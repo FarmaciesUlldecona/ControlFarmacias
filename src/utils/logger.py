@@ -5,42 +5,44 @@ from pathlib import Path
 def obtener_logger(nombre: str = "farmatic") -> logging.Logger:
     """
     Devuelve un logger configurado para escribir
-    tanto en pantalla como en un archivo.
+    tanto en pantalla como en un archivo independiente.
+
+    Cada proceso genera su propio archivo de log.
     """
 
-    # Carpeta de logs
     carpeta_logs = Path("logs")
-    carpeta_logs.mkdir(exist_ok=True)
+    carpeta_logs.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
-    # Archivo de log
-    archivo_log = carpeta_logs / "programa.log"
+    nombre_archivo = f"{nombre}.log"
+    archivo_log = carpeta_logs / nombre_archivo
 
-    # Crear logger
     logger = logging.getLogger(nombre)
 
-    # Evitar añadir manejadores varias veces
     if logger.handlers:
         return logger
 
     logger.setLevel(logging.INFO)
+    logger.propagate = False
 
-    # Formato de los mensajes
     formato = logging.Formatter(
-        "%(asctime)s | %(levelname)s | %(message)s"
+        "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
     )
 
-    # Escribir en archivo
-    archivo = logging.FileHandler(
+    manejador_archivo = logging.FileHandler(
         archivo_log,
-        encoding="utf-8"
+        encoding="utf-8",
     )
-    archivo.setFormatter(formato)
+    manejador_archivo.setLevel(logging.INFO)
+    manejador_archivo.setFormatter(formato)
 
-    # Escribir también en consola
-    consola = logging.StreamHandler()
-    consola.setFormatter(formato)
+    manejador_consola = logging.StreamHandler()
+    manejador_consola.setLevel(logging.INFO)
+    manejador_consola.setFormatter(formato)
 
-    logger.addHandler(archivo)
-    logger.addHandler(consola)
+    logger.addHandler(manejador_archivo)
+    logger.addHandler(manejador_consola)
 
     return logger

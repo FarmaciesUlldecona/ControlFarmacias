@@ -52,7 +52,6 @@ def guardar_albaran(
         return respuesta.data
 
     except APIError as error:
-
         if error.code == "23505":
             return []
 
