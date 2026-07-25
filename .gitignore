@@ -1,25 +1,27 @@
-# Variables de entorno
+# Entorno virtual
+.venv/
+venv/
+
+# Variables privadas
 .env
 
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
-
-# Entornos virtuales
-.venv/
-venv/
 
 # Logs
 logs/
 *.log
 
+# Datos locales generados durante la ejecución
+data/
+*.sqlite
+*.sqlite3
+*.db
+
 # Visual Studio Code
 .vscode/
 
-# Windows
+# Sistema operativo
+.DS_Store
 Thumbs.db
-Desktop.ini
-
-# Archivos temporales
-*.tmp
