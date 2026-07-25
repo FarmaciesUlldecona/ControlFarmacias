@@ -21,6 +21,7 @@ FECHA_INICIO_IMPORTACION = date(2026, 6, 1)
 
 FARMACIA_ESPERADA = "PIO"
 BUCKET_FACTURAS = "facturas-pdf"
+TABLA_DOCUMENTOS = "documentos_facturas"
 
 MAXIMO_INTENTOS = 3
 ESPERAS_REINTENTO = [5, 15]
@@ -30,7 +31,9 @@ ARCHIVO_INDICE = CARPETA_DATOS / "indice_facturas.sqlite"
 
 TAMANO_PAGINA_SUPABASE = 1000
 
-logger = obtener_logger("importar_facturas_drive")
+logger = obtener_logger(
+    "importar_facturas_drive"
+)
 
 
 MESES_RECONOCIDOS = {
@@ -65,7 +68,8 @@ MESES_RECONOCIDOS = {
 
 def validar_configuracion() -> None:
     """
-    Impide importar facturas bajo una farmacia incorrecta.
+    Comprueba que el programa está configurado para PIO
+    y que la carpeta de Google Drive está disponible.
     """
 
     if NOMBRE_FARMACIA != FARMACIA_ESPERADA:
@@ -77,13 +81,22 @@ def validar_configuracion() -> None:
 
     if not RUTA_FACTURAS.exists():
         raise FileNotFoundError(
-            f"No existe la carpeta de facturas: {RUTA_FACTURAS}"
+            "No existe la carpeta de facturas: "
+            f"{RUTA_FACTURAS}"
+        )
+
+    if not RUTA_FACTURAS.is_dir():
+        raise NotADirectoryError(
+            "La ruta de facturas no es una carpeta: "
+            f"{RUTA_FACTURAS}"
         )
 
 
-def normalizar_texto(texto: str) -> str:
+def normalizar_texto(
+    texto: str,
+) -> str:
     """
-    Convierte a mayúsculas y elimina acentos.
+    Convierte el texto a mayúsculas y elimina acentos.
     """
 
     texto_normalizado = unicodedata.normalize(
@@ -94,15 +107,23 @@ def normalizar_texto(texto: str) -> str:
     texto_sin_acentos = "".join(
         caracter
         for caracter in texto_normalizado
-        if not unicodedata.combining(caracter)
+        if not unicodedata.combining(
+            caracter
+        )
     )
 
     return texto_sin_acentos.upper().strip()
 
 
-def interpretar_ano(texto_ano: str) -> int | None:
+def interpretar_ano(
+    texto_ano: str,
+) -> int | None:
     """
     Convierte años de dos o cuatro cifras.
+
+    Ejemplos:
+    26 -> 2026
+    2027 -> 2027
     """
 
     try:
@@ -123,7 +144,14 @@ def obtener_fecha_carpeta_mes(
     nombre_carpeta: str,
 ) -> date | None:
     """
-    Interpreta carpetas como JUNY 26, AGOST 2026 o GENER 27.
+    Interpreta nombres de carpetas mensuales.
+
+    Ejemplos válidos:
+    JUNY 26
+    JULIOL 2026
+    AGOST-26
+    ENERO 27
+    DICIEMBRE_2035
     """
 
     nombre_normalizado = normalizar_texto(
@@ -143,18 +171,22 @@ def obtener_fecha_carpeta_mes(
 
     for palabra in palabras:
         if palabra in MESES_RECONOCIDOS:
-            mes_encontrado = MESES_RECONOCIDOS[
-                palabra
-            ]
+            mes_encontrado = (
+                MESES_RECONOCIDOS[palabra]
+            )
             break
 
     for palabra in palabras:
-        if re.fullmatch(r"\d{2}|\d{4}", palabra):
-            ano_encontrado = interpretar_ano(
+        if re.fullmatch(
+            r"\d{2}|\d{4}",
+            palabra,
+        ):
+            ano_posible = interpretar_ano(
                 palabra
             )
 
-            if ano_encontrado is not None:
+            if ano_posible is not None:
+                ano_encontrado = ano_posible
                 break
 
     if (
@@ -175,8 +207,8 @@ def obtener_fecha_carpeta_mes(
 
 def obtener_carpetas_mensuales_validas() -> list[Path]:
     """
-    Obtiene todas las carpetas desde junio de 2026,
-    sin límite de fecha final.
+    Devuelve todas las carpetas mensuales desde junio de 2026
+    en adelante, sin límite de fecha final.
     """
 
     carpetas_validas: list[
@@ -200,6 +232,12 @@ def obtener_carpetas_mensuales_validas() -> list[Path]:
             continue
 
         if fecha_carpeta < FECHA_INICIO_IMPORTACION:
+            logger.info(
+                "Carpeta anterior al inicio, ignorada | "
+                "Carpeta: %s | Fecha: %s",
+                carpeta.name,
+                fecha_carpeta.isoformat(),
+            )
             continue
 
         carpetas_validas.append(
@@ -210,7 +248,10 @@ def obtener_carpetas_mensuales_validas() -> list[Path]:
         )
 
     carpetas_validas.sort(
-        key=lambda elemento: elemento[0]
+        key=lambda elemento: (
+            elemento[0],
+            elemento[1].name.upper(),
+        )
     )
 
     return [
@@ -222,20 +263,32 @@ def obtener_carpetas_mensuales_validas() -> list[Path]:
 def obtener_facturas_pdf() -> list[Path]:
     """
     Localiza todos los PDF desde junio de 2026.
+
+    Recorre las carpetas de las decenas y cualquier
+    otra subcarpeta existente dentro del mes.
     """
 
     facturas: list[Path] = []
 
-    for carpeta_mes in obtener_carpetas_mensuales_validas():
+    carpetas_mensuales = (
+        obtener_carpetas_mensuales_validas()
+    )
+
+    for carpeta_mes in carpetas_mensuales:
         for archivo in carpeta_mes.rglob("*"):
             if (
                 archivo.is_file()
-                and archivo.suffix.lower() == ".pdf"
+                and archivo.suffix.lower()
+                == ".pdf"
             ):
-                facturas.append(archivo)
+                facturas.append(
+                    archivo
+                )
 
     facturas.sort(
-        key=lambda archivo: str(archivo).lower()
+        key=lambda archivo: str(
+            archivo
+        ).lower()
     )
 
     return facturas
@@ -243,7 +296,7 @@ def obtener_facturas_pdf() -> list[Path]:
 
 def obtener_conexion_indice() -> sqlite3.Connection:
     """
-    Abre el índice local utilizado para evitar volver
+    Abre el índice local utilizado para no volver
     a leer archivos que no han cambiado.
     """
 
@@ -282,7 +335,7 @@ def obtener_registro_indice(
     ruta_relativa: str,
 ) -> sqlite3.Row | None:
     """
-    Obtiene el registro local de un PDF.
+    Obtiene el registro local correspondiente a un PDF.
     """
 
     cursor = conexion.execute(
@@ -297,7 +350,9 @@ def obtener_registro_indice(
         FROM archivos_facturas
         WHERE ruta_relativa = ?
         """,
-        (ruta_relativa,),
+        (
+            ruta_relativa,
+        ),
     )
 
     return cursor.fetchone()
@@ -313,7 +368,7 @@ def guardar_registro_indice(
     ultimo_error: str | None = None,
 ) -> None:
     """
-    Crea o actualiza el estado local del archivo.
+    Crea o actualiza el registro local de un PDF.
     """
 
     conexion.execute(
@@ -331,11 +386,16 @@ def guardar_registro_indice(
         ON CONFLICT(ruta_relativa)
         DO UPDATE SET
             tamano = excluded.tamano,
-            fecha_modificacion_ns = excluded.fecha_modificacion_ns,
-            archivo_hash = excluded.archivo_hash,
-            estado = excluded.estado,
-            ultimo_error = excluded.ultimo_error,
-            fecha_actualizacion = excluded.fecha_actualizacion
+            fecha_modificacion_ns =
+                excluded.fecha_modificacion_ns,
+            archivo_hash =
+                excluded.archivo_hash,
+            estado =
+                excluded.estado,
+            ultimo_error =
+                excluded.ultimo_error,
+            fecha_actualizacion =
+                excluded.fecha_actualizacion
         """,
         (
             ruta_relativa,
@@ -359,27 +419,31 @@ def archivo_no_ha_cambiado(
     fecha_modificacion_ns: int,
 ) -> bool:
     """
-    Comprueba si el archivo tiene el mismo tamaño
-    y la misma fecha de modificación que en la última ejecución.
+    Comprueba si el archivo conserva el mismo tamaño
+    y la misma fecha de modificación.
     """
 
     if registro is None:
         return False
 
     return (
-        int(registro["tamano"]) == tamano
+        int(
+            registro["tamano"]
+        ) == tamano
         and int(
-            registro["fecha_modificacion_ns"]
+            registro[
+                "fecha_modificacion_ns"
+            ]
         ) == fecha_modificacion_ns
     )
 
 
-def obtener_hashes_supabase() -> set[str]:
+def obtener_hashes_documentos_supabase() -> set[str]:
     """
-    Descarga una sola vez todos los hashes de facturas
-    de la farmacia desde Supabase.
+    Descarga una sola vez todos los hashes de los PDF
+    registrados en documentos_facturas.
 
-    Usa paginación para admitir miles de facturas.
+    Usa paginación para admitir miles de documentos.
     """
 
     cliente = obtener_cliente_supabase()
@@ -396,7 +460,7 @@ def obtener_hashes_supabase() -> set[str]:
 
         respuesta = (
             cliente
-            .table("facturas")
+            .table(TABLA_DOCUMENTOS)
             .select("archivo_hash")
             .eq(
                 "farmacia",
@@ -421,7 +485,9 @@ def obtener_hashes_supabase() -> set[str]:
                     str(archivo_hash)
                 )
 
-        if len(filas) < TAMANO_PAGINA_SUPABASE:
+        if len(
+            filas
+        ) < TAMANO_PAGINA_SUPABASE:
             break
 
         inicio += TAMANO_PAGINA_SUPABASE
@@ -433,12 +499,14 @@ def calcular_hash_archivo(
     ruta_archivo: Path,
 ) -> str:
     """
-    Calcula el SHA-256 del PDF.
+    Calcula el hash SHA-256 del PDF.
     """
 
     calculador = hashlib.sha256()
 
-    with ruta_archivo.open("rb") as archivo:
+    with ruta_archivo.open(
+        "rb"
+    ) as archivo:
         while True:
             bloque = archivo.read(
                 1024 * 1024
@@ -447,7 +515,9 @@ def calcular_hash_archivo(
             if not bloque:
                 break
 
-            calculador.update(bloque)
+            calculador.update(
+                bloque
+            )
 
     return calculador.hexdigest()
 
@@ -456,41 +526,51 @@ def validar_pdf_nuevo(
     ruta_pdf: Path,
 ) -> None:
     """
-    Valida únicamente los archivos nuevos o modificados.
+    Valida únicamente archivos nuevos o modificados.
     """
 
     if not ruta_pdf.exists():
         raise FileNotFoundError(
-            f"El archivo no existe: {ruta_pdf}"
+            "El archivo no existe: "
+            f"{ruta_pdf}"
         )
 
     if not ruta_pdf.is_file():
         raise ValueError(
-            f"No es un archivo: {ruta_pdf}"
+            "La ruta no corresponde a un archivo: "
+            f"{ruta_pdf}"
         )
 
-    tamano_inicial = ruta_pdf.stat().st_size
+    tamano_inicial = (
+        ruta_pdf.stat().st_size
+    )
 
     if tamano_inicial <= 0:
         raise ValueError(
-            "El PDF está vacío."
+            "El archivo PDF está vacío."
         )
 
     time.sleep(1)
 
-    tamano_final = ruta_pdf.stat().st_size
+    tamano_final = (
+        ruta_pdf.stat().st_size
+    )
 
     if tamano_inicial != tamano_final:
         raise RuntimeError(
-            "El archivo todavía se está sincronizando."
+            "El archivo todavía se está "
+            "sincronizando o modificando."
         )
 
-    with ruta_pdf.open("rb") as archivo:
+    with ruta_pdf.open(
+        "rb"
+    ) as archivo:
         cabecera = archivo.read(5)
 
     if cabecera != b"%PDF-":
         raise ValueError(
-            "El archivo no contiene una cabecera PDF válida."
+            "El archivo no contiene una "
+            "cabecera PDF válida."
         )
 
 
@@ -498,7 +578,7 @@ def normalizar_nombre_storage(
     texto: str,
 ) -> str:
     """
-    Genera nombres seguros para Storage.
+    Genera nombres seguros para Supabase Storage.
     """
 
     texto_normalizado = unicodedata.normalize(
@@ -509,7 +589,9 @@ def normalizar_nombre_storage(
     texto_sin_acentos = "".join(
         caracter
         for caracter in texto_normalizado
-        if not unicodedata.combining(caracter)
+        if not unicodedata.combining(
+            caracter
+        )
     )
 
     texto_limpio = re.sub(
@@ -522,7 +604,9 @@ def normalizar_nombre_storage(
         r"_+",
         "_",
         texto_limpio,
-    ).strip("._-")
+    ).strip(
+        "._-"
+    )
 
     return texto_limpio or "archivo"
 
@@ -532,7 +616,7 @@ def crear_ruta_storage(
     archivo_hash: str,
 ) -> str:
     """
-    Crea la ruta del archivo dentro del bucket.
+    Crea la ruta del PDF dentro del bucket privado.
     """
 
     ruta_relativa = ruta_pdf.relative_to(
@@ -540,12 +624,16 @@ def crear_ruta_storage(
     )
 
     carpetas = [
-        normalizar_nombre_storage(parte)
+        normalizar_nombre_storage(
+            parte
+        )
         for parte in ruta_relativa.parts[:-1]
     ]
 
-    nombre_archivo = normalizar_nombre_storage(
-        ruta_pdf.stem
+    nombre_archivo = (
+        normalizar_nombre_storage(
+            ruta_pdf.stem
+        )
     )
 
     nombre_storage = (
@@ -566,11 +654,16 @@ def obtener_nombre_storage(
     elemento: Any,
 ) -> str | None:
     """
-    Obtiene el nombre de una respuesta de Storage.
+    Obtiene el nombre de un archivo devuelto por Storage.
     """
 
-    if isinstance(elemento, dict):
-        nombre = elemento.get("name")
+    if isinstance(
+        elemento,
+        dict,
+    ):
+        nombre = elemento.get(
+            "name"
+        )
     else:
         nombre = getattr(
             elemento,
@@ -585,12 +678,11 @@ def obtener_nombre_storage(
 
 
 def archivo_existe_en_storage(
-    cliente,
+    cliente: Any,
     ruta_storage: str,
 ) -> bool:
     """
-    Comprueba si un archivo ya existe en Storage.
-    Solo se utiliza para archivos nuevos.
+    Comprueba si un PDF ya existe en Storage.
     """
 
     ruta = PurePosixPath(
@@ -602,7 +694,9 @@ def archivo_existe_en_storage(
         .storage
         .from_(BUCKET_FACTURAS)
         .list(
-            path=str(ruta.parent),
+            path=str(
+                ruta.parent
+            ),
             options={
                 "search": ruta.name,
                 "limit": 10,
@@ -611,19 +705,20 @@ def archivo_existe_en_storage(
     )
 
     return any(
-        obtener_nombre_storage(elemento)
-        == ruta.name
+        obtener_nombre_storage(
+            elemento
+        ) == ruta.name
         for elemento in respuesta
     )
 
 
 def subir_pdf_storage(
-    cliente,
+    cliente: Any,
     ruta_pdf: Path,
     ruta_storage: str,
 ) -> None:
     """
-    Sube el PDF al bucket privado.
+    Sube el PDF al bucket privado facturas-pdf.
     """
 
     tipo_mime = (
@@ -633,7 +728,9 @@ def subir_pdf_storage(
         or "application/pdf"
     )
 
-    with ruta_pdf.open("rb") as archivo:
+    with ruta_pdf.open(
+        "rb"
+    ) as archivo:
         (
             cliente
             .storage
@@ -650,14 +747,17 @@ def subir_pdf_storage(
         )
 
 
-def registrar_factura(
-    cliente,
+def registrar_documento_factura(
+    cliente: Any,
     ruta_pdf: Path,
     ruta_storage: str,
     archivo_hash: str,
 ) -> None:
     """
-    Crea el registro inicial en Supabase.
+    Registra el PDF físico en documentos_facturas.
+
+    Todavía no crea facturas económicas.
+    La lectura mediante IA se realizará en otro proceso.
     """
 
     datos = {
@@ -666,16 +766,15 @@ def registrar_factura(
         "archivo_ruta": ruta_storage,
         "archivo_hash": archivo_hash,
         "estado_lectura": "PENDIENTE",
-        "estado_conciliacion": "PENDIENTE",
-        "estado_pago": "SIN_PAGAR",
         "requiere_revision": False,
-        "validada_manualmente": False,
         "datos_extraidos": {},
+        "necesita_lectura_visual": False,
+        "intentos_lectura": 0,
     }
 
     (
         cliente
-        .table("facturas")
+        .table(TABLA_DOCUMENTOS)
         .insert(datos)
         .execute()
     )
@@ -685,10 +784,13 @@ def es_error_reintentable(
     error: Exception,
 ) -> bool:
     """
-    Identifica errores temporales.
+    Identifica errores temporales que pueden resolverse
+    repitiendo la operación.
     """
 
-    mensaje = str(error).lower()
+    mensaje = str(
+        error
+    ).lower()
 
     textos_reintentables = (
         "timed out",
@@ -714,8 +816,8 @@ def es_error_reintentable(
     )
 
 
-def importar_archivo_nuevo(
-    cliente,
+def importar_documento_nuevo(
+    cliente: Any,
     conexion_indice: sqlite3.Connection,
     ruta_pdf: Path,
     ruta_relativa: str,
@@ -724,7 +826,9 @@ def importar_archivo_nuevo(
     archivo_hash: str,
 ) -> tuple[str, int, str | None]:
     """
-    Sube y registra un archivo nuevo con tres intentos.
+    Sube y registra un documento nuevo.
+
+    Realiza hasta tres intentos ante errores temporales.
     """
 
     ultimo_error: Exception | None = None
@@ -749,7 +853,23 @@ def importar_archivo_nuevo(
                     ruta_storage,
                 )
 
-            registrar_factura(
+                logger.info(
+                    "PDF subido a Storage | "
+                    "Archivo: %s | Ruta: %s",
+                    ruta_relativa,
+                    ruta_storage,
+                )
+
+            else:
+                logger.warning(
+                    "PDF ya existente en Storage "
+                    "sin registro localizado | "
+                    "Archivo: %s | Ruta: %s",
+                    ruta_relativa,
+                    ruta_storage,
+                )
+
+            registrar_documento_factura(
                 cliente,
                 ruta_pdf,
                 ruta_storage,
@@ -766,7 +886,8 @@ def importar_archivo_nuevo(
             )
 
             logger.info(
-                "Factura importada | Archivo: %s | Intento: %s",
+                "Documento importado | "
+                "Archivo: %s | Intento: %s",
                 ruta_relativa,
                 intento,
             )
@@ -781,8 +902,10 @@ def importar_archivo_nuevo(
             ultimo_error = error
 
             logger.exception(
-                "Error importando factura | "
-                "Archivo: %s | Intento: %s/%s | Error: %s",
+                "Error importando documento | "
+                "Archivo: %s | "
+                "Intento: %s/%s | "
+                "Error: %s",
                 ruta_relativa,
                 intento,
                 MAXIMO_INTENTOS,
@@ -790,8 +913,11 @@ def importar_archivo_nuevo(
             )
 
             if (
-                not es_error_reintentable(error)
-                or intento == MAXIMO_INTENTOS
+                not es_error_reintentable(
+                    error
+                )
+                or intento
+                == MAXIMO_INTENTOS
             ):
                 break
 
@@ -799,10 +925,25 @@ def importar_archivo_nuevo(
                 intento - 1
             ]
 
-            time.sleep(segundos)
+            logger.warning(
+                "Documento pendiente de reintento | "
+                "Archivo: %s | "
+                "Próximo intento: %s/%s | "
+                "Espera: %s segundos",
+                ruta_relativa,
+                intento + 1,
+                MAXIMO_INTENTOS,
+                segundos,
+            )
+
+            time.sleep(
+                segundos
+            )
 
     mensaje_error = (
-        str(ultimo_error)
+        str(
+            ultimo_error
+        )
         if ultimo_error is not None
         else "Error desconocido"
     )
@@ -817,6 +958,13 @@ def importar_archivo_nuevo(
         mensaje_error,
     )
 
+    logger.error(
+        "Documento pendiente para otra ejecución | "
+        "Archivo: %s | Error: %s",
+        ruta_relativa,
+        mensaje_error,
+    )
+
     return (
         "ERROR",
         MAXIMO_INTENTOS,
@@ -826,10 +974,15 @@ def importar_archivo_nuevo(
 
 def importar_facturas() -> None:
     """
-    Importación incremental optimizada.
+    Importación incremental optimizada de PDF.
 
-    Los PDF conocidos y sin cambios se descartan mediante
-    el índice local sin volver a abrirlos ni consultar Supabase.
+    Los archivos conocidos y sin cambios se omiten mediante
+    el índice local.
+
+    Los PDF nuevos se registran en documentos_facturas.
+
+    Esta función no ejecuta todavía la lectura mediante IA
+    ni crea filas en la nueva tabla facturas.
     """
 
     inicio_proceso = time.monotonic()
@@ -837,36 +990,54 @@ def importar_facturas() -> None:
     validar_configuracion()
 
     logger.info(
-        "Inicio de importación optimizada | "
-        "Farmacia: %s | Ruta: %s",
+        "Inicio de importación de documentos | "
+        "Farmacia: %s | "
+        "Ruta: %s | "
+        "Fecha mínima: %s | "
+        "Tabla: %s",
         NOMBRE_FARMACIA,
         RUTA_FACTURAS,
+        FECHA_INICIO_IMPORTACION.isoformat(),
+        TABLA_DOCUMENTOS,
     )
 
     conexion_indice = obtener_conexion_indice()
     cliente = obtener_cliente_supabase()
 
     try:
-        hashes_supabase = obtener_hashes_supabase()
-        facturas = obtener_facturas_pdf()
+        hashes_supabase = (
+            obtener_hashes_documentos_supabase()
+        )
 
-        total = len(facturas)
+        facturas_pdf = obtener_facturas_pdf()
+        total = len(
+            facturas_pdf
+        )
 
         print()
-        print("IMPORTACION OPTIMIZADA DE FACTURAS")
-        print("----------------------------------")
-        print(f"PDF encontrados: {total}")
         print(
-            "Facturas registradas en Supabase: "
-            f"{len(hashes_supabase)}"
+            "IMPORTACION DE DOCUMENTOS DE FACTURAS"
+        )
+        print(
+            "------------------------------------"
+        )
+        print(
+            f"Tabla de destino: {TABLA_DOCUMENTOS}"
+        )
+        print(
+            f"PDF detectados: {total}"
+        )
+        print(
+            "Documentos únicos registrados "
+            f"en Supabase: {len(hashes_supabase)}"
         )
         print()
 
-        omitidas_indice = 0
+        omitidos_indice = 0
         existentes_supabase = 0
-        importadas = 0
-        recuperadas = 0
-        modificadas = 0
+        importados = 0
+        recuperados = 0
+        modificados = 0
         errores = 0
 
         archivos_error: list[
@@ -874,7 +1045,7 @@ def importar_facturas() -> None:
         ] = []
 
         for posicion, ruta_pdf in enumerate(
-            facturas,
+            facturas_pdf,
             start=1,
         ):
             ruta_relativa = str(
@@ -884,7 +1055,11 @@ def importar_facturas() -> None:
             )
 
             datos_archivo = ruta_pdf.stat()
-            tamano = datos_archivo.st_size
+
+            tamano = (
+                datos_archivo.st_size
+            )
+
             fecha_modificacion_ns = (
                 datos_archivo.st_mtime_ns
             )
@@ -903,11 +1078,12 @@ def importar_facturas() -> None:
             if (
                 sin_cambios
                 and registro is not None
-                and registro["estado"] == "IMPORTADA"
+                and registro["estado"]
+                == "IMPORTADA"
                 and registro["archivo_hash"]
                 in hashes_supabase
             ):
-                omitidas_indice += 1
+                omitidos_indice += 1
                 continue
 
             print(
@@ -928,10 +1104,11 @@ def importar_facturas() -> None:
                     registro is not None
                     and not sin_cambios
                 ):
-                    modificadas += 1
+                    modificados += 1
 
                     logger.warning(
-                        "Archivo modificado desde la última ejecución | "
+                        "Archivo modificado desde "
+                        "la última ejecución | "
                         "Archivo: %s",
                         ruta_relativa,
                     )
@@ -949,14 +1126,14 @@ def importar_facturas() -> None:
                     existentes_supabase += 1
 
                     print(
-                        "  Ya estaba registrada. "
-                        "Añadida al índice local."
+                        "  Documento ya registrado. "
+                        "Índice local actualizado."
                     )
 
                     continue
 
                 estado, intentos, error = (
-                    importar_archivo_nuevo(
+                    importar_documento_nuevo(
                         cliente,
                         conexion_indice,
                         ruta_pdf,
@@ -968,16 +1145,17 @@ def importar_facturas() -> None:
                 )
 
                 if estado == "IMPORTADA":
-                    importadas += 1
+                    importados += 1
+
                     hashes_supabase.add(
                         archivo_hash
                     )
 
                     if intentos > 1:
-                        recuperadas += 1
+                        recuperados += 1
 
                     print(
-                        "  Importada correctamente."
+                        "  Documento importado correctamente."
                     )
 
                 else:
@@ -998,18 +1176,23 @@ def importar_facturas() -> None:
             except Exception as error:
                 errores += 1
 
-                mensaje_error = str(error)
+                mensaje_error = str(
+                    error
+                )
+
+                hash_anterior = None
+
+                if registro is not None:
+                    hash_anterior = registro[
+                        "archivo_hash"
+                    ]
 
                 guardar_registro_indice(
                     conexion_indice,
                     ruta_relativa,
                     tamano,
                     fecha_modificacion_ns,
-                    (
-                        registro["archivo_hash"]
-                        if registro is not None
-                        else None
-                    ),
+                    hash_anterior,
                     "ERROR",
                     mensaje_error,
                 )
@@ -1034,55 +1217,76 @@ def importar_facturas() -> None:
         )
 
         logger.info(
-            "Importación optimizada finalizada | "
-            "Detectadas: %s | "
-            "Omitidas por índice: %s | "
-            "Existentes añadidas al índice: %s | "
-            "Importadas: %s | "
-            "Modificadas: %s | "
+            "Importación de documentos finalizada | "
+            "Detectados: %s | "
+            "Omitidos por índice: %s | "
+            "Existentes añadidos al índice: %s | "
+            "Importados: %s | "
+            "Modificados: %s | "
             "Errores: %s | "
             "Duración: %.2f segundos",
             total,
-            omitidas_indice,
+            omitidos_indice,
             existentes_supabase,
-            importadas,
-            modificadas,
+            importados,
+            modificados,
             errores,
             duracion,
         )
 
         print()
-        print("IMPORTACION FINALIZADA")
-        print("----------------------")
-        print(f"PDF detectados: {total}")
+        print(
+            "IMPORTACION FINALIZADA"
+        )
+        print(
+            "----------------------"
+        )
+        print(
+            f"PDF detectados: {total}"
+        )
         print(
             "Omitidos sin abrir: "
-            f"{omitidas_indice}"
+            f"{omitidos_indice}"
         )
         print(
             "Existentes añadidos al índice: "
             f"{existentes_supabase}"
         )
-        print(f"Importadas nuevas: {importadas}")
         print(
-            "Recuperadas tras reintento: "
-            f"{recuperadas}"
+            "Documentos nuevos importados: "
+            f"{importados}"
+        )
+        print(
+            "Recuperados tras reintento: "
+            f"{recuperados}"
         )
         print(
             "Archivos modificados: "
-            f"{modificadas}"
+            f"{modificados}"
         )
-        print(f"Errores pendientes: {errores}")
-        print(f"Duración: {duracion:.1f} segundos")
+        print(
+            f"Errores pendientes: {errores}"
+        )
+        print(
+            f"Duración: {duracion:.1f} segundos"
+        )
 
         if archivos_error:
             print()
-            print("ARCHIVOS CON ERROR")
-            print("------------------")
+            print(
+                "ARCHIVOS CON ERROR"
+            )
+            print(
+                "------------------"
+            )
 
             for archivo, error in archivos_error:
-                print(f"- {archivo}")
-                print(f"  Error: {error}")
+                print(
+                    f"- {archivo}"
+                )
+                print(
+                    f"  Error: {error}"
+                )
 
     finally:
         conexion_indice.close()

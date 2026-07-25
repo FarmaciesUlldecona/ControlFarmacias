@@ -1,0 +1,2856 @@
+{
+  "version_patron": "1.0",
+  "farmacia": "PIO",
+  "moneda": "EUR",
+  "criterios_generales": {
+    "fechas": "ISO 8601 YYYY-MM-DD",
+    "importes": "Número decimal con punto y dos decimales",
+    "signo_abonos": "Los abonos se guardan con importes contables negativos aunque el PDF los muestre positivos",
+    "datos_ausentes": "null; nunca inventar",
+    "paginas": "Numeración empezando en 1"
+  },
+  "documentos": [
+    {
+      "archivo": "DERMOFARM ABONO VTO 5.8.26 PIO.pdf",
+      "tipo_contenido": "FACTURA_UNICA",
+      "numero_paginas": 1,
+      "necesita_lectura_visual": false,
+      "cantidad_documentos_esperados": 1,
+      "facturas": [
+        {
+          "tipo_documento": "ABONO",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": true,
+          "pagina_inicio": 1,
+          "pagina_fin": 1,
+          "proveedor_nombre": "DERMOFARM, S.A.U.",
+          "proveedor_cif": "A08283624",
+          "numero_factura": "2700282621",
+          "fecha_factura": "2026-07-17",
+          "base_imponible_total": -86.65,
+          "iva_total": -18.2,
+          "recargo_equivalencia_total": -4.51,
+          "importe_total": -109.36,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-08-05",
+              "importe": -109.36,
+              "origen_fecha": "nombre del archivo; no visible en el cuerpo del PDF"
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": -86.65,
+              "tipo_iva": 21.0,
+              "cuota_iva": -18.2,
+              "tipo_recargo_equivalencia": 5.2,
+              "cuota_recargo_equivalencia": -4.51
+            }
+          ],
+          "albaranes": [
+            {
+              "orden": 1,
+              "numero_albaran": "25026140",
+              "fecha_albaran": "2026-07-17",
+              "tipo_movimiento": "ABONO",
+              "importe_base": null,
+              "importe_total": -109.36
+            }
+          ],
+          "ajustes": []
+        }
+      ]
+    },
+    {
+      "archivo": "PIERRE FABRE ABONO VTO 7.9.26 PIO.pdf",
+      "tipo_contenido": "FACTURA_UNICA",
+      "numero_paginas": 1,
+      "necesita_lectura_visual": false,
+      "cantidad_documentos_esperados": 1,
+      "facturas": [
+        {
+          "tipo_documento": "ABONO",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": true,
+          "pagina_inicio": 1,
+          "pagina_fin": 1,
+          "proveedor_nombre": "PIERRE FABRE IBÉRICA, S.A.",
+          "proveedor_cif": "A08008724",
+          "numero_factura": "SCN0276685",
+          "fecha_factura": "2026-06-22",
+          "base_imponible_total": -86.83,
+          "iva_total": -8.68,
+          "recargo_equivalencia_total": -1.22,
+          "importe_total": -96.73,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-09-07",
+              "importe": -96.73
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": -86.83,
+              "tipo_iva": 10.0,
+              "cuota_iva": -8.68,
+              "tipo_recargo_equivalencia": 1.4,
+              "cuota_recargo_equivalencia": -1.22
+            }
+          ],
+          "albaranes": [
+            {
+              "orden": 1,
+              "numero_albaran": "SCN0276685",
+              "fecha_albaran": null,
+              "tipo_movimiento": "ABONO",
+              "importe_base": -86.83,
+              "importe_total": -96.73
+            }
+          ],
+          "ajustes": [
+            {
+              "orden": 1,
+              "tipo_ajuste": "DESCUENTO",
+              "descripcion": "Descuento comercial 28%",
+              "importe": -33.77,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "archivo": "SUAVINEX VTO 15.8.26 PIO.pdf",
+      "tipo_contenido": "FACTURA_UNICA",
+      "numero_paginas": 1,
+      "necesita_lectura_visual": false,
+      "cantidad_documentos_esperados": 1,
+      "facturas": [
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": true,
+          "pagina_inicio": 1,
+          "pagina_fin": 1,
+          "proveedor_nombre": "SUAVINEX GROUP, S.L.",
+          "proveedor_cif": "B03074093",
+          "numero_factura": "0702638508",
+          "fecha_factura": "2026-06-19",
+          "base_imponible_total": 531.26,
+          "iva_total": 111.56,
+          "recargo_equivalencia_total": 27.63,
+          "importe_total": 670.45,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-08-19",
+              "importe": 670.45,
+              "nota": "El nombre del archivo indica 15/08/2026, pero el PDF muestra 19/08/2026; prevalece el PDF"
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": 531.26,
+              "tipo_iva": 21.0,
+              "cuota_iva": 111.56,
+              "tipo_recargo_equivalencia": 5.2,
+              "cuota_recargo_equivalencia": 27.63,
+              "nota": "El PDF agrupa IVA y recargo en una cuota total de 139,19 €"
+            }
+          ],
+          "albaranes": [
+            {
+              "orden": 1,
+              "numero_albaran": "81109681",
+              "fecha_albaran": null,
+              "tipo_movimiento": "CARGO",
+              "importe_base": 531.26,
+              "importe_total": 670.45
+            }
+          ],
+          "ajustes": [
+            {
+              "orden": 1,
+              "tipo_ajuste": "OTRO",
+              "descripcion": "Información punto verde",
+              "importe": 1.9,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "archivo": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+      "tipo_contenido": "LOTE_FACTURAS",
+      "numero_paginas": 11,
+      "necesita_lectura_visual": false,
+      "cantidad_documentos_esperados": 4,
+      "facturas": [
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": true,
+          "pagina_inicio": 1,
+          "pagina_fin": 3,
+          "proveedor_nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "proveedor_cif": "A50004324",
+          "numero_factura": "08008428",
+          "fecha_factura": "2026-07-10",
+          "base_imponible_total": 2751.75,
+          "iva_total": 189.45,
+          "recargo_equivalencia_total": 31.5,
+          "importe_total": 2972.7,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-09-10",
+              "importe": 2972.7
+            }
+          ],
+          "impuestos": [],
+          "albaranes": [
+            {
+              "orden": 1,
+              "numero_albaran": "08C27029",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 48.45,
+              "importe_total": 53.98
+            },
+            {
+              "orden": 2,
+              "numero_albaran": "08C27032",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 39.14,
+              "importe_total": 45.83
+            },
+            {
+              "orden": 3,
+              "numero_albaran": "08C27086",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 6.66,
+              "importe_total": 8.41
+            },
+            {
+              "orden": 4,
+              "numero_albaran": "08C27259",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 60.88,
+              "importe_total": 65.05
+            },
+            {
+              "orden": 5,
+              "numero_albaran": "08C27264",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 78.09,
+              "importe_total": 83.32
+            },
+            {
+              "orden": 6,
+              "numero_albaran": "08C27899",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 6.44,
+              "importe_total": 8.12
+            },
+            {
+              "orden": 7,
+              "numero_albaran": "08M29583",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 25.02,
+              "importe_total": 31.57
+            },
+            {
+              "orden": 8,
+              "numero_albaran": "08M29917",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 10.02,
+              "importe_total": 10.47
+            },
+            {
+              "orden": 9,
+              "numero_albaran": "08M30064",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 6.56,
+              "importe_total": 6.85
+            },
+            {
+              "orden": 10,
+              "numero_albaran": "08C28369",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 6.72,
+              "importe_total": 7.02
+            },
+            {
+              "orden": 11,
+              "numero_albaran": "08C28649",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 34.81,
+              "importe_total": 36.37
+            },
+            {
+              "orden": 12,
+              "numero_albaran": "08C28657",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 294.41,
+              "importe_total": 307.66
+            },
+            {
+              "orden": 13,
+              "numero_albaran": "08C28662",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 34.51,
+              "importe_total": 37.48
+            },
+            {
+              "orden": 14,
+              "numero_albaran": "08C28668",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 220.49,
+              "importe_total": 230.41
+            },
+            {
+              "orden": 15,
+              "numero_albaran": "08C28813",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.24,
+              "importe_total": 2.34
+            },
+            {
+              "orden": 16,
+              "numero_albaran": "08C29059",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 11.42,
+              "importe_total": 11.94
+            },
+            {
+              "orden": 17,
+              "numero_albaran": "08C29168",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 1.41,
+              "importe_total": 1.48
+            },
+            {
+              "orden": 18,
+              "numero_albaran": "08C29186",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 9.52,
+              "importe_total": 9.95
+            },
+            {
+              "orden": 19,
+              "numero_albaran": "08M30281",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 24.84,
+              "importe_total": 25.95
+            },
+            {
+              "orden": 20,
+              "numero_albaran": "08M30607",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 11.06,
+              "importe_total": 11.56
+            },
+            {
+              "orden": 21,
+              "numero_albaran": "08M30608",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 14.52,
+              "importe_total": 18.33
+            },
+            {
+              "orden": 22,
+              "numero_albaran": "08M30656",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 5.26,
+              "importe_total": 5.86
+            },
+            {
+              "orden": 23,
+              "numero_albaran": "08M30732",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 0.84,
+              "importe_total": 0.93
+            },
+            {
+              "orden": 24,
+              "numero_albaran": "08M30737",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 43.51,
+              "importe_total": 45.47
+            },
+            {
+              "orden": 25,
+              "numero_albaran": "08M30915",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.52,
+              "importe_total": 2.63
+            },
+            {
+              "orden": 26,
+              "numero_albaran": "08M30923",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 18.08,
+              "importe_total": 20.52
+            },
+            {
+              "orden": 27,
+              "numero_albaran": "08M30925",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.21,
+              "importe_total": 2.46
+            },
+            {
+              "orden": 28,
+              "numero_albaran": "08M31070",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.92,
+              "importe_total": 3.05
+            },
+            {
+              "orden": 29,
+              "numero_albaran": "08V19089",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 12.11,
+              "importe_total": 13.49
+            },
+            {
+              "orden": 30,
+              "numero_albaran": "08C29779",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 24.32,
+              "importe_total": 25.41
+            },
+            {
+              "orden": 31,
+              "numero_albaran": "08C29973",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 66.76,
+              "importe_total": 74.14
+            },
+            {
+              "orden": 32,
+              "numero_albaran": "08C29976",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 24.1,
+              "importe_total": 25.56
+            },
+            {
+              "orden": 33,
+              "numero_albaran": "08C30154",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 7.24,
+              "importe_total": 7.57
+            },
+            {
+              "orden": 34,
+              "numero_albaran": "08C30420",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 61.91,
+              "importe_total": 68.97
+            },
+            {
+              "orden": 35,
+              "numero_albaran": "08M31633",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 23.64,
+              "importe_total": 24.71
+            },
+            {
+              "orden": 36,
+              "numero_albaran": "08M31835",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 7.51,
+              "importe_total": 8.37
+            },
+            {
+              "orden": 37,
+              "numero_albaran": "08M31838",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 5.62,
+              "importe_total": 5.87
+            },
+            {
+              "orden": 38,
+              "numero_albaran": "08C31296",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 96.18,
+              "importe_total": 104.86
+            },
+            {
+              "orden": 39,
+              "numero_albaran": "08C31300",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 51.7,
+              "importe_total": 55.99
+            },
+            {
+              "orden": 40,
+              "numero_albaran": "08C31488",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 10.59,
+              "importe_total": 11.06
+            },
+            {
+              "orden": 41,
+              "numero_albaran": "08C31637",
+              "fecha_albaran": "2026-07-05",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 11.02,
+              "importe_total": 11.52
+            },
+            {
+              "orden": 42,
+              "numero_albaran": "08C31644",
+              "fecha_albaran": "2026-07-05",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.5,
+              "importe_total": 2.61
+            },
+            {
+              "orden": 43,
+              "numero_albaran": "08C31645",
+              "fecha_albaran": "2026-07-05",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 17.2,
+              "importe_total": 20.17
+            },
+            {
+              "orden": 44,
+              "numero_albaran": "08C32022",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 25.77,
+              "importe_total": 28.71
+            },
+            {
+              "orden": 45,
+              "numero_albaran": "08C32341",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 60.52,
+              "importe_total": 67.53
+            },
+            {
+              "orden": 46,
+              "numero_albaran": "08C32347",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 47.76,
+              "importe_total": 53.09
+            },
+            {
+              "orden": 47,
+              "numero_albaran": "08M32279",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 87.58,
+              "importe_total": 91.52
+            },
+            {
+              "orden": 48,
+              "numero_albaran": "08M32580",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 24.6,
+              "importe_total": 27.4
+            },
+            {
+              "orden": 49,
+              "numero_albaran": "08M32581",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 6.74,
+              "importe_total": 7.5
+            },
+            {
+              "orden": 50,
+              "numero_albaran": "08M32942",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 7.29,
+              "importe_total": 9.2
+            },
+            {
+              "orden": 51,
+              "numero_albaran": "08M32943",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 26.07,
+              "importe_total": 27.77
+            },
+            {
+              "orden": 52,
+              "numero_albaran": "08M32961",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 23.0,
+              "importe_total": 24.04
+            },
+            {
+              "orden": 53,
+              "numero_albaran": "08C33509",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.66,
+              "importe_total": 2.78
+            },
+            {
+              "orden": 54,
+              "numero_albaran": "08C33617",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 7.43,
+              "importe_total": 9.38
+            },
+            {
+              "orden": 55,
+              "numero_albaran": "08C33654",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 51.59,
+              "importe_total": 53.91
+            },
+            {
+              "orden": 56,
+              "numero_albaran": "08C33659",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 44.33,
+              "importe_total": 47.16
+            },
+            {
+              "orden": 57,
+              "numero_albaran": "08C33691",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 22.44,
+              "importe_total": 23.45
+            },
+            {
+              "orden": 58,
+              "numero_albaran": "08C34238",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 17.55,
+              "importe_total": 22.15
+            },
+            {
+              "orden": 59,
+              "numero_albaran": "08M33956",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 12.09,
+              "importe_total": 12.63
+            },
+            {
+              "orden": 60,
+              "numero_albaran": "08M33957",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 22.57,
+              "importe_total": 24.45
+            },
+            {
+              "orden": 61,
+              "numero_albaran": "08C34792",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 4.21,
+              "importe_total": 4.69
+            },
+            {
+              "orden": 62,
+              "numero_albaran": "08C34913",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 11.26,
+              "importe_total": 11.77
+            },
+            {
+              "orden": 63,
+              "numero_albaran": "08C35031",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 8.88,
+              "importe_total": 11.2
+            },
+            {
+              "orden": 64,
+              "numero_albaran": "08C35059",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 40.67,
+              "importe_total": 43.92
+            },
+            {
+              "orden": 65,
+              "numero_albaran": "08C35072",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 86.5,
+              "importe_total": 92.2
+            },
+            {
+              "orden": 66,
+              "numero_albaran": "08C35280",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 12.46,
+              "importe_total": 13.02
+            },
+            {
+              "orden": 67,
+              "numero_albaran": "08C35571",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 6.7,
+              "importe_total": 7.0
+            },
+            {
+              "orden": 68,
+              "numero_albaran": "08M34531",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 17.74,
+              "importe_total": 21.18
+            },
+            {
+              "orden": 69,
+              "numero_albaran": "08M34538",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "COSTO LABORAT.",
+              "importe_base": 145.84,
+              "importe_total": 162.46
+            },
+            {
+              "orden": 70,
+              "numero_albaran": "08M34832",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 14.5,
+              "importe_total": 17.26
+            },
+            {
+              "orden": 71,
+              "numero_albaran": "08M34836",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 7.68,
+              "importe_total": 8.03
+            },
+            {
+              "orden": 72,
+              "numero_albaran": "08C36328",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 52.4,
+              "importe_total": 56.19
+            },
+            {
+              "orden": 73,
+              "numero_albaran": "08C36329",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 85.75,
+              "importe_total": 89.8
+            },
+            {
+              "orden": 74,
+              "numero_albaran": "08C36401",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 28.32,
+              "importe_total": 29.59
+            },
+            {
+              "orden": 75,
+              "numero_albaran": "08C36874",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 4.15,
+              "importe_total": 4.34
+            },
+            {
+              "orden": 76,
+              "numero_albaran": "08M35556",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 39.29,
+              "importe_total": 43.42
+            },
+            {
+              "orden": 77,
+              "numero_albaran": "08M35757",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 5.0,
+              "importe_total": 5.23
+            },
+            {
+              "orden": 78,
+              "numero_albaran": "08M35854",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 4.99,
+              "importe_total": 6.02
+            },
+            {
+              "orden": 79,
+              "numero_albaran": "08M35862",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 5.52,
+              "importe_total": 5.77
+            },
+            {
+              "orden": 80,
+              "numero_albaran": "08M35882",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 1.07,
+              "importe_total": 1.12
+            },
+            {
+              "orden": 81,
+              "numero_albaran": "08M35911",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.72,
+              "importe_total": 2.84
+            },
+            {
+              "orden": 82,
+              "numero_albaran": "08M35912",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.21,
+              "importe_total": 2.31
+            },
+            {
+              "orden": 83,
+              "numero_albaran": "08C37481",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 51.91,
+              "importe_total": 54.25
+            },
+            {
+              "orden": 84,
+              "numero_albaran": "08C37577",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 15.97,
+              "importe_total": 16.69
+            },
+            {
+              "orden": 85,
+              "numero_albaran": "08C37652",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 43.27,
+              "importe_total": 45.77
+            },
+            {
+              "orden": 86,
+              "numero_albaran": "08C37654",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 41.32,
+              "importe_total": 43.18
+            },
+            {
+              "orden": 87,
+              "numero_albaran": "08C37761",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 1.12,
+              "importe_total": 1.17
+            },
+            {
+              "orden": 88,
+              "numero_albaran": "08M36595",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 1.89,
+              "importe_total": 1.98
+            },
+            {
+              "orden": 89,
+              "numero_albaran": "08M36758",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 32.91,
+              "importe_total": 35.16
+            },
+            {
+              "orden": 90,
+              "numero_albaran": "08M36759",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 31.7,
+              "importe_total": 37.43
+            },
+            {
+              "orden": 91,
+              "numero_albaran": "08M36835",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 2.05,
+              "importe_total": 2.14
+            },
+            {
+              "orden": 92,
+              "numero_albaran": "08V19539",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "PLATAFORMA 360",
+              "importe_base": 6.81,
+              "importe_total": 7.59
+            }
+          ],
+          "ajustes": []
+        },
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": true,
+          "pagina_inicio": 4,
+          "pagina_fin": 7,
+          "proveedor_nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "proveedor_cif": "A50004324",
+          "numero_factura": "08008427",
+          "fecha_factura": "2026-07-10",
+          "base_imponible_total": 10531.42,
+          "iva_total": 573.16,
+          "recargo_equivalencia_total": 80.52,
+          "importe_total": 11185.1,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-10-06",
+              "importe": 11185.1
+            }
+          ],
+          "impuestos": [],
+          "albaranes": [
+            {
+              "orden": 1,
+              "numero_albaran": "08C26499",
+              "fecha_albaran": "2026-06-30",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.62,
+              "importe_total": 1.69
+            },
+            {
+              "orden": 2,
+              "numero_albaran": "08C38230",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "ABONO",
+              "descripcion": "ABONOS AGRUPADOS",
+              "importe_base": -8.29,
+              "importe_total": -8.66
+            },
+            {
+              "orden": 3,
+              "numero_albaran": "08C26500",
+              "fecha_albaran": "2026-06-30",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.26,
+              "importe_total": 1.32
+            },
+            {
+              "orden": 4,
+              "numero_albaran": "08C38231",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "ABONO",
+              "descripcion": "ABONOS AGRUPADOS",
+              "importe_base": -34.54,
+              "importe_total": -36.09
+            },
+            {
+              "orden": 5,
+              "numero_albaran": "08C27035",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 116.87,
+              "importe_total": 127.77
+            },
+            {
+              "orden": 6,
+              "numero_albaran": "08C27265",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 733.36,
+              "importe_total": 775.24
+            },
+            {
+              "orden": 7,
+              "numero_albaran": "08C27268",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 37.76,
+              "importe_total": 39.46
+            },
+            {
+              "orden": 8,
+              "numero_albaran": "08C27311",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 4.13,
+              "importe_total": 4.32
+            },
+            {
+              "orden": 9,
+              "numero_albaran": "08C27437",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 3.36,
+              "importe_total": 3.51
+            },
+            {
+              "orden": 10,
+              "numero_albaran": "08C27700",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 103.88,
+              "importe_total": 115.72
+            },
+            {
+              "orden": 11,
+              "numero_albaran": "08C27725",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 33.87,
+              "importe_total": 37.73
+            },
+            {
+              "orden": 12,
+              "numero_albaran": "08C27896",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 15.03,
+              "importe_total": 15.71
+            },
+            {
+              "orden": 13,
+              "numero_albaran": "08C27900",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 8.48,
+              "importe_total": 10.7
+            },
+            {
+              "orden": 14,
+              "numero_albaran": "08M29400",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 39.71,
+              "importe_total": 41.5
+            },
+            {
+              "orden": 15,
+              "numero_albaran": "08M29624",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 52.29,
+              "importe_total": 58.25
+            },
+            {
+              "orden": 16,
+              "numero_albaran": "08M29915",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 61.99,
+              "importe_total": 64.78
+            },
+            {
+              "orden": 17,
+              "numero_albaran": "08M29918",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 7.59,
+              "importe_total": 9.57
+            },
+            {
+              "orden": 18,
+              "numero_albaran": "08M29976",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 8.7,
+              "importe_total": 9.09
+            },
+            {
+              "orden": 19,
+              "numero_albaran": "08M30003",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 4.7,
+              "importe_total": 4.91
+            },
+            {
+              "orden": 20,
+              "numero_albaran": "08M30063",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 14.27,
+              "importe_total": 14.91
+            },
+            {
+              "orden": 21,
+              "numero_albaran": "08C28370",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 343.97,
+              "importe_total": 362.8
+            },
+            {
+              "orden": 22,
+              "numero_albaran": "08C28452",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 4.42,
+              "importe_total": 4.62
+            },
+            {
+              "orden": 23,
+              "numero_albaran": "08C28650",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 147.38,
+              "importe_total": 154.02
+            },
+            {
+              "orden": 24,
+              "numero_albaran": "08C28658",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 7.65,
+              "importe_total": 9.44
+            },
+            {
+              "orden": 25,
+              "numero_albaran": "08C28814",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 4.25,
+              "importe_total": 4.44
+            },
+            {
+              "orden": 26,
+              "numero_albaran": "08C29133",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 24.73,
+              "importe_total": 25.84
+            },
+            {
+              "orden": 27,
+              "numero_albaran": "08C29302",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 27.89,
+              "importe_total": 29.15
+            },
+            {
+              "orden": 28,
+              "numero_albaran": "08M30406",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 3.03,
+              "importe_total": 3.17
+            },
+            {
+              "orden": 29,
+              "numero_albaran": "08M30761",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 18.55,
+              "importe_total": 19.38
+            },
+            {
+              "orden": 30,
+              "numero_albaran": "08M30914",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 161.14,
+              "importe_total": 168.4
+            },
+            {
+              "orden": 31,
+              "numero_albaran": "08M30924",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 2.12,
+              "importe_total": 2.21
+            },
+            {
+              "orden": 32,
+              "numero_albaran": "08C29766",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 9.25,
+              "importe_total": 9.67
+            },
+            {
+              "orden": 33,
+              "numero_albaran": "08C29780",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 213.22,
+              "importe_total": 223.46
+            },
+            {
+              "orden": 34,
+              "numero_albaran": "08C29977",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 256.39,
+              "importe_total": 268.17
+            },
+            {
+              "orden": 35,
+              "numero_albaran": "08C29988",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 11.73,
+              "importe_total": 13.06
+            },
+            {
+              "orden": 36,
+              "numero_albaran": "08C29989",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.26,
+              "importe_total": 1.32
+            },
+            {
+              "orden": 37,
+              "numero_albaran": "08C30585",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 5.75,
+              "importe_total": 6.01
+            },
+            {
+              "orden": 38,
+              "numero_albaran": "08M31275",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 55.54,
+              "importe_total": 61.87
+            },
+            {
+              "orden": 39,
+              "numero_albaran": "08M31303",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 9.57,
+              "importe_total": 12.08
+            },
+            {
+              "orden": 40,
+              "numero_albaran": "08M31366",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.4,
+              "importe_total": 1.56
+            },
+            {
+              "orden": 41,
+              "numero_albaran": "08M31836",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 67.53,
+              "importe_total": 70.78
+            },
+            {
+              "orden": 42,
+              "numero_albaran": "08M31892",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 18.39,
+              "importe_total": 19.22
+            },
+            {
+              "orden": 43,
+              "numero_albaran": "08M31914",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 31.16,
+              "importe_total": 32.57
+            },
+            {
+              "orden": 44,
+              "numero_albaran": "08C30750",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 13.96,
+              "importe_total": 15.56
+            },
+            {
+              "orden": 45,
+              "numero_albaran": "08C30762",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 9.43,
+              "importe_total": 10.5
+            },
+            {
+              "orden": 46,
+              "numero_albaran": "08C30798",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 12.02,
+              "importe_total": 15.17
+            },
+            {
+              "orden": 47,
+              "numero_albaran": "08C30821",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 11.46,
+              "importe_total": 11.98
+            },
+            {
+              "orden": 48,
+              "numero_albaran": "08C30958",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 9.64,
+              "importe_total": 10.73
+            },
+            {
+              "orden": 49,
+              "numero_albaran": "08C31034",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.62,
+              "importe_total": 1.69
+            },
+            {
+              "orden": 50,
+              "numero_albaran": "08C31135",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.78,
+              "importe_total": 1.86
+            },
+            {
+              "orden": 51,
+              "numero_albaran": "08C31297",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 2.16,
+              "importe_total": 2.26
+            },
+            {
+              "orden": 52,
+              "numero_albaran": "08C31301",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 301.99,
+              "importe_total": 318.74
+            },
+            {
+              "orden": 53,
+              "numero_albaran": "08C31302",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.64,
+              "importe_total": 1.72
+            },
+            {
+              "orden": 54,
+              "numero_albaran": "08C31489",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 197.13,
+              "importe_total": 206.01
+            },
+            {
+              "orden": 55,
+              "numero_albaran": "08M32051",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 85.88,
+              "importe_total": 89.75
+            },
+            {
+              "orden": 56,
+              "numero_albaran": "08V19185",
+              "fecha_albaran": "2026-07-04",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 6.99,
+              "importe_total": 8.82
+            },
+            {
+              "orden": 57,
+              "numero_albaran": "08C31638",
+              "fecha_albaran": "2026-07-05",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 57.47,
+              "importe_total": 60.06
+            },
+            {
+              "orden": 58,
+              "numero_albaran": "08C32023",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 168.48,
+              "importe_total": 176.06
+            },
+            {
+              "orden": 59,
+              "numero_albaran": "08C32131",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 228.27,
+              "importe_total": 238.54
+            },
+            {
+              "orden": 60,
+              "numero_albaran": "08C32157",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 10.99,
+              "importe_total": 11.48
+            },
+            {
+              "orden": 61,
+              "numero_albaran": "08C32269",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 32.78,
+              "importe_total": 34.25
+            },
+            {
+              "orden": 62,
+              "numero_albaran": "08C32270",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 16.39,
+              "importe_total": 17.13
+            },
+            {
+              "orden": 63,
+              "numero_albaran": "08C32342",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 6.14,
+              "importe_total": 6.42
+            },
+            {
+              "orden": 64,
+              "numero_albaran": "08C32348",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 711.47,
+              "importe_total": 743.49
+            },
+            {
+              "orden": 65,
+              "numero_albaran": "08C32355",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 13.4,
+              "importe_total": 15.21
+            },
+            {
+              "orden": 66,
+              "numero_albaran": "08C32356",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.35,
+              "importe_total": 1.41
+            },
+            {
+              "orden": 67,
+              "numero_albaran": "08C32802",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 151.51,
+              "importe_total": 168.78
+            },
+            {
+              "orden": 68,
+              "numero_albaran": "08C32805",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 24.74,
+              "importe_total": 27.56
+            },
+            {
+              "orden": 69,
+              "numero_albaran": "08C32806",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 65.54,
+              "importe_total": 68.49
+            },
+            {
+              "orden": 70,
+              "numero_albaran": "08C32824",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 34.5,
+              "importe_total": 38.43
+            },
+            {
+              "orden": 71,
+              "numero_albaran": "08C32854",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 5.33,
+              "importe_total": 5.57
+            },
+            {
+              "orden": 72,
+              "numero_albaran": "08C32877",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 4.85,
+              "importe_total": 5.06
+            },
+            {
+              "orden": 73,
+              "numero_albaran": "08C32878",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 9.7,
+              "importe_total": 10.14
+            },
+            {
+              "orden": 74,
+              "numero_albaran": "08C33027",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 6.45,
+              "importe_total": 6.74
+            },
+            {
+              "orden": 75,
+              "numero_albaran": "08M32213",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 42.94,
+              "importe_total": 44.87
+            },
+            {
+              "orden": 76,
+              "numero_albaran": "08M32226",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 18.82,
+              "importe_total": 19.66
+            },
+            {
+              "orden": 77,
+              "numero_albaran": "08M32414",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 35.98,
+              "importe_total": 37.6
+            },
+            {
+              "orden": 78,
+              "numero_albaran": "08M32604",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 99.61,
+              "importe_total": 104.09
+            },
+            {
+              "orden": 79,
+              "numero_albaran": "08M32607",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 55.54,
+              "importe_total": 61.87
+            },
+            {
+              "orden": 80,
+              "numero_albaran": "08M32612",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 0.85,
+              "importe_total": 0.88
+            },
+            {
+              "orden": 81,
+              "numero_albaran": "08M32962",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 185.95,
+              "importe_total": 196.38
+            },
+            {
+              "orden": 82,
+              "numero_albaran": "08M32963",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 7.17,
+              "importe_total": 9.05
+            },
+            {
+              "orden": 83,
+              "numero_albaran": "08M32977",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 34.78,
+              "importe_total": 36.34
+            },
+            {
+              "orden": 84,
+              "numero_albaran": "08V19262",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 6.99,
+              "importe_total": 8.82
+            },
+            {
+              "orden": 85,
+              "numero_albaran": "08C33364",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 92.94,
+              "importe_total": 103.53
+            },
+            {
+              "orden": 86,
+              "numero_albaran": "08C33510",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 34.98,
+              "importe_total": 38.62
+            },
+            {
+              "orden": 87,
+              "numero_albaran": "08C33655",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 10.84,
+              "importe_total": 11.32
+            },
+            {
+              "orden": 88,
+              "numero_albaran": "08C33660",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 504.67,
+              "importe_total": 533.1
+            },
+            {
+              "orden": 89,
+              "numero_albaran": "08C33667",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 18.79,
+              "importe_total": 21.92
+            },
+            {
+              "orden": 90,
+              "numero_albaran": "08C33697",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 161.55,
+              "importe_total": 168.82
+            },
+            {
+              "orden": 91,
+              "numero_albaran": "08C34216",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 2.43,
+              "importe_total": 2.54
+            },
+            {
+              "orden": 92,
+              "numero_albaran": "08C34434",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 133.85,
+              "importe_total": 139.87
+            },
+            {
+              "orden": 93,
+              "numero_albaran": "08C34451",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 6.41,
+              "importe_total": 6.7
+            },
+            {
+              "orden": 94,
+              "numero_albaran": "08M33392",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 128.22,
+              "importe_total": 142.77
+            },
+            {
+              "orden": 95,
+              "numero_albaran": "08M33628",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 169.67,
+              "importe_total": 177.31
+            },
+            {
+              "orden": 96,
+              "numero_albaran": "08M33646",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 63.68,
+              "importe_total": 70.94
+            },
+            {
+              "orden": 97,
+              "numero_albaran": "08M33656",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 25.82,
+              "importe_total": 28.76
+            },
+            {
+              "orden": 98,
+              "numero_albaran": "08M33699",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 102.17,
+              "importe_total": 106.77
+            },
+            {
+              "orden": 99,
+              "numero_albaran": "08M33871",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 10.76,
+              "importe_total": 13.58
+            },
+            {
+              "orden": 100,
+              "numero_albaran": "08M33960",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 349.7,
+              "importe_total": 366.12
+            },
+            {
+              "orden": 101,
+              "numero_albaran": "08M33962",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 11.82,
+              "importe_total": 13.17
+            },
+            {
+              "orden": 102,
+              "numero_albaran": "08M34050",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.83,
+              "importe_total": 1.91
+            },
+            {
+              "orden": 103,
+              "numero_albaran": "08C34793",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 297.55,
+              "importe_total": 314.75
+            },
+            {
+              "orden": 104,
+              "numero_albaran": "08C34914",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 83.96,
+              "importe_total": 90.39
+            },
+            {
+              "orden": 105,
+              "numero_albaran": "08C34941",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 7.27,
+              "importe_total": 7.6
+            },
+            {
+              "orden": 106,
+              "numero_albaran": "08C34961",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 3.62,
+              "importe_total": 4.03
+            },
+            {
+              "orden": 107,
+              "numero_albaran": "08C34993",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 87.78,
+              "importe_total": 97.79
+            },
+            {
+              "orden": 108,
+              "numero_albaran": "08C35060",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 341.09,
+              "importe_total": 356.44
+            },
+            {
+              "orden": 109,
+              "numero_albaran": "08C35062",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 5.09,
+              "importe_total": 6.21
+            },
+            {
+              "orden": 110,
+              "numero_albaran": "08C35063",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.26,
+              "importe_total": 1.32
+            },
+            {
+              "orden": 111,
+              "numero_albaran": "08C35281",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 4.67,
+              "importe_total": 4.88
+            },
+            {
+              "orden": 112,
+              "numero_albaran": "08C35567",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 19.91,
+              "importe_total": 22.18
+            },
+            {
+              "orden": 113,
+              "numero_albaran": "08C35706",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 11.19,
+              "importe_total": 11.7
+            },
+            {
+              "orden": 114,
+              "numero_albaran": "08M34186",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 21.21,
+              "importe_total": 23.63
+            },
+            {
+              "orden": 115,
+              "numero_albaran": "08M34243",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 69.82,
+              "importe_total": 72.96
+            },
+            {
+              "orden": 116,
+              "numero_albaran": "08M34283",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 41.68,
+              "importe_total": 43.56
+            },
+            {
+              "orden": 117,
+              "numero_albaran": "08M34323",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 66.07,
+              "importe_total": 73.6
+            },
+            {
+              "orden": 118,
+              "numero_albaran": "08M34347",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 9.83,
+              "importe_total": 10.83
+            },
+            {
+              "orden": 119,
+              "numero_albaran": "08M34834",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 1.62,
+              "importe_total": 1.69
+            },
+            {
+              "orden": 120,
+              "numero_albaran": "08M34837",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 543.92,
+              "importe_total": 569.49
+            },
+            {
+              "orden": 121,
+              "numero_albaran": "08M34838",
+              "fecha_albaran": "2026-07-08",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 7.19,
+              "importe_total": 9.07
+            },
+            {
+              "orden": 122,
+              "numero_albaran": "08C36031",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 25.47,
+              "importe_total": 28.38
+            },
+            {
+              "orden": 123,
+              "numero_albaran": "08C36225",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 7.34,
+              "importe_total": 7.67
+            },
+            {
+              "orden": 124,
+              "numero_albaran": "08C36245",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 14.29,
+              "importe_total": 15.92
+            },
+            {
+              "orden": 125,
+              "numero_albaran": "08C36330",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 159.01,
+              "importe_total": 166.17
+            },
+            {
+              "orden": 126,
+              "numero_albaran": "08C36335",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 14.21,
+              "importe_total": 14.85
+            },
+            {
+              "orden": 127,
+              "numero_albaran": "08C36624",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 17.51,
+              "importe_total": 22.1
+            },
+            {
+              "orden": 128,
+              "numero_albaran": "08C36870",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 31.25,
+              "importe_total": 32.66
+            },
+            {
+              "orden": 129,
+              "numero_albaran": "08C36940",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 2.04,
+              "importe_total": 2.13
+            },
+            {
+              "orden": 130,
+              "numero_albaran": "08C37045",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 10.08,
+              "importe_total": 10.53
+            },
+            {
+              "orden": 131,
+              "numero_albaran": "08C37049",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 8.48,
+              "importe_total": 10.7
+            },
+            {
+              "orden": 132,
+              "numero_albaran": "08C37065",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 2.74,
+              "importe_total": 2.86
+            },
+            {
+              "orden": 133,
+              "numero_albaran": "08M35430",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 105.06,
+              "importe_total": 132.58
+            },
+            {
+              "orden": 134,
+              "numero_albaran": "08M35555",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 38.98,
+              "importe_total": 43.43
+            },
+            {
+              "orden": 135,
+              "numero_albaran": "08M35630",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 84.09,
+              "importe_total": 87.87
+            },
+            {
+              "orden": 136,
+              "numero_albaran": "08M35691",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 15.4,
+              "importe_total": 16.1
+            },
+            {
+              "orden": 137,
+              "numero_albaran": "08M35692",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 15.4,
+              "importe_total": 16.1
+            },
+            {
+              "orden": 138,
+              "numero_albaran": "08M35806",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 12.16,
+              "importe_total": 12.71
+            },
+            {
+              "orden": 139,
+              "numero_albaran": "08M35828",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 18.82,
+              "importe_total": 19.66
+            },
+            {
+              "orden": 140,
+              "numero_albaran": "08M35863",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 156.99,
+              "importe_total": 164.05
+            },
+            {
+              "orden": 141,
+              "numero_albaran": "08C37482",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 157.23,
+              "importe_total": 164.56
+            },
+            {
+              "orden": 142,
+              "numero_albaran": "08C37653",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 485.73,
+              "importe_total": 507.59
+            },
+            {
+              "orden": 143,
+              "numero_albaran": "08C37656",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NETOS PLUS",
+              "importe_base": 18.96,
+              "importe_total": 23.49
+            },
+            {
+              "orden": 144,
+              "numero_albaran": "08C37737",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 12.83,
+              "importe_total": 13.4
+            },
+            {
+              "orden": 145,
+              "numero_albaran": "08M36292",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 18.79,
+              "importe_total": 19.63
+            },
+            {
+              "orden": 146,
+              "numero_albaran": "08M36757",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 289.53,
+              "importe_total": 302.56
+            },
+            {
+              "orden": 147,
+              "numero_albaran": "08M36770",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "NORMAL ACUSTICO",
+              "importe_base": 2.12,
+              "importe_total": 2.21
+            }
+          ],
+          "ajustes": [
+            {
+              "orden": 1,
+              "tipo_ajuste": "GASTO",
+              "descripcion": "Servicio básico",
+              "importe": 31.46,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            }
+          ]
+        },
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": true,
+          "pagina_inicio": 8,
+          "pagina_fin": 9,
+          "proveedor_nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "proveedor_cif": "A50004324",
+          "numero_factura": "08008429",
+          "fecha_factura": "2026-07-10",
+          "base_imponible_total": 196.8,
+          "iva_total": 19.68,
+          "recargo_equivalencia_total": 2.76,
+          "importe_total": 219.24,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-10-10",
+              "importe": 219.24
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": 196.8,
+              "tipo_iva": 10.0,
+              "cuota_iva": 19.68,
+              "tipo_recargo_equivalencia": 1.4,
+              "cuota_recargo_equivalencia": 2.76
+            }
+          ],
+          "albaranes": [
+            {
+              "orden": 1,
+              "numero_albaran": "08M30618",
+              "fecha_albaran": "2026-07-02",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "COSTO LABORAT.",
+              "importe_base": 196.8,
+              "importe_total": 219.24
+            }
+          ],
+          "ajustes": []
+        },
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": true,
+          "pagina_inicio": 10,
+          "pagina_fin": 11,
+          "proveedor_nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "proveedor_cif": "A50004324",
+          "numero_factura": "08008430",
+          "fecha_factura": "2026-07-10",
+          "base_imponible_total": 144.67,
+          "iva_total": 15.59,
+          "recargo_equivalencia_total": 2.41,
+          "importe_total": 162.67,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-11-06",
+              "importe": 162.67
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": 134.47,
+              "tipo_iva": 10.0,
+              "cuota_iva": 13.45,
+              "tipo_recargo_equivalencia": 1.4,
+              "cuota_recargo_equivalencia": 1.88
+            },
+            {
+              "orden": 2,
+              "base_imponible": 10.2,
+              "tipo_iva": 21.0,
+              "cuota_iva": 2.14,
+              "tipo_recargo_equivalencia": 5.2,
+              "cuota_recargo_equivalencia": 0.53
+            }
+          ],
+          "albaranes": [
+            {
+              "orden": 1,
+              "numero_albaran": "08C26323",
+              "fecha_albaran": "2026-06-30",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "ECOCEUTICS",
+              "importe_base": 19.73,
+              "importe_total": 21.98
+            },
+            {
+              "orden": 2,
+              "numero_albaran": "08C27758",
+              "fecha_albaran": "2026-07-01",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "ECOCEUTICS",
+              "importe_base": 43.21,
+              "importe_total": 48.13
+            },
+            {
+              "orden": 3,
+              "numero_albaran": "08C29987",
+              "fecha_albaran": "2026-07-03",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "ECOCEUTICS",
+              "importe_base": 13.35,
+              "importe_total": 14.88
+            },
+            {
+              "orden": 4,
+              "numero_albaran": "08C31639",
+              "fecha_albaran": "2026-07-05",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "ECOCEUTICS",
+              "importe_base": 13.35,
+              "importe_total": 14.88
+            },
+            {
+              "orden": 5,
+              "numero_albaran": "08C32804",
+              "fecha_albaran": "2026-07-06",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "ECOCEUTICS",
+              "importe_base": 19.76,
+              "importe_total": 22.02
+            },
+            {
+              "orden": 6,
+              "numero_albaran": "08C33369",
+              "fecha_albaran": "2026-07-07",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "ECOCEUTICS",
+              "importe_base": 11.72,
+              "importe_total": 13.05
+            },
+            {
+              "orden": 7,
+              "numero_albaran": "08M35864",
+              "fecha_albaran": "2026-07-09",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "ECOCEUTICS",
+              "importe_base": 6.75,
+              "importe_total": 8.52
+            },
+            {
+              "orden": 8,
+              "numero_albaran": "08C37655",
+              "fecha_albaran": "2026-07-10",
+              "tipo_movimiento": "CARGO",
+              "descripcion": "ECOCEUTICS",
+              "importe_base": 16.8,
+              "importe_total": 19.23
+            }
+          ],
+          "ajustes": []
+        }
+      ]
+    },
+    {
+      "archivo": "FEDE VTO 5.8.26 PIO.pdf",
+      "tipo_contenido": "FACTURA_UNICA",
+      "numero_paginas": 2,
+      "necesita_lectura_visual": false,
+      "cantidad_documentos_esperados": 1,
+      "facturas": [
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": true,
+          "pagina_inicio": 1,
+          "pagina_fin": 2,
+          "proveedor_nombre": "FEDERACIÓ FARMACÈUTICA, S.COOP.C.L.",
+          "proveedor_cif": "F08173395",
+          "numero_factura": "VN2605-0005381",
+          "fecha_factura": "2026-07-20",
+          "base_imponible_total": 57.44,
+          "iva_total": 4.53,
+          "recargo_equivalencia_total": 0.62,
+          "importe_total": 62.59,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-08-05",
+              "importe": 62.59
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": 20.38,
+              "tipo_iva": 4.0,
+              "cuota_iva": 0.82,
+              "tipo_recargo_equivalencia": 0.5,
+              "cuota_recargo_equivalencia": 0.1
+            },
+            {
+              "orden": 2,
+              "base_imponible": 37.06,
+              "tipo_iva": 10.0,
+              "cuota_iva": 3.71,
+              "tipo_recargo_equivalencia": 1.4,
+              "cuota_recargo_equivalencia": 0.52
+            }
+          ],
+          "albaranes": [
+            {
+              "orden": 1,
+              "numero_albaran": "2620-2051956",
+              "fecha_albaran": "2026-07-13",
+              "tipo_movimiento": "CARGO",
+              "importe_base": null,
+              "importe_total": 40.98
+            },
+            {
+              "orden": 2,
+              "numero_albaran": "2620-2090700",
+              "fecha_albaran": "2026-07-16",
+              "tipo_movimiento": "CARGO",
+              "importe_base": null,
+              "importe_total": 19.29
+            },
+            {
+              "orden": 3,
+              "numero_albaran": "2620-2100818",
+              "fecha_albaran": "2026-07-17",
+              "tipo_movimiento": "CARGO",
+              "importe_base": null,
+              "importe_total": 3.35
+            },
+            {
+              "orden": 4,
+              "numero_albaran": "2620-2100853",
+              "fecha_albaran": "2026-07-17",
+              "tipo_movimiento": "CARGO",
+              "importe_base": null,
+              "importe_total": 4.78
+            },
+            {
+              "orden": 5,
+              "numero_albaran": "2620A-196245",
+              "fecha_albaran": "2026-07-17",
+              "tipo_movimiento": "ABONO",
+              "importe_base": null,
+              "importe_total": -14.04
+            }
+          ],
+          "ajustes": [
+            {
+              "orden": 1,
+              "tipo_ajuste": "BONIFICACION",
+              "descripcion": "Bonificación pago inmediato",
+              "importe": -0.08,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            },
+            {
+              "orden": 2,
+              "tipo_ajuste": "CONDICION_OPERATIVA",
+              "descripcion": "Condición operativa",
+              "importe": 3.16,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "archivo": "FARMACIA GUIMERA VTO 30.6.26 PIO.pdf",
+      "tipo_contenido": "FACTURA_UNICA",
+      "numero_paginas": 1,
+      "necesita_lectura_visual": true,
+      "cantidad_documentos_esperados": 1,
+      "facturas": [
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "MERCANCIA",
+          "requiere_conciliacion_albaranes": false,
+          "pagina_inicio": 1,
+          "pagina_fin": 1,
+          "proveedor_nombre": "FARMACIA GUIMERA C.B.",
+          "proveedor_cif": "E12943437",
+          "numero_factura": "509",
+          "fecha_factura": "2026-05-29",
+          "base_imponible_total": 228.58,
+          "iva_total": 12.95,
+          "recargo_equivalencia_total": 1.71,
+          "importe_total": 243.24,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-06-30",
+              "importe": 243.24,
+              "origen_fecha": "nombre del archivo; no visible en el cuerpo del PDF"
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": 165.22,
+              "tipo_iva": 4.0,
+              "cuota_iva": 6.61,
+              "tipo_recargo_equivalencia": 0.5,
+              "cuota_recargo_equivalencia": 0.83
+            },
+            {
+              "orden": 2,
+              "base_imponible": 63.36,
+              "tipo_iva": 10.0,
+              "cuota_iva": 6.34,
+              "tipo_recargo_equivalencia": 1.4,
+              "cuota_recargo_equivalencia": 0.89
+            }
+          ],
+          "albaranes": [],
+          "ajustes": [
+            {
+              "orden": 1,
+              "tipo_ajuste": "DESCUENTO",
+              "descripcion": "Descuento total",
+              "importe": -70.31,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            }
+          ],
+          "nota_revision": "Es una liquidación/resumen mensual de fórmulas o dispensaciones, no presenta números de albarán conciliables con Farmatic"
+        }
+      ]
+    },
+    {
+      "archivo": "GAS CASA ABRIL-MAIG 2026.pdf",
+      "tipo_contenido": "FACTURA_UNICA",
+      "numero_paginas": 2,
+      "necesita_lectura_visual": false,
+      "cantidad_documentos_esperados": 1,
+      "facturas": [
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "SUMINISTRO",
+          "requiere_conciliacion_albaranes": false,
+          "pagina_inicio": 1,
+          "pagina_fin": 2,
+          "proveedor_nombre": "ENDESA ENERGÍA, S.A.U.",
+          "proveedor_cif": "A81948077",
+          "numero_factura": "P26CON024967719",
+          "fecha_factura": "2026-06-09",
+          "base_imponible_total": 350.9,
+          "iva_total": 73.69,
+          "recargo_equivalencia_total": 0.0,
+          "importe_total": 424.59,
+          "fecha_cargo": "2026-06-16",
+          "periodo_facturacion_inicio": "2026-04-02",
+          "periodo_facturacion_fin": "2026-06-03",
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-06-16",
+              "importe": 424.59
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": 350.9,
+              "tipo_iva": 21.0,
+              "cuota_iva": 73.69,
+              "tipo_recargo_equivalencia": 0.0,
+              "cuota_recargo_equivalencia": 0.0
+            }
+          ],
+          "albaranes": [],
+          "ajustes": [
+            {
+              "orden": 1,
+              "tipo_ajuste": "DESCUENTO",
+              "descripcion": "Descuento promocional",
+              "importe": -32.03,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            },
+            {
+              "orden": 2,
+              "tipo_ajuste": "GASTO",
+              "descripcion": "Alquiler de equipos gas",
+              "importe": 1.18,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            },
+            {
+              "orden": 3,
+              "tipo_ajuste": "OTRO",
+              "descripcion": "Impuesto de hidrocarburos",
+              "importe": 4.49,
+              "incluido_en_base": true,
+              "incluido_en_total": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "archivo": "ECOCEUTICS MENSUALIDAD PIO.pdf",
+      "tipo_contenido": "FACTURA_UNICA",
+      "numero_paginas": 1,
+      "necesita_lectura_visual": false,
+      "cantidad_documentos_esperados": 1,
+      "facturas": [
+        {
+          "tipo_documento": "FACTURA",
+          "categoria": "CUOTA_SERVICIO",
+          "requiere_conciliacion_albaranes": false,
+          "pagina_inicio": 1,
+          "pagina_fin": 1,
+          "proveedor_nombre": "HYGIE31 ESPAÑA, S.L.U.",
+          "proveedor_cif": "B17733601",
+          "numero_factura": "FR00263029",
+          "fecha_factura": "2026-06-30",
+          "base_imponible_total": 339.0,
+          "iva_total": 71.19,
+          "recargo_equivalencia_total": 0.0,
+          "importe_total": 410.19,
+          "vencimientos": [
+            {
+              "orden": 1,
+              "fecha_vencimiento": "2026-07-01",
+              "importe": 410.19
+            }
+          ],
+          "impuestos": [
+            {
+              "orden": 1,
+              "base_imponible": 339.0,
+              "tipo_iva": 21.0,
+              "cuota_iva": 71.19,
+              "tipo_recargo_equivalencia": 0.0,
+              "cuota_recargo_equivalencia": 0.0
+            }
+          ],
+          "albaranes": [],
+          "ajustes": []
+        }
+      ]
+    }
+  ]
+}
