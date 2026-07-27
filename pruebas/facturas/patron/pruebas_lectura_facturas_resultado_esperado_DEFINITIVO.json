@@ -59,7 +59,13 @@
               "importe_total": -109.36
             }
           ],
-          "ajustes": []
+          "ajustes": [],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         }
       ]
     },
@@ -120,7 +126,13 @@
               "incluido_en_base": true,
               "incluido_en_total": true
             }
-          ]
+          ],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         }
       ]
     },
@@ -183,7 +195,13 @@
               "incluido_en_base": true,
               "incluido_en_total": true
             }
-          ]
+          ],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         }
       ]
     },
@@ -1046,7 +1064,13 @@
               "importe_total": 7.59
             }
           ],
-          "ajustes": []
+          "ajustes": [],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         },
         {
           "tipo_documento": "FACTURA",
@@ -2404,7 +2428,13 @@
               "incluido_en_base": true,
               "incluido_en_total": true
             }
-          ]
+          ],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         },
         {
           "tipo_documento": "FACTURA",
@@ -2448,7 +2478,13 @@
               "importe_total": 219.24
             }
           ],
-          "ajustes": []
+          "ajustes": [],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         },
         {
           "tipo_documento": "FACTURA",
@@ -2563,7 +2599,13 @@
               "importe_total": 19.23
             }
           ],
-          "ajustes": []
+          "ajustes": [],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         }
       ]
     },
@@ -2672,7 +2714,13 @@
               "incluido_en_base": true,
               "incluido_en_total": true
             }
-          ]
+          ],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         }
       ]
     },
@@ -2734,7 +2782,13 @@
               "incluido_en_total": true
             }
           ],
-          "nota_revision": "Es una liquidación/resumen mensual de fórmulas o dispensaciones, no presenta números de albarán conciliables con Farmatic"
+          "nota_revision": "Es una liquidación/resumen mensual de fórmulas o dispensaciones, no presenta números de albarán conciliables con Farmatic",
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         }
       ]
     },
@@ -2805,7 +2859,13 @@
               "incluido_en_base": true,
               "incluido_en_total": true
             }
-          ]
+          ],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         }
       ]
     },
@@ -2848,7 +2908,13 @@
             }
           ],
           "albaranes": [],
-          "ajustes": []
+          "ajustes": [],
+          "destinatario": {
+            "id_farmacia": "PIO",
+            "nombre": "FARMACIA PIO PUIG",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF"
+          }
         }
       ]
     }
