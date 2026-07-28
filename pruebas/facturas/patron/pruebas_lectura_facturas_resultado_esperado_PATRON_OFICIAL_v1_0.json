@@ -32,14 +32,8 @@
           "iva_total": -18.2,
           "recargo_equivalencia_total": -4.51,
           "importe_total": -109.36,
-          "vencimientos": [
-            {
-              "orden": 1,
-              "fecha_vencimiento": "2026-08-05",
-              "importe": -109.36,
-              "origen_fecha": "nombre del archivo; no visible en el cuerpo del PDF"
-            }
-          ],
+          "vencimientos": [],
+          
           "impuestos": [
             {
               "orden": 1,
