@@ -7,7 +7,8 @@
     "importes": "Número decimal con punto y dos decimales",
     "signo_abonos": "Los abonos se guardan con importes contables negativos aunque el PDF los muestre positivos",
     "datos_ausentes": "null; nunca inventar",
-    "paginas": "Numeración empezando en 1"
+    "paginas": "Numeración empezando en 1",
+    "vencimientos": "Solo se incluyen vencimientos visibles y verificables en el documento; los datos inferidos por el nombre del archivo o por hábitos históricos no forman parte del patrón."
   },
   "documentos": [
     {
@@ -2745,14 +2746,7 @@
           "iva_total": 12.95,
           "recargo_equivalencia_total": 1.71,
           "importe_total": 243.24,
-          "vencimientos": [
-            {
-              "orden": 1,
-              "fecha_vencimiento": "2026-06-30",
-              "importe": 243.24,
-              "origen_fecha": "nombre del archivo; no visible en el cuerpo del PDF"
-            }
-          ],
+          "vencimientos": [],
           "impuestos": [
             {
               "orden": 1,
@@ -2782,7 +2776,7 @@
               "incluido_en_total": true
             }
           ],
-          "nota_revision": "Es una liquidación/resumen mensual de fórmulas o dispensaciones, no presenta números de albarán conciliables con Farmatic",
+          "nota_revision": "Es una liquidación/resumen mensual de fórmulas o dispensaciones, no presenta números de albarán conciliables con Farmatic. El vencimiento no es visible ni verificable en el cuerpo del documento. La fecha incluida anteriormente procedía del nombre del archivo y se elimina del patrón oficial. El hábito histórico del proveedor de facturar al final de mes podrá utilizarse como regla auxiliar del sistema, pero nunca como dato extraído ni como resultado esperado de la IA.",
           "destinatario": {
             "id_farmacia": "PIO",
             "nombre": "FARMACIA PIO PUIG",
