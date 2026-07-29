@@ -1,0 +1,60 @@
+{
+  "archivo": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+  "motor": {
+    "proveedor": "SIMULADO",
+    "nombre_modelo": "motor-pruebas",
+    "version_modelo": "1.0"
+  },
+  "procesado_correctamente": true,
+  "fecha_procesamiento": "2026-07-29T17:22:18.022772+00:00",
+  "metricas": {
+    "tiempo_segundos": 0.10570029995869845,
+    "coste_estimado_eur": 0.0,
+    "paginas_procesadas": 1,
+    "confianza_global": 0.99
+  },
+  "documento_normalizado": {
+    "archivo": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+    "tipo_contenido": "PDF_DIGITAL",
+    "numero_paginas": 1,
+    "necesita_lectura_visual": false,
+    "cantidad_documentos_esperados": 1,
+    "facturas": [
+      {
+        "tipo_documento": "FACTURA",
+        "categoria": "PRUEBA",
+        "requiere_conciliacion_albaranes": false,
+        "pagina_inicio": 1,
+        "pagina_fin": 1,
+        "proveedor_nombre": "PROVEEDOR SIMULADO",
+        "proveedor_cif": "B12345678",
+        "numero_factura": "SIM-0001",
+        "fecha_factura": null,
+        "base_imponible_total": 100.0,
+        "iva_total": 21.0,
+        "recargo_equivalencia_total": 0.0,
+        "importe_total": 121.0,
+        "vencimientos": [],
+        "impuestos": [],
+        "albaranes": [],
+        "ajustes": [],
+        "destinatario": {
+          "id_farmacia": "PIO",
+          "nombre": "FARMACIA PIO PUIG",
+          "cif": "40901058C",
+          "metodo_identificacion": "CIF"
+        },
+        "fecha_cargo": null,
+        "periodo_facturacion_inicio": null,
+        "periodo_facturacion_fin": null,
+        "nota_revision": null
+      }
+    ]
+  },
+  "respuesta_original": {
+    "motor": "simulado",
+    "archivo": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+    "resultado": "correcto"
+  },
+  "errores": []
+}
