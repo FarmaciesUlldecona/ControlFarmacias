@@ -1,0 +1,1288 @@
+﻿INSPECCIËN DE RESPUESTA ORIGINAL DE AZURE
+----------------------------------------
+Archivo: ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO_azure_original.json
+
+CLAVES PRINCIPALES
+------------------
+apiVersion: texto: '2024-11-30'
+modelId: texto: 'prebuilt-invoice'
+stringIndexType: texto: 'textElements'
+content: texto: 'FACTURA DUPLICADO cencora D/D±a PUIG SALOMON PIUS DOCUMENT Alliance Healthcare UNICOM FEFAC DIREC...'
+pages: lista con 2 elementos
+tables: lista con 7 elementos
+styles: lista con 0 elementos
+documents: lista con 1 elementos
+contentFormat: texto: 'text'
+
+DOCUMENTOS ESTRUCTURADOS
+------------------------
+Cantidad: 1
+
+DOCUMENTO 1
+--------------------
+doc_type: invoice
+confidence: 1
+bounding_regions: lista con 2 elementos
+Campos detectados: 12
+
+  CustomerAddress
+    type: address
+    content: 'CR SANT LLUC 34\n43550 ULLDECONA\nRUTA 16'
+    confidence: 0.722
+
+  CustomerAddressRecipient
+    type: string
+    content: 'PUIG SALOMON PIUS'
+    confidence: 0.903
+    valueString: texto: 'PUIG SALOMON PIUS'
+
+  CustomerName
+    type: string
+    content: 'PUIG SALOMON PIUS'
+    confidence: 0.903
+    valueString: texto: 'PUIG SALOMON PIUS'
+
+  CustomerTaxId
+    type: string
+    content: '40901058C'
+    confidence: 0.664
+    valueString: texto: '40901058C'
+
+  DueDate
+    type: date
+    content: '10-09-2026'
+    confidence: 0.937
+    valueDate: texto: '2026-09-10'
+
+  InvoiceDate
+    type: date
+    content: '10-07-2026'
+    confidence: 0.938
+    valueDate: texto: '2026-07-10'
+
+  InvoiceId
+    type: string
+    content: '08008428'
+    confidence: 0.938
+    valueString: texto: '08008428'
+
+  InvoiceTotal
+    type: currency
+    content: '2.972,70'
+    confidence: 0.938
+    valueCurrency: objeto con 2 claves
+
+  Items
+    type: array
+    content: None
+    confidence: None
+    valueArray: lista con 53 elementos
+
+  TaxDetails
+    type: array
+    content: None
+    confidence: None
+    valueArray: lista con 1 elementos
+
+  TotalTax
+    type: currency
+    content: '189,45'
+    confidence: 0.938
+    valueCurrency: objeto con 2 claves
+
+  VendorName
+    type: string
+    content: 'cencora\nAlliance Healthcare'
+    confidence: 0.652
+    valueString: texto: 'cencora Alliance Healthcare'
+
+TABLAS
+------
+Cantidad: 7
+
+Tabla 1
+Filas: 3
+Columnas: 2
+Celdas: 6
+  Fila 0, columna 0, fila_span None, columna_span None, kind None: 'D/D±a'
+  Fila 0, columna 1, fila_span None, columna_span None, kind None: 'PUIG SALOMON PIUS'
+  Fila 1, columna 0, fila_span None, columna_span None, kind None: 'DIRECCIËN'
+  Fila 1, columna 1, fila_span None, columna_span None, kind None: 'CR SANT LLUC 34\n43550 ULLDECONA\nRUTA 16'
+  Fila 2, columna 0, fila_span None, columna_span None, kind None: 'NIF'
+  Fila 2, columna 1, fila_span None, columna_span None, kind None: '40901058C\n006600'
+
+Tabla 2
+Filas: 2
+Columnas: 3
+Celdas: 6
+  Fila 0, columna 0, fila_span None, columna_span None, kind columnHeader: 'N┌MERO FACTURA'
+  Fila 0, columna 1, fila_span None, columna_span None, kind columnHeader: 'FECHA FACTURA'
+  Fila 0, columna 2, fila_span None, columna_span None, kind columnHeader: 'FECHA VENCIMIENTO'
+  Fila 1, columna 0, fila_span None, columna_span None, kind None: '08008428'
+  Fila 1, columna 1, fila_span None, columna_span None, kind None: '10-07-2026'
+  Fila 1, columna 2, fila_span None, columna_span None, kind None: '10-09-2026'
+
+Tabla 3
+Filas: 22
+Columnas: 12
+Celdas: 191
+  Fila 0, columna 0, fila_span None, columna_span None, kind columnHeader: 'COMPRAS'
+  Fila 0, columna 1, fila_span None, columna_span 3, kind columnHeader: 'BASE IMPONIBLE'
+  Fila 0, columna 4, fila_span None, columna_span 4, kind columnHeader: 'IVA'
+  Fila 0, columna 8, fila_span None, columna_span 3, kind columnHeader: 'R.E.'
+  Fila 0, columna 11, fila_span None, columna_span None, kind columnHeader: 'TOTALES'
+  Fila 1, columna 0, fila_span None, columna_span None, kind None: 'CONCEPTO'
+  Fila 1, columna 1, fila_span None, columna_span None, kind None: '4'
+  Fila 1, columna 2, fila_span None, columna_span None, kind None: '10'
+  Fila 1, columna 3, fila_span None, columna_span None, kind None: '21'
+  Fila 1, columna 4, fila_span None, columna_span None, kind None: '4'
+  Fila 1, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 1, columna 6, fila_span None, columna_span None, kind None: '10'
+  Fila 1, columna 7, fila_span None, columna_span None, kind None: '21'
+  Fila 1, columna 8, fila_span None, columna_span None, kind None: '0,50'
+  Fila 1, columna 9, fila_span None, columna_span None, kind None: '1,40'
+  Fila 1, columna 10, fila_span None, columna_span None, kind None: '5,20'
+  Fila 1, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 0, fila_span None, columna_span None, kind None: 'ESPECIALIDAD'
+  Fila 2, columna 1, fila_span None, columna_span None, kind None: '687,38'
+  Fila 2, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 4, fila_span None, columna_span None, kind None: '27,49'
+  Fila 2, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 8, fila_span None, columna_span None, kind None: '3,44'
+  Fila 2, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 11, fila_span None, columna_span None, kind None: '718,31'
+  Fila 3, columna 0, fila_span None, columna_span None, kind None: 'GENERICOS'
+  Fila 3, columna 1, fila_span None, columna_span None, kind None: '1.237,99'
+  Fila 3, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 4, fila_span None, columna_span None, kind None: '49,52'
+  Fila 3, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 8, fila_span None, columna_span None, kind None: '6,19'
+  Fila 3, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 11, fila_span None, columna_span None, kind None: '1.293,70'
+  Fila 4, columna 0, fila_span None, columna_span None, kind None: 'NO ESPECIALIDAD'
+  Fila 4, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 2, fila_span None, columna_span None, kind None: '555,42'
+  Fila 4, columna 3, fila_span None, columna_span None, kind None: '270,96'
+  Fila 4, columna 4, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 6, fila_span None, columna_span None, kind None: '55,54'
+  Fila 4, columna 7, fila_span None, columna_span None, kind None: '56,90'
+  Fila 4, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 9, fila_span None, columna_span None, kind None: '7,78'
+  Fila 4, columna 10, fila_span None, columna_span None, kind None: '14,09'
+  Fila 4, columna 11, fila_span None, columna_span None, kind None: '960,69'
+  Fila 5, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 5, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 5, columna 2, fila_span 7, columna_span None, kind None: ''
+  Fila 5, columna 3, fila_span 7, columna_span None, kind None: ''
+  Fila 5, columna 4, fila_span 9, columna_span None, kind None: ''
+  Fila 5, columna 5, fila_span 6, columna_span None, kind None: ''
+  Fila 5, columna 6, fila_span 7, columna_span None, kind None: ''
+  Fila 5, columna 7, fila_span 7, columna_span None, kind None: ''
+  Fila 5, columna 8, fila_span 7, columna_span None, kind None: ''
+  Fila 5, columna 9, fila_span 7, columna_span None, kind None: ''
+  Fila 5, columna 10, fila_span 7, columna_span None, kind None: ''
+  Fila 5, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 6, columna 0, fila_span 2, columna_span None, kind None: ''
+  Fila 6, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 6, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 7, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 7, columna 11, fila_span 3, columna_span None, kind None: ''
+  Fila 8, columna 0, fila_span 2, columna_span None, kind None: ''
+  Fila 8, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 9, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 10, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 10, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 10, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 4, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 4, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 4, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 4, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 0, fila_span 3, columna_span None, kind None: ''
+  Fila 18, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 4, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 11, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 4, fila_span 2, columna_span None, kind None: ''
+  Fila 19, columna 5, fila_span 2, columna_span None, kind None: ''
+  Fila 19, columna 6, fila_span 2, columna_span None, kind None: ''
+  Fila 19, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 8, fila_span 2, columna_span None, kind None: ''
+  Fila 19, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 11, fila_span 2, columna_span None, kind None: ''
+  Fila 20, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 10, fila_span None, columna_span None, kind None: ''
+  Fila 21, columna 0, fila_span None, columna_span None, kind None: 'TOTAL COMPRAS'
+  Fila 21, columna 1, fila_span None, columna_span None, kind None: '1.925,37'
+  Fila 21, columna 2, fila_span None, columna_span None, kind None: '555,42'
+  Fila 21, columna 3, fila_span None, columna_span None, kind None: '270,96'
+  Fila 21, columna 4, fila_span None, columna_span None, kind None: '77,01'
+  Fila 21, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 21, columna 6, fila_span None, columna_span None, kind None: '55,54'
+  Fila 21, columna 7, fila_span None, columna_span None, kind None: '56,90'
+  Fila 21, columna 8, fila_span None, columna_span None, kind None: '9,63'
+  Fila 21, columna 9, fila_span None, columna_span None, kind None: '7,78'
+  Fila 21, columna 10, fila_span None, columna_span None, kind None: '14,09'
+  Fila 21, columna 11, fila_span None, columna_span None, kind None: '2.972,70'
+
+Tabla 4
+Filas: 4
+Columnas: 8
+Celdas: 28
+  Fila 0, columna 0, fila_span None, columna_span None, kind columnHeader: 'GASTOS'
+  Fila 0, columna 1, fila_span None, columna_span 3, kind columnHeader: 'BASE IMPONIBLE'
+  Fila 0, columna 4, fila_span None, columna_span 3, kind columnHeader: 'IVA'
+  Fila 0, columna 7, fila_span None, columna_span None, kind columnHeader: 'TOTALES'
+  Fila 1, columna 0, fila_span None, columna_span None, kind None: 'CONCEPTO'
+  Fila 1, columna 1, fila_span None, columna_span None, kind None: '4'
+  Fila 1, columna 2, fila_span None, columna_span None, kind None: '10'
+  Fila 1, columna 3, fila_span None, columna_span None, kind None: '21'
+  Fila 1, columna 4, fila_span None, columna_span None, kind None: '4'
+  Fila 1, columna 5, fila_span None, columna_span None, kind None: '10'
+  Fila 1, columna 6, fila_span None, columna_span None, kind None: '21'
+  Fila 1, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 0, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 4, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 0, fila_span None, columna_span None, kind None: 'TOTAL GASTOS'
+  Fila 3, columna 1, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 2, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 3, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 4, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 7, fila_span None, columna_span None, kind None: '0,00'
+
+Tabla 5
+Filas: 2
+Columnas: 2
+Celdas: 4
+  Fila 0, columna 0, fila_span None, columna_span None, kind None: 'TOTAL BASE IMPONIBLE'
+  Fila 0, columna 1, fila_span None, columna_span None, kind None: '2.751,75'
+  Fila 1, columna 0, fila_span None, columna_span None, kind None: 'TOTAL IVAS'
+  Fila 1, columna 1, fila_span None, columna_span None, kind None: '189,45'
+
+Tabla 6
+Filas: 2
+Columnas: 2
+Celdas: 4
+  Fila 0, columna 0, fila_span None, columna_span None, kind None: 'TOTAL RECARGOS EQUIVALENCIA'
+  Fila 0, columna 1, fila_span None, columna_span None, kind None: '31,50'
+  Fila 1, columna 0, fila_span None, columna_span None, kind None: 'FINANCIERO'
+  Fila 1, columna 1, fila_span None, columna_span None, kind None: ''
+
+Tabla 7
+Filas: 51
+Columnas: 10
+Celdas: 510
+  Fila 0, columna 0, fila_span None, columna_span None, kind columnHeader: 'FECHA'
+  Fila 0, columna 1, fila_span None, columna_span None, kind columnHeader: 'TIPO DE PEDIDO'
+  Fila 0, columna 2, fila_span None, columna_span None, kind columnHeader: 'N┌MERO\nALBAR┴N'
+  Fila 0, columna 3, fila_span None, columna_span None, kind columnHeader: 'TOTAL\nBASE'
+  Fila 0, columna 4, fila_span None, columna_span None, kind columnHeader: 'TOTAL\nALBAR┴N'
+  Fila 0, columna 5, fila_span None, columna_span None, kind columnHeader: 'FECHA'
+  Fila 0, columna 6, fila_span None, columna_span None, kind columnHeader: 'TIPO DE PEDIDO'
+  Fila 0, columna 7, fila_span None, columna_span None, kind columnHeader: 'N┌MERO\nALBAR┴N'
+  Fila 0, columna 8, fila_span None, columna_span None, kind columnHeader: 'TOTAL\nBASE'
+  Fila 0, columna 9, fila_span None, columna_span None, kind columnHeader: 'TOTAL\nALBAR┴N'
+  Fila 1, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 1, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 1, columna 2, fila_span None, columna_span None, kind None: '08C27029'
+  Fila 1, columna 3, fila_span None, columna_span None, kind None: '48,45'
+  Fila 1, columna 4, fila_span None, columna_span None, kind None: '53,98'
+  Fila 1, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 1, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 1, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 1, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 1, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 2, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 2, columna 2, fila_span None, columna_span None, kind None: '08C27032'
+  Fila 2, columna 3, fila_span None, columna_span None, kind None: '39,14'
+  Fila 2, columna 4, fila_span None, columna_span None, kind None: '45,83'
+  Fila 2, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 2, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 3, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 3, columna 2, fila_span None, columna_span None, kind None: '08C27086'
+  Fila 3, columna 3, fila_span None, columna_span None, kind None: '6,66'
+  Fila 3, columna 4, fila_span None, columna_span None, kind None: '8,41'
+  Fila 3, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 3, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 4, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 4, columna 2, fila_span None, columna_span None, kind None: '08C27259'
+  Fila 4, columna 3, fila_span None, columna_span None, kind None: '60,88'
+  Fila 4, columna 4, fila_span None, columna_span None, kind None: '65,05'
+  Fila 4, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 4, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 5, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 5, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 5, columna 2, fila_span None, columna_span None, kind None: '08C27264'
+  Fila 5, columna 3, fila_span None, columna_span None, kind None: '78,09'
+  Fila 5, columna 4, fila_span None, columna_span None, kind None: '83,32'
+  Fila 5, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 5, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 5, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 5, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 5, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 6, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 6, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 6, columna 2, fila_span None, columna_span None, kind None: '08C27899'
+  Fila 6, columna 3, fila_span None, columna_span None, kind None: '6,44'
+  Fila 6, columna 4, fila_span None, columna_span None, kind None: '8,12'
+  Fila 6, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 6, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 6, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 6, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 6, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 7, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 7, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 7, columna 2, fila_span None, columna_span None, kind None: '08M29583'
+  Fila 7, columna 3, fila_span None, columna_span None, kind None: '25,02'
+  Fila 7, columna 4, fila_span None, columna_span None, kind None: '31,57'
+  Fila 7, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 7, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 7, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 7, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 7, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 8, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 8, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 8, columna 2, fila_span None, columna_span None, kind None: '08M29917'
+  Fila 8, columna 3, fila_span None, columna_span None, kind None: '10,02'
+  Fila 8, columna 4, fila_span None, columna_span None, kind None: '10,47'
+  Fila 8, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 8, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 8, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 8, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 8, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 9, columna 0, fila_span None, columna_span None, kind None: '01-07-2026'
+  Fila 9, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 9, columna 2, fila_span None, columna_span None, kind None: '08M30064'
+  Fila 9, columna 3, fila_span None, columna_span None, kind None: '6,56'
+  Fila 9, columna 4, fila_span None, columna_span None, kind None: '6,85'
+  Fila 9, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 9, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 9, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 9, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 9, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 10, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 10, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 10, columna 2, fila_span None, columna_span None, kind None: '08C28369'
+  Fila 10, columna 3, fila_span None, columna_span None, kind None: '6,72'
+  Fila 10, columna 4, fila_span None, columna_span None, kind None: '7,02'
+  Fila 10, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 10, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 10, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 10, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 10, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 11, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 11, columna 2, fila_span None, columna_span None, kind None: '08C28649'
+  Fila 11, columna 3, fila_span None, columna_span None, kind None: '34,81'
+  Fila 11, columna 4, fila_span None, columna_span None, kind None: '36,37'
+  Fila 11, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 11, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 12, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 12, columna 2, fila_span None, columna_span None, kind None: '08C28657'
+  Fila 12, columna 3, fila_span None, columna_span None, kind None: '294,41'
+  Fila 12, columna 4, fila_span None, columna_span None, kind None: '307,66'
+  Fila 12, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 12, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 13, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 13, columna 2, fila_span None, columna_span None, kind None: '08C28662'
+  Fila 13, columna 3, fila_span None, columna_span None, kind None: '34,51'
+  Fila 13, columna 4, fila_span None, columna_span None, kind None: '37,48'
+  Fila 13, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 13, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 14, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 14, columna 2, fila_span None, columna_span None, kind None: '08C28668'
+  Fila 14, columna 3, fila_span None, columna_span None, kind None: '220,49'
+  Fila 14, columna 4, fila_span None, columna_span None, kind None: '230,41'
+  Fila 14, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 14, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 15, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 15, columna 2, fila_span None, columna_span None, kind None: '08C28813'
+  Fila 15, columna 3, fila_span None, columna_span None, kind None: '2,24'
+  Fila 15, columna 4, fila_span None, columna_span None, kind None: '2,34'
+  Fila 15, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 15, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 16, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 16, columna 2, fila_span None, columna_span None, kind None: '08C29059'
+  Fila 16, columna 3, fila_span None, columna_span None, kind None: '11,42'
+  Fila 16, columna 4, fila_span None, columna_span None, kind None: '11,94'
+  Fila 16, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 16, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 17, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 17, columna 2, fila_span None, columna_span None, kind None: '08C29168'
+  Fila 17, columna 3, fila_span None, columna_span None, kind None: '1,41'
+  Fila 17, columna 4, fila_span None, columna_span None, kind None: '1,48'
+  Fila 17, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 17, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 18, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 18, columna 2, fila_span None, columna_span None, kind None: '08C29186'
+  Fila 18, columna 3, fila_span None, columna_span None, kind None: '9,52'
+  Fila 18, columna 4, fila_span None, columna_span None, kind None: '9,95'
+  Fila 18, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 18, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 19, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 19, columna 2, fila_span None, columna_span None, kind None: '08M30281'
+  Fila 19, columna 3, fila_span None, columna_span None, kind None: '24,84'
+  Fila 19, columna 4, fila_span None, columna_span None, kind None: '25,95'
+  Fila 19, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 19, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 20, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 20, columna 2, fila_span None, columna_span None, kind None: '08M30607'
+  Fila 20, columna 3, fila_span None, columna_span None, kind None: '11,06'
+  Fila 20, columna 4, fila_span None, columna_span None, kind None: '11,56'
+  Fila 20, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 20, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 21, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 21, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 21, columna 2, fila_span None, columna_span None, kind None: '08M30608'
+  Fila 21, columna 3, fila_span None, columna_span None, kind None: '14,52'
+  Fila 21, columna 4, fila_span None, columna_span None, kind None: '18,33'
+  Fila 21, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 21, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 21, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 21, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 21, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 22, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 22, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 22, columna 2, fila_span None, columna_span None, kind None: '08M30656'
+  Fila 22, columna 3, fila_span None, columna_span None, kind None: '5,26'
+  Fila 22, columna 4, fila_span None, columna_span None, kind None: '5,86'
+  Fila 22, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 22, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 22, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 22, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 22, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 23, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 23, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 23, columna 2, fila_span None, columna_span None, kind None: '08M30732'
+  Fila 23, columna 3, fila_span None, columna_span None, kind None: '0,84'
+  Fila 23, columna 4, fila_span None, columna_span None, kind None: '0,93'
+  Fila 23, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 23, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 23, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 23, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 23, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 24, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 24, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 24, columna 2, fila_span None, columna_span None, kind None: '08M30737'
+  Fila 24, columna 3, fila_span None, columna_span None, kind None: '43,51'
+  Fila 24, columna 4, fila_span None, columna_span None, kind None: '45,47'
+  Fila 24, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 24, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 24, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 24, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 24, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 25, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 25, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 25, columna 2, fila_span None, columna_span None, kind None: '08M30915'
+  Fila 25, columna 3, fila_span None, columna_span None, kind None: '2,52'
+  Fila 25, columna 4, fila_span None, columna_span None, kind None: '2,63'
+  Fila 25, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 25, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 25, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 25, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 25, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 26, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 26, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 26, columna 2, fila_span None, columna_span None, kind None: '08M30923'
+  Fila 26, columna 3, fila_span None, columna_span None, kind None: '18,08'
+  Fila 26, columna 4, fila_span None, columna_span None, kind None: '20,52'
+  Fila 26, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 26, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 26, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 26, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 26, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 27, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 27, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 27, columna 2, fila_span None, columna_span None, kind None: '08M30925'
+  Fila 27, columna 3, fila_span None, columna_span None, kind None: '2,21'
+  Fila 27, columna 4, fila_span None, columna_span None, kind None: '2,46'
+  Fila 27, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 27, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 27, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 27, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 27, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 28, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 28, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 28, columna 2, fila_span None, columna_span None, kind None: '08M31070'
+  Fila 28, columna 3, fila_span None, columna_span None, kind None: '2,92'
+  Fila 28, columna 4, fila_span None, columna_span None, kind None: '3,05'
+  Fila 28, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 28, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 28, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 28, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 28, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 29, columna 0, fila_span None, columna_span None, kind None: '02-07-2026'
+  Fila 29, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 29, columna 2, fila_span None, columna_span None, kind None: '08V19089'
+  Fila 29, columna 3, fila_span None, columna_span None, kind None: '12,11'
+  Fila 29, columna 4, fila_span None, columna_span None, kind None: '13,49'
+  Fila 29, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 29, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 29, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 29, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 29, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 30, columna 0, fila_span None, columna_span None, kind None: '03-07-2026'
+  Fila 30, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 30, columna 2, fila_span None, columna_span None, kind None: '08C29779'
+  Fila 30, columna 3, fila_span None, columna_span None, kind None: '24,32'
+  Fila 30, columna 4, fila_span None, columna_span None, kind None: '25,41'
+  Fila 30, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 30, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 30, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 30, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 30, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 31, columna 0, fila_span None, columna_span None, kind None: '03-07-2026'
+  Fila 31, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 31, columna 2, fila_span None, columna_span None, kind None: '08C29973'
+  Fila 31, columna 3, fila_span None, columna_span None, kind None: '66,76'
+  Fila 31, columna 4, fila_span None, columna_span None, kind None: '74,14'
+  Fila 31, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 31, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 31, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 31, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 31, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 32, columna 0, fila_span None, columna_span None, kind None: '03-07-2026'
+  Fila 32, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 32, columna 2, fila_span None, columna_span None, kind None: '08C29976'
+  Fila 32, columna 3, fila_span None, columna_span None, kind None: '24,10'
+  Fila 32, columna 4, fila_span None, columna_span None, kind None: '25,56'
+  Fila 32, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 32, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 32, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 32, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 32, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 33, columna 0, fila_span None, columna_span None, kind None: '03-07-2026'
+  Fila 33, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 33, columna 2, fila_span None, columna_span None, kind None: '08C30154'
+  Fila 33, columna 3, fila_span None, columna_span None, kind None: '7,24'
+  Fila 33, columna 4, fila_span None, columna_span None, kind None: '7,57'
+  Fila 33, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 33, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 33, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 33, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 33, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 34, columna 0, fila_span None, columna_span None, kind None: '03-07-2026'
+  Fila 34, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 34, columna 2, fila_span None, columna_span None, kind None: '08C30420'
+  Fila 34, columna 3, fila_span None, columna_span None, kind None: '61,91'
+  Fila 34, columna 4, fila_span None, columna_span None, kind None: '68,97'
+  Fila 34, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 34, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 34, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 34, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 34, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 35, columna 0, fila_span None, columna_span None, kind None: '03-07-2026'
+  Fila 35, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 35, columna 2, fila_span None, columna_span None, kind None: '08M31633'
+  Fila 35, columna 3, fila_span None, columna_span None, kind None: '23,64'
+  Fila 35, columna 4, fila_span None, columna_span None, kind None: '24,71'
+  Fila 35, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 35, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 35, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 35, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 35, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 36, columna 0, fila_span None, columna_span None, kind None: '03-07-2026'
+  Fila 36, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 36, columna 2, fila_span None, columna_span None, kind None: '08M31835'
+  Fila 36, columna 3, fila_span None, columna_span None, kind None: '7,51'
+  Fila 36, columna 4, fila_span None, columna_span None, kind None: '8,37'
+  Fila 36, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 36, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 36, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 36, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 36, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 37, columna 0, fila_span None, columna_span None, kind None: '03-07-2026'
+  Fila 37, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 37, columna 2, fila_span None, columna_span None, kind None: '08M31838'
+  Fila 37, columna 3, fila_span None, columna_span None, kind None: '5,62'
+  Fila 37, columna 4, fila_span None, columna_span None, kind None: '5,87'
+  Fila 37, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 37, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 37, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 37, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 37, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 38, columna 0, fila_span None, columna_span None, kind None: '04-07-2026'
+  Fila 38, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 38, columna 2, fila_span None, columna_span None, kind None: '08C31296'
+  Fila 38, columna 3, fila_span None, columna_span None, kind None: '96,18'
+  Fila 38, columna 4, fila_span None, columna_span None, kind None: '104,86'
+  Fila 38, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 38, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 38, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 38, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 38, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 39, columna 0, fila_span None, columna_span None, kind None: '04-07-2026'
+  Fila 39, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 39, columna 2, fila_span None, columna_span None, kind None: '08C31300'
+  Fila 39, columna 3, fila_span None, columna_span None, kind None: '51,70'
+  Fila 39, columna 4, fila_span None, columna_span None, kind None: '55,99'
+  Fila 39, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 39, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 39, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 39, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 39, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 40, columna 0, fila_span None, columna_span None, kind None: '04-07-2026'
+  Fila 40, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 40, columna 2, fila_span None, columna_span None, kind None: '08C31488'
+  Fila 40, columna 3, fila_span None, columna_span None, kind None: '10,59'
+  Fila 40, columna 4, fila_span None, columna_span None, kind None: '11,06'
+  Fila 40, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 40, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 40, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 40, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 40, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 41, columna 0, fila_span None, columna_span None, kind None: '05-07-2026'
+  Fila 41, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 41, columna 2, fila_span None, columna_span None, kind None: '08C31637'
+  Fila 41, columna 3, fila_span None, columna_span None, kind None: '11,02'
+  Fila 41, columna 4, fila_span None, columna_span None, kind None: '11,52'
+  Fila 41, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 41, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 41, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 41, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 41, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 42, columna 0, fila_span None, columna_span None, kind None: '05-07-2026'
+  Fila 42, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 42, columna 2, fila_span None, columna_span None, kind None: '08C31644'
+  Fila 42, columna 3, fila_span None, columna_span None, kind None: '2,50'
+  Fila 42, columna 4, fila_span None, columna_span None, kind None: '2,61'
+  Fila 42, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 42, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 42, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 42, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 42, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 43, columna 0, fila_span None, columna_span None, kind None: '05-07-2026'
+  Fila 43, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 43, columna 2, fila_span None, columna_span None, kind None: '08C31645'
+  Fila 43, columna 3, fila_span None, columna_span None, kind None: '17,20'
+  Fila 43, columna 4, fila_span None, columna_span None, kind None: '20,17'
+  Fila 43, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 43, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 43, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 43, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 43, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 44, columna 0, fila_span None, columna_span None, kind None: '06-07-2026'
+  Fila 44, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 44, columna 2, fila_span None, columna_span None, kind None: '08C32022'
+  Fila 44, columna 3, fila_span None, columna_span None, kind None: '25,77'
+  Fila 44, columna 4, fila_span None, columna_span None, kind None: '28,71'
+  Fila 44, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 44, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 44, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 44, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 44, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 45, columna 0, fila_span None, columna_span None, kind None: '06-07-2026'
+  Fila 45, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 45, columna 2, fila_span None, columna_span None, kind None: '08C32341'
+  Fila 45, columna 3, fila_span None, columna_span None, kind None: '60,52'
+  Fila 45, columna 4, fila_span None, columna_span None, kind None: '67,53'
+  Fila 45, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 45, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 45, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 45, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 45, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 46, columna 0, fila_span None, columna_span None, kind None: '06-07-2026'
+  Fila 46, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 46, columna 2, fila_span None, columna_span None, kind None: '08C32347'
+  Fila 46, columna 3, fila_span None, columna_span None, kind None: '47,76'
+  Fila 46, columna 4, fila_span None, columna_span None, kind None: '53,09'
+  Fila 46, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 46, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 46, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 46, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 46, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 47, columna 0, fila_span None, columna_span None, kind None: '06-07-2026'
+  Fila 47, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 47, columna 2, fila_span None, columna_span None, kind None: '08M32279'
+  Fila 47, columna 3, fila_span None, columna_span None, kind None: '87,58'
+  Fila 47, columna 4, fila_span None, columna_span None, kind None: '91,52'
+  Fila 47, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 47, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 47, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 47, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 47, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 48, columna 0, fila_span None, columna_span None, kind None: '06-07-2026'
+  Fila 48, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 48, columna 2, fila_span None, columna_span None, kind None: '08M32580'
+  Fila 48, columna 3, fila_span None, columna_span None, kind None: '24,60'
+  Fila 48, columna 4, fila_span None, columna_span None, kind None: '27,40'
+  Fila 48, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 48, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 48, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 48, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 48, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 49, columna 0, fila_span None, columna_span None, kind None: '06-07-2026'
+  Fila 49, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 49, columna 2, fila_span None, columna_span None, kind None: '08M32581'
+  Fila 49, columna 3, fila_span None, columna_span None, kind None: '6,74'
+  Fila 49, columna 4, fila_span None, columna_span None, kind None: '7,50'
+  Fila 49, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 49, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 49, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 49, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 49, columna 9, fila_span None, columna_span None, kind None: ''
+  Fila 50, columna 0, fila_span None, columna_span None, kind None: '06-07-2026'
+  Fila 50, columna 1, fila_span None, columna_span None, kind None: 'PLATAFORMA 360'
+  Fila 50, columna 2, fila_span None, columna_span None, kind None: '08M32942'
+  Fila 50, columna 3, fila_span None, columna_span None, kind None: '7,29'
+  Fila 50, columna 4, fila_span None, columna_span None, kind None: '9,20'
+  Fila 50, columna 5, fila_span None, columna_span None, kind None: ''
+  Fila 50, columna 6, fila_span None, columna_span None, kind None: ''
+  Fila 50, columna 7, fila_span None, columna_span None, kind None: ''
+  Fila 50, columna 8, fila_span None, columna_span None, kind None: ''
+  Fila 50, columna 9, fila_span None, columna_span None, kind None: ''
+
+P┴GINAS
+-------
+Cantidad: 2
+
+Pßgina 1
+LÝneas OCR: 113
+  FACTURA
+  DUPLICADO
+  cencora
+  D/D±a
+  PUIG SALOMON PIUS
+  DOCUMENT
+  Alliance Healthcare
+  UNICOM
+  FEFAC
+  DIRECCIËN
+  CR SANT LLUC 34
+  43550 ULLDECONA
+  ALMACEN
+  CANONJA
+  RUTA 16
+  PAGINA 01 DE 03
+  NIF
+  40901058C
+  006600
+  N┌MERO FACTURA
+  FECHA FACTURA
+  FECHA VENCIMIENTO
+  08008428
+  10-07-2026
+  10-09-2026
+  COMPRAS
+  BASE IMPONIBLE
+  IVA
+  R.E.
+  TOTALES
+  CONCEPTO
+  4
+  10
+  21
+  4
+  10
+  21
+  0,50
+  1,40
+  5,20
+  ESPECIALIDAD
+  687,38
+  27,49
+  3,44
+  718,31
+  GENERICOS
+  1.237,99
+  49,52
+  6,19
+  1.293,70
+  NO ESPECIALIDAD
+  555,42
+  270,96
+  55,54
+  56,90
+  7,78
+  14,09
+  960,69
+  TOTAL COMPRAS
+  1.925,37
+  555,42
+  270,96
+  77,01
+  55,54
+  56,90
+  9,63
+  7,78
+  14,09
+  2.972,70
+  GASTOS
+  BASE IMPONIBLE
+  IVA
+  TOTALES
+  CONCEPTO
+  4
+  10
+  21
+  4
+  10
+  21
+  Domicilio Social: Pol. Ind. Sector 4 50830 VILLANUEVA DE GALLEGO (Zaragoza) Reg. Merc. de Zaragoza Tomo 1242 Folio 212 Hoja Z 6041 Insc. 1¬ CIF: A50004324 ENV/2023/000013571
+  TOTAL GASTOS
+  0,00
+  TOTALES
+  TOTAL BASE IMPONIBLE
+  2.751,75
+  TOTAL RECARGOS EQUIVALENCIA
+  31,50
+  TOTAL FACTURA
+  2.972,70
+  TOTAL IVAS
+  189,45
+  FINANCIERO
+  R.D.
+  143,03
+  0
+  0,00
+  R.D.
+  260,95
+  0
+  0,00
+  R. D.
+  578,15
+  0
+  0,00
+  IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011
+  94,74
+  0,00
+  DEDUCCION
+  0,54-
+  0,00
+  Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÐA, S.A., para gestionar nuestra relaci¾n comercial. Puede ejercer sus derechos en materia de protecci¾n de datos
+  mediante escrito dirigido a nuestro departamento legal o a travÚs del correo electr¾nico: privacy@cencora.com
+
+Pßgina 2
+LÝneas OCR: 280
+  FACTURA
+  DUPLICADO
+  N┌MERO FACTURA
+  FECHA FACTURA
+  FECHA VENCIMIENTO
+  08008428
+  10-07-2026
+  10-09-2026
+  PAGINA 02 DE 03
+  CARGOS
+  ABONOS
+  FECHA
+  TIPO DE PEDIDO
+  N┌MERO
+  TOTAL
+  TOTAL
+  FECHA
+  TIPO DE PEDIDO
+  N┌MERO
+  TOTAL
+  TOTAL
+  ALBAR┴N
+  BASE
+  ALBAR┴N
+  ALBAR┴N
+  BASE
+  ALBAR┴N
+  01-07-2026
+  PLATAFORMA 360
+  08C27029
+  48,45
+  53,98
+  01-07-2026
+  PLATAFORMA 360
+  08C27032
+  39,14
+  45,83
+  01-07-2026
+  PLATAFORMA 360
+  08C27086
+  6,66
+  8,41
+  01-07-2026
+  PLATAFORMA 360
+  08C27259
+  60,88
+  65,05
+  01-07-2026
+  PLATAFORMA 360
+  08C27264
+  78,09
+  83,32
+  01-07-2026
+  PLATAFORMA 360
+  08C27899
+  6,44
+  8,12
+  01-07-2026
+  PLATAFORMA 360
+  08M29583
+  25,02
+  31,57
+  01-07-2026
+  PLATAFORMA 360
+  08M29917
+  10,02
+  10,47
+  01-07-2026
+  PLATAFORMA 360
+  08M30064
+  6,56
+  6,85
+  02-07-2026
+  PLATAFORMA 360
+  08C28369
+  6,72
+  7,02
+  02-07-2026
+  PLATAFORMA 360
+  08C28649
+  34,81
+  36,37
+  02-07-2026
+  PLATAFORMA 360
+  08C28657
+  294,41
+  307,66
+  02-07-2026
+  PLATAFORMA 360
+  08C28662
+  34,51
+  37,48
+  02-07-2026
+  PLATAFORMA 360
+  08C28668
+  220,49
+  230,41
+  02-07-2026
+  PLATAFORMA 360
+  08C28813
+  2,24
+  2,34
+  02-07-2026
+  PLATAFORMA 360
+  08C29059
+  11,42
+  11,94
+  02-07-2026
+  PLATAFORMA 360
+  08C29168
+  1,41
+  1,48
+  02-07-2026
+  PLATAFORMA 360
+  08C29186
+  9,52
+  9,95
+  02-07-2026
+  PLATAFORMA 360
+  08M30281
+  24,84
+  25,95
+  02-07-2026
+  PLATAFORMA 360
+  08M30607
+  11,06
+  11,56
+  02-07-2026
+  PLATAFORMA 360
+  08M30608
+  14,52
+  18,33
+  02-07-2026
+  PLATAFORMA 360
+  08M30656
+  5,26
+  5,86
+  02-07-2026
+  PLATAFORMA 360
+  08M30732
+  0,84
+  0,93
+  02-07-2026
+  PLATAFORMA 360
+  08M30737
+  43,51
+  45,47
+  02-07-2026
+  PLATAFORMA 360
+  08M30915
+  2,52
+  2,63
+  02-07-2026
+  PLATAFORMA 360
+  08M30923
+  18,08
+  20,52
+  02-07-2026
+  PLATAFORMA 360
+  08M30925
+  2,21
+  2,46
+  02-07-2026
+  PLATAFORMA 360
+  08M31070
+  2,92
+  3,05
+  02-07-2026
+  PLATAFORMA 360
+  08V19089
+  12,11
+  13,49
+  03-07-2026
+  PLATAFORMA 360
+  08C29779
+  24,32
+  25,41
+  03-07-2026
+  PLATAFORMA 360
+  08C29973
+  66,76
+  74,14
+  03-07-2026
+  PLATAFORMA 360
+  08C29976
+  24,10
+  25,56
+  03-07-2026
+  PLATAFORMA 360
+  08C30154
+  7,24
+  7,57
+  03-07-2026
+  PLATAFORMA 360
+  08C30420
+  61,91
+  68,97
+  03-07-2026
+  PLATAFORMA 360
+  08M31633
+  23,64
+  24,71
+  03-07-2026
+  PLATAFORMA 360
+  08M31835
+  7,51
+  8,37
+  03-07-2026
+  PLATAFORMA 360
+  08M31838
+  5,62
+  5,87
+  04-07-2026
+  PLATAFORMA 360
+  08C31296
+  96,18
+  104,86
+  04-07-2026
+  PLATAFORMA 360
+  08C31300
+  51,70
+  55,99
+  04-07-2026
+  PLATAFORMA 360
+  08C31488
+  10,59
+  11,06
+  05-07-2026
+  PLATAFORMA 360
+  08C31637
+  11,02
+  11,52
+  05-07-2026
+  PLATAFORMA 360
+  08C31644
+  2,50
+  2,61
+  05-07-2026
+  PLATAFORMA 360
+  08C31645
+  17,20
+  20,17
+  Domicilio Social: Pol. Ind. Sector 4 50830 VILLANUEVA DE GALLEGO (Zaragoza) Reg. Merc. de Zaragoza Tomo 1242 Folio 212 Hoja Z 6041 Insc. 1¬ CIF: A50004324 ENV/2023/000013571
+  06-07-2026
+  PLATAFORMA 360
+  08C32022
+  25,77
+  28,71
+  06-07-2026
+  PLATAFORMA 360
+  08C32341
+  60,52
+  67,53
+  06-07-2026
+  PLATAFORMA 360
+  08C32347
+  47,76
+  53,09
+  06-07-2026
+  PLATAFORMA 360
+  08M32279
+  87,58
+  91,52
+  06-07-2026
+  PLATAFORMA 360
+  08M32580
+  24,60
+  27,40
+  06-07-2026
+  PLATAFORMA 360
+  08M32581
+  6,74
+  7,50
+  06-07-2026
+  PLATAFORMA 360
+  08M32942
+  7,29
+  9,20
+  Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÐA, S.A., para gestionar nuestra relaci¾n comercial. Puede ejercer sus derechos en materia de protecci¾n de datos
+  mediante escrito dirigido a nuestro departamento legal o a travÚs del correo electr¾nico: privacy@cencora.com
