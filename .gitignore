@@ -5,6 +5,15 @@ venv/
 # Variables privadas
 .env
 
+# Credenciales de servicios (incluido Google Cloud)
+*credentials*.json
+*credential*.json
+*credenciales*.json
+*service-account*.json
+*service_account*.json
+*serviceaccount*.json
+google-application-credentials.json
+
 # Python
 __pycache__/
 *.py[cod]
