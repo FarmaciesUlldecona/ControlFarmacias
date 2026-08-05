@@ -31,10 +31,8 @@ def cargar_configuracion() -> tuple[str, str, str]:
     proyecto = os.getenv("GOOGLE_CLOUD_PROJECT_ID")
     ubicacion = os.getenv("GOOGLE_DOCUMENT_AI_LOCATION")
     processor_id = os.getenv("GOOGLE_DOCUMENT_AI_PROCESSOR_ID")
-    ruta_credenciales = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
     variables = {
-        "GOOGLE_APPLICATION_CREDENTIALS": ruta_credenciales,
         "GOOGLE_CLOUD_PROJECT_ID": proyecto,
         "GOOGLE_DOCUMENT_AI_LOCATION": ubicacion,
         "GOOGLE_DOCUMENT_AI_PROCESSOR_ID": processor_id,
@@ -42,13 +40,6 @@ def cargar_configuracion() -> tuple[str, str, str]:
     ausentes = [nombre for nombre, valor in variables.items() if not valor]
     if ausentes:
         raise ValueError("Faltan variables de entorno: " + ", ".join(ausentes))
-
-    credenciales = Path(ruta_credenciales).expanduser()
-    if not credenciales.is_file():
-        raise FileNotFoundError(
-            f"No se encuentra el JSON indicado por GOOGLE_APPLICATION_CREDENTIALS: "
-            f"{credenciales}"
-        )
 
     if ubicacion != "eu":
         raise ValueError("GOOGLE_DOCUMENT_AI_LOCATION debe ser 'eu'.")
