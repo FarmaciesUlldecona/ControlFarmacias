@@ -1,0 +1,1980 @@
+{
+  "metadatos_prueba": {
+    "archivo_enviado": "documento.pdf",
+    "paginas_pdf": 4,
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_04283dac2ceebd8a016a74b0688a7081a3aed563480bcef02c",
+    "fecha_hora_utc": "2026-08-06T16:05:33.037642+00:00",
+    "version_prompt": "alliance_08008427_campos_complejos_v1.0",
+    "reasoning_effort": "none",
+    "max_output_tokens": 32000,
+    "store": false
+  },
+  "respuesta_original": {
+    "id": "resp_04283dac2ceebd8a016a74b0688a7081a3aed563480bcef02c",
+    "created_at": 1786032233.0,
+    "error": null,
+    "incomplete_details": null,
+    "instructions": null,
+    "metadata": {},
+    "model": "gpt-5.6-luna",
+    "object": "response",
+    "output": [
+      {
+        "id": "msg_04283dac2ceebd8a016a74b06b712c81a3ae6aea766c476b87",
+        "content": [
+          {
+            "annotations": [],
+            "text": "{\"vencimientos\":[{\"orden\":1,\"fecha_vencimiento\":\"06-10-2026\",\"importe\":null,\"pagina\":1}],\"impuestos\":[{\"orden\":1,\"base_imponible\":6658.52,\"tipo_iva\":4,\"cuota_iva\":266.34,\"tipo_recargo_equivalencia\":0.5,\"cuota_recargo_equivalencia\":33.29,\"pagina\":1},{\"orden\":2,\"base_imponible\":736.37,\"tipo_iva\":4,\"cuota_iva\":29.45,\"tipo_recargo_equivalencia\":0.5,\"cuota_recargo_equivalencia\":3.68,\"pagina\":1},{\"orden\":3,\"base_imponible\":1153.63,\"tipo_iva\":4,\"cuota_iva\":46.15,\"tipo_recargo_equivalencia\":0.5,\"cuota_recargo_equivalencia\":5.77,\"pagina\":1},{\"orden\":4,\"base_imponible\":1683.59,\"tipo_iva\":10,\"cuota_iva\":168.36,\"tipo_recargo_equivalencia\":1.4,\"cuota_recargo_equivalencia\":23.57,\"pagina\":1},{\"orden\":5,\"base_imponible\":273.31,\"tipo_iva\":21,\"cuota_iva\":57.4,\"tipo_recargo_equivalencia\":5.2,\"cuota_recargo_equivalencia\":14.21,\"pagina\":1},{\"orden\":6,\"base_imponible\":26,\"tipo_iva\":21,\"cuota_iva\":5.46,\"tipo_recargo_equivalencia\":null,\"cuota_recargo_equivalencia\":null,\"pagina\":1}],\"albaranes\":[{\"orden\":1,\"numero_albaran\":\"08C26499\",\"fecha_albaran\":\"30-06-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.62,\"importe_total\":1.69,\"pagina\":2},{\"orden\":2,\"numero_albaran\":\"08C26500\",\"fecha_albaran\":\"30-06-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.26,\"importe_total\":1.32,\"pagina\":2},{\"orden\":3,\"numero_albaran\":\"08C27035\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":116.87,\"importe_total\":127.77,\"pagina\":2},{\"orden\":4,\"numero_albaran\":\"08C27265\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":733.36,\"importe_total\":775.24,\"pagina\":2},{\"orden\":5,\"numero_albaran\":\"08C27268\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":37.76,\"importe_total\":39.46,\"pagina\":2},{\"orden\":6,\"numero_albaran\":\"08C27311\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":4.13,\"importe_total\":4.32,\"pagina\":2},{\"orden\":7,\"numero_albaran\":\"08C27437\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":3.36,\"importe_total\":3.51,\"pagina\":2},{\"orden\":8,\"numero_albaran\":\"08C27700\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":103.88,\"importe_total\":115.72,\"pagina\":2},{\"orden\":9,\"numero_albaran\":\"08C27725\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":33.87,\"importe_total\":37.73,\"pagina\":2},{\"orden\":10,\"numero_albaran\":\"08C27896\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":15.03,\"importe_total\":15.71,\"pagina\":2},{\"orden\":11,\"numero_albaran\":\"08C27900\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":8.48,\"importe_total\":10.7,\"pagina\":2},{\"orden\":12,\"numero_albaran\":\"08M29400\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":39.71,\"importe_total\":41.5,\"pagina\":2},{\"orden\":13,\"numero_albaran\":\"08M29624\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":52.29,\"importe_total\":58.25,\"pagina\":2},{\"orden\":14,\"numero_albaran\":\"08M29915\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":61.99,\"importe_total\":64.78,\"pagina\":2},{\"orden\":15,\"numero_albaran\":\"08M29918\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":7.59,\"importe_total\":9.57,\"pagina\":2},{\"orden\":16,\"numero_albaran\":\"08M29976\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":8.7,\"importe_total\":9.09,\"pagina\":2},{\"orden\":17,\"numero_albaran\":\"08M30003\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":4.7,\"importe_total\":4.91,\"pagina\":2},{\"orden\":18,\"numero_albaran\":\"08M30063\",\"fecha_albaran\":\"01-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":14.27,\"importe_total\":14.91,\"pagina\":2},{\"orden\":19,\"numero_albaran\":\"08C28370\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":343.97,\"importe_total\":362.8,\"pagina\":2},{\"orden\":20,\"numero_albaran\":\"08C28452\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":4.42,\"importe_total\":4.62,\"pagina\":2},{\"orden\":21,\"numero_albaran\":\"08C28650\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":147.38,\"importe_total\":154.02,\"pagina\":2},{\"orden\":22,\"numero_albaran\":\"08C28658\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":7.65,\"importe_total\":9.44,\"pagina\":2},{\"orden\":23,\"numero_albaran\":\"08C28814\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":4.25,\"importe_total\":4.44,\"pagina\":2},{\"orden\":24,\"numero_albaran\":\"08C29133\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":24.73,\"importe_total\":25.84,\"pagina\":2},{\"orden\":25,\"numero_albaran\":\"08C29302\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":27.89,\"importe_total\":29.15,\"pagina\":2},{\"orden\":26,\"numero_albaran\":\"08M30406\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":3.03,\"importe_total\":3.17,\"pagina\":2},{\"orden\":27,\"numero_albaran\":\"08M30761\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":18.55,\"importe_total\":19.38,\"pagina\":2},{\"orden\":28,\"numero_albaran\":\"08M30914\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":161.14,\"importe_total\":168.4,\"pagina\":2},{\"orden\":29,\"numero_albaran\":\"08M30924\",\"fecha_albaran\":\"02-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":2.12,\"importe_total\":2.21,\"pagina\":2},{\"orden\":30,\"numero_albaran\":\"08C29766\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":9.25,\"importe_total\":9.67,\"pagina\":2},{\"orden\":31,\"numero_albaran\":\"08C29780\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":213.22,\"importe_total\":223.46,\"pagina\":2},{\"orden\":32,\"numero_albaran\":\"08C29977\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":256.39,\"importe_total\":268.17,\"pagina\":2},{\"orden\":33,\"numero_albaran\":\"08C29988\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":11.73,\"importe_total\":13.06,\"pagina\":2},{\"orden\":34,\"numero_albaran\":\"08C29989\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.26,\"importe_total\":1.32,\"pagina\":2},{\"orden\":35,\"numero_albaran\":\"08C30585\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":5.75,\"importe_total\":6.01,\"pagina\":2},{\"orden\":36,\"numero_albaran\":\"08M31275\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":55.54,\"importe_total\":61.87,\"pagina\":2},{\"orden\":37,\"numero_albaran\":\"08M31303\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":9.57,\"importe_total\":12.08,\"pagina\":2},{\"orden\":38,\"numero_albaran\":\"08M31366\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.4,\"importe_total\":1.56,\"pagina\":2},{\"orden\":39,\"numero_albaran\":\"08M31836\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":67.53,\"importe_total\":70.78,\"pagina\":2},{\"orden\":40,\"numero_albaran\":\"08M31892\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":18.39,\"importe_total\":19.22,\"pagina\":2},{\"orden\":41,\"numero_albaran\":\"08M31914\",\"fecha_albaran\":\"03-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":31.16,\"importe_total\":32.57,\"pagina\":2},{\"orden\":42,\"numero_albaran\":\"08C30750\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":13.96,\"importe_total\":15.56,\"pagina\":2},{\"orden\":43,\"numero_albaran\":\"08C30762\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":9.43,\"importe_total\":10.5,\"pagina\":2},{\"orden\":44,\"numero_albaran\":\"08C30798\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":12.02,\"importe_total\":15.17,\"pagina\":2},{\"orden\":45,\"numero_albaran\":\"08C30821\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":11.46,\"importe_total\":11.98,\"pagina\":2},{\"orden\":46,\"numero_albaran\":\"08C30958\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":9.64,\"importe_total\":10.73,\"pagina\":2},{\"orden\":47,\"numero_albaran\":\"08C31034\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.62,\"importe_total\":1.69,\"pagina\":2},{\"orden\":48,\"numero_albaran\":\"08C31135\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.78,\"importe_total\":1.86,\"pagina\":2},{\"orden\":49,\"numero_albaran\":\"08C31297\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":2.16,\"importe_total\":2.26,\"pagina\":2},{\"orden\":50,\"numero_albaran\":\"08C31301\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":301.99,\"importe_total\":318.74,\"pagina\":2},{\"orden\":51,\"numero_albaran\":\"08C31302\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.64,\"importe_total\":1.72,\"pagina\":3},{\"orden\":52,\"numero_albaran\":\"08C31489\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":197.13,\"importe_total\":206.01,\"pagina\":3},{\"orden\":53,\"numero_albaran\":\"08M32051\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":85.88,\"importe_total\":89.75,\"pagina\":3},{\"orden\":54,\"numero_albaran\":\"08V19185\",\"fecha_albaran\":\"04-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":6.99,\"importe_total\":8.82,\"pagina\":3},{\"orden\":55,\"numero_albaran\":\"08C31638\",\"fecha_albaran\":\"05-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":57.47,\"importe_total\":60.06,\"pagina\":3},{\"orden\":56,\"numero_albaran\":\"08C32023\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":168.48,\"importe_total\":176.06,\"pagina\":3},{\"orden\":57,\"numero_albaran\":\"08C32131\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":228.27,\"importe_total\":238.54,\"pagina\":3},{\"orden\":58,\"numero_albaran\":\"08C32157\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":10.99,\"importe_total\":11.48,\"pagina\":3},{\"orden\":59,\"numero_albaran\":\"08C32269\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":32.78,\"importe_total\":34.25,\"pagina\":3},{\"orden\":60,\"numero_albaran\":\"08C32270\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":16.39,\"importe_total\":17.13,\"pagina\":3},{\"orden\":61,\"numero_albaran\":\"08C32342\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":6.14,\"importe_total\":6.42,\"pagina\":3},{\"orden\":62,\"numero_albaran\":\"08C32348\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":711.47,\"importe_total\":743.49,\"pagina\":3},{\"orden\":63,\"numero_albaran\":\"08C32355\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":13.4,\"importe_total\":15.21,\"pagina\":3},{\"orden\":64,\"numero_albaran\":\"08C32356\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.35,\"importe_total\":1.41,\"pagina\":3},{\"orden\":65,\"numero_albaran\":\"08C32802\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":151.51,\"importe_total\":168.78,\"pagina\":3},{\"orden\":66,\"numero_albaran\":\"08C32805\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":24.74,\"importe_total\":27.56,\"pagina\":3},{\"orden\":67,\"numero_albaran\":\"08C32806\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":65.54,\"importe_total\":68.49,\"pagina\":3},{\"orden\":68,\"numero_albaran\":\"08C32824\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":34.5,\"importe_total\":38.43,\"pagina\":3},{\"orden\":69,\"numero_albaran\":\"08C32854\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":5.33,\"importe_total\":5.57,\"pagina\":3},{\"orden\":70,\"numero_albaran\":\"08C32877\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":4.85,\"importe_total\":5.06,\"pagina\":3},{\"orden\":71,\"numero_albaran\":\"08C32878\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":9.7,\"importe_total\":10.14,\"pagina\":3},{\"orden\":72,\"numero_albaran\":\"08C33027\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":6.45,\"importe_total\":6.74,\"pagina\":3},{\"orden\":73,\"numero_albaran\":\"08M32213\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":42.94,\"importe_total\":44.87,\"pagina\":3},{\"orden\":74,\"numero_albaran\":\"08M32226\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":18.82,\"importe_total\":19.66,\"pagina\":3},{\"orden\":75,\"numero_albaran\":\"08M32414\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":35.98,\"importe_total\":37.6,\"pagina\":3},{\"orden\":76,\"numero_albaran\":\"08M32604\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":99.61,\"importe_total\":104.09,\"pagina\":3},{\"orden\":77,\"numero_albaran\":\"08M32607\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":55.54,\"importe_total\":61.87,\"pagina\":3},{\"orden\":78,\"numero_albaran\":\"08M32612\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":0.85,\"importe_total\":0.88,\"pagina\":3},{\"orden\":79,\"numero_albaran\":\"08M32962\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":185.95,\"importe_total\":196.38,\"pagina\":3},{\"orden\":80,\"numero_albaran\":\"08M32963\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":7.17,\"importe_total\":9.05,\"pagina\":3},{\"orden\":81,\"numero_albaran\":\"08M32977\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":34.78,\"importe_total\":36.34,\"pagina\":3},{\"orden\":82,\"numero_albaran\":\"08V19262\",\"fecha_albaran\":\"06-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":6.99,\"importe_total\":8.82,\"pagina\":3},{\"orden\":83,\"numero_albaran\":\"08C33364\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":92.94,\"importe_total\":103.53,\"pagina\":3},{\"orden\":84,\"numero_albaran\":\"08C33510\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":34.98,\"importe_total\":38.62,\"pagina\":3},{\"orden\":85,\"numero_albaran\":\"08C33655\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":10.84,\"importe_total\":11.32,\"pagina\":3},{\"orden\":86,\"numero_albaran\":\"08C33660\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":504.67,\"importe_total\":533.1,\"pagina\":3},{\"orden\":87,\"numero_albaran\":\"08C33667\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":18.79,\"importe_total\":21.92,\"pagina\":3},{\"orden\":88,\"numero_albaran\":\"08C33697\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":161.55,\"importe_total\":168.82,\"pagina\":3},{\"orden\":89,\"numero_albaran\":\"08C34216\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":2.43,\"importe_total\":2.54,\"pagina\":3},{\"orden\":90,\"numero_albaran\":\"08C34434\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":133.85,\"importe_total\":139.87,\"pagina\":3},{\"orden\":91,\"numero_albaran\":\"08C34451\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":6.41,\"importe_total\":6.7,\"pagina\":3},{\"orden\":92,\"numero_albaran\":\"08M33392\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":128.22,\"importe_total\":142.77,\"pagina\":3},{\"orden\":93,\"numero_albaran\":\"08M33628\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":169.67,\"importe_total\":177.31,\"pagina\":3},{\"orden\":94,\"numero_albaran\":\"08M33646\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":63.68,\"importe_total\":70.94,\"pagina\":3},{\"orden\":95,\"numero_albaran\":\"08M33656\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":25.82,\"importe_total\":28.76,\"pagina\":3},{\"orden\":96,\"numero_albaran\":\"08M33699\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":102.17,\"importe_total\":106.77,\"pagina\":3},{\"orden\":97,\"numero_albaran\":\"08M33871\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":10.76,\"importe_total\":13.58,\"pagina\":3},{\"orden\":98,\"numero_albaran\":\"08M33960\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":349.7,\"importe_total\":366.12,\"pagina\":3},{\"orden\":99,\"numero_albaran\":\"08M33962\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":11.82,\"importe_total\":13.17,\"pagina\":3},{\"orden\":100,\"numero_albaran\":\"08M34050\",\"fecha_albaran\":\"07-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.83,\"importe_total\":1.91,\"pagina\":3},{\"orden\":101,\"numero_albaran\":\"08C34793\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":297.55,\"importe_total\":314.75,\"pagina\":4},{\"orden\":102,\"numero_albaran\":\"08C34914\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":83.96,\"importe_total\":90.39,\"pagina\":4},{\"orden\":103,\"numero_albaran\":\"08C34941\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":7.27,\"importe_total\":7.6,\"pagina\":4},{\"orden\":104,\"numero_albaran\":\"08C34961\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":3.62,\"importe_total\":4.03,\"pagina\":4},{\"orden\":105,\"numero_albaran\":\"08C34993\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":87.78,\"importe_total\":97.79,\"pagina\":4},{\"orden\":106,\"numero_albaran\":\"08C35060\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":341.09,\"importe_total\":356.44,\"pagina\":4},{\"orden\":107,\"numero_albaran\":\"08C35062\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":5.09,\"importe_total\":6.21,\"pagina\":4},{\"orden\":108,\"numero_albaran\":\"08C35063\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.26,\"importe_total\":1.32,\"pagina\":4},{\"orden\":109,\"numero_albaran\":\"08C35281\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":4.67,\"importe_total\":4.88,\"pagina\":4},{\"orden\":110,\"numero_albaran\":\"08C35567\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":19.91,\"importe_total\":22.18,\"pagina\":4},{\"orden\":111,\"numero_albaran\":\"08C35706\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":11.19,\"importe_total\":11.7,\"pagina\":4},{\"orden\":112,\"numero_albaran\":\"08M34186\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":21.21,\"importe_total\":23.63,\"pagina\":4},{\"orden\":113,\"numero_albaran\":\"08M34243\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":69.82,\"importe_total\":72.96,\"pagina\":4},{\"orden\":114,\"numero_albaran\":\"08M34283\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":41.68,\"importe_total\":43.56,\"pagina\":4},{\"orden\":115,\"numero_albaran\":\"08M34323\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":66.07,\"importe_total\":73.6,\"pagina\":4},{\"orden\":116,\"numero_albaran\":\"08M34347\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":9.83,\"importe_total\":10.83,\"pagina\":4},{\"orden\":117,\"numero_albaran\":\"08M34834\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":1.62,\"importe_total\":1.69,\"pagina\":4},{\"orden\":118,\"numero_albaran\":\"08M34837\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":543.92,\"importe_total\":569.49,\"pagina\":4},{\"orden\":119,\"numero_albaran\":\"08M34838\",\"fecha_albaran\":\"08-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":7.19,\"importe_total\":9.07,\"pagina\":4},{\"orden\":120,\"numero_albaran\":\"08C36031\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":25.47,\"importe_total\":28.38,\"pagina\":4},{\"orden\":121,\"numero_albaran\":\"08C36225\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":7.34,\"importe_total\":7.67,\"pagina\":4},{\"orden\":122,\"numero_albaran\":\"08C36245\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":14.29,\"importe_total\":15.92,\"pagina\":4},{\"orden\":123,\"numero_albaran\":\"08C36330\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":159.01,\"importe_total\":166.17,\"pagina\":4},{\"orden\":124,\"numero_albaran\":\"08C36335\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":14.21,\"importe_total\":14.85,\"pagina\":4},{\"orden\":125,\"numero_albaran\":\"08C36624\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":17.51,\"importe_total\":22.1,\"pagina\":4},{\"orden\":126,\"numero_albaran\":\"08C36870\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":31.25,\"importe_total\":32.66,\"pagina\":4},{\"orden\":127,\"numero_albaran\":\"08C36940\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":2.04,\"importe_total\":2.13,\"pagina\":4},{\"orden\":128,\"numero_albaran\":\"08C37045\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":10.08,\"importe_total\":10.53,\"pagina\":4},{\"orden\":129,\"numero_albaran\":\"08C37049\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":8.48,\"importe_total\":10.7,\"pagina\":4},{\"orden\":130,\"numero_albaran\":\"08C37065\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":2.74,\"importe_total\":2.86,\"pagina\":4},{\"orden\":131,\"numero_albaran\":\"08M35430\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":105.06,\"importe_total\":132.58,\"pagina\":4},{\"orden\":132,\"numero_albaran\":\"08M35555\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":38.98,\"importe_total\":43.43,\"pagina\":4},{\"orden\":133,\"numero_albaran\":\"08M35630\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":84.09,\"importe_total\":87.87,\"pagina\":4},{\"orden\":134,\"numero_albaran\":\"08M35691\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":15.4,\"importe_total\":16.1,\"pagina\":4},{\"orden\":135,\"numero_albaran\":\"08M35692\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":15.4,\"importe_total\":16.1,\"pagina\":4},{\"orden\":136,\"numero_albaran\":\"08M35806\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":12.16,\"importe_total\":12.71,\"pagina\":4},{\"orden\":137,\"numero_albaran\":\"08M35828\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":18.82,\"importe_total\":19.66,\"pagina\":4},{\"orden\":138,\"numero_albaran\":\"08M35863\",\"fecha_albaran\":\"09-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":156.99,\"importe_total\":164.05,\"pagina\":4},{\"orden\":139,\"numero_albaran\":\"08C37482\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":157.23,\"importe_total\":164.56,\"pagina\":4},{\"orden\":140,\"numero_albaran\":\"08C37653\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":485.73,\"importe_total\":507.59,\"pagina\":4},{\"orden\":141,\"numero_albaran\":\"08C37656\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"NETOS PLUS\",\"descripcion\":null,\"importe_base\":18.96,\"importe_total\":23.49,\"pagina\":4},{\"orden\":142,\"numero_albaran\":\"08C37737\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":12.83,\"importe_total\":13.4,\"pagina\":4},{\"orden\":143,\"numero_albaran\":\"08M36292\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":18.79,\"importe_total\":19.63,\"pagina\":4},{\"orden\":144,\"numero_albaran\":\"08M36757\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":289.53,\"importe_total\":302.56,\"pagina\":4},{\"orden\":145,\"numero_albaran\":\"08M36770\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"NORMAL ACUSTICO\",\"descripcion\":null,\"importe_base\":2.12,\"importe_total\":2.21,\"pagina\":4},{\"orden\":146,\"numero_albaran\":\"08C38230\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"ABONOS AGRUPADOS\",\"descripcion\":null,\"importe_base\":-8.29,\"importe_total\":-8.66,\"pagina\":2},{\"orden\":147,\"numero_albaran\":\"08C38231\",\"fecha_albaran\":\"10-07-2026\",\"tipo_movimiento\":\"ABONOS AGRUPADOS\",\"descripcion\":null,\"importe_base\":-34.54,\"importe_total\":-36.09,\"pagina\":2}],\"ajustes\":[{\"orden\":1,\"tipo_ajuste\":\"DEDUCCION\",\"descripcion\":\"IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011\",\"importe\":-19.02,\"pagina\":1},{\"orden\":2,\"tipo_ajuste\":\"DEDUCCION\",\"descripcion\":null,\"importe\":-6.13,\"pagina\":1}]}",
+            "type": "output_text",
+            "logprobs": [],
+            "parsed": {
+              "vencimientos": [
+                {
+                  "orden": 1,
+                  "fecha_vencimiento": "06-10-2026",
+                  "importe": null,
+                  "pagina": 1
+                }
+              ],
+              "impuestos": [
+                {
+                  "orden": 1,
+                  "base_imponible": 6658.52,
+                  "tipo_iva": 4.0,
+                  "cuota_iva": 266.34,
+                  "tipo_recargo_equivalencia": 0.5,
+                  "cuota_recargo_equivalencia": 33.29,
+                  "pagina": 1
+                },
+                {
+                  "orden": 2,
+                  "base_imponible": 736.37,
+                  "tipo_iva": 4.0,
+                  "cuota_iva": 29.45,
+                  "tipo_recargo_equivalencia": 0.5,
+                  "cuota_recargo_equivalencia": 3.68,
+                  "pagina": 1
+                },
+                {
+                  "orden": 3,
+                  "base_imponible": 1153.63,
+                  "tipo_iva": 4.0,
+                  "cuota_iva": 46.15,
+                  "tipo_recargo_equivalencia": 0.5,
+                  "cuota_recargo_equivalencia": 5.77,
+                  "pagina": 1
+                },
+                {
+                  "orden": 4,
+                  "base_imponible": 1683.59,
+                  "tipo_iva": 10.0,
+                  "cuota_iva": 168.36,
+                  "tipo_recargo_equivalencia": 1.4,
+                  "cuota_recargo_equivalencia": 23.57,
+                  "pagina": 1
+                },
+                {
+                  "orden": 5,
+                  "base_imponible": 273.31,
+                  "tipo_iva": 21.0,
+                  "cuota_iva": 57.4,
+                  "tipo_recargo_equivalencia": 5.2,
+                  "cuota_recargo_equivalencia": 14.21,
+                  "pagina": 1
+                },
+                {
+                  "orden": 6,
+                  "base_imponible": 26.0,
+                  "tipo_iva": 21.0,
+                  "cuota_iva": 5.46,
+                  "tipo_recargo_equivalencia": null,
+                  "cuota_recargo_equivalencia": null,
+                  "pagina": 1
+                }
+              ],
+              "albaranes": [
+                {
+                  "orden": 1,
+                  "numero_albaran": "08C26499",
+                  "fecha_albaran": "30-06-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.62,
+                  "importe_total": 1.69,
+                  "pagina": 2
+                },
+                {
+                  "orden": 2,
+                  "numero_albaran": "08C26500",
+                  "fecha_albaran": "30-06-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.26,
+                  "importe_total": 1.32,
+                  "pagina": 2
+                },
+                {
+                  "orden": 3,
+                  "numero_albaran": "08C27035",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 116.87,
+                  "importe_total": 127.77,
+                  "pagina": 2
+                },
+                {
+                  "orden": 4,
+                  "numero_albaran": "08C27265",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 733.36,
+                  "importe_total": 775.24,
+                  "pagina": 2
+                },
+                {
+                  "orden": 5,
+                  "numero_albaran": "08C27268",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 37.76,
+                  "importe_total": 39.46,
+                  "pagina": 2
+                },
+                {
+                  "orden": 6,
+                  "numero_albaran": "08C27311",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 4.13,
+                  "importe_total": 4.32,
+                  "pagina": 2
+                },
+                {
+                  "orden": 7,
+                  "numero_albaran": "08C27437",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 3.36,
+                  "importe_total": 3.51,
+                  "pagina": 2
+                },
+                {
+                  "orden": 8,
+                  "numero_albaran": "08C27700",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 103.88,
+                  "importe_total": 115.72,
+                  "pagina": 2
+                },
+                {
+                  "orden": 9,
+                  "numero_albaran": "08C27725",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 33.87,
+                  "importe_total": 37.73,
+                  "pagina": 2
+                },
+                {
+                  "orden": 10,
+                  "numero_albaran": "08C27896",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 15.03,
+                  "importe_total": 15.71,
+                  "pagina": 2
+                },
+                {
+                  "orden": 11,
+                  "numero_albaran": "08C27900",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 8.48,
+                  "importe_total": 10.7,
+                  "pagina": 2
+                },
+                {
+                  "orden": 12,
+                  "numero_albaran": "08M29400",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 39.71,
+                  "importe_total": 41.5,
+                  "pagina": 2
+                },
+                {
+                  "orden": 13,
+                  "numero_albaran": "08M29624",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 52.29,
+                  "importe_total": 58.25,
+                  "pagina": 2
+                },
+                {
+                  "orden": 14,
+                  "numero_albaran": "08M29915",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 61.99,
+                  "importe_total": 64.78,
+                  "pagina": 2
+                },
+                {
+                  "orden": 15,
+                  "numero_albaran": "08M29918",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 7.59,
+                  "importe_total": 9.57,
+                  "pagina": 2
+                },
+                {
+                  "orden": 16,
+                  "numero_albaran": "08M29976",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 8.7,
+                  "importe_total": 9.09,
+                  "pagina": 2
+                },
+                {
+                  "orden": 17,
+                  "numero_albaran": "08M30003",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 4.7,
+                  "importe_total": 4.91,
+                  "pagina": 2
+                },
+                {
+                  "orden": 18,
+                  "numero_albaran": "08M30063",
+                  "fecha_albaran": "01-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 14.27,
+                  "importe_total": 14.91,
+                  "pagina": 2
+                },
+                {
+                  "orden": 19,
+                  "numero_albaran": "08C28370",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 343.97,
+                  "importe_total": 362.8,
+                  "pagina": 2
+                },
+                {
+                  "orden": 20,
+                  "numero_albaran": "08C28452",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 4.42,
+                  "importe_total": 4.62,
+                  "pagina": 2
+                },
+                {
+                  "orden": 21,
+                  "numero_albaran": "08C28650",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 147.38,
+                  "importe_total": 154.02,
+                  "pagina": 2
+                },
+                {
+                  "orden": 22,
+                  "numero_albaran": "08C28658",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 7.65,
+                  "importe_total": 9.44,
+                  "pagina": 2
+                },
+                {
+                  "orden": 23,
+                  "numero_albaran": "08C28814",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 4.25,
+                  "importe_total": 4.44,
+                  "pagina": 2
+                },
+                {
+                  "orden": 24,
+                  "numero_albaran": "08C29133",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 24.73,
+                  "importe_total": 25.84,
+                  "pagina": 2
+                },
+                {
+                  "orden": 25,
+                  "numero_albaran": "08C29302",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 27.89,
+                  "importe_total": 29.15,
+                  "pagina": 2
+                },
+                {
+                  "orden": 26,
+                  "numero_albaran": "08M30406",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 3.03,
+                  "importe_total": 3.17,
+                  "pagina": 2
+                },
+                {
+                  "orden": 27,
+                  "numero_albaran": "08M30761",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 18.55,
+                  "importe_total": 19.38,
+                  "pagina": 2
+                },
+                {
+                  "orden": 28,
+                  "numero_albaran": "08M30914",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 161.14,
+                  "importe_total": 168.4,
+                  "pagina": 2
+                },
+                {
+                  "orden": 29,
+                  "numero_albaran": "08M30924",
+                  "fecha_albaran": "02-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 2.12,
+                  "importe_total": 2.21,
+                  "pagina": 2
+                },
+                {
+                  "orden": 30,
+                  "numero_albaran": "08C29766",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 9.25,
+                  "importe_total": 9.67,
+                  "pagina": 2
+                },
+                {
+                  "orden": 31,
+                  "numero_albaran": "08C29780",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 213.22,
+                  "importe_total": 223.46,
+                  "pagina": 2
+                },
+                {
+                  "orden": 32,
+                  "numero_albaran": "08C29977",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 256.39,
+                  "importe_total": 268.17,
+                  "pagina": 2
+                },
+                {
+                  "orden": 33,
+                  "numero_albaran": "08C29988",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 11.73,
+                  "importe_total": 13.06,
+                  "pagina": 2
+                },
+                {
+                  "orden": 34,
+                  "numero_albaran": "08C29989",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.26,
+                  "importe_total": 1.32,
+                  "pagina": 2
+                },
+                {
+                  "orden": 35,
+                  "numero_albaran": "08C30585",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 5.75,
+                  "importe_total": 6.01,
+                  "pagina": 2
+                },
+                {
+                  "orden": 36,
+                  "numero_albaran": "08M31275",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 55.54,
+                  "importe_total": 61.87,
+                  "pagina": 2
+                },
+                {
+                  "orden": 37,
+                  "numero_albaran": "08M31303",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 9.57,
+                  "importe_total": 12.08,
+                  "pagina": 2
+                },
+                {
+                  "orden": 38,
+                  "numero_albaran": "08M31366",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.4,
+                  "importe_total": 1.56,
+                  "pagina": 2
+                },
+                {
+                  "orden": 39,
+                  "numero_albaran": "08M31836",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 67.53,
+                  "importe_total": 70.78,
+                  "pagina": 2
+                },
+                {
+                  "orden": 40,
+                  "numero_albaran": "08M31892",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 18.39,
+                  "importe_total": 19.22,
+                  "pagina": 2
+                },
+                {
+                  "orden": 41,
+                  "numero_albaran": "08M31914",
+                  "fecha_albaran": "03-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 31.16,
+                  "importe_total": 32.57,
+                  "pagina": 2
+                },
+                {
+                  "orden": 42,
+                  "numero_albaran": "08C30750",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 13.96,
+                  "importe_total": 15.56,
+                  "pagina": 2
+                },
+                {
+                  "orden": 43,
+                  "numero_albaran": "08C30762",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 9.43,
+                  "importe_total": 10.5,
+                  "pagina": 2
+                },
+                {
+                  "orden": 44,
+                  "numero_albaran": "08C30798",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 12.02,
+                  "importe_total": 15.17,
+                  "pagina": 2
+                },
+                {
+                  "orden": 45,
+                  "numero_albaran": "08C30821",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 11.46,
+                  "importe_total": 11.98,
+                  "pagina": 2
+                },
+                {
+                  "orden": 46,
+                  "numero_albaran": "08C30958",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 9.64,
+                  "importe_total": 10.73,
+                  "pagina": 2
+                },
+                {
+                  "orden": 47,
+                  "numero_albaran": "08C31034",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.62,
+                  "importe_total": 1.69,
+                  "pagina": 2
+                },
+                {
+                  "orden": 48,
+                  "numero_albaran": "08C31135",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.78,
+                  "importe_total": 1.86,
+                  "pagina": 2
+                },
+                {
+                  "orden": 49,
+                  "numero_albaran": "08C31297",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 2.16,
+                  "importe_total": 2.26,
+                  "pagina": 2
+                },
+                {
+                  "orden": 50,
+                  "numero_albaran": "08C31301",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 301.99,
+                  "importe_total": 318.74,
+                  "pagina": 2
+                },
+                {
+                  "orden": 51,
+                  "numero_albaran": "08C31302",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.64,
+                  "importe_total": 1.72,
+                  "pagina": 3
+                },
+                {
+                  "orden": 52,
+                  "numero_albaran": "08C31489",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 197.13,
+                  "importe_total": 206.01,
+                  "pagina": 3
+                },
+                {
+                  "orden": 53,
+                  "numero_albaran": "08M32051",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 85.88,
+                  "importe_total": 89.75,
+                  "pagina": 3
+                },
+                {
+                  "orden": 54,
+                  "numero_albaran": "08V19185",
+                  "fecha_albaran": "04-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 6.99,
+                  "importe_total": 8.82,
+                  "pagina": 3
+                },
+                {
+                  "orden": 55,
+                  "numero_albaran": "08C31638",
+                  "fecha_albaran": "05-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 57.47,
+                  "importe_total": 60.06,
+                  "pagina": 3
+                },
+                {
+                  "orden": 56,
+                  "numero_albaran": "08C32023",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 168.48,
+                  "importe_total": 176.06,
+                  "pagina": 3
+                },
+                {
+                  "orden": 57,
+                  "numero_albaran": "08C32131",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 228.27,
+                  "importe_total": 238.54,
+                  "pagina": 3
+                },
+                {
+                  "orden": 58,
+                  "numero_albaran": "08C32157",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 10.99,
+                  "importe_total": 11.48,
+                  "pagina": 3
+                },
+                {
+                  "orden": 59,
+                  "numero_albaran": "08C32269",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 32.78,
+                  "importe_total": 34.25,
+                  "pagina": 3
+                },
+                {
+                  "orden": 60,
+                  "numero_albaran": "08C32270",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 16.39,
+                  "importe_total": 17.13,
+                  "pagina": 3
+                },
+                {
+                  "orden": 61,
+                  "numero_albaran": "08C32342",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 6.14,
+                  "importe_total": 6.42,
+                  "pagina": 3
+                },
+                {
+                  "orden": 62,
+                  "numero_albaran": "08C32348",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 711.47,
+                  "importe_total": 743.49,
+                  "pagina": 3
+                },
+                {
+                  "orden": 63,
+                  "numero_albaran": "08C32355",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 13.4,
+                  "importe_total": 15.21,
+                  "pagina": 3
+                },
+                {
+                  "orden": 64,
+                  "numero_albaran": "08C32356",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.35,
+                  "importe_total": 1.41,
+                  "pagina": 3
+                },
+                {
+                  "orden": 65,
+                  "numero_albaran": "08C32802",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 151.51,
+                  "importe_total": 168.78,
+                  "pagina": 3
+                },
+                {
+                  "orden": 66,
+                  "numero_albaran": "08C32805",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 24.74,
+                  "importe_total": 27.56,
+                  "pagina": 3
+                },
+                {
+                  "orden": 67,
+                  "numero_albaran": "08C32806",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 65.54,
+                  "importe_total": 68.49,
+                  "pagina": 3
+                },
+                {
+                  "orden": 68,
+                  "numero_albaran": "08C32824",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 34.5,
+                  "importe_total": 38.43,
+                  "pagina": 3
+                },
+                {
+                  "orden": 69,
+                  "numero_albaran": "08C32854",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 5.33,
+                  "importe_total": 5.57,
+                  "pagina": 3
+                },
+                {
+                  "orden": 70,
+                  "numero_albaran": "08C32877",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 4.85,
+                  "importe_total": 5.06,
+                  "pagina": 3
+                },
+                {
+                  "orden": 71,
+                  "numero_albaran": "08C32878",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 9.7,
+                  "importe_total": 10.14,
+                  "pagina": 3
+                },
+                {
+                  "orden": 72,
+                  "numero_albaran": "08C33027",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 6.45,
+                  "importe_total": 6.74,
+                  "pagina": 3
+                },
+                {
+                  "orden": 73,
+                  "numero_albaran": "08M32213",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 42.94,
+                  "importe_total": 44.87,
+                  "pagina": 3
+                },
+                {
+                  "orden": 74,
+                  "numero_albaran": "08M32226",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 18.82,
+                  "importe_total": 19.66,
+                  "pagina": 3
+                },
+                {
+                  "orden": 75,
+                  "numero_albaran": "08M32414",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 35.98,
+                  "importe_total": 37.6,
+                  "pagina": 3
+                },
+                {
+                  "orden": 76,
+                  "numero_albaran": "08M32604",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 99.61,
+                  "importe_total": 104.09,
+                  "pagina": 3
+                },
+                {
+                  "orden": 77,
+                  "numero_albaran": "08M32607",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 55.54,
+                  "importe_total": 61.87,
+                  "pagina": 3
+                },
+                {
+                  "orden": 78,
+                  "numero_albaran": "08M32612",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 0.85,
+                  "importe_total": 0.88,
+                  "pagina": 3
+                },
+                {
+                  "orden": 79,
+                  "numero_albaran": "08M32962",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 185.95,
+                  "importe_total": 196.38,
+                  "pagina": 3
+                },
+                {
+                  "orden": 80,
+                  "numero_albaran": "08M32963",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 7.17,
+                  "importe_total": 9.05,
+                  "pagina": 3
+                },
+                {
+                  "orden": 81,
+                  "numero_albaran": "08M32977",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 34.78,
+                  "importe_total": 36.34,
+                  "pagina": 3
+                },
+                {
+                  "orden": 82,
+                  "numero_albaran": "08V19262",
+                  "fecha_albaran": "06-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 6.99,
+                  "importe_total": 8.82,
+                  "pagina": 3
+                },
+                {
+                  "orden": 83,
+                  "numero_albaran": "08C33364",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 92.94,
+                  "importe_total": 103.53,
+                  "pagina": 3
+                },
+                {
+                  "orden": 84,
+                  "numero_albaran": "08C33510",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 34.98,
+                  "importe_total": 38.62,
+                  "pagina": 3
+                },
+                {
+                  "orden": 85,
+                  "numero_albaran": "08C33655",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 10.84,
+                  "importe_total": 11.32,
+                  "pagina": 3
+                },
+                {
+                  "orden": 86,
+                  "numero_albaran": "08C33660",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 504.67,
+                  "importe_total": 533.1,
+                  "pagina": 3
+                },
+                {
+                  "orden": 87,
+                  "numero_albaran": "08C33667",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 18.79,
+                  "importe_total": 21.92,
+                  "pagina": 3
+                },
+                {
+                  "orden": 88,
+                  "numero_albaran": "08C33697",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 161.55,
+                  "importe_total": 168.82,
+                  "pagina": 3
+                },
+                {
+                  "orden": 89,
+                  "numero_albaran": "08C34216",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 2.43,
+                  "importe_total": 2.54,
+                  "pagina": 3
+                },
+                {
+                  "orden": 90,
+                  "numero_albaran": "08C34434",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 133.85,
+                  "importe_total": 139.87,
+                  "pagina": 3
+                },
+                {
+                  "orden": 91,
+                  "numero_albaran": "08C34451",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 6.41,
+                  "importe_total": 6.7,
+                  "pagina": 3
+                },
+                {
+                  "orden": 92,
+                  "numero_albaran": "08M33392",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 128.22,
+                  "importe_total": 142.77,
+                  "pagina": 3
+                },
+                {
+                  "orden": 93,
+                  "numero_albaran": "08M33628",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 169.67,
+                  "importe_total": 177.31,
+                  "pagina": 3
+                },
+                {
+                  "orden": 94,
+                  "numero_albaran": "08M33646",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 63.68,
+                  "importe_total": 70.94,
+                  "pagina": 3
+                },
+                {
+                  "orden": 95,
+                  "numero_albaran": "08M33656",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 25.82,
+                  "importe_total": 28.76,
+                  "pagina": 3
+                },
+                {
+                  "orden": 96,
+                  "numero_albaran": "08M33699",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 102.17,
+                  "importe_total": 106.77,
+                  "pagina": 3
+                },
+                {
+                  "orden": 97,
+                  "numero_albaran": "08M33871",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 10.76,
+                  "importe_total": 13.58,
+                  "pagina": 3
+                },
+                {
+                  "orden": 98,
+                  "numero_albaran": "08M33960",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 349.7,
+                  "importe_total": 366.12,
+                  "pagina": 3
+                },
+                {
+                  "orden": 99,
+                  "numero_albaran": "08M33962",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 11.82,
+                  "importe_total": 13.17,
+                  "pagina": 3
+                },
+                {
+                  "orden": 100,
+                  "numero_albaran": "08M34050",
+                  "fecha_albaran": "07-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.83,
+                  "importe_total": 1.91,
+                  "pagina": 3
+                },
+                {
+                  "orden": 101,
+                  "numero_albaran": "08C34793",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 297.55,
+                  "importe_total": 314.75,
+                  "pagina": 4
+                },
+                {
+                  "orden": 102,
+                  "numero_albaran": "08C34914",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 83.96,
+                  "importe_total": 90.39,
+                  "pagina": 4
+                },
+                {
+                  "orden": 103,
+                  "numero_albaran": "08C34941",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 7.27,
+                  "importe_total": 7.6,
+                  "pagina": 4
+                },
+                {
+                  "orden": 104,
+                  "numero_albaran": "08C34961",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 3.62,
+                  "importe_total": 4.03,
+                  "pagina": 4
+                },
+                {
+                  "orden": 105,
+                  "numero_albaran": "08C34993",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 87.78,
+                  "importe_total": 97.79,
+                  "pagina": 4
+                },
+                {
+                  "orden": 106,
+                  "numero_albaran": "08C35060",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 341.09,
+                  "importe_total": 356.44,
+                  "pagina": 4
+                },
+                {
+                  "orden": 107,
+                  "numero_albaran": "08C35062",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 5.09,
+                  "importe_total": 6.21,
+                  "pagina": 4
+                },
+                {
+                  "orden": 108,
+                  "numero_albaran": "08C35063",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.26,
+                  "importe_total": 1.32,
+                  "pagina": 4
+                },
+                {
+                  "orden": 109,
+                  "numero_albaran": "08C35281",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 4.67,
+                  "importe_total": 4.88,
+                  "pagina": 4
+                },
+                {
+                  "orden": 110,
+                  "numero_albaran": "08C35567",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 19.91,
+                  "importe_total": 22.18,
+                  "pagina": 4
+                },
+                {
+                  "orden": 111,
+                  "numero_albaran": "08C35706",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 11.19,
+                  "importe_total": 11.7,
+                  "pagina": 4
+                },
+                {
+                  "orden": 112,
+                  "numero_albaran": "08M34186",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 21.21,
+                  "importe_total": 23.63,
+                  "pagina": 4
+                },
+                {
+                  "orden": 113,
+                  "numero_albaran": "08M34243",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 69.82,
+                  "importe_total": 72.96,
+                  "pagina": 4
+                },
+                {
+                  "orden": 114,
+                  "numero_albaran": "08M34283",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 41.68,
+                  "importe_total": 43.56,
+                  "pagina": 4
+                },
+                {
+                  "orden": 115,
+                  "numero_albaran": "08M34323",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 66.07,
+                  "importe_total": 73.6,
+                  "pagina": 4
+                },
+                {
+                  "orden": 116,
+                  "numero_albaran": "08M34347",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 9.83,
+                  "importe_total": 10.83,
+                  "pagina": 4
+                },
+                {
+                  "orden": 117,
+                  "numero_albaran": "08M34834",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 1.62,
+                  "importe_total": 1.69,
+                  "pagina": 4
+                },
+                {
+                  "orden": 118,
+                  "numero_albaran": "08M34837",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 543.92,
+                  "importe_total": 569.49,
+                  "pagina": 4
+                },
+                {
+                  "orden": 119,
+                  "numero_albaran": "08M34838",
+                  "fecha_albaran": "08-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 7.19,
+                  "importe_total": 9.07,
+                  "pagina": 4
+                },
+                {
+                  "orden": 120,
+                  "numero_albaran": "08C36031",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 25.47,
+                  "importe_total": 28.38,
+                  "pagina": 4
+                },
+                {
+                  "orden": 121,
+                  "numero_albaran": "08C36225",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 7.34,
+                  "importe_total": 7.67,
+                  "pagina": 4
+                },
+                {
+                  "orden": 122,
+                  "numero_albaran": "08C36245",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 14.29,
+                  "importe_total": 15.92,
+                  "pagina": 4
+                },
+                {
+                  "orden": 123,
+                  "numero_albaran": "08C36330",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 159.01,
+                  "importe_total": 166.17,
+                  "pagina": 4
+                },
+                {
+                  "orden": 124,
+                  "numero_albaran": "08C36335",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 14.21,
+                  "importe_total": 14.85,
+                  "pagina": 4
+                },
+                {
+                  "orden": 125,
+                  "numero_albaran": "08C36624",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 17.51,
+                  "importe_total": 22.1,
+                  "pagina": 4
+                },
+                {
+                  "orden": 126,
+                  "numero_albaran": "08C36870",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 31.25,
+                  "importe_total": 32.66,
+                  "pagina": 4
+                },
+                {
+                  "orden": 127,
+                  "numero_albaran": "08C36940",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 2.04,
+                  "importe_total": 2.13,
+                  "pagina": 4
+                },
+                {
+                  "orden": 128,
+                  "numero_albaran": "08C37045",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 10.08,
+                  "importe_total": 10.53,
+                  "pagina": 4
+                },
+                {
+                  "orden": 129,
+                  "numero_albaran": "08C37049",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 8.48,
+                  "importe_total": 10.7,
+                  "pagina": 4
+                },
+                {
+                  "orden": 130,
+                  "numero_albaran": "08C37065",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 2.74,
+                  "importe_total": 2.86,
+                  "pagina": 4
+                },
+                {
+                  "orden": 131,
+                  "numero_albaran": "08M35430",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 105.06,
+                  "importe_total": 132.58,
+                  "pagina": 4
+                },
+                {
+                  "orden": 132,
+                  "numero_albaran": "08M35555",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 38.98,
+                  "importe_total": 43.43,
+                  "pagina": 4
+                },
+                {
+                  "orden": 133,
+                  "numero_albaran": "08M35630",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 84.09,
+                  "importe_total": 87.87,
+                  "pagina": 4
+                },
+                {
+                  "orden": 134,
+                  "numero_albaran": "08M35691",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 15.4,
+                  "importe_total": 16.1,
+                  "pagina": 4
+                },
+                {
+                  "orden": 135,
+                  "numero_albaran": "08M35692",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 15.4,
+                  "importe_total": 16.1,
+                  "pagina": 4
+                },
+                {
+                  "orden": 136,
+                  "numero_albaran": "08M35806",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 12.16,
+                  "importe_total": 12.71,
+                  "pagina": 4
+                },
+                {
+                  "orden": 137,
+                  "numero_albaran": "08M35828",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 18.82,
+                  "importe_total": 19.66,
+                  "pagina": 4
+                },
+                {
+                  "orden": 138,
+                  "numero_albaran": "08M35863",
+                  "fecha_albaran": "09-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 156.99,
+                  "importe_total": 164.05,
+                  "pagina": 4
+                },
+                {
+                  "orden": 139,
+                  "numero_albaran": "08C37482",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 157.23,
+                  "importe_total": 164.56,
+                  "pagina": 4
+                },
+                {
+                  "orden": 140,
+                  "numero_albaran": "08C37653",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 485.73,
+                  "importe_total": 507.59,
+                  "pagina": 4
+                },
+                {
+                  "orden": 141,
+                  "numero_albaran": "08C37656",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "NETOS PLUS",
+                  "descripcion": null,
+                  "importe_base": 18.96,
+                  "importe_total": 23.49,
+                  "pagina": 4
+                },
+                {
+                  "orden": 142,
+                  "numero_albaran": "08C37737",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 12.83,
+                  "importe_total": 13.4,
+                  "pagina": 4
+                },
+                {
+                  "orden": 143,
+                  "numero_albaran": "08M36292",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 18.79,
+                  "importe_total": 19.63,
+                  "pagina": 4
+                },
+                {
+                  "orden": 144,
+                  "numero_albaran": "08M36757",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 289.53,
+                  "importe_total": 302.56,
+                  "pagina": 4
+                },
+                {
+                  "orden": 145,
+                  "numero_albaran": "08M36770",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "NORMAL ACUSTICO",
+                  "descripcion": null,
+                  "importe_base": 2.12,
+                  "importe_total": 2.21,
+                  "pagina": 4
+                },
+                {
+                  "orden": 146,
+                  "numero_albaran": "08C38230",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "ABONOS AGRUPADOS",
+                  "descripcion": null,
+                  "importe_base": -8.29,
+                  "importe_total": -8.66,
+                  "pagina": 2
+                },
+                {
+                  "orden": 147,
+                  "numero_albaran": "08C38231",
+                  "fecha_albaran": "10-07-2026",
+                  "tipo_movimiento": "ABONOS AGRUPADOS",
+                  "descripcion": null,
+                  "importe_base": -34.54,
+                  "importe_total": -36.09,
+                  "pagina": 2
+                }
+              ],
+              "ajustes": [
+                {
+                  "orden": 1,
+                  "tipo_ajuste": "DEDUCCION",
+                  "descripcion": "IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011",
+                  "importe": -19.02,
+                  "pagina": 1
+                },
+                {
+                  "orden": 2,
+                  "tipo_ajuste": "DEDUCCION",
+                  "descripcion": null,
+                  "importe": -6.13,
+                  "pagina": 1
+                }
+              ]
+            }
+          }
+        ],
+        "role": "assistant",
+        "status": "completed",
+        "type": "message",
+        "phase": "final_answer"
+      }
+    ],
+    "parallel_tool_calls": true,
+    "temperature": 1.0,
+    "tool_choice": "auto",
+    "tools": [],
+    "top_p": 0.98,
+    "background": false,
+    "completed_at": 1786032331.0,
+    "conversation": null,
+    "max_output_tokens": 32000,
+    "max_tool_calls": null,
+    "moderation": null,
+    "previous_response_id": null,
+    "prompt": null,
+    "prompt_cache_key": null,
+    "prompt_cache_options": null,
+    "prompt_cache_retention": "24h",
+    "reasoning": {
+      "context": "all_turns",
+      "effort": "none",
+      "generate_summary": null,
+      "mode": "standard",
+      "summary": null
+    },
+    "safety_identifier": null,
+    "service_tier": "default",
+    "status": "completed",
+    "text": {
+      "format": {
+        "name": "ExtraccionEspecializada",
+        "schema_": {
+          "$defs": {
+            "Ajuste": {
+              "additionalProperties": false,
+              "properties": {
+                "orden": {
+                  "title": "Orden",
+                  "type": "integer"
+                },
+                "tipo_ajuste": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Tipo Ajuste"
+                },
+                "descripcion": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Descripcion"
+                },
+                "importe": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Importe"
+                },
+                "pagina": {
+                  "title": "Pagina",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "orden",
+                "tipo_ajuste",
+                "descripcion",
+                "importe",
+                "pagina"
+              ],
+              "title": "Ajuste",
+              "type": "object"
+            },
+            "Albaran": {
+              "additionalProperties": false,
+              "properties": {
+                "orden": {
+                  "title": "Orden",
+                  "type": "integer"
+                },
+                "numero_albaran": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Numero Albaran"
+                },
+                "fecha_albaran": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Fecha Albaran"
+                },
+                "tipo_movimiento": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Tipo Movimiento"
+                },
+                "descripcion": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Descripcion"
+                },
+                "importe_base": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Importe Base"
+                },
+                "importe_total": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Importe Total"
+                },
+                "pagina": {
+                  "title": "Pagina",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "orden",
+                "numero_albaran",
+                "fecha_albaran",
+                "tipo_movimiento",
+                "descripcion",
+                "importe_base",
+                "importe_total",
+                "pagina"
+              ],
+              "title": "Albaran",
+              "type": "object"
+            },
+            "Impuesto": {
+              "additionalProperties": false,
+              "properties": {
+                "orden": {
+                  "title": "Orden",
+                  "type": "integer"
+                },
+                "base_imponible": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Base Imponible"
+                },
+                "tipo_iva": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Tipo Iva"
+                },
+                "cuota_iva": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Cuota Iva"
+                },
+                "tipo_recargo_equivalencia": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Tipo Recargo Equivalencia"
+                },
+                "cuota_recargo_equivalencia": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Cuota Recargo Equivalencia"
+                },
+                "pagina": {
+                  "title": "Pagina",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "orden",
+                "base_imponible",
+                "tipo_iva",
+                "cuota_iva",
+                "tipo_recargo_equivalencia",
+                "cuota_recargo_equivalencia",
+                "pagina"
+              ],
+              "title": "Impuesto",
+              "type": "object"
+            },
+            "Vencimiento": {
+              "additionalProperties": false,
+              "properties": {
+                "orden": {
+                  "title": "Orden",
+                  "type": "integer"
+                },
+                "fecha_vencimiento": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Fecha Vencimiento"
+                },
+                "importe": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Importe"
+                },
+                "pagina": {
+                  "title": "Pagina",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "orden",
+                "fecha_vencimiento",
+                "importe",
+                "pagina"
+              ],
+              "title": "Vencimiento",
+              "type": "object"
+            }
+          },
+          "additionalProperties": false,
+          "properties": {
+            "vencimientos": {
+              "items": {
+                "$ref": "#/$defs/Vencimiento"
+              },
+              "title": "Vencimientos",
+              "type": "array"
+            },
+            "impuestos": {
+              "items": {
+                "$ref": "#/$defs/Impuesto"
+              },
+              "title": "Impuestos",
+              "type": "array"
+            },
+            "albaranes": {
+              "items": {
+                "$ref": "#/$defs/Albaran"
+              },
+              "title": "Albaranes",
+              "type": "array"
+            },
+            "ajustes": {
+              "items": {
+                "$ref": "#/$defs/Ajuste"
+              },
+              "title": "Ajustes",
+              "type": "array"
+            }
+          },
+          "required": [
+            "vencimientos",
+            "impuestos",
+            "albaranes",
+            "ajustes"
+          ],
+          "title": "ExtraccionEspecializada",
+          "type": "object"
+        },
+        "type": "json_schema",
+        "description": null,
+        "strict": true
+      },
+      "verbosity": "medium"
+    },
+    "top_logprobs": 0,
+    "truncation": "disabled",
+    "usage": {
+      "input_tokens": 16975,
+      "input_tokens_details": {
+        "cache_write_tokens": 16972,
+        "cached_tokens": 0
+      },
+      "output_tokens": 8836,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 25811
+    },
+    "user": null,
+    "billing": {
+      "payer": "developer"
+    },
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "store": false,
+    "tool_usage": {
+      "image_gen": {
+        "input_tokens": 0,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 0
+        },
+        "total_tokens": 0
+      },
+      "web_search": {
+        "num_requests": 0
+      }
+    }
+  }
+}

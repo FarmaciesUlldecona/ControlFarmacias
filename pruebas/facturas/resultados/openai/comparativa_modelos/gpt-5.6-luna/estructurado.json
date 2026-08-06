@@ -1,0 +1,9 @@
+{
+  "factura": null,
+  "error": {
+    "modelo": "gpt-5.6-luna",
+    "tipo_error": "RateLimitError",
+    "status_code": 429,
+    "mensaje": "La unica llamada permitida fallo; no se reintentara."
+  }
+}
