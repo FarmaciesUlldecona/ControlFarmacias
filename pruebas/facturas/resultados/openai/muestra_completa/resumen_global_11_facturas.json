@@ -1,0 +1,549 @@
+{
+  "alcance": {
+    "documentos_totales_integrados": 11,
+    "nuevos_documentos_luna_homogeneos": 7,
+    "alliance_previos": 4,
+    "advertencia_metodologica": "Los cuatro Alliance previos se integran como antecedente Google; solo 08008427 dispone además de Luna general. No se mezclan sus campos en las tasas Luna de los siete nuevos."
+  },
+  "siete_nuevos_luna": {
+    "campos_evaluados": 154,
+    "correctos": 108,
+    "incorrectos": 15,
+    "ausentes": 7,
+    "parciales": 22,
+    "inventados": 2,
+    "acierto_estricto": 70.13,
+    "cobertura": 95.45,
+    "coste_total_usd": 0.102996,
+    "coste_medio_usd": 0.014714,
+    "paginas_totales": 9,
+    "tokens_entrada": 44396,
+    "tokens_entrada_cacheados": 10290,
+    "tokens_salida": 11310,
+    "tokens_razonamiento": 0,
+    "documentos_requieren_tablas": 4,
+    "porcentaje_requieren_tablas": 57.14,
+    "porcentaje_resoluble_solo_extraccion_general": 42.86
+  },
+  "alliance_previo_google": {
+    "total_campos_evaluados": 72,
+    "correctos": 26,
+    "incorrectos": 10,
+    "ausentes": 6,
+    "parciales": 11,
+    "entidad_ambigua": 3,
+    "no_disponible_forma_nativa": 16,
+    "porcentaje_acierto": 36.11,
+    "porcentaje_cobertura": 69.44,
+    "definicion_porcentaje_acierto": "CORRECTO / total de campos evaluados",
+    "definicion_porcentaje_cobertura": "(CORRECTO + INCORRECTO + PARCIAL + ENTIDAD AMBIGUA) / total; mide presencia utilizable, no exactitud",
+    "resultados_por_campo": {
+      "tipo_documento": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 4,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "categoria": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 4
+      },
+      "requiere_conciliacion_albaranes": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 4
+      },
+      "pagina_inicio": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 4
+      },
+      "pagina_fin": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 4
+      },
+      "proveedor_nombre": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 4,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "proveedor_cif": {
+        "total": 4,
+        "CORRECTO": 3,
+        "INCORRECTO": 1,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "numero_factura": {
+        "total": 4,
+        "CORRECTO": 4,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "fecha_factura": {
+        "total": 4,
+        "CORRECTO": 4,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "base_imponible_total": {
+        "total": 4,
+        "CORRECTO": 4,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "iva_total": {
+        "total": 4,
+        "CORRECTO": 4,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "importe_total": {
+        "total": 4,
+        "CORRECTO": 4,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "recargo_equivalencia_total": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 0,
+        "AUSENTE": 4,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "vencimientos": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 4,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "impuestos": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 0,
+        "AUSENTE": 2,
+        "PARCIAL": 0,
+        "ENTIDAD AMBIGUA": 2,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "albaranes": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 4,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "ajustes": {
+        "total": 4,
+        "CORRECTO": 3,
+        "INCORRECTO": 0,
+        "AUSENTE": 0,
+        "PARCIAL": 1,
+        "ENTIDAD AMBIGUA": 0,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      },
+      "destinatario": {
+        "total": 4,
+        "CORRECTO": 0,
+        "INCORRECTO": 1,
+        "AUSENTE": 0,
+        "PARCIAL": 2,
+        "ENTIDAD AMBIGUA": 1,
+        "NO DISPONIBLE DE FORMA NATIVA": 0
+      }
+    },
+    "resultados_por_factura": {
+      "08008428": {
+        "paginas_originales": [
+          1,
+          3
+        ],
+        "total": 18,
+        "INCORRECTO": 3,
+        "NO DISPONIBLE DE FORMA NATIVA": 4,
+        "CORRECTO": 7,
+        "AUSENTE": 1,
+        "PARCIAL": 2,
+        "ENTIDAD AMBIGUA": 1
+      },
+      "08008427": {
+        "paginas_originales": [
+          4,
+          7
+        ],
+        "total": 18,
+        "INCORRECTO": 3,
+        "NO DISPONIBLE DE FORMA NATIVA": 4,
+        "CORRECTO": 5,
+        "AUSENTE": 1,
+        "PARCIAL": 3,
+        "ENTIDAD AMBIGUA": 2
+      },
+      "08008429": {
+        "paginas_originales": [
+          8,
+          9
+        ],
+        "total": 18,
+        "INCORRECTO": 2,
+        "NO DISPONIBLE DE FORMA NATIVA": 4,
+        "CORRECTO": 7,
+        "AUSENTE": 2,
+        "PARCIAL": 3
+      },
+      "08008430": {
+        "paginas_originales": [
+          10,
+          11
+        ],
+        "total": 18,
+        "INCORRECTO": 2,
+        "NO DISPONIBLE DE FORMA NATIVA": 4,
+        "CORRECTO": 7,
+        "AUSENTE": 2,
+        "PARCIAL": 3
+      }
+    }
+  },
+  "alliance_08008427_luna_coste_usd": 0.034339,
+  "coste_openai_conocido_total_usd": 0.137335,
+  "paginas_totales_11_documentos": 20,
+  "tokens_openai_conocidos": {
+    "documentos_con_usage": 8,
+    "tokens_entrada": 62289,
+    "tokens_entrada_cacheados": 10290,
+    "tokens_salida": 14051,
+    "tokens_razonamiento": 0,
+    "nota": "No se atribuyen tokens OpenAI a los tres Alliance que solo tienen evaluación previa de Google."
+  },
+  "resultados_por_documento": [
+    {
+      "indice": 1,
+      "archivo_original": "DERMOFARM ABONO VTO 5.8.26 PIO.pdf",
+      "numero_factura_esperado": "2700282621",
+      "tipo_esperado": "ABONO",
+      "proveedor_esperado": "DERMOFARM, S.A.U.",
+      "paginas": 1,
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 14,
+        "incorrectos": 5,
+        "ausentes": 0,
+        "parciales": 3,
+        "inventados": 0,
+        "acierto_estricto": 63.64,
+        "cobertura": 100.0,
+        "coste_real_usd": 0.013164,
+        "duracion_segundos": 10.77,
+        "requiere_extraccion_literal_tablas": true
+      }
+    },
+    {
+      "indice": 2,
+      "archivo_original": "ECOCEUTICS MENSUALIDAD PIO.pdf",
+      "numero_factura_esperado": "FR00263029",
+      "tipo_esperado": "FACTURA",
+      "proveedor_esperado": "HYGIE31 ESPAÑA, S.L.U.",
+      "paginas": 1,
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 18,
+        "incorrectos": 1,
+        "ausentes": 1,
+        "parciales": 2,
+        "inventados": 0,
+        "acierto_estricto": 81.82,
+        "cobertura": 95.45,
+        "coste_real_usd": 0.008587,
+        "duracion_segundos": 14.107,
+        "requiere_extraccion_literal_tablas": false
+      }
+    },
+    {
+      "indice": 3,
+      "archivo_original": "FARMACIA GUIMERA VTO 30.6.26 PIO.pdf",
+      "numero_factura_esperado": "509",
+      "tipo_esperado": "FACTURA",
+      "proveedor_esperado": "FARMACIA GUIMERA C.B.",
+      "paginas": 1,
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 15,
+        "incorrectos": 2,
+        "ausentes": 2,
+        "parciales": 1,
+        "inventados": 2,
+        "acierto_estricto": 68.18,
+        "cobertura": 90.91,
+        "coste_real_usd": 0.010828,
+        "duracion_segundos": 6.976,
+        "requiere_extraccion_literal_tablas": false
+      }
+    },
+    {
+      "indice": 4,
+      "archivo_original": "FEDE VTO 5.8.26 PIO.pdf",
+      "numero_factura_esperado": "VN2605-0005381",
+      "tipo_esperado": "FACTURA",
+      "proveedor_esperado": "FEDERACIÓ FARMACÈUTICA, S.COOP.C.L.",
+      "paginas": 2,
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 15,
+        "incorrectos": 2,
+        "ausentes": 1,
+        "parciales": 4,
+        "inventados": 0,
+        "acierto_estricto": 68.18,
+        "cobertura": 95.45,
+        "coste_real_usd": 0.025816,
+        "duracion_segundos": 15.557,
+        "requiere_extraccion_literal_tablas": true
+      }
+    },
+    {
+      "indice": 5,
+      "archivo_original": "GAS CASA ABRIL-MAIG 2026.pdf",
+      "numero_factura_esperado": "P26CON024967719",
+      "tipo_esperado": "FACTURA",
+      "proveedor_esperado": "ENDESA ENERGÍA, S.A.U.",
+      "paginas": 2,
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 16,
+        "incorrectos": 2,
+        "ausentes": 1,
+        "parciales": 3,
+        "inventados": 0,
+        "acierto_estricto": 72.73,
+        "cobertura": 95.45,
+        "coste_real_usd": 0.021867,
+        "duracion_segundos": 10.558,
+        "requiere_extraccion_literal_tablas": false
+      }
+    },
+    {
+      "indice": 6,
+      "archivo_original": "PIERRE FABRE ABONO VTO 7.9.26 PIO.pdf",
+      "numero_factura_esperado": "SCN0276685",
+      "tipo_esperado": "ABONO",
+      "proveedor_esperado": "PIERRE FABRE IBÉRICA, S.A.",
+      "paginas": 1,
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 17,
+        "incorrectos": 1,
+        "ausentes": 0,
+        "parciales": 4,
+        "inventados": 0,
+        "acierto_estricto": 77.27,
+        "cobertura": 100.0,
+        "coste_real_usd": 0.011906,
+        "duracion_segundos": 7.938,
+        "requiere_extraccion_literal_tablas": true
+      }
+    },
+    {
+      "indice": 7,
+      "archivo_original": "SUAVINEX VTO 15.8.26 PIO.pdf",
+      "numero_factura_esperado": "0702638508",
+      "tipo_esperado": "FACTURA",
+      "proveedor_esperado": "SUAVINEX GROUP, S.L.",
+      "paginas": 1,
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 13,
+        "incorrectos": 2,
+        "ausentes": 2,
+        "parciales": 5,
+        "inventados": 0,
+        "acierto_estricto": 59.09,
+        "cobertura": 90.91,
+        "coste_real_usd": 0.010828,
+        "duracion_segundos": 7.392,
+        "requiere_extraccion_literal_tablas": true
+      }
+    }
+  ],
+  "resultados_por_proveedor": {
+    "DERMOFARM, S.A.U.": {
+      "campos_evaluados": 22,
+      "correctos": 14,
+      "incorrectos": 5,
+      "ausentes": 0,
+      "parciales": 3,
+      "inventados": 0
+    },
+    "HYGIE31 ESPAÑA, S.L.U.": {
+      "campos_evaluados": 22,
+      "correctos": 18,
+      "incorrectos": 1,
+      "ausentes": 1,
+      "parciales": 2,
+      "inventados": 0
+    },
+    "FARMACIA GUIMERA C.B.": {
+      "campos_evaluados": 22,
+      "correctos": 15,
+      "incorrectos": 2,
+      "ausentes": 2,
+      "parciales": 1,
+      "inventados": 2
+    },
+    "FEDERACIÓ FARMACÈUTICA, S.COOP.C.L.": {
+      "campos_evaluados": 22,
+      "correctos": 15,
+      "incorrectos": 2,
+      "ausentes": 1,
+      "parciales": 4,
+      "inventados": 0
+    },
+    "ENDESA ENERGÍA, S.A.U.": {
+      "campos_evaluados": 22,
+      "correctos": 16,
+      "incorrectos": 2,
+      "ausentes": 1,
+      "parciales": 3,
+      "inventados": 0
+    },
+    "PIERRE FABRE IBÉRICA, S.A.": {
+      "campos_evaluados": 22,
+      "correctos": 17,
+      "incorrectos": 1,
+      "ausentes": 0,
+      "parciales": 4,
+      "inventados": 0
+    },
+    "SUAVINEX GROUP, S.L.": {
+      "campos_evaluados": 22,
+      "correctos": 13,
+      "incorrectos": 2,
+      "ausentes": 2,
+      "parciales": 5,
+      "inventados": 0
+    }
+  },
+  "resultados_por_tipo": {
+    "ABONO": {
+      "campos_evaluados": 44,
+      "correctos": 31,
+      "incorrectos": 6,
+      "ausentes": 0,
+      "parciales": 7,
+      "inventados": 0
+    },
+    "FACTURA": {
+      "campos_evaluados": 110,
+      "correctos": 77,
+      "incorrectos": 9,
+      "ausentes": 7,
+      "parciales": 15,
+      "inventados": 2
+    }
+  },
+  "resultados_por_campo": {
+    "ajustes::CORRECTO": 2,
+    "albaranes::PARCIAL": 4,
+    "base_imponible_total::INCORRECTO": 1,
+    "categoria::CORRECTO": 6,
+    "destinatario::PARCIAL": 5,
+    "fecha_cargo::CORRECTO": 7,
+    "fecha_factura::CORRECTO": 7,
+    "importe_total::INCORRECTO": 1,
+    "impuestos::PARCIAL": 5,
+    "iva_total::INCORRECTO": 2,
+    "nota_revision::CORRECTO": 6,
+    "numero_factura::CORRECTO": 7,
+    "pagina_fin::CORRECTO": 7,
+    "pagina_inicio::CORRECTO": 7,
+    "periodo_facturacion_fin::CORRECTO": 6,
+    "periodo_facturacion_inicio::CORRECTO": 6,
+    "proveedor_cif::INCORRECTO": 3,
+    "proveedor_nombre::CORRECTO": 1,
+    "recargo_equivalencia_total::INCORRECTO": 1,
+    "requiere_conciliacion_albaranes::CORRECTO": 7,
+    "tipo_documento::CORRECTO": 7,
+    "vencimientos::CORRECTO": 4,
+    "albaranes::CORRECTO": 3,
+    "base_imponible_total::CORRECTO": 6,
+    "importe_total::CORRECTO": 6,
+    "iva_total::CORRECTO": 5,
+    "proveedor_cif::CORRECTO": 3,
+    "proveedor_nombre::INCORRECTO": 5,
+    "recargo_equivalencia_total::AUSENTE": 3,
+    "ajustes::PARCIAL": 4,
+    "destinatario::INCORRECTO": 2,
+    "impuestos::CORRECTO": 2,
+    "nota_revision::AUSENTE": 1,
+    "periodo_facturacion_fin::INVENTADO": 1,
+    "periodo_facturacion_inicio::INVENTADO": 1,
+    "proveedor_cif::AUSENTE": 1,
+    "recargo_equivalencia_total::CORRECTO": 3,
+    "categoria::AUSENTE": 1,
+    "vencimientos::PARCIAL": 3,
+    "ajustes::AUSENTE": 1,
+    "proveedor_nombre::PARCIAL": 1
+  },
+  "reglas_comunes_candidatas": [
+    "fechas visibles a ISO",
+    "importes españoles",
+    "páginas técnicas",
+    "campos internos de farmacia y categoría"
+  ],
+  "reglas_especificas_candidatas": [
+    "vencimientos por proveedor",
+    "tablas de albaranes",
+    "signos de abonos",
+    "recargo de equivalencia",
+    "ajustes y cuotas de servicio"
+  ]
+}

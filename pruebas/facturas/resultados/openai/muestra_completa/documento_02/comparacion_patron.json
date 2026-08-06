@@ -1,0 +1,563 @@
+{
+  "indice": 2,
+  "archivo_original": "ECOCEUTICS MENSUALIDAD PIO.pdf",
+  "numero_factura_esperado": "FR00263029",
+  "tipo_esperado": "FACTURA",
+  "proveedor_esperado": "HYGIE31 ESPAÑA, S.L.U.",
+  "paginas": 1,
+  "resumen": {
+    "campos_evaluados": 22,
+    "correctos": 18,
+    "incorrectos": 1,
+    "ausentes": 1,
+    "parciales": 2,
+    "inventados": 0,
+    "acierto_estricto": 81.82,
+    "cobertura": 95.45,
+    "coste_real_usd": 0.008587,
+    "duracion_segundos": 14.107,
+    "requiere_extraccion_literal_tablas": false
+  },
+  "resultados_por_bloque": {
+    "ajustes": {
+      "CORRECTO": 1
+    },
+    "albaranes": {
+      "CORRECTO": 1
+    },
+    "totales": {
+      "CORRECTO": 3,
+      "AUSENTE": 1
+    },
+    "cabecera": {
+      "CORRECTO": 7
+    },
+    "destinatario": {
+      "PARCIAL": 1
+    },
+    "campos_especiales": {
+      "CORRECTO": 4
+    },
+    "fiscalidad": {
+      "PARCIAL": 1
+    },
+    "proveedor": {
+      "CORRECTO": 1,
+      "INCORRECTO": 1
+    },
+    "vencimientos": {
+      "CORRECTO": 1
+    }
+  },
+  "conteo_atomico": {
+    "CORRECTO": 27,
+    "INCORRECTO": 4,
+    "AUSENTE": 3
+  },
+  "verificacion_evidencias": {
+    "verificadas_en_texto_pdf": 19,
+    "no_verificables_por_capa_textual": 3
+  },
+  "comparaciones": [
+    {
+      "campo": "ajustes",
+      "valor_esperado": [],
+      "valor_extraido": [],
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes",
+          "esperado": [],
+          "obtenido": [],
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "valor_esperado": [],
+      "valor_extraido": [],
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes",
+          "esperado": [],
+          "obtenido": [],
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "valor_esperado": 339.0,
+      "valor_extraido": 339.0,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 339.0,
+          "obtenido": 339.0,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "valor_esperado": "CUOTA_SERVICIO",
+      "valor_extraido": "CUOTA_SERVICIO",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "CUOTA_SERVICIO",
+          "obtenido": "CUOTA_SERVICIO",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "valor_esperado": {
+        "id_farmacia": "PIO",
+        "nombre": "FARMACIA PIO PUIG",
+        "cif": "40901058C",
+        "metodo_identificacion": "CIF"
+      },
+      "valor_extraido": {
+        "id_farmacia": "430340",
+        "nombre": "PUIG SALOMON, PIO",
+        "cif": "40901058C",
+        "metodo_identificacion": "N.I.F."
+      },
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 1,
+        "INCORRECTO": 3
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": "40901058C",
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": "430340",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "N.I.F.",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "PUIG SALOMON, PIO",
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "valor_esperado": "2026-06-30",
+      "valor_extraido": "2026-06-30",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-06-30",
+          "obtenido": "2026-06-30",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "valor_esperado": 410.19,
+      "valor_extraido": 410.19,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 410.19,
+          "obtenido": 410.19,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "base_imponible": 339.0,
+          "tipo_iva": 21.0,
+          "cuota_iva": 71.19,
+          "tipo_recargo_equivalencia": 0.0,
+          "cuota_recargo_equivalencia": 0.0
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "base_imponible": 339.0,
+          "tipo_iva": 21.0,
+          "cuota_iva": 71.19,
+          "tipo_recargo_equivalencia": null,
+          "cuota_recargo_equivalencia": null,
+          "nota": null
+        }
+      ],
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 5,
+        "AUSENTE": 2
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": 339.0,
+          "obtenido": 339.0,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": 71.19,
+          "obtenido": 71.19,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": 0.0,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "impuestos[0].nota",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": 21.0,
+          "obtenido": 21.0,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": 0.0,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "valor_esperado": 71.19,
+      "valor_extraido": 71.19,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 71.19,
+          "obtenido": 71.19,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "valor_esperado": "FR00263029",
+      "valor_extraido": "FR00263029",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "FR00263029",
+          "obtenido": "FR00263029",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "valor_esperado": 1,
+      "valor_extraido": 1,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "valor_esperado": 1,
+      "valor_extraido": 1,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "valor_esperado": "B17733601",
+      "valor_extraido": "B17733601",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "B17733601",
+          "obtenido": "B17733601",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "valor_esperado": "HYGIE31 ESPAÑA, S.L.U.",
+      "valor_extraido": "Hygie31 España SLU.",
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "HYGIE31 ESPAÑA, S.L.U.",
+          "obtenido": "Hygie31 España SLU.",
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "valor_esperado": 0.0,
+      "valor_extraido": null,
+      "clasificacion": "AUSENTE",
+      "conteo_atomico": {
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 0.0,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "valor_esperado": false,
+      "valor_extraido": false,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": false,
+          "obtenido": false,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "tipo_documento",
+      "valor_esperado": "FACTURA",
+      "valor_extraido": "FACTURA",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-07-01",
+          "importe": 410.19
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-07-01",
+          "importe": 410.19,
+          "nota": null
+        }
+      ],
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 4
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos[0].fecha_vencimiento",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].importe",
+          "esperado": 410.19,
+          "obtenido": 410.19,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].nota",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    }
+  ],
+  "criterios": {
+    "diferencia_formato": "Equivalencia tras ignorar mayúsculas, tildes y espacios.",
+    "campo_negocio_python": [
+      "categoria",
+      "requiere_conciliacion_albaranes",
+      "destinatario.id_farmacia",
+      "destinatario.metodo_identificacion"
+    ],
+    "datos_no_visibles": "Los null sin evidencia se contabilizan como ausentes, no inventados."
+  }
+}

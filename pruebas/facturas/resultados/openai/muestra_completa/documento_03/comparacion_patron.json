@@ -1,0 +1,639 @@
+{
+  "indice": 3,
+  "archivo_original": "FARMACIA GUIMERA VTO 30.6.26 PIO.pdf",
+  "numero_factura_esperado": "509",
+  "tipo_esperado": "FACTURA",
+  "proveedor_esperado": "FARMACIA GUIMERA C.B.",
+  "paginas": 1,
+  "resumen": {
+    "campos_evaluados": 22,
+    "correctos": 15,
+    "incorrectos": 2,
+    "ausentes": 2,
+    "parciales": 1,
+    "inventados": 2,
+    "acierto_estricto": 68.18,
+    "cobertura": 90.91,
+    "coste_real_usd": 0.010828,
+    "duracion_segundos": 6.976,
+    "requiere_extraccion_literal_tablas": false
+  },
+  "resultados_por_bloque": {
+    "ajustes": {
+      "PARCIAL": 1
+    },
+    "albaranes": {
+      "CORRECTO": 1
+    },
+    "totales": {
+      "CORRECTO": 4
+    },
+    "cabecera": {
+      "CORRECTO": 7
+    },
+    "destinatario": {
+      "INCORRECTO": 1
+    },
+    "campos_especiales": {
+      "CORRECTO": 1,
+      "AUSENTE": 1,
+      "INVENTADO": 2
+    },
+    "fiscalidad": {
+      "CORRECTO": 1
+    },
+    "proveedor": {
+      "AUSENTE": 1,
+      "INCORRECTO": 1
+    },
+    "vencimientos": {
+      "CORRECTO": 1
+    }
+  },
+  "conteo_atomico": {
+    "AUSENTE": 3,
+    "CORRECTO": 33,
+    "INCORRECTO": 5,
+    "INVENTADO": 2
+  },
+  "verificacion_evidencias": {
+    "no_verificables_por_capa_textual": 34
+  },
+  "comparaciones": [
+    {
+      "campo": "ajustes",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "DESCUENTO",
+          "descripcion": "Descuento total",
+          "importe": -70.31,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "DESCUENTO",
+          "descripcion": null,
+          "importe": -70.31,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        }
+      ],
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "AUSENTE": 1,
+        "CORRECTO": 5
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes[0].descripcion",
+          "esperado": "Descuento total",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].importe",
+          "esperado": -70.31,
+          "obtenido": -70.31,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].tipo_ajuste",
+          "esperado": "DESCUENTO",
+          "obtenido": "DESCUENTO",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "valor_esperado": [],
+      "valor_extraido": [],
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes",
+          "esperado": [],
+          "obtenido": [],
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "valor_esperado": 228.58,
+      "valor_extraido": 228.58,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 228.58,
+          "obtenido": 228.58,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "valor_esperado": "MERCANCIA",
+      "valor_extraido": "MERCANCIA",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "MERCANCIA",
+          "obtenido": "MERCANCIA",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "valor_esperado": {
+        "id_farmacia": "PIO",
+        "nombre": "FARMACIA PIO PUIG",
+        "cif": "40901058C",
+        "metodo_identificacion": "CIF"
+      },
+      "valor_extraido": {
+        "id_farmacia": "84",
+        "nombre": "FARMACIA GUIMERA C.B.",
+        "cif": "E12943437",
+        "metodo_identificacion": "NIF"
+      },
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 4
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": "E12943437",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": "84",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "NIF",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "FARMACIA GUIMERA C.B.",
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "valor_esperado": "2026-05-29",
+      "valor_extraido": "2026-05-29",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-05-29",
+          "obtenido": "2026-05-29",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "valor_esperado": 243.24,
+      "valor_extraido": 243.24,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 243.24,
+          "obtenido": 243.24,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "base_imponible": 165.22,
+          "tipo_iva": 4.0,
+          "cuota_iva": 6.61,
+          "tipo_recargo_equivalencia": 0.5,
+          "cuota_recargo_equivalencia": 0.83
+        },
+        {
+          "orden": 2,
+          "base_imponible": 63.36,
+          "tipo_iva": 10.0,
+          "cuota_iva": 6.34,
+          "tipo_recargo_equivalencia": 1.4,
+          "cuota_recargo_equivalencia": 0.89
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "base_imponible": 165.22,
+          "tipo_iva": 4.0,
+          "cuota_iva": 6.61,
+          "tipo_recargo_equivalencia": 0.5,
+          "cuota_recargo_equivalencia": 0.83,
+          "nota": null
+        },
+        {
+          "orden": 2,
+          "base_imponible": 63.36,
+          "tipo_iva": 10.0,
+          "cuota_iva": 6.34,
+          "tipo_recargo_equivalencia": 1.4,
+          "cuota_recargo_equivalencia": 0.89,
+          "nota": null
+        }
+      ],
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 14
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": 165.22,
+          "obtenido": 165.22,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": 6.61,
+          "obtenido": 6.61,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": 0.83,
+          "obtenido": 0.83,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].nota",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": 4.0,
+          "obtenido": 4.0,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": 0.5,
+          "obtenido": 0.5,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].base_imponible",
+          "esperado": 63.36,
+          "obtenido": 63.36,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_iva",
+          "esperado": 6.34,
+          "obtenido": 6.34,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_recargo_equivalencia",
+          "esperado": 0.89,
+          "obtenido": 0.89,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].nota",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].orden",
+          "esperado": 2,
+          "obtenido": 2,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_iva",
+          "esperado": 10.0,
+          "obtenido": 10.0,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_recargo_equivalencia",
+          "esperado": 1.4,
+          "obtenido": 1.4,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "valor_esperado": 12.95,
+      "valor_extraido": 12.95,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 12.95,
+          "obtenido": 12.95,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "valor_esperado": "Es una liquidación/resumen mensual de fórmulas o dispensaciones, no presenta números de albarán conciliables con Farmatic. El vencimiento no es visible ni verificable en el cuerpo del documento. La fecha incluida anteriormente procedía del nombre del archivo y se elimina del patrón oficial. El hábito histórico del proveedor de facturar al final de mes podrá utilizarse como regla auxiliar del sistema, pero nunca como dato extraído ni como resultado esperado de la IA.",
+      "valor_extraido": null,
+      "clasificacion": "AUSENTE",
+      "conteo_atomico": {
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": "Es una liquidación/resumen mensual de fórmulas o dispensaciones, no presenta números de albarán conciliables con Farmatic. El vencimiento no es visible ni verificable en el cuerpo del documento. La fecha incluida anteriormente procedía del nombre del archivo y se elimina del patrón oficial. El hábito histórico del proveedor de facturar al final de mes podrá utilizarse como regla auxiliar del sistema, pero nunca como dato extraído ni como resultado esperado de la IA.",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "valor_esperado": "509",
+      "valor_extraido": "509",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "509",
+          "obtenido": "509",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "valor_esperado": 1,
+      "valor_extraido": 1,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "valor_esperado": 1,
+      "valor_extraido": 1,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "valor_esperado": null,
+      "valor_extraido": "2026-05-31",
+      "clasificacion": "INVENTADO",
+      "conteo_atomico": {
+        "INVENTADO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": null,
+          "obtenido": "2026-05-31",
+          "clasificacion": "INVENTADO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "valor_esperado": null,
+      "valor_extraido": "2026-05-01",
+      "clasificacion": "INVENTADO",
+      "conteo_atomico": {
+        "INVENTADO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": null,
+          "obtenido": "2026-05-01",
+          "clasificacion": "INVENTADO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "valor_esperado": "E12943437",
+      "valor_extraido": null,
+      "clasificacion": "AUSENTE",
+      "conteo_atomico": {
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "E12943437",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "valor_esperado": "FARMACIA GUIMERA C.B.",
+      "valor_extraido": "PUIG SALOMON, PIO",
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "FARMACIA GUIMERA C.B.",
+          "obtenido": "PUIG SALOMON, PIO",
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "valor_esperado": 1.71,
+      "valor_extraido": 1.71,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 1.71,
+          "obtenido": 1.71,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "valor_esperado": false,
+      "valor_extraido": false,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": false,
+          "obtenido": false,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "tipo_documento",
+      "valor_esperado": "FACTURA",
+      "valor_extraido": "FACTURA",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "valor_esperado": [],
+      "valor_extraido": [],
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos",
+          "esperado": [],
+          "obtenido": [],
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    }
+  ],
+  "criterios": {
+    "diferencia_formato": "Equivalencia tras ignorar mayúsculas, tildes y espacios.",
+    "campo_negocio_python": [
+      "categoria",
+      "requiere_conciliacion_albaranes",
+      "destinatario.id_farmacia",
+      "destinatario.metodo_identificacion"
+    ],
+    "datos_no_visibles": "Los null sin evidencia se contabilizan como ausentes, no inventados."
+  }
+}

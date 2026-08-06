@@ -1,0 +1,670 @@
+{
+  "indice": 7,
+  "archivo_original": "SUAVINEX VTO 15.8.26 PIO.pdf",
+  "numero_factura_esperado": "0702638508",
+  "tipo_esperado": "FACTURA",
+  "proveedor_esperado": "SUAVINEX GROUP, S.L.",
+  "paginas": 1,
+  "resumen": {
+    "campos_evaluados": 22,
+    "correctos": 13,
+    "incorrectos": 2,
+    "ausentes": 2,
+    "parciales": 5,
+    "inventados": 0,
+    "acierto_estricto": 59.09,
+    "cobertura": 90.91,
+    "coste_real_usd": 0.010828,
+    "duracion_segundos": 7.392,
+    "requiere_extraccion_literal_tablas": true
+  },
+  "resultados_por_bloque": {
+    "ajustes": {
+      "AUSENTE": 1
+    },
+    "albaranes": {
+      "PARCIAL": 1
+    },
+    "totales": {
+      "CORRECTO": 2,
+      "INCORRECTO": 1,
+      "AUSENTE": 1
+    },
+    "cabecera": {
+      "CORRECTO": 7
+    },
+    "destinatario": {
+      "PARCIAL": 1
+    },
+    "campos_especiales": {
+      "CORRECTO": 4
+    },
+    "fiscalidad": {
+      "PARCIAL": 1
+    },
+    "proveedor": {
+      "INCORRECTO": 1,
+      "PARCIAL": 1
+    },
+    "vencimientos": {
+      "PARCIAL": 1
+    }
+  },
+  "conteo_atomico": {
+    "AUSENTE": 14,
+    "CORRECTO": 25,
+    "INCORRECTO": 6,
+    "DIFERENCIA_FORMATO": 1
+  },
+  "verificacion_evidencias": {
+    "verificadas_en_texto_pdf": 21,
+    "no_verificables_por_capa_textual": 5
+  },
+  "comparaciones": [
+    {
+      "campo": "ajustes",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Información punto verde",
+          "importe": 1.9,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        }
+      ],
+      "valor_extraido": [],
+      "clasificacion": "AUSENTE",
+      "conteo_atomico": {
+        "AUSENTE": 7
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes",
+          "esperado": null,
+          "obtenido": [],
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].descripcion",
+          "esperado": "Información punto verde",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].importe",
+          "esperado": 1.9,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_base",
+          "esperado": true,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_total",
+          "esperado": true,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].orden",
+          "esperado": 1,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].tipo_ajuste",
+          "esperado": "OTRO",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "numero_albaran": "81109681",
+          "fecha_albaran": null,
+          "tipo_movimiento": "CARGO",
+          "importe_base": 531.26,
+          "importe_total": 670.45
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "numero_albaran": "81109681",
+          "fecha_albaran": null,
+          "tipo_movimiento": null,
+          "descripcion": null,
+          "importe_base": null,
+          "importe_total": null
+        }
+      ],
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 4,
+        "AUSENTE": 3
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes[0].descripcion",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].fecha_albaran",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_base",
+          "esperado": 531.26,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[0].importe_total",
+          "esperado": 670.45,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[0].numero_albaran",
+          "esperado": "81109681",
+          "obtenido": "81109681",
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "valor_esperado": 531.26,
+      "valor_extraido": 531.26,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 531.26,
+          "obtenido": 531.26,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "valor_esperado": "MERCANCIA",
+      "valor_extraido": "MERCANCIA",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "MERCANCIA",
+          "obtenido": "MERCANCIA",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "valor_esperado": {
+        "id_farmacia": "PIO",
+        "nombre": "FARMACIA PIO PUIG",
+        "cif": "40901058C",
+        "metodo_identificacion": "CIF"
+      },
+      "valor_extraido": {
+        "id_farmacia": "7485",
+        "nombre": "PUIG SALOMON, PIO",
+        "cif": "40901058C",
+        "metodo_identificacion": "NIF/DNI"
+      },
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 1,
+        "INCORRECTO": 3
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": "40901058C",
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": "7485",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "NIF/DNI",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "PUIG SALOMON, PIO",
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "valor_esperado": "2026-06-19",
+      "valor_extraido": "2026-06-19",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-06-19",
+          "obtenido": "2026-06-19",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "valor_esperado": 670.45,
+      "valor_extraido": 670.45,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 670.45,
+          "obtenido": 670.45,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "base_imponible": 531.26,
+          "tipo_iva": 21.0,
+          "cuota_iva": 111.56,
+          "tipo_recargo_equivalencia": 5.2,
+          "cuota_recargo_equivalencia": 27.63,
+          "nota": "El PDF agrupa IVA y recargo en una cuota total de 139,19 €"
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "base_imponible": 531.26,
+          "tipo_iva": 21.0,
+          "cuota_iva": 139.19,
+          "tipo_recargo_equivalencia": 5.2,
+          "cuota_recargo_equivalencia": null,
+          "nota": null
+        }
+      ],
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 4,
+        "INCORRECTO": 1,
+        "AUSENTE": 2
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": 531.26,
+          "obtenido": 531.26,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": 111.56,
+          "obtenido": 139.19,
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": 27.63,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "impuestos[0].nota",
+          "esperado": "El PDF agrupa IVA y recargo en una cuota total de 139,19 €",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "impuestos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": 21.0,
+          "obtenido": 21.0,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": 5.2,
+          "obtenido": 5.2,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "valor_esperado": 111.56,
+      "valor_extraido": 139.19,
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 111.56,
+          "obtenido": 139.19,
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "valor_esperado": "0702638508",
+      "valor_extraido": "0702638508",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "0702638508",
+          "obtenido": "0702638508",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "valor_esperado": 1,
+      "valor_extraido": 1,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "valor_esperado": 1,
+      "valor_extraido": 1,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "valor_esperado": "B03074093",
+      "valor_extraido": "ESB03074093",
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "B03074093",
+          "obtenido": "ESB03074093",
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "valor_esperado": "SUAVINEX GROUP, S.L.",
+      "valor_extraido": "Suavinex Group, S.L.",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "DIFERENCIA_FORMATO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "SUAVINEX GROUP, S.L.",
+          "obtenido": "Suavinex Group, S.L.",
+          "clasificacion": "DIFERENCIA_FORMATO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "valor_esperado": 27.63,
+      "valor_extraido": null,
+      "clasificacion": "AUSENTE",
+      "conteo_atomico": {
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 27.63,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "valor_esperado": true,
+      "valor_extraido": true,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "tipo_documento",
+      "valor_esperado": "FACTURA",
+      "valor_extraido": "FACTURA",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-08-19",
+          "importe": 670.45,
+          "nota": "El nombre del archivo indica 15/08/2026, pero el PDF muestra 19/08/2026; prevalece el PDF"
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-08-19",
+          "importe": 670.45,
+          "nota": null
+        }
+      ],
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 3,
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos[0].fecha_vencimiento",
+          "esperado": "2026-08-19",
+          "obtenido": "2026-08-19",
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].importe",
+          "esperado": 670.45,
+          "obtenido": 670.45,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].nota",
+          "esperado": "El nombre del archivo indica 15/08/2026, pero el PDF muestra 19/08/2026; prevalece el PDF",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "vencimientos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    }
+  ],
+  "criterios": {
+    "diferencia_formato": "Equivalencia tras ignorar mayúsculas, tildes y espacios.",
+    "campo_negocio_python": [
+      "categoria",
+      "requiere_conciliacion_albaranes",
+      "destinatario.id_farmacia",
+      "destinatario.metodo_identificacion"
+    ],
+    "datos_no_visibles": "Los null sin evidencia se contabilizan como ausentes, no inventados."
+  }
+}

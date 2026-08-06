@@ -1,0 +1,860 @@
+{
+  "indice": 5,
+  "archivo_original": "GAS CASA ABRIL-MAIG 2026.pdf",
+  "numero_factura_esperado": "P26CON024967719",
+  "tipo_esperado": "FACTURA",
+  "proveedor_esperado": "ENDESA ENERGÍA, S.A.U.",
+  "paginas": 2,
+  "resumen": {
+    "campos_evaluados": 22,
+    "correctos": 16,
+    "incorrectos": 2,
+    "ausentes": 1,
+    "parciales": 3,
+    "inventados": 0,
+    "acierto_estricto": 72.73,
+    "cobertura": 95.45,
+    "coste_real_usd": 0.021867,
+    "duracion_segundos": 10.558,
+    "requiere_extraccion_literal_tablas": false
+  },
+  "resultados_por_bloque": {
+    "ajustes": {
+      "PARCIAL": 1
+    },
+    "albaranes": {
+      "CORRECTO": 1
+    },
+    "totales": {
+      "CORRECTO": 3,
+      "AUSENTE": 1
+    },
+    "cabecera": {
+      "CORRECTO": 7
+    },
+    "destinatario": {
+      "INCORRECTO": 1
+    },
+    "campos_especiales": {
+      "CORRECTO": 4
+    },
+    "fiscalidad": {
+      "PARCIAL": 1
+    },
+    "proveedor": {
+      "CORRECTO": 1,
+      "INCORRECTO": 1
+    },
+    "vencimientos": {
+      "PARCIAL": 1
+    }
+  },
+  "conteo_atomico": {
+    "INCORRECTO": 7,
+    "CORRECTO": 42,
+    "DIFERENCIA_FORMATO": 1,
+    "INVENTADO": 15,
+    "AUSENTE": 5
+  },
+  "verificacion_evidencias": {
+    "verificadas_en_texto_pdf": 55
+  },
+  "comparaciones": [
+    {
+      "campo": "ajustes",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "DESCUENTO",
+          "descripcion": "Descuento promocional",
+          "importe": -32.03,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        },
+        {
+          "orden": 2,
+          "tipo_ajuste": "GASTO",
+          "descripcion": "Alquiler de equipos gas",
+          "importe": 1.18,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        },
+        {
+          "orden": 3,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Impuesto de hidrocarburos",
+          "importe": 4.49,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "DESCUENTO",
+          "descripcion": "Descuento promocional -10 % x 320,32 Eur",
+          "importe": -32.03,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        },
+        {
+          "orden": 2,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Alquiler de Equipos Gas",
+          "importe": 1.18,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        },
+        {
+          "orden": 3,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Fijo",
+          "importe": 56.94,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        },
+        {
+          "orden": 4,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Variable",
+          "importe": 320.32,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        },
+        {
+          "orden": 5,
+          "tipo_ajuste": "IMPUESTO",
+          "descripcion": "Impuestos",
+          "importe": 78.18,
+          "incluido_en_base": false,
+          "incluido_en_total": true
+        }
+      ],
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "INCORRECTO": 4,
+        "CORRECTO": 13,
+        "DIFERENCIA_FORMATO": 1,
+        "INVENTADO": 12
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes[0].descripcion",
+          "esperado": "Descuento promocional",
+          "obtenido": "Descuento promocional -10 % x 320,32 Eur",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].importe",
+          "esperado": -32.03,
+          "obtenido": -32.03,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].tipo_ajuste",
+          "esperado": "DESCUENTO",
+          "obtenido": "DESCUENTO",
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].descripcion",
+          "esperado": "Alquiler de equipos gas",
+          "obtenido": "Alquiler de Equipos Gas",
+          "clasificacion": "DIFERENCIA_FORMATO"
+        },
+        {
+          "ruta": "ajustes[1].importe",
+          "esperado": 1.18,
+          "obtenido": 1.18,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].orden",
+          "esperado": 2,
+          "obtenido": 2,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].tipo_ajuste",
+          "esperado": "GASTO",
+          "obtenido": "OTRO",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].descripcion",
+          "esperado": "Impuesto de hidrocarburos",
+          "obtenido": "Fijo",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].importe",
+          "esperado": 4.49,
+          "obtenido": 56.94,
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].orden",
+          "esperado": 3,
+          "obtenido": 3,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].tipo_ajuste",
+          "esperado": "OTRO",
+          "obtenido": "OTRO",
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[3].descripcion",
+          "esperado": null,
+          "obtenido": "Variable",
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].importe",
+          "esperado": null,
+          "obtenido": 320.32,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].incluido_en_base",
+          "esperado": null,
+          "obtenido": true,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].incluido_en_total",
+          "esperado": null,
+          "obtenido": true,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].orden",
+          "esperado": null,
+          "obtenido": 4,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].tipo_ajuste",
+          "esperado": null,
+          "obtenido": "OTRO",
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].descripcion",
+          "esperado": null,
+          "obtenido": "Impuestos",
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].importe",
+          "esperado": null,
+          "obtenido": 78.18,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].incluido_en_base",
+          "esperado": null,
+          "obtenido": false,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].incluido_en_total",
+          "esperado": null,
+          "obtenido": true,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].orden",
+          "esperado": null,
+          "obtenido": 5,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].tipo_ajuste",
+          "esperado": null,
+          "obtenido": "IMPUESTO",
+          "clasificacion": "INVENTADO"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "valor_esperado": [],
+      "valor_extraido": [],
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes",
+          "esperado": [],
+          "obtenido": [],
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "valor_esperado": 350.9,
+      "valor_extraido": 350.9,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 350.9,
+          "obtenido": 350.9,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "valor_esperado": "SUMINISTRO",
+      "valor_extraido": "SUMINISTRO",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "SUMINISTRO",
+          "obtenido": "SUMINISTRO",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "valor_esperado": {
+        "id_farmacia": "PIO",
+        "nombre": "FARMACIA PIO PUIG",
+        "cif": "40901058C",
+        "metodo_identificacion": "CIF"
+      },
+      "valor_extraido": {
+        "id_farmacia": null,
+        "nombre": "PIO PUIG SALOMON",
+        "cif": null,
+        "metodo_identificacion": "Dirección de suministro: CARRER BARCELONA 54 1, 43550 ULLDECONA, TARRAGONA"
+      },
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "AUSENTE": 2,
+        "INCORRECTO": 2
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "Dirección de suministro: CARRER BARCELONA 54 1, 43550 ULLDECONA, TARRAGONA",
+          "clasificacion": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "PIO PUIG SALOMON",
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "valor_esperado": "2026-06-16",
+      "valor_extraido": "2026-06-16",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": "2026-06-16",
+          "obtenido": "2026-06-16",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "valor_esperado": "2026-06-09",
+      "valor_extraido": "2026-06-09",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-06-09",
+          "obtenido": "2026-06-09",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "valor_esperado": 424.59,
+      "valor_extraido": 424.59,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 424.59,
+          "obtenido": 424.59,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "base_imponible": 350.9,
+          "tipo_iva": 21.0,
+          "cuota_iva": 73.69,
+          "tipo_recargo_equivalencia": 0.0,
+          "cuota_recargo_equivalencia": 0.0
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "base_imponible": 350.9,
+          "tipo_iva": 21.0,
+          "cuota_iva": 73.69,
+          "tipo_recargo_equivalencia": null,
+          "cuota_recargo_equivalencia": null,
+          "nota": null
+        },
+        {
+          "orden": 2,
+          "base_imponible": null,
+          "tipo_iva": null,
+          "cuota_iva": null,
+          "tipo_recargo_equivalencia": null,
+          "cuota_recargo_equivalencia": null,
+          "nota": "Impto.HC general (#) 4.160,00 kWh x 0,001080 Eur/kWh"
+        }
+      ],
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 10,
+        "AUSENTE": 2,
+        "INVENTADO": 2
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": 350.9,
+          "obtenido": 350.9,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": 73.69,
+          "obtenido": 73.69,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": 0.0,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "impuestos[0].nota",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": 21.0,
+          "obtenido": 21.0,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": 0.0,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        },
+        {
+          "ruta": "impuestos[1].base_imponible",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_iva",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].nota",
+          "esperado": null,
+          "obtenido": "Impto.HC general (#) 4.160,00 kWh x 0,001080 Eur/kWh",
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].orden",
+          "esperado": null,
+          "obtenido": 2,
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_iva",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "valor_esperado": 73.69,
+      "valor_extraido": 73.69,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 73.69,
+          "obtenido": 73.69,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "valor_esperado": null,
+      "valor_extraido": null,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": null,
+          "obtenido": null,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "valor_esperado": "P26CON024967719",
+      "valor_extraido": "P26CON024967719",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "P26CON024967719",
+          "obtenido": "P26CON024967719",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "valor_esperado": 2,
+      "valor_extraido": 2,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 2,
+          "obtenido": 2,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "valor_esperado": 1,
+      "valor_extraido": 1,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "valor_esperado": "2026-06-03",
+      "valor_extraido": "2026-06-03",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": "2026-06-03",
+          "obtenido": "2026-06-03",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "valor_esperado": "2026-04-02",
+      "valor_extraido": "2026-04-02",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": "2026-04-02",
+          "obtenido": "2026-04-02",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "valor_esperado": "A81948077",
+      "valor_extraido": "A81948077",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "A81948077",
+          "obtenido": "A81948077",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "valor_esperado": "ENDESA ENERGÍA, S.A.U.",
+      "valor_extraido": "Endesa Energía, S.A. Unipersonal",
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "ENDESA ENERGÍA, S.A.U.",
+          "obtenido": "Endesa Energía, S.A. Unipersonal",
+          "clasificacion": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "valor_esperado": 0.0,
+      "valor_extraido": null,
+      "clasificacion": "AUSENTE",
+      "conteo_atomico": {
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 0.0,
+          "obtenido": null,
+          "clasificacion": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "valor_esperado": false,
+      "valor_extraido": false,
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": false,
+          "obtenido": false,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "tipo_documento",
+      "valor_esperado": "FACTURA",
+      "valor_extraido": "FACTURA",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "valor_esperado": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-06-16",
+          "importe": 424.59
+        }
+      ],
+      "valor_extraido": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-06-16",
+          "importe": 424.59,
+          "nota": "Domiciliación bancaria"
+        }
+      ],
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 3,
+        "INVENTADO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos[0].fecha_vencimiento",
+          "esperado": "2026-06-16",
+          "obtenido": "2026-06-16",
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].importe",
+          "esperado": 424.59,
+          "obtenido": 424.59,
+          "clasificacion": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].nota",
+          "esperado": null,
+          "obtenido": "Domiciliación bancaria",
+          "clasificacion": "INVENTADO"
+        },
+        {
+          "ruta": "vencimientos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "clasificacion": "CORRECTO"
+        }
+      ]
+    }
+  ],
+  "criterios": {
+    "diferencia_formato": "Equivalencia tras ignorar mayúsculas, tildes y espacios.",
+    "campo_negocio_python": [
+      "categoria",
+      "requiere_conciliacion_albaranes",
+      "destinatario.id_farmacia",
+      "destinatario.metodo_identificacion"
+    ],
+    "datos_no_visibles": "Los null sin evidencia se contabilizan como ausentes, no inventados."
+  }
+}
