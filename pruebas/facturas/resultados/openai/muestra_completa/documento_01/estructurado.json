@@ -1,0 +1,341 @@
+{
+  "metadatos_prueba": {
+    "indice": 1,
+    "archivo_original_local": "DERMOFARM ABONO VTO 5.8.26 PIO.pdf",
+    "nombre_neutro_enviado": "documento_01.pdf",
+    "numero_paginas": 1,
+    "tamano_bytes": 180988,
+    "sha256": "1337762f4e6ce2e8cd6b7a859bd2c03da56d80d8a69ded058727646b03933614",
+    "contenido_patron_incluido": false,
+    "modelo": "gpt-5.6-luna",
+    "response_id": "resp_0a7e839d80fe28c5016a74ceea1cbc819dbe45912d5f59cf22",
+    "version_prompt": "muestra_completa_ciega_v1.0",
+    "max_output_tokens": 16000,
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "ABONO",
+      "evidencias": [
+        {
+          "texto_visible": "ABONO",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "MERCANCIA",
+      "evidencias": [
+        {
+          "texto_visible": "Denominación",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": true,
+      "evidencias": [
+        {
+          "texto_visible": "Albaranes: 25026140 (17/07/2026)",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Hoja: 1",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Hoja: 1",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "DERMOFARM, S.A.U.",
+      "evidencias": [
+        {
+          "texto_visible": "DERMOFARM, S.A.U. - CIF/VAT: ES A08283624",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "ESA08283624",
+      "evidencias": [
+        {
+          "texto_visible": "CIF/VAT: ES A08283624",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "2700282621",
+      "evidencias": [
+        {
+          "texto_visible": "Nº: 2700282621",
+          "pagina": 1
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-07-17",
+      "evidencias": [
+        {
+          "texto_visible": "Fecha: 17/07/2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 86.65,
+      "evidencias": [
+        {
+          "texto_visible": "I.V.A. 21,00% 86,65 18,20",
+          "pagina": 1
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 18.2,
+      "evidencias": [
+        {
+          "texto_visible": "I.V.A. 21,00% 86,65 18,20",
+          "pagina": 1
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": 4.51,
+      "evidencias": [
+        {
+          "texto_visible": "RGO.E 5,20% 86,65 4,51",
+          "pagina": 1
+        }
+      ]
+    },
+    "importe_total": {
+      "valor": 109.36,
+      "evidencias": [
+        {
+          "texto_visible": "Total impuestos incluidos: Euros 109,36",
+          "pagina": 1
+        }
+      ]
+    },
+    "vencimientos": [],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "I.V.A. 21,00% 86,65 18,20",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 86.65,
+          "evidencias": [
+            {
+              "texto_visible": "I.V.A. 21,00% 86,65 18,20",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 21.0,
+          "evidencias": [
+            {
+              "texto_visible": "I.V.A. 21,00%",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 18.2,
+          "evidencias": [
+            {
+              "texto_visible": "I.V.A. 21,00% 86,65 18,20",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      },
+      {
+        "orden": {
+          "valor": 2,
+          "evidencias": [
+            {
+              "texto_visible": "RGO.E 5,20% 86,65 4,51",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 86.65,
+          "evidencias": [
+            {
+              "texto_visible": "RGO.E 5,20% 86,65 4,51",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": null,
+          "evidencias": []
+        },
+        "cuota_iva": {
+          "valor": null,
+          "evidencias": []
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 5.2,
+          "evidencias": [
+            {
+              "texto_visible": "RGO.E 5,20%",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 4.51,
+          "evidencias": [
+            {
+              "texto_visible": "RGO.E 5,20% 86,65 4,51",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Albaranes: 25026140 (17/07/2026)",
+              "pagina": 1
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "25026140",
+          "evidencias": [
+            {
+              "texto_visible": "Albaranes: 25026140 (17/07/2026)",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-17",
+          "evidencias": [
+            {
+              "texto_visible": "Albaranes: 25026140 (17/07/2026)",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": null,
+          "evidencias": []
+        },
+        "descripcion": {
+          "valor": null,
+          "evidencias": []
+        },
+        "importe_base": {
+          "valor": null,
+          "evidencias": []
+        },
+        "importe_total": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": "2014300230",
+        "evidencias": [
+          {
+            "texto_visible": "Cliente: 2014300230",
+            "pagina": 1
+          }
+        ]
+      },
+      "nombre": {
+        "valor": "PUIG SALOMON, PIO",
+        "evidencias": [
+          {
+            "texto_visible": "Entregado a: PUIG SALOMON, PIO",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": "40901058C",
+        "evidencias": [
+          {
+            "texto_visible": "CIF/NIF: 40901058C",
+            "pagina": 1
+          }
+        ]
+      },
+      "metodo_identificacion": {
+        "valor": "Cliente",
+        "evidencias": [
+          {
+            "texto_visible": "Cliente: 2014300230",
+            "pagina": 1
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_inicio": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_fin": {
+      "valor": null,
+      "evidencias": []
+    },
+    "nota_revision": {
+      "valor": null,
+      "evidencias": []
+    }
+  }
+}

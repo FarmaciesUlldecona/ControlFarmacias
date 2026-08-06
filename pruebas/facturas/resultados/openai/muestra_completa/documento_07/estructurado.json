@@ -1,0 +1,320 @@
+{
+  "metadatos_prueba": {
+    "indice": 7,
+    "archivo_original_local": "SUAVINEX VTO 15.8.26 PIO.pdf",
+    "nombre_neutro_enviado": "documento_07.pdf",
+    "numero_paginas": 1,
+    "tamano_bytes": 200924,
+    "sha256": "f8ccbf1971f79adbdc37a35b0d5c73ce53285190d8da3089b2cc3e0fb41836a9",
+    "contenido_patron_incluido": false,
+    "modelo": "gpt-5.6-luna",
+    "response_id": "resp_0a52a76b1750d344016a74cf2b550481a292bc8a392754e368",
+    "version_prompt": "muestra_completa_ciega_v1.0",
+    "max_output_tokens": 16000,
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "FACTURA",
+      "evidencias": [
+        {
+          "texto_visible": "Factura Nº: 0702638508",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "MERCANCIA",
+      "evidencias": [
+        {
+          "texto_visible": "Descripción",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": true,
+      "evidencias": [
+        {
+          "texto_visible": "Albarán: 81109681",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Página 1/1",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Página 1/1",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "Suavinex Group, S.L.",
+      "evidencias": [
+        {
+          "texto_visible": "Suavinex Group, S.L.",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "ESB03074093",
+      "evidencias": [
+        {
+          "texto_visible": "C.I.F. ESB03074093",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "0702638508",
+      "evidencias": [
+        {
+          "texto_visible": "Factura Nº: 0702638508",
+          "pagina": 1
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-06-19",
+      "evidencias": [
+        {
+          "texto_visible": "Fecha Factura: 19.06.2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 531.26,
+      "evidencias": [
+        {
+          "texto_visible": "Base 531,26",
+          "pagina": 1
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 139.19,
+      "evidencias": [
+        {
+          "texto_visible": "Cuota 139,19 EUR",
+          "pagina": 1
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": null,
+      "evidencias": []
+    },
+    "importe_total": {
+      "valor": 670.45,
+      "evidencias": [
+        {
+          "texto_visible": "Total Factura: 670,45 EUR",
+          "pagina": 1
+        }
+      ]
+    },
+    "vencimientos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Vto.: 19.08.2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_vencimiento": {
+          "valor": "2026-08-19",
+          "evidencias": [
+            {
+              "texto_visible": "Vto.: 19.08.2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": 670.45,
+          "evidencias": [
+            {
+              "texto_visible": "Importe: 670,45 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Base 531,26 IVA 21,00 % Recargo 5,20 % Cuota 139,19 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 531.26,
+          "evidencias": [
+            {
+              "texto_visible": "Base 531,26",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 21.0,
+          "evidencias": [
+            {
+              "texto_visible": "21,00 %",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 139.19,
+          "evidencias": [
+            {
+              "texto_visible": "Cuota 139,19 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 5.2,
+          "evidencias": [
+            {
+              "texto_visible": "5,20 %",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Albarán: 81109681",
+              "pagina": 1
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "81109681",
+          "evidencias": [
+            {
+              "texto_visible": "Albarán: 81109681",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": null,
+          "evidencias": []
+        },
+        "tipo_movimiento": {
+          "valor": null,
+          "evidencias": []
+        },
+        "descripcion": {
+          "valor": null,
+          "evidencias": []
+        },
+        "importe_base": {
+          "valor": null,
+          "evidencias": []
+        },
+        "importe_total": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": "7485",
+        "evidencias": [
+          {
+            "texto_visible": "Cliente: 7485",
+            "pagina": 1
+          }
+        ]
+      },
+      "nombre": {
+        "valor": "PUIG SALOMON, PIO",
+        "evidencias": [
+          {
+            "texto_visible": "PUIG SALOMON, PIO",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": "40901058C",
+        "evidencias": [
+          {
+            "texto_visible": "NIF/DNI: 40901058C",
+            "pagina": 1
+          }
+        ]
+      },
+      "metodo_identificacion": {
+        "valor": "NIF/DNI",
+        "evidencias": [
+          {
+            "texto_visible": "NIF/DNI: 40901058C",
+            "pagina": 1
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_inicio": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_fin": {
+      "valor": null,
+      "evidencias": []
+    },
+    "nota_revision": {
+      "valor": null,
+      "evidencias": []
+    }
+  }
+}

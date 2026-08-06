@@ -1,0 +1,595 @@
+{
+  "metadatos_prueba": {
+    "indice": 5,
+    "archivo_original_local": "GAS CASA ABRIL-MAIG 2026.pdf",
+    "nombre_neutro_enviado": "documento_05.pdf",
+    "numero_paginas": 2,
+    "tamano_bytes": 174005,
+    "sha256": "c4da5833d8b2099ac4af951b0e40f90e19bb1c0b6a8e72bc92a31bea2242ceef",
+    "contenido_patron_incluido": false,
+    "modelo": "gpt-5.6-luna",
+    "response_id": "resp_0d0f9ea6534fa3cc016a74cf17f5948192a8f7a5dbedc79068",
+    "version_prompt": "muestra_completa_ciega_v1.0",
+    "max_output_tokens": 16000,
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "FACTURA",
+      "evidencias": [
+        {
+          "texto_visible": "Nº de factura: P26CON024967719",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "SUMINISTRO",
+      "evidencias": [
+        {
+          "texto_visible": "INFORMACIÓN DEL CONSUMO GAS",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": false,
+      "evidencias": []
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "DATOS DE LA FACTURA",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 2,
+      "evidencias": [
+        {
+          "texto_visible": "DETALLE DE LA FACTURA",
+          "pagina": 2
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "Endesa Energía, S.A. Unipersonal",
+      "evidencias": [
+        {
+          "texto_visible": "Endesa Energía, S.A. Unipersonal.",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "A81948077",
+      "evidencias": [
+        {
+          "texto_visible": "CIF A81948077",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "P26CON024967719",
+      "evidencias": [
+        {
+          "texto_visible": "Nº de factura: P26CON024967719",
+          "pagina": 1
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-06-09",
+      "evidencias": [
+        {
+          "texto_visible": "Fecha emisión factura: 09/06/2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 350.9,
+      "evidencias": [
+        {
+          "texto_visible": "Importe total 350,90 €",
+          "pagina": 2
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 73.69,
+      "evidencias": [
+        {
+          "texto_visible": "IVA normal (21%) 21 % s/ 350,90 73,69 €",
+          "pagina": 2
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": null,
+      "evidencias": []
+    },
+    "importe_total": {
+      "valor": 424.59,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+          "pagina": 2
+        }
+      ]
+    },
+    "vencimientos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Fecha de cargo: 16 de junio de 2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_vencimiento": {
+          "valor": "2026-06-16",
+          "evidencias": [
+            {
+              "texto_visible": "Fecha de cargo: 16 de junio de 2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": 424.59,
+          "evidencias": [
+            {
+              "texto_visible": "Total 424,59 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": "Domiciliación bancaria",
+          "evidencias": [
+            {
+              "texto_visible": "Forma de pago: Domiciliación bancaria",
+              "pagina": 1
+            }
+          ]
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "IVA normal (21%) 21 % s/ 350,90 73,69 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 350.9,
+          "evidencias": [
+            {
+              "texto_visible": "IVA normal (21%) 21 % s/ 350,90 73,69 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 21.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA normal (21%)",
+              "pagina": 2
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 73.69,
+          "evidencias": [
+            {
+              "texto_visible": "IVA normal (21%) 21 % s/ 350,90 73,69 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      },
+      {
+        "orden": {
+          "valor": 2,
+          "evidencias": [
+            {
+              "texto_visible": "Impto.HC general (#) 4.160,00 kWh x 0,001080 Eur/kWh 4,49 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": null,
+          "evidencias": []
+        },
+        "tipo_iva": {
+          "valor": null,
+          "evidencias": []
+        },
+        "cuota_iva": {
+          "valor": null,
+          "evidencias": []
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": "Impto.HC general (#) 4.160,00 kWh x 0,001080 Eur/kWh",
+          "evidencias": [
+            {
+              "texto_visible": "Impto.HC general (#) 4.160,00 kWh x 0,001080 Eur/kWh 4,49 €",
+              "pagina": 2
+            }
+          ]
+        }
+      }
+    ],
+    "albaranes": [],
+    "ajustes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Descuento promocional -10 % x 320,32 Eur -32,03 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_ajuste": {
+          "valor": "DESCUENTO",
+          "evidencias": [
+            {
+              "texto_visible": "Descuento promocional -10 % x 320,32 Eur -32,03 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "Descuento promocional -10 % x 320,32 Eur",
+          "evidencias": [
+            {
+              "texto_visible": "Descuento promocional -10 % x 320,32 Eur -32,03 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe": {
+          "valor": -32.03,
+          "evidencias": [
+            {
+              "texto_visible": "Descuento promocional -10 % x 320,32 Eur -32,03 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "incluido_en_base": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "IVA normal (21%) 21 % s/ 350,90 73,69 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "incluido_en_total": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 2,
+          "evidencias": [
+            {
+              "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_ajuste": {
+          "valor": "OTRO",
+          "evidencias": [
+            {
+              "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "Alquiler de Equipos Gas",
+          "evidencias": [
+            {
+              "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe": {
+          "valor": 1.18,
+          "evidencias": [
+            {
+              "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "incluido_en_base": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "Importe total 350,90 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "incluido_en_total": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 3,
+          "evidencias": [
+            {
+              "texto_visible": "Fijo 56,94 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_ajuste": {
+          "valor": "OTRO",
+          "evidencias": [
+            {
+              "texto_visible": "Fijo 56,94 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "Fijo",
+          "evidencias": [
+            {
+              "texto_visible": "Fijo 56,94 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": 56.94,
+          "evidencias": [
+            {
+              "texto_visible": "Fijo 56,94 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "incluido_en_base": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "Importe total 350,90 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "incluido_en_total": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 4,
+          "evidencias": [
+            {
+              "texto_visible": "Variable 320,32 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_ajuste": {
+          "valor": "OTRO",
+          "evidencias": [
+            {
+              "texto_visible": "Variable 320,32 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "Variable",
+          "evidencias": [
+            {
+              "texto_visible": "Variable 320,32 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": 320.32,
+          "evidencias": [
+            {
+              "texto_visible": "Variable 320,32 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "incluido_en_base": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "Importe total 350,90 €",
+              "pagina": 2
+            }
+          ]
+        },
+        "incluido_en_total": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 5,
+          "evidencias": [
+            {
+              "texto_visible": "Impuestos 78,18 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_ajuste": {
+          "valor": "IMPUESTO",
+          "evidencias": [
+            {
+              "texto_visible": "Impuestos 78,18 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "Impuestos",
+          "evidencias": [
+            {
+              "texto_visible": "Impuestos 78,18 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": 78.18,
+          "evidencias": [
+            {
+              "texto_visible": "Impuestos 78,18 €",
+              "pagina": 1
+            }
+          ]
+        },
+        "incluido_en_base": {
+          "valor": false,
+          "evidencias": []
+        },
+        "incluido_en_total": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "Total 424,59 €",
+              "pagina": 1
+            }
+          ]
+        }
+      }
+    ],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": null,
+        "evidencias": []
+      },
+      "nombre": {
+        "valor": "PIO PUIG SALOMON",
+        "evidencias": [
+          {
+            "texto_visible": "PIO PUIG SALOMON",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": null,
+        "evidencias": []
+      },
+      "metodo_identificacion": {
+        "valor": "Dirección de suministro: CARRER BARCELONA 54 1, 43550 ULLDECONA, TARRAGONA",
+        "evidencias": [
+          {
+            "texto_visible": "Dirección de suministro: CARRER BARCELONA 54 1, 43550 ULLDECONA, TARRAGONA",
+            "pagina": 2
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": "2026-06-16",
+      "evidencias": [
+        {
+          "texto_visible": "Fecha de cargo: 16 de junio de 2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "periodo_facturacion_inicio": {
+      "valor": "2026-04-02",
+      "evidencias": [
+        {
+          "texto_visible": "Periodo de facturación: del 02/04/2026 al 03/06/2026 (62 días)",
+          "pagina": 1
+        }
+      ]
+    },
+    "periodo_facturacion_fin": {
+      "valor": "2026-06-03",
+      "evidencias": [
+        {
+          "texto_visible": "Periodo de facturación: del 02/04/2026 al 03/06/2026 (62 días)",
+          "pagina": 1
+        }
+      ]
+    },
+    "nota_revision": {
+      "valor": null,
+      "evidencias": []
+    }
+  }
+}

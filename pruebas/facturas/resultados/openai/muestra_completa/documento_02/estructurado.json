@@ -1,0 +1,269 @@
+{
+  "metadatos_prueba": {
+    "indice": 2,
+    "archivo_original_local": "ECOCEUTICS MENSUALIDAD PIO.pdf",
+    "nombre_neutro_enviado": "documento_02.pdf",
+    "numero_paginas": 1,
+    "tamano_bytes": 107203,
+    "sha256": "62416a0f4b22ff24c51ecdabf59696bca6e8473f1685548fb4b8815733f3f9e8",
+    "contenido_patron_incluido": false,
+    "modelo": "gpt-5.6-luna",
+    "response_id": "resp_09fafaa4c2530f6a016a74cef315ec819e91eab4cf121db4c7",
+    "version_prompt": "muestra_completa_ciega_v1.0",
+    "max_output_tokens": 16000,
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "FACTURA",
+      "evidencias": [
+        {
+          "texto_visible": "Factura/",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "CUOTA_SERVICIO",
+      "evidencias": [
+        {
+          "texto_visible": "QUOTA READY",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": false,
+      "evidencias": []
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Full Núm. 1/1",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Full Núm. 1/1",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "Hygie31 España SLU.",
+      "evidencias": [
+        {
+          "texto_visible": "Hygie31 España SLU.",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "B17733601",
+      "evidencias": [
+        {
+          "texto_visible": "B17733601",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "FR00263029",
+      "evidencias": [
+        {
+          "texto_visible": "Número de fra. FR00263029",
+          "pagina": 1
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-06-30",
+      "evidencias": [
+        {
+          "texto_visible": "Data factura 30/06/2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 339.0,
+      "evidencias": [
+        {
+          "texto_visible": "339,00€",
+          "pagina": 1
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 71.19,
+      "evidencias": [
+        {
+          "texto_visible": "71,19€",
+          "pagina": 1
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": null,
+      "evidencias": []
+    },
+    "importe_total": {
+      "valor": 410.19,
+      "evidencias": [
+        {
+          "texto_visible": "410,19€",
+          "pagina": 1
+        }
+      ]
+    },
+    "vencimientos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "01-07-2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_vencimiento": {
+          "valor": "2026-07-01",
+          "evidencias": [
+            {
+              "texto_visible": "01-07-2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": 410.19,
+          "evidencias": [
+            {
+              "texto_visible": "410,19",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "21,00%",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 339.0,
+          "evidencias": [
+            {
+              "texto_visible": "339,00€",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 21.0,
+          "evidencias": [
+            {
+              "texto_visible": "21,00%",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 71.19,
+          "evidencias": [
+            {
+              "texto_visible": "71,19€",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "albaranes": [],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": "430340",
+        "evidencias": [
+          {
+            "texto_visible": "Client 430340",
+            "pagina": 1
+          }
+        ]
+      },
+      "nombre": {
+        "valor": "PUIG SALOMON, PIO",
+        "evidencias": [
+          {
+            "texto_visible": "PUIG SALOMON, PIO",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": "40901058C",
+        "evidencias": [
+          {
+            "texto_visible": "N.I.F. 40901058C",
+            "pagina": 1
+          }
+        ]
+      },
+      "metodo_identificacion": {
+        "valor": "N.I.F.",
+        "evidencias": [
+          {
+            "texto_visible": "N.I.F. 40901058C",
+            "pagina": 1
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_inicio": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_fin": {
+      "valor": null,
+      "evidencias": []
+    },
+    "nota_revision": {
+      "valor": null,
+      "evidencias": []
+    }
+  }
+}
