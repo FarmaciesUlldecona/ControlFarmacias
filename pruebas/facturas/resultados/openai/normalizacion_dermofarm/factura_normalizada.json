@@ -1,0 +1,111 @@
+{
+  "version_normalizador": "dermofarm_v1",
+  "fecha_ejecucion": "2026-08-07T16:48:45.392337+00:00",
+  "archivo_origen": "DERMOFARM ABONO VTO 5.8.26 PIO.pdf",
+  "paginas_originales": [
+    1,
+    1
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "ABONO",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "pagina_inicio": 1,
+    "pagina_fin": 1,
+    "proveedor_nombre": "DERMOFARM, S.A.U.",
+    "proveedor_cif": "A08283624",
+    "numero_factura": "2700282621",
+    "fecha_factura": "2026-07-17",
+    "base_imponible_total": -86.65,
+    "iva_total": -18.2,
+    "recargo_equivalencia_total": -4.51,
+    "importe_total": -109.36,
+    "vencimientos": [],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": -86.65,
+        "tipo_iva": 21.0,
+        "cuota_iva": -18.2,
+        "tipo_recargo_equivalencia": 5.2,
+        "cuota_recargo_equivalencia": -4.51
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": 1,
+        "numero_albaran": "25026140",
+        "fecha_albaran": "2026-07-17",
+        "tipo_movimiento": "ABONO",
+        "descripcion": null,
+        "importe_base": null,
+        "importe_total": null,
+        "procedencia": {
+          "numero_y_fecha": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          },
+          "tipo_movimiento": {
+            "tipo": "regla_determinista",
+            "fuente": "python",
+            "regla": "movimiento_segun_tipo_documento_visible",
+            "version_regla": "dermofarm_v1"
+          }
+        }
+      }
+    ],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON, PIO",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": null,
+    "periodo_facturacion_inicio": null,
+    "periodo_facturacion_fin": null,
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_totales_fiscalidad_albaranes": "lectura_visible_luna_general",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna",
+    "signos_contables": "regla_determinista:signo_contable_abono_dermofarm"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF"
+  },
+  "validaciones_monetarias": [
+    {
+      "nombre": "total_factura",
+      "estado": "OK",
+      "esperado": "-109.36",
+      "obtenido": "-109.36",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "cuota_iva",
+      "estado": "OK",
+      "esperado": "-18.2",
+      "obtenido": "-18.1965",
+      "diferencia": "0.0035",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "cuota_recargo_equivalencia",
+      "estado": "OK",
+      "esperado": "-4.51",
+      "obtenido": "-4.5058",
+      "diferencia": "0.0042",
+      "tolerancia": "0.01"
+    }
+  ]
+}

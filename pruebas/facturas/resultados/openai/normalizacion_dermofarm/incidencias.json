@@ -1,0 +1,59 @@
+{
+  "version_normalizador": "dermofarm_v1",
+  "archivo_origen": "DERMOFARM ABONO VTO 5.8.26 PIO.pdf",
+  "incidencias": [
+    {
+      "orden": 1,
+      "campo": "totales",
+      "tipo_incidencia": "SIGNO_CONTABLE_ABONO_NORMALIZADO",
+      "nivel": "AVISO",
+      "descripcion": "El documento visible es ABONO y presenta magnitudes positivas.",
+      "datos_visibles_disponibles": {
+        "base_imponible_total": 86.65,
+        "iva_total": 18.2,
+        "recargo_equivalencia_total": 4.51,
+        "importe_total": 109.36
+      },
+      "decision_tomada": "Las magnitudes contables se representan con signo negativo.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 2,
+      "campo": "impuestos",
+      "tipo_incidencia": "FILAS_FISCALES_COMPLEMENTARIAS_UNIFICADAS",
+      "nivel": "AVISO",
+      "descripcion": "Las filas visibles de IVA y recargo comparten la misma base.",
+      "datos_visibles_disponibles": {
+        "cantidad_filas": 2,
+        "base_comun": -86.65
+      },
+      "decision_tomada": "Se representa un unico tramo fiscal con IVA y recargo.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 3,
+      "campo": "albaranes[0].importes",
+      "tipo_incidencia": "IMPORTES_ALBARAN_NO_VISIBLES",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La referencia de albaran no muestra importes asociados.",
+      "datos_visibles_disponibles": {
+        "numero_albaran": "25026140",
+        "fecha_albaran": "2026-07-17"
+      },
+      "decision_tomada": "Los importes del albaran permanecen en null.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 4,
+      "campo": "proveedor_cif",
+      "tipo_incidencia": "PREFIJO_PAIS_ELIMINADO",
+      "nivel": "AVISO",
+      "descripcion": "El VAT visible incluye el prefijo de pais ES.",
+      "datos_visibles_disponibles": {
+        "valor": "ESA08283624"
+      },
+      "decision_tomada": "Se conserva el identificador fiscal nacional A08283624.",
+      "requiere_revision_manual": false
+    }
+  ]
+}
