@@ -1,0 +1,762 @@
+{
+  "aislamiento": {
+    "cumple": true,
+    "hallazgos": []
+  },
+  "antes_luna": {
+    "campos_evaluados": 22,
+    "correctos": 13,
+    "incorrectos": 2,
+    "parciales": 6,
+    "ausentes": 1,
+    "inventados": 1,
+    "acierto_estricto": 59.09,
+    "cobertura": 95.45,
+    "incidencias_previsibles": 9
+  },
+  "despues_suavinex_v1": {
+    "campos_evaluados": 22,
+    "correctos": 20,
+    "incorrectos": 0,
+    "parciales": 2,
+    "ausentes": 0,
+    "acierto_estricto": 90.91,
+    "cobertura": 100.0,
+    "inventados": 0
+  },
+  "cantidad_incidencias": 6,
+  "incidencias": [
+    {
+      "orden": 1,
+      "campo": "impuestos",
+      "tipo_incidencia": "CUOTA_FISCAL_AGREGADA_SEPARADA",
+      "nivel": "AVISO",
+      "descripcion": "El documento muestra una cuota conjunta de IVA y recargo.",
+      "datos_visibles_disponibles": {
+        "base": 531.26,
+        "tipo_iva": 21.0,
+        "tipo_recargo": 5.2,
+        "cuota_agregada": 139.19
+      },
+      "decision_tomada": "Se calculan 111.56 de IVA y 27.63 de recargo; su suma reproduce la cuota visible.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 2,
+      "campo": "vencimientos[0].nota",
+      "tipo_incidencia": "FORMA_PAGO_NO_ES_NOTA_VENCIMIENTO",
+      "nivel": "AVISO",
+      "descripcion": "La forma de pago visible no describe el vencimiento.",
+      "datos_visibles_disponibles": {
+        "valor": "Giro domiciliado CORE"
+      },
+      "decision_tomada": "La nota del vencimiento permanece en null.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 3,
+      "campo": "albaranes[0].descripcion",
+      "tipo_incidencia": "REFERENCIA_PEDIDO_BLOQUEADA_COMO_DESCRIPCION_ALBARAN",
+      "nivel": "AVISO",
+      "descripcion": "La referencia de pedido es un concepto distinto del albaran.",
+      "datos_visibles_disponibles": {
+        "valor": "Pedido: 220559274"
+      },
+      "decision_tomada": "La descripcion del albaran permanece en null.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 4,
+      "campo": "albaranes[0].importes",
+      "tipo_incidencia": "IMPORTES_ASOCIADOS_A_ALBARAN_UNICO",
+      "nivel": "AVISO",
+      "descripcion": "La configuracion confirma que el unico bloque de albaran abarca la factura.",
+      "datos_visibles_disponibles": {
+        "numero_albaran": "81109681",
+        "cantidad_albaranes": 1
+      },
+      "decision_tomada": "Se asocian la base y el total visibles de la factura.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 5,
+      "campo": "ajustes[0]",
+      "tipo_incidencia": "PUNTO_VERDE_INFORMATIVO_NORMALIZADO",
+      "nivel": "AVISO",
+      "descripcion": "El concepto visible identifica informacion de punto verde.",
+      "datos_visibles_disponibles": {
+        "tipo": "Infor.Pto.Verde",
+        "importe": 1.9
+      },
+      "decision_tomada": "Se clasifica como OTRO y se conserva como incluido en base y total.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 6,
+      "campo": "proveedor_cif",
+      "tipo_incidencia": "PREFIJO_PAIS_ELIMINADO",
+      "nivel": "AVISO",
+      "descripcion": "El CIF visible incluye el prefijo de pais ES.",
+      "datos_visibles_disponibles": {
+        "valor": "ESB03074093"
+      },
+      "decision_tomada": "Se conserva el identificador fiscal nacional B03074093.",
+      "requiere_revision_manual": false
+    }
+  ],
+  "validaciones_monetarias": [
+    {
+      "nombre": "total_factura",
+      "estado": "OK",
+      "esperado": "670.45",
+      "obtenido": "670.45",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "cuota_fiscal_agregada",
+      "estado": "OK",
+      "esperado": "139.19",
+      "obtenido": "139.19",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "cuota_iva",
+      "estado": "OK",
+      "esperado": "111.56",
+      "obtenido": "111.5646",
+      "diferencia": "0.0046",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "cuota_recargo_equivalencia",
+      "estado": "OK",
+      "esperado": "27.63",
+      "obtenido": "27.62552",
+      "diferencia": "-0.00448",
+      "tolerancia": "0.01"
+    }
+  ],
+  "comparaciones": [
+    {
+      "campo": "ajustes",
+      "estado": "CORRECTO",
+      "esperado": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Información punto verde",
+          "importe": 1.9,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        }
+      ],
+      "obtenido": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Información punto verde",
+          "importe": 1.9,
+          "incluido_en_base": true,
+          "incluido_en_total": true,
+          "procedencia": {
+            "tipo": "regla_determinista",
+            "fuente": "python",
+            "regla": "clasificacion_punto_verde_suavinex",
+            "version_regla": "suavinex_v1"
+          }
+        }
+      ],
+      "conteo_atomico": {
+        "CORRECTO": 6
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes[0].descripcion",
+          "esperado": "Información punto verde",
+          "obtenido": "Información punto verde",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].importe",
+          "esperado": 1.9,
+          "obtenido": 1.9,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].tipo_ajuste",
+          "esperado": "OTRO",
+          "obtenido": "OTRO",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "estado": "CORRECTO",
+      "esperado": [
+        {
+          "orden": 1,
+          "numero_albaran": "81109681",
+          "fecha_albaran": null,
+          "tipo_movimiento": "CARGO",
+          "importe_base": 531.26,
+          "importe_total": 670.45
+        }
+      ],
+      "obtenido": [
+        {
+          "orden": 1,
+          "numero_albaran": "81109681",
+          "fecha_albaran": null,
+          "tipo_movimiento": "CARGO",
+          "descripcion": null,
+          "importe_base": 531.26,
+          "importe_total": 670.45,
+          "procedencia": {
+            "numero_y_fecha": {
+              "tipo": "lectura_visible",
+              "fuente": "luna_general"
+            },
+            "tipo_movimiento": {
+              "tipo": "regla_determinista",
+              "fuente": "python",
+              "regla": "movimiento_segun_tipo_documento_visible",
+              "version_regla": "suavinex_v1"
+            },
+            "importes": {
+              "tipo": "regla_determinista",
+              "fuente": "python",
+              "regla": "importes_factura_para_albaran_unico_suavinex",
+              "version_regla": "suavinex_v1"
+            }
+          }
+        }
+      ],
+      "conteo_atomico": {
+        "CORRECTO": 7
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes[0].descripcion",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].fecha_albaran",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_base",
+          "esperado": 531.26,
+          "obtenido": 531.26,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_total",
+          "esperado": 670.45,
+          "obtenido": 670.45,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].numero_albaran",
+          "esperado": "81109681",
+          "obtenido": "81109681",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "estado": "CORRECTO",
+      "esperado": 531.26,
+      "obtenido": 531.26,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 531.26,
+          "obtenido": 531.26,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "estado": "CORRECTO",
+      "esperado": "MERCANCIA",
+      "obtenido": "MERCANCIA",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "MERCANCIA",
+          "obtenido": "MERCANCIA",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "estado": "PARCIAL",
+      "esperado": {
+        "id_farmacia": "PIO",
+        "nombre": "FARMACIA PIO PUIG",
+        "cif": "40901058C",
+        "metodo_identificacion": "CIF"
+      },
+      "obtenido": {
+        "id_farmacia": "PIO",
+        "nombre": "PUIG SALOMON, PIO",
+        "cif": "40901058C",
+        "metodo_identificacion": "CIF"
+      },
+      "conteo_atomico": {
+        "CORRECTO": 3,
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": "40901058C",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": "PIO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "CIF",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "PUIG SALOMON, PIO",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "estado": "CORRECTO",
+      "esperado": null,
+      "obtenido": null,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "estado": "CORRECTO",
+      "esperado": "2026-06-19",
+      "obtenido": "2026-06-19",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-06-19",
+          "obtenido": "2026-06-19",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "estado": "CORRECTO",
+      "esperado": 670.45,
+      "obtenido": 670.45,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 670.45,
+          "obtenido": 670.45,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "estado": "CORRECTO",
+      "esperado": [
+        {
+          "orden": 1,
+          "base_imponible": 531.26,
+          "tipo_iva": 21.0,
+          "cuota_iva": 111.56,
+          "tipo_recargo_equivalencia": 5.2,
+          "cuota_recargo_equivalencia": 27.63,
+          "nota": "El PDF agrupa IVA y recargo en una cuota total de 139,19 €"
+        }
+      ],
+      "obtenido": [
+        {
+          "orden": 1,
+          "base_imponible": 531.26,
+          "tipo_iva": 21.0,
+          "cuota_iva": 111.56,
+          "tipo_recargo_equivalencia": 5.2,
+          "cuota_recargo_equivalencia": 27.63,
+          "nota": "El PDF agrupa IVA y recargo en una cuota total de 139,19 €"
+        }
+      ],
+      "conteo_atomico": {
+        "CORRECTO": 7
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": 531.26,
+          "obtenido": 531.26,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": 111.56,
+          "obtenido": 111.56,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": 27.63,
+          "obtenido": 27.63,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].nota",
+          "esperado": "El PDF agrupa IVA y recargo en una cuota total de 139,19 €",
+          "obtenido": "El PDF agrupa IVA y recargo en una cuota total de 139,19 €",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": 21.0,
+          "obtenido": 21.0,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": 5.2,
+          "obtenido": 5.2,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "estado": "CORRECTO",
+      "esperado": 111.56,
+      "obtenido": 111.56,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 111.56,
+          "obtenido": 111.56,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "estado": "CORRECTO",
+      "esperado": null,
+      "obtenido": null,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "estado": "CORRECTO",
+      "esperado": "0702638508",
+      "obtenido": "0702638508",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "0702638508",
+          "obtenido": "0702638508",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "estado": "CORRECTO",
+      "esperado": 1,
+      "obtenido": 1,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "estado": "CORRECTO",
+      "esperado": 1,
+      "obtenido": 1,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "estado": "CORRECTO",
+      "esperado": null,
+      "obtenido": null,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "estado": "CORRECTO",
+      "esperado": null,
+      "obtenido": null,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "estado": "CORRECTO",
+      "esperado": "B03074093",
+      "obtenido": "B03074093",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "B03074093",
+          "obtenido": "B03074093",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "estado": "CORRECTO",
+      "esperado": "SUAVINEX GROUP, S.L.",
+      "obtenido": "SUAVINEX GROUP, S.L.",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "SUAVINEX GROUP, S.L.",
+          "obtenido": "SUAVINEX GROUP, S.L.",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "estado": "CORRECTO",
+      "esperado": 27.63,
+      "obtenido": 27.63,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 27.63,
+          "obtenido": 27.63,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "estado": "CORRECTO",
+      "esperado": true,
+      "obtenido": true,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "tipo_documento",
+      "estado": "CORRECTO",
+      "esperado": "FACTURA",
+      "obtenido": "FACTURA",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "estado": "PARCIAL",
+      "esperado": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-08-19",
+          "importe": 670.45,
+          "nota": "El nombre del archivo indica 15/08/2026, pero el PDF muestra 19/08/2026; prevalece el PDF"
+        }
+      ],
+      "obtenido": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-08-19",
+          "importe": 670.45,
+          "nota": null
+        }
+      ],
+      "conteo_atomico": {
+        "CORRECTO": 3,
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos[0].fecha_vencimiento",
+          "esperado": "2026-08-19",
+          "obtenido": "2026-08-19",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].importe",
+          "esperado": 670.45,
+          "obtenido": 670.45,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].nota",
+          "esperado": "El nombre del archivo indica 15/08/2026, pero el PDF muestra 19/08/2026; prevalece el PDF",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "vencimientos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    }
+  ]
+}

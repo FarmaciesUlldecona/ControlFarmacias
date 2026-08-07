@@ -1,0 +1,150 @@
+{
+  "version_normalizador": "suavinex_v1",
+  "fecha_ejecucion": "2026-08-07T18:18:34.593185+00:00",
+  "archivo_origen": "SUAVINEX VTO 15.8.26 PIO.pdf",
+  "paginas_originales": [
+    1,
+    1
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "FACTURA",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "pagina_inicio": 1,
+    "pagina_fin": 1,
+    "proveedor_nombre": "SUAVINEX GROUP, S.L.",
+    "proveedor_cif": "B03074093",
+    "numero_factura": "0702638508",
+    "fecha_factura": "2026-06-19",
+    "base_imponible_total": 531.26,
+    "iva_total": 111.56,
+    "recargo_equivalencia_total": 27.63,
+    "importe_total": 670.45,
+    "vencimientos": [
+      {
+        "orden": 1,
+        "fecha_vencimiento": "2026-08-19",
+        "importe": 670.45,
+        "nota": null
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": 531.26,
+        "tipo_iva": 21.0,
+        "cuota_iva": 111.56,
+        "tipo_recargo_equivalencia": 5.2,
+        "cuota_recargo_equivalencia": 27.63,
+        "nota": "El PDF agrupa IVA y recargo en una cuota total de 139,19 €"
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": 1,
+        "numero_albaran": "81109681",
+        "fecha_albaran": null,
+        "tipo_movimiento": "CARGO",
+        "descripcion": null,
+        "importe_base": 531.26,
+        "importe_total": 670.45,
+        "procedencia": {
+          "numero_y_fecha": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          },
+          "tipo_movimiento": {
+            "tipo": "regla_determinista",
+            "fuente": "python",
+            "regla": "movimiento_segun_tipo_documento_visible",
+            "version_regla": "suavinex_v1"
+          },
+          "importes": {
+            "tipo": "regla_determinista",
+            "fuente": "python",
+            "regla": "importes_factura_para_albaran_unico_suavinex",
+            "version_regla": "suavinex_v1"
+          }
+        }
+      }
+    ],
+    "ajustes": [
+      {
+        "orden": 1,
+        "tipo_ajuste": "OTRO",
+        "descripcion": "Información punto verde",
+        "importe": 1.9,
+        "incluido_en_base": true,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "regla_determinista",
+          "fuente": "python",
+          "regla": "clasificacion_punto_verde_suavinex",
+          "version_regla": "suavinex_v1"
+        }
+      }
+    ],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON, PIO",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": null,
+    "periodo_facturacion_inicio": null,
+    "periodo_facturacion_fin": null,
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_y_totales": "lectura_visible_luna_general",
+    "fiscalidad": "regla_determinista:separacion_cuota_fiscal_agregada_suavinex",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna",
+    "signos": "lectura_visible_sin_regla_de_abono"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF",
+    "albaran_unico_abarca_factura": true
+  },
+  "validaciones_monetarias": [
+    {
+      "nombre": "total_factura",
+      "estado": "OK",
+      "esperado": "670.45",
+      "obtenido": "670.45",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "cuota_fiscal_agregada",
+      "estado": "OK",
+      "esperado": "139.19",
+      "obtenido": "139.19",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "cuota_iva",
+      "estado": "OK",
+      "esperado": "111.56",
+      "obtenido": "111.5646",
+      "diferencia": "0.0046",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "cuota_recargo_equivalencia",
+      "estado": "OK",
+      "esperado": "27.63",
+      "obtenido": "27.62552",
+      "diferencia": "-0.00448",
+      "tolerancia": "0.01"
+    }
+  ]
+}

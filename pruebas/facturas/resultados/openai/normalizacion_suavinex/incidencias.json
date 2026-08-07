@@ -1,0 +1,83 @@
+{
+  "version_normalizador": "suavinex_v1",
+  "archivo_origen": "SUAVINEX VTO 15.8.26 PIO.pdf",
+  "incidencias": [
+    {
+      "orden": 1,
+      "campo": "impuestos",
+      "tipo_incidencia": "CUOTA_FISCAL_AGREGADA_SEPARADA",
+      "nivel": "AVISO",
+      "descripcion": "El documento muestra una cuota conjunta de IVA y recargo.",
+      "datos_visibles_disponibles": {
+        "base": 531.26,
+        "tipo_iva": 21.0,
+        "tipo_recargo": 5.2,
+        "cuota_agregada": 139.19
+      },
+      "decision_tomada": "Se calculan 111.56 de IVA y 27.63 de recargo; su suma reproduce la cuota visible.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 2,
+      "campo": "vencimientos[0].nota",
+      "tipo_incidencia": "FORMA_PAGO_NO_ES_NOTA_VENCIMIENTO",
+      "nivel": "AVISO",
+      "descripcion": "La forma de pago visible no describe el vencimiento.",
+      "datos_visibles_disponibles": {
+        "valor": "Giro domiciliado CORE"
+      },
+      "decision_tomada": "La nota del vencimiento permanece en null.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 3,
+      "campo": "albaranes[0].descripcion",
+      "tipo_incidencia": "REFERENCIA_PEDIDO_BLOQUEADA_COMO_DESCRIPCION_ALBARAN",
+      "nivel": "AVISO",
+      "descripcion": "La referencia de pedido es un concepto distinto del albaran.",
+      "datos_visibles_disponibles": {
+        "valor": "Pedido: 220559274"
+      },
+      "decision_tomada": "La descripcion del albaran permanece en null.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 4,
+      "campo": "albaranes[0].importes",
+      "tipo_incidencia": "IMPORTES_ASOCIADOS_A_ALBARAN_UNICO",
+      "nivel": "AVISO",
+      "descripcion": "La configuracion confirma que el unico bloque de albaran abarca la factura.",
+      "datos_visibles_disponibles": {
+        "numero_albaran": "81109681",
+        "cantidad_albaranes": 1
+      },
+      "decision_tomada": "Se asocian la base y el total visibles de la factura.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 5,
+      "campo": "ajustes[0]",
+      "tipo_incidencia": "PUNTO_VERDE_INFORMATIVO_NORMALIZADO",
+      "nivel": "AVISO",
+      "descripcion": "El concepto visible identifica informacion de punto verde.",
+      "datos_visibles_disponibles": {
+        "tipo": "Infor.Pto.Verde",
+        "importe": 1.9
+      },
+      "decision_tomada": "Se clasifica como OTRO y se conserva como incluido en base y total.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 6,
+      "campo": "proveedor_cif",
+      "tipo_incidencia": "PREFIJO_PAIS_ELIMINADO",
+      "nivel": "AVISO",
+      "descripcion": "El CIF visible incluye el prefijo de pais ES.",
+      "datos_visibles_disponibles": {
+        "valor": "ESB03074093"
+      },
+      "decision_tomada": "Se conserva el identificador fiscal nacional B03074093.",
+      "requiere_revision_manual": false
+    }
+  ]
+}
