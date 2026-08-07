@@ -29,7 +29,13 @@ def ejecutar() -> tuple[Path, Path]:
     resultado, incidencias = normalizar_alliance(
         general,
         tablas,
-        ConfiguracionAlliance(archivo_origen=ARCHIVO_ORIGEN),
+        ConfiguracionAlliance(
+            archivo_origen=ARCHIVO_ORIGEN,
+            factura_separada_inequivocamente=True,
+            descuadre_total=False,
+            pagos_parciales_o_fraccionamiento=False,
+            importes_vencimiento_distintos=False,
+        ),
     )
     RUTA_SALIDA.mkdir(parents=True, exist_ok=True)
     ruta_factura = RUTA_SALIDA / "factura_normalizada.json"

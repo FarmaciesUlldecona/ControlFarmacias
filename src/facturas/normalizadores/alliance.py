@@ -5,12 +5,26 @@ from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from src.facturas.normalizadores.comun import (
+    AliasProveedor,
+    EstadoValidacion,
+    aplicar_regla_determinista,
+    fecha_visible_a_iso,
+    importe_espanol_a_decimal,
+    normalizar_identificador,
+    validar_suma_monetaria,
+    valor_visible,
+)
 from src.models.factura import FacturaNormalizada
 
 
 VERSION_NORMALIZADOR = "alliance_v1.1"
 TITULOS_ALBARANES = {"CARGOS": "CARGO", "ABONOS": "ABONO"}
-ALIAS_ALLIANCE = ("CENCORA", "AH", "ALLIANCE", "ALLIANCE HEALTHCARE")
+NOMBRE_CANONICO_ALLIANCE = "ALLIANCE HEALTHCARE ESPAÑA, S.A."
+ALIAS_ALLIANCE = AliasProveedor(
+    nombre_canonico=NOMBRE_CANONICO_ALLIANCE,
+    alias=("CENCORA", "AH", "ALLIANCE", "ALLIANCE HEALTHCARE"),
+)
 
 
 class FilaAlbaranInvalida(ValueError):
@@ -28,69 +42,18 @@ class ConfiguracionAlliance:
     requiere_conciliacion_albaranes: bool = True
     destinatario_id_farmacia: str = "PIO"
     destinatario_metodo_identificacion: str = "CIF"
-    factura_separada_inequivocamente: bool = True
-    descuadre_total: bool = False
-    pagos_parciales_o_fraccionamiento: bool = False
-    importes_vencimiento_distintos: bool = False
-
-
-def fecha_visible_a_iso(valor: str | None) -> str | None:
-    if valor is None:
-        return None
-    texto = valor.strip()
-    if not texto:
-        return None
-    try:
-        return datetime.strptime(texto, "%d-%m-%Y").date().isoformat()
-    except ValueError as error:
-        raise ValueError(f"Fecha visible no válida: {valor!r}") from error
-
-
-def importe_espanol_a_decimal(valor: str | int | float | Decimal | None) -> Decimal | None:
-    if valor is None:
-        return None
-    if isinstance(valor, Decimal):
-        return valor
-    if isinstance(valor, (int, float)):
-        return Decimal(str(valor))
-    texto = valor.strip().replace("€", "").replace(" ", "")
-    if not texto:
-        return None
-    negativo_final = texto.endswith("-")
-    negativo_inicial = texto.startswith("-")
-    if negativo_final:
-        texto = texto[:-1]
-    if negativo_inicial:
-        texto = texto[1:]
-    texto = texto.replace(".", "").replace(",", ".")
-    try:
-        numero = Decimal(texto)
-    except InvalidOperation as error:
-        raise ValueError(f"Importe español no válido: {valor!r}") from error
-    return -numero if negativo_final or negativo_inicial else numero
-
-
-def _valor_con_evidencia(campo: Any) -> Any:
-    if not isinstance(campo, dict):
-        return None
-    evidencias = campo.get("evidencias")
-    if not isinstance(evidencias, list) or not evidencias:
-        return None
-    return campo.get("valor")
+    factura_separada_inequivocamente: bool | None = None
+    descuadre_total: bool | None = None
+    pagos_parciales_o_fraccionamiento: bool | None = None
+    importes_vencimiento_distintos: bool | None = None
 
 
 def _normalizar_razon_social(valor: str | None) -> str | None:
-    if valor is None:
-        return None
-    texto = valor.strip()
-    mayusculas = texto.upper()
-    if any(alias in mayusculas for alias in ALIAS_ALLIANCE):
-        return "ALLIANCE HEALTHCARE ESPAÑA, S.A."
-    return texto
+    return ALIAS_ALLIANCE.normalizar(valor)
 
 
 def _decimal_general(campo: Any) -> Decimal | None:
-    valor = _valor_con_evidencia(campo)
+    valor = valor_visible(campo)
     if valor is None:
         return None
     try:
@@ -100,14 +63,11 @@ def _decimal_general(campo: Any) -> Decimal | None:
 
 
 def _fecha_general(campo: Any) -> str | None:
-    valor = _valor_con_evidencia(campo)
+    valor = valor_visible(campo)
     if valor is None:
         return None
     texto = str(valor).strip()
-    try:
-        return date.fromisoformat(texto).isoformat()
-    except ValueError:
-        return fecha_visible_a_iso(texto)
+    return fecha_visible_a_iso(texto)
 
 
 def normalizar_fila_albaran(
@@ -127,7 +87,7 @@ def normalizar_fila_albaran(
         raise FilaAlbaranInvalida("La fila de albarán contiene celdas obligatorias vacías")
     return {
         "orden": orden,
-        "numero_albaran": numero,
+        "numero_albaran": normalizar_identificador(numero),
         "fecha_albaran": fecha_visible_a_iso(fecha),
         "tipo_movimiento": TITULOS_ALBARANES[titulo_tabla],
         "descripcion": descripcion,
@@ -262,9 +222,15 @@ def _normalizar_ajustes(
                     base_compras = sum(valores[:3], Decimal("0"))
                     total_compras_factura = valores[-1]
                     if base_total is not None:
-                        incluido_base = base_compras + base == base_total
+                        incluido_base = validar_suma_monetaria(
+                            [base_compras, base], base_total, tolerancia=Decimal("0")
+                        ).estado is EstadoValidacion.OK
                     if importe_total is not None:
-                        incluido_total = total_compras_factura + total == importe_total
+                        incluido_total = validar_suma_monetaria(
+                            [total_compras_factura, total],
+                            importe_total,
+                            tolerancia=Decimal("0"),
+                        ).estado is EstadoValidacion.OK
                     justificacion = {
                         "base_compras": base_compras,
                         "base_servicio": base,
@@ -306,11 +272,10 @@ def _normalizar_ajustes(
     return ajustes
 
 
-def _es_proveedor_alliance(proveedor_normalizado: str | None) -> bool:
+def _es_proveedor_alliance(proveedor_normalizado: str | None) -> bool | None:
     if proveedor_normalizado is None:
-        return False
-    texto = proveedor_normalizado.strip().upper()
-    return any(alias == texto or alias in texto for alias in ALIAS_ALLIANCE)
+        return None
+    return ALIAS_ALLIANCE.normalizar(proveedor_normalizado) == NOMBRE_CANONICO_ALLIANCE
 
 
 def _normalizar_vencimientos(
@@ -343,23 +308,38 @@ def _normalizar_vencimientos(
 
     fechas_visibles = [item for item in resultado if item["fecha_vencimiento"] is not None]
     importes_visibles = [item["importe"] for item in resultado if item["importe"] is not None]
-    condiciones = {
+    condiciones: dict[str, bool | None] = {
         "proveedor_alliance": _es_proveedor_alliance(proveedor_normalizado),
         "factura_separada_inequivocamente": configuracion.factura_separada_inequivocamente,
         "unica_fecha_vencimiento": len(fechas_visibles) == 1 and len(resultado) == 1,
-        "sin_vencimientos_multiples_o_importes_distintos": (
-            len(resultado) == 1
-            and len(set(importes_visibles)) <= 1
-            and not configuracion.pagos_parciales_o_fraccionamiento
-            and not configuracion.importes_vencimiento_distintos
+        "sin_vencimientos_multiples": len(resultado) == 1,
+        "sin_pagos_parciales_o_fraccionamiento": (
+            None
+            if configuracion.pagos_parciales_o_fraccionamiento is None
+            else not configuracion.pagos_parciales_o_fraccionamiento
+        ),
+        "sin_importes_vencimiento_distintos": (
+            None
+            if configuracion.importes_vencimiento_distintos is None
+            else not configuracion.importes_vencimiento_distintos
         ),
         "importe_total_valido": importe_total is not None,
-        "sin_descuadre_total": not configuracion.descuadre_total,
+        "sin_descuadre_total": (
+            None if configuracion.descuadre_total is None else not configuracion.descuadre_total
+        ),
+        "sin_importe_visible_incompatible": not importes_visibles,
     }
     candidato = fechas_visibles[0] if len(fechas_visibles) == 1 else None
     requiere_regla = candidato is not None and candidato["importe"] is None
-    if requiere_regla and all(condiciones.values()):
-        candidato["importe"] = importe_total
+    resultado_regla = aplicar_regla_determinista(
+        nombre="regla_proveedor_alliance_vencimiento_unico",
+        version=VERSION_NORMALIZADOR,
+        precondiciones=condiciones,
+        entradas={"importe_total": importe_total},
+        derivar=lambda entradas: entradas["importe_total"],
+    )
+    if requiere_regla and resultado_regla.aplicada:
+        candidato["importe"] = resultado_regla.valor
         candidato["procedencia"]["importe"] = "regla_proveedor_alliance_vencimiento_unico"
         candidato["procedencia"]["importe_procede_de_lectura_literal"] = False
         candidato["nota"] = "Importe asignado mediante regla determinista de proveedor y vencimiento unico."
@@ -369,7 +349,11 @@ def _normalizar_vencimientos(
                 campo="vencimientos.importe",
                 tipo="REGLA_VENCIMIENTO_UNICO_NO_APLICABLE",
                 descripcion="No se cumplen todas las condiciones para asignar el total al vencimiento.",
-                datos_visibles={"bloques": bloques, "condiciones": condiciones},
+                datos_visibles={
+                    "bloques": bloques,
+                    "condiciones": condiciones,
+                    "bloqueos_regla": list(resultado_regla.bloqueos),
+                },
                 decision="Se conserva la fecha visible y se devuelve importe=null.",
                 revision=True,
             )
@@ -380,9 +364,9 @@ def _normalizar_vencimientos(
 def _normalizar_destinatario(general: dict[str, Any], config: ConfiguracionAlliance) -> dict[str, Any]:
     bruto = general.get("destinatario") or {}
     return {
-        "id_farmacia": config.destinatario_id_farmacia,
-        "nombre": _valor_con_evidencia(bruto.get("nombre")),
-        "cif": _valor_con_evidencia(bruto.get("cif")),
+        "id_farmacia": normalizar_identificador(config.destinatario_id_farmacia),
+        "nombre": valor_visible(bruto.get("nombre")),
+        "cif": normalizar_identificador(valor_visible(bruto.get("cif"))),
         "metodo_identificacion": config.destinatario_metodo_identificacion,
     }
 
@@ -415,13 +399,13 @@ def normalizar_alliance(
     literal = tablas_literales.get("transcripcion", tablas_literales)
     incidencias: list[dict[str, Any]] = []
 
-    proveedor_visible = _valor_con_evidencia(general.get("proveedor_nombre"))
+    proveedor_visible = valor_visible(general.get("proveedor_nombre"))
     proveedor_normalizado = _normalizar_razon_social(proveedor_visible)
     base_total = _decimal_general(general.get("base_imponible_total"))
     importe_total = _decimal_general(general.get("importe_total"))
     tablas = list(literal.get("tablas", []))
 
-    tipo_documento = _valor_con_evidencia(general.get("tipo_documento"))
+    tipo_documento = valor_visible(general.get("tipo_documento"))
     factura = {
         "tipo_documento": tipo_documento,
         "categoria": configuracion.categoria,
@@ -429,8 +413,8 @@ def normalizar_alliance(
         "pagina_inicio": configuracion.pagina_inicio,
         "pagina_fin": configuracion.pagina_fin,
         "proveedor_nombre": proveedor_normalizado,
-        "proveedor_cif": _valor_con_evidencia(general.get("proveedor_cif")),
-        "numero_factura": _valor_con_evidencia(general.get("numero_factura")),
+        "proveedor_cif": normalizar_identificador(valor_visible(general.get("proveedor_cif"))),
+        "numero_factura": normalizar_identificador(valor_visible(general.get("numero_factura"))),
         "fecha_factura": _fecha_general(general.get("fecha_factura")),
         "base_imponible_total": base_total,
         "iva_total": _decimal_general(general.get("iva_total")),

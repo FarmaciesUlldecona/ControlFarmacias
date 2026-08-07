@@ -36,7 +36,13 @@ def resultado_normalizado() -> tuple[dict, list[dict], dict]:
     resultado, incidencias = normalizar_alliance(
         general,
         tablas,
-        ConfiguracionAlliance(archivo_origen="documento_origen.pdf"),
+        ConfiguracionAlliance(
+            archivo_origen="documento_origen.pdf",
+            factura_separada_inequivocamente=True,
+            descuadre_total=False,
+            pagos_parciales_o_fraccionamiento=False,
+            importes_vencimiento_distintos=False,
+        ),
         fecha_ejecucion=datetime(2026, 8, 6, tzinfo=timezone.utc),
     )
     return serializar_json(resultado), serializar_json(incidencias), tablas
@@ -112,7 +118,9 @@ def test_unico_vencimiento_alliance_asigna_total(resultado_normalizado) -> None:
 
 def _normalizar_caso_vencimiento(
     *, proveedor: str = "Alliance", total: float | None = 11185.10,
-    bloques: list[dict] | None = None, separada: bool = True, descuadre: bool = False,
+    bloques: list[dict] | None = None, separada: bool | None = True,
+    descuadre: bool | None = False, pagos: bool | None = False,
+    importes_distintos: bool | None = False,
 ) -> tuple[dict, list[dict]]:
     general = cargar(RUTA_GENERAL)
     tablas = cargar(RUTA_TABLAS)
@@ -129,6 +137,8 @@ def _normalizar_caso_vencimiento(
             archivo_origen="documento_origen.pdf",
             factura_separada_inequivocamente=separada,
             descuadre_total=descuadre,
+            pagos_parciales_o_fraccionamiento=pagos,
+            importes_vencimiento_distintos=importes_distintos,
         ),
         fecha_ejecucion=datetime(2026, 8, 6, tzinfo=timezone.utc),
     )
@@ -154,6 +164,74 @@ def test_no_asigna_total_si_falla_condicion(cambios: dict, motivo: str) -> None:
     assert all(item["importe"] is None for item in vencimientos), motivo
     incidencia = next(x for x in incidencias if x["campo"] == "vencimientos.importe")
     assert incidencia["requiere_revision_manual"] is True
+
+
+def test_no_asigna_total_con_precondiciones_no_demostradas() -> None:
+    general = cargar(RUTA_GENERAL)
+    tablas = cargar(RUTA_TABLAS)
+    resultado, incidencias = normalizar_alliance(
+        general,
+        tablas,
+        ConfiguracionAlliance(archivo_origen="documento_origen.pdf"),
+        fecha_ejecucion=datetime(2026, 8, 6, tzinfo=timezone.utc),
+    )
+    vencimiento = resultado["resultado_normalizado"]["vencimientos"][0]
+    assert vencimiento["importe"] is None
+    incidencia = next(x for x in incidencias if x["campo"] == "vencimientos.importe")
+    assert incidencia["requiere_revision_manual"] is True
+    assert any(valor is None for valor in incidencia["datos_visibles_disponibles"]["condiciones"].values())
+
+
+def test_alias_corto_ah_no_coincide_por_subcadena() -> None:
+    resultado, incidencias = _normalizar_caso_vencimiento(proveedor="FARMACIA AHORRO")
+    vencimiento = resultado["resultado_normalizado"]["vencimientos"][0]
+    assert vencimiento["importe"] is None
+    assert resultado["resultado_normalizado"]["proveedor_nombre"] == "FARMACIA AHORRO"
+    assert any(x["campo"] == "vencimientos.importe" for x in incidencias)
+
+
+@pytest.mark.parametrize("proveedor", ["Alliance", "Cencora", "AH"])
+def test_alias_alliance_reconocido_aplica_regla(proveedor: str) -> None:
+    resultado, _ = _normalizar_caso_vencimiento(proveedor=proveedor)
+    vencimiento = resultado["resultado_normalizado"]["vencimientos"][0]
+    assert vencimiento["importe"] == Decimal("11185.10")
+    assert vencimiento["procedencia"]["importe"] == "regla_proveedor_alliance_vencimiento_unico"
+
+
+@pytest.mark.parametrize(
+    "cambio",
+    [
+        {"separada": None},
+        {"descuadre": None},
+        {"pagos": None},
+        {"importes_distintos": None},
+    ],
+)
+def test_cada_precondicion_desconocida_bloquea_regla(cambio: dict) -> None:
+    resultado, incidencias = _normalizar_caso_vencimiento(**cambio)
+    vencimiento = resultado["resultado_normalizado"]["vencimientos"][0]
+    assert vencimiento["importe"] is None
+    incidencia = next(x for x in incidencias if x["campo"] == "vencimientos.importe")
+    assert incidencia["requiere_revision_manual"] is True
+
+
+def test_identificadores_sin_evidencia_permanecen_ausentes() -> None:
+    general = cargar(RUTA_GENERAL)
+    tablas = cargar(RUTA_TABLAS)
+    general["factura"]["numero_factura"]["evidencias"] = []
+    with pytest.raises(ValueError, match="Falta numero_factura"):
+        normalizar_alliance(
+            general,
+            tablas,
+            ConfiguracionAlliance(
+                archivo_origen="documento_origen.pdf",
+                factura_separada_inequivocamente=True,
+                descuadre_total=False,
+                pagos_parciales_o_fraccionamiento=False,
+                importes_vencimiento_distintos=False,
+            ),
+            fecha_ejecucion=datetime(2026, 8, 6, tzinfo=timezone.utc),
+        )
 
 
 def test_normalizador_no_puede_acceder_al_patron() -> None:
@@ -188,7 +266,13 @@ def test_resultado_estable_en_dos_ejecuciones() -> None:
     argumentos = (
         cargar(RUTA_GENERAL),
         cargar(RUTA_TABLAS),
-        ConfiguracionAlliance(archivo_origen="documento_origen.pdf"),
+        ConfiguracionAlliance(
+            archivo_origen="documento_origen.pdf",
+            factura_separada_inequivocamente=True,
+            descuadre_total=False,
+            pagos_parciales_o_fraccionamiento=False,
+            importes_vencimiento_distintos=False,
+        ),
     )
     primero = serializar_json(normalizar_alliance(*argumentos, fecha_ejecucion=instante))
     segundo = serializar_json(normalizar_alliance(*argumentos, fecha_ejecucion=instante))
