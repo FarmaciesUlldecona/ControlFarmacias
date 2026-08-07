@@ -1,0 +1,23 @@
+{
+  "caso": "alliance_08008427",
+  "modelo": "gpt-5.6-terra",
+  "estado_llamada": "failed",
+  "resumen": null,
+  "albaranes": null,
+  "metricas": {
+    "modelo_solicitado": "gpt-5.6-terra",
+    "modelo_utilizado": null,
+    "response_id": null,
+    "estado": "failed",
+    "duracion_segundos": 98.053,
+    "tokens_entrada": null,
+    "tokens_entrada_cacheados": null,
+    "tokens_salida": null,
+    "tokens_razonamiento": null,
+    "coste_entrada_usd": null,
+    "coste_salida_usd": null,
+    "coste_total_usd": null,
+    "sin_reintento": true
+  },
+  "comparaciones": []
+}

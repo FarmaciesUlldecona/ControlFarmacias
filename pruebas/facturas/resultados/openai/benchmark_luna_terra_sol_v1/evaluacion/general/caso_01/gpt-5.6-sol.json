@@ -1,0 +1,6784 @@
+{
+  "caso": "alliance_08008427",
+  "modelo": "gpt-5.6-sol",
+  "estado_llamada": "completed",
+  "resumen": {
+    "campos_evaluados": 22,
+    "correctos": 14,
+    "incorrectos": 2,
+    "parciales": 5,
+    "ausentes": 0,
+    "inventados": 27,
+    "acierto_estricto": 63.64,
+    "cobertura": 100.0,
+    "incidencias_previsibles": 8
+  },
+  "albaranes": {
+    "esperados": 147,
+    "extraidos": 4,
+    "numeros_correctos": 4,
+    "ausentes": 143,
+    "duplicados": 0,
+    "inventados": 0,
+    "fechas_correctas": 4,
+    "importes_correctos": 8,
+    "ordenes_correctos": 2
+  },
+  "metricas": {
+    "modelo_solicitado": "gpt-5.6-sol",
+    "modelo_utilizado": "gpt-5.6-sol",
+    "response_id": "resp_0d4f4ed30fbcc333016a7610b9a9f4819f8d1ab5fa796f837b",
+    "estado": "completed",
+    "duracion_segundos": 31.222,
+    "tokens_entrada": 17893,
+    "tokens_entrada_cacheados": 0,
+    "tokens_salida": 3065,
+    "tokens_razonamiento": 0,
+    "coste_entrada_usd": 0.089465,
+    "coste_salida_usd": 0.09195,
+    "coste_total_usd": 0.181415,
+    "sin_reintento": true
+  },
+  "comparaciones": [
+    {
+      "campo": "tipo_documento",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "MERCANCIA",
+          "obtenido": "MERCANCIA",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 4,
+          "obtenido": 1,
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 7,
+          "obtenido": 4,
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "obtenido": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "A50004324",
+          "obtenido": "A50004324",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "08008427",
+          "obtenido": "08008427",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 10531.42,
+          "obtenido": 10531.42,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 573.16,
+          "obtenido": 573.16,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 80.52,
+          "obtenido": 80.52,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 11185.1,
+          "obtenido": 11185.1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 3,
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos[0].fecha_vencimiento",
+          "esperado": "2026-10-06",
+          "obtenido": "2026-10-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].importe",
+          "esperado": 11185.1,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "vencimientos[0].nota",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "AUSENTE": 1,
+        "INVENTADO": 26,
+        "CORRECTO": 2
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos",
+          "esperado": [],
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": null,
+          "obtenido": 8548.52,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": null,
+          "obtenido": 341.94,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 42.74,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].nota",
+          "esperado": null,
+          "obtenido": "COMPRAS",
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].orden",
+          "esperado": null,
+          "obtenido": 1,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": null,
+          "obtenido": 4.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 0.5,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].base_imponible",
+          "esperado": null,
+          "obtenido": 1683.59,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_iva",
+          "esperado": null,
+          "obtenido": 168.36,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 23.57,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].nota",
+          "esperado": null,
+          "obtenido": "COMPRAS",
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].orden",
+          "esperado": null,
+          "obtenido": 2,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_iva",
+          "esperado": null,
+          "obtenido": 10.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 1.4,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].base_imponible",
+          "esperado": null,
+          "obtenido": 273.31,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].cuota_iva",
+          "esperado": null,
+          "obtenido": 57.4,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 14.21,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].nota",
+          "esperado": null,
+          "obtenido": "COMPRAS",
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].orden",
+          "esperado": null,
+          "obtenido": 3,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].tipo_iva",
+          "esperado": null,
+          "obtenido": 21.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 5.2,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].base_imponible",
+          "esperado": null,
+          "obtenido": 26.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].cuota_iva",
+          "esperado": null,
+          "obtenido": 5.46,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[3].nota",
+          "esperado": null,
+          "obtenido": "GASTOS",
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].orden",
+          "esperado": null,
+          "obtenido": 4,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].tipo_iva",
+          "esperado": null,
+          "obtenido": 21.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 16,
+        "AUSENTE": 1001,
+        "INCORRECTO": 12
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes[0].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": "NORMAL ACUSTICO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].fecha_albaran",
+          "esperado": "2026-06-30",
+          "obtenido": "2026-06-30",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_base",
+          "esperado": 1.62,
+          "obtenido": 1.62,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_total",
+          "esperado": 1.69,
+          "obtenido": 1.69,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].numero_albaran",
+          "esperado": "08C26499",
+          "obtenido": "08C26499",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[100].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[100].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[100].importe_base",
+          "esperado": 11.82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[100].importe_total",
+          "esperado": 13.17,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[100].numero_albaran",
+          "esperado": "08M33962",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[100].orden",
+          "esperado": 101,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[100].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[101].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[101].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[101].importe_base",
+          "esperado": 1.83,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[101].importe_total",
+          "esperado": 1.91,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[101].numero_albaran",
+          "esperado": "08M34050",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[101].orden",
+          "esperado": 102,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[101].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[102].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[102].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[102].importe_base",
+          "esperado": 297.55,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[102].importe_total",
+          "esperado": 314.75,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[102].numero_albaran",
+          "esperado": "08C34793",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[102].orden",
+          "esperado": 103,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[102].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[103].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[103].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[103].importe_base",
+          "esperado": 83.96,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[103].importe_total",
+          "esperado": 90.39,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[103].numero_albaran",
+          "esperado": "08C34914",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[103].orden",
+          "esperado": 104,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[103].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[104].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[104].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[104].importe_base",
+          "esperado": 7.27,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[104].importe_total",
+          "esperado": 7.6,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[104].numero_albaran",
+          "esperado": "08C34941",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[104].orden",
+          "esperado": 105,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[104].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[105].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[105].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[105].importe_base",
+          "esperado": 3.62,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[105].importe_total",
+          "esperado": 4.03,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[105].numero_albaran",
+          "esperado": "08C34961",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[105].orden",
+          "esperado": 106,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[105].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[106].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[106].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[106].importe_base",
+          "esperado": 87.78,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[106].importe_total",
+          "esperado": 97.79,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[106].numero_albaran",
+          "esperado": "08C34993",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[106].orden",
+          "esperado": 107,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[106].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[107].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[107].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[107].importe_base",
+          "esperado": 341.09,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[107].importe_total",
+          "esperado": 356.44,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[107].numero_albaran",
+          "esperado": "08C35060",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[107].orden",
+          "esperado": 108,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[107].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[108].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[108].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[108].importe_base",
+          "esperado": 5.09,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[108].importe_total",
+          "esperado": 6.21,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[108].numero_albaran",
+          "esperado": "08C35062",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[108].orden",
+          "esperado": 109,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[108].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[109].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[109].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[109].importe_base",
+          "esperado": 1.26,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[109].importe_total",
+          "esperado": 1.32,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[109].numero_albaran",
+          "esperado": "08C35063",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[109].orden",
+          "esperado": 110,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[109].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[10].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[10].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[10].importe_base",
+          "esperado": 33.87,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[10].importe_total",
+          "esperado": 37.73,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[10].numero_albaran",
+          "esperado": "08C27725",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[10].orden",
+          "esperado": 11,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[10].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[110].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[110].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[110].importe_base",
+          "esperado": 4.67,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[110].importe_total",
+          "esperado": 4.88,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[110].numero_albaran",
+          "esperado": "08C35281",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[110].orden",
+          "esperado": 111,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[110].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[111].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[111].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[111].importe_base",
+          "esperado": 19.91,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[111].importe_total",
+          "esperado": 22.18,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[111].numero_albaran",
+          "esperado": "08C35567",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[111].orden",
+          "esperado": 112,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[111].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[112].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[112].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[112].importe_base",
+          "esperado": 11.19,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[112].importe_total",
+          "esperado": 11.7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[112].numero_albaran",
+          "esperado": "08C35706",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[112].orden",
+          "esperado": 113,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[112].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[113].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[113].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[113].importe_base",
+          "esperado": 21.21,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[113].importe_total",
+          "esperado": 23.63,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[113].numero_albaran",
+          "esperado": "08M34186",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[113].orden",
+          "esperado": 114,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[113].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[114].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[114].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[114].importe_base",
+          "esperado": 69.82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[114].importe_total",
+          "esperado": 72.96,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[114].numero_albaran",
+          "esperado": "08M34243",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[114].orden",
+          "esperado": 115,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[114].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[115].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[115].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[115].importe_base",
+          "esperado": 41.68,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[115].importe_total",
+          "esperado": 43.56,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[115].numero_albaran",
+          "esperado": "08M34283",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[115].orden",
+          "esperado": 116,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[115].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[116].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[116].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[116].importe_base",
+          "esperado": 66.07,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[116].importe_total",
+          "esperado": 73.6,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[116].numero_albaran",
+          "esperado": "08M34323",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[116].orden",
+          "esperado": 117,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[116].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[117].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[117].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[117].importe_base",
+          "esperado": 9.83,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[117].importe_total",
+          "esperado": 10.83,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[117].numero_albaran",
+          "esperado": "08M34347",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[117].orden",
+          "esperado": 118,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[117].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[118].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[118].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[118].importe_base",
+          "esperado": 1.62,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[118].importe_total",
+          "esperado": 1.69,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[118].numero_albaran",
+          "esperado": "08M34834",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[118].orden",
+          "esperado": 119,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[118].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[119].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[119].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[119].importe_base",
+          "esperado": 543.92,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[119].importe_total",
+          "esperado": 569.49,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[119].numero_albaran",
+          "esperado": "08M34837",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[119].orden",
+          "esperado": 120,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[119].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[11].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[11].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[11].importe_base",
+          "esperado": 15.03,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[11].importe_total",
+          "esperado": 15.71,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[11].numero_albaran",
+          "esperado": "08C27896",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[11].orden",
+          "esperado": 12,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[11].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[120].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[120].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[120].importe_base",
+          "esperado": 7.19,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[120].importe_total",
+          "esperado": 9.07,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[120].numero_albaran",
+          "esperado": "08M34838",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[120].orden",
+          "esperado": 121,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[120].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[121].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[121].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[121].importe_base",
+          "esperado": 25.47,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[121].importe_total",
+          "esperado": 28.38,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[121].numero_albaran",
+          "esperado": "08C36031",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[121].orden",
+          "esperado": 122,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[121].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[122].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[122].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[122].importe_base",
+          "esperado": 7.34,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[122].importe_total",
+          "esperado": 7.67,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[122].numero_albaran",
+          "esperado": "08C36225",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[122].orden",
+          "esperado": 123,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[122].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[123].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[123].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[123].importe_base",
+          "esperado": 14.29,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[123].importe_total",
+          "esperado": 15.92,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[123].numero_albaran",
+          "esperado": "08C36245",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[123].orden",
+          "esperado": 124,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[123].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[124].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[124].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[124].importe_base",
+          "esperado": 159.01,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[124].importe_total",
+          "esperado": 166.17,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[124].numero_albaran",
+          "esperado": "08C36330",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[124].orden",
+          "esperado": 125,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[124].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[125].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[125].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[125].importe_base",
+          "esperado": 14.21,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[125].importe_total",
+          "esperado": 14.85,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[125].numero_albaran",
+          "esperado": "08C36335",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[125].orden",
+          "esperado": 126,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[125].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[126].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[126].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[126].importe_base",
+          "esperado": 17.51,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[126].importe_total",
+          "esperado": 22.1,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[126].numero_albaran",
+          "esperado": "08C36624",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[126].orden",
+          "esperado": 127,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[126].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[127].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[127].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[127].importe_base",
+          "esperado": 31.25,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[127].importe_total",
+          "esperado": 32.66,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[127].numero_albaran",
+          "esperado": "08C36870",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[127].orden",
+          "esperado": 128,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[127].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[128].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[128].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[128].importe_base",
+          "esperado": 2.04,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[128].importe_total",
+          "esperado": 2.13,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[128].numero_albaran",
+          "esperado": "08C36940",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[128].orden",
+          "esperado": 129,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[128].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[129].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[129].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[129].importe_base",
+          "esperado": 10.08,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[129].importe_total",
+          "esperado": 10.53,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[129].numero_albaran",
+          "esperado": "08C37045",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[129].orden",
+          "esperado": 130,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[129].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[12].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[12].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[12].importe_base",
+          "esperado": 8.48,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[12].importe_total",
+          "esperado": 10.7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[12].numero_albaran",
+          "esperado": "08C27900",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[12].orden",
+          "esperado": 13,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[12].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[130].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[130].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[130].importe_base",
+          "esperado": 8.48,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[130].importe_total",
+          "esperado": 10.7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[130].numero_albaran",
+          "esperado": "08C37049",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[130].orden",
+          "esperado": 131,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[130].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[131].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[131].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[131].importe_base",
+          "esperado": 2.74,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[131].importe_total",
+          "esperado": 2.86,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[131].numero_albaran",
+          "esperado": "08C37065",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[131].orden",
+          "esperado": 132,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[131].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[132].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[132].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[132].importe_base",
+          "esperado": 105.06,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[132].importe_total",
+          "esperado": 132.58,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[132].numero_albaran",
+          "esperado": "08M35430",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[132].orden",
+          "esperado": 133,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[132].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[133].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[133].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[133].importe_base",
+          "esperado": 38.98,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[133].importe_total",
+          "esperado": 43.43,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[133].numero_albaran",
+          "esperado": "08M35555",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[133].orden",
+          "esperado": 134,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[133].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[134].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[134].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[134].importe_base",
+          "esperado": 84.09,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[134].importe_total",
+          "esperado": 87.87,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[134].numero_albaran",
+          "esperado": "08M35630",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[134].orden",
+          "esperado": 135,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[134].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[135].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[135].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[135].importe_base",
+          "esperado": 15.4,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[135].importe_total",
+          "esperado": 16.1,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[135].numero_albaran",
+          "esperado": "08M35691",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[135].orden",
+          "esperado": 136,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[135].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[136].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[136].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[136].importe_base",
+          "esperado": 15.4,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[136].importe_total",
+          "esperado": 16.1,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[136].numero_albaran",
+          "esperado": "08M35692",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[136].orden",
+          "esperado": 137,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[136].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[137].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[137].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[137].importe_base",
+          "esperado": 12.16,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[137].importe_total",
+          "esperado": 12.71,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[137].numero_albaran",
+          "esperado": "08M35806",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[137].orden",
+          "esperado": 138,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[137].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[138].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[138].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[138].importe_base",
+          "esperado": 18.82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[138].importe_total",
+          "esperado": 19.66,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[138].numero_albaran",
+          "esperado": "08M35828",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[138].orden",
+          "esperado": 139,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[138].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[139].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[139].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[139].importe_base",
+          "esperado": 156.99,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[139].importe_total",
+          "esperado": 164.05,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[139].numero_albaran",
+          "esperado": "08M35863",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[139].orden",
+          "esperado": 140,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[139].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[13].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[13].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[13].importe_base",
+          "esperado": 39.71,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[13].importe_total",
+          "esperado": 41.5,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[13].numero_albaran",
+          "esperado": "08M29400",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[13].orden",
+          "esperado": 14,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[13].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[140].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[140].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[140].importe_base",
+          "esperado": 157.23,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[140].importe_total",
+          "esperado": 164.56,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[140].numero_albaran",
+          "esperado": "08C37482",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[140].orden",
+          "esperado": 141,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[140].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[141].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[141].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[141].importe_base",
+          "esperado": 485.73,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[141].importe_total",
+          "esperado": 507.59,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[141].numero_albaran",
+          "esperado": "08C37653",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[141].orden",
+          "esperado": 142,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[141].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[142].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[142].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[142].importe_base",
+          "esperado": 18.96,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[142].importe_total",
+          "esperado": 23.49,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[142].numero_albaran",
+          "esperado": "08C37656",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[142].orden",
+          "esperado": 143,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[142].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[143].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[143].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[143].importe_base",
+          "esperado": 12.83,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[143].importe_total",
+          "esperado": 13.4,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[143].numero_albaran",
+          "esperado": "08C37737",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[143].orden",
+          "esperado": 144,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[143].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[144].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[144].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[144].importe_base",
+          "esperado": 18.79,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[144].importe_total",
+          "esperado": 19.63,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[144].numero_albaran",
+          "esperado": "08M36292",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[144].orden",
+          "esperado": 145,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[144].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[145].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[145].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[145].importe_base",
+          "esperado": 289.53,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[145].importe_total",
+          "esperado": 302.56,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[145].numero_albaran",
+          "esperado": "08M36757",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[145].orden",
+          "esperado": 146,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[145].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[146].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[146].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[146].importe_base",
+          "esperado": 2.12,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[146].importe_total",
+          "esperado": 2.21,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[146].numero_albaran",
+          "esperado": "08M36770",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[146].orden",
+          "esperado": 147,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[146].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[14].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[14].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[14].importe_base",
+          "esperado": 52.29,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[14].importe_total",
+          "esperado": 58.25,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[14].numero_albaran",
+          "esperado": "08M29624",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[14].orden",
+          "esperado": 15,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[14].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[15].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[15].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[15].importe_base",
+          "esperado": 61.99,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[15].importe_total",
+          "esperado": 64.78,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[15].numero_albaran",
+          "esperado": "08M29915",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[15].orden",
+          "esperado": 16,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[15].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[16].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[16].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[16].importe_base",
+          "esperado": 7.59,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[16].importe_total",
+          "esperado": 9.57,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[16].numero_albaran",
+          "esperado": "08M29918",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[16].orden",
+          "esperado": 17,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[16].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[17].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[17].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[17].importe_base",
+          "esperado": 8.7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[17].importe_total",
+          "esperado": 9.09,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[17].numero_albaran",
+          "esperado": "08M29976",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[17].orden",
+          "esperado": 18,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[17].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[18].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[18].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[18].importe_base",
+          "esperado": 4.7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[18].importe_total",
+          "esperado": 4.91,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[18].numero_albaran",
+          "esperado": "08M30003",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[18].orden",
+          "esperado": 19,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[18].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[19].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[19].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[19].importe_base",
+          "esperado": 14.27,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[19].importe_total",
+          "esperado": 14.91,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[19].numero_albaran",
+          "esperado": "08M30063",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[19].orden",
+          "esperado": 20,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[19].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[1].descripcion",
+          "esperado": "ABONOS AGRUPADOS",
+          "obtenido": "NORMAL ACUSTICO",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-06-30",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].importe_base",
+          "esperado": -8.29,
+          "obtenido": 1.26,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].importe_total",
+          "esperado": -8.66,
+          "obtenido": 1.32,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].numero_albaran",
+          "esperado": "08C38230",
+          "obtenido": "08C26500",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].orden",
+          "esperado": 2,
+          "obtenido": 2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].tipo_movimiento",
+          "esperado": "ABONO",
+          "obtenido": "CARGO",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[20].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[20].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[20].importe_base",
+          "esperado": 343.97,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[20].importe_total",
+          "esperado": 362.8,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[20].numero_albaran",
+          "esperado": "08C28370",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[20].orden",
+          "esperado": 21,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[20].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[21].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[21].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[21].importe_base",
+          "esperado": 4.42,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[21].importe_total",
+          "esperado": 4.62,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[21].numero_albaran",
+          "esperado": "08C28452",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[21].orden",
+          "esperado": 22,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[21].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[22].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[22].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[22].importe_base",
+          "esperado": 147.38,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[22].importe_total",
+          "esperado": 154.02,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[22].numero_albaran",
+          "esperado": "08C28650",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[22].orden",
+          "esperado": 23,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[22].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[23].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[23].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[23].importe_base",
+          "esperado": 7.65,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[23].importe_total",
+          "esperado": 9.44,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[23].numero_albaran",
+          "esperado": "08C28658",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[23].orden",
+          "esperado": 24,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[23].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[24].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[24].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[24].importe_base",
+          "esperado": 4.25,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[24].importe_total",
+          "esperado": 4.44,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[24].numero_albaran",
+          "esperado": "08C28814",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[24].orden",
+          "esperado": 25,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[24].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[25].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[25].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[25].importe_base",
+          "esperado": 24.73,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[25].importe_total",
+          "esperado": 25.84,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[25].numero_albaran",
+          "esperado": "08C29133",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[25].orden",
+          "esperado": 26,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[25].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[26].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[26].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[26].importe_base",
+          "esperado": 27.89,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[26].importe_total",
+          "esperado": 29.15,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[26].numero_albaran",
+          "esperado": "08C29302",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[26].orden",
+          "esperado": 27,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[26].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[27].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[27].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[27].importe_base",
+          "esperado": 3.03,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[27].importe_total",
+          "esperado": 3.17,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[27].numero_albaran",
+          "esperado": "08M30406",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[27].orden",
+          "esperado": 28,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[27].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[28].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[28].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[28].importe_base",
+          "esperado": 18.55,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[28].importe_total",
+          "esperado": 19.38,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[28].numero_albaran",
+          "esperado": "08M30761",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[28].orden",
+          "esperado": 29,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[28].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[29].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[29].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[29].importe_base",
+          "esperado": 161.14,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[29].importe_total",
+          "esperado": 168.4,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[29].numero_albaran",
+          "esperado": "08M30914",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[29].orden",
+          "esperado": 30,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[29].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[2].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": "ABONOS AGRUPADOS",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].fecha_albaran",
+          "esperado": "2026-06-30",
+          "obtenido": "2026-07-10",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].importe_base",
+          "esperado": 1.26,
+          "obtenido": -8.29,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].importe_total",
+          "esperado": 1.32,
+          "obtenido": -8.66,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].numero_albaran",
+          "esperado": "08C26500",
+          "obtenido": "08C38230",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].orden",
+          "esperado": 3,
+          "obtenido": 3,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "ABONO",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[30].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[30].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[30].importe_base",
+          "esperado": 2.12,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[30].importe_total",
+          "esperado": 2.21,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[30].numero_albaran",
+          "esperado": "08M30924",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[30].orden",
+          "esperado": 31,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[30].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[31].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[31].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[31].importe_base",
+          "esperado": 9.25,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[31].importe_total",
+          "esperado": 9.67,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[31].numero_albaran",
+          "esperado": "08C29766",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[31].orden",
+          "esperado": 32,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[31].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[32].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[32].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[32].importe_base",
+          "esperado": 213.22,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[32].importe_total",
+          "esperado": 223.46,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[32].numero_albaran",
+          "esperado": "08C29780",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[32].orden",
+          "esperado": 33,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[32].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[33].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[33].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[33].importe_base",
+          "esperado": 256.39,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[33].importe_total",
+          "esperado": 268.17,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[33].numero_albaran",
+          "esperado": "08C29977",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[33].orden",
+          "esperado": 34,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[33].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[34].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[34].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[34].importe_base",
+          "esperado": 11.73,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[34].importe_total",
+          "esperado": 13.06,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[34].numero_albaran",
+          "esperado": "08C29988",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[34].orden",
+          "esperado": 35,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[34].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[35].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[35].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[35].importe_base",
+          "esperado": 1.26,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[35].importe_total",
+          "esperado": 1.32,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[35].numero_albaran",
+          "esperado": "08C29989",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[35].orden",
+          "esperado": 36,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[35].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[36].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[36].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[36].importe_base",
+          "esperado": 5.75,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[36].importe_total",
+          "esperado": 6.01,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[36].numero_albaran",
+          "esperado": "08C30585",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[36].orden",
+          "esperado": 37,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[36].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[37].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[37].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[37].importe_base",
+          "esperado": 55.54,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[37].importe_total",
+          "esperado": 61.87,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[37].numero_albaran",
+          "esperado": "08M31275",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[37].orden",
+          "esperado": 38,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[37].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[38].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[38].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[38].importe_base",
+          "esperado": 9.57,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[38].importe_total",
+          "esperado": 12.08,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[38].numero_albaran",
+          "esperado": "08M31303",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[38].orden",
+          "esperado": 39,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[38].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[39].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[39].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[39].importe_base",
+          "esperado": 1.4,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[39].importe_total",
+          "esperado": 1.56,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[39].numero_albaran",
+          "esperado": "08M31366",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[39].orden",
+          "esperado": 40,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[39].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[3].descripcion",
+          "esperado": "ABONOS AGRUPADOS",
+          "obtenido": "ABONOS AGRUPADOS",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].importe_base",
+          "esperado": -34.54,
+          "obtenido": -34.54,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].importe_total",
+          "esperado": -36.09,
+          "obtenido": -36.09,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].numero_albaran",
+          "esperado": "08C38231",
+          "obtenido": "08C38231",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].orden",
+          "esperado": 4,
+          "obtenido": 4,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].tipo_movimiento",
+          "esperado": "ABONO",
+          "obtenido": "ABONO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[40].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[40].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[40].importe_base",
+          "esperado": 67.53,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[40].importe_total",
+          "esperado": 70.78,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[40].numero_albaran",
+          "esperado": "08M31836",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[40].orden",
+          "esperado": 41,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[40].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[41].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[41].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[41].importe_base",
+          "esperado": 18.39,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[41].importe_total",
+          "esperado": 19.22,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[41].numero_albaran",
+          "esperado": "08M31892",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[41].orden",
+          "esperado": 42,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[41].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[42].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[42].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[42].importe_base",
+          "esperado": 31.16,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[42].importe_total",
+          "esperado": 32.57,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[42].numero_albaran",
+          "esperado": "08M31914",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[42].orden",
+          "esperado": 43,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[42].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[43].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[43].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[43].importe_base",
+          "esperado": 13.96,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[43].importe_total",
+          "esperado": 15.56,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[43].numero_albaran",
+          "esperado": "08C30750",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[43].orden",
+          "esperado": 44,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[43].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[44].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[44].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[44].importe_base",
+          "esperado": 9.43,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[44].importe_total",
+          "esperado": 10.5,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[44].numero_albaran",
+          "esperado": "08C30762",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[44].orden",
+          "esperado": 45,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[44].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[45].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[45].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[45].importe_base",
+          "esperado": 12.02,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[45].importe_total",
+          "esperado": 15.17,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[45].numero_albaran",
+          "esperado": "08C30798",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[45].orden",
+          "esperado": 46,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[45].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[46].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[46].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[46].importe_base",
+          "esperado": 11.46,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[46].importe_total",
+          "esperado": 11.98,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[46].numero_albaran",
+          "esperado": "08C30821",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[46].orden",
+          "esperado": 47,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[46].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[47].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[47].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[47].importe_base",
+          "esperado": 9.64,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[47].importe_total",
+          "esperado": 10.73,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[47].numero_albaran",
+          "esperado": "08C30958",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[47].orden",
+          "esperado": 48,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[47].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[48].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[48].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[48].importe_base",
+          "esperado": 1.62,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[48].importe_total",
+          "esperado": 1.69,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[48].numero_albaran",
+          "esperado": "08C31034",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[48].orden",
+          "esperado": 49,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[48].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[49].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[49].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[49].importe_base",
+          "esperado": 1.78,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[49].importe_total",
+          "esperado": 1.86,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[49].numero_albaran",
+          "esperado": "08C31135",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[49].orden",
+          "esperado": 50,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[49].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].importe_base",
+          "esperado": 116.87,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].importe_total",
+          "esperado": 127.77,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].numero_albaran",
+          "esperado": "08C27035",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].orden",
+          "esperado": 5,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[50].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[50].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[50].importe_base",
+          "esperado": 2.16,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[50].importe_total",
+          "esperado": 2.26,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[50].numero_albaran",
+          "esperado": "08C31297",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[50].orden",
+          "esperado": 51,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[50].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[51].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[51].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[51].importe_base",
+          "esperado": 301.99,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[51].importe_total",
+          "esperado": 318.74,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[51].numero_albaran",
+          "esperado": "08C31301",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[51].orden",
+          "esperado": 52,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[51].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[52].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[52].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[52].importe_base",
+          "esperado": 1.64,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[52].importe_total",
+          "esperado": 1.72,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[52].numero_albaran",
+          "esperado": "08C31302",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[52].orden",
+          "esperado": 53,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[52].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[53].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[53].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[53].importe_base",
+          "esperado": 197.13,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[53].importe_total",
+          "esperado": 206.01,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[53].numero_albaran",
+          "esperado": "08C31489",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[53].orden",
+          "esperado": 54,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[53].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[54].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[54].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[54].importe_base",
+          "esperado": 85.88,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[54].importe_total",
+          "esperado": 89.75,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[54].numero_albaran",
+          "esperado": "08M32051",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[54].orden",
+          "esperado": 55,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[54].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[55].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[55].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[55].importe_base",
+          "esperado": 6.99,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[55].importe_total",
+          "esperado": 8.82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[55].numero_albaran",
+          "esperado": "08V19185",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[55].orden",
+          "esperado": 56,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[55].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[56].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[56].fecha_albaran",
+          "esperado": "2026-07-05",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[56].importe_base",
+          "esperado": 57.47,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[56].importe_total",
+          "esperado": 60.06,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[56].numero_albaran",
+          "esperado": "08C31638",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[56].orden",
+          "esperado": 57,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[56].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[57].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[57].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[57].importe_base",
+          "esperado": 168.48,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[57].importe_total",
+          "esperado": 176.06,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[57].numero_albaran",
+          "esperado": "08C32023",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[57].orden",
+          "esperado": 58,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[57].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[58].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[58].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[58].importe_base",
+          "esperado": 228.27,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[58].importe_total",
+          "esperado": 238.54,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[58].numero_albaran",
+          "esperado": "08C32131",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[58].orden",
+          "esperado": 59,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[58].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[59].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[59].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[59].importe_base",
+          "esperado": 10.99,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[59].importe_total",
+          "esperado": 11.48,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[59].numero_albaran",
+          "esperado": "08C32157",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[59].orden",
+          "esperado": 60,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[59].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[5].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[5].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[5].importe_base",
+          "esperado": 733.36,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[5].importe_total",
+          "esperado": 775.24,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[5].numero_albaran",
+          "esperado": "08C27265",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[5].orden",
+          "esperado": 6,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[5].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[60].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[60].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[60].importe_base",
+          "esperado": 32.78,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[60].importe_total",
+          "esperado": 34.25,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[60].numero_albaran",
+          "esperado": "08C32269",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[60].orden",
+          "esperado": 61,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[60].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[61].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[61].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[61].importe_base",
+          "esperado": 16.39,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[61].importe_total",
+          "esperado": 17.13,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[61].numero_albaran",
+          "esperado": "08C32270",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[61].orden",
+          "esperado": 62,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[61].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[62].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[62].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[62].importe_base",
+          "esperado": 6.14,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[62].importe_total",
+          "esperado": 6.42,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[62].numero_albaran",
+          "esperado": "08C32342",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[62].orden",
+          "esperado": 63,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[62].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[63].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[63].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[63].importe_base",
+          "esperado": 711.47,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[63].importe_total",
+          "esperado": 743.49,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[63].numero_albaran",
+          "esperado": "08C32348",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[63].orden",
+          "esperado": 64,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[63].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[64].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[64].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[64].importe_base",
+          "esperado": 13.4,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[64].importe_total",
+          "esperado": 15.21,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[64].numero_albaran",
+          "esperado": "08C32355",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[64].orden",
+          "esperado": 65,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[64].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[65].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[65].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[65].importe_base",
+          "esperado": 1.35,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[65].importe_total",
+          "esperado": 1.41,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[65].numero_albaran",
+          "esperado": "08C32356",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[65].orden",
+          "esperado": 66,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[65].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[66].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[66].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[66].importe_base",
+          "esperado": 151.51,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[66].importe_total",
+          "esperado": 168.78,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[66].numero_albaran",
+          "esperado": "08C32802",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[66].orden",
+          "esperado": 67,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[66].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[67].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[67].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[67].importe_base",
+          "esperado": 24.74,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[67].importe_total",
+          "esperado": 27.56,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[67].numero_albaran",
+          "esperado": "08C32805",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[67].orden",
+          "esperado": 68,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[67].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[68].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[68].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[68].importe_base",
+          "esperado": 65.54,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[68].importe_total",
+          "esperado": 68.49,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[68].numero_albaran",
+          "esperado": "08C32806",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[68].orden",
+          "esperado": 69,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[68].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[69].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[69].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[69].importe_base",
+          "esperado": 34.5,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[69].importe_total",
+          "esperado": 38.43,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[69].numero_albaran",
+          "esperado": "08C32824",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[69].orden",
+          "esperado": 70,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[69].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[6].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[6].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[6].importe_base",
+          "esperado": 37.76,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[6].importe_total",
+          "esperado": 39.46,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[6].numero_albaran",
+          "esperado": "08C27268",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[6].orden",
+          "esperado": 7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[6].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[70].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[70].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[70].importe_base",
+          "esperado": 5.33,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[70].importe_total",
+          "esperado": 5.57,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[70].numero_albaran",
+          "esperado": "08C32854",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[70].orden",
+          "esperado": 71,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[70].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[71].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[71].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[71].importe_base",
+          "esperado": 4.85,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[71].importe_total",
+          "esperado": 5.06,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[71].numero_albaran",
+          "esperado": "08C32877",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[71].orden",
+          "esperado": 72,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[71].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[72].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[72].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[72].importe_base",
+          "esperado": 9.7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[72].importe_total",
+          "esperado": 10.14,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[72].numero_albaran",
+          "esperado": "08C32878",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[72].orden",
+          "esperado": 73,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[72].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[73].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[73].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[73].importe_base",
+          "esperado": 6.45,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[73].importe_total",
+          "esperado": 6.74,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[73].numero_albaran",
+          "esperado": "08C33027",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[73].orden",
+          "esperado": 74,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[73].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[74].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[74].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[74].importe_base",
+          "esperado": 42.94,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[74].importe_total",
+          "esperado": 44.87,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[74].numero_albaran",
+          "esperado": "08M32213",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[74].orden",
+          "esperado": 75,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[74].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[75].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[75].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[75].importe_base",
+          "esperado": 18.82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[75].importe_total",
+          "esperado": 19.66,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[75].numero_albaran",
+          "esperado": "08M32226",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[75].orden",
+          "esperado": 76,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[75].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[76].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[76].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[76].importe_base",
+          "esperado": 35.98,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[76].importe_total",
+          "esperado": 37.6,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[76].numero_albaran",
+          "esperado": "08M32414",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[76].orden",
+          "esperado": 77,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[76].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[77].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[77].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[77].importe_base",
+          "esperado": 99.61,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[77].importe_total",
+          "esperado": 104.09,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[77].numero_albaran",
+          "esperado": "08M32604",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[77].orden",
+          "esperado": 78,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[77].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[78].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[78].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[78].importe_base",
+          "esperado": 55.54,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[78].importe_total",
+          "esperado": 61.87,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[78].numero_albaran",
+          "esperado": "08M32607",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[78].orden",
+          "esperado": 79,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[78].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[79].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[79].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[79].importe_base",
+          "esperado": 0.85,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[79].importe_total",
+          "esperado": 0.88,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[79].numero_albaran",
+          "esperado": "08M32612",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[79].orden",
+          "esperado": 80,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[79].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[7].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[7].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[7].importe_base",
+          "esperado": 4.13,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[7].importe_total",
+          "esperado": 4.32,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[7].numero_albaran",
+          "esperado": "08C27311",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[7].orden",
+          "esperado": 8,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[7].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[80].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[80].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[80].importe_base",
+          "esperado": 185.95,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[80].importe_total",
+          "esperado": 196.38,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[80].numero_albaran",
+          "esperado": "08M32962",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[80].orden",
+          "esperado": 81,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[80].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[81].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[81].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[81].importe_base",
+          "esperado": 7.17,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[81].importe_total",
+          "esperado": 9.05,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[81].numero_albaran",
+          "esperado": "08M32963",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[81].orden",
+          "esperado": 82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[81].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[82].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[82].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[82].importe_base",
+          "esperado": 34.78,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[82].importe_total",
+          "esperado": 36.34,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[82].numero_albaran",
+          "esperado": "08M32977",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[82].orden",
+          "esperado": 83,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[82].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[83].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[83].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[83].importe_base",
+          "esperado": 6.99,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[83].importe_total",
+          "esperado": 8.82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[83].numero_albaran",
+          "esperado": "08V19262",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[83].orden",
+          "esperado": 84,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[83].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[84].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[84].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[84].importe_base",
+          "esperado": 92.94,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[84].importe_total",
+          "esperado": 103.53,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[84].numero_albaran",
+          "esperado": "08C33364",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[84].orden",
+          "esperado": 85,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[84].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[85].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[85].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[85].importe_base",
+          "esperado": 34.98,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[85].importe_total",
+          "esperado": 38.62,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[85].numero_albaran",
+          "esperado": "08C33510",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[85].orden",
+          "esperado": 86,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[85].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[86].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[86].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[86].importe_base",
+          "esperado": 10.84,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[86].importe_total",
+          "esperado": 11.32,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[86].numero_albaran",
+          "esperado": "08C33655",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[86].orden",
+          "esperado": 87,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[86].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[87].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[87].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[87].importe_base",
+          "esperado": 504.67,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[87].importe_total",
+          "esperado": 533.1,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[87].numero_albaran",
+          "esperado": "08C33660",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[87].orden",
+          "esperado": 88,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[87].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[88].descripcion",
+          "esperado": "NETOS PLUS",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[88].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[88].importe_base",
+          "esperado": 18.79,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[88].importe_total",
+          "esperado": 21.92,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[88].numero_albaran",
+          "esperado": "08C33667",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[88].orden",
+          "esperado": 89,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[88].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[89].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[89].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[89].importe_base",
+          "esperado": 161.55,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[89].importe_total",
+          "esperado": 168.82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[89].numero_albaran",
+          "esperado": "08C33697",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[89].orden",
+          "esperado": 90,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[89].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[8].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[8].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[8].importe_base",
+          "esperado": 3.36,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[8].importe_total",
+          "esperado": 3.51,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[8].numero_albaran",
+          "esperado": "08C27437",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[8].orden",
+          "esperado": 9,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[8].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[90].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[90].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[90].importe_base",
+          "esperado": 2.43,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[90].importe_total",
+          "esperado": 2.54,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[90].numero_albaran",
+          "esperado": "08C34216",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[90].orden",
+          "esperado": 91,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[90].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[91].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[91].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[91].importe_base",
+          "esperado": 133.85,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[91].importe_total",
+          "esperado": 139.87,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[91].numero_albaran",
+          "esperado": "08C34434",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[91].orden",
+          "esperado": 92,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[91].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[92].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[92].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[92].importe_base",
+          "esperado": 6.41,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[92].importe_total",
+          "esperado": 6.7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[92].numero_albaran",
+          "esperado": "08C34451",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[92].orden",
+          "esperado": 93,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[92].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[93].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[93].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[93].importe_base",
+          "esperado": 128.22,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[93].importe_total",
+          "esperado": 142.77,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[93].numero_albaran",
+          "esperado": "08M33392",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[93].orden",
+          "esperado": 94,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[93].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[94].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[94].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[94].importe_base",
+          "esperado": 169.67,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[94].importe_total",
+          "esperado": 177.31,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[94].numero_albaran",
+          "esperado": "08M33628",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[94].orden",
+          "esperado": 95,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[94].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[95].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[95].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[95].importe_base",
+          "esperado": 63.68,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[95].importe_total",
+          "esperado": 70.94,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[95].numero_albaran",
+          "esperado": "08M33646",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[95].orden",
+          "esperado": 96,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[95].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[96].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[96].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[96].importe_base",
+          "esperado": 25.82,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[96].importe_total",
+          "esperado": 28.76,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[96].numero_albaran",
+          "esperado": "08M33656",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[96].orden",
+          "esperado": 97,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[96].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[97].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[97].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[97].importe_base",
+          "esperado": 102.17,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[97].importe_total",
+          "esperado": 106.77,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[97].numero_albaran",
+          "esperado": "08M33699",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[97].orden",
+          "esperado": 98,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[97].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[98].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[98].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[98].importe_base",
+          "esperado": 10.76,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[98].importe_total",
+          "esperado": 13.58,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[98].numero_albaran",
+          "esperado": "08M33871",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[98].orden",
+          "esperado": 99,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[98].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[99].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[99].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[99].importe_base",
+          "esperado": 349.7,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[99].importe_total",
+          "esperado": 366.12,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[99].numero_albaran",
+          "esperado": "08M33960",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[99].orden",
+          "esperado": 100,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[99].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[9].descripcion",
+          "esperado": "NORMAL ACUSTICO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[9].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[9].importe_base",
+          "esperado": 103.88,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[9].importe_total",
+          "esperado": 115.72,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[9].numero_albaran",
+          "esperado": "08C27700",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[9].orden",
+          "esperado": 10,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[9].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "ajustes",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "INCORRECTO": 2,
+        "AUSENTE": 3,
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes[0].descripcion",
+          "esperado": "Servicio básico",
+          "obtenido": "DEDUCCION",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].importe",
+          "esperado": 31.46,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_base",
+          "esperado": true,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_total",
+          "esperado": true,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].tipo_ajuste",
+          "esperado": "GASTO",
+          "obtenido": "DEDUCCION",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 1,
+        "INCORRECTO": 3
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": "40901058C",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": "006600",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "NIF e id de farmacia visibles",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "PUIG SALOMON PIUS",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "clasificacion": "INVENTADO",
+      "conteo_atomico": {
+        "INVENTADO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": null,
+          "obtenido": "El documento muestra albaranes de cargos en las páginas 2 a 4 y dos albaranes de abono en la página 2; se requiere conciliación. La deducción muestra dos importes sin asociación inequívoca a un único campo de ajuste.",
+          "estado": "INVENTADO"
+        }
+      ]
+    }
+  ]
+}

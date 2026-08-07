@@ -1,0 +1,34 @@
+{
+  "modelo": "gpt-5.6-terra",
+  "estado_llamada": "completed",
+  "resumen": {
+    "filas_esperadas": 147,
+    "filas_obtenidas": 147,
+    "numeros_correctos": 147,
+    "fechas_correctas": 147,
+    "descripciones_correctas": 147,
+    "bases_correctas": 147,
+    "totales_correctos": 147,
+    "signos_correctos": 294,
+    "paginas_correctas": 147,
+    "posiciones_correctas": 147,
+    "duplicados": 0,
+    "ausentes": 0,
+    "inventados": 0
+  },
+  "metricas": {
+    "modelo_solicitado": "gpt-5.6-terra",
+    "modelo_utilizado": "gpt-5.6-terra",
+    "response_id": "resp_09fb231096039072016a76118965b4819c811c9d9a7d3f7e7b",
+    "estado": "completed",
+    "duracion_segundos": 31.906,
+    "tokens_entrada": 16878,
+    "tokens_entrada_cacheados": 0,
+    "tokens_salida": 6019,
+    "tokens_razonamiento": 0,
+    "coste_entrada_usd": 0.042195,
+    "coste_salida_usd": 0.090285,
+    "coste_total_usd": 0.13248,
+    "sin_reintento": true
+  }
+}

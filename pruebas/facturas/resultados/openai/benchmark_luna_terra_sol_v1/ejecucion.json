@@ -1,0 +1,12 @@
+{
+  "modelos": [
+    "gpt-5.6-luna",
+    "gpt-5.6-terra",
+    "gpt-5.6-sol"
+  ],
+  "llamadas_nuevas_previstas": 17,
+  "resultados_reutilizados": 1,
+  "coste_nuevas_llamadas_usd": 1.16027,
+  "fecha_fin_utc": "2026-08-07T17:12:03.671783+00:00",
+  "sin_reintentos": true
+}

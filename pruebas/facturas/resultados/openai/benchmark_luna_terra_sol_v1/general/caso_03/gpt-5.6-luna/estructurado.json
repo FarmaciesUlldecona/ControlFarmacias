@@ -1,0 +1,379 @@
+{
+  "metadatos_prueba": {
+    "caso": "suavinex",
+    "documento_local": "SUAVINEX VTO 15.8.26 PIO.pdf",
+    "archivo_enviado": "documento_03.pdf",
+    "tipo_extraccion": "general",
+    "paginas_originales": [
+      1,
+      1
+    ],
+    "paginas_enviadas": 1,
+    "tamano_bytes_enviado": 200924,
+    "sha256_enviado": "f8ccbf1971f79adbdc37a35b0d5c73ce53285190d8da3089b2cc3e0fb41836a9",
+    "contenido_patron_incluido": false,
+    "version_prompt": "benchmark_modelos_general_v1",
+    "max_output_tokens": 16000,
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_089f762e4967eccb016a761106de7081a3884d7fd0e7a193c5",
+    "fecha_hora_utc": "2026-08-07T17:08:31.078070+00:00",
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "FACTURA",
+      "evidencias": [
+        {
+          "texto_visible": "Factura Nº: 0702638508",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "MERCANCIA",
+      "evidencias": [
+        {
+          "texto_visible": "Descripción: S BABY CARE...",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": true,
+      "evidencias": [
+        {
+          "texto_visible": "Albarán: 81109681",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Página 1/1",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Página 1/1",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "Suavinex Group, S.L.",
+      "evidencias": [
+        {
+          "texto_visible": "Suavinex Group, S.L.",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "ESB03074093",
+      "evidencias": [
+        {
+          "texto_visible": "C.I.F. ESB03074093",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "0702638508",
+      "evidencias": [
+        {
+          "texto_visible": "Factura Nº: 0702638508",
+          "pagina": 1
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-06-19",
+      "evidencias": [
+        {
+          "texto_visible": "Fecha Factura: 19.06.2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 531.26,
+      "evidencias": [
+        {
+          "texto_visible": "Importe Neto: 531,26 EUR",
+          "pagina": 1
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 139.19,
+      "evidencias": [
+        {
+          "texto_visible": "Impuestos: 139,19 EUR",
+          "pagina": 1
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": null,
+      "evidencias": []
+    },
+    "importe_total": {
+      "valor": 670.45,
+      "evidencias": [
+        {
+          "texto_visible": "Total Factura: 670,45 EUR",
+          "pagina": 1
+        }
+      ]
+    },
+    "vencimientos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Vto.: 19.08.2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_vencimiento": {
+          "valor": "2026-08-19",
+          "evidencias": [
+            {
+              "texto_visible": "Vto.: 19.08.2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": 670.45,
+          "evidencias": [
+            {
+              "texto_visible": "Importe: 670,45 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": "Giro domiciliado CORE",
+          "evidencias": [
+            {
+              "texto_visible": "Vía de pago: Giro domiciliado CORE",
+              "pagina": 1
+            }
+          ]
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Base 531,26 IVA 21,00 % Recargo 5,20 % Cuota 139,19 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 531.26,
+          "evidencias": [
+            {
+              "texto_visible": "Base 531,26",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 21.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 21,00 %",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 139.19,
+          "evidencias": [
+            {
+              "texto_visible": "Cuota 139,19 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 5.2,
+          "evidencias": [
+            {
+              "texto_visible": "Recargo 5,20 %",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Albarán: 81109681",
+              "pagina": 1
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "81109681",
+          "evidencias": [
+            {
+              "texto_visible": "Albarán: 81109681",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": null,
+          "evidencias": []
+        },
+        "tipo_movimiento": {
+          "valor": null,
+          "evidencias": []
+        },
+        "descripcion": {
+          "valor": "Pedido: 220559274",
+          "evidencias": [
+            {
+              "texto_visible": "Pedido: 220559274",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": null,
+          "evidencias": []
+        },
+        "importe_total": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "ajustes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Infor.Pto.Verde: 1,90 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_ajuste": {
+          "valor": "Infor.Pto.Verde",
+          "evidencias": [
+            {
+              "texto_visible": "Infor.Pto.Verde: 1,90 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": null,
+          "evidencias": []
+        },
+        "importe": {
+          "valor": 1.9,
+          "evidencias": [
+            {
+              "texto_visible": "Infor.Pto.Verde: 1,90 EUR",
+              "pagina": 1
+            }
+          ]
+        },
+        "incluido_en_base": {
+          "valor": null,
+          "evidencias": []
+        },
+        "incluido_en_total": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": "7485",
+        "evidencias": [
+          {
+            "texto_visible": "Cliente: 7485",
+            "pagina": 1
+          }
+        ]
+      },
+      "nombre": {
+        "valor": "PUIG SALOMON, PIO",
+        "evidencias": [
+          {
+            "texto_visible": "PUIG SALOMON, PIO",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": "40901058C",
+        "evidencias": [
+          {
+            "texto_visible": "NIF/DNI: 40901058C",
+            "pagina": 1
+          }
+        ]
+      },
+      "metodo_identificacion": {
+        "valor": "Cliente",
+        "evidencias": [
+          {
+            "texto_visible": "Cliente: 7485",
+            "pagina": 1
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_inicio": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_fin": {
+      "valor": null,
+      "evidencias": []
+    },
+    "nota_revision": {
+      "valor": null,
+      "evidencias": []
+    }
+  }
+}

@@ -1,0 +1,843 @@
+{
+  "caso": "fedefarma",
+  "modelo": "gpt-5.6-luna",
+  "estado_llamada": "completed",
+  "resumen": {
+    "campos_evaluados": 22,
+    "correctos": 14,
+    "incorrectos": 2,
+    "parciales": 4,
+    "ausentes": 1,
+    "inventados": 13,
+    "acierto_estricto": 63.64,
+    "cobertura": 95.45,
+    "incidencias_previsibles": 8
+  },
+  "albaranes": {
+    "esperados": 5,
+    "extraidos": 4,
+    "numeros_correctos": 4,
+    "ausentes": 1,
+    "duplicados": 0,
+    "inventados": 0,
+    "fechas_correctas": 4,
+    "importes_correctos": 4,
+    "ordenes_correctos": 4
+  },
+  "metricas": {
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_0343093877387c3a016a76112b6898819db436d623a49c33b5",
+    "estado": "completed",
+    "duracion_segundos": 15.611,
+    "tokens_entrada": 8380,
+    "tokens_entrada_cacheados": 1756,
+    "tokens_salida": 3088,
+    "tokens_razonamiento": 0,
+    "coste_entrada_usd": 0.0068,
+    "coste_salida_usd": 0.018528,
+    "coste_total_usd": 0.025328,
+    "sin_reintento": true
+  },
+  "comparaciones": [
+    {
+      "campo": "tipo_documento",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "clasificacion": "AUSENTE",
+      "conteo_atomico": {
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "MERCANCIA",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 2,
+          "obtenido": 2,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "FEDERACIÓ FARMACÈUTICA, S.COOP.C.L.",
+          "obtenido": "Federació Farmacèutica S.Coop.C.L.",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "clasificacion": "INCORRECTO",
+      "conteo_atomico": {
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "F08173395",
+          "obtenido": "F-08-173395",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "VN2605-0005381",
+          "obtenido": "VN2605-0005381",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-07-20",
+          "obtenido": "2026-07-20",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 57.44,
+          "obtenido": 57.44,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 4.53,
+          "obtenido": 4.53,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 0.62,
+          "obtenido": 0.62,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 62.59,
+          "obtenido": 62.59,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 4
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos[0].fecha_vencimiento",
+          "esperado": "2026-08-05",
+          "obtenido": "2026-08-05",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].importe",
+          "esperado": 62.59,
+          "obtenido": 62.59,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].nota",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "INCORRECTO": 10,
+        "CORRECTO": 6,
+        "INVENTADO": 12
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": 20.38,
+          "obtenido": 0.0,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": 0.82,
+          "obtenido": 0.0,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": 0.1,
+          "obtenido": 0.0,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].nota",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": 4.0,
+          "obtenido": 0.0,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": 0.5,
+          "obtenido": 0.0,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].base_imponible",
+          "esperado": 37.06,
+          "obtenido": 20.38,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_iva",
+          "esperado": 3.71,
+          "obtenido": 0.82,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_recargo_equivalencia",
+          "esperado": 0.52,
+          "obtenido": 0.1,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].nota",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].orden",
+          "esperado": 2,
+          "obtenido": 2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_iva",
+          "esperado": 10.0,
+          "obtenido": 4.0,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_recargo_equivalencia",
+          "esperado": 1.4,
+          "obtenido": 0.5,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "impuestos[2].base_imponible",
+          "esperado": null,
+          "obtenido": 37.06,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].cuota_iva",
+          "esperado": null,
+          "obtenido": 3.71,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 0.52,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].nota",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[2].orden",
+          "esperado": null,
+          "obtenido": 3,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].tipo_iva",
+          "esperado": null,
+          "obtenido": 10.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 1.4,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].base_imponible",
+          "esperado": null,
+          "obtenido": 0.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].cuota_iva",
+          "esperado": null,
+          "obtenido": 0.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 0.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].nota",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[3].orden",
+          "esperado": null,
+          "obtenido": 4,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].tipo_iva",
+          "esperado": null,
+          "obtenido": 21.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[3].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 5.2,
+          "estado": "INVENTADO"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 25,
+        "INCORRECTO": 4,
+        "AUSENTE": 5
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes[0].descripcion",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].fecha_albaran",
+          "esperado": "2026-07-13",
+          "obtenido": "2026-07-13",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_base",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_total",
+          "esperado": 40.98,
+          "obtenido": 40.98,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].numero_albaran",
+          "esperado": "2620-2051956",
+          "obtenido": "2620-2051956",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "P",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].descripcion",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].fecha_albaran",
+          "esperado": "2026-07-16",
+          "obtenido": "2026-07-16",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].importe_base",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].importe_total",
+          "esperado": 19.29,
+          "obtenido": 19.29,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].numero_albaran",
+          "esperado": "2620-2090700",
+          "obtenido": "2620-2090700",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].orden",
+          "esperado": 2,
+          "obtenido": 2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "P",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].descripcion",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].fecha_albaran",
+          "esperado": "2026-07-17",
+          "obtenido": "2026-07-17",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].importe_base",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].importe_total",
+          "esperado": 3.35,
+          "obtenido": 3.35,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].numero_albaran",
+          "esperado": "2620-2100818",
+          "obtenido": "2620-2100818",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].orden",
+          "esperado": 3,
+          "obtenido": 3,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "P",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].descripcion",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].fecha_albaran",
+          "esperado": "2026-07-17",
+          "obtenido": "2026-07-17",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].importe_base",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].importe_total",
+          "esperado": 4.78,
+          "obtenido": 4.78,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].numero_albaran",
+          "esperado": "2620-2100853",
+          "obtenido": "2620-2100853",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].orden",
+          "esperado": 4,
+          "obtenido": 4,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "P",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].fecha_albaran",
+          "esperado": "2026-07-17",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].importe_base",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].importe_total",
+          "esperado": -14.04,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].numero_albaran",
+          "esperado": "2620A-196245",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].orden",
+          "esperado": 5,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "albaranes[4].tipo_movimiento",
+          "esperado": "ABONO",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "ajustes",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "INCORRECTO": 5,
+        "CORRECTO": 6,
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes[0].descripcion",
+          "esperado": "Bonificación pago inmediato",
+          "obtenido": "NATURGREEN ACEITE DE COCO MCT 500ML",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].importe",
+          "esperado": -0.08,
+          "obtenido": -14.04,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].tipo_ajuste",
+          "esperado": "BONIFICACION",
+          "obtenido": "ABONO",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].descripcion",
+          "esperado": "Condición operativa",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "ajustes[1].importe",
+          "esperado": 3.16,
+          "obtenido": -0.08,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].orden",
+          "esperado": 2,
+          "obtenido": 2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].tipo_ajuste",
+          "esperado": "CONDICION_OPERATIVA",
+          "obtenido": "BONIFICACIÓN",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 1,
+        "INCORRECTO": 3
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": "40901058C",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": "050171",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "Farmàcia 0500 - 050171 - S30213",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "PUIG SALOMON PIO",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "clasificacion": "INVENTADO",
+      "conteo_atomico": {
+        "INVENTADO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": null,
+          "obtenido": "2026-07-20",
+          "estado": "INVENTADO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    }
+  ]
+}

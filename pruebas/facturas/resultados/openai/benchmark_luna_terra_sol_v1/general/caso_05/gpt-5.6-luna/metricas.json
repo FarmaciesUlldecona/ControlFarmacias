@@ -1,0 +1,15 @@
+{
+  "modelo_solicitado": "gpt-5.6-luna",
+  "modelo_utilizado": "gpt-5.6-luna",
+  "response_id": "resp_0cb1c98d114f6ad0016a761173c598819d80c0a6e98c0a4c61",
+  "estado": "completed",
+  "duracion_segundos": 5.376,
+  "tokens_entrada": 5054,
+  "tokens_entrada_cacheados": 1756,
+  "tokens_salida": 906,
+  "tokens_razonamiento": 0,
+  "coste_entrada_usd": 0.003474,
+  "coste_salida_usd": 0.005436,
+  "coste_total_usd": 0.00891,
+  "sin_reintento": true
+}

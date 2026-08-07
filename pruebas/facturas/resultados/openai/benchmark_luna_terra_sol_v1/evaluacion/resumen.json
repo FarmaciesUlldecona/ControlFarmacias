@@ -1,0 +1,827 @@
+{
+  "metodologia": {
+    "modelos": [
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-5.6-sol"
+    ],
+    "documentos": [
+      "alliance_08008427",
+      "farmacia_guimera",
+      "suavinex",
+      "fedefarma",
+      "ecoceutics"
+    ],
+    "resultados_generales": 15,
+    "resultados_tablas": 3,
+    "llamadas_nuevas": 17,
+    "resultados_reutilizados": 1,
+    "normalizadores_aplicados": false,
+    "patron_aislado_de_extractores": true
+  },
+  "por_modelo": {
+    "gpt-5.6-luna": {
+      "llamadas_generales_correctas": 5,
+      "llamadas_generales_fallidas": 0,
+      "campos_evaluados": 110,
+      "correctos": 75,
+      "acierto_estricto": 68.18,
+      "cobertura": 95.45,
+      "invenciones": 39,
+      "incidencias_previsibles": 35,
+      "coste_general_usd": 0.09188,
+      "coste_literal_usd": 0.052392,
+      "coste_muestra_usd": 0.144272,
+      "coste_medio_factura_general_usd": 0.018376,
+      "costes_no_disponibles": 0
+    },
+    "gpt-5.6-terra": {
+      "llamadas_generales_correctas": 4,
+      "llamadas_generales_fallidas": 1,
+      "campos_evaluados": 110,
+      "correctos": 66,
+      "acierto_estricto": 60.0,
+      "cobertura": 76.36,
+      "invenciones": 16,
+      "incidencias_previsibles": 22,
+      "coste_general_usd": 0.142228,
+      "coste_literal_usd": 0.13248,
+      "coste_muestra_usd": 0.274708,
+      "coste_medio_factura_general_usd": 0.035557,
+      "costes_no_disponibles": 1
+    },
+    "gpt-5.6-sol": {
+      "llamadas_generales_correctas": 5,
+      "llamadas_generales_fallidas": 0,
+      "campos_evaluados": 110,
+      "correctos": 80,
+      "acierto_estricto": 72.73,
+      "cobertura": 97.27,
+      "invenciones": 50,
+      "incidencias_previsibles": 30,
+      "coste_general_usd": 0.507662,
+      "coste_literal_usd": 0.28602,
+      "coste_muestra_usd": 0.793682,
+      "coste_medio_factura_general_usd": 0.101532,
+      "costes_no_disponibles": 0
+    }
+  },
+  "proyecciones": {
+    "gpt-5.6-luna": {
+      "literal_20": {
+        "mensual_60_facturas_usd": 1.73,
+        "anual_usd": 20.78
+      },
+      "literal_40": {
+        "mensual_60_facturas_usd": 2.36,
+        "anual_usd": 28.32
+      },
+      "literal_60": {
+        "mensual_60_facturas_usd": 2.99,
+        "anual_usd": 35.86
+      }
+    },
+    "gpt-5.6-terra": {
+      "literal_20": {
+        "mensual_60_facturas_usd": 3.72,
+        "anual_usd": 44.68
+      },
+      "literal_40": {
+        "mensual_60_facturas_usd": 5.31,
+        "anual_usd": 63.76
+      },
+      "literal_60": {
+        "mensual_60_facturas_usd": 6.9,
+        "anual_usd": 82.83
+      }
+    },
+    "gpt-5.6-sol": {
+      "literal_20": {
+        "mensual_60_facturas_usd": 9.52,
+        "anual_usd": 114.29
+      },
+      "literal_40": {
+        "mensual_60_facturas_usd": 12.96,
+        "anual_usd": 155.48
+      },
+      "literal_60": {
+        "mensual_60_facturas_usd": 16.39,
+        "anual_usd": 196.66
+      }
+    }
+  },
+  "resultados_generales": [
+    {
+      "caso": "alliance_08008427",
+      "modelo": "gpt-5.6-luna",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 14,
+        "incorrectos": 2,
+        "parciales": 5,
+        "ausentes": 1,
+        "inventados": 22,
+        "acierto_estricto": 63.64,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 8
+      },
+      "albaranes": {
+        "esperados": 147,
+        "extraidos": 4,
+        "numeros_correctos": 4,
+        "ausentes": 143,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 4,
+        "importes_correctos": 8,
+        "ordenes_correctos": 2
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-luna",
+        "modelo_utilizado": "gpt-5.6-luna",
+        "response_id": "resp_003a8f1e7fcb8bf4016a76104917bc8191884db8f60f563341",
+        "estado": "completed",
+        "duracion_segundos": 17.23,
+        "tokens_entrada": 17893,
+        "tokens_entrada_cacheados": 0,
+        "tokens_salida": 2763,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.017893,
+        "coste_salida_usd": 0.016578,
+        "coste_total_usd": 0.034471,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "alliance_08008427",
+      "modelo": "gpt-5.6-terra",
+      "estado_llamada": "failed",
+      "resumen": null,
+      "albaranes": null,
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-terra",
+        "modelo_utilizado": null,
+        "response_id": null,
+        "estado": "failed",
+        "duracion_segundos": 98.053,
+        "tokens_entrada": null,
+        "tokens_entrada_cacheados": null,
+        "tokens_salida": null,
+        "tokens_razonamiento": null,
+        "coste_entrada_usd": null,
+        "coste_salida_usd": null,
+        "coste_total_usd": null,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "alliance_08008427",
+      "modelo": "gpt-5.6-sol",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 14,
+        "incorrectos": 2,
+        "parciales": 5,
+        "ausentes": 0,
+        "inventados": 27,
+        "acierto_estricto": 63.64,
+        "cobertura": 100.0,
+        "incidencias_previsibles": 8
+      },
+      "albaranes": {
+        "esperados": 147,
+        "extraidos": 4,
+        "numeros_correctos": 4,
+        "ausentes": 143,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 4,
+        "importes_correctos": 8,
+        "ordenes_correctos": 2
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-sol",
+        "modelo_utilizado": "gpt-5.6-sol",
+        "response_id": "resp_0d4f4ed30fbcc333016a7610b9a9f4819f8d1ab5fa796f837b",
+        "estado": "completed",
+        "duracion_segundos": 31.222,
+        "tokens_entrada": 17893,
+        "tokens_entrada_cacheados": 0,
+        "tokens_salida": 3065,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.089465,
+        "coste_salida_usd": 0.09195,
+        "coste_total_usd": 0.181415,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "farmacia_guimera",
+      "modelo": "gpt-5.6-luna",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 17,
+        "incorrectos": 0,
+        "parciales": 2,
+        "ausentes": 1,
+        "inventados": 2,
+        "acierto_estricto": 77.27,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 5
+      },
+      "albaranes": {
+        "esperados": 0,
+        "extraidos": 0,
+        "numeros_correctos": 0,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 0,
+        "importes_correctos": 0,
+        "ordenes_correctos": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-luna",
+        "modelo_utilizado": "gpt-5.6-luna",
+        "response_id": "resp_0b7c4519a86ab98a016a7610d942c881a1b4c1b09213beb2bd",
+        "estado": "completed",
+        "duracion_segundos": 17.68,
+        "tokens_entrada": 4709,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 1337,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.003129,
+        "coste_salida_usd": 0.008022,
+        "coste_total_usd": 0.011151,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "farmacia_guimera",
+      "modelo": "gpt-5.6-terra",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 19,
+        "incorrectos": 0,
+        "parciales": 2,
+        "ausentes": 1,
+        "inventados": 0,
+        "acierto_estricto": 86.36,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 3
+      },
+      "albaranes": {
+        "esperados": 0,
+        "extraidos": 0,
+        "numeros_correctos": 0,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 0,
+        "importes_correctos": 0,
+        "ordenes_correctos": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-terra",
+        "modelo_utilizado": "gpt-5.6-terra",
+        "response_id": "resp_0089748e221ca877016a7610eab9548191b0d7ef474b35e106",
+        "estado": "completed",
+        "duracion_segundos": 9.515,
+        "tokens_entrada": 4709,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 1200,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.007822,
+        "coste_salida_usd": 0.018,
+        "coste_total_usd": 0.025821,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "farmacia_guimera",
+      "modelo": "gpt-5.6-sol",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 19,
+        "incorrectos": 0,
+        "parciales": 2,
+        "ausentes": 1,
+        "inventados": 0,
+        "acierto_estricto": 86.36,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 3
+      },
+      "albaranes": {
+        "esperados": 0,
+        "extraidos": 0,
+        "numeros_correctos": 0,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 0,
+        "importes_correctos": 0,
+        "ordenes_correctos": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-sol",
+        "modelo_utilizado": "gpt-5.6-sol",
+        "response_id": "resp_026ebf495f0a6338016a7610f472b4819fa4e95acf036e2f63",
+        "estado": "completed",
+        "duracion_segundos": 18.521,
+        "tokens_entrada": 4709,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 1407,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.015643,
+        "coste_salida_usd": 0.04221,
+        "coste_total_usd": 0.057853,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "suavinex",
+      "modelo": "gpt-5.6-luna",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 13,
+        "incorrectos": 2,
+        "parciales": 6,
+        "ausentes": 1,
+        "inventados": 1,
+        "acierto_estricto": 59.09,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 9
+      },
+      "albaranes": {
+        "esperados": 1,
+        "extraidos": 1,
+        "numeros_correctos": 1,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 1,
+        "importes_correctos": 0,
+        "ordenes_correctos": 1
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-luna",
+        "modelo_utilizado": "gpt-5.6-luna",
+        "response_id": "resp_089f762e4967eccb016a761106de7081a3884d7fd0e7a193c5",
+        "estado": "completed",
+        "duracion_segundos": 7.632,
+        "tokens_entrada": 5956,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 1274,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.004376,
+        "coste_salida_usd": 0.007644,
+        "coste_total_usd": 0.01202,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "suavinex",
+      "modelo": "gpt-5.6-terra",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 13,
+        "incorrectos": 2,
+        "parciales": 5,
+        "ausentes": 2,
+        "inventados": 0,
+        "acierto_estricto": 59.09,
+        "cobertura": 90.91,
+        "incidencias_previsibles": 9
+      },
+      "albaranes": {
+        "esperados": 1,
+        "extraidos": 1,
+        "numeros_correctos": 1,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 1,
+        "importes_correctos": 0,
+        "ordenes_correctos": 1
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-terra",
+        "modelo_utilizado": "gpt-5.6-terra",
+        "response_id": "resp_081806a8a658e79a016a76110f11c8819ea44e90ea21559133",
+        "estado": "completed",
+        "duracion_segundos": 10.702,
+        "tokens_entrada": 5956,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 1149,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.010939,
+        "coste_salida_usd": 0.017235,
+        "coste_total_usd": 0.028174,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "suavinex",
+      "modelo": "gpt-5.6-sol",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 13,
+        "incorrectos": 1,
+        "parciales": 5,
+        "ausentes": 1,
+        "inventados": 2,
+        "acierto_estricto": 59.09,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 9
+      },
+      "albaranes": {
+        "esperados": 1,
+        "extraidos": 1,
+        "numeros_correctos": 1,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 1,
+        "importes_correctos": 0,
+        "ordenes_correctos": 1
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-sol",
+        "modelo_utilizado": "gpt-5.6-sol",
+        "response_id": "resp_042b4c1c9c914c98016a761119877c819f954c8bd9582a9b40",
+        "estado": "completed",
+        "duracion_segundos": 18.03,
+        "tokens_entrada": 5956,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 1354,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.021878,
+        "coste_salida_usd": 0.04062,
+        "coste_total_usd": 0.062498,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "fedefarma",
+      "modelo": "gpt-5.6-luna",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 14,
+        "incorrectos": 2,
+        "parciales": 4,
+        "ausentes": 1,
+        "inventados": 13,
+        "acierto_estricto": 63.64,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 8
+      },
+      "albaranes": {
+        "esperados": 5,
+        "extraidos": 4,
+        "numeros_correctos": 4,
+        "ausentes": 1,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 4,
+        "importes_correctos": 4,
+        "ordenes_correctos": 4
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-luna",
+        "modelo_utilizado": "gpt-5.6-luna",
+        "response_id": "resp_0343093877387c3a016a76112b6898819db436d623a49c33b5",
+        "estado": "completed",
+        "duracion_segundos": 15.611,
+        "tokens_entrada": 8380,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 3088,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.0068,
+        "coste_salida_usd": 0.018528,
+        "coste_total_usd": 0.025328,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "fedefarma",
+      "modelo": "gpt-5.6-terra",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 16,
+        "incorrectos": 2,
+        "parciales": 4,
+        "ausentes": 0,
+        "inventados": 16,
+        "acierto_estricto": 72.73,
+        "cobertura": 100.0,
+        "incidencias_previsibles": 6
+      },
+      "albaranes": {
+        "esperados": 5,
+        "extraidos": 4,
+        "numeros_correctos": 0,
+        "ausentes": 5,
+        "duplicados": 0,
+        "inventados": 4,
+        "fechas_correctas": 0,
+        "importes_correctos": 0,
+        "ordenes_correctos": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-terra",
+        "modelo_utilizado": "gpt-5.6-terra",
+        "response_id": "resp_01a8d7eac5b022d0016a76113b453481a3bb270288937fd0c5",
+        "estado": "completed",
+        "duracion_segundos": 18.692,
+        "tokens_entrada": 8380,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 3284,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.016999,
+        "coste_salida_usd": 0.04926,
+        "coste_total_usd": 0.066259,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "fedefarma",
+      "modelo": "gpt-5.6-sol",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 16,
+        "incorrectos": 2,
+        "parciales": 4,
+        "ausentes": 0,
+        "inventados": 21,
+        "acierto_estricto": 72.73,
+        "cobertura": 100.0,
+        "incidencias_previsibles": 6
+      },
+      "albaranes": {
+        "esperados": 5,
+        "extraidos": 4,
+        "numeros_correctos": 0,
+        "ausentes": 5,
+        "duplicados": 0,
+        "inventados": 4,
+        "fechas_correctas": 0,
+        "importes_correctos": 0,
+        "ordenes_correctos": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-sol",
+        "modelo_utilizado": "gpt-5.6-sol",
+        "response_id": "resp_0c2ec545fcbe0a03016a76114ddd28819daea921239310103e",
+        "estado": "completed",
+        "duracion_segundos": 37.78,
+        "tokens_entrada": 8380,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 4192,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.033998,
+        "coste_salida_usd": 0.12576,
+        "coste_total_usd": 0.159758,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "ecoceutics",
+      "modelo": "gpt-5.6-luna",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 17,
+        "incorrectos": 1,
+        "parciales": 3,
+        "ausentes": 1,
+        "inventados": 1,
+        "acierto_estricto": 77.27,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 5
+      },
+      "albaranes": {
+        "esperados": 0,
+        "extraidos": 0,
+        "numeros_correctos": 0,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 0,
+        "importes_correctos": 0,
+        "ordenes_correctos": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-luna",
+        "modelo_utilizado": "gpt-5.6-luna",
+        "response_id": "resp_0cb1c98d114f6ad0016a761173c598819d80c0a6e98c0a4c61",
+        "estado": "completed",
+        "duracion_segundos": 5.376,
+        "tokens_entrada": 5054,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 906,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.003474,
+        "coste_salida_usd": 0.005436,
+        "coste_total_usd": 0.00891,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "ecoceutics",
+      "modelo": "gpt-5.6-terra",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 18,
+        "incorrectos": 1,
+        "parciales": 2,
+        "ausentes": 1,
+        "inventados": 0,
+        "acierto_estricto": 81.82,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 4
+      },
+      "albaranes": {
+        "esperados": 0,
+        "extraidos": 0,
+        "numeros_correctos": 0,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 0,
+        "importes_correctos": 0,
+        "ordenes_correctos": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-terra",
+        "modelo_utilizado": "gpt-5.6-terra",
+        "response_id": "resp_0d9571555431a91c016a7611794b448191834446dd3ecd5cf5",
+        "estado": "completed",
+        "duracion_segundos": 6.145,
+        "tokens_entrada": 5054,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 886,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.008684,
+        "coste_salida_usd": 0.01329,
+        "coste_total_usd": 0.021974,
+        "sin_reintento": true
+      }
+    },
+    {
+      "caso": "ecoceutics",
+      "modelo": "gpt-5.6-sol",
+      "estado_llamada": "completed",
+      "resumen": {
+        "campos_evaluados": 22,
+        "correctos": 18,
+        "incorrectos": 1,
+        "parciales": 2,
+        "ausentes": 1,
+        "inventados": 0,
+        "acierto_estricto": 81.82,
+        "cobertura": 95.45,
+        "incidencias_previsibles": 4
+      },
+      "albaranes": {
+        "esperados": 0,
+        "extraidos": 0,
+        "numeros_correctos": 0,
+        "ausentes": 0,
+        "duplicados": 0,
+        "inventados": 0,
+        "fechas_correctas": 0,
+        "importes_correctos": 0,
+        "ordenes_correctos": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-sol",
+        "modelo_utilizado": "gpt-5.6-sol",
+        "response_id": "resp_0f133a10eb98aed8016a76117f612081a286e2aa2fb9aa342b",
+        "estado": "completed",
+        "duracion_segundos": 9.99,
+        "tokens_entrada": 5054,
+        "tokens_entrada_cacheados": 1756,
+        "tokens_salida": 959,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.017368,
+        "coste_salida_usd": 0.02877,
+        "coste_total_usd": 0.046138,
+        "sin_reintento": true
+      }
+    }
+  ],
+  "resultados_tablas": [
+    {
+      "modelo": "gpt-5.6-luna",
+      "estado_llamada": "completed",
+      "resumen": {
+        "filas_esperadas": 147,
+        "filas_obtenidas": 147,
+        "numeros_correctos": 147,
+        "fechas_correctas": 147,
+        "descripciones_correctas": 147,
+        "bases_correctas": 147,
+        "totales_correctos": 147,
+        "signos_correctos": 294,
+        "paginas_correctas": 147,
+        "posiciones_correctas": 147,
+        "duplicados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "metricas": {
+        "modelo": "gpt-5.6-luna",
+        "response_id": "resp_04541df53a17d900016a74becb9224819e924cc0d55e0d0cba",
+        "tokens_entrada": 16878,
+        "tokens_entrada_cacheados": 0,
+        "tokens_salida": 5919,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.016878,
+        "coste_salida_usd": 0.035514,
+        "coste_total_estimado_usd": 0.052392,
+        "duracion_segundos": 175.085,
+        "estado_final": "completed"
+      }
+    },
+    {
+      "modelo": "gpt-5.6-terra",
+      "estado_llamada": "completed",
+      "resumen": {
+        "filas_esperadas": 147,
+        "filas_obtenidas": 147,
+        "numeros_correctos": 147,
+        "fechas_correctas": 147,
+        "descripciones_correctas": 147,
+        "bases_correctas": 147,
+        "totales_correctos": 147,
+        "signos_correctos": 294,
+        "paginas_correctas": 147,
+        "posiciones_correctas": 147,
+        "duplicados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-terra",
+        "modelo_utilizado": "gpt-5.6-terra",
+        "response_id": "resp_09fb231096039072016a76118965b4819c811c9d9a7d3f7e7b",
+        "estado": "completed",
+        "duracion_segundos": 31.906,
+        "tokens_entrada": 16878,
+        "tokens_entrada_cacheados": 0,
+        "tokens_salida": 6019,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.042195,
+        "coste_salida_usd": 0.090285,
+        "coste_total_usd": 0.13248,
+        "sin_reintento": true
+      }
+    },
+    {
+      "modelo": "gpt-5.6-sol",
+      "estado_llamada": "completed",
+      "resumen": {
+        "filas_esperadas": 147,
+        "filas_obtenidas": 147,
+        "numeros_correctos": 147,
+        "fechas_correctas": 147,
+        "descripciones_correctas": 147,
+        "bases_correctas": 147,
+        "totales_correctos": 147,
+        "signos_correctos": 294,
+        "paginas_correctas": 147,
+        "posiciones_correctas": 147,
+        "duplicados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "metricas": {
+        "modelo_solicitado": "gpt-5.6-sol",
+        "modelo_utilizado": "gpt-5.6-sol",
+        "response_id": "resp_0ebf43abdd5309b7016a7611a964708192b0774984fb01d02b",
+        "estado": "completed",
+        "duracion_segundos": 57.516,
+        "tokens_entrada": 16878,
+        "tokens_entrada_cacheados": 0,
+        "tokens_salida": 6721,
+        "tokens_razonamiento": 0,
+        "coste_entrada_usd": 0.08439,
+        "coste_salida_usd": 0.20163,
+        "coste_total_usd": 0.28602,
+        "sin_reintento": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "reutilizado": true,
+  "motivo": "Mismo prompt, esquema, modelo, reasoning, max_output_tokens y nombre neutro.",
+  "llamada_nueva": false
+}

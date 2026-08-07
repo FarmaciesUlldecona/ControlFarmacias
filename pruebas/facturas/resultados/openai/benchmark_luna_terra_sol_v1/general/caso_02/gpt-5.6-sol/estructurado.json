@@ -1,0 +1,391 @@
+{
+  "metadatos_prueba": {
+    "caso": "farmacia_guimera",
+    "documento_local": "FARMACIA GUIMERA VTO 30.6.26 PIO.pdf",
+    "archivo_enviado": "documento_02.pdf",
+    "tipo_extraccion": "general",
+    "paginas_originales": [
+      1,
+      1
+    ],
+    "paginas_enviadas": 1,
+    "tamano_bytes_enviado": 355518,
+    "sha256_enviado": "bdaa8c8c3c6d6edb4fb48d7c8a8ee5c3263672d9bae4f42f97ddb1d7f89282b8",
+    "contenido_patron_incluido": false,
+    "version_prompt": "benchmark_modelos_general_v1",
+    "max_output_tokens": 16000,
+    "modelo_solicitado": "gpt-5.6-sol",
+    "modelo_utilizado": "gpt-5.6-sol",
+    "response_id": "resp_026ebf495f0a6338016a7610f472b4819fa4e95acf036e2f63",
+    "fecha_hora_utc": "2026-08-07T17:08:23.425004+00:00",
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "FACTURA",
+      "evidencias": [
+        {
+          "texto_visible": "Factura núm.: 509",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "MERCANCIA",
+      "evidencias": [
+        {
+          "texto_visible": "Concepto",
+          "pagina": 1
+        },
+        {
+          "texto_visible": "Betametasona 1mg/g/o/w",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": false,
+      "evidencias": [
+        {
+          "texto_visible": "Número  Suma  Dto.  B.Imp.  IVA  R.E.  PVF  PVP  F.Elab.  Env.  Concepto",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Factura núm.: 509",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "Debe: 243,24",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "FARMACIA GUIMERA C.B.",
+      "evidencias": [
+        {
+          "texto_visible": "FARMACIA GUIMERA C.B.",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "E12943437",
+      "evidencias": [
+        {
+          "texto_visible": "NIF E12943437",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "509",
+      "evidencias": [
+        {
+          "texto_visible": "Factura núm.: 509",
+          "pagina": 1
+        },
+        {
+          "texto_visible": "Núm.Fac.: 509",
+          "pagina": 1
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-05-29",
+      "evidencias": [
+        {
+          "texto_visible": "29-05-2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 228.58,
+      "evidencias": [
+        {
+          "texto_visible": "Base imp.: 228,58",
+          "pagina": 1
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 12.95,
+      "evidencias": [
+        {
+          "texto_visible": "IVA: 12,95",
+          "pagina": 1
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": 1.71,
+      "evidencias": [
+        {
+          "texto_visible": "R.Equiv.: 1,71",
+          "pagina": 1
+        }
+      ]
+    },
+    "importe_total": {
+      "valor": 243.24,
+      "evidencias": [
+        {
+          "texto_visible": "[ PVF: 243,24 ]",
+          "pagina": 1
+        },
+        {
+          "texto_visible": "Debe: 243,24",
+          "pagina": 1
+        }
+      ]
+    },
+    "vencimientos": [],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "B4%: 165,22 IVA4%: 6,61 Re0,5%: 0,83",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 165.22,
+          "evidencias": [
+            {
+              "texto_visible": "B4%: 165,22",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 4.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA4%: 6,61",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 6.61,
+          "evidencias": [
+            {
+              "texto_visible": "IVA4%: 6,61",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 0.5,
+          "evidencias": [
+            {
+              "texto_visible": "Re0,5%: 0,83",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 0.83,
+          "evidencias": [
+            {
+              "texto_visible": "Re0,5%: 0,83",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      },
+      {
+        "orden": {
+          "valor": 2,
+          "evidencias": [
+            {
+              "texto_visible": "B10%: 63,36 IVA10%: 6,34 Re1,4%: 0,89",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 63.36,
+          "evidencias": [
+            {
+              "texto_visible": "B10%: 63,36",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 10.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA10%: 6,34",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 6.34,
+          "evidencias": [
+            {
+              "texto_visible": "IVA10%: 6,34",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 1.4,
+          "evidencias": [
+            {
+              "texto_visible": "Re1,4%: 0,89",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 0.89,
+          "evidencias": [
+            {
+              "texto_visible": "Re1,4%: 0,89",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "albaranes": [],
+    "ajustes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "Dto:-70,31",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_ajuste": {
+          "valor": "Descuento",
+          "evidencias": [
+            {
+              "texto_visible": "Dto:-70,31",
+              "pagina": 1
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "Dto.",
+          "evidencias": [
+            {
+              "texto_visible": "Dto:-70,31",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": -70.31,
+          "evidencias": [
+            {
+              "texto_visible": "Dto:-70,31",
+              "pagina": 1
+            }
+          ]
+        },
+        "incluido_en_base": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "Suma: 298,89  Dto:-70,31  Base imp.: 228,58",
+              "pagina": 1
+            }
+          ]
+        },
+        "incluido_en_total": {
+          "valor": true,
+          "evidencias": [
+            {
+              "texto_visible": "Suma: 298,89  Dto:-70,31  Base imp.: 228,58  IVA: 12,95  R.Equiv.: 1,71",
+              "pagina": 1
+            }
+          ]
+        }
+      }
+    ],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": "84",
+        "evidencias": [
+          {
+            "texto_visible": "N.Cliente: 84",
+            "pagina": 1
+          }
+        ]
+      },
+      "nombre": {
+        "valor": "PUIG SALOMON, PIO",
+        "evidencias": [
+          {
+            "texto_visible": "PUIG SALOMON, PIO",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": "40901058C",
+        "evidencias": [
+          {
+            "texto_visible": "N.I.F.: 40901058C",
+            "pagina": 1
+          }
+        ]
+      },
+      "metodo_identificacion": {
+        "valor": "N.Cliente",
+        "evidencias": [
+          {
+            "texto_visible": "N.Cliente: 84",
+            "pagina": 1
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_inicio": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_fin": {
+      "valor": null,
+      "evidencias": []
+    },
+    "nota_revision": {
+      "valor": null,
+      "evidencias": []
+    }
+  }
+}

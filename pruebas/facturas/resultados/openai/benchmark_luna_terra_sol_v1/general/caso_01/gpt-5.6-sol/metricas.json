@@ -1,0 +1,15 @@
+{
+  "modelo_solicitado": "gpt-5.6-sol",
+  "modelo_utilizado": "gpt-5.6-sol",
+  "response_id": "resp_0d4f4ed30fbcc333016a7610b9a9f4819f8d1ab5fa796f837b",
+  "estado": "completed",
+  "duracion_segundos": 31.222,
+  "tokens_entrada": 17893,
+  "tokens_entrada_cacheados": 0,
+  "tokens_salida": 3065,
+  "tokens_razonamiento": 0,
+  "coste_entrada_usd": 0.089465,
+  "coste_salida_usd": 0.09195,
+  "coste_total_usd": 0.181415,
+  "sin_reintento": true
+}

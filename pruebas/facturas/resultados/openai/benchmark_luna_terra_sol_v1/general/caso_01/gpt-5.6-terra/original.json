@@ -1,0 +1,26 @@
+{
+  "metadatos_prueba": {
+    "caso": "alliance_08008427",
+    "documento_local": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+    "archivo_enviado": "documento_01.pdf",
+    "tipo_extraccion": "general",
+    "paginas_originales": [
+      4,
+      7
+    ],
+    "paginas_enviadas": 4,
+    "tamano_bytes_enviado": 63918,
+    "sha256_enviado": "93af6ea0d92b64f4be5c760f24b43fb18a1e57e8b461775dacc415712ff00701",
+    "contenido_patron_incluido": false,
+    "version_prompt": "benchmark_modelos_general_v1",
+    "max_output_tokens": 16000
+  },
+  "respuesta_original": null,
+  "error": {
+    "tipo": "ValidationError",
+    "status_code": null,
+    "mensaje": "1 validation error for FacturaExtraida\n  Invalid JSON: EOF while parsing an object at line 1 column 48056 [type=json_invalid, input_value='{\"tipo_documento\":{\"valo...74 27,56\",\"pagina\":3}]}', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid",
+    "cuerpo": null,
+    "sin_reintento": true
+  }
+}

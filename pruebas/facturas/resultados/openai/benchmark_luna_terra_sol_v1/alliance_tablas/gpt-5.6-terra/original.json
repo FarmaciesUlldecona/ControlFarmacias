@@ -1,0 +1,2013 @@
+{
+  "metadatos_prueba": {
+    "caso": "alliance_08008427",
+    "documento_local": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+    "archivo_enviado": "documento.pdf",
+    "tipo_extraccion": "tablas_literales",
+    "paginas_originales": [
+      4,
+      7
+    ],
+    "paginas_enviadas": 4,
+    "tamano_bytes_enviado": 63918,
+    "sha256_enviado": "93af6ea0d92b64f4be5c760f24b43fb18a1e57e8b461775dacc415712ff00701",
+    "contenido_patron_incluido": false,
+    "version_prompt": "alliance_08008427_tablas_literales_v1.0",
+    "max_output_tokens": 32000,
+    "modelo_solicitado": "gpt-5.6-terra",
+    "modelo_utilizado": "gpt-5.6-terra",
+    "response_id": "resp_09fb231096039072016a76118965b4819c811c9d9a7d3f7e7b",
+    "fecha_hora_utc": "2026-08-07T17:11:05.981217+00:00",
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "respuesta_original": {
+    "id": "resp_09fb231096039072016a76118965b4819c811c9d9a7d3f7e7b",
+    "created_at": 1786122633.0,
+    "error": null,
+    "incomplete_details": null,
+    "instructions": null,
+    "metadata": {},
+    "model": "gpt-5.6-terra",
+    "object": "response",
+    "output": [
+      {
+        "id": "msg_09fb231096039072016a76118ab030819cb40f6eae157a590c",
+        "content": [
+          {
+            "annotations": [],
+            "text": "{\"bloques_vencimiento\":[{\"texto_fecha\":\"06-10-2026\",\"texto_importe\":null,\"pagina\":1},{\"texto_fecha\":\"06-10-2026\",\"texto_importe\":null,\"pagina\":2},{\"texto_fecha\":\"06-10-2026\",\"texto_importe\":null,\"pagina\":3},{\"texto_fecha\":\"06-10-2026\",\"texto_importe\":null,\"pagina\":4}],\"tablas\":[{\"pagina\":1,\"titulo_visible\":\"COMPRAS\",\"encabezados\":[\"CONCEPTO\",\"4\",\"10\",\"21\",\"4\",\"10\",\"21\",\"0,50\",\"1,40\",\"5,20\",\"TOTALES\"],\"filas\":[{\"orden_visual\":1,\"celdas\":[\"ESPECIALIDAD\",\"6.658,52\",\"\",\"\",\"266,34\",\"\",\"\",\"33,29\",\"\",\"\",\"6.958,15\"]},{\"orden_visual\":2,\"celdas\":[\"GENERICOS\",\"736,37\",\"\",\"\",\"29,45\",\"\",\"\",\"3,68\",\"\",\"\",\"769,50\"]},{\"orden_visual\":3,\"celdas\":[\"R.D. 5/2000\",\"1.153,63\",\"\",\"\",\"46,15\",\"\",\"\",\"5,77\",\"\",\"\",\"1.205,55\"]},{\"orden_visual\":4,\"celdas\":[\"NO ESPECIALIDAD\",\"\",\"1.683,59\",\"273,31\",\"\",\"168,36\",\"57,40\",\"\",\"23,57\",\"14,21\",\"2.220,44\"]},{\"orden_visual\":5,\"celdas\":[\"TOTAL COMPRAS\",\"8.548,52\",\"1.683,59\",\"273,31\",\"341,94\",\"168,36\",\"57,40\",\"42,74\",\"23,57\",\"14,21\",\"11.153,64\"]}]},{\"pagina\":1,\"titulo_visible\":\"GASTOS\",\"encabezados\":[\"CONCEPTO\",\"4\",\"10\",\"21\",\"4\",\"10\",\"21\",\"TOTALES\"],\"filas\":[{\"orden_visual\":1,\"celdas\":[\"SERVICIO BASICO\",\"\",\"\",\"26,00\",\"\",\"\",\"5,46\",\"31,46\"]},{\"orden_visual\":2,\"celdas\":[\"TOTAL GASTOS\",\"\",\"\",\"26,00\",\"\",\"\",\"5,46\",\"31,46\"]}]},{\"pagina\":2,\"titulo_visible\":\"CARGOS\",\"encabezados\":[\"FECHA\",\"TIPO DE PEDIDO\",\"NÚMERO ALBARÁN\",\"TOTAL BASE\",\"TOTAL ALBARÁN\"],\"filas\":[{\"orden_visual\":1,\"celdas\":[\"30-06-2026\",\"NORMAL ACUSTICO\",\"08C26499\",\"1,62\",\"1,69\"]},{\"orden_visual\":2,\"celdas\":[\"30-06-2026\",\"NORMAL ACUSTICO\",\"08C26500\",\"1,26\",\"1,32\"]},{\"orden_visual\":3,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08C27035\",\"116,87\",\"127,77\"]},{\"orden_visual\":4,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08C27265\",\"733,36\",\"775,24\"]},{\"orden_visual\":5,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08C27268\",\"37,76\",\"39,46\"]},{\"orden_visual\":6,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08C27311\",\"4,13\",\"4,32\"]},{\"orden_visual\":7,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08C27437\",\"3,36\",\"3,51\"]},{\"orden_visual\":8,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08C27700\",\"103,88\",\"115,72\"]},{\"orden_visual\":9,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08C27725\",\"33,87\",\"37,73\"]},{\"orden_visual\":10,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08C27896\",\"15,03\",\"15,71\"]},{\"orden_visual\":11,\"celdas\":[\"01-07-2026\",\"NETOS PLUS\",\"08C27900\",\"8,48\",\"10,70\"]},{\"orden_visual\":12,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08M29400\",\"39,71\",\"41,50\"]},{\"orden_visual\":13,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08M29624\",\"52,29\",\"58,25\"]},{\"orden_visual\":14,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08M29915\",\"61,99\",\"64,78\"]},{\"orden_visual\":15,\"celdas\":[\"01-07-2026\",\"NETOS PLUS\",\"08M29918\",\"7,59\",\"9,57\"]},{\"orden_visual\":16,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08M29976\",\"8,70\",\"9,09\"]},{\"orden_visual\":17,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08M30003\",\"4,70\",\"4,91\"]},{\"orden_visual\":18,\"celdas\":[\"01-07-2026\",\"NORMAL ACUSTICO\",\"08M30063\",\"14,27\",\"14,91\"]},{\"orden_visual\":19,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08C28370\",\"343,97\",\"362,80\"]},{\"orden_visual\":20,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08C28452\",\"4,42\",\"4,62\"]},{\"orden_visual\":21,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08C28650\",\"147,38\",\"154,02\"]},{\"orden_visual\":22,\"celdas\":[\"02-07-2026\",\"NETOS PLUS\",\"08C28658\",\"7,65\",\"9,44\"]},{\"orden_visual\":23,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08C28814\",\"4,25\",\"4,44\"]},{\"orden_visual\":24,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08C29133\",\"24,73\",\"25,84\"]},{\"orden_visual\":25,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08C29302\",\"27,89\",\"29,15\"]},{\"orden_visual\":26,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08M30406\",\"3,03\",\"3,17\"]},{\"orden_visual\":27,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08M30761\",\"18,55\",\"19,38\"]},{\"orden_visual\":28,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08M30914\",\"161,14\",\"168,40\"]},{\"orden_visual\":29,\"celdas\":[\"02-07-2026\",\"NORMAL ACUSTICO\",\"08M30924\",\"2,12\",\"2,21\"]},{\"orden_visual\":30,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08C29766\",\"9,25\",\"9,67\"]},{\"orden_visual\":31,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08C29780\",\"213,22\",\"223,46\"]},{\"orden_visual\":32,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08C29977\",\"256,39\",\"268,17\"]},{\"orden_visual\":33,\"celdas\":[\"03-07-2026\",\"NETOS PLUS\",\"08C29988\",\"11,73\",\"13,06\"]},{\"orden_visual\":34,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08C29989\",\"1,26\",\"1,32\"]},{\"orden_visual\":35,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08C30585\",\"5,75\",\"6,01\"]},{\"orden_visual\":36,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08M31275\",\"55,54\",\"61,87\"]},{\"orden_visual\":37,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08M31303\",\"9,57\",\"12,08\"]},{\"orden_visual\":38,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08M31366\",\"1,40\",\"1,56\"]},{\"orden_visual\":39,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08M31836\",\"67,53\",\"70,78\"]},{\"orden_visual\":40,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08M31892\",\"18,39\",\"19,22\"]},{\"orden_visual\":41,\"celdas\":[\"03-07-2026\",\"NORMAL ACUSTICO\",\"08M31914\",\"31,16\",\"32,57\"]},{\"orden_visual\":42,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C30750\",\"13,96\",\"15,56\"]},{\"orden_visual\":43,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C30762\",\"9,43\",\"10,50\"]},{\"orden_visual\":44,\"celdas\":[\"04-07-2026\",\"NETOS PLUS\",\"08C30798\",\"12,02\",\"15,17\"]},{\"orden_visual\":45,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C30821\",\"11,46\",\"11,98\"]},{\"orden_visual\":46,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C30958\",\"9,64\",\"10,73\"]},{\"orden_visual\":47,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C31034\",\"1,62\",\"1,69\"]},{\"orden_visual\":48,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C31135\",\"1,78\",\"1,86\"]},{\"orden_visual\":49,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C31297\",\"2,16\",\"2,26\"]},{\"orden_visual\":50,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C31301\",\"301,99\",\"318,74\"]}]},{\"pagina\":2,\"titulo_visible\":\"ABONOS\",\"encabezados\":[\"FECHA\",\"TIPO DE PEDIDO\",\"NÚMERO ALBARÁN\",\"TOTAL BASE\",\"TOTAL ALBARÁN\"],\"filas\":[{\"orden_visual\":1,\"celdas\":[\"10-07-2026\",\"ABONOS AGRUPADOS\",\"08C38230\",\"8,29-\",\"8,66-\"]},{\"orden_visual\":2,\"celdas\":[\"10-07-2026\",\"ABONOS AGRUPADOS\",\"08C38231\",\"34,54-\",\"36,09-\"]}]},{\"pagina\":3,\"titulo_visible\":\"CARGOS\",\"encabezados\":[\"FECHA\",\"TIPO DE PEDIDO\",\"NÚMERO ALBARÁN\",\"TOTAL BASE\",\"TOTAL ALBARÁN\"],\"filas\":[{\"orden_visual\":1,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C31302\",\"1,64\",\"1,72\"]},{\"orden_visual\":2,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08C31489\",\"197,13\",\"206,01\"]},{\"orden_visual\":3,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08M32051\",\"85,88\",\"89,75\"]},{\"orden_visual\":4,\"celdas\":[\"04-07-2026\",\"NORMAL ACUSTICO\",\"08V19185\",\"6,99\",\"8,82\"]},{\"orden_visual\":5,\"celdas\":[\"05-07-2026\",\"NORMAL ACUSTICO\",\"08C31638\",\"57,47\",\"60,06\"]},{\"orden_visual\":6,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32023\",\"168,48\",\"176,06\"]},{\"orden_visual\":7,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32131\",\"228,27\",\"238,54\"]},{\"orden_visual\":8,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32157\",\"10,99\",\"11,48\"]},{\"orden_visual\":9,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32269\",\"32,78\",\"34,25\"]},{\"orden_visual\":10,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32270\",\"16,39\",\"17,13\"]},{\"orden_visual\":11,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32342\",\"6,14\",\"6,42\"]},{\"orden_visual\":12,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32348\",\"711,47\",\"743,49\"]},{\"orden_visual\":13,\"celdas\":[\"06-07-2026\",\"NETOS PLUS\",\"08C32355\",\"13,40\",\"15,21\"]},{\"orden_visual\":14,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32356\",\"1,35\",\"1,41\"]},{\"orden_visual\":15,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32802\",\"151,51\",\"168,78\"]},{\"orden_visual\":16,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32805\",\"24,74\",\"27,56\"]},{\"orden_visual\":17,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32806\",\"65,54\",\"68,49\"]},{\"orden_visual\":18,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32824\",\"34,50\",\"38,43\"]},{\"orden_visual\":19,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32854\",\"5,33\",\"5,57\"]},{\"orden_visual\":20,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32877\",\"4,85\",\"5,06\"]},{\"orden_visual\":21,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C32878\",\"9,70\",\"10,14\"]},{\"orden_visual\":22,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08C33027\",\"6,45\",\"6,74\"]},{\"orden_visual\":23,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08M32213\",\"42,94\",\"44,87\"]},{\"orden_visual\":24,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08M32226\",\"18,82\",\"19,66\"]},{\"orden_visual\":25,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08M32414\",\"35,98\",\"37,60\"]},{\"orden_visual\":26,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08M32604\",\"99,61\",\"104,09\"]},{\"orden_visual\":27,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08M32607\",\"55,54\",\"61,87\"]},{\"orden_visual\":28,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08M32612\",\"0,85\",\"0,88\"]},{\"orden_visual\":29,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08M32962\",\"185,95\",\"196,38\"]},{\"orden_visual\":30,\"celdas\":[\"06-07-2026\",\"NETOS PLUS\",\"08M32963\",\"7,17\",\"9,05\"]},{\"orden_visual\":31,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08M32977\",\"34,78\",\"36,34\"]},{\"orden_visual\":32,\"celdas\":[\"06-07-2026\",\"NORMAL ACUSTICO\",\"08V19262\",\"6,99\",\"8,82\"]},{\"orden_visual\":33,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08C33364\",\"92,94\",\"103,53\"]},{\"orden_visual\":34,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08C33510\",\"34,98\",\"38,62\"]},{\"orden_visual\":35,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08C33655\",\"10,84\",\"11,32\"]},{\"orden_visual\":36,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08C33660\",\"504,67\",\"533,10\"]},{\"orden_visual\":37,\"celdas\":[\"07-07-2026\",\"NETOS PLUS\",\"08C33667\",\"18,79\",\"21,92\"]},{\"orden_visual\":38,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08C33697\",\"161,55\",\"168,82\"]},{\"orden_visual\":39,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08C34216\",\"2,43\",\"2,54\"]},{\"orden_visual\":40,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08C34434\",\"133,85\",\"139,87\"]},{\"orden_visual\":41,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08C34451\",\"6,41\",\"6,70\"]},{\"orden_visual\":42,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08M33392\",\"128,22\",\"142,77\"]},{\"orden_visual\":43,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08M33628\",\"169,67\",\"177,31\"]},{\"orden_visual\":44,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08M33646\",\"63,68\",\"70,94\"]},{\"orden_visual\":45,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08M33656\",\"25,82\",\"28,76\"]},{\"orden_visual\":46,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08M33699\",\"102,17\",\"106,77\"]},{\"orden_visual\":47,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08M33871\",\"10,76\",\"13,58\"]},{\"orden_visual\":48,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08M33960\",\"349,70\",\"366,12\"]},{\"orden_visual\":49,\"celdas\":[\"07-07-2026\",\"NETOS PLUS\",\"08M33962\",\"11,82\",\"13,17\"]},{\"orden_visual\":50,\"celdas\":[\"07-07-2026\",\"NORMAL ACUSTICO\",\"08M34050\",\"1,83\",\"1,91\"]}]},{\"pagina\":3,\"titulo_visible\":\"ABONOS\",\"encabezados\":[\"FECHA\",\"TIPO DE PEDIDO\",\"NÚMERO ALBARÁN\",\"TOTAL BASE\",\"TOTAL ALBARÁN\"],\"filas\":[]},{\"pagina\":4,\"titulo_visible\":\"CARGOS\",\"encabezados\":[\"FECHA\",\"TIPO DE PEDIDO\",\"NÚMERO ALBARÁN\",\"TOTAL BASE\",\"TOTAL ALBARÁN\"],\"filas\":[{\"orden_visual\":1,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C34793\",\"297,55\",\"314,75\"]},{\"orden_visual\":2,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C34914\",\"83,96\",\"90,39\"]},{\"orden_visual\":3,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C34941\",\"7,27\",\"7,60\"]},{\"orden_visual\":4,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C34961\",\"3,62\",\"4,03\"]},{\"orden_visual\":5,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C34993\",\"87,78\",\"97,79\"]},{\"orden_visual\":6,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C35060\",\"341,09\",\"356,44\"]},{\"orden_visual\":7,\"celdas\":[\"08-07-2026\",\"NETOS PLUS\",\"08C35062\",\"5,09\",\"6,21\"]},{\"orden_visual\":8,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C35063\",\"1,26\",\"1,32\"]},{\"orden_visual\":9,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C35281\",\"4,67\",\"4,88\"]},{\"orden_visual\":10,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C35567\",\"19,91\",\"22,18\"]},{\"orden_visual\":11,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08C35706\",\"11,19\",\"11,70\"]},{\"orden_visual\":12,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08M34186\",\"21,21\",\"23,63\"]},{\"orden_visual\":13,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08M34243\",\"69,82\",\"72,96\"]},{\"orden_visual\":14,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08M34283\",\"41,68\",\"43,56\"]},{\"orden_visual\":15,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08M34323\",\"66,07\",\"73,60\"]},{\"orden_visual\":16,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08M34347\",\"9,83\",\"10,83\"]},{\"orden_visual\":17,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08M34834\",\"1,62\",\"1,69\"]},{\"orden_visual\":18,\"celdas\":[\"08-07-2026\",\"NORMAL ACUSTICO\",\"08M34837\",\"543,92\",\"569,49\"]},{\"orden_visual\":19,\"celdas\":[\"08-07-2026\",\"NETOS PLUS\",\"08M34838\",\"7,19\",\"9,07\"]},{\"orden_visual\":20,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C36031\",\"25,47\",\"28,38\"]},{\"orden_visual\":21,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C36225\",\"7,34\",\"7,67\"]},{\"orden_visual\":22,\"celdas\":[\"09-07-2026\",\"NETOS PLUS\",\"08C36245\",\"14,29\",\"15,92\"]},{\"orden_visual\":23,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C36330\",\"159,01\",\"166,17\"]},{\"orden_visual\":24,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C36335\",\"14,21\",\"14,85\"]},{\"orden_visual\":25,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C36624\",\"17,51\",\"22,10\"]},{\"orden_visual\":26,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C36870\",\"31,25\",\"32,66\"]},{\"orden_visual\":27,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C36940\",\"2,04\",\"2,13\"]},{\"orden_visual\":28,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C37045\",\"10,08\",\"10,53\"]},{\"orden_visual\":29,\"celdas\":[\"09-07-2026\",\"NETOS PLUS\",\"08C37049\",\"8,48\",\"10,70\"]},{\"orden_visual\":30,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08C37065\",\"2,74\",\"2,86\"]},{\"orden_visual\":31,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08M35430\",\"105,06\",\"132,58\"]},{\"orden_visual\":32,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08M35555\",\"38,98\",\"43,43\"]},{\"orden_visual\":33,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08M35630\",\"84,09\",\"87,87\"]},{\"orden_visual\":34,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08M35691\",\"15,40\",\"16,10\"]},{\"orden_visual\":35,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08M35692\",\"15,40\",\"16,10\"]},{\"orden_visual\":36,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08M35806\",\"12,16\",\"12,71\"]},{\"orden_visual\":37,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08M35828\",\"18,82\",\"19,66\"]},{\"orden_visual\":38,\"celdas\":[\"09-07-2026\",\"NORMAL ACUSTICO\",\"08M35863\",\"156,99\",\"164,05\"]},{\"orden_visual\":39,\"celdas\":[\"10-07-2026\",\"NORMAL ACUSTICO\",\"08C37482\",\"157,23\",\"164,56\"]},{\"orden_visual\":40,\"celdas\":[\"10-07-2026\",\"NORMAL ACUSTICO\",\"08C37653\",\"485,73\",\"507,59\"]},{\"orden_visual\":41,\"celdas\":[\"10-07-2026\",\"NETOS PLUS\",\"08C37656\",\"18,96\",\"23,49\"]},{\"orden_visual\":42,\"celdas\":[\"10-07-2026\",\"NORMAL ACUSTICO\",\"08C37737\",\"12,83\",\"13,40\"]},{\"orden_visual\":43,\"celdas\":[\"10-07-2026\",\"NORMAL ACUSTICO\",\"08M36292\",\"18,79\",\"19,63\"]},{\"orden_visual\":44,\"celdas\":[\"10-07-2026\",\"NORMAL ACUSTICO\",\"08M36757\",\"289,53\",\"302,56\"]},{\"orden_visual\":45,\"celdas\":[\"10-07-2026\",\"NORMAL ACUSTICO\",\"08M36770\",\"2,12\",\"2,21\"]}]},{\"pagina\":4,\"titulo_visible\":\"ABONOS\",\"encabezados\":[\"FECHA\",\"TIPO DE PEDIDO\",\"NÚMERO ALBARÁN\",\"TOTAL BASE\",\"TOTAL ALBARÁN\"],\"filas\":[]}],\"textos_ajustes\":[{\"texto_visible\":\"R.D. 143,03 7 899,28 R.D. 260,95 1 258,86 R.D. 578,15 0 0,00\",\"pagina\":1},{\"texto_visible\":\"IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011 3.336,84 537,70 DEDUCCION 19,02- 6,13-\",\"pagina\":1}],\"textos_fiscales\":[]}",
+            "type": "output_text",
+            "logprobs": [],
+            "parsed": {
+              "bloques_vencimiento": [
+                {
+                  "texto_fecha": "06-10-2026",
+                  "texto_importe": null,
+                  "pagina": 1
+                },
+                {
+                  "texto_fecha": "06-10-2026",
+                  "texto_importe": null,
+                  "pagina": 2
+                },
+                {
+                  "texto_fecha": "06-10-2026",
+                  "texto_importe": null,
+                  "pagina": 3
+                },
+                {
+                  "texto_fecha": "06-10-2026",
+                  "texto_importe": null,
+                  "pagina": 4
+                }
+              ],
+              "tablas": [
+                {
+                  "pagina": 1,
+                  "titulo_visible": "COMPRAS",
+                  "encabezados": [
+                    "CONCEPTO",
+                    "4",
+                    "10",
+                    "21",
+                    "4",
+                    "10",
+                    "21",
+                    "0,50",
+                    "1,40",
+                    "5,20",
+                    "TOTALES"
+                  ],
+                  "filas": [
+                    {
+                      "orden_visual": 1,
+                      "celdas": [
+                        "ESPECIALIDAD",
+                        "6.658,52",
+                        "",
+                        "",
+                        "266,34",
+                        "",
+                        "",
+                        "33,29",
+                        "",
+                        "",
+                        "6.958,15"
+                      ]
+                    },
+                    {
+                      "orden_visual": 2,
+                      "celdas": [
+                        "GENERICOS",
+                        "736,37",
+                        "",
+                        "",
+                        "29,45",
+                        "",
+                        "",
+                        "3,68",
+                        "",
+                        "",
+                        "769,50"
+                      ]
+                    },
+                    {
+                      "orden_visual": 3,
+                      "celdas": [
+                        "R.D. 5/2000",
+                        "1.153,63",
+                        "",
+                        "",
+                        "46,15",
+                        "",
+                        "",
+                        "5,77",
+                        "",
+                        "",
+                        "1.205,55"
+                      ]
+                    },
+                    {
+                      "orden_visual": 4,
+                      "celdas": [
+                        "NO ESPECIALIDAD",
+                        "",
+                        "1.683,59",
+                        "273,31",
+                        "",
+                        "168,36",
+                        "57,40",
+                        "",
+                        "23,57",
+                        "14,21",
+                        "2.220,44"
+                      ]
+                    },
+                    {
+                      "orden_visual": 5,
+                      "celdas": [
+                        "TOTAL COMPRAS",
+                        "8.548,52",
+                        "1.683,59",
+                        "273,31",
+                        "341,94",
+                        "168,36",
+                        "57,40",
+                        "42,74",
+                        "23,57",
+                        "14,21",
+                        "11.153,64"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "pagina": 1,
+                  "titulo_visible": "GASTOS",
+                  "encabezados": [
+                    "CONCEPTO",
+                    "4",
+                    "10",
+                    "21",
+                    "4",
+                    "10",
+                    "21",
+                    "TOTALES"
+                  ],
+                  "filas": [
+                    {
+                      "orden_visual": 1,
+                      "celdas": [
+                        "SERVICIO BASICO",
+                        "",
+                        "",
+                        "26,00",
+                        "",
+                        "",
+                        "5,46",
+                        "31,46"
+                      ]
+                    },
+                    {
+                      "orden_visual": 2,
+                      "celdas": [
+                        "TOTAL GASTOS",
+                        "",
+                        "",
+                        "26,00",
+                        "",
+                        "",
+                        "5,46",
+                        "31,46"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "pagina": 2,
+                  "titulo_visible": "CARGOS",
+                  "encabezados": [
+                    "FECHA",
+                    "TIPO DE PEDIDO",
+                    "NÚMERO ALBARÁN",
+                    "TOTAL BASE",
+                    "TOTAL ALBARÁN"
+                  ],
+                  "filas": [
+                    {
+                      "orden_visual": 1,
+                      "celdas": [
+                        "30-06-2026",
+                        "NORMAL ACUSTICO",
+                        "08C26499",
+                        "1,62",
+                        "1,69"
+                      ]
+                    },
+                    {
+                      "orden_visual": 2,
+                      "celdas": [
+                        "30-06-2026",
+                        "NORMAL ACUSTICO",
+                        "08C26500",
+                        "1,26",
+                        "1,32"
+                      ]
+                    },
+                    {
+                      "orden_visual": 3,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C27035",
+                        "116,87",
+                        "127,77"
+                      ]
+                    },
+                    {
+                      "orden_visual": 4,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C27265",
+                        "733,36",
+                        "775,24"
+                      ]
+                    },
+                    {
+                      "orden_visual": 5,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C27268",
+                        "37,76",
+                        "39,46"
+                      ]
+                    },
+                    {
+                      "orden_visual": 6,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C27311",
+                        "4,13",
+                        "4,32"
+                      ]
+                    },
+                    {
+                      "orden_visual": 7,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C27437",
+                        "3,36",
+                        "3,51"
+                      ]
+                    },
+                    {
+                      "orden_visual": 8,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C27700",
+                        "103,88",
+                        "115,72"
+                      ]
+                    },
+                    {
+                      "orden_visual": 9,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C27725",
+                        "33,87",
+                        "37,73"
+                      ]
+                    },
+                    {
+                      "orden_visual": 10,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C27896",
+                        "15,03",
+                        "15,71"
+                      ]
+                    },
+                    {
+                      "orden_visual": 11,
+                      "celdas": [
+                        "01-07-2026",
+                        "NETOS PLUS",
+                        "08C27900",
+                        "8,48",
+                        "10,70"
+                      ]
+                    },
+                    {
+                      "orden_visual": 12,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M29400",
+                        "39,71",
+                        "41,50"
+                      ]
+                    },
+                    {
+                      "orden_visual": 13,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M29624",
+                        "52,29",
+                        "58,25"
+                      ]
+                    },
+                    {
+                      "orden_visual": 14,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M29915",
+                        "61,99",
+                        "64,78"
+                      ]
+                    },
+                    {
+                      "orden_visual": 15,
+                      "celdas": [
+                        "01-07-2026",
+                        "NETOS PLUS",
+                        "08M29918",
+                        "7,59",
+                        "9,57"
+                      ]
+                    },
+                    {
+                      "orden_visual": 16,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M29976",
+                        "8,70",
+                        "9,09"
+                      ]
+                    },
+                    {
+                      "orden_visual": 17,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M30003",
+                        "4,70",
+                        "4,91"
+                      ]
+                    },
+                    {
+                      "orden_visual": 18,
+                      "celdas": [
+                        "01-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M30063",
+                        "14,27",
+                        "14,91"
+                      ]
+                    },
+                    {
+                      "orden_visual": 19,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C28370",
+                        "343,97",
+                        "362,80"
+                      ]
+                    },
+                    {
+                      "orden_visual": 20,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C28452",
+                        "4,42",
+                        "4,62"
+                      ]
+                    },
+                    {
+                      "orden_visual": 21,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C28650",
+                        "147,38",
+                        "154,02"
+                      ]
+                    },
+                    {
+                      "orden_visual": 22,
+                      "celdas": [
+                        "02-07-2026",
+                        "NETOS PLUS",
+                        "08C28658",
+                        "7,65",
+                        "9,44"
+                      ]
+                    },
+                    {
+                      "orden_visual": 23,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C28814",
+                        "4,25",
+                        "4,44"
+                      ]
+                    },
+                    {
+                      "orden_visual": 24,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C29133",
+                        "24,73",
+                        "25,84"
+                      ]
+                    },
+                    {
+                      "orden_visual": 25,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C29302",
+                        "27,89",
+                        "29,15"
+                      ]
+                    },
+                    {
+                      "orden_visual": 26,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M30406",
+                        "3,03",
+                        "3,17"
+                      ]
+                    },
+                    {
+                      "orden_visual": 27,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M30761",
+                        "18,55",
+                        "19,38"
+                      ]
+                    },
+                    {
+                      "orden_visual": 28,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M30914",
+                        "161,14",
+                        "168,40"
+                      ]
+                    },
+                    {
+                      "orden_visual": 29,
+                      "celdas": [
+                        "02-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M30924",
+                        "2,12",
+                        "2,21"
+                      ]
+                    },
+                    {
+                      "orden_visual": 30,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C29766",
+                        "9,25",
+                        "9,67"
+                      ]
+                    },
+                    {
+                      "orden_visual": 31,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C29780",
+                        "213,22",
+                        "223,46"
+                      ]
+                    },
+                    {
+                      "orden_visual": 32,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C29977",
+                        "256,39",
+                        "268,17"
+                      ]
+                    },
+                    {
+                      "orden_visual": 33,
+                      "celdas": [
+                        "03-07-2026",
+                        "NETOS PLUS",
+                        "08C29988",
+                        "11,73",
+                        "13,06"
+                      ]
+                    },
+                    {
+                      "orden_visual": 34,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C29989",
+                        "1,26",
+                        "1,32"
+                      ]
+                    },
+                    {
+                      "orden_visual": 35,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C30585",
+                        "5,75",
+                        "6,01"
+                      ]
+                    },
+                    {
+                      "orden_visual": 36,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M31275",
+                        "55,54",
+                        "61,87"
+                      ]
+                    },
+                    {
+                      "orden_visual": 37,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M31303",
+                        "9,57",
+                        "12,08"
+                      ]
+                    },
+                    {
+                      "orden_visual": 38,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M31366",
+                        "1,40",
+                        "1,56"
+                      ]
+                    },
+                    {
+                      "orden_visual": 39,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M31836",
+                        "67,53",
+                        "70,78"
+                      ]
+                    },
+                    {
+                      "orden_visual": 40,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M31892",
+                        "18,39",
+                        "19,22"
+                      ]
+                    },
+                    {
+                      "orden_visual": 41,
+                      "celdas": [
+                        "03-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M31914",
+                        "31,16",
+                        "32,57"
+                      ]
+                    },
+                    {
+                      "orden_visual": 42,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C30750",
+                        "13,96",
+                        "15,56"
+                      ]
+                    },
+                    {
+                      "orden_visual": 43,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C30762",
+                        "9,43",
+                        "10,50"
+                      ]
+                    },
+                    {
+                      "orden_visual": 44,
+                      "celdas": [
+                        "04-07-2026",
+                        "NETOS PLUS",
+                        "08C30798",
+                        "12,02",
+                        "15,17"
+                      ]
+                    },
+                    {
+                      "orden_visual": 45,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C30821",
+                        "11,46",
+                        "11,98"
+                      ]
+                    },
+                    {
+                      "orden_visual": 46,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C30958",
+                        "9,64",
+                        "10,73"
+                      ]
+                    },
+                    {
+                      "orden_visual": 47,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C31034",
+                        "1,62",
+                        "1,69"
+                      ]
+                    },
+                    {
+                      "orden_visual": 48,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C31135",
+                        "1,78",
+                        "1,86"
+                      ]
+                    },
+                    {
+                      "orden_visual": 49,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C31297",
+                        "2,16",
+                        "2,26"
+                      ]
+                    },
+                    {
+                      "orden_visual": 50,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C31301",
+                        "301,99",
+                        "318,74"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "pagina": 2,
+                  "titulo_visible": "ABONOS",
+                  "encabezados": [
+                    "FECHA",
+                    "TIPO DE PEDIDO",
+                    "NÚMERO ALBARÁN",
+                    "TOTAL BASE",
+                    "TOTAL ALBARÁN"
+                  ],
+                  "filas": [
+                    {
+                      "orden_visual": 1,
+                      "celdas": [
+                        "10-07-2026",
+                        "ABONOS AGRUPADOS",
+                        "08C38230",
+                        "8,29-",
+                        "8,66-"
+                      ]
+                    },
+                    {
+                      "orden_visual": 2,
+                      "celdas": [
+                        "10-07-2026",
+                        "ABONOS AGRUPADOS",
+                        "08C38231",
+                        "34,54-",
+                        "36,09-"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "pagina": 3,
+                  "titulo_visible": "CARGOS",
+                  "encabezados": [
+                    "FECHA",
+                    "TIPO DE PEDIDO",
+                    "NÚMERO ALBARÁN",
+                    "TOTAL BASE",
+                    "TOTAL ALBARÁN"
+                  ],
+                  "filas": [
+                    {
+                      "orden_visual": 1,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C31302",
+                        "1,64",
+                        "1,72"
+                      ]
+                    },
+                    {
+                      "orden_visual": 2,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C31489",
+                        "197,13",
+                        "206,01"
+                      ]
+                    },
+                    {
+                      "orden_visual": 3,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32051",
+                        "85,88",
+                        "89,75"
+                      ]
+                    },
+                    {
+                      "orden_visual": 4,
+                      "celdas": [
+                        "04-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08V19185",
+                        "6,99",
+                        "8,82"
+                      ]
+                    },
+                    {
+                      "orden_visual": 5,
+                      "celdas": [
+                        "05-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C31638",
+                        "57,47",
+                        "60,06"
+                      ]
+                    },
+                    {
+                      "orden_visual": 6,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32023",
+                        "168,48",
+                        "176,06"
+                      ]
+                    },
+                    {
+                      "orden_visual": 7,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32131",
+                        "228,27",
+                        "238,54"
+                      ]
+                    },
+                    {
+                      "orden_visual": 8,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32157",
+                        "10,99",
+                        "11,48"
+                      ]
+                    },
+                    {
+                      "orden_visual": 9,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32269",
+                        "32,78",
+                        "34,25"
+                      ]
+                    },
+                    {
+                      "orden_visual": 10,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32270",
+                        "16,39",
+                        "17,13"
+                      ]
+                    },
+                    {
+                      "orden_visual": 11,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32342",
+                        "6,14",
+                        "6,42"
+                      ]
+                    },
+                    {
+                      "orden_visual": 12,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32348",
+                        "711,47",
+                        "743,49"
+                      ]
+                    },
+                    {
+                      "orden_visual": 13,
+                      "celdas": [
+                        "06-07-2026",
+                        "NETOS PLUS",
+                        "08C32355",
+                        "13,40",
+                        "15,21"
+                      ]
+                    },
+                    {
+                      "orden_visual": 14,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32356",
+                        "1,35",
+                        "1,41"
+                      ]
+                    },
+                    {
+                      "orden_visual": 15,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32802",
+                        "151,51",
+                        "168,78"
+                      ]
+                    },
+                    {
+                      "orden_visual": 16,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32805",
+                        "24,74",
+                        "27,56"
+                      ]
+                    },
+                    {
+                      "orden_visual": 17,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32806",
+                        "65,54",
+                        "68,49"
+                      ]
+                    },
+                    {
+                      "orden_visual": 18,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32824",
+                        "34,50",
+                        "38,43"
+                      ]
+                    },
+                    {
+                      "orden_visual": 19,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32854",
+                        "5,33",
+                        "5,57"
+                      ]
+                    },
+                    {
+                      "orden_visual": 20,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32877",
+                        "4,85",
+                        "5,06"
+                      ]
+                    },
+                    {
+                      "orden_visual": 21,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C32878",
+                        "9,70",
+                        "10,14"
+                      ]
+                    },
+                    {
+                      "orden_visual": 22,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C33027",
+                        "6,45",
+                        "6,74"
+                      ]
+                    },
+                    {
+                      "orden_visual": 23,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32213",
+                        "42,94",
+                        "44,87"
+                      ]
+                    },
+                    {
+                      "orden_visual": 24,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32226",
+                        "18,82",
+                        "19,66"
+                      ]
+                    },
+                    {
+                      "orden_visual": 25,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32414",
+                        "35,98",
+                        "37,60"
+                      ]
+                    },
+                    {
+                      "orden_visual": 26,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32604",
+                        "99,61",
+                        "104,09"
+                      ]
+                    },
+                    {
+                      "orden_visual": 27,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32607",
+                        "55,54",
+                        "61,87"
+                      ]
+                    },
+                    {
+                      "orden_visual": 28,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32612",
+                        "0,85",
+                        "0,88"
+                      ]
+                    },
+                    {
+                      "orden_visual": 29,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32962",
+                        "185,95",
+                        "196,38"
+                      ]
+                    },
+                    {
+                      "orden_visual": 30,
+                      "celdas": [
+                        "06-07-2026",
+                        "NETOS PLUS",
+                        "08M32963",
+                        "7,17",
+                        "9,05"
+                      ]
+                    },
+                    {
+                      "orden_visual": 31,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M32977",
+                        "34,78",
+                        "36,34"
+                      ]
+                    },
+                    {
+                      "orden_visual": 32,
+                      "celdas": [
+                        "06-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08V19262",
+                        "6,99",
+                        "8,82"
+                      ]
+                    },
+                    {
+                      "orden_visual": 33,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C33364",
+                        "92,94",
+                        "103,53"
+                      ]
+                    },
+                    {
+                      "orden_visual": 34,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C33510",
+                        "34,98",
+                        "38,62"
+                      ]
+                    },
+                    {
+                      "orden_visual": 35,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C33655",
+                        "10,84",
+                        "11,32"
+                      ]
+                    },
+                    {
+                      "orden_visual": 36,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C33660",
+                        "504,67",
+                        "533,10"
+                      ]
+                    },
+                    {
+                      "orden_visual": 37,
+                      "celdas": [
+                        "07-07-2026",
+                        "NETOS PLUS",
+                        "08C33667",
+                        "18,79",
+                        "21,92"
+                      ]
+                    },
+                    {
+                      "orden_visual": 38,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C33697",
+                        "161,55",
+                        "168,82"
+                      ]
+                    },
+                    {
+                      "orden_visual": 39,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C34216",
+                        "2,43",
+                        "2,54"
+                      ]
+                    },
+                    {
+                      "orden_visual": 40,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C34434",
+                        "133,85",
+                        "139,87"
+                      ]
+                    },
+                    {
+                      "orden_visual": 41,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C34451",
+                        "6,41",
+                        "6,70"
+                      ]
+                    },
+                    {
+                      "orden_visual": 42,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M33392",
+                        "128,22",
+                        "142,77"
+                      ]
+                    },
+                    {
+                      "orden_visual": 43,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M33628",
+                        "169,67",
+                        "177,31"
+                      ]
+                    },
+                    {
+                      "orden_visual": 44,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M33646",
+                        "63,68",
+                        "70,94"
+                      ]
+                    },
+                    {
+                      "orden_visual": 45,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M33656",
+                        "25,82",
+                        "28,76"
+                      ]
+                    },
+                    {
+                      "orden_visual": 46,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M33699",
+                        "102,17",
+                        "106,77"
+                      ]
+                    },
+                    {
+                      "orden_visual": 47,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M33871",
+                        "10,76",
+                        "13,58"
+                      ]
+                    },
+                    {
+                      "orden_visual": 48,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M33960",
+                        "349,70",
+                        "366,12"
+                      ]
+                    },
+                    {
+                      "orden_visual": 49,
+                      "celdas": [
+                        "07-07-2026",
+                        "NETOS PLUS",
+                        "08M33962",
+                        "11,82",
+                        "13,17"
+                      ]
+                    },
+                    {
+                      "orden_visual": 50,
+                      "celdas": [
+                        "07-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M34050",
+                        "1,83",
+                        "1,91"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "pagina": 3,
+                  "titulo_visible": "ABONOS",
+                  "encabezados": [
+                    "FECHA",
+                    "TIPO DE PEDIDO",
+                    "NÚMERO ALBARÁN",
+                    "TOTAL BASE",
+                    "TOTAL ALBARÁN"
+                  ],
+                  "filas": []
+                },
+                {
+                  "pagina": 4,
+                  "titulo_visible": "CARGOS",
+                  "encabezados": [
+                    "FECHA",
+                    "TIPO DE PEDIDO",
+                    "NÚMERO ALBARÁN",
+                    "TOTAL BASE",
+                    "TOTAL ALBARÁN"
+                  ],
+                  "filas": [
+                    {
+                      "orden_visual": 1,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C34793",
+                        "297,55",
+                        "314,75"
+                      ]
+                    },
+                    {
+                      "orden_visual": 2,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C34914",
+                        "83,96",
+                        "90,39"
+                      ]
+                    },
+                    {
+                      "orden_visual": 3,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C34941",
+                        "7,27",
+                        "7,60"
+                      ]
+                    },
+                    {
+                      "orden_visual": 4,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C34961",
+                        "3,62",
+                        "4,03"
+                      ]
+                    },
+                    {
+                      "orden_visual": 5,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C34993",
+                        "87,78",
+                        "97,79"
+                      ]
+                    },
+                    {
+                      "orden_visual": 6,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C35060",
+                        "341,09",
+                        "356,44"
+                      ]
+                    },
+                    {
+                      "orden_visual": 7,
+                      "celdas": [
+                        "08-07-2026",
+                        "NETOS PLUS",
+                        "08C35062",
+                        "5,09",
+                        "6,21"
+                      ]
+                    },
+                    {
+                      "orden_visual": 8,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C35063",
+                        "1,26",
+                        "1,32"
+                      ]
+                    },
+                    {
+                      "orden_visual": 9,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C35281",
+                        "4,67",
+                        "4,88"
+                      ]
+                    },
+                    {
+                      "orden_visual": 10,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C35567",
+                        "19,91",
+                        "22,18"
+                      ]
+                    },
+                    {
+                      "orden_visual": 11,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C35706",
+                        "11,19",
+                        "11,70"
+                      ]
+                    },
+                    {
+                      "orden_visual": 12,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M34186",
+                        "21,21",
+                        "23,63"
+                      ]
+                    },
+                    {
+                      "orden_visual": 13,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M34243",
+                        "69,82",
+                        "72,96"
+                      ]
+                    },
+                    {
+                      "orden_visual": 14,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M34283",
+                        "41,68",
+                        "43,56"
+                      ]
+                    },
+                    {
+                      "orden_visual": 15,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M34323",
+                        "66,07",
+                        "73,60"
+                      ]
+                    },
+                    {
+                      "orden_visual": 16,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M34347",
+                        "9,83",
+                        "10,83"
+                      ]
+                    },
+                    {
+                      "orden_visual": 17,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M34834",
+                        "1,62",
+                        "1,69"
+                      ]
+                    },
+                    {
+                      "orden_visual": 18,
+                      "celdas": [
+                        "08-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M34837",
+                        "543,92",
+                        "569,49"
+                      ]
+                    },
+                    {
+                      "orden_visual": 19,
+                      "celdas": [
+                        "08-07-2026",
+                        "NETOS PLUS",
+                        "08M34838",
+                        "7,19",
+                        "9,07"
+                      ]
+                    },
+                    {
+                      "orden_visual": 20,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C36031",
+                        "25,47",
+                        "28,38"
+                      ]
+                    },
+                    {
+                      "orden_visual": 21,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C36225",
+                        "7,34",
+                        "7,67"
+                      ]
+                    },
+                    {
+                      "orden_visual": 22,
+                      "celdas": [
+                        "09-07-2026",
+                        "NETOS PLUS",
+                        "08C36245",
+                        "14,29",
+                        "15,92"
+                      ]
+                    },
+                    {
+                      "orden_visual": 23,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C36330",
+                        "159,01",
+                        "166,17"
+                      ]
+                    },
+                    {
+                      "orden_visual": 24,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C36335",
+                        "14,21",
+                        "14,85"
+                      ]
+                    },
+                    {
+                      "orden_visual": 25,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C36624",
+                        "17,51",
+                        "22,10"
+                      ]
+                    },
+                    {
+                      "orden_visual": 26,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C36870",
+                        "31,25",
+                        "32,66"
+                      ]
+                    },
+                    {
+                      "orden_visual": 27,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C36940",
+                        "2,04",
+                        "2,13"
+                      ]
+                    },
+                    {
+                      "orden_visual": 28,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C37045",
+                        "10,08",
+                        "10,53"
+                      ]
+                    },
+                    {
+                      "orden_visual": 29,
+                      "celdas": [
+                        "09-07-2026",
+                        "NETOS PLUS",
+                        "08C37049",
+                        "8,48",
+                        "10,70"
+                      ]
+                    },
+                    {
+                      "orden_visual": 30,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C37065",
+                        "2,74",
+                        "2,86"
+                      ]
+                    },
+                    {
+                      "orden_visual": 31,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M35430",
+                        "105,06",
+                        "132,58"
+                      ]
+                    },
+                    {
+                      "orden_visual": 32,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M35555",
+                        "38,98",
+                        "43,43"
+                      ]
+                    },
+                    {
+                      "orden_visual": 33,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M35630",
+                        "84,09",
+                        "87,87"
+                      ]
+                    },
+                    {
+                      "orden_visual": 34,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M35691",
+                        "15,40",
+                        "16,10"
+                      ]
+                    },
+                    {
+                      "orden_visual": 35,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M35692",
+                        "15,40",
+                        "16,10"
+                      ]
+                    },
+                    {
+                      "orden_visual": 36,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M35806",
+                        "12,16",
+                        "12,71"
+                      ]
+                    },
+                    {
+                      "orden_visual": 37,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M35828",
+                        "18,82",
+                        "19,66"
+                      ]
+                    },
+                    {
+                      "orden_visual": 38,
+                      "celdas": [
+                        "09-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M35863",
+                        "156,99",
+                        "164,05"
+                      ]
+                    },
+                    {
+                      "orden_visual": 39,
+                      "celdas": [
+                        "10-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C37482",
+                        "157,23",
+                        "164,56"
+                      ]
+                    },
+                    {
+                      "orden_visual": 40,
+                      "celdas": [
+                        "10-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C37653",
+                        "485,73",
+                        "507,59"
+                      ]
+                    },
+                    {
+                      "orden_visual": 41,
+                      "celdas": [
+                        "10-07-2026",
+                        "NETOS PLUS",
+                        "08C37656",
+                        "18,96",
+                        "23,49"
+                      ]
+                    },
+                    {
+                      "orden_visual": 42,
+                      "celdas": [
+                        "10-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08C37737",
+                        "12,83",
+                        "13,40"
+                      ]
+                    },
+                    {
+                      "orden_visual": 43,
+                      "celdas": [
+                        "10-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M36292",
+                        "18,79",
+                        "19,63"
+                      ]
+                    },
+                    {
+                      "orden_visual": 44,
+                      "celdas": [
+                        "10-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M36757",
+                        "289,53",
+                        "302,56"
+                      ]
+                    },
+                    {
+                      "orden_visual": 45,
+                      "celdas": [
+                        "10-07-2026",
+                        "NORMAL ACUSTICO",
+                        "08M36770",
+                        "2,12",
+                        "2,21"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "pagina": 4,
+                  "titulo_visible": "ABONOS",
+                  "encabezados": [
+                    "FECHA",
+                    "TIPO DE PEDIDO",
+                    "NÚMERO ALBARÁN",
+                    "TOTAL BASE",
+                    "TOTAL ALBARÁN"
+                  ],
+                  "filas": []
+                }
+              ],
+              "textos_ajustes": [
+                {
+                  "texto_visible": "R.D. 143,03 7 899,28 R.D. 260,95 1 258,86 R.D. 578,15 0 0,00",
+                  "pagina": 1
+                },
+                {
+                  "texto_visible": "IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011 3.336,84 537,70 DEDUCCION 19,02- 6,13-",
+                  "pagina": 1
+                }
+              ],
+              "textos_fiscales": []
+            }
+          }
+        ],
+        "role": "assistant",
+        "status": "completed",
+        "type": "message",
+        "phase": "final_answer"
+      }
+    ],
+    "parallel_tool_calls": true,
+    "temperature": 1.0,
+    "tool_choice": "auto",
+    "tools": [],
+    "top_p": 0.98,
+    "background": false,
+    "completed_at": 1786122664.0,
+    "conversation": null,
+    "max_output_tokens": 32000,
+    "max_tool_calls": null,
+    "moderation": null,
+    "previous_response_id": null,
+    "prompt": null,
+    "prompt_cache_key": null,
+    "prompt_cache_options": null,
+    "prompt_cache_retention": "24h",
+    "reasoning": {
+      "context": "all_turns",
+      "effort": "none",
+      "generate_summary": null,
+      "mode": "standard",
+      "summary": null
+    },
+    "safety_identifier": null,
+    "service_tier": "default",
+    "status": "completed",
+    "text": {
+      "format": {
+        "name": "TranscripcionTablas",
+        "schema_": {
+          "$defs": {
+            "BloqueVencimiento": {
+              "additionalProperties": false,
+              "properties": {
+                "texto_fecha": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Texto Fecha"
+                },
+                "texto_importe": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Texto Importe"
+                },
+                "pagina": {
+                  "title": "Pagina",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "texto_fecha",
+                "texto_importe",
+                "pagina"
+              ],
+              "title": "BloqueVencimiento",
+              "type": "object"
+            },
+            "FilaTabla": {
+              "additionalProperties": false,
+              "properties": {
+                "orden_visual": {
+                  "title": "Orden Visual",
+                  "type": "integer"
+                },
+                "celdas": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Celdas",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "orden_visual",
+                "celdas"
+              ],
+              "title": "FilaTabla",
+              "type": "object"
+            },
+            "TablaVisible": {
+              "additionalProperties": false,
+              "properties": {
+                "pagina": {
+                  "title": "Pagina",
+                  "type": "integer"
+                },
+                "titulo_visible": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Titulo Visible"
+                },
+                "encabezados": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Encabezados",
+                  "type": "array"
+                },
+                "filas": {
+                  "items": {
+                    "$ref": "#/$defs/FilaTabla"
+                  },
+                  "title": "Filas",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "pagina",
+                "titulo_visible",
+                "encabezados",
+                "filas"
+              ],
+              "title": "TablaVisible",
+              "type": "object"
+            },
+            "TextoVisible": {
+              "additionalProperties": false,
+              "properties": {
+                "texto_visible": {
+                  "title": "Texto Visible",
+                  "type": "string"
+                },
+                "pagina": {
+                  "title": "Pagina",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "texto_visible",
+                "pagina"
+              ],
+              "title": "TextoVisible",
+              "type": "object"
+            }
+          },
+          "additionalProperties": false,
+          "properties": {
+            "bloques_vencimiento": {
+              "items": {
+                "$ref": "#/$defs/BloqueVencimiento"
+              },
+              "title": "Bloques Vencimiento",
+              "type": "array"
+            },
+            "tablas": {
+              "items": {
+                "$ref": "#/$defs/TablaVisible"
+              },
+              "title": "Tablas",
+              "type": "array"
+            },
+            "textos_ajustes": {
+              "items": {
+                "$ref": "#/$defs/TextoVisible"
+              },
+              "title": "Textos Ajustes",
+              "type": "array"
+            },
+            "textos_fiscales": {
+              "items": {
+                "$ref": "#/$defs/TextoVisible"
+              },
+              "title": "Textos Fiscales",
+              "type": "array"
+            }
+          },
+          "required": [
+            "bloques_vencimiento",
+            "tablas",
+            "textos_ajustes",
+            "textos_fiscales"
+          ],
+          "title": "TranscripcionTablas",
+          "type": "object"
+        },
+        "type": "json_schema",
+        "description": null,
+        "strict": true
+      },
+      "verbosity": "medium"
+    },
+    "top_logprobs": 0,
+    "truncation": "disabled",
+    "usage": {
+      "input_tokens": 16878,
+      "input_tokens_details": {
+        "cache_write_tokens": 16875,
+        "cached_tokens": 0
+      },
+      "output_tokens": 6019,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 22897
+    },
+    "user": null,
+    "billing": {
+      "payer": "developer"
+    },
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "store": false,
+    "tool_usage": {
+      "image_gen": {
+        "input_tokens": 0,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 0
+        },
+        "total_tokens": 0
+      },
+      "web_search": {
+        "num_requests": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,841 @@
+{
+  "metadatos_prueba": {
+    "caso": "alliance_08008427",
+    "documento_local": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+    "archivo_enviado": "documento_01.pdf",
+    "tipo_extraccion": "general",
+    "paginas_originales": [
+      4,
+      7
+    ],
+    "paginas_enviadas": 4,
+    "tamano_bytes_enviado": 63918,
+    "sha256_enviado": "93af6ea0d92b64f4be5c760f24b43fb18a1e57e8b461775dacc415712ff00701",
+    "contenido_patron_incluido": false,
+    "version_prompt": "benchmark_modelos_general_v1",
+    "max_output_tokens": 16000,
+    "modelo_solicitado": "gpt-5.6-sol",
+    "modelo_utilizado": "gpt-5.6-sol",
+    "response_id": "resp_0d4f4ed30fbcc333016a7610b9a9f4819f8d1ab5fa796f837b",
+    "fecha_hora_utc": "2026-08-07T17:07:37.506469+00:00",
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "FACTURA",
+      "evidencias": [
+        {
+          "texto_visible": "FACTURA DUPLICADO",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "MERCANCIA",
+      "evidencias": [
+        {
+          "texto_visible": "COMPRAS",
+          "pagina": 1
+        },
+        {
+          "texto_visible": "ESPECIALIDAD",
+          "pagina": 1
+        },
+        {
+          "texto_visible": "GENERICOS",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": true,
+      "evidencias": [
+        {
+          "texto_visible": "CARGOS ABONOS",
+          "pagina": 2
+        },
+        {
+          "texto_visible": "NÚMERO ALBARÁN",
+          "pagina": 2
+        }
+      ]
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "PAGINA 01 DE 04",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 4,
+      "evidencias": [
+        {
+          "texto_visible": "PAGINA 04 DE 04",
+          "pagina": 4
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "evidencias": [
+        {
+          "texto_visible": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "A50004324",
+      "evidencias": [
+        {
+          "texto_visible": "CIF: A50004324",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "08008427",
+      "evidencias": [
+        {
+          "texto_visible": "NÚMERO FACTURA 08008427",
+          "pagina": 1
+        },
+        {
+          "texto_visible": "NÚMERO FACTURA 08008427",
+          "pagina": 2
+        },
+        {
+          "texto_visible": "NÚMERO FACTURA 08008427",
+          "pagina": 3
+        },
+        {
+          "texto_visible": "NÚMERO FACTURA 08008427",
+          "pagina": 4
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-07-10",
+      "evidencias": [
+        {
+          "texto_visible": "FECHA FACTURA 10-07-2026",
+          "pagina": 1
+        },
+        {
+          "texto_visible": "FECHA FACTURA 10-07-2026",
+          "pagina": 2
+        },
+        {
+          "texto_visible": "FECHA FACTURA 10-07-2026",
+          "pagina": 3
+        },
+        {
+          "texto_visible": "FECHA FACTURA 10-07-2026",
+          "pagina": 4
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 10531.42,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL BASE IMPONIBLE 10.531,42",
+          "pagina": 1
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 573.16,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL IVAS 573,16",
+          "pagina": 1
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": 80.52,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL RECARGOS EQUIVALENCIA 80,52",
+          "pagina": 1
+        }
+      ]
+    },
+    "importe_total": {
+      "valor": 11185.1,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL FACTURA 11.185,10",
+          "pagina": 1
+        }
+      ]
+    },
+    "vencimientos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "FECHA VENCIMIENTO 06-10-2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_vencimiento": {
+          "valor": "2026-10-06",
+          "evidencias": [
+            {
+              "texto_visible": "FECHA VENCIMIENTO 06-10-2026",
+              "pagina": 1
+            },
+            {
+              "texto_visible": "FECHA VENCIMIENTO 06-10-2026",
+              "pagina": 2
+            },
+            {
+              "texto_visible": "FECHA VENCIMIENTO 06-10-2026",
+              "pagina": 3
+            },
+            {
+              "texto_visible": "FECHA VENCIMIENTO 06-10-2026",
+              "pagina": 4
+            }
+          ]
+        },
+        "importe": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "BASE IMPONIBLE 4 IVA 4 R.E. 0,50",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 8548.52,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 8.548,52",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 4.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 4",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 341.94,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 341,94",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 0.5,
+          "evidencias": [
+            {
+              "texto_visible": "R.E. 0,50",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 42.74,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 42,74",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": "COMPRAS",
+          "evidencias": [
+            {
+              "texto_visible": "COMPRAS",
+              "pagina": 1
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 2,
+          "evidencias": [
+            {
+              "texto_visible": "BASE IMPONIBLE 10 IVA 10 R.E. 1,40",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 1683.59,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 1.683,59",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 10.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 10",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 168.36,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 168,36",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 1.4,
+          "evidencias": [
+            {
+              "texto_visible": "R.E. 1,40",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 23.57,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 23,57",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": "COMPRAS",
+          "evidencias": [
+            {
+              "texto_visible": "COMPRAS",
+              "pagina": 1
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 3,
+          "evidencias": [
+            {
+              "texto_visible": "BASE IMPONIBLE 21 IVA 21 R.E. 5,20",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 273.31,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 273,31",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 21.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 21",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 57.4,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 57,40",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 5.2,
+          "evidencias": [
+            {
+              "texto_visible": "R.E. 5,20",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 14.21,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL COMPRAS 14,21",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": "COMPRAS",
+          "evidencias": [
+            {
+              "texto_visible": "COMPRAS",
+              "pagina": 1
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 4,
+          "evidencias": [
+            {
+              "texto_visible": "GASTOS BASE IMPONIBLE 21 IVA 21",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 26.0,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL GASTOS 26,00",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 21.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 21",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 5.46,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL GASTOS 5,46",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": "GASTOS",
+          "evidencias": [
+            {
+              "texto_visible": "GASTOS",
+              "pagina": 1
+            }
+          ]
+        }
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "30-06-2026 NORMAL ACUSTICO 08C26499 1,62 1,69",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C26499",
+          "evidencias": [
+            {
+              "texto_visible": "08C26499",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-06-30",
+          "evidencias": [
+            {
+              "texto_visible": "30-06-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGO",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "NORMAL ACUSTICO",
+          "evidencias": [
+            {
+              "texto_visible": "NORMAL ACUSTICO",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 1.62,
+          "evidencias": [
+            {
+              "texto_visible": "08C26499 1,62 1,69",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 1.69,
+          "evidencias": [
+            {
+              "texto_visible": "08C26499 1,62 1,69",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 2,
+          "evidencias": [
+            {
+              "texto_visible": "30-06-2026 NORMAL ACUSTICO 08C26500 1,26 1,32",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C26500",
+          "evidencias": [
+            {
+              "texto_visible": "08C26500",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-06-30",
+          "evidencias": [
+            {
+              "texto_visible": "30-06-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGO",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "NORMAL ACUSTICO",
+          "evidencias": [
+            {
+              "texto_visible": "NORMAL ACUSTICO",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 1.26,
+          "evidencias": [
+            {
+              "texto_visible": "08C26500 1,26 1,32",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 1.32,
+          "evidencias": [
+            {
+              "texto_visible": "08C26500 1,26 1,32",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 3,
+          "evidencias": [
+            {
+              "texto_visible": "10-07-2026 ABONOS AGRUPADOS 08C38230 8,29- 8,66-",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C38230",
+          "evidencias": [
+            {
+              "texto_visible": "08C38230",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-10",
+          "evidencias": [
+            {
+              "texto_visible": "10-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "ABONO",
+          "evidencias": [
+            {
+              "texto_visible": "ABONOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ABONOS AGRUPADOS",
+          "evidencias": [
+            {
+              "texto_visible": "ABONOS AGRUPADOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": -8.29,
+          "evidencias": [
+            {
+              "texto_visible": "08C38230 8,29- 8,66-",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": -8.66,
+          "evidencias": [
+            {
+              "texto_visible": "08C38230 8,29- 8,66-",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 4,
+          "evidencias": [
+            {
+              "texto_visible": "10-07-2026 ABONOS AGRUPADOS 08C38231 34,54- 36,09-",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C38231",
+          "evidencias": [
+            {
+              "texto_visible": "08C38231",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-10",
+          "evidencias": [
+            {
+              "texto_visible": "10-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "ABONO",
+          "evidencias": [
+            {
+              "texto_visible": "ABONOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ABONOS AGRUPADOS",
+          "evidencias": [
+            {
+              "texto_visible": "ABONOS AGRUPADOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": -34.54,
+          "evidencias": [
+            {
+              "texto_visible": "08C38231 34,54- 36,09-",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": -36.09,
+          "evidencias": [
+            {
+              "texto_visible": "08C38231 34,54- 36,09-",
+              "pagina": 2
+            }
+          ]
+        }
+      }
+    ],
+    "ajustes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "DEDUCCION 19,02- 6,13-",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_ajuste": {
+          "valor": "DEDUCCION",
+          "evidencias": [
+            {
+              "texto_visible": "DEDUCCION",
+              "pagina": 1
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "DEDUCCION",
+          "evidencias": [
+            {
+              "texto_visible": "DEDUCCION 19,02- 6,13-",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": null,
+          "evidencias": []
+        },
+        "incluido_en_base": {
+          "valor": null,
+          "evidencias": []
+        },
+        "incluido_en_total": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": "006600",
+        "evidencias": [
+          {
+            "texto_visible": "006600",
+            "pagina": 1
+          }
+        ]
+      },
+      "nombre": {
+        "valor": "PUIG SALOMON PIUS",
+        "evidencias": [
+          {
+            "texto_visible": "D/Dña PUIG SALOMON PIUS",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": "40901058C",
+        "evidencias": [
+          {
+            "texto_visible": "NIF 40901058C",
+            "pagina": 1
+          }
+        ]
+      },
+      "metodo_identificacion": {
+        "valor": "NIF e id de farmacia visibles",
+        "evidencias": [
+          {
+            "texto_visible": "NIF 40901058C 006600",
+            "pagina": 1
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_inicio": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_fin": {
+      "valor": null,
+      "evidencias": []
+    },
+    "nota_revision": {
+      "valor": "El documento muestra albaranes de cargos en las páginas 2 a 4 y dos albaranes de abono en la página 2; se requiere conciliación. La deducción muestra dos importes sin asociación inequívoca a un único campo de ajuste.",
+      "evidencias": [
+        {
+          "texto_visible": "CARGOS ABONOS",
+          "pagina": 2
+        },
+        {
+          "texto_visible": "DEDUCCION 19,02- 6,13-",
+          "pagina": 1
+        }
+      ]
+    }
+  }
+}

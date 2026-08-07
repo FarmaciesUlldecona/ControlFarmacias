@@ -1,0 +1,15 @@
+{
+  "modelo_solicitado": "gpt-5.6-terra",
+  "modelo_utilizado": "gpt-5.6-terra",
+  "response_id": "resp_081806a8a658e79a016a76110f11c8819ea44e90ea21559133",
+  "estado": "completed",
+  "duracion_segundos": 10.702,
+  "tokens_entrada": 5956,
+  "tokens_entrada_cacheados": 1756,
+  "tokens_salida": 1149,
+  "tokens_razonamiento": 0,
+  "coste_entrada_usd": 0.010939,
+  "coste_salida_usd": 0.017235,
+  "coste_total_usd": 0.028174,
+  "sin_reintento": true
+}
