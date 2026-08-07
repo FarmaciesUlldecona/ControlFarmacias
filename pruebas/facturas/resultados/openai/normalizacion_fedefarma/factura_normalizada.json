@@ -1,0 +1,207 @@
+{
+  "version_normalizador": "fedefarma_v1",
+  "fecha_ejecucion": "2026-08-07T18:36:56.065486+00:00",
+  "archivo_origen": "FEDE VTO 5.8.26 PIO.pdf",
+  "paginas_originales": [
+    1,
+    2
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "FACTURA",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "pagina_inicio": 1,
+    "pagina_fin": 2,
+    "proveedor_nombre": "FEDERACIÓ FARMACÈUTICA, S.COOP.C.L.",
+    "proveedor_cif": "F08173395",
+    "numero_factura": "VN2605-0005381",
+    "fecha_factura": "2026-07-20",
+    "base_imponible_total": 57.44,
+    "iva_total": 4.53,
+    "recargo_equivalencia_total": 0.62,
+    "importe_total": 62.59,
+    "vencimientos": [
+      {
+        "orden": 1,
+        "fecha_vencimiento": "2026-08-05",
+        "importe": 62.59,
+        "nota": null
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": 20.38,
+        "tipo_iva": 4.0,
+        "cuota_iva": 0.82,
+        "tipo_recargo_equivalencia": 0.5,
+        "cuota_recargo_equivalencia": 0.1,
+        "nota": null
+      },
+      {
+        "orden": 2,
+        "base_imponible": 37.06,
+        "tipo_iva": 10.0,
+        "cuota_iva": 3.71,
+        "tipo_recargo_equivalencia": 1.4,
+        "cuota_recargo_equivalencia": 0.52,
+        "nota": null
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": 1,
+        "numero_albaran": "2620-2051956",
+        "fecha_albaran": "2026-07-13",
+        "tipo_movimiento": "CARGO",
+        "descripcion": null,
+        "importe_base": null,
+        "importe_total": 40.98,
+        "pagina": 2,
+        "seccion": "tabla albaranes",
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_tablas_literales"
+        }
+      },
+      {
+        "orden": 2,
+        "numero_albaran": "2620-2090700",
+        "fecha_albaran": "2026-07-16",
+        "tipo_movimiento": "CARGO",
+        "descripcion": null,
+        "importe_base": null,
+        "importe_total": 19.29,
+        "pagina": 2,
+        "seccion": "tabla albaranes",
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_tablas_literales"
+        }
+      },
+      {
+        "orden": 3,
+        "numero_albaran": "2620-2100818",
+        "fecha_albaran": "2026-07-17",
+        "tipo_movimiento": "CARGO",
+        "descripcion": null,
+        "importe_base": null,
+        "importe_total": 3.35,
+        "pagina": 2,
+        "seccion": "tabla albaranes",
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_tablas_literales"
+        }
+      },
+      {
+        "orden": 4,
+        "numero_albaran": "2620-2100853",
+        "fecha_albaran": "2026-07-17",
+        "tipo_movimiento": "CARGO",
+        "descripcion": null,
+        "importe_base": null,
+        "importe_total": 4.78,
+        "pagina": 2,
+        "seccion": "tabla albaranes",
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_tablas_literales"
+        }
+      },
+      {
+        "orden": 5,
+        "numero_albaran": "2620A-196245",
+        "fecha_albaran": "2026-07-17",
+        "tipo_movimiento": "ABONO",
+        "descripcion": null,
+        "importe_base": null,
+        "importe_total": -14.04,
+        "pagina": 2,
+        "seccion": "DETALL ABONAMENTS",
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_tablas_literales"
+        }
+      }
+    ],
+    "ajustes": [
+      {
+        "orden": 1,
+        "tipo_ajuste": "BONIFICACION",
+        "descripcion": "Bonificación pago inmediato",
+        "importe": -0.08,
+        "incluido_en_base": true,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "regla_determinista",
+          "fuente": "python",
+          "regla": "clasificacion_bonificacion_fedefarma",
+          "version_regla": "fedefarma_v1"
+        }
+      }
+    ],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON PIO",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": null,
+    "periodo_facturacion_inicio": null,
+    "periodo_facturacion_fin": null,
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_totales_fiscalidad_vencimientos": "luna_general",
+    "albaranes": "luna_tablas_literales_fusion_determinista",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna",
+    "signos": "lectura_visible_sin_regla_dermofarm"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF",
+    "usar_tablas_literales": true
+  },
+  "validaciones_monetarias": [
+    {
+      "nombre": "total_factura",
+      "estado": "OK",
+      "esperado": "62.59",
+      "obtenido": "62.59",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "suma_bases_fiscales",
+      "estado": "OK",
+      "esperado": "57.44",
+      "obtenido": "57.44",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "suma_cuotas_iva",
+      "estado": "OK",
+      "esperado": "4.53",
+      "obtenido": "4.53",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "suma_cuotas_recargo",
+      "estado": "OK",
+      "esperado": "0.62",
+      "obtenido": "0.62",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    }
+  ]
+}

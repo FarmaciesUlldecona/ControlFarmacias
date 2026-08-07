@@ -1,0 +1,109 @@
+{
+  "version_normalizador": "fedefarma_v1",
+  "archivo_origen": "FEDE VTO 5.8.26 PIO.pdf",
+  "incidencias": [
+    {
+      "orden": 1,
+      "campo": "impuestos",
+      "tipo_incidencia": "TRAMO_FISCAL_SIN_IMPORTE_OMITIDO",
+      "nivel": "AVISO",
+      "descripcion": "El tramo visible no aporta base, IVA ni recargo.",
+      "datos_visibles_disponibles": {
+        "tipo_iva": 0.0,
+        "tipo_recargo": 0.0
+      },
+      "decision_tomada": "No se crea un tramo fiscal contable con importes cero.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 2,
+      "campo": "impuestos",
+      "tipo_incidencia": "TRAMO_FISCAL_SIN_IMPORTE_OMITIDO",
+      "nivel": "AVISO",
+      "descripcion": "El tramo visible no aporta base, IVA ni recargo.",
+      "datos_visibles_disponibles": {
+        "tipo_iva": 21.0,
+        "tipo_recargo": 5.2
+      },
+      "decision_tomada": "No se crea un tramo fiscal contable con importes cero.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 3,
+      "campo": "albaranes",
+      "tipo_incidencia": "DUPLICADO_GENERAL_LITERAL_DEDUPLICADO",
+      "nivel": "AVISO",
+      "descripcion": "La misma referencia aparece en ambas extracciones.",
+      "datos_visibles_disponibles": {
+        "numero_albaran": "2620-2051956",
+        "conflictos": []
+      },
+      "decision_tomada": "Se conserva una unica fila procedente de la tabla literal.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 4,
+      "campo": "albaranes",
+      "tipo_incidencia": "DUPLICADO_GENERAL_LITERAL_DEDUPLICADO",
+      "nivel": "AVISO",
+      "descripcion": "La misma referencia aparece en ambas extracciones.",
+      "datos_visibles_disponibles": {
+        "numero_albaran": "2620-2090700",
+        "conflictos": []
+      },
+      "decision_tomada": "Se conserva una unica fila procedente de la tabla literal.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 5,
+      "campo": "albaranes",
+      "tipo_incidencia": "DUPLICADO_GENERAL_LITERAL_DEDUPLICADO",
+      "nivel": "AVISO",
+      "descripcion": "La misma referencia aparece en ambas extracciones.",
+      "datos_visibles_disponibles": {
+        "numero_albaran": "2620-2100818",
+        "conflictos": []
+      },
+      "decision_tomada": "Se conserva una unica fila procedente de la tabla literal.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 6,
+      "campo": "albaranes",
+      "tipo_incidencia": "DUPLICADO_GENERAL_LITERAL_DEDUPLICADO",
+      "nivel": "AVISO",
+      "descripcion": "La misma referencia aparece en ambas extracciones.",
+      "datos_visibles_disponibles": {
+        "numero_albaran": "2620-2100853",
+        "conflictos": []
+      },
+      "decision_tomada": "Se conserva una unica fila procedente de la tabla literal.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 7,
+      "campo": "ajustes",
+      "tipo_incidencia": "ABONO_RECLASIFICADO_COMO_ALBARAN",
+      "nivel": "AVISO",
+      "descripcion": "El resumen general corresponde a una fila literal de abono.",
+      "datos_visibles_disponibles": {
+        "descripcion": "NATURGREEN ACEITE DE COCO MCT 500ML",
+        "importe": -14.04
+      },
+      "decision_tomada": "No se duplica el abono como ajuste.",
+      "requiere_revision_manual": false
+    },
+    {
+      "orden": 8,
+      "campo": "proveedor_cif",
+      "tipo_incidencia": "SEPARADORES_CIF_ELIMINADOS",
+      "nivel": "AVISO",
+      "descripcion": "El CIF visible separa sus grupos mediante guiones tipograficos.",
+      "datos_visibles_disponibles": {
+        "valor": "F-08-173395"
+      },
+      "decision_tomada": "Se conserva el identificador continuo F08173395.",
+      "requiere_revision_manual": false
+    }
+  ]
+}

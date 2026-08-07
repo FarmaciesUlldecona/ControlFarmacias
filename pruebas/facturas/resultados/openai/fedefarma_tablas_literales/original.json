@@ -1,0 +1,357 @@
+{
+  "metadatos_prueba": {
+    "documento_local": "FEDE VTO 5.8.26 PIO.pdf",
+    "archivo_enviado": "documento.pdf",
+    "tipo_extraccion": "tablas_albaranes_literal",
+    "paginas_originales": [
+      2,
+      2
+    ],
+    "paginas_enviadas": 1,
+    "tamano_bytes_enviado": 182357,
+    "sha256_enviado": "2862808e7621da95ba9bc9939bebe55525807e1711164e9f9ba5a6f292ecdd73",
+    "contenido_patron_incluido": false,
+    "version_prompt": "fedefarma_tablas_literales_v1.0",
+    "max_output_tokens": 12000,
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_0b237645b678a9e0016a7623ea7e40819ca86a838f39581811",
+    "fecha_hora_utc": "2026-08-07T18:29:03.955403+00:00",
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "respuesta_original": {
+    "id": "resp_0b237645b678a9e0016a7623ea7e40819ca86a838f39581811",
+    "created_at": 1786127339.0,
+    "error": null,
+    "incomplete_details": null,
+    "instructions": null,
+    "metadata": {},
+    "model": "gpt-5.6-luna",
+    "object": "response",
+    "output": [
+      {
+        "id": "msg_0b237645b678a9e0016a7623ec2224819c922cd1e40b6865db",
+        "content": [
+          {
+            "annotations": [],
+            "text": "{\"filas\":[{\"seccion_visible\":\"tabla albaranes\",\"orden_visual\":1,\"fecha_entrega\":\"13-07-2026\",\"texto_origen\":null,\"fecha_albaran\":null,\"marcadores_antes_numero\":[\"P\",\"PA\"],\"numero_albaran\":\"2620-2051956\",\"motivo\":null,\"descripcion\":null,\"importe\":\"40,98\",\"signo_visible\":null,\"pagina_original\":2},{\"seccion_visible\":\"tabla albaranes\",\"orden_visual\":2,\"fecha_entrega\":\"16-07-2026\",\"texto_origen\":null,\"fecha_albaran\":null,\"marcadores_antes_numero\":[\"P\",\"PA\"],\"numero_albaran\":\"2620-2090700\",\"motivo\":null,\"descripcion\":null,\"importe\":\"19,29\",\"signo_visible\":null,\"pagina_original\":2},{\"seccion_visible\":\"tabla albaranes\",\"orden_visual\":3,\"fecha_entrega\":\"17-07-2026\",\"texto_origen\":null,\"fecha_albaran\":null,\"marcadores_antes_numero\":[\"P\",\"PA\"],\"numero_albaran\":\"2620-2100818\",\"motivo\":null,\"descripcion\":null,\"importe\":\"3,35\",\"signo_visible\":null,\"pagina_original\":2},{\"seccion_visible\":\"tabla albaranes\",\"orden_visual\":4,\"fecha_entrega\":\"17-07-2026\",\"texto_origen\":null,\"fecha_albaran\":null,\"marcadores_antes_numero\":[\"P\",\"PA\"],\"numero_albaran\":\"2620-2100853\",\"motivo\":null,\"descripcion\":null,\"importe\":\"4,78\",\"signo_visible\":null,\"pagina_original\":2},{\"seccion_visible\":\"DETALL ABONAMENTS\",\"orden_visual\":1,\"fecha_entrega\":\"09-06-2026\",\"texto_origen\":\"2620-1710659\",\"fecha_albaran\":\"17-07-2026\",\"marcadores_antes_numero\":[],\"numero_albaran\":\"2620A-196245\",\"motivo\":\"FG\",\"descripcion\":\"NATURGREEN ACEITE DE COCO MCT 500ML\",\"importe\":\"-14,04\",\"signo_visible\":\"-\",\"pagina_original\":2}]}",
+            "type": "output_text",
+            "logprobs": [],
+            "parsed": {
+              "filas": [
+                {
+                  "seccion_visible": "tabla albaranes",
+                  "orden_visual": 1,
+                  "fecha_entrega": "13-07-2026",
+                  "texto_origen": null,
+                  "fecha_albaran": null,
+                  "marcadores_antes_numero": [
+                    "P",
+                    "PA"
+                  ],
+                  "numero_albaran": "2620-2051956",
+                  "motivo": null,
+                  "descripcion": null,
+                  "importe": "40,98",
+                  "signo_visible": null,
+                  "pagina_original": 2
+                },
+                {
+                  "seccion_visible": "tabla albaranes",
+                  "orden_visual": 2,
+                  "fecha_entrega": "16-07-2026",
+                  "texto_origen": null,
+                  "fecha_albaran": null,
+                  "marcadores_antes_numero": [
+                    "P",
+                    "PA"
+                  ],
+                  "numero_albaran": "2620-2090700",
+                  "motivo": null,
+                  "descripcion": null,
+                  "importe": "19,29",
+                  "signo_visible": null,
+                  "pagina_original": 2
+                },
+                {
+                  "seccion_visible": "tabla albaranes",
+                  "orden_visual": 3,
+                  "fecha_entrega": "17-07-2026",
+                  "texto_origen": null,
+                  "fecha_albaran": null,
+                  "marcadores_antes_numero": [
+                    "P",
+                    "PA"
+                  ],
+                  "numero_albaran": "2620-2100818",
+                  "motivo": null,
+                  "descripcion": null,
+                  "importe": "3,35",
+                  "signo_visible": null,
+                  "pagina_original": 2
+                },
+                {
+                  "seccion_visible": "tabla albaranes",
+                  "orden_visual": 4,
+                  "fecha_entrega": "17-07-2026",
+                  "texto_origen": null,
+                  "fecha_albaran": null,
+                  "marcadores_antes_numero": [
+                    "P",
+                    "PA"
+                  ],
+                  "numero_albaran": "2620-2100853",
+                  "motivo": null,
+                  "descripcion": null,
+                  "importe": "4,78",
+                  "signo_visible": null,
+                  "pagina_original": 2
+                },
+                {
+                  "seccion_visible": "DETALL ABONAMENTS",
+                  "orden_visual": 1,
+                  "fecha_entrega": "09-06-2026",
+                  "texto_origen": "2620-1710659",
+                  "fecha_albaran": "17-07-2026",
+                  "marcadores_antes_numero": [],
+                  "numero_albaran": "2620A-196245",
+                  "motivo": "FG",
+                  "descripcion": "NATURGREEN ACEITE DE COCO MCT 500ML",
+                  "importe": "-14,04",
+                  "signo_visible": "-",
+                  "pagina_original": 2
+                }
+              ]
+            }
+          }
+        ],
+        "role": "assistant",
+        "status": "completed",
+        "type": "message",
+        "phase": "final_answer"
+      }
+    ],
+    "parallel_tool_calls": true,
+    "temperature": 1.0,
+    "tool_choice": "auto",
+    "tools": [],
+    "top_p": 0.98,
+    "background": false,
+    "completed_at": 1786127342.0,
+    "conversation": null,
+    "max_output_tokens": 12000,
+    "max_tool_calls": null,
+    "moderation": null,
+    "previous_response_id": null,
+    "prompt": null,
+    "prompt_cache_key": null,
+    "prompt_cache_options": null,
+    "prompt_cache_retention": "24h",
+    "reasoning": {
+      "context": "all_turns",
+      "effort": "none",
+      "generate_summary": null,
+      "mode": "standard",
+      "summary": null
+    },
+    "safety_identifier": null,
+    "service_tier": "default",
+    "status": "completed",
+    "text": {
+      "format": {
+        "name": "TranscripcionAlbaranes",
+        "schema_": {
+          "$defs": {
+            "FilaAlbaranLiteral": {
+              "additionalProperties": false,
+              "properties": {
+                "seccion_visible": {
+                  "title": "Seccion Visible",
+                  "type": "string"
+                },
+                "orden_visual": {
+                  "title": "Orden Visual",
+                  "type": "integer"
+                },
+                "fecha_entrega": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Fecha Entrega"
+                },
+                "texto_origen": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Texto Origen"
+                },
+                "fecha_albaran": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Fecha Albaran"
+                },
+                "marcadores_antes_numero": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Marcadores Antes Numero",
+                  "type": "array"
+                },
+                "numero_albaran": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Numero Albaran"
+                },
+                "motivo": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Motivo"
+                },
+                "descripcion": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Descripcion"
+                },
+                "importe": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Importe"
+                },
+                "signo_visible": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Signo Visible"
+                },
+                "pagina_original": {
+                  "title": "Pagina Original",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "seccion_visible",
+                "orden_visual",
+                "fecha_entrega",
+                "texto_origen",
+                "fecha_albaran",
+                "marcadores_antes_numero",
+                "numero_albaran",
+                "motivo",
+                "descripcion",
+                "importe",
+                "signo_visible",
+                "pagina_original"
+              ],
+              "title": "FilaAlbaranLiteral",
+              "type": "object"
+            }
+          },
+          "additionalProperties": false,
+          "properties": {
+            "filas": {
+              "items": {
+                "$ref": "#/$defs/FilaAlbaranLiteral"
+              },
+              "title": "Filas",
+              "type": "array"
+            }
+          },
+          "required": [
+            "filas"
+          ],
+          "title": "TranscripcionAlbaranes",
+          "type": "object"
+        },
+        "type": "json_schema",
+        "description": null,
+        "strict": true
+      },
+      "verbosity": "medium"
+    },
+    "top_logprobs": 0,
+    "truncation": "disabled",
+    "usage": {
+      "input_tokens": 4055,
+      "input_tokens_details": {
+        "cache_write_tokens": 4052,
+        "cached_tokens": 0
+      },
+      "output_tokens": 484,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 4539
+    },
+    "user": null,
+    "billing": {
+      "payer": "developer"
+    },
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "store": false,
+    "tool_usage": {
+      "image_gen": {
+        "input_tokens": 0,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 0
+        },
+        "total_tokens": 0
+      },
+      "web_search": {
+        "num_requests": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "metadatos_prueba": {
+    "documento_local": "FEDE VTO 5.8.26 PIO.pdf",
+    "archivo_enviado": "documento.pdf",
+    "tipo_extraccion": "tablas_albaranes_literal",
+    "paginas_originales": [
+      2,
+      2
+    ],
+    "paginas_enviadas": 1,
+    "tamano_bytes_enviado": 182357,
+    "sha256_enviado": "2862808e7621da95ba9bc9939bebe55525807e1711164e9f9ba5a6f292ecdd73",
+    "contenido_patron_incluido": false,
+    "version_prompt": "fedefarma_tablas_literales_v1.0",
+    "max_output_tokens": 12000,
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_0b237645b678a9e0016a7623ea7e40819ca86a838f39581811",
+    "fecha_hora_utc": "2026-08-07T18:29:03.955403+00:00",
+    "reasoning_effort": "none",
+    "store": false
+  },
+  "transcripcion": {
+    "filas": [
+      {
+        "seccion_visible": "tabla albaranes",
+        "orden_visual": 1,
+        "fecha_entrega": "13-07-2026",
+        "texto_origen": null,
+        "fecha_albaran": null,
+        "marcadores_antes_numero": [
+          "P",
+          "PA"
+        ],
+        "numero_albaran": "2620-2051956",
+        "motivo": null,
+        "descripcion": null,
+        "importe": "40,98",
+        "signo_visible": null,
+        "pagina_original": 2
+      },
+      {
+        "seccion_visible": "tabla albaranes",
+        "orden_visual": 2,
+        "fecha_entrega": "16-07-2026",
+        "texto_origen": null,
+        "fecha_albaran": null,
+        "marcadores_antes_numero": [
+          "P",
+          "PA"
+        ],
+        "numero_albaran": "2620-2090700",
+        "motivo": null,
+        "descripcion": null,
+        "importe": "19,29",
+        "signo_visible": null,
+        "pagina_original": 2
+      },
+      {
+        "seccion_visible": "tabla albaranes",
+        "orden_visual": 3,
+        "fecha_entrega": "17-07-2026",
+        "texto_origen": null,
+        "fecha_albaran": null,
+        "marcadores_antes_numero": [
+          "P",
+          "PA"
+        ],
+        "numero_albaran": "2620-2100818",
+        "motivo": null,
+        "descripcion": null,
+        "importe": "3,35",
+        "signo_visible": null,
+        "pagina_original": 2
+      },
+      {
+        "seccion_visible": "tabla albaranes",
+        "orden_visual": 4,
+        "fecha_entrega": "17-07-2026",
+        "texto_origen": null,
+        "fecha_albaran": null,
+        "marcadores_antes_numero": [
+          "P",
+          "PA"
+        ],
+        "numero_albaran": "2620-2100853",
+        "motivo": null,
+        "descripcion": null,
+        "importe": "4,78",
+        "signo_visible": null,
+        "pagina_original": 2
+      },
+      {
+        "seccion_visible": "DETALL ABONAMENTS",
+        "orden_visual": 1,
+        "fecha_entrega": "09-06-2026",
+        "texto_origen": "2620-1710659",
+        "fecha_albaran": "17-07-2026",
+        "marcadores_antes_numero": [],
+        "numero_albaran": "2620A-196245",
+        "motivo": "FG",
+        "descripcion": "NATURGREEN ACEITE DE COCO MCT 500ML",
+        "importe": "-14,04",
+        "signo_visible": "-",
+        "pagina_original": 2
+      }
+    ]
+  }
+}
