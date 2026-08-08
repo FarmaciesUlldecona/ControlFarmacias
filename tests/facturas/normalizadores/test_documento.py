@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import fields
 from datetime import datetime, timezone
+from decimal import Decimal
 import json
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
     construir_cabecera_documental,
     construir_destinatario,
+    ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
     normalizar_proveedor_documental,
     paginas_desde_metadatos,
@@ -238,3 +240,183 @@ def test_aislamiento_de_la_capa_documental() -> None:
     for ruta in rutas:
         texto = ruta.read_text(encoding="utf-8").casefold().replace("\\", "/")
         assert all(prohibido not in texto for prohibido in prohibidos)
+
+
+def argumentos_ensamblado(configuracion) -> dict:
+    return {
+        "cabecera": {
+            "tipo_documento": "FACTURA",
+            "categoria": "MERCANCIA",
+            "requiere_conciliacion_albaranes": True,
+            "pagina_inicio": 2,
+            "pagina_fin": 3,
+            "proveedor_nombre": "PROVEEDOR, S.A.",
+            "proveedor_cif": "A00123456",
+            "numero_factura": "0000123",
+            "fecha_factura": "2026-08-08",
+        },
+        "base_imponible_total": Decimal("100.00"),
+        "iva_total": Decimal("21.00"),
+        "recargo_equivalencia_total": None,
+        "importe_total": Decimal("121.00"),
+        "vencimientos": [],
+        "impuestos": [],
+        "albaranes": [],
+        "ajustes": [],
+        "destinatario": {
+            "id_farmacia": "0007",
+            "nombre": "FARMACIA VISIBLE",
+            "cif": "40901058C",
+            "metodo_identificacion": "CIF",
+        },
+        "incidencias": RegistroIncidencias(),
+        "version_normalizador": "proveedor_v1",
+        "archivo_origen": "factura_0001.pdf",
+        "procedencia_bloques": {"cabecera": "lectura_visible"},
+        "configuracion": configuracion,
+        "validaciones_monetarias": [],
+        "fecha_ejecucion": datetime(2026, 8, 8, 10, 30, tzinfo=timezone.utc),
+    }
+
+
+def test_ensamblador_minimo_preserva_decimales_ids_listas_y_contexto(
+    configuracion,
+) -> None:
+    argumentos = argumentos_ensamblado(configuracion)
+    resultado = ensamblar_factura_normalizada(**argumentos)
+    factura = resultado["resultado_normalizado"]
+
+    assert factura["base_imponible_total"] == Decimal("100.00")
+    assert factura["numero_factura"] == "0000123"
+    assert factura["vencimientos"] == factura["impuestos"] == []
+    assert resultado["version_normalizador"] == "proveedor_v1"
+    assert resultado["archivo_origen"] == "factura_0001.pdf"
+    assert resultado["paginas_originales"] == [2, 3]
+    assert resultado["fecha_ejecucion"] == "2026-08-08T10:30:00+00:00"
+    assert argumentos["incidencias"].como_lista() == []
+
+
+def test_ensamblador_admite_todos_los_bloques_y_campos_opcionales(
+    configuracion,
+) -> None:
+    argumentos = argumentos_ensamblado(configuracion)
+    argumentos.update(
+        vencimientos=[
+            {
+                "orden": 1,
+                "fecha_vencimiento": "2026-09-01",
+                "importe": Decimal("121.00"),
+            }
+        ],
+        impuestos=[
+            {
+                "orden": 1,
+                "base_imponible": Decimal("100.00"),
+                "tipo_iva": Decimal("21"),
+                "cuota_iva": Decimal("21.00"),
+                "tipo_recargo_equivalencia": None,
+                "cuota_recargo_equivalencia": None,
+            }
+        ],
+        albaranes=[
+            {
+                "orden": 1,
+                "numero_albaran": "000045",
+                "fecha_albaran": "2026-08-01",
+                "tipo_movimiento": "VENTA",
+                "importe_base": Decimal("100.00"),
+                "importe_total": Decimal("121.00"),
+            }
+        ],
+        ajustes=[
+            {
+                "orden": 1,
+                "tipo_ajuste": "DESCUENTO",
+                "descripcion": "Visible",
+                "importe": Decimal("1.00"),
+                "incluido_en_base": True,
+                "incluido_en_total": True,
+            }
+        ],
+        fecha_cargo="2026-09-01",
+        periodo_facturacion_inicio="2026-08-01",
+        periodo_facturacion_fin="2026-08-08",
+        nota_revision="Revisar soporte visible",
+    )
+    resultado = ensamblar_factura_normalizada(**argumentos)
+    factura = resultado["resultado_normalizado"]
+
+    assert factura["vencimientos"] is argumentos["vencimientos"]
+    assert factura["impuestos"] is argumentos["impuestos"]
+    assert factura["albaranes"][0]["numero_albaran"] == "000045"
+    assert factura["ajustes"] is argumentos["ajustes"]
+    assert factura["fecha_cargo"] == "2026-09-01"
+    assert argumentos["incidencias"].como_lista() == []
+
+
+def test_ensamblador_registra_errores_estructurales_uniformes(configuracion) -> None:
+    argumentos = argumentos_ensamblado(configuracion)
+    argumentos["cabecera"] = {**argumentos["cabecera"], "numero_factura": None}
+    ensamblar_factura_normalizada(**argumentos)
+
+    assert argumentos["incidencias"].como_lista() == [
+        {
+            "orden": 1,
+            "campo": "factura",
+            "tipo_incidencia": "ESTRUCTURA_INCOMPLETA",
+            "nivel": "REVISION_MANUAL",
+            "descripcion": "Falta numero_factura.",
+            "datos_visibles_disponibles": None,
+            "decision_tomada": "Se conserva null; no se completa el campo.",
+            "requiere_revision_manual": True,
+        }
+    ]
+
+
+def test_ensamblador_no_oculta_errores_de_conversion_del_modelo(configuracion) -> None:
+    argumentos = argumentos_ensamblado(configuracion)
+    argumentos["impuestos"] = [{"orden": "no-numerico"}]
+    with pytest.raises(ValueError):
+        ensamblar_factura_normalizada(**argumentos)
+
+
+def test_ensamblador_aplica_configuracion_estable_y_extension_explicita(
+    configuracion,
+) -> None:
+    argumentos = argumentos_ensamblado(configuracion)
+    argumentos["configuracion_adicional"] = {"regla_proveedor": True}
+    resultado = ensamblar_factura_normalizada(**argumentos)
+
+    assert resultado["configuracion_interna_aplicada"] == {
+        "farmacia": "FARMACIA_INTERNA",
+        "categoria": "MERCANCIA",
+        "requiere_conciliacion_albaranes": True,
+        "destinatario_id_farmacia": "0007",
+        "destinatario_metodo_identificacion": "CIF",
+        "regla_proveedor": True,
+    }
+    assert "archivo_origen" not in resultado["configuracion_interna_aplicada"]
+
+
+def test_ensamblador_separa_contextos_variables_sin_cambiar_politica(
+    configuracion,
+) -> None:
+    primero = argumentos_ensamblado(configuracion)
+    segundo = argumentos_ensamblado(configuracion)
+    segundo["archivo_origen"] = "factura_0002.pdf"
+    segundo["fecha_ejecucion"] = datetime(2026, 8, 9, tzinfo=timezone.utc)
+
+    resultado_primero = ensamblar_factura_normalizada(**primero)
+    resultado_segundo = ensamblar_factura_normalizada(**segundo)
+
+    assert (
+        resultado_primero["archivo_origen"]
+        != resultado_segundo["archivo_origen"]
+    )
+    assert resultado_primero["fecha_ejecucion"] != resultado_segundo["fecha_ejecucion"]
+    assert resultado_primero["configuracion_interna_aplicada"] == resultado_segundo[
+        "configuracion_interna_aplicada"
+    ]
+    assert resultado_primero["resultado_normalizado"] == resultado_segundo[
+        "resultado_normalizado"
+    ]

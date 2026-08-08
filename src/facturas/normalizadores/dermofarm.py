@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -24,10 +24,10 @@ from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
     construir_cabecera_documental,
     construir_destinatario,
+    ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
     normalizar_proveedor_documental,
 )
-from src.models.factura import FacturaNormalizada
 
 
 VERSION_NORMALIZADOR = "dermofarm_v1"
@@ -266,22 +266,6 @@ def normalizar_dermofarm(
         ),
     )
     destinatario = construir_destinatario(general.get("destinatario"), configuracion)
-    pagina_inicio = cabecera["pagina_inicio"]
-    pagina_fin = cabecera["pagina_fin"]
-
-    factura = {
-        **cabecera,
-        **importes,
-        "vencimientos": [],
-        "impuestos": impuestos,
-        "albaranes": albaranes,
-        "ajustes": [],
-        "destinatario": destinatario,
-        "fecha_cargo": None,
-        "periodo_facturacion_inicio": None,
-        "periodo_facturacion_fin": None,
-        "nota_revision": None,
-    }
 
     validaciones: list[dict[str, Any]] = []
     registrar_validacion_monetaria(
@@ -289,11 +273,11 @@ def normalizar_dermofarm(
         incidencias,
         "total_factura",
         [
-            factura["base_imponible_total"],
-            factura["iva_total"],
-            factura["recargo_equivalencia_total"],
+            importes["base_imponible_total"],
+            importes["iva_total"],
+            importes["recargo_equivalencia_total"],
         ],
-        factura["importe_total"],
+        importes["importe_total"],
         descripcion_incidencia=_DESCRIPCION_VALIDACION,
         decision_incidencia=_DECISION_VALIDACION,
     )
@@ -327,25 +311,19 @@ def normalizar_dermofarm(
             decision_incidencia=_DECISION_VALIDACION,
         )
 
-    modelo = FacturaNormalizada.desde_diccionario(factura)
-    for error in modelo.validar():
-        incidencias.agregar(
-            campo="factura",
-            tipo="ESTRUCTURA_INCOMPLETA",
-            nivel=NivelIncidencia.REVISION_MANUAL,
-            descripcion=error,
-            datos_visibles=None,
-            decision="Se conserva null; no se completa el campo.",
-        )
-
-    instante = fecha_ejecucion or datetime.now(timezone.utc)
-    resultado = {
-        "version_normalizador": VERSION_NORMALIZADOR,
-        "fecha_ejecucion": instante.astimezone(timezone.utc).isoformat(),
-        "archivo_origen": archivo_origen,
-        "paginas_originales": [pagina_inicio, pagina_fin],
-        "resultado_normalizado": factura,
-        "procedencia_bloques": {
+    resultado = ensamblar_factura_normalizada(
+        cabecera=cabecera,
+        **importes,
+        vencimientos=[],
+        impuestos=impuestos,
+        albaranes=albaranes,
+        ajustes=[],
+        destinatario=destinatario,
+        incidencias=incidencias,
+        version_normalizador=VERSION_NORMALIZADOR,
+        archivo_origen=archivo_origen,
+        fecha_ejecucion=fecha_ejecucion,
+        procedencia_bloques={
             "cabecera_totales_fiscalidad_albaranes": "lectura_visible_luna_general",
             "paginas": "metadato_tecnico",
             "categoria": "configuracion_interna",
@@ -354,13 +332,7 @@ def normalizar_dermofarm(
             "destinatario.metodo_identificacion": "configuracion_interna",
             "signos_contables": "regla_determinista:signo_contable_abono_dermofarm",
         },
-        "configuracion_interna_aplicada": {
-            "farmacia": configuracion.farmacia,
-            "categoria": configuracion.categoria,
-            "requiere_conciliacion_albaranes": configuracion.requiere_conciliacion_albaranes,
-            "destinatario_id_farmacia": configuracion.id_farmacia,
-            "destinatario_metodo_identificacion": configuracion.metodo_identificacion_farmacia,
-        },
-        "validaciones_monetarias": validaciones,
-    }
+        configuracion=configuracion,
+        validaciones_monetarias=validaciones,
+    )
     return resultado, incidencias.como_lista()

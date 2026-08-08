@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
@@ -26,10 +26,10 @@ from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
     construir_cabecera_documental,
     construir_destinatario,
+    ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
     normalizar_proveedor_documental,
 )
-from src.models.factura import FacturaNormalizada
 
 
 VERSION_NORMALIZADOR = "suavinex_v1"
@@ -407,25 +407,6 @@ def normalizar_suavinex(
         ),
     )
     destinatario = construir_destinatario(general.get("destinatario"), configuracion)
-    pagina_inicio = cabecera["pagina_inicio"]
-    pagina_fin = cabecera["pagina_fin"]
-
-    factura = {
-        **cabecera,
-        "base_imponible_total": base,
-        "iva_total": iva,
-        "recargo_equivalencia_total": recargo,
-        "importe_total": total,
-        "vencimientos": vencimientos,
-        "impuestos": impuestos,
-        "albaranes": albaranes,
-        "ajustes": ajustes,
-        "destinatario": destinatario,
-        "fecha_cargo": None,
-        "periodo_facturacion_inicio": None,
-        "periodo_facturacion_fin": None,
-        "nota_revision": None,
-    }
 
     validaciones: list[dict[str, Any]] = []
     registrar_validacion_monetaria(
@@ -481,25 +462,22 @@ def normalizar_suavinex(
             decision_incidencia=_DECISION_VALIDACION,
         )
 
-    modelo = FacturaNormalizada.desde_diccionario(factura)
-    for error in modelo.validar():
-        incidencias.agregar(
-            campo="factura",
-            tipo="ESTRUCTURA_INCOMPLETA",
-            nivel=NivelIncidencia.REVISION_MANUAL,
-            descripcion=error,
-            datos_visibles=None,
-            decision="Se conserva null; no se completa el campo.",
-        )
-
-    instante = fecha_ejecucion or datetime.now(timezone.utc)
-    resultado = {
-        "version_normalizador": VERSION_NORMALIZADOR,
-        "fecha_ejecucion": instante.astimezone(timezone.utc).isoformat(),
-        "archivo_origen": archivo_origen,
-        "paginas_originales": [pagina_inicio, pagina_fin],
-        "resultado_normalizado": factura,
-        "procedencia_bloques": {
+    resultado = ensamblar_factura_normalizada(
+        cabecera=cabecera,
+        base_imponible_total=base,
+        iva_total=iva,
+        recargo_equivalencia_total=recargo,
+        importe_total=total,
+        vencimientos=vencimientos,
+        impuestos=impuestos,
+        albaranes=albaranes,
+        ajustes=ajustes,
+        destinatario=destinatario,
+        incidencias=incidencias,
+        version_normalizador=VERSION_NORMALIZADOR,
+        archivo_origen=archivo_origen,
+        fecha_ejecucion=fecha_ejecucion,
+        procedencia_bloques={
             "cabecera_y_totales": "lectura_visible_luna_general",
             "fiscalidad": "regla_determinista:separacion_cuota_fiscal_agregada_suavinex",
             "paginas": "metadato_tecnico",
@@ -509,14 +487,10 @@ def normalizar_suavinex(
             "destinatario.metodo_identificacion": "configuracion_interna",
             "signos": "lectura_visible_sin_regla_de_abono",
         },
-        "configuracion_interna_aplicada": {
-            "farmacia": configuracion.farmacia,
-            "categoria": configuracion.categoria,
-            "requiere_conciliacion_albaranes": configuracion.requiere_conciliacion_albaranes,
-            "destinatario_id_farmacia": configuracion.id_farmacia,
-            "destinatario_metodo_identificacion": configuracion.metodo_identificacion_farmacia,
+        configuracion=configuracion,
+        configuracion_adicional={
             "albaran_unico_abarca_factura": configuracion.albaran_unico_abarca_factura,
         },
-        "validaciones_monetarias": validaciones,
-    }
+        validaciones_monetarias=validaciones,
+    )
     return resultado, incidencias.como_lista()

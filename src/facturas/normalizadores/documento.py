@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from datetime import datetime, timezone
 import re
 from typing import Any
 
@@ -14,6 +15,7 @@ from src.facturas.normalizadores.comun import (
     valor_visible,
 )
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
+from src.models.factura import FacturaNormalizada
 
 
 _IDENTIFICADOR_FISCAL_ES_CON_PREFIJO = re.compile(
@@ -135,4 +137,88 @@ def construir_destinatario(
         "nombre": valor_visible(visible.get("nombre")),
         "cif": normalizar_identificador(valor_visible(visible.get("cif"))),
         "metodo_identificacion": configuracion.metodo_identificacion_farmacia,
+    }
+
+
+def ensamblar_factura_normalizada(
+    *,
+    cabecera: Mapping[str, Any],
+    base_imponible_total: Any,
+    iva_total: Any,
+    recargo_equivalencia_total: Any,
+    importe_total: Any,
+    vencimientos: list[dict[str, Any]],
+    impuestos: list[dict[str, Any]],
+    albaranes: list[dict[str, Any]],
+    ajustes: list[dict[str, Any]],
+    destinatario: Mapping[str, Any] | None,
+    incidencias: RegistroIncidencias,
+    version_normalizador: str,
+    archivo_origen: str,
+    procedencia_bloques: Mapping[str, str],
+    configuracion: ConfiguracionProveedor,
+    validaciones_monetarias: list[dict[str, Any]],
+    fecha_ejecucion: datetime | None = None,
+    fecha_cargo: str | None = None,
+    periodo_facturacion_inicio: str | None = None,
+    periodo_facturacion_fin: str | None = None,
+    nota_revision: str | None = None,
+    configuracion_adicional: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Ensambla bloques ya normalizados sin interpretarlos ni corregirlos."""
+    factura = {
+        **cabecera,
+        "base_imponible_total": base_imponible_total,
+        "iva_total": iva_total,
+        "recargo_equivalencia_total": recargo_equivalencia_total,
+        "importe_total": importe_total,
+        "vencimientos": vencimientos,
+        "impuestos": impuestos,
+        "albaranes": albaranes,
+        "ajustes": ajustes,
+        "destinatario": destinatario,
+        "fecha_cargo": fecha_cargo,
+        "periodo_facturacion_inicio": periodo_facturacion_inicio,
+        "periodo_facturacion_fin": periodo_facturacion_fin,
+        "nota_revision": nota_revision,
+    }
+
+    modelo = FacturaNormalizada.desde_diccionario(factura)
+    for error in modelo.validar():
+        incidencias.agregar(
+            campo="factura",
+            tipo="ESTRUCTURA_INCOMPLETA",
+            nivel=NivelIncidencia.REVISION_MANUAL,
+            descripcion=error,
+            datos_visibles=None,
+            decision="Se conserva null; no se completa el campo.",
+        )
+
+    configuracion_aplicada = {
+        "farmacia": configuracion.farmacia,
+        "categoria": configuracion.categoria,
+        "requiere_conciliacion_albaranes": (
+            configuracion.requiere_conciliacion_albaranes
+        ),
+        "destinatario_id_farmacia": configuracion.id_farmacia,
+        "destinatario_metodo_identificacion": (
+            configuracion.metodo_identificacion_farmacia
+        ),
+    }
+    if configuracion_adicional:
+        configuracion_aplicada.update(configuracion_adicional)
+
+    instante = fecha_ejecucion or datetime.now(timezone.utc)
+    return {
+        "version_normalizador": version_normalizador,
+        "fecha_ejecucion": instante.astimezone(timezone.utc).isoformat(),
+        "archivo_origen": archivo_origen,
+        "paginas_originales": [
+            factura["pagina_inicio"],
+            factura["pagina_fin"],
+        ],
+        "resultado_normalizado": factura,
+        "procedencia_bloques": dict(procedencia_bloques),
+        "configuracion_interna_aplicada": configuracion_aplicada,
+        "validaciones_monetarias": validaciones_monetarias,
     }
