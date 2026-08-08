@@ -29,7 +29,8 @@ def ejecutar() -> tuple[Path, Path]:
     resultado, incidencias = normalizar_dermofarm(
         extraccion,
         metadatos,
-        ConfiguracionDermofarm(archivo_origen=metadatos["archivo_original_local"]),
+        ConfiguracionDermofarm(),
+        archivo_origen=metadatos["archivo_original_local"],
     )
     RUTA_SALIDA.mkdir(parents=True, exist_ok=True)
     ruta_factura = RUTA_SALIDA / "factura_normalizada.json"

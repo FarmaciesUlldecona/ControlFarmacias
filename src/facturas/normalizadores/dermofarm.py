@@ -5,11 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
-import re
 from typing import Any
 
 from src.facturas.normalizadores.comun import (
-    AliasProveedor,
     EstadoValidacion,
     NivelIncidencia,
     Procedencia,
@@ -22,27 +20,24 @@ from src.facturas.normalizadores.comun import (
     validar_suma_monetaria,
     valor_visible,
 )
+from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
+from src.facturas.normalizadores.documento import (
+    construir_cabecera_documental,
+    construir_destinatario,
+    normalizar_identificador_fiscal_es,
+    normalizar_proveedor_documental,
+)
 from src.models.factura import FacturaNormalizada
 
 
 VERSION_NORMALIZADOR = "dermofarm_v1"
 NOMBRE_CANONICO_DERMOFARM = "DERMOFARM, S.A.U."
-ALIAS_DERMOFARM = AliasProveedor(
-    nombre_canonico=NOMBRE_CANONICO_DERMOFARM,
-    alias=("DERMOFARM",),
-)
-_CIF_CON_PREFIJO_ES = re.compile(r"^ES\s*([A-Z]\d{8})$", re.IGNORECASE)
 
 
-@dataclass(frozen=True, slots=True)
-class ConfiguracionDermofarm:
-    archivo_origen: str
-    farmacia: str = "PIO"
-    pagina_inicio: int = 1
-    categoria: str = "MERCANCIA"
-    requiere_conciliacion_albaranes: bool = True
-    destinatario_id_farmacia: str = "PIO"
-    destinatario_metodo_identificacion: str = "CIF"
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ConfiguracionDermofarm(ConfiguracionProveedor):
+    proveedor_nombre_canonico: str = NOMBRE_CANONICO_DERMOFARM
+    aliases: tuple[str, ...] = ("DERMOFARM",)
 
 
 def _decimal_visible(campo: Any) -> Decimal | None:
@@ -71,25 +66,6 @@ def _fecha_visible(campo: Any) -> str | None:
 
 def _procedencia_visible(fuente: str = "luna_general") -> dict[str, str]:
     return Procedencia(TipoProcedencia.LECTURA_VISIBLE, fuente).a_diccionario()
-
-
-def _normalizar_cif(valor: Any, incidencias: RegistroIncidencias) -> str | None:
-    cif = normalizar_identificador(valor)
-    if cif is None:
-        return None
-    coincidencia = _CIF_CON_PREFIJO_ES.fullmatch(cif.replace(" ", ""))
-    if coincidencia is None:
-        return cif
-    normalizado = coincidencia.group(1).upper()
-    incidencias.agregar(
-        campo="proveedor_cif",
-        tipo="PREFIJO_PAIS_ELIMINADO",
-        nivel=NivelIncidencia.AVISO,
-        descripcion="El VAT visible incluye el prefijo de pais ES.",
-        datos_visibles={"valor": cif},
-        decision=f"Se conserva el identificador fiscal nacional {normalizado}.",
-    )
-    return normalizado
 
 
 def _importe_contable(
@@ -249,6 +225,8 @@ def normalizar_dermofarm(
     metadatos_tecnicos: dict[str, Any],
     configuracion: ConfiguracionDermofarm,
     fecha_ejecucion: datetime | None = None,
+    *,
+    archivo_origen: str,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     general = extraccion_general.get("factura", extraccion_general)
     incidencias = RegistroIncidencias()
@@ -265,9 +243,11 @@ def normalizar_dermofarm(
             decision="tipo_documento permanece en null y no se corrigen signos.",
         )
 
-    proveedor_visible = valor_visible(general.get("proveedor_nombre"))
-    proveedor = ALIAS_DERMOFARM.normalizar(proveedor_visible)
-    proveedor_reconocido = proveedor == NOMBRE_CANONICO_DERMOFARM
+    proveedor_visible, proveedor, proveedor_reconocido = (
+        normalizar_proveedor_documental(
+            general.get("proveedor_nombre"), configuracion
+        )
+    )
     if proveedor_visible is not None and not proveedor_reconocido:
         incidencias.agregar(
             campo="proveedor_nombre",
@@ -309,39 +289,29 @@ def normalizar_dermofarm(
     albaranes = _normalizar_albaranes(
         list(general.get("albaranes", [])), tipo_documento, incidencias
     )
-    destinatario_bruto = general.get("destinatario") or {}
-    numero_paginas = metadatos_tecnicos.get("numero_paginas")
-    if not isinstance(numero_paginas, int) or isinstance(numero_paginas, bool) or numero_paginas < 1:
-        raise ValueError("Los metadatos tecnicos deben declarar numero_paginas positivo.")
-    pagina_fin = configuracion.pagina_inicio + numero_paginas - 1
+    cabecera = construir_cabecera_documental(
+        general,
+        metadatos_tecnicos,
+        configuracion,
+        incidencias,
+        tipo_documento=tipo_documento,
+        proveedor_nombre=proveedor,
+        normalizar_cif=lambda valor, registro: normalizar_identificador_fiscal_es(
+            valor, registro, etiqueta_visible="VAT"
+        ),
+    )
+    destinatario = construir_destinatario(general.get("destinatario"), configuracion)
+    pagina_inicio = cabecera["pagina_inicio"]
+    pagina_fin = cabecera["pagina_fin"]
 
     factura = {
-        "tipo_documento": tipo_documento,
-        "categoria": configuracion.categoria,
-        "requiere_conciliacion_albaranes": configuracion.requiere_conciliacion_albaranes,
-        "pagina_inicio": configuracion.pagina_inicio,
-        "pagina_fin": pagina_fin,
-        "proveedor_nombre": proveedor,
-        "proveedor_cif": _normalizar_cif(
-            valor_visible(general.get("proveedor_cif")), incidencias
-        ),
-        "numero_factura": normalizar_identificador(
-            valor_visible(general.get("numero_factura"))
-        ),
-        "fecha_factura": _fecha_visible(general.get("fecha_factura")),
+        **cabecera,
         **importes,
         "vencimientos": [],
         "impuestos": impuestos,
         "albaranes": albaranes,
         "ajustes": [],
-        "destinatario": {
-            "id_farmacia": normalizar_identificador(
-                configuracion.destinatario_id_farmacia
-            ),
-            "nombre": valor_visible(destinatario_bruto.get("nombre")),
-            "cif": normalizar_identificador(valor_visible(destinatario_bruto.get("cif"))),
-            "metodo_identificacion": configuracion.destinatario_metodo_identificacion,
-        },
+        "destinatario": destinatario,
         "fecha_cargo": None,
         "periodo_facturacion_inicio": None,
         "periodo_facturacion_fin": None,
@@ -397,8 +367,8 @@ def normalizar_dermofarm(
     resultado = {
         "version_normalizador": VERSION_NORMALIZADOR,
         "fecha_ejecucion": instante.astimezone(timezone.utc).isoformat(),
-        "archivo_origen": configuracion.archivo_origen,
-        "paginas_originales": [configuracion.pagina_inicio, pagina_fin],
+        "archivo_origen": archivo_origen,
+        "paginas_originales": [pagina_inicio, pagina_fin],
         "resultado_normalizado": factura,
         "procedencia_bloques": {
             "cabecera_totales_fiscalidad_albaranes": "lectura_visible_luna_general",
@@ -413,8 +383,8 @@ def normalizar_dermofarm(
             "farmacia": configuracion.farmacia,
             "categoria": configuracion.categoria,
             "requiere_conciliacion_albaranes": configuracion.requiere_conciliacion_albaranes,
-            "destinatario_id_farmacia": configuracion.destinatario_id_farmacia,
-            "destinatario_metodo_identificacion": configuracion.destinatario_metodo_identificacion,
+            "destinatario_id_farmacia": configuracion.id_farmacia,
+            "destinatario_metodo_identificacion": configuracion.metodo_identificacion_farmacia,
         },
         "validaciones_monetarias": validaciones,
     }

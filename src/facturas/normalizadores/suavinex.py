@@ -5,11 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-import re
 from typing import Any
 
 from src.facturas.normalizadores.comun import (
-    AliasProveedor,
     EstadoValidacion,
     NivelIncidencia,
     Procedencia,
@@ -22,28 +20,26 @@ from src.facturas.normalizadores.comun import (
     validar_suma_monetaria,
     valor_visible,
 )
+from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
+from src.facturas.normalizadores.documento import (
+    construir_cabecera_documental,
+    construir_destinatario,
+    normalizar_identificador_fiscal_es,
+    normalizar_proveedor_documental,
+)
 from src.models.factura import FacturaNormalizada
 
 
 VERSION_NORMALIZADOR = "suavinex_v1"
 NOMBRE_CANONICO_SUAVINEX = "SUAVINEX GROUP, S.L."
-ALIAS_SUAVINEX = AliasProveedor(
-    nombre_canonico=NOMBRE_CANONICO_SUAVINEX,
-    alias=("SUAVINEX", "SUAVINEX GROUP SL"),
-)
 TOLERANCIA_MONETARIA = Decimal("0.01")
 _CENTIMOS = Decimal("0.01")
-_CIF_CON_PREFIJO_ES = re.compile(r"^ES\s*([A-Z]\d{8})$", re.IGNORECASE)
 
 
-@dataclass(frozen=True, slots=True)
-class ConfiguracionSuavinex:
-    archivo_origen: str
-    farmacia: str = "PIO"
-    categoria: str = "MERCANCIA"
-    requiere_conciliacion_albaranes: bool = True
-    destinatario_id_farmacia: str = "PIO"
-    destinatario_metodo_identificacion: str = "CIF"
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ConfiguracionSuavinex(ConfiguracionProveedor):
+    proveedor_nombre_canonico: str = NOMBRE_CANONICO_SUAVINEX
+    aliases: tuple[str, ...] = ("SUAVINEX", "SUAVINEX GROUP SL")
     albaran_unico_abarca_factura: bool | None = None
 
 
@@ -83,25 +79,6 @@ def _procedencia_regla(nombre: str) -> dict[str, str]:
         regla=nombre,
         version_regla=VERSION_NORMALIZADOR,
     ).a_diccionario()
-
-
-def _normalizar_cif(valor: Any, incidencias: RegistroIncidencias) -> str | None:
-    cif = normalizar_identificador(valor)
-    if cif is None:
-        return None
-    coincidencia = _CIF_CON_PREFIJO_ES.fullmatch(cif.replace(" ", ""))
-    if coincidencia is None:
-        return cif
-    normalizado = coincidencia.group(1).upper()
-    incidencias.agregar(
-        campo="proveedor_cif",
-        tipo="PREFIJO_PAIS_ELIMINADO",
-        nivel=NivelIncidencia.AVISO,
-        descripcion="El CIF visible incluye el prefijo de pais ES.",
-        datos_visibles={"valor": cif},
-        decision=f"Se conserva el identificador fiscal nacional {normalizado}.",
-    )
-    return normalizado
 
 
 def _cuota(base: Decimal, porcentaje: Decimal) -> Decimal:
@@ -390,21 +367,6 @@ def _normalizar_ajustes(
     return resultado
 
 
-def _paginas_originales(metadatos: dict[str, Any]) -> tuple[int, int]:
-    paginas = metadatos.get("paginas_originales")
-    if (
-        isinstance(paginas, list)
-        and len(paginas) == 2
-        and all(isinstance(x, int) and not isinstance(x, bool) and x >= 1 for x in paginas)
-        and paginas[1] >= paginas[0]
-    ):
-        return paginas[0], paginas[1]
-    numero_paginas = metadatos.get("numero_paginas")
-    if isinstance(numero_paginas, int) and not isinstance(numero_paginas, bool) and numero_paginas >= 1:
-        return 1, numero_paginas
-    raise ValueError("Los metadatos tecnicos deben declarar paginas originales validas.")
-
-
 def _agregar_validacion(
     validaciones: list[dict[str, Any]],
     incidencias: RegistroIncidencias,
@@ -432,6 +394,8 @@ def normalizar_suavinex(
     metadatos_tecnicos: dict[str, Any],
     configuracion: ConfiguracionSuavinex,
     fecha_ejecucion: datetime | None = None,
+    *,
+    archivo_origen: str,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     general = extraccion_general.get("factura", extraccion_general)
     incidencias = RegistroIncidencias()
@@ -448,9 +412,12 @@ def normalizar_suavinex(
             decision="tipo_documento permanece en null.",
         )
 
-    proveedor_visible = valor_visible(general.get("proveedor_nombre"))
-    proveedor = ALIAS_SUAVINEX.normalizar(proveedor_visible)
-    if proveedor_visible is not None and proveedor != NOMBRE_CANONICO_SUAVINEX:
+    proveedor_visible, proveedor, proveedor_reconocido = (
+        normalizar_proveedor_documental(
+            general.get("proveedor_nombre"), configuracion
+        )
+    )
+    if proveedor_visible is not None and not proveedor_reconocido:
         incidencias.agregar(
             campo="proveedor_nombre",
             tipo="PROVEEDOR_SUAVINEX_NO_RECONOCIDO",
@@ -477,23 +444,23 @@ def normalizar_suavinex(
         incidencias,
     )
     ajustes = _normalizar_ajustes(list(general.get("ajustes", [])), incidencias)
-    destinatario_bruto = general.get("destinatario") or {}
-    pagina_inicio, pagina_fin = _paginas_originales(metadatos_tecnicos)
+    cabecera = construir_cabecera_documental(
+        general,
+        metadatos_tecnicos,
+        configuracion,
+        incidencias,
+        tipo_documento=tipo_documento,
+        proveedor_nombre=proveedor,
+        normalizar_cif=lambda valor, registro: normalizar_identificador_fiscal_es(
+            valor, registro, etiqueta_visible="CIF"
+        ),
+    )
+    destinatario = construir_destinatario(general.get("destinatario"), configuracion)
+    pagina_inicio = cabecera["pagina_inicio"]
+    pagina_fin = cabecera["pagina_fin"]
 
     factura = {
-        "tipo_documento": tipo_documento,
-        "categoria": configuracion.categoria,
-        "requiere_conciliacion_albaranes": configuracion.requiere_conciliacion_albaranes,
-        "pagina_inicio": pagina_inicio,
-        "pagina_fin": pagina_fin,
-        "proveedor_nombre": proveedor,
-        "proveedor_cif": _normalizar_cif(
-            valor_visible(general.get("proveedor_cif")), incidencias
-        ),
-        "numero_factura": normalizar_identificador(
-            valor_visible(general.get("numero_factura"))
-        ),
-        "fecha_factura": _fecha_visible(general.get("fecha_factura")),
+        **cabecera,
         "base_imponible_total": base,
         "iva_total": iva,
         "recargo_equivalencia_total": recargo,
@@ -502,16 +469,7 @@ def normalizar_suavinex(
         "impuestos": impuestos,
         "albaranes": albaranes,
         "ajustes": ajustes,
-        "destinatario": {
-            "id_farmacia": normalizar_identificador(
-                configuracion.destinatario_id_farmacia
-            ),
-            "nombre": valor_visible(destinatario_bruto.get("nombre")),
-            "cif": normalizar_identificador(
-                valor_visible(destinatario_bruto.get("cif"))
-            ),
-            "metodo_identificacion": configuracion.destinatario_metodo_identificacion,
-        },
+        "destinatario": destinatario,
         "fecha_cargo": None,
         "periodo_facturacion_inicio": None,
         "periodo_facturacion_fin": None,
@@ -567,7 +525,7 @@ def normalizar_suavinex(
     resultado = {
         "version_normalizador": VERSION_NORMALIZADOR,
         "fecha_ejecucion": instante.astimezone(timezone.utc).isoformat(),
-        "archivo_origen": configuracion.archivo_origen,
+        "archivo_origen": archivo_origen,
         "paginas_originales": [pagina_inicio, pagina_fin],
         "resultado_normalizado": factura,
         "procedencia_bloques": {
@@ -584,8 +542,8 @@ def normalizar_suavinex(
             "farmacia": configuracion.farmacia,
             "categoria": configuracion.categoria,
             "requiere_conciliacion_albaranes": configuracion.requiere_conciliacion_albaranes,
-            "destinatario_id_farmacia": configuracion.destinatario_id_farmacia,
-            "destinatario_metodo_identificacion": configuracion.destinatario_metodo_identificacion,
+            "destinatario_id_farmacia": configuracion.id_farmacia,
+            "destinatario_metodo_identificacion": configuracion.metodo_identificacion_farmacia,
             "albaran_unico_abarca_factura": configuracion.albaran_unico_abarca_factura,
         },
         "validaciones_monetarias": validaciones,

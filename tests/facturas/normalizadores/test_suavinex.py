@@ -37,10 +37,10 @@ def ejecutar(
         datos["metadatos_prueba"],
         configuracion
         or ConfiguracionSuavinex(
-            archivo_origen="documento_suavinex.pdf",
             albaran_unico_abarca_factura=True,
         ),
         fecha_ejecucion=INSTANTE,
+        archivo_origen="documento_suavinex.pdf",
     )
 
 
@@ -181,7 +181,6 @@ def test_albaran_unico_y_dato_incompatible_bloqueado(normalizado) -> None:
 def test_false_y_none_bloquean_importes_del_albaran(relacion) -> None:
     resultado, incidencias = ejecutar(
         configuracion=ConfiguracionSuavinex(
-            archivo_origen="documento_suavinex.pdf",
             albaran_unico_abarca_factura=relacion,
         )
     )
@@ -200,7 +199,7 @@ def test_no_aplica_signos_de_abono_dermofarm() -> None:
         extraccion["factura"][campo]["valor"] *= -1
     resultado, _ = ejecutar(
         extraccion,
-        ConfiguracionSuavinex(archivo_origen="documento_suavinex.pdf"),
+        ConfiguracionSuavinex(),
     )
     factura = resultado["resultado_normalizado"]
     assert factura["base_imponible_total"] == Decimal("-531.26")
@@ -218,12 +217,11 @@ def test_campo_sin_evidencia_permanece_ausente() -> None:
 def test_configuracion_interna_no_procede_de_luna() -> None:
     resultado, _ = ejecutar(
         configuracion=ConfiguracionSuavinex(
-            archivo_origen="documento_suavinex.pdf",
             farmacia="PRUEBA",
             categoria="CATEGORIA_INTERNA",
             requiere_conciliacion_albaranes=False,
-            destinatario_id_farmacia="0007",
-            destinatario_metodo_identificacion="INTERNO",
+            id_farmacia="0007",
+            metodo_identificacion_farmacia="INTERNO",
             albaran_unico_abarca_factura=True,
         )
     )

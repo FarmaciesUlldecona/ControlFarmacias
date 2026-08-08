@@ -30,8 +30,9 @@ def normalizado() -> tuple[dict, list[dict]]:
     return normalizar_dermofarm(
         cargar(RUTA_EXTRACCION),
         cargar(RUTA_METADATOS),
-        ConfiguracionDermofarm(archivo_origen="documento_01.pdf"),
+        ConfiguracionDermofarm(),
         fecha_ejecucion=INSTANTE,
+        archivo_origen="documento_01.pdf",
     )
 
 
@@ -46,8 +47,9 @@ def test_no_reconoce_dermofarm_por_subcadena() -> None:
     resultado, incidencias = normalizar_dermofarm(
         extraccion,
         cargar(RUTA_METADATOS),
-        ConfiguracionDermofarm(archivo_origen="documento_01.pdf"),
+        ConfiguracionDermofarm(),
         fecha_ejecucion=INSTANTE,
+        archivo_origen="documento_01.pdf",
     )
     assert resultado["resultado_normalizado"]["proveedor_nombre"] == "DERMOFARMACIA DEL SUR"
     assert any(x["tipo_incidencia"] == "PROVEEDOR_DERMOFARM_NO_RECONOCIDO" for x in incidencias)
@@ -76,8 +78,9 @@ def test_sin_evidencia_de_abono_no_corrige_signos() -> None:
     resultado, incidencias = normalizar_dermofarm(
         extraccion,
         cargar(RUTA_METADATOS),
-        ConfiguracionDermofarm(archivo_origen="documento_01.pdf"),
+        ConfiguracionDermofarm(),
         fecha_ejecucion=INSTANTE,
+        archivo_origen="documento_01.pdf",
     )
     factura = resultado["resultado_normalizado"]
     assert factura["tipo_documento"] is None
@@ -107,8 +110,9 @@ def test_total_sin_evidencia_permanece_ausente() -> None:
     resultado, incidencias = normalizar_dermofarm(
         extraccion,
         cargar(RUTA_METADATOS),
-        ConfiguracionDermofarm(archivo_origen="documento_01.pdf"),
+        ConfiguracionDermofarm(),
         fecha_ejecucion=INSTANTE,
+        archivo_origen="documento_01.pdf",
     )
     assert resultado["resultado_normalizado"]["importe_total"] is None
     assert resultado["validaciones_monetarias"][0]["estado"] == "NO_EVALUABLE"
@@ -138,14 +142,14 @@ def test_configuracion_interna_no_procede_de_luna() -> None:
         cargar(RUTA_EXTRACCION),
         cargar(RUTA_METADATOS),
         ConfiguracionDermofarm(
-            archivo_origen="documento_01.pdf",
             farmacia="PRUEBA",
             categoria="CATEGORIA_INTERNA",
             requiere_conciliacion_albaranes=False,
-            destinatario_id_farmacia="0007",
-            destinatario_metodo_identificacion="INTERNO",
+            id_farmacia="0007",
+            metodo_identificacion_farmacia="INTERNO",
         ),
         fecha_ejecucion=INSTANTE,
+        archivo_origen="documento_01.pdf",
     )
     factura = resultado["resultado_normalizado"]
     assert factura["categoria"] == "CATEGORIA_INTERNA"
@@ -164,10 +168,22 @@ def test_determinismo() -> None:
     argumentos = (
         cargar(RUTA_EXTRACCION),
         cargar(RUTA_METADATOS),
-        ConfiguracionDermofarm(archivo_origen="documento_01.pdf"),
+        ConfiguracionDermofarm(),
     )
-    primero = serializar_valor(normalizar_dermofarm(*argumentos, fecha_ejecucion=INSTANTE))
-    segundo = serializar_valor(normalizar_dermofarm(*argumentos, fecha_ejecucion=INSTANTE))
+    primero = serializar_valor(
+        normalizar_dermofarm(
+            *argumentos,
+            fecha_ejecucion=INSTANTE,
+            archivo_origen="documento_01.pdf",
+        )
+    )
+    segundo = serializar_valor(
+        normalizar_dermofarm(
+            *argumentos,
+            fecha_ejecucion=INSTANTE,
+            archivo_origen="documento_01.pdf",
+        )
+    )
     assert primero == segundo
 
 

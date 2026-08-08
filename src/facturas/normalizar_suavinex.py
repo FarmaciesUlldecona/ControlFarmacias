@@ -32,9 +32,9 @@ def ejecutar() -> tuple[Path, Path]:
         extraccion,
         metadatos,
         ConfiguracionSuavinex(
-            archivo_origen=metadatos["documento_local"],
             albaran_unico_abarca_factura=True,
         ),
+        archivo_origen=metadatos["documento_local"],
     )
     RUTA_SALIDA.mkdir(parents=True, exist_ok=True)
     ruta_factura = RUTA_SALIDA / "factura_normalizada.json"
