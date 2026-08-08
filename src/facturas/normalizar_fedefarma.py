@@ -39,9 +39,9 @@ def ejecutar() -> tuple[Path, Path]:
         literal,
         metadatos,
         ConfiguracionFedefarma(
-            archivo_origen=metadatos["documento_local"],
             usar_tablas_literales=True,
         ),
+        archivo_origen=metadatos["documento_local"],
     )
     RUTA_SALIDA.mkdir(parents=True, exist_ok=True)
     ruta_factura = RUTA_SALIDA / "factura_normalizada.json"

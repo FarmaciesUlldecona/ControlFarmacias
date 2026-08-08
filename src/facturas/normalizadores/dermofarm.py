@@ -8,16 +8,16 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from src.facturas.normalizadores.comun import (
-    EstadoValidacion,
     NivelIncidencia,
     Procedencia,
     RegistroIncidencias,
     TipoProcedencia,
     aplicar_regla_determinista,
-    fecha_visible_a_iso,
-    importe_espanol_a_decimal,
+    decimal_visible,
+    fecha_visible,
     normalizar_identificador,
-    validar_suma_monetaria,
+    procedencia_visible,
+    registrar_validacion_monetaria,
     valor_visible,
 )
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
@@ -32,19 +32,16 @@ from src.models.factura import FacturaNormalizada
 
 VERSION_NORMALIZADOR = "dermofarm_v1"
 NOMBRE_CANONICO_DERMOFARM = "DERMOFARM, S.A.U."
+_DESCRIPCION_VALIDACION = (
+    "La validacion monetaria no ha podido confirmarse correctamente."
+)
+_DECISION_VALIDACION = "No se corrigen importes por plausibilidad."
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ConfiguracionDermofarm(ConfiguracionProveedor):
     proveedor_nombre_canonico: str = NOMBRE_CANONICO_DERMOFARM
     aliases: tuple[str, ...] = ("DERMOFARM",)
-
-
-def _decimal_visible(campo: Any) -> Decimal | None:
-    valor = valor_visible(campo)
-    if valor is None:
-        return None
-    return importe_espanol_a_decimal(valor)
 
 
 def _porcentaje_visible(campo: Any) -> Decimal | None:
@@ -57,17 +54,6 @@ def _porcentaje_visible(campo: Any) -> Decimal | None:
         raise ValueError(f"Porcentaje fiscal no valido: {valor!r}") from error
 
 
-def _fecha_visible(campo: Any) -> str | None:
-    valor = valor_visible(campo)
-    if valor is None:
-        return None
-    return fecha_visible_a_iso(str(valor))
-
-
-def _procedencia_visible(fuente: str = "luna_general") -> dict[str, str]:
-    return Procedencia(TipoProcedencia.LECTURA_VISIBLE, fuente).a_diccionario()
-
-
 def _importe_contable(
     valor: Decimal | None,
     tipo_documento: str | None,
@@ -75,7 +61,7 @@ def _importe_contable(
     if valor is None:
         return None, None
     if tipo_documento != "ABONO":
-        return valor, _procedencia_visible()
+        return valor, procedencia_visible()
     resultado = aplicar_regla_determinista(
         nombre="signo_contable_abono_dermofarm",
         version=VERSION_NORMALIZADOR,
@@ -93,10 +79,10 @@ def _normalizar_impuestos(
 ) -> list[dict[str, Any]]:
     normalizadas = []
     for fila in filas:
-        base, _ = _importe_contable(_decimal_visible(fila.get("base_imponible")), tipo_documento)
-        cuota_iva, _ = _importe_contable(_decimal_visible(fila.get("cuota_iva")), tipo_documento)
+        base, _ = _importe_contable(decimal_visible(fila.get("base_imponible")), tipo_documento)
+        cuota_iva, _ = _importe_contable(decimal_visible(fila.get("cuota_iva")), tipo_documento)
         cuota_recargo, _ = _importe_contable(
-            _decimal_visible(fila.get("cuota_recargo_equivalencia")), tipo_documento
+            decimal_visible(fila.get("cuota_recargo_equivalencia")), tipo_documento
         )
         normalizadas.append(
             {
@@ -153,15 +139,15 @@ def _normalizar_albaranes(
     resultado = []
     for fila in filas:
         numero = normalizar_identificador(valor_visible(fila.get("numero_albaran")))
-        fecha = _fecha_visible(fila.get("fecha_albaran"))
+        fecha = fecha_visible(fila.get("fecha_albaran"))
         if numero is None and fecha is None:
             continue
         movimiento = tipo_documento if tipo_documento == "ABONO" else None
         importe_base, _ = _importe_contable(
-            _decimal_visible(fila.get("importe_base")), tipo_documento
+            decimal_visible(fila.get("importe_base")), tipo_documento
         )
         importe_total, _ = _importe_contable(
-            _decimal_visible(fila.get("importe_total")), tipo_documento
+            decimal_visible(fila.get("importe_total")), tipo_documento
         )
         if importe_base is None and importe_total is None:
             incidencias.agregar(
@@ -182,7 +168,7 @@ def _normalizar_albaranes(
                 "importe_base": importe_base,
                 "importe_total": importe_total,
                 "procedencia": {
-                    "numero_y_fecha": _procedencia_visible(),
+                    "numero_y_fecha": procedencia_visible(),
                     "tipo_movimiento": (
                         Procedencia(
                             TipoProcedencia.REGLA_DETERMINISTA,
@@ -197,27 +183,6 @@ def _normalizar_albaranes(
             }
         )
     return resultado
-
-
-def _agregar_validacion(
-    validaciones: list[dict[str, Any]],
-    incidencias: RegistroIncidencias,
-    nombre: str,
-    sumandos: list[Decimal | None],
-    esperado: Decimal | None,
-    tolerancia: Decimal = Decimal("0.01"),
-) -> None:
-    resultado = validar_suma_monetaria(sumandos, esperado, tolerancia=tolerancia)
-    validaciones.append({"nombre": nombre, **resultado.a_diccionario()})
-    if resultado.estado is not EstadoValidacion.OK:
-        incidencias.agregar(
-            campo=nombre,
-            tipo=f"VALIDACION_MONETARIA_{resultado.estado.value}",
-            nivel=NivelIncidencia.REVISION_MANUAL,
-            descripcion="La validacion monetaria no ha podido confirmarse correctamente.",
-            datos_visibles=resultado.a_diccionario(),
-            decision="No se corrigen importes por plausibilidad.",
-        )
 
 
 def normalizar_dermofarm(
@@ -259,7 +224,7 @@ def normalizar_dermofarm(
         )
 
     importes_originales = {
-        campo: _decimal_visible(general.get(campo))
+        campo: decimal_visible(general.get(campo))
         for campo in (
             "base_imponible_total",
             "iva_total",
@@ -319,7 +284,7 @@ def normalizar_dermofarm(
     }
 
     validaciones: list[dict[str, Any]] = []
-    _agregar_validacion(
+    registrar_validacion_monetaria(
         validaciones,
         incidencias,
         "total_factura",
@@ -329,6 +294,8 @@ def normalizar_dermofarm(
             factura["recargo_equivalencia_total"],
         ],
         factura["importe_total"],
+        descripcion_incidencia=_DESCRIPCION_VALIDACION,
+        decision_incidencia=_DECISION_VALIDACION,
     )
     if impuestos:
         tramo = impuestos[0]
@@ -341,15 +308,23 @@ def normalizar_dermofarm(
             if base is not None and tipo_recargo is not None
             else None
         )
-        _agregar_validacion(
-            validaciones, incidencias, "cuota_iva", [iva_calculado], tramo["cuota_iva"]
+        registrar_validacion_monetaria(
+            validaciones,
+            incidencias,
+            "cuota_iva",
+            [iva_calculado],
+            tramo["cuota_iva"],
+            descripcion_incidencia=_DESCRIPCION_VALIDACION,
+            decision_incidencia=_DECISION_VALIDACION,
         )
-        _agregar_validacion(
+        registrar_validacion_monetaria(
             validaciones,
             incidencias,
             "cuota_recargo_equivalencia",
             [recargo_calculado],
             tramo["cuota_recargo_equivalencia"],
+            descripcion_incidencia=_DESCRIPCION_VALIDACION,
+            decision_incidencia=_DECISION_VALIDACION,
         )
 
     modelo = FacturaNormalizada.desde_diccionario(factura)

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.fedefarma import (
     ConfiguracionFedefarma,
     limpiar_etiqueta_albaran,
@@ -37,6 +38,7 @@ def ejecutar(
     general: dict | None = None,
     literal: dict | None = None,
     configuracion: ConfiguracionFedefarma | None = None,
+    archivo_origen: str = "documento_fedefarma.pdf",
 ) -> tuple[dict, list[dict]]:
     entrada_general = general if general is not None else cargar(RUTA_GENERAL)
     entrada_literal = literal if literal is not None else cargar(RUTA_LITERAL)
@@ -46,10 +48,10 @@ def ejecutar(
         entrada_general["metadatos_prueba"],
         configuracion
         or ConfiguracionFedefarma(
-            archivo_origen="documento_fedefarma.pdf",
             usar_tablas_literales=True,
         ),
         fecha_ejecucion=INSTANTE,
+        archivo_origen=archivo_origen,
     )
 
 
@@ -149,7 +151,6 @@ def test_procedencia_literal_pagina_y_seccion(normalizado) -> None:
 def test_false_y_none_bloquean_fallback_literal(usar_literal) -> None:
     resultado, incidencias = ejecutar(
         configuracion=ConfiguracionFedefarma(
-            archivo_origen="documento_fedefarma.pdf",
             usar_tablas_literales=usar_literal,
         )
     )
@@ -254,11 +255,10 @@ def test_ajustes_no_duplican_abono_y_conservan_bonificacion(normalizado) -> None
 def test_configuracion_y_datos_documentales_destinatario() -> None:
     resultado, _ = ejecutar(
         configuracion=ConfiguracionFedefarma(
-            archivo_origen="documento_fedefarma.pdf",
             categoria="INTERNA",
             requiere_conciliacion_albaranes=False,
-            destinatario_id_farmacia="0007",
-            destinatario_metodo_identificacion="INTERNO",
+            id_farmacia="0007",
+            metodo_identificacion_farmacia="INTERNO",
             usar_tablas_literales=True,
         )
     )
@@ -278,6 +278,38 @@ def test_paginas_metadatos_y_fecha_cargo_bloqueada(normalizado) -> None:
     assert resultado["paginas_originales"] == [1, 2]
     assert resultado["resultado_normalizado"]["fecha_cargo"] is None
     assert resultado["procedencia_bloques"]["paginas"] == "metadato_tecnico"
+
+
+def test_configuracion_comun_reutilizable_con_archivos_fuera_de_politica() -> None:
+    configuracion = ConfiguracionFedefarma(usar_tablas_literales=True)
+    assert isinstance(configuracion, ConfiguracionProveedor)
+    assert not hasattr(configuracion, "archivo_origen")
+
+    primero, incidencias_primero = ejecutar(
+        configuracion=configuracion,
+        archivo_origen="fedefarma_uno.pdf",
+    )
+    segundo, incidencias_segundo = ejecutar(
+        configuracion=configuracion,
+        archivo_origen="fedefarma_dos.pdf",
+    )
+
+    assert primero["archivo_origen"] == "fedefarma_uno.pdf"
+    assert segundo["archivo_origen"] == "fedefarma_dos.pdf"
+    assert primero["resultado_normalizado"] == segundo["resultado_normalizado"]
+    assert primero["configuracion_interna_aplicada"] == segundo[
+        "configuracion_interna_aplicada"
+    ]
+    assert incidencias_primero == incidencias_segundo
+
+
+def test_adaptador_usa_cabecera_y_destinatario_comunes() -> None:
+    texto = (RAIZ / "src/facturas/normalizadores/fedefarma.py").read_text(
+        encoding="utf-8"
+    )
+    assert "class ConfiguracionFedefarma(ConfiguracionProveedor)" in texto
+    assert "construir_cabecera_documental(" in texto
+    assert "construir_destinatario(" in texto
 
 
 def test_determinismo() -> None:

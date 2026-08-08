@@ -240,6 +240,34 @@ def valor_visible(campo: Any) -> Any:
     return campo.get("valor")
 
 
+def decimal_visible(campo: Any) -> Decimal | None:
+    """Normaliza un importe solo cuando el campo contiene evidencia valida."""
+    valor = valor_visible(campo)
+    return importe_espanol_a_decimal(valor) if valor is not None else None
+
+
+def porcentaje_visible(campo: Any) -> Decimal | None:
+    """Normaliza un porcentaje visible sin deducirlo desde otros importes."""
+    valor = valor_visible(campo)
+    if valor is None:
+        return None
+    if isinstance(valor, bool):
+        raise ValueError(f"Porcentaje fiscal no valido: {valor!r}")
+    try:
+        porcentaje = Decimal(str(valor))
+    except (InvalidOperation, ValueError, TypeError) as error:
+        raise ValueError(f"Porcentaje fiscal no valido: {valor!r}") from error
+    if not porcentaje.is_finite():
+        raise ValueError(f"Porcentaje fiscal no finito: {valor!r}")
+    return porcentaje
+
+
+def fecha_visible(campo: Any) -> str | None:
+    """Normaliza a ISO una fecha respaldada por evidencia valida."""
+    valor = valor_visible(campo)
+    return fecha_visible_a_iso(str(valor)) if valor is not None else None
+
+
 def _evidencia_valida(evidencia: Any) -> bool:
     if evidencia is None:
         return False
@@ -276,6 +304,58 @@ def validar_suma_monetaria(
     diferencia = obtenido - esperado
     estado = EstadoValidacion.OK if abs(diferencia) <= tolerancia else EstadoValidacion.ERROR
     return ResultadoValidacionMonetaria(estado, esperado, obtenido, diferencia, tolerancia)
+
+
+def registrar_validacion_monetaria(
+    validaciones: list[dict[str, Any]],
+    incidencias: RegistroIncidencias,
+    nombre: str,
+    sumandos: Sequence[Decimal | None],
+    esperado: Decimal | None,
+    *,
+    tolerancia: Decimal = Decimal("0.01"),
+    descripcion_incidencia: str,
+    decision_incidencia: str,
+) -> ResultadoValidacionMonetaria:
+    """Registra una suma y conserva la politica de incidencia del adaptador."""
+    resultado = validar_suma_monetaria(sumandos, esperado, tolerancia=tolerancia)
+    validaciones.append({"nombre": nombre, **resultado.a_diccionario()})
+    if resultado.estado is not EstadoValidacion.OK:
+        incidencias.agregar(
+            campo=nombre,
+            tipo=f"VALIDACION_MONETARIA_{resultado.estado.value}",
+            nivel=NivelIncidencia.REVISION_MANUAL,
+            descripcion=descripcion_incidencia,
+            datos_visibles=resultado.a_diccionario(),
+            decision=decision_incidencia,
+        )
+    return resultado
+
+
+def procedencia_visible(fuente: str = "luna_general") -> dict[str, str]:
+    return Procedencia(TipoProcedencia.LECTURA_VISIBLE, fuente).a_diccionario()
+
+
+def procedencia_metadato_tecnico(fuente: str) -> dict[str, str]:
+    return Procedencia(TipoProcedencia.METADATO_TECNICO, fuente).a_diccionario()
+
+
+def procedencia_configuracion_interna(fuente: str = "python") -> dict[str, str]:
+    return Procedencia(TipoProcedencia.CONFIGURACION_INTERNA, fuente).a_diccionario()
+
+
+def procedencia_determinista(
+    regla: str,
+    version_regla: str,
+    *,
+    fuente: str = "python",
+) -> dict[str, str]:
+    return Procedencia(
+        TipoProcedencia.REGLA_DETERMINISTA,
+        fuente,
+        regla=regla,
+        version_regla=version_regla,
+    ).a_diccionario()
 
 
 @dataclass(frozen=True, slots=True)

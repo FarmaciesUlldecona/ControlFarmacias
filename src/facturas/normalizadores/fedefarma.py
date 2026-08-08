@@ -4,23 +4,31 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 import re
 from typing import Any
 
 from src.facturas.normalizadores.comun import (
     AliasProveedor,
-    EstadoValidacion,
     NivelIncidencia,
-    Procedencia,
     RegistroIncidencias,
-    TipoProcedencia,
     aplicar_regla_determinista,
+    decimal_visible,
+    fecha_visible,
     fecha_visible_a_iso,
     importe_espanol_a_decimal,
     normalizar_identificador,
-    validar_suma_monetaria,
+    porcentaje_visible,
+    procedencia_determinista,
+    procedencia_visible,
+    registrar_validacion_monetaria,
     valor_visible,
+)
+from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
+from src.facturas.normalizadores.documento import (
+    construir_cabecera_documental,
+    construir_destinatario,
+    normalizar_proveedor_documental,
 )
 from src.models.factura import FacturaNormalizada
 
@@ -36,6 +44,8 @@ ALIAS_FEDEFARMA = AliasProveedor(
     ),
 )
 TOLERANCIA_MONETARIA = Decimal("0.01")
+_DESCRIPCION_VALIDACION = "La validacion monetaria no se ha confirmado."
+_DECISION_VALIDACION = "No se modifican cifras para forzar el cuadre."
 _CIF_SEPARADO = re.compile(r"^([A-Z])-([0-9]{2})-([0-9]{6})$", re.IGNORECASE)
 _ETIQUETA_ALBARAN = re.compile(
     r"^(?:albar(?:[aá]n|à)|n[ºo]\s*albar(?:[aá]n|à))\s*:\s*(.+)$",
@@ -43,51 +53,11 @@ _ETIQUETA_ALBARAN = re.compile(
 )
 
 
-@dataclass(frozen=True, slots=True)
-class ConfiguracionFedefarma:
-    archivo_origen: str
-    farmacia: str = "PIO"
-    categoria: str = "MERCANCIA"
-    requiere_conciliacion_albaranes: bool = True
-    destinatario_id_farmacia: str = "PIO"
-    destinatario_metodo_identificacion: str = "CIF"
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ConfiguracionFedefarma(ConfiguracionProveedor):
+    proveedor_nombre_canonico: str = NOMBRE_CANONICO_FEDEFARMA
+    aliases: tuple[str, ...] = ALIAS_FEDEFARMA.alias
     usar_tablas_literales: bool | None = None
-
-
-def _decimal_visible(campo: Any) -> Decimal | None:
-    valor = valor_visible(campo)
-    return importe_espanol_a_decimal(valor) if valor is not None else None
-
-
-def _porcentaje_visible(campo: Any) -> Decimal | None:
-    valor = valor_visible(campo)
-    if valor is None:
-        return None
-    try:
-        numero = Decimal(str(valor))
-    except (InvalidOperation, ValueError, TypeError) as error:
-        raise ValueError(f"Porcentaje fiscal no valido: {valor!r}") from error
-    if not numero.is_finite():
-        raise ValueError(f"Porcentaje fiscal no finito: {valor!r}")
-    return numero
-
-
-def _fecha_visible(campo: Any) -> str | None:
-    valor = valor_visible(campo)
-    return fecha_visible_a_iso(str(valor)) if valor is not None else None
-
-
-def _procedencia_visible(fuente: str) -> dict[str, str]:
-    return Procedencia(TipoProcedencia.LECTURA_VISIBLE, fuente).a_diccionario()
-
-
-def _procedencia_regla(nombre: str) -> dict[str, str]:
-    return Procedencia(
-        TipoProcedencia.REGLA_DETERMINISTA,
-        "python",
-        regla=nombre,
-        version_regla=VERSION_NORMALIZADOR,
-    ).a_diccionario()
 
 
 def limpiar_etiqueta_albaran(valor: str | int | None) -> str | None:
@@ -123,11 +93,11 @@ def _normalizar_impuestos(
 ) -> list[dict[str, Any]]:
     resultado = []
     for fila in filas:
-        base = _decimal_visible(fila.get("base_imponible"))
-        cuota_iva = _decimal_visible(fila.get("cuota_iva"))
-        cuota_recargo = _decimal_visible(fila.get("cuota_recargo_equivalencia"))
-        tipo_iva = _porcentaje_visible(fila.get("tipo_iva"))
-        tipo_recargo = _porcentaje_visible(fila.get("tipo_recargo_equivalencia"))
+        base = decimal_visible(fila.get("base_imponible"))
+        cuota_iva = decimal_visible(fila.get("cuota_iva"))
+        cuota_recargo = decimal_visible(fila.get("cuota_recargo_equivalencia"))
+        tipo_iva = porcentaje_visible(fila.get("tipo_iva"))
+        tipo_recargo = porcentaje_visible(fila.get("tipo_recargo_equivalencia"))
         importes = (base, cuota_iva, cuota_recargo)
         if all(valor == Decimal("0") for valor in importes):
             incidencias.agregar(
@@ -159,7 +129,7 @@ def _normalizar_general_albaranes(
     resultado = []
     for fila in filas:
         numero = limpiar_etiqueta_albaran(valor_visible(fila.get("numero_albaran")))
-        fecha = _fecha_visible(fila.get("fecha_albaran"))
+        fecha = fecha_visible(fila.get("fecha_albaran"))
         if numero is None and fecha is None:
             continue
         marcador = valor_visible(fila.get("tipo_movimiento"))
@@ -174,11 +144,11 @@ def _normalizar_general_albaranes(
                 "fecha_albaran": fecha,
                 "tipo_movimiento": movimiento,
                 "descripcion": valor_visible(fila.get("descripcion")),
-                "importe_base": _decimal_visible(fila.get("importe_base")),
-                "importe_total": _decimal_visible(fila.get("importe_total")),
+                "importe_base": decimal_visible(fila.get("importe_base")),
+                "importe_total": decimal_visible(fila.get("importe_total")),
                 "pagina": _pagina_evidencia(fila),
                 "seccion": "extraccion_general",
-                "procedencia": _procedencia_visible("luna_general"),
+                "procedencia": procedencia_visible("luna_general"),
             }
         )
     return resultado
@@ -265,7 +235,7 @@ def _normalizar_literal_albaranes(
                 "importe_total": importe,
                 "pagina": fila.get("pagina_original"),
                 "seccion": seccion,
-                "procedencia": _procedencia_visible("luna_tablas_literales"),
+                "procedencia": procedencia_visible("luna_tablas_literales"),
             }
         )
     return resultado
@@ -350,8 +320,8 @@ def _normalizar_vencimientos(
 ) -> list[dict[str, Any]]:
     resultado = []
     for fila in filas:
-        fecha = _fecha_visible(fila.get("fecha_vencimiento"))
-        importe = _decimal_visible(fila.get("importe"))
+        fecha = fecha_visible(fila.get("fecha_vencimiento"))
+        importe = decimal_visible(fila.get("importe"))
         if fecha is None and importe is None:
             continue
         if importe is None:
@@ -388,7 +358,7 @@ def _normalizar_ajustes(
     for fila in filas:
         tipo = valor_visible(fila.get("tipo_ajuste"))
         descripcion = valor_visible(fila.get("descripcion"))
-        importe = _decimal_visible(fila.get("importe"))
+        importe = decimal_visible(fila.get("importe"))
         if tipo == "ABONO" and importe in importes_abono:
             incidencias.agregar(
                 campo="ajustes",
@@ -412,47 +382,16 @@ def _normalizar_ajustes(
                 "incluido_en_base": valor_visible(fila.get("incluido_en_base")),
                 "incluido_en_total": valor_visible(fila.get("incluido_en_total")),
                 "procedencia": (
-                    _procedencia_regla("clasificacion_bonificacion_fedefarma")
+                    procedencia_determinista(
+                        "clasificacion_bonificacion_fedefarma",
+                        VERSION_NORMALIZADOR,
+                    )
                     if es_bonificacion
-                    else _procedencia_visible("luna_general")
+                    else procedencia_visible("luna_general")
                 ),
             }
         )
     return resultado
-
-
-def _paginas_originales(metadatos: dict[str, Any]) -> tuple[int, int]:
-    paginas = metadatos.get("paginas_originales")
-    if (
-        isinstance(paginas, list)
-        and len(paginas) == 2
-        and all(isinstance(x, int) and not isinstance(x, bool) and x >= 1 for x in paginas)
-        and paginas[1] >= paginas[0]
-    ):
-        return paginas[0], paginas[1]
-    raise ValueError("Los metadatos tecnicos deben declarar paginas originales validas.")
-
-
-def _agregar_validacion(
-    validaciones: list[dict[str, Any]],
-    incidencias: RegistroIncidencias,
-    nombre: str,
-    sumandos: list[Decimal | None],
-    esperado: Decimal | None,
-) -> None:
-    validacion = validar_suma_monetaria(
-        sumandos, esperado, tolerancia=TOLERANCIA_MONETARIA
-    )
-    validaciones.append({"nombre": nombre, **validacion.a_diccionario()})
-    if validacion.estado is not EstadoValidacion.OK:
-        incidencias.agregar(
-            campo=nombre,
-            tipo=f"VALIDACION_MONETARIA_{validacion.estado.value}",
-            nivel=NivelIncidencia.REVISION_MANUAL,
-            descripcion="La validacion monetaria no se ha confirmado.",
-            datos_visibles=validacion.a_diccionario(),
-            decision="No se modifican cifras para forzar el cuadre.",
-        )
 
 
 def normalizar_fedefarma(
@@ -461,6 +400,8 @@ def normalizar_fedefarma(
     metadatos_tecnicos: dict[str, Any],
     configuracion: ConfiguracionFedefarma,
     fecha_ejecucion: datetime | None = None,
+    *,
+    archivo_origen: str,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     general = extraccion_general.get("factura", extraccion_general)
     incidencias = RegistroIncidencias()
@@ -476,9 +417,12 @@ def normalizar_fedefarma(
             decision="tipo_documento permanece en null.",
         )
 
-    proveedor_visible = valor_visible(general.get("proveedor_nombre"))
-    proveedor = ALIAS_FEDEFARMA.normalizar(proveedor_visible)
-    if proveedor_visible is not None and proveedor != NOMBRE_CANONICO_FEDEFARMA:
+    proveedor_visible, proveedor, proveedor_reconocido = (
+        normalizar_proveedor_documental(
+            general.get("proveedor_nombre"), configuracion
+        )
+    )
+    if proveedor_visible is not None and not proveedor_reconocido:
         incidencias.agregar(
             campo="proveedor_nombre",
             tipo="PROVEEDOR_FEDEFARMA_NO_RECONOCIDO",
@@ -501,27 +445,25 @@ def normalizar_fedefarma(
     vencimientos = _normalizar_vencimientos(
         list(general.get("vencimientos", [])), incidencias
     )
-    base = _decimal_visible(general.get("base_imponible_total"))
-    iva = _decimal_visible(general.get("iva_total"))
-    recargo = _decimal_visible(general.get("recargo_equivalencia_total"))
-    total = _decimal_visible(general.get("importe_total"))
-    destinatario_bruto = general.get("destinatario") or {}
-    pagina_inicio, pagina_fin = _paginas_originales(metadatos_tecnicos)
+    base = decimal_visible(general.get("base_imponible_total"))
+    iva = decimal_visible(general.get("iva_total"))
+    recargo = decimal_visible(general.get("recargo_equivalencia_total"))
+    total = decimal_visible(general.get("importe_total"))
+    cabecera = construir_cabecera_documental(
+        general,
+        metadatos_tecnicos,
+        configuracion,
+        incidencias,
+        tipo_documento=tipo_documento,
+        proveedor_nombre=proveedor,
+        normalizar_cif=_normalizar_cif,
+    )
+    destinatario = construir_destinatario(general.get("destinatario"), configuracion)
+    pagina_inicio = cabecera["pagina_inicio"]
+    pagina_fin = cabecera["pagina_fin"]
 
     factura = {
-        "tipo_documento": tipo_documento,
-        "categoria": configuracion.categoria,
-        "requiere_conciliacion_albaranes": configuracion.requiere_conciliacion_albaranes,
-        "pagina_inicio": pagina_inicio,
-        "pagina_fin": pagina_fin,
-        "proveedor_nombre": proveedor,
-        "proveedor_cif": _normalizar_cif(
-            valor_visible(general.get("proveedor_cif")), incidencias
-        ),
-        "numero_factura": normalizar_identificador(
-            valor_visible(general.get("numero_factura"))
-        ),
-        "fecha_factura": _fecha_visible(general.get("fecha_factura")),
+        **cabecera,
         "base_imponible_total": base,
         "iva_total": iva,
         "recargo_equivalencia_total": recargo,
@@ -530,16 +472,7 @@ def normalizar_fedefarma(
         "impuestos": impuestos,
         "albaranes": albaranes,
         "ajustes": ajustes,
-        "destinatario": {
-            "id_farmacia": normalizar_identificador(
-                configuracion.destinatario_id_farmacia
-            ),
-            "nombre": valor_visible(destinatario_bruto.get("nombre")),
-            "cif": normalizar_identificador(
-                valor_visible(destinatario_bruto.get("cif"))
-            ),
-            "metodo_identificacion": configuracion.destinatario_metodo_identificacion,
-        },
+        "destinatario": destinatario,
         "fecha_cargo": None,
         "periodo_facturacion_inicio": None,
         "periodo_facturacion_fin": None,
@@ -547,27 +480,45 @@ def normalizar_fedefarma(
     }
 
     validaciones: list[dict[str, Any]] = []
-    _agregar_validacion(validaciones, incidencias, "total_factura", [base, iva, recargo], total)
-    _agregar_validacion(
+    registrar_validacion_monetaria(
+        validaciones,
+        incidencias,
+        "total_factura",
+        [base, iva, recargo],
+        total,
+        tolerancia=TOLERANCIA_MONETARIA,
+        descripcion_incidencia=_DESCRIPCION_VALIDACION,
+        decision_incidencia=_DECISION_VALIDACION,
+    )
+    registrar_validacion_monetaria(
         validaciones,
         incidencias,
         "suma_bases_fiscales",
         [fila["base_imponible"] for fila in impuestos],
         base,
+        tolerancia=TOLERANCIA_MONETARIA,
+        descripcion_incidencia=_DESCRIPCION_VALIDACION,
+        decision_incidencia=_DECISION_VALIDACION,
     )
-    _agregar_validacion(
+    registrar_validacion_monetaria(
         validaciones,
         incidencias,
         "suma_cuotas_iva",
         [fila["cuota_iva"] for fila in impuestos],
         iva,
+        tolerancia=TOLERANCIA_MONETARIA,
+        descripcion_incidencia=_DESCRIPCION_VALIDACION,
+        decision_incidencia=_DECISION_VALIDACION,
     )
-    _agregar_validacion(
+    registrar_validacion_monetaria(
         validaciones,
         incidencias,
         "suma_cuotas_recargo",
         [fila["cuota_recargo_equivalencia"] for fila in impuestos],
         recargo,
+        tolerancia=TOLERANCIA_MONETARIA,
+        descripcion_incidencia=_DESCRIPCION_VALIDACION,
+        decision_incidencia=_DECISION_VALIDACION,
     )
 
     modelo = FacturaNormalizada.desde_diccionario(factura)
@@ -585,7 +536,7 @@ def normalizar_fedefarma(
     resultado = {
         "version_normalizador": VERSION_NORMALIZADOR,
         "fecha_ejecucion": instante.astimezone(timezone.utc).isoformat(),
-        "archivo_origen": configuracion.archivo_origen,
+        "archivo_origen": archivo_origen,
         "paginas_originales": [pagina_inicio, pagina_fin],
         "resultado_normalizado": factura,
         "procedencia_bloques": {
@@ -606,8 +557,8 @@ def normalizar_fedefarma(
             "farmacia": configuracion.farmacia,
             "categoria": configuracion.categoria,
             "requiere_conciliacion_albaranes": configuracion.requiere_conciliacion_albaranes,
-            "destinatario_id_farmacia": configuracion.destinatario_id_farmacia,
-            "destinatario_metodo_identificacion": configuracion.destinatario_metodo_identificacion,
+            "destinatario_id_farmacia": configuracion.id_farmacia,
+            "destinatario_metodo_identificacion": configuracion.metodo_identificacion_farmacia,
             "usar_tablas_literales": configuracion.usar_tablas_literales,
         },
         "validaciones_monetarias": validaciones,
