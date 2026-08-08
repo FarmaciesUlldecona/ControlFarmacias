@@ -28,6 +28,7 @@ from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
     construir_cabecera_documental,
     construir_destinatario,
+    construir_vencimientos,
     ensamblar_factura_normalizada,
     normalizar_proveedor_documental,
 )
@@ -318,30 +319,27 @@ def _fusionar_albaranes(
 def _normalizar_vencimientos(
     filas: list[dict[str, Any]], incidencias: RegistroIncidencias
 ) -> list[dict[str, Any]]:
-    resultado = []
-    for fila in filas:
-        fecha = fecha_visible(fila.get("fecha_vencimiento"))
-        importe = decimal_visible(fila.get("importe"))
-        if fecha is None and importe is None:
-            continue
-        if importe is None:
-            incidencias.agregar(
-                campo=f"vencimientos[{len(resultado)}].importe",
-                tipo="IMPORTE_VENCIMIENTO_NO_VISIBLE",
-                nivel=NivelIncidencia.REVISION_MANUAL,
-                descripcion="No existe importe visible asociado al vencimiento.",
-                datos_visibles={"fecha_vencimiento": fecha},
-                decision="No se asigna automaticamente el total de factura.",
-            )
-        resultado.append(
-            {
-                "orden": len(resultado) + 1,
-                "fecha_vencimiento": fecha,
-                "importe": importe,
-                "nota": valor_visible(fila.get("nota")),
-            }
-        )
-    return resultado
+    interpretadas = [
+        {
+            "fecha_vencimiento": fecha_visible(fila.get("fecha_vencimiento")),
+            "importe": decimal_visible(fila.get("importe")),
+            "nota": valor_visible(fila.get("nota")),
+        }
+        for fila in filas
+    ]
+    return construir_vencimientos(
+        interpretadas,
+        al_importe_ausente=lambda indice, vencimiento: incidencias.agregar(
+            campo=f"vencimientos[{indice}].importe",
+            tipo="IMPORTE_VENCIMIENTO_NO_VISIBLE",
+            nivel=NivelIncidencia.REVISION_MANUAL,
+            descripcion="No existe importe visible asociado al vencimiento.",
+            datos_visibles={
+                "fecha_vencimiento": vencimiento["fecha_vencimiento"]
+            },
+            decision="No se asigna automaticamente el total de factura.",
+        ),
+    )
 
 
 def _normalizar_ajustes(

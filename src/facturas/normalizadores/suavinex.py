@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
@@ -26,6 +27,7 @@ from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
     construir_cabecera_documental,
     construir_destinatario,
+    construir_vencimientos,
     ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
     normalizar_proveedor_documental,
@@ -160,44 +162,48 @@ def _normalizar_fiscalidad(
 def _normalizar_vencimientos(
     filas: list[dict[str, Any]], incidencias: RegistroIncidencias
 ) -> list[dict[str, Any]]:
-    resultado = []
-    for fila in filas:
-        fecha = fecha_visible(fila.get("fecha_vencimiento"))
-        importe = decimal_visible(fila.get("importe"))
-        if fecha is None and importe is None:
-            continue
-        nota_visible = valor_visible(fila.get("nota"))
-        nota = nota_visible
-        if isinstance(nota_visible, str) and nota_visible.casefold().startswith(
-            "giro domiciliado"
-        ):
-            nota = None
-            incidencias.agregar(
-                campo=f"vencimientos[{len(resultado)}].nota",
-                tipo="FORMA_PAGO_NO_ES_NOTA_VENCIMIENTO",
-                nivel=NivelIncidencia.AVISO,
-                descripcion="La forma de pago visible no describe el vencimiento.",
-                datos_visibles={"valor": nota_visible},
-                decision="La nota del vencimiento permanece en null.",
-            )
-        if importe is None:
-            incidencias.agregar(
-                campo=f"vencimientos[{len(resultado)}].importe",
-                tipo="IMPORTE_VENCIMIENTO_NO_VISIBLE",
-                nivel=NivelIncidencia.REVISION_MANUAL,
-                descripcion="El vencimiento no tiene un importe visible con evidencia.",
-                datos_visibles={"fecha_vencimiento": fecha},
-                decision="No se asigna el total de factura al vencimiento.",
-            )
-        resultado.append(
-            {
-                "orden": len(resultado) + 1,
+    def interpretar_filas() -> Iterable[dict[str, Any]]:
+        indice_salida = 0
+        for fila in filas:
+            fecha = fecha_visible(fila.get("fecha_vencimiento"))
+            importe = decimal_visible(fila.get("importe"))
+            nota_visible = valor_visible(fila.get("nota"))
+            nota = nota_visible
+            if (
+                (fecha is not None or importe is not None)
+                and isinstance(nota_visible, str)
+                and nota_visible.casefold().startswith("giro domiciliado")
+            ):
+                nota = None
+                incidencias.agregar(
+                    campo=f"vencimientos[{indice_salida}].nota",
+                    tipo="FORMA_PAGO_NO_ES_NOTA_VENCIMIENTO",
+                    nivel=NivelIncidencia.AVISO,
+                    descripcion="La forma de pago visible no describe el vencimiento.",
+                    datos_visibles={"valor": nota_visible},
+                    decision="La nota del vencimiento permanece en null.",
+                )
+            yield {
                 "fecha_vencimiento": fecha,
                 "importe": importe,
                 "nota": nota,
             }
-        )
-    return resultado
+            if fecha is not None or importe is not None:
+                indice_salida += 1
+
+    return construir_vencimientos(
+        interpretar_filas(),
+        al_importe_ausente=lambda indice, vencimiento: incidencias.agregar(
+            campo=f"vencimientos[{indice}].importe",
+            tipo="IMPORTE_VENCIMIENTO_NO_VISIBLE",
+            nivel=NivelIncidencia.REVISION_MANUAL,
+            descripcion="El vencimiento no tiene un importe visible con evidencia.",
+            datos_visibles={
+                "fecha_vencimiento": vencimiento["fecha_vencimiento"]
+            },
+            decision="No se asigna el total de factura al vencimiento.",
+        ),
+    )
 
 
 def _normalizar_albaranes(

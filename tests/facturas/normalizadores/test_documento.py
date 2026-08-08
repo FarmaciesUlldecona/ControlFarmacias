@@ -13,6 +13,7 @@ from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
     construir_cabecera_documental,
     construir_destinatario,
+    construir_vencimientos,
     ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
     normalizar_proveedor_documental,
@@ -240,6 +241,147 @@ def test_aislamiento_de_la_capa_documental() -> None:
     for ruta in rutas:
         texto = ruta.read_text(encoding="utf-8").casefold().replace("\\", "/")
         assert all(prohibido not in texto for prohibido in prohibidos)
+
+
+def test_vencimiento_con_fecha_importe_y_nota_preserva_valores() -> None:
+    filas = [
+        {
+            "fecha_vencimiento": "2026-09-07",
+            "importe": Decimal("96.73"),
+            "nota": "Texto visible sin reinterpretar",
+        }
+    ]
+
+    assert construir_vencimientos(filas) == [
+        {
+            "orden": 1,
+            "fecha_vencimiento": "2026-09-07",
+            "importe": Decimal("96.73"),
+            "nota": "Texto visible sin reinterpretar",
+        }
+    ]
+
+
+def test_vencimiento_con_nota_none_y_cero_no_considera_importe_ausente() -> None:
+    avisos = []
+    resultado = construir_vencimientos(
+        [
+            {
+                "fecha_vencimiento": "2026-09-07",
+                "importe": Decimal("0"),
+                "nota": None,
+            }
+        ],
+        al_importe_ausente=lambda indice, fila: avisos.append((indice, fila)),
+    )
+
+    assert resultado[0]["importe"] == Decimal("0")
+    assert resultado[0]["nota"] is None
+    assert avisos == []
+
+
+def test_vencimiento_con_fecha_sin_importe_conserva_none_y_notifica() -> None:
+    avisos = []
+    resultado = construir_vencimientos(
+        [{"fecha_vencimiento": "2026-09-07", "importe": None, "nota": None}],
+        al_importe_ausente=lambda indice, fila: avisos.append((indice, fila)),
+    )
+
+    assert resultado[0]["importe"] is None
+    assert avisos == [(0, resultado[0])]
+
+
+def test_vencimiento_con_importe_sin_fecha_no_infiere_fecha() -> None:
+    resultado = construir_vencimientos(
+        [{"fecha_vencimiento": None, "importe": Decimal("12.30"), "nota": None}]
+    )
+
+    assert resultado == [
+        {
+            "orden": 1,
+            "fecha_vencimiento": None,
+            "importe": Decimal("12.30"),
+            "nota": None,
+        }
+    ]
+
+
+def test_vencimiento_sin_fecha_ni_importe_se_omite_aunque_tenga_nota() -> None:
+    assert construir_vencimientos(
+        [{"fecha_vencimiento": None, "importe": None, "nota": "Forma de pago"}]
+    ) == []
+
+
+def test_vencimientos_multiples_conservan_orden_documental_y_son_deterministas(
+) -> None:
+    filas = [
+        {
+            "fecha_vencimiento": "2026-10-10",
+            "importe": Decimal("20"),
+            "nota": None,
+        },
+        {
+            "fecha_vencimiento": "2026-09-10",
+            "importe": Decimal("10"),
+            "nota": None,
+        },
+    ]
+
+    primero = construir_vencimientos(filas)
+    segundo = construir_vencimientos(filas)
+    assert primero == segundo
+    assert [fila["orden"] for fila in primero] == [1, 2]
+    assert [fila["fecha_vencimiento"] for fila in primero] == [
+        "2026-10-10",
+        "2026-09-10",
+    ]
+
+
+def test_vencimientos_conservan_procedencias_sin_cambiar_formato() -> None:
+    visible = {"tipo": "visible", "fuente": "luna_general"}
+    determinista = {
+        "tipo": "regla_determinista",
+        "fuente": "python",
+        "regla": "regla_auditada",
+        "version_regla": "v1",
+    }
+    resultado = construir_vencimientos(
+        [
+            {
+                "fecha_vencimiento": "2026-09-01",
+                "importe": Decimal("10"),
+                "nota": None,
+                "procedencia": visible,
+            },
+            {
+                "fecha_vencimiento": "2026-10-01",
+                "importe": Decimal("20"),
+                "nota": None,
+                "origen_fecha": "regla",
+                "procedencia": determinista,
+            },
+        ]
+    )
+
+    assert resultado[0]["procedencia"] is visible
+    assert resultado[1]["procedencia"] is determinista
+    assert resultado[1]["origen_fecha"] == "regla"
+
+
+def test_helper_vencimientos_no_infiere_total_fecha_ni_conoce_proveedores() -> None:
+    resultado = construir_vencimientos(
+        [{"fecha_vencimiento": None, "importe": Decimal("5"), "nota": "literal"}]
+    )
+    assert resultado[0]["fecha_vencimiento"] is None
+    assert resultado[0]["importe"] == Decimal("5")
+
+    fuente = (RAIZ / "src/facturas/normalizadores/documento.py").read_text(
+        encoding="utf-8"
+    ).casefold()
+    assert all(
+        proveedor not in fuente
+        for proveedor in ("suavinex", "fedefarma", "alliance", "dermofarm")
+    )
 
 
 def argumentos_ensamblado(configuracion) -> dict:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from datetime import datetime, timezone
 import re
 from typing import Any
@@ -138,6 +138,35 @@ def construir_destinatario(
         "cif": normalizar_identificador(valor_visible(visible.get("cif"))),
         "metodo_identificacion": configuracion.metodo_identificacion_farmacia,
     }
+
+
+def construir_vencimientos(
+    filas: Iterable[Mapping[str, Any]],
+    *,
+    al_importe_ausente: Callable[[int, Mapping[str, Any]], Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Construye vencimientos ya interpretados en su orden documental."""
+    resultado: list[dict[str, Any]] = []
+    for fila in filas:
+        fecha = fila.get("fecha_vencimiento")
+        importe = fila.get("importe")
+        if fecha is None and importe is None:
+            continue
+
+        vencimiento = {
+            "orden": len(resultado) + 1,
+            "fecha_vencimiento": fecha,
+            "importe": importe,
+            "nota": fila.get("nota"),
+        }
+        for campo_opcional in ("origen_fecha", "procedencia"):
+            if campo_opcional in fila:
+                vencimiento[campo_opcional] = fila[campo_opcional]
+
+        if importe is None and al_importe_ausente is not None:
+            al_importe_ausente(len(resultado), vencimiento)
+        resultado.append(vencimiento)
+    return resultado
 
 
 def ensamblar_factura_normalizada(
