@@ -1,0 +1,89 @@
+{
+  "version_normalizador": "estandar_v1",
+  "fecha_ejecucion": "2026-08-08T16:00:58.433027+00:00",
+  "archivo_origen": "ECOCEUTICS MENSUALIDAD PIO.pdf",
+  "paginas_originales": [
+    1,
+    1
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "FACTURA",
+    "categoria": "CUOTA_SERVICIO",
+    "requiere_conciliacion_albaranes": false,
+    "pagina_inicio": 1,
+    "pagina_fin": 1,
+    "proveedor_nombre": "HYGIE31 ESPAÑA, S.L.U.",
+    "proveedor_cif": "B17733601",
+    "numero_factura": "FR00263029",
+    "fecha_factura": "2026-06-30",
+    "base_imponible_total": 339.0,
+    "iva_total": 71.19,
+    "recargo_equivalencia_total": null,
+    "importe_total": 410.19,
+    "vencimientos": [
+      {
+        "orden": 1,
+        "fecha_vencimiento": "2026-07-01",
+        "importe": 410.19,
+        "nota": null,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": 339.0,
+        "tipo_iva": 21.0,
+        "cuota_iva": 71.19,
+        "tipo_recargo_equivalencia": null,
+        "cuota_recargo_equivalencia": null,
+        "nota": null,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
+    "albaranes": [],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON, PIO",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": null,
+    "periodo_facturacion_inicio": null,
+    "periodo_facturacion_fin": null,
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_totales_fiscalidad_vencimientos": "lectura_visible_luna_general",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "categoria": "CUOTA_SERVICIO",
+    "requiere_conciliacion_albaranes": false,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF",
+    "proveedor_nombre_canonico": "HYGIE31 ESPAÑA, S.L.U."
+  },
+  "validaciones_monetarias": [
+    {
+      "nombre": "impuestos[0].cuota_iva",
+      "estado": "OK",
+      "esperado": "71.19",
+      "obtenido": "71.19",
+      "diferencia": "0.00",
+      "tolerancia": "0.01"
+    }
+  ]
+}

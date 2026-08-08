@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
 from datetime import datetime, timezone
+from decimal import Decimal
 import re
 from typing import Any
 
@@ -12,6 +13,7 @@ from src.facturas.normalizadores.comun import (
     RegistroIncidencias,
     fecha_visible_a_iso,
     normalizar_identificador,
+    registrar_validacion_monetaria,
     valor_visible,
 )
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
@@ -166,6 +168,70 @@ def construir_vencimientos(
         if importe is None and al_importe_ausente is not None:
             al_importe_ausente(len(resultado), vencimiento)
         resultado.append(vencimiento)
+    return resultado
+
+
+def construir_impuestos(
+    filas: Iterable[Mapping[str, Any]],
+    *,
+    validaciones: list[dict[str, Any]],
+    incidencias: RegistroIncidencias,
+    tolerancia: Decimal = Decimal("0.01"),
+) -> list[dict[str, Any]]:
+    """Construye y valida tramos fiscales ya interpretados, sin completarlos."""
+    resultado: list[dict[str, Any]] = []
+    for fila in filas:
+        base = fila.get("base_imponible")
+        tipo_iva = fila.get("tipo_iva")
+        cuota_iva = fila.get("cuota_iva")
+        tipo_recargo = fila.get("tipo_recargo_equivalencia")
+        cuota_recargo = fila.get("cuota_recargo_equivalencia")
+        if all(
+            valor is None
+            for valor in (base, tipo_iva, cuota_iva, tipo_recargo, cuota_recargo)
+        ):
+            continue
+
+        indice = len(resultado)
+        impuesto = {
+            "orden": indice + 1,
+            "base_imponible": base,
+            "tipo_iva": tipo_iva,
+            "cuota_iva": cuota_iva,
+            "tipo_recargo_equivalencia": tipo_recargo,
+            "cuota_recargo_equivalencia": cuota_recargo,
+            "nota": fila.get("nota"),
+        }
+        if "procedencia" in fila:
+            impuesto["procedencia"] = fila["procedencia"]
+        resultado.append(impuesto)
+
+        relaciones = (
+            ("iva", tipo_iva, cuota_iva),
+            ("recargo_equivalencia", tipo_recargo, cuota_recargo),
+        )
+        for nombre, porcentaje, cuota in relaciones:
+            if porcentaje is None and cuota is None:
+                continue
+            esperado = (
+                base * porcentaje / Decimal("100")
+                if isinstance(base, Decimal) and isinstance(porcentaje, Decimal)
+                else None
+            )
+            registrar_validacion_monetaria(
+                validaciones,
+                incidencias,
+                f"impuestos[{indice}].cuota_{nombre}",
+                [esperado],
+                cuota,
+                tolerancia=tolerancia,
+                descripcion_incidencia=(
+                    "La cuota fiscal visible no coincide con base por porcentaje."
+                ),
+                decision_incidencia=(
+                    "Se conservan los valores visibles sin corregir ni completar."
+                ),
+            )
     return resultado
 
 
