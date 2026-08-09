@@ -1,6 +1,6 @@
 {
   "version_normalizador": "estandar_v1",
-  "fecha_ejecucion": "2026-08-08T16:26:16.963164+00:00",
+  "fecha_ejecucion": "2026-08-09T07:12:55.955003+00:00",
   "archivo_origen": "FARMACIA GUIMERA VTO 30.6.26 PIO.pdf",
   "paginas_originales": [
     1,
@@ -50,7 +50,20 @@
       }
     ],
     "albaranes": [],
-    "ajustes": [],
+    "ajustes": [
+      {
+        "orden": 1,
+        "tipo_ajuste": "DESCUENTO",
+        "descripcion": null,
+        "importe": -70.31,
+        "incluido_en_base": true,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
     "destinatario": {
       "id_farmacia": "PIO",
       "nombre": "PUIG SALOMON, PIO",

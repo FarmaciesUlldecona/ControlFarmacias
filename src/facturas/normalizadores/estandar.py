@@ -16,6 +16,7 @@ from src.facturas.normalizadores.comun import (
 )
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
+    construir_ajustes,
     construir_cabecera_documental,
     construir_destinatario,
     construir_impuestos,
@@ -65,6 +66,68 @@ def _fecha_opcional_visible(
             decision=f"{nombre} permanece en null; no se deriva una fecha.",
         )
         return None
+
+
+def _interpretar_ajustes(
+    filas: Any,
+    incidencias: RegistroIncidencias,
+) -> list[dict[str, Any]]:
+    if not filas:
+        return []
+    if not isinstance(filas, list):
+        return _bloquear_coleccion_no_interpretable(
+            "ajustes", filas, incidencias
+        )
+
+    interpretadas: list[dict[str, Any]] = []
+    for indice, fila in enumerate(filas):
+        if not isinstance(fila, dict):
+            motivo = "La fila de ajuste no tiene una estructura de campos valida."
+            datos_visibles = None
+        else:
+            try:
+                tipo = valor_visible(fila.get("tipo_ajuste"))
+                descripcion = valor_visible(fila.get("descripcion"))
+                importe = decimal_visible(fila.get("importe"))
+                incluido_en_base = valor_visible(fila.get("incluido_en_base"))
+                incluido_en_total = valor_visible(fila.get("incluido_en_total"))
+            except ValueError:
+                motivo = "La fila contiene un importe visible no interpretable."
+                datos_visibles = {"indice": indice}
+            else:
+                tipos_validos = tipo is None or isinstance(tipo, str)
+                descripcion_valida = descripcion is None or isinstance(
+                    descripcion, str
+                )
+                inclusiones_validas = all(
+                    valor is None or isinstance(valor, bool)
+                    for valor in (incluido_en_base, incluido_en_total)
+                )
+                if tipos_validos and descripcion_valida and inclusiones_validas:
+                    interpretadas.append(
+                        {
+                            "tipo_ajuste": tipo,
+                            "descripcion": descripcion,
+                            "importe": importe,
+                            "incluido_en_base": incluido_en_base,
+                            "incluido_en_total": incluido_en_total,
+                            "procedencia": procedencia_visible(),
+                        }
+                    )
+                    continue
+                motivo = "La fila contiene tipos incompatibles con el contrato de ajuste."
+                datos_visibles = {"indice": indice}
+
+        incidencias.agregar(
+            campo=f"ajustes[{indice}]",
+            tipo="AJUSTE_ESTANDAR_NO_INTERPRETABLE",
+            nivel=NivelIncidencia.REVISION_MANUAL,
+            descripcion=motivo,
+            datos_visibles=datos_visibles,
+            decision="La fila no se incorpora a los ajustes normalizados.",
+        )
+
+    return construir_ajustes(interpretadas)
 
 
 def normalizar_estandar(
@@ -157,9 +220,7 @@ def normalizar_estandar(
     albaranes = _bloquear_coleccion_no_interpretable(
         "albaranes", general.get("albaranes"), incidencias
     )
-    ajustes = _bloquear_coleccion_no_interpretable(
-        "ajustes", general.get("ajustes"), incidencias
-    )
+    ajustes = _interpretar_ajustes(general.get("ajustes"), incidencias)
     cabecera = construir_cabecera_documental(
         general,
         metadatos_tecnicos,

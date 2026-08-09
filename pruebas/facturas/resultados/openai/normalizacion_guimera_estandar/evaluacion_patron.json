@@ -18,28 +18,16 @@
     "campos_evaluados": 22,
     "correctos": 19,
     "incorrectos": 0,
-    "parciales": 1,
-    "ausentes": 2,
+    "parciales": 2,
+    "ausentes": 1,
     "acierto_estricto": 86.36,
-    "cobertura": 90.91,
+    "cobertura": 95.45,
     "inventados": 0
   },
-  "cantidad_incidencias": 3,
+  "cantidad_incidencias": 2,
   "incidencias": [
     {
       "orden": 1,
-      "campo": "ajustes",
-      "tipo_incidencia": "AJUSTES_NO_INTERPRETABLES_POR_RUTA_ESTANDAR",
-      "nivel": "REVISION_MANUAL",
-      "descripcion": "La ruta estandar no interpreta automaticamente ajustes.",
-      "datos_visibles_disponibles": {
-        "cantidad_filas": 1
-      },
-      "decision_tomada": "Se devuelve ajustes=[] para evitar crear datos no demostrados.",
-      "requiere_revision_manual": true
-    },
-    {
-      "orden": 2,
       "campo": "periodo_facturacion_inicio",
       "tipo_incidencia": "FECHA_VISIBLE_NO_INTERPRETABLE",
       "nivel": "REVISION_MANUAL",
@@ -51,7 +39,7 @@
       "requiere_revision_manual": true
     },
     {
-      "orden": 3,
+      "orden": 2,
       "campo": "periodo_facturacion_fin",
       "tipo_incidencia": "FECHA_VISIBLE_NO_INTERPRETABLE",
       "nivel": "REVISION_MANUAL",
@@ -100,7 +88,7 @@
   "comparaciones": [
     {
       "campo": "ajustes",
-      "estado": "AUSENTE",
+      "estado": "PARCIAL",
       "esperado": [
         {
           "orden": 1,
@@ -111,17 +99,25 @@
           "incluido_en_total": true
         }
       ],
-      "obtenido": [],
+      "obtenido": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "DESCUENTO",
+          "descripcion": null,
+          "importe": -70.31,
+          "incluido_en_base": true,
+          "incluido_en_total": true,
+          "procedencia": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          }
+        }
+      ],
       "conteo_atomico": {
-        "AUSENTE": 7
+        "AUSENTE": 1,
+        "CORRECTO": 5
       },
       "detalles": [
-        {
-          "ruta": "ajustes",
-          "esperado": null,
-          "obtenido": [],
-          "estado": "AUSENTE"
-        },
         {
           "ruta": "ajustes[0].descripcion",
           "esperado": "Descuento total",
@@ -131,32 +127,32 @@
         {
           "ruta": "ajustes[0].importe",
           "esperado": -70.31,
-          "obtenido": null,
-          "estado": "AUSENTE"
+          "obtenido": -70.31,
+          "estado": "CORRECTO"
         },
         {
           "ruta": "ajustes[0].incluido_en_base",
           "esperado": true,
-          "obtenido": null,
-          "estado": "AUSENTE"
+          "obtenido": true,
+          "estado": "CORRECTO"
         },
         {
           "ruta": "ajustes[0].incluido_en_total",
           "esperado": true,
-          "obtenido": null,
-          "estado": "AUSENTE"
+          "obtenido": true,
+          "estado": "CORRECTO"
         },
         {
           "ruta": "ajustes[0].orden",
           "esperado": 1,
-          "obtenido": null,
-          "estado": "AUSENTE"
+          "obtenido": 1,
+          "estado": "CORRECTO"
         },
         {
           "ruta": "ajustes[0].tipo_ajuste",
           "esperado": "DESCUENTO",
-          "obtenido": null,
-          "estado": "AUSENTE"
+          "obtenido": "DESCUENTO",
+          "estado": "CORRECTO"
         }
       ]
     },

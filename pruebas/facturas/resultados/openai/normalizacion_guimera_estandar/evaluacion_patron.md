@@ -3,12 +3,12 @@
 - Antes Luna: 17/22 correctos; 77.27 %; cobertura 95.45 %.
 - Despues: 19/22 correctos.
 - Acierto estricto: 86.36 %.
-- Cobertura: 90.91 %.
+- Cobertura: 95.45 %.
 - Invenciones atomicas: 0.
-- Incidencias: 3.
+- Incidencias: 2.
 
 ## Diferencias
 
-- `ajustes`: AUSENTE
+- `ajustes`: PARCIAL
 - `destinatario`: PARCIAL
 - `nota_revision`: AUSENTE

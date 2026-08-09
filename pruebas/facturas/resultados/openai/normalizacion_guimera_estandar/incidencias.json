@@ -4,18 +4,6 @@
   "incidencias": [
     {
       "orden": 1,
-      "campo": "ajustes",
-      "tipo_incidencia": "AJUSTES_NO_INTERPRETABLES_POR_RUTA_ESTANDAR",
-      "nivel": "REVISION_MANUAL",
-      "descripcion": "La ruta estandar no interpreta automaticamente ajustes.",
-      "datos_visibles_disponibles": {
-        "cantidad_filas": 1
-      },
-      "decision_tomada": "Se devuelve ajustes=[] para evitar crear datos no demostrados.",
-      "requiere_revision_manual": true
-    },
-    {
-      "orden": 2,
       "campo": "periodo_facturacion_inicio",
       "tipo_incidencia": "FECHA_VISIBLE_NO_INTERPRETABLE",
       "nivel": "REVISION_MANUAL",
@@ -27,7 +15,7 @@
       "requiere_revision_manual": true
     },
     {
-      "orden": 3,
+      "orden": 2,
       "campo": "periodo_facturacion_fin",
       "tipo_incidencia": "FECHA_VISIBLE_NO_INTERPRETABLE",
       "nivel": "REVISION_MANUAL",

@@ -235,6 +235,32 @@ def construir_impuestos(
     return resultado
 
 
+def construir_ajustes(
+    filas: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Construye ajustes ya interpretados sin clasificarlos ni completarlos."""
+    resultado: list[dict[str, Any]] = []
+    campos = (
+        "tipo_ajuste",
+        "descripcion",
+        "importe",
+        "incluido_en_base",
+        "incluido_en_total",
+    )
+    for fila in filas:
+        if all(fila.get(campo) is None for campo in campos):
+            continue
+
+        ajuste = {
+            "orden": len(resultado) + 1,
+            **{campo: fila.get(campo) for campo in campos},
+        }
+        if "procedencia" in fila:
+            ajuste["procedencia"] = fila["procedencia"]
+        resultado.append(ajuste)
+    return resultado
+
+
 def ensamblar_factura_normalizada(
     *,
     cabecera: Mapping[str, Any],

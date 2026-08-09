@@ -11,6 +11,7 @@ import pytest
 from src.facturas.normalizadores.comun import RegistroIncidencias
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
+    construir_ajustes,
     construir_cabecera_documental,
     construir_destinatario,
     construir_vencimientos,
@@ -241,6 +242,161 @@ def test_aislamiento_de_la_capa_documental() -> None:
     for ruta in rutas:
         texto = ruta.read_text(encoding="utf-8").casefold().replace("\\", "/")
         assert all(prohibido not in texto for prohibido in prohibidos)
+
+
+def test_construir_ajuste_completo_conserva_contrato_y_decimal() -> None:
+    procedencia = {"tipo": "lectura_visible", "fuente": "luna_general"}
+    resultado = construir_ajustes(
+        [
+            {
+                "tipo_ajuste": "DESCUENTO",
+                "descripcion": "Descuento visible",
+                "importe": Decimal("-33.77"),
+                "incluido_en_base": True,
+                "incluido_en_total": True,
+                "procedencia": procedencia,
+            }
+        ]
+    )
+
+    assert resultado == [
+        {
+            "orden": 1,
+            "tipo_ajuste": "DESCUENTO",
+            "descripcion": "Descuento visible",
+            "importe": Decimal("-33.77"),
+            "incluido_en_base": True,
+            "incluido_en_total": True,
+            "procedencia": procedencia,
+        }
+    ]
+    assert isinstance(resultado[0]["importe"], Decimal)
+
+
+@pytest.mark.parametrize(
+    ("fila", "importe_esperado"),
+    [
+        (
+            {
+                "tipo_ajuste": "DESCUENTO",
+                "descripcion": "Visible",
+                "importe": Decimal("-1.00"),
+            },
+            Decimal("-1.00"),
+        ),
+        ({"descripcion": "Recargo visible", "importe": Decimal("2.50")}, Decimal("2.50")),
+        ({"descripcion": "Importe cero", "importe": Decimal("0")}, Decimal("0")),
+        ({"descripcion": "Sin importe", "importe": None}, None),
+        ({"descripcion": None, "importe": Decimal("4.00")}, Decimal("4.00")),
+    ],
+)
+def test_construir_ajustes_conserva_signo_cero_y_campos_ausentes(
+    fila,
+    importe_esperado,
+) -> None:
+    resultado = construir_ajustes([fila])
+
+    assert resultado[0]["importe"] == importe_esperado
+    assert resultado[0]["descripcion"] == fila.get("descripcion")
+    assert resultado[0]["incluido_en_base"] is None
+    assert resultado[0]["incluido_en_total"] is None
+
+
+@pytest.mark.parametrize(
+    "fila",
+    [
+        {},
+        {
+            "tipo_ajuste": None,
+            "descripcion": None,
+            "importe": None,
+            "incluido_en_base": None,
+            "incluido_en_total": None,
+            "procedencia": {"tipo": "lectura_visible"},
+        },
+    ],
+)
+def test_construir_ajustes_omite_solo_filas_totalmente_vacias(fila) -> None:
+    assert construir_ajustes([fila]) == []
+
+
+def test_construir_ajustes_preserva_orden_y_es_determinista() -> None:
+    filas = [
+        {"descripcion": "Segundo por importe", "importe": Decimal("20")},
+        {"descripcion": "Primero por importe", "importe": Decimal("1")},
+        {"descripcion": "Sin importe", "importe": None},
+    ]
+
+    primero = construir_ajustes(filas)
+    segundo = construir_ajustes(filas)
+
+    assert primero == segundo
+    assert [fila["orden"] for fila in primero] == [1, 2, 3]
+    assert [fila["descripcion"] for fila in primero] == [
+        "Segundo por importe",
+        "Primero por importe",
+        "Sin importe",
+    ]
+
+
+@pytest.mark.parametrize(
+    "procedencia",
+    [
+        {"tipo": "lectura_visible", "fuente": "luna_general"},
+        {
+            "tipo": "regla_determinista",
+            "fuente": "python",
+            "regla": "regla_previa",
+            "version_regla": "v1",
+        },
+    ],
+)
+def test_construir_ajustes_conserva_procedencia_interpretada(procedencia) -> None:
+    resultado = construir_ajustes(
+        [{"descripcion": "Visible", "importe": Decimal("1"), "procedencia": procedencia}]
+    )
+
+    assert resultado[0]["procedencia"] is procedencia
+
+
+def test_construir_ajustes_no_clasifica_calcula_ni_infiere() -> None:
+    resultado = construir_ajustes(
+        [
+            {
+                "tipo_ajuste": None,
+                "descripcion": "BONIFICACION PUNTO VERDE SERVICIO BASICO",
+                "importe": Decimal("-10"),
+                "incluido_en_base": None,
+                "incluido_en_total": None,
+                "porcentaje": Decimal("28"),
+                "nota": "No forma parte del contrato historico",
+            }
+        ]
+    )[0]
+
+    assert resultado["tipo_ajuste"] is None
+    assert resultado["descripcion"] == "BONIFICACION PUNTO VERDE SERVICIO BASICO"
+    assert resultado["importe"] == Decimal("-10")
+    assert resultado["incluido_en_base"] is None
+    assert resultado["incluido_en_total"] is None
+    assert "porcentaje" not in resultado
+    assert "nota" not in resultado
+
+
+def test_construir_ajustes_no_conoce_proveedores_ni_patron() -> None:
+    texto = (
+        RAIZ / "src/facturas/normalizadores/documento.py"
+    ).read_text(encoding="utf-8").casefold()
+    prohibidos = (
+        "guimer",
+        "pierre fabre",
+        "suavinex",
+        "fedefarma",
+        "alliance",
+        "patron_oficial",
+        "facturas/patron",
+    )
+    assert all(prohibido not in texto for prohibido in prohibidos)
 
 
 def test_vencimiento_con_fecha_importe_y_nota_preserva_valores() -> None:

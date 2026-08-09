@@ -324,13 +324,74 @@ def test_albaranes_y_ajustes_no_interpretables_se_bloquean(
     configuracion,
 ) -> None:
     extraccion["factura"]["albaranes"] = [{"referencia": campo("PEDIDO-1")}]
-    extraccion["factura"]["ajustes"] = [{"concepto": campo("DESCONOCIDO")}]
+    extraccion["factura"]["ajustes"] = ["estructura no interpretable"]
     resultado, incidencias = ejecutar(extraccion, configuracion)
 
     factura = resultado["resultado_normalizado"]
     assert factura["albaranes"] == []
     assert factura["ajustes"] == []
-    assert {x["campo"] for x in incidencias} >= {"albaranes", "ajustes"}
+    assert {x["campo"] for x in incidencias} >= {"albaranes", "ajustes[0]"}
+
+
+def test_ajuste_visible_estructurado_se_conserva_sin_clasificar(
+    extraccion,
+    configuracion,
+) -> None:
+    extraccion["factura"]["ajustes"] = [
+        {
+            "tipo_ajuste": campo(None, evidencia=False),
+            "descripcion": campo("BONIFICACION visible"),
+            "importe": campo("-70,31"),
+            "incluido_en_base": campo(True),
+            "incluido_en_total": campo(True),
+        }
+    ]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
+    assert resultado["resultado_normalizado"]["ajustes"] == [
+        {
+            "orden": 1,
+            "tipo_ajuste": None,
+            "descripcion": "BONIFICACION visible",
+            "importe": Decimal("-70.31"),
+            "incluido_en_base": True,
+            "incluido_en_total": True,
+            "procedencia": {"tipo": "lectura_visible", "fuente": "luna_general"},
+        }
+    ]
+    assert incidencias == []
+
+
+def test_ausencia_de_ajustes_produce_lista_vacia(extraccion, configuracion) -> None:
+    extraccion["factura"]["ajustes"] = []
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
+    assert resultado["resultado_normalizado"]["ajustes"] == []
+    assert incidencias == []
+
+
+def test_ajuste_con_tipos_incompatibles_se_bloquea(
+    extraccion,
+    configuracion,
+) -> None:
+    extraccion["factura"]["ajustes"] = [
+        {
+            "tipo_ajuste": campo("DESCUENTO"),
+            "descripcion": campo("Visible"),
+            "importe": campo("1,00"),
+            "incluido_en_base": campo("QUIZA"),
+            "incluido_en_total": campo(True),
+        }
+    ]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
+    assert resultado["resultado_normalizado"]["ajustes"] == []
+    assert [incidencia["tipo_incidencia"] for incidencia in incidencias] == [
+        "AJUSTE_ESTANDAR_NO_INTERPRETABLE"
+    ]
 
 
 def test_misma_entrada_y_fecha_fija_producen_salida_determinista(
