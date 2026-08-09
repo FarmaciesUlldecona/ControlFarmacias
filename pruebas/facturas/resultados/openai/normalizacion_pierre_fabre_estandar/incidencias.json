@@ -1,0 +1,30 @@
+{
+  "version_normalizador": "estandar_v1",
+  "archivo_origen": "PIERRE FABRE ABONO VTO 7.9.26 PIO.pdf",
+  "incidencias": [
+    {
+      "orden": 1,
+      "campo": "vencimientos[0].importe",
+      "tipo_incidencia": "IMPORTE_VENCIMIENTO_NO_VISIBLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "El vencimiento estandar no tiene un importe visible.",
+      "datos_visibles_disponibles": {
+        "fecha_vencimiento": "2026-09-07"
+      },
+      "decision_tomada": "No se asigna automaticamente el total de factura.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 2,
+      "campo": "albaranes",
+      "tipo_incidencia": "ALBARANES_NO_INTERPRETABLES_POR_RUTA_ESTANDAR",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La ruta estandar no interpreta automaticamente albaranes.",
+      "datos_visibles_disponibles": {
+        "cantidad_filas": 1
+      },
+      "decision_tomada": "Se devuelve albaranes=[] para evitar crear datos no demostrados.",
+      "requiere_revision_manual": true
+    }
+  ]
+}

@@ -23,6 +23,7 @@ from src.facturas.normalizadores.documento import (
     construir_vencimientos,
     ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
+    normalizar_nota_vencimiento,
     normalizar_proveedor_documental,
 )
 
@@ -201,7 +202,9 @@ def normalizar_estandar(
             {
                 "fecha_vencimiento": fecha_visible(fila.get("fecha_vencimiento")),
                 "importe": decimal_visible(fila.get("importe")),
-                "nota": valor_visible(fila.get("nota")),
+                "nota": normalizar_nota_vencimiento(
+                    valor_visible(fila.get("nota"))
+                ),
                 "procedencia": procedencia_visible(),
             }
             for fila in (general.get("vencimientos") or [])

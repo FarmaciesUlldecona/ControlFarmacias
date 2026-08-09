@@ -30,6 +30,7 @@ from src.facturas.normalizadores.documento import (
     construir_vencimientos,
     ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
+    normalizar_nota_vencimiento,
     normalizar_proveedor_documental,
 )
 
@@ -168,13 +169,12 @@ def _normalizar_vencimientos(
             fecha = fecha_visible(fila.get("fecha_vencimiento"))
             importe = decimal_visible(fila.get("importe"))
             nota_visible = valor_visible(fila.get("nota"))
-            nota = nota_visible
+            nota = normalizar_nota_vencimiento(nota_visible)
             if (
                 (fecha is not None or importe is not None)
-                and isinstance(nota_visible, str)
-                and nota_visible.casefold().startswith("giro domiciliado")
+                and nota_visible is not None
+                and nota is None
             ):
-                nota = None
                 incidencias.agregar(
                     campo=f"vencimientos[{indice_salida}].nota",
                     tipo="FORMA_PAGO_NO_ES_NOTA_VENCIMIENTO",

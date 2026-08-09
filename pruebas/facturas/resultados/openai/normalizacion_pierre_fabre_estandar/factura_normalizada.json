@@ -1,0 +1,110 @@
+{
+  "version_normalizador": "estandar_v1",
+  "fecha_ejecucion": "2026-08-09T07:36:12.871623+00:00",
+  "archivo_origen": "PIERRE FABRE ABONO VTO 7.9.26 PIO.pdf",
+  "paginas_originales": [
+    1,
+    1
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "ABONO",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "pagina_inicio": 1,
+    "pagina_fin": 1,
+    "proveedor_nombre": "PIERRE FABRE IBÉRICA, S.A.",
+    "proveedor_cif": "A08008724",
+    "numero_factura": "SCN0276685",
+    "fecha_factura": "2026-06-22",
+    "base_imponible_total": -86.83,
+    "iva_total": -8.68,
+    "recargo_equivalencia_total": -1.22,
+    "importe_total": -96.73,
+    "vencimientos": [
+      {
+        "orden": 1,
+        "fecha_vencimiento": "2026-09-07",
+        "importe": null,
+        "nota": null,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": -86.83,
+        "tipo_iva": 10.0,
+        "cuota_iva": -8.68,
+        "tipo_recargo_equivalencia": 1.4,
+        "cuota_recargo_equivalencia": -1.22,
+        "nota": null,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
+    "albaranes": [],
+    "ajustes": [
+      {
+        "orden": 1,
+        "tipo_ajuste": "DESCUENTO",
+        "descripcion": "Descuento comercial",
+        "importe": -33.77,
+        "incluido_en_base": true,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON PIO",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": null,
+    "periodo_facturacion_inicio": null,
+    "periodo_facturacion_fin": null,
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_totales_fiscalidad_vencimientos": "lectura_visible_luna_general",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF",
+    "proveedor_nombre_canonico": "PIERRE FABRE IBÉRICA, S.A."
+  },
+  "validaciones_monetarias": [
+    {
+      "nombre": "impuestos[0].cuota_iva",
+      "estado": "OK",
+      "esperado": "-8.68",
+      "obtenido": "-8.683",
+      "diferencia": "-0.003",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "impuestos[0].cuota_recargo_equivalencia",
+      "estado": "OK",
+      "esperado": "-1.22",
+      "obtenido": "-1.21562",
+      "diferencia": "0.00438",
+      "tolerancia": "0.01"
+    }
+  ]
+}

@@ -10,6 +10,7 @@ import pytest
 from src.facturas.configuraciones_estandar import (
     CONFIGURACION_GUIMERA,
     CONFIGURACION_HYGIE31,
+    CONFIGURACION_PIERRE_FABRE,
 )
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.estandar import normalizar_estandar
@@ -363,6 +364,59 @@ def test_ajuste_visible_estructurado_se_conserva_sin_clasificar(
     assert incidencias == []
 
 
+def test_abono_estandar_conserva_signos_y_limites_visibles(
+    extraccion,
+    configuracion,
+) -> None:
+    general = extraccion["factura"]
+    general["tipo_documento"] = campo("ABONO")
+    general["base_imponible_total"] = campo("-86,83")
+    general["iva_total"] = campo("-8,68")
+    general["importe_total"] = campo("-95,51")
+    general["impuestos"] = [
+        {
+            "base_imponible": campo("-86,83"),
+            "tipo_iva": campo("10"),
+            "cuota_iva": campo("-8,68"),
+            "tipo_recargo_equivalencia": campo(None, evidencia=False),
+            "cuota_recargo_equivalencia": campo(None, evidencia=False),
+            "nota": campo(None, evidencia=False),
+        }
+    ]
+    general["vencimientos"] = [
+        {
+            "fecha_vencimiento": campo("07-09-2026"),
+            "importe": campo(None, evidencia=False),
+            "nota": campo("Remesa"),
+        }
+    ]
+    general["albaranes"] = [{"numero_albaran": campo("AB-0001")}]
+    general["ajustes"] = [
+        {
+            "tipo_ajuste": campo("DESCUENTO"),
+            "descripcion": campo("Descuento visible"),
+            "importe": campo("-33,77"),
+            "incluido_en_base": campo(True),
+            "incluido_en_total": campo(True),
+        }
+    ]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+    factura = resultado["resultado_normalizado"]
+
+    assert factura["tipo_documento"] == "ABONO"
+    assert factura["base_imponible_total"] == Decimal("-86.83")
+    assert factura["impuestos"][0]["cuota_iva"] == Decimal("-8.68")
+    assert factura["ajustes"][0]["importe"] == Decimal("-33.77")
+    assert factura["vencimientos"][0]["importe"] is None
+    assert factura["vencimientos"][0]["nota"] is None
+    assert factura["albaranes"] == []
+    assert {incidencia["tipo_incidencia"] for incidencia in incidencias} == {
+        "IMPORTE_VENCIMIENTO_NO_VISIBLE",
+        "ALBARANES_NO_INTERPRETABLES_POR_RUTA_ESTANDAR",
+    }
+
+
 def test_ausencia_de_ajustes_produce_lista_vacia(extraccion, configuracion) -> None:
     extraccion["factura"]["ajustes"] = []
 
@@ -430,11 +484,24 @@ def test_dos_proveedores_usan_el_mismo_normalizador_solo_cambiando_configuracion
     assert segundo["resultado_normalizado"]["destinatario"]["id_farmacia"] == "0099"
 
 
-def test_registro_de_configuraciones_estandar_contiene_dos_politicas_estables() -> None:
+def test_registro_de_configuraciones_estandar_contiene_tres_politicas_estables() -> None:
     assert CONFIGURACION_HYGIE31.proveedor_nombre_canonico == "HYGIE31 ESPAÑA, S.L.U."
     assert CONFIGURACION_GUIMERA.proveedor_nombre_canonico == "FARMACIA GUIMERA C.B."
-    assert CONFIGURACION_HYGIE31.id_farmacia == CONFIGURACION_GUIMERA.id_farmacia == "PIO"
-    assert not hasattr(CONFIGURACION_GUIMERA, "archivo_origen")
+    assert CONFIGURACION_PIERRE_FABRE.proveedor_nombre_canonico == (
+        "PIERRE FABRE IBÉRICA, S.A."
+    )
+    configuraciones = (
+        CONFIGURACION_HYGIE31,
+        CONFIGURACION_GUIMERA,
+        CONFIGURACION_PIERRE_FABRE,
+    )
+    assert {configuracion.id_farmacia for configuracion in configuraciones} == {
+        "PIO"
+    }
+    assert all(
+        not hasattr(configuracion, "archivo_origen")
+        for configuracion in configuraciones
+    )
 
 
 def test_normalizador_estandar_esta_aislado_y_no_conoce_casos_concretos() -> None:
@@ -457,6 +524,7 @@ def test_normalizador_estandar_esta_aislado_y_no_conoce_casos_concretos() -> Non
         "azure",
         "ecoceutics",
         "guimer",
+        "pierre",
     )
     for ruta in rutas:
         texto = ruta.read_text(encoding="utf-8").casefold().replace("\\", "/")

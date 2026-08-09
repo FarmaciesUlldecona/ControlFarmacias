@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import fields
 from datetime import datetime, timezone
 from decimal import Decimal
+import inspect
 import json
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from src.facturas.normalizadores.documento import (
     construir_vencimientos,
     ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
+    normalizar_nota_vencimiento,
     normalizar_proveedor_documental,
     paginas_desde_metadatos,
 )
@@ -416,6 +418,70 @@ def test_vencimiento_con_fecha_importe_y_nota_preserva_valores() -> None:
             "nota": "Texto visible sin reinterpretar",
         }
     ]
+
+
+def test_nota_real_de_vencimiento_se_conserva() -> None:
+    assert normalizar_nota_vencimiento("Pago aplazado por incidencia") == (
+        "Pago aplazado por incidencia"
+    )
+
+
+@pytest.mark.parametrize(
+    "forma_pago",
+    (
+        "Remesa",
+        "  REMESA  ",
+        "Giro domiciliado",
+        "Giro   domiciliado CORE",
+    ),
+)
+def test_forma_pago_inequivoca_no_se_convierte_en_nota(forma_pago) -> None:
+    assert normalizar_nota_vencimiento(forma_pago) is None
+
+
+@pytest.mark.parametrize("ausente", (None, "", "   "))
+def test_nota_ausente_o_vacia_permanece_none(ausente) -> None:
+    assert normalizar_nota_vencimiento(ausente) is None
+
+
+def test_texto_generico_no_clasificado_se_conserva() -> None:
+    assert normalizar_nota_vencimiento("Pago según condiciones acordadas") == (
+        "Pago según condiciones acordadas"
+    )
+
+
+@pytest.mark.parametrize(
+    "nota_real",
+    (
+        "Remesa pendiente de confirmar por el cliente",
+        "Observación sobre el giro domiciliado devuelto",
+    ),
+)
+def test_palabra_de_pago_dentro_de_nota_real_no_produce_falso_positivo(
+    nota_real,
+) -> None:
+    assert normalizar_nota_vencimiento(nota_real) == nota_real
+
+
+def test_normalizacion_nota_vencimiento_es_determinista() -> None:
+    texto = "Giro domiciliado CORE"
+    assert normalizar_nota_vencimiento(texto) == normalizar_nota_vencimiento(
+        texto
+    )
+
+
+def test_helper_nota_vencimiento_no_conoce_proveedores_ni_patron() -> None:
+    fuente = inspect.getsource(normalizar_nota_vencimiento).casefold()
+    prohibidos = (
+        "pierre",
+        "suavinex",
+        "alliance",
+        "dermofarm",
+        "fedefarma",
+        "patron_oficial",
+        "facturas/patron",
+    )
+    assert all(prohibido not in fuente for prohibido in prohibidos)
 
 
 def test_vencimiento_con_nota_none_y_cero_no_considera_importe_ausente() -> None:

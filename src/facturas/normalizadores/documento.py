@@ -142,6 +142,28 @@ def construir_destinatario(
     }
 
 
+_FORMAS_PAGO_INEQUIVOCAS = frozenset(
+    {
+        "remesa",
+        "giro domiciliado",
+        "giro domiciliado core",
+    }
+)
+
+
+def normalizar_nota_vencimiento(texto_visible: Any) -> str | None:
+    """Conserva notas reales y bloquea formas de pago completas inequívocas."""
+    if texto_visible is None or not isinstance(texto_visible, str):
+        return None
+    if not texto_visible.strip():
+        return None
+
+    clave = " ".join(texto_visible.casefold().split())
+    if clave in _FORMAS_PAGO_INEQUIVOCAS:
+        return None
+    return texto_visible
+
+
 def construir_vencimientos(
     filas: Iterable[Mapping[str, Any]],
     *,
