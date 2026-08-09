@@ -12,3 +12,14 @@ CONFIGURACION_HYGIE31 = ConfiguracionProveedor(
     id_farmacia="PIO",
     metodo_identificacion_farmacia="CIF",
 )
+
+
+CONFIGURACION_GUIMERA = ConfiguracionProveedor(
+    proveedor_nombre_canonico="FARMACIA GUIMERA C.B.",
+    aliases=(),
+    categoria="MERCANCIA",
+    requiere_conciliacion_albaranes=False,
+    farmacia="PIO",
+    id_farmacia="PIO",
+    metodo_identificacion_farmacia="CIF",
+)

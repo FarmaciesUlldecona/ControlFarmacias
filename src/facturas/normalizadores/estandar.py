@@ -48,6 +48,25 @@ def _bloquear_coleccion_no_interpretable(
     return []
 
 
+def _fecha_opcional_visible(
+    campo: Any,
+    nombre: str,
+    incidencias: RegistroIncidencias,
+) -> str | None:
+    try:
+        return fecha_visible(campo)
+    except ValueError:
+        incidencias.agregar(
+            campo=nombre,
+            tipo="FECHA_VISIBLE_NO_INTERPRETABLE",
+            nivel=NivelIncidencia.REVISION_MANUAL,
+            descripcion="El valor temporal visible no es una fecha completa autorizada.",
+            datos_visibles={"valor": valor_visible(campo)},
+            decision=f"{nombre} permanece en null; no se deriva una fecha.",
+        )
+        return None
+
+
 def normalizar_estandar(
     extraccion_general: dict[str, Any],
     metadatos_tecnicos: dict[str, Any],
@@ -171,12 +190,18 @@ def normalizar_estandar(
         version_normalizador=VERSION_NORMALIZADOR,
         archivo_origen=archivo_origen,
         fecha_ejecucion=fecha_ejecucion,
-        fecha_cargo=fecha_visible(general.get("fecha_cargo")),
-        periodo_facturacion_inicio=fecha_visible(
-            general.get("periodo_facturacion_inicio")
+        fecha_cargo=_fecha_opcional_visible(
+            general.get("fecha_cargo"), "fecha_cargo", incidencias
         ),
-        periodo_facturacion_fin=fecha_visible(
-            general.get("periodo_facturacion_fin")
+        periodo_facturacion_inicio=_fecha_opcional_visible(
+            general.get("periodo_facturacion_inicio"),
+            "periodo_facturacion_inicio",
+            incidencias,
+        ),
+        periodo_facturacion_fin=_fecha_opcional_visible(
+            general.get("periodo_facturacion_fin"),
+            "periodo_facturacion_fin",
+            incidencias,
         ),
         nota_revision=valor_visible(general.get("nota_revision")),
         procedencia_bloques={

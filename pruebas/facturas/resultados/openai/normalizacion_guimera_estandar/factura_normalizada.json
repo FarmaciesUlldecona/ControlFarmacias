@@ -1,0 +1,115 @@
+{
+  "version_normalizador": "estandar_v1",
+  "fecha_ejecucion": "2026-08-08T16:26:16.963164+00:00",
+  "archivo_origen": "FARMACIA GUIMERA VTO 30.6.26 PIO.pdf",
+  "paginas_originales": [
+    1,
+    1
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "FACTURA",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": false,
+    "pagina_inicio": 1,
+    "pagina_fin": 1,
+    "proveedor_nombre": "FARMACIA GUIMERA C.B.",
+    "proveedor_cif": "E12943437",
+    "numero_factura": "509",
+    "fecha_factura": "2026-05-29",
+    "base_imponible_total": 228.58,
+    "iva_total": 12.95,
+    "recargo_equivalencia_total": 1.71,
+    "importe_total": 243.24,
+    "vencimientos": [],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": 165.22,
+        "tipo_iva": 4.0,
+        "cuota_iva": 6.61,
+        "tipo_recargo_equivalencia": 0.5,
+        "cuota_recargo_equivalencia": 0.83,
+        "nota": null,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      },
+      {
+        "orden": 2,
+        "base_imponible": 63.36,
+        "tipo_iva": 10.0,
+        "cuota_iva": 6.34,
+        "tipo_recargo_equivalencia": 1.4,
+        "cuota_recargo_equivalencia": 0.89,
+        "nota": null,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
+    "albaranes": [],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON, PIO",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": null,
+    "periodo_facturacion_inicio": null,
+    "periodo_facturacion_fin": null,
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_totales_fiscalidad_vencimientos": "lectura_visible_luna_general",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": false,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF",
+    "proveedor_nombre_canonico": "FARMACIA GUIMERA C.B."
+  },
+  "validaciones_monetarias": [
+    {
+      "nombre": "impuestos[0].cuota_iva",
+      "estado": "OK",
+      "esperado": "6.61",
+      "obtenido": "6.6088",
+      "diferencia": "-0.0012",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "impuestos[0].cuota_recargo_equivalencia",
+      "estado": "OK",
+      "esperado": "0.83",
+      "obtenido": "0.8261",
+      "diferencia": "-0.0039",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "impuestos[1].cuota_iva",
+      "estado": "OK",
+      "esperado": "6.34",
+      "obtenido": "6.336",
+      "diferencia": "-0.004",
+      "tolerancia": "0.01"
+    },
+    {
+      "nombre": "impuestos[1].cuota_recargo_equivalencia",
+      "estado": "OK",
+      "esperado": "0.89",
+      "obtenido": "0.88704",
+      "diferencia": "-0.00296",
+      "tolerancia": "0.01"
+    }
+  ]
+}

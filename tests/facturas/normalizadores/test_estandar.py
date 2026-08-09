@@ -7,6 +7,10 @@ from pathlib import Path
 
 import pytest
 
+from src.facturas.configuraciones_estandar import (
+    CONFIGURACION_GUIMERA,
+    CONFIGURACION_HYGIE31,
+)
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.estandar import normalizar_estandar
 
@@ -255,6 +259,54 @@ def test_fiscalidad_con_descuadre_detecta_pero_no_corrige(
     )
 
 
+def test_fiscalidad_con_dos_tramos_conserva_orden_recargo_y_validaciones(
+    extraccion,
+    configuracion,
+) -> None:
+    segundo = deepcopy(extraccion["factura"]["impuestos"][0])
+    segundo["base_imponible"] = campo("50,00")
+    segundo["tipo_iva"] = campo("10")
+    segundo["cuota_iva"] = campo("5,00")
+    segundo["tipo_recargo_equivalencia"] = campo(1.4)
+    segundo["cuota_recargo_equivalencia"] = campo("0,70")
+    extraccion["factura"]["impuestos"].append(segundo)
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+    impuestos = resultado["resultado_normalizado"]["impuestos"]
+
+    assert [tramo["orden"] for tramo in impuestos] == [1, 2]
+    assert impuestos[1]["tipo_recargo_equivalencia"] == Decimal("1.4")
+    assert impuestos[1]["cuota_recargo_equivalencia"] == Decimal("0.70")
+    assert [validacion["estado"] for validacion in resultado["validaciones_monetarias"]] == [
+        "OK",
+        "OK",
+        "OK",
+    ]
+    assert incidencias == []
+
+
+def test_fechas_opcionales_incompletas_se_bloquean_sin_derivarlas(
+    extraccion,
+    configuracion,
+) -> None:
+    extraccion["factura"]["periodo_facturacion_inicio"] = campo("2026-05")
+    extraccion["factura"]["periodo_facturacion_fin"] = campo("05-2026")
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+    factura = resultado["resultado_normalizado"]
+
+    assert factura["periodo_facturacion_inicio"] is None
+    assert factura["periodo_facturacion_fin"] is None
+    assert [incidencia["campo"] for incidencia in incidencias] == [
+        "periodo_facturacion_inicio",
+        "periodo_facturacion_fin",
+    ]
+    assert all(
+        incidencia["tipo_incidencia"] == "FECHA_VISIBLE_NO_INTERPRETABLE"
+        for incidencia in incidencias
+    )
+
+
 def test_cero_monetario_no_se_omite(extraccion, configuracion) -> None:
     tramo = extraccion["factura"]["impuestos"][0]
     tramo["base_imponible"] = campo("0")
@@ -317,6 +369,13 @@ def test_dos_proveedores_usan_el_mismo_normalizador_solo_cambiando_configuracion
     assert segundo["resultado_normalizado"]["destinatario"]["id_farmacia"] == "0099"
 
 
+def test_registro_de_configuraciones_estandar_contiene_dos_politicas_estables() -> None:
+    assert CONFIGURACION_HYGIE31.proveedor_nombre_canonico == "HYGIE31 ESPAÑA, S.L.U."
+    assert CONFIGURACION_GUIMERA.proveedor_nombre_canonico == "FARMACIA GUIMERA C.B."
+    assert CONFIGURACION_HYGIE31.id_farmacia == CONFIGURACION_GUIMERA.id_farmacia == "PIO"
+    assert not hasattr(CONFIGURACION_GUIMERA, "archivo_origen")
+
+
 def test_normalizador_estandar_esta_aislado_y_no_conoce_casos_concretos() -> None:
     rutas = (
         RAIZ / "src/facturas/normalizadores/estandar.py",
@@ -336,6 +395,7 @@ def test_normalizador_estandar_esta_aislado_y_no_conoce_casos_concretos() -> Non
         "google",
         "azure",
         "ecoceutics",
+        "guimer",
     )
     for ruta in rutas:
         texto = ruta.read_text(encoding="utf-8").casefold().replace("\\", "/")
