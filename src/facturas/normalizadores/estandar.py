@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
 
@@ -73,6 +74,110 @@ def _fecha_opcional_visible(
             decision=f"{nombre} permanece en null; no se deriva una fecha.",
         )
         return None
+
+
+def _evidencias_visibles_fila(fila: Mapping[str, Any]) -> list[dict[str, Any]]:
+    evidencias: list[dict[str, Any]] = []
+    for nombre_campo, campo in fila.items():
+        if not isinstance(campo, Mapping):
+            continue
+        candidatas = campo.get("evidencias")
+        if not isinstance(candidatas, Sequence) or isinstance(
+            candidatas, (str, bytes)
+        ):
+            continue
+        for evidencia in candidatas:
+            if isinstance(evidencia, str):
+                texto = evidencia.strip()
+                if texto:
+                    evidencias.append(
+                        {"campo": nombre_campo, "texto_visible": texto}
+                    )
+                continue
+            if not isinstance(evidencia, Mapping):
+                continue
+            texto = evidencia.get("texto_visible")
+            if not isinstance(texto, str) or not texto.strip():
+                continue
+            dato = {
+                "campo": nombre_campo,
+                "texto_visible": texto,
+            }
+            if evidencia.get("pagina") is not None:
+                dato["pagina"] = evidencia["pagina"]
+            evidencias.append(dato)
+    return evidencias
+
+
+def _interpretar_impuestos(
+    filas: Any,
+    validaciones: list[dict[str, Any]],
+    incidencias: RegistroIncidencias,
+) -> list[dict[str, Any]]:
+    interpretadas: list[dict[str, Any]] = []
+    for indice, fila in enumerate(filas or []):
+        valores_fiscales = {
+            "base_imponible": decimal_visible(fila.get("base_imponible")),
+            "tipo_iva": porcentaje_visible(fila.get("tipo_iva")),
+            "cuota_iva": decimal_visible(fila.get("cuota_iva")),
+            "tipo_recargo_equivalencia": porcentaje_visible(
+                fila.get("tipo_recargo_equivalencia")
+            ),
+            "cuota_recargo_equivalencia": decimal_visible(
+                fila.get("cuota_recargo_equivalencia")
+            ),
+        }
+        nota = valor_visible(fila.get("nota"))
+        evidencias = _evidencias_visibles_fila(fila)
+        interpretadas.append(
+            {
+                **valores_fiscales,
+                "nota": nota,
+                "procedencia": procedencia_visible(),
+            }
+        )
+
+        if any(valor is not None for valor in valores_fiscales.values()) or (
+            nota is None and not evidencias
+        ):
+            continue
+
+        paginas = list(
+            dict.fromkeys(
+                evidencia["pagina"]
+                for evidencia in evidencias
+                if evidencia.get("pagina") is not None
+            )
+        )
+        incidencias.agregar(
+            campo=f"impuestos[{indice}]",
+            tipo="CONCEPTO_FISCAL_NO_REPRESENTABLE",
+            nivel=NivelIncidencia.REVISION_MANUAL,
+            descripcion=(
+                "Existe informacion fiscal visible que no puede mapearse con "
+                "seguridad al contrato actual de IVA y recargo de equivalencia."
+            ),
+            datos_visibles={
+                "orden_entrada": indice + 1,
+                "nota": nota,
+                "evidencias": evidencias,
+                "paginas": paginas,
+                "campos_fiscales_recibidos": valores_fiscales,
+                "motivo": (
+                    "Ningun campo fiscal compatible contiene un valor visible."
+                ),
+            },
+            decision=(
+                "La fila no se incorpora a impuestos normalizados; su contenido "
+                "visible se conserva para revision."
+            ),
+        )
+
+    return construir_impuestos(
+        interpretadas,
+        validaciones=validaciones,
+        incidencias=incidencias,
+    )
 
 
 def _interpretar_ajustes(
@@ -292,25 +397,10 @@ def normalizar_estandar(
     recargo = decimal_visible(general.get("recargo_equivalencia_total"))
     total = decimal_visible(general.get("importe_total"))
     validaciones: list[dict[str, Any]] = []
-    impuestos = construir_impuestos(
-        (
-            {
-                "base_imponible": decimal_visible(fila.get("base_imponible")),
-                "tipo_iva": porcentaje_visible(fila.get("tipo_iva")),
-                "cuota_iva": decimal_visible(fila.get("cuota_iva")),
-                "tipo_recargo_equivalencia": porcentaje_visible(
-                    fila.get("tipo_recargo_equivalencia")
-                ),
-                "cuota_recargo_equivalencia": decimal_visible(
-                    fila.get("cuota_recargo_equivalencia")
-                ),
-                "nota": valor_visible(fila.get("nota")),
-                "procedencia": procedencia_visible(),
-            }
-            for fila in (general.get("impuestos") or [])
-        ),
-        validaciones=validaciones,
-        incidencias=incidencias,
+    impuestos = _interpretar_impuestos(
+        general.get("impuestos"),
+        validaciones,
+        incidencias,
     )
     vencimientos = construir_vencimientos(
         (

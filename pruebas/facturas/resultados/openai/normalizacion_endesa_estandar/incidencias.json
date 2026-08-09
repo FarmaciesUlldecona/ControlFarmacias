@@ -4,6 +4,42 @@
   "incidencias": [
     {
       "orden": 1,
+      "campo": "impuestos[1]",
+      "tipo_incidencia": "CONCEPTO_FISCAL_NO_REPRESENTABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "Existe informacion fiscal visible que no puede mapearse con seguridad al contrato actual de IVA y recargo de equivalencia.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 2,
+        "nota": "Impto.HC general (#) 4.160,00 kWh x 0,001080 Eur/kWh",
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Impto.HC general (#) 4.160,00 kWh x 0,001080 Eur/kWh 4,49 €",
+            "pagina": 2
+          },
+          {
+            "campo": "nota",
+            "texto_visible": "Impto.HC general (#) 4.160,00 kWh x 0,001080 Eur/kWh 4,49 €",
+            "pagina": 2
+          }
+        ],
+        "paginas": [
+          2
+        ],
+        "campos_fiscales_recibidos": {
+          "base_imponible": null,
+          "tipo_iva": null,
+          "cuota_iva": null,
+          "tipo_recargo_equivalencia": null,
+          "cuota_recargo_equivalencia": null
+        },
+        "motivo": "Ningun campo fiscal compatible contiene un valor visible."
+      },
+      "decision_tomada": "La fila no se incorpora a impuestos normalizados; su contenido visible se conserva para revision.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 2,
       "campo": "ajustes[1]",
       "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
       "nivel": "REVISION_MANUAL",
@@ -52,7 +88,7 @@
       "requiere_revision_manual": true
     },
     {
-      "orden": 2,
+      "orden": 3,
       "campo": "ajustes[2]",
       "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
       "nivel": "REVISION_MANUAL",
@@ -101,7 +137,7 @@
       "requiere_revision_manual": true
     },
     {
-      "orden": 3,
+      "orden": 4,
       "campo": "ajustes[3]",
       "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
       "nivel": "REVISION_MANUAL",
@@ -150,7 +186,7 @@
       "requiere_revision_manual": true
     },
     {
-      "orden": 4,
+      "orden": 5,
       "campo": "ajustes[4]",
       "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
       "nivel": "REVISION_MANUAL",

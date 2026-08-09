@@ -335,6 +335,212 @@ def test_fiscalidad_con_dos_tramos_conserva_orden_recargo_y_validaciones(
     assert incidencias == []
 
 
+def fila_fiscal_vacia() -> dict:
+    return {
+        "orden": campo(None, evidencia=False),
+        "base_imponible": campo(None, evidencia=False),
+        "tipo_iva": campo(None, evidencia=False),
+        "cuota_iva": campo(None, evidencia=False),
+        "tipo_recargo_equivalencia": campo(None, evidencia=False),
+        "cuota_recargo_equivalencia": campo(None, evidencia=False),
+        "nota": campo(None, evidencia=False),
+    }
+
+
+def incidencias_fiscales(incidencias: list[dict]) -> list[dict]:
+    return [
+        incidencia
+        for incidencia in incidencias
+        if incidencia["tipo_incidencia"]
+        == "CONCEPTO_FISCAL_NO_REPRESENTABLE"
+    ]
+
+
+def test_fila_iva_parcial_representable_conserva_comportamiento_historico(
+    extraccion,
+    configuracion,
+) -> None:
+    fila = fila_fiscal_vacia()
+    fila["base_imponible"] = campo("40,00")
+    extraccion["factura"]["impuestos"] = [fila]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
+    assert resultado["resultado_normalizado"]["impuestos"][0][
+        "base_imponible"
+    ] == Decimal("40.00")
+    assert incidencias_fiscales(incidencias) == []
+
+
+def test_fila_recargo_valida_no_genera_incidencia(
+    extraccion,
+    configuracion,
+) -> None:
+    fila = fila_fiscal_vacia()
+    fila["base_imponible"] = campo("100,00")
+    fila["tipo_recargo_equivalencia"] = campo("5.2")
+    fila["cuota_recargo_equivalencia"] = campo("5,20")
+    extraccion["factura"]["impuestos"] = [fila]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
+    assert resultado["resultado_normalizado"]["impuestos"][0][
+        "cuota_recargo_equivalencia"
+    ] == Decimal("5.20")
+    assert incidencias_fiscales(incidencias) == []
+
+
+def test_fila_fiscal_realmente_vacia_se_omite_sin_incidencia(
+    extraccion,
+    configuracion,
+) -> None:
+    extraccion["factura"]["impuestos"] = [fila_fiscal_vacia()]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
+    assert resultado["resultado_normalizado"]["impuestos"] == []
+    assert incidencias == []
+
+
+def test_fila_fiscal_solo_con_nota_visible_genera_una_incidencia(
+    extraccion,
+    configuracion,
+) -> None:
+    fila = fila_fiscal_vacia()
+    fila["nota"] = campo_con_evidencia(
+        "Concepto fiscal visible", "Concepto fiscal visible 1,23 EUR"
+    )
+    extraccion["factura"]["impuestos"] = [fila]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
+    assert resultado["resultado_normalizado"]["impuestos"] == []
+    assert len(incidencias_fiscales(incidencias)) == 1
+
+
+def test_fila_fiscal_solo_con_evidencia_visible_genera_incidencia(
+    extraccion,
+    configuracion,
+) -> None:
+    fila = fila_fiscal_vacia()
+    fila["orden"] = campo_con_evidencia(None, "Concepto fiscal visible")
+    extraccion["factura"]["impuestos"] = [fila]
+
+    _, incidencias = ejecutar(extraccion, configuracion)
+
+    incidencia = incidencias_fiscales(incidencias)[0]
+    assert incidencia["datos_visibles_disponibles"]["nota"] is None
+    assert incidencia["datos_visibles_disponibles"]["evidencias"] == [
+        {
+            "campo": "orden",
+            "texto_visible": "Concepto fiscal visible",
+            "pagina": 1,
+        }
+    ]
+
+
+def test_varias_evidencias_de_una_fila_generan_una_sola_incidencia(
+    extraccion,
+    configuracion,
+) -> None:
+    fila = fila_fiscal_vacia()
+    fila["nota"] = {
+        "valor": "Concepto visible",
+        "evidencias": [
+            {"texto_visible": "Primera evidencia", "pagina": 1},
+            {"texto_visible": "Segunda evidencia", "pagina": 2},
+        ],
+    }
+    extraccion["factura"]["impuestos"] = [fila]
+
+    _, incidencias = ejecutar(extraccion, configuracion)
+
+    fiscales = incidencias_fiscales(incidencias)
+    assert len(fiscales) == 1
+    assert fiscales[0]["datos_visibles_disponibles"]["paginas"] == [1, 2]
+    assert len(fiscales[0]["datos_visibles_disponibles"]["evidencias"]) == 2
+
+
+def test_varias_filas_fiscales_no_representables_generan_una_incidencia_por_fila(
+    extraccion,
+    configuracion,
+) -> None:
+    primera = fila_fiscal_vacia()
+    primera["nota"] = campo("Concepto uno")
+    segunda = fila_fiscal_vacia()
+    segunda["nota"] = campo("Concepto dos")
+    extraccion["factura"]["impuestos"] = [primera, segunda]
+
+    _, incidencias = ejecutar(extraccion, configuracion)
+
+    fiscales = incidencias_fiscales(incidencias)
+    assert [incidencia["campo"] for incidencia in fiscales] == [
+        "impuestos[0]",
+        "impuestos[1]",
+    ]
+
+
+def test_incidencia_fiscal_no_extrae_importe_ni_clasifica_concepto(
+    extraccion,
+    configuracion,
+) -> None:
+    fila = fila_fiscal_vacia()
+    fila["nota"] = campo_con_evidencia(
+        "Tributo documental", "Tributo documental 9,87 EUR"
+    )
+    extraccion["factura"]["impuestos"] = [fila]
+
+    _, incidencias = ejecutar(extraccion, configuracion)
+
+    datos = incidencias_fiscales(incidencias)[0][
+        "datos_visibles_disponibles"
+    ]
+    assert set(datos) == {
+        "orden_entrada",
+        "nota",
+        "evidencias",
+        "paginas",
+        "campos_fiscales_recibidos",
+        "motivo",
+    }
+    assert datos["campos_fiscales_recibidos"] == {
+        "base_imponible": None,
+        "tipo_iva": None,
+        "cuota_iva": None,
+        "tipo_recargo_equivalencia": None,
+        "cuota_recargo_equivalencia": None,
+    }
+    assert all(
+        nombre not in datos
+        for nombre in ("importe", "tipo_impuesto", "impuesto_especial")
+    )
+
+
+def test_incidencia_fiscal_es_determinista_y_acepta_proveedor_arbitrario(
+    extraccion,
+    configuracion,
+) -> None:
+    fila = fila_fiscal_vacia()
+    fila["nota"] = campo("Concepto fiscal pendiente")
+    extraccion["factura"]["impuestos"] = [fila]
+    otra_configuracion = ConfiguracionProveedor(
+        proveedor_nombre_canonico="ENTIDAD ARBITRARIA, S.L.",
+        aliases=("Entidad Arbitraria",),
+        categoria="SERVICIO",
+        requiere_conciliacion_albaranes=False,
+        farmacia="FARMACIA INTERNA",
+        id_farmacia="0007",
+        metodo_identificacion_farmacia="CIF",
+    )
+    extraccion["factura"]["proveedor_nombre"] = campo("Entidad Arbitraria")
+
+    primero = ejecutar(deepcopy(extraccion), otra_configuracion)
+    segundo = ejecutar(deepcopy(extraccion), otra_configuracion)
+
+    assert primero == segundo
+    assert len(incidencias_fiscales(primero[1])) == 1
+
+
 def test_fechas_opcionales_incompletas_se_bloquean_sin_derivarlas(
     extraccion,
     configuracion,

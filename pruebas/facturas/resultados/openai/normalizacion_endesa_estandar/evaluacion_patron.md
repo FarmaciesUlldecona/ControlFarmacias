@@ -5,7 +5,7 @@
 - Acierto estricto: 77.27 %.
 - Cobertura: 90.91 %.
 - Invenciones atomicas: 0.
-- Incidencias: 4.
+- Incidencias: 5.
 
 ## Diferencias
 
