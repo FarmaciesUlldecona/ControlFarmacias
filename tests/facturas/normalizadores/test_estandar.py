@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from src.facturas.configuraciones_estandar import (
+    CONFIGURACION_ENDESA,
     CONFIGURACION_GUIMERA,
     CONFIGURACION_HYGIE31,
     CONFIGURACION_PIERRE_FABRE,
@@ -173,6 +174,47 @@ def test_fecha_vencimiento_sin_importe_no_recibe_total(
         incidencia["tipo_incidencia"] == "IMPORTE_VENCIMIENTO_NO_VISIBLE"
         for incidencia in incidencias
     )
+
+
+def test_fechas_iguales_con_evidencias_independientes_se_conservan(
+    extraccion,
+    configuracion,
+) -> None:
+    general = extraccion["factura"]
+    general["fecha_cargo"] = campo("10-09-2026")
+    general["vencimientos"][0]["fecha_vencimiento"] = {
+        "valor": "10-09-2026",
+        "evidencias": [
+            {"texto_visible": "Vencimiento: 10-09-2026", "pagina": 1}
+        ],
+    }
+
+    resultado, _ = ejecutar(extraccion, configuracion)
+    factura = resultado["resultado_normalizado"]
+
+    assert factura["fecha_cargo"] == "2026-09-10"
+    assert factura["vencimientos"][0]["fecha_vencimiento"] == "2026-09-10"
+
+
+def test_fecha_etiquetada_solo_como_cargo_no_crea_vencimiento(
+    extraccion,
+    configuracion,
+) -> None:
+    general = extraccion["factura"]
+    general["fecha_cargo"] = campo("10-09-2026")
+    general["vencimientos"][0]["fecha_vencimiento"] = {
+        "valor": "10-09-2026",
+        "evidencias": [
+            {"texto_visible": "Fecha de cargo: 10-09-2026", "pagina": 1}
+        ],
+    }
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+    factura = resultado["resultado_normalizado"]
+
+    assert factura["fecha_cargo"] == "2026-09-10"
+    assert factura["vencimientos"] == []
+    assert incidencias == []
 
 
 def test_datos_sin_evidencia_quedan_none_y_ids_siguen_siendo_texto(
@@ -523,16 +565,20 @@ def test_dos_proveedores_usan_el_mismo_normalizador_solo_cambiando_configuracion
     assert segundo["resultado_normalizado"]["destinatario"]["id_farmacia"] == "0099"
 
 
-def test_registro_de_configuraciones_estandar_contiene_tres_politicas_estables() -> None:
+def test_registro_de_configuraciones_estandar_contiene_cuatro_politicas_estables() -> None:
     assert CONFIGURACION_HYGIE31.proveedor_nombre_canonico == "HYGIE31 ESPAÑA, S.L.U."
     assert CONFIGURACION_GUIMERA.proveedor_nombre_canonico == "FARMACIA GUIMERA C.B."
     assert CONFIGURACION_PIERRE_FABRE.proveedor_nombre_canonico == (
         "PIERRE FABRE IBÉRICA, S.A."
     )
+    assert CONFIGURACION_ENDESA.proveedor_nombre_canonico == (
+        "ENDESA ENERGÍA, S.A.U."
+    )
     configuraciones = (
         CONFIGURACION_HYGIE31,
         CONFIGURACION_GUIMERA,
         CONFIGURACION_PIERRE_FABRE,
+        CONFIGURACION_ENDESA,
     )
     assert {configuracion.id_farmacia for configuracion in configuraciones} == {
         "PIO"
@@ -564,6 +610,7 @@ def test_normalizador_estandar_esta_aislado_y_no_conoce_casos_concretos() -> Non
         "ecoceutics",
         "guimer",
         "pierre",
+        "endesa",
     )
     for ruta in rutas:
         texto = ruta.read_text(encoding="utf-8").casefold().replace("\\", "/")

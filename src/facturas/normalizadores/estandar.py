@@ -22,6 +22,7 @@ from src.facturas.normalizadores.documento import (
     construir_destinatario,
     construir_impuestos,
     construir_vencimientos,
+    evidencia_identifica_fecha_cargo,
     ensamblar_factura_normalizada,
     normalizar_identificador_fiscal_es,
     normalizar_nota_vencimiento,
@@ -286,6 +287,9 @@ def normalizar_estandar(
                 "procedencia": procedencia_visible(),
             }
             for fila in (general.get("vencimientos") or [])
+            if not evidencia_identifica_fecha_cargo(
+                fila.get("fecha_vencimiento")
+            )
         ),
         al_importe_ausente=lambda indice, vencimiento: incidencias.agregar(
             campo=f"vencimientos[{indice}].importe",

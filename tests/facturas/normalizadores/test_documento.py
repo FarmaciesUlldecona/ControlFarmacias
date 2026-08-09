@@ -18,6 +18,7 @@ from src.facturas.normalizadores.documento import (
     construir_destinatario,
     construir_vencimientos,
     ensamblar_factura_normalizada,
+    evidencia_identifica_fecha_cargo,
     normalizar_identificador_fiscal_es,
     normalizar_nota_vencimiento,
     normalizar_proveedor_documental,
@@ -582,6 +583,7 @@ def test_nota_real_de_vencimiento_se_conserva() -> None:
 @pytest.mark.parametrize(
     "forma_pago",
     (
+        "Domiciliación bancaria",
         "Remesa",
         "  REMESA  ",
         "Giro domiciliado",
@@ -606,6 +608,7 @@ def test_texto_generico_no_clasificado_se_conserva() -> None:
 @pytest.mark.parametrize(
     "nota_real",
     (
+        "Domiciliación bancaria pendiente de confirmar",
         "Remesa pendiente de confirmar por el cliente",
         "Observación sobre el giro domiciliado devuelto",
     ),
@@ -621,6 +624,59 @@ def test_normalizacion_nota_vencimiento_es_determinista() -> None:
     assert normalizar_nota_vencimiento(texto) == normalizar_nota_vencimiento(
         texto
     )
+
+
+def test_evidencia_explicita_de_vencimiento_no_se_clasifica_como_cargo() -> None:
+    campo_fecha = {
+        "valor": "2026-06-16",
+        "evidencias": [
+            {"texto_visible": "Fecha de vencimiento: 16/06/2026", "pagina": 1}
+        ],
+    }
+    assert evidencia_identifica_fecha_cargo(campo_fecha) is False
+
+
+@pytest.mark.parametrize(
+    "etiqueta",
+    (
+        "Fecha de cargo: 16/06/2026",
+        "Fecha de adeudo: 16/06/2026",
+        "Fecha de domiciliación: 16/06/2026",
+        "Fecha de débito: 16/06/2026",
+    ),
+)
+def test_evidencia_explicita_de_cargo_no_sostiene_vencimiento(etiqueta) -> None:
+    campo_fecha = {
+        "valor": "2026-06-16",
+        "evidencias": [{"texto_visible": etiqueta, "pagina": 1}],
+    }
+    assert evidencia_identifica_fecha_cargo(campo_fecha) is True
+
+
+def test_evidencia_fecha_cargo_none_y_determinismo() -> None:
+    campo_fecha = {
+        "valor": None,
+        "evidencias": [],
+    }
+    assert evidencia_identifica_fecha_cargo(None) is False
+    assert evidencia_identifica_fecha_cargo(campo_fecha) is False
+    assert evidencia_identifica_fecha_cargo(campo_fecha) == (
+        evidencia_identifica_fecha_cargo(campo_fecha)
+    )
+
+
+def test_helper_fecha_cargo_no_conoce_proveedores_ni_patron() -> None:
+    fuente = inspect.getsource(evidencia_identifica_fecha_cargo).casefold()
+    prohibidos = (
+        "endesa",
+        "pierre",
+        "suavinex",
+        "hygie",
+        "guimer",
+        "patron_oficial",
+        "facturas/patron",
+    )
+    assert all(prohibido not in fuente for prohibido in prohibidos)
 
 
 def test_helper_nota_vencimiento_no_conoce_proveedores_ni_patron() -> None:

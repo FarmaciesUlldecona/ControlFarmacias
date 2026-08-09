@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
 import re
@@ -144,6 +144,7 @@ def construir_destinatario(
 
 _FORMAS_PAGO_INEQUIVOCAS = frozenset(
     {
+        "domiciliación bancaria",
         "remesa",
         "giro domiciliado",
         "giro domiciliado core",
@@ -162,6 +163,38 @@ def normalizar_nota_vencimiento(texto_visible: Any) -> str | None:
     if clave in _FORMAS_PAGO_INEQUIVOCAS:
         return None
     return texto_visible
+
+
+_ETIQUETAS_FECHA_CARGO = frozenset(
+    {
+        "fecha de cargo",
+        "fecha de adeudo",
+        "fecha de domiciliación",
+        "fecha de débito",
+    }
+)
+
+
+def evidencia_identifica_fecha_cargo(campo: Any) -> bool:
+    """Detecta si la evidencia etiqueta expresamente una fecha como cargo."""
+    if not isinstance(campo, Mapping):
+        return False
+    evidencias = campo.get("evidencias")
+    if not isinstance(evidencias, Sequence) or isinstance(
+        evidencias, (str, bytes)
+    ):
+        return False
+
+    for evidencia in evidencias:
+        if not isinstance(evidencia, Mapping):
+            continue
+        texto = evidencia.get("texto_visible")
+        if not isinstance(texto, str):
+            continue
+        normalizado = " ".join(texto.casefold().split())
+        if any(etiqueta in normalizado for etiqueta in _ETIQUETAS_FECHA_CARGO):
+            return True
+    return False
 
 
 def construir_vencimientos(

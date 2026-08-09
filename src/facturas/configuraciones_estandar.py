@@ -34,3 +34,14 @@ CONFIGURACION_PIERRE_FABRE = ConfiguracionProveedor(
     id_farmacia="PIO",
     metodo_identificacion_farmacia="CIF",
 )
+
+
+CONFIGURACION_ENDESA = ConfiguracionProveedor(
+    proveedor_nombre_canonico="ENDESA ENERGÍA, S.A.U.",
+    aliases=("Endesa Energía, S.A. Unipersonal",),
+    categoria="SUMINISTRO",
+    requiere_conciliacion_albaranes=False,
+    farmacia="PIO",
+    id_farmacia="PIO",
+    metodo_identificacion_farmacia="CIF",
+)

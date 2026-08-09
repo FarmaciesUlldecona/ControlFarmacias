@@ -1,0 +1,139 @@
+{
+  "version_normalizador": "estandar_v1",
+  "fecha_ejecucion": "2026-08-09T09:45:35.354762+00:00",
+  "archivo_origen": "GAS CASA ABRIL-MAIG 2026.pdf",
+  "paginas_originales": [
+    1,
+    2
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "FACTURA",
+    "categoria": "SUMINISTRO",
+    "requiere_conciliacion_albaranes": false,
+    "pagina_inicio": 1,
+    "pagina_fin": 2,
+    "proveedor_nombre": "ENDESA ENERGÍA, S.A.U.",
+    "proveedor_cif": "A81948077",
+    "numero_factura": "P26CON024967719",
+    "fecha_factura": "2026-06-09",
+    "base_imponible_total": 350.9,
+    "iva_total": 73.69,
+    "recargo_equivalencia_total": null,
+    "importe_total": 424.59,
+    "vencimientos": [],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": 350.9,
+        "tipo_iva": 21.0,
+        "cuota_iva": 73.69,
+        "tipo_recargo_equivalencia": null,
+        "cuota_recargo_equivalencia": null,
+        "nota": null,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
+    "albaranes": [],
+    "ajustes": [
+      {
+        "orden": 1,
+        "tipo_ajuste": "DESCUENTO",
+        "descripcion": "Descuento promocional -10 % x 320,32 Eur",
+        "importe": -32.03,
+        "incluido_en_base": true,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      },
+      {
+        "orden": 2,
+        "tipo_ajuste": "OTRO",
+        "descripcion": "Alquiler de Equipos Gas",
+        "importe": 1.18,
+        "incluido_en_base": true,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      },
+      {
+        "orden": 3,
+        "tipo_ajuste": "OTRO",
+        "descripcion": "Fijo",
+        "importe": 56.94,
+        "incluido_en_base": true,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      },
+      {
+        "orden": 4,
+        "tipo_ajuste": "OTRO",
+        "descripcion": "Variable",
+        "importe": 320.32,
+        "incluido_en_base": true,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      },
+      {
+        "orden": 5,
+        "tipo_ajuste": "IMPUESTO",
+        "descripcion": "Impuestos",
+        "importe": 78.18,
+        "incluido_en_base": null,
+        "incluido_en_total": true,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PIO PUIG SALOMON",
+      "cif": null,
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": "2026-06-16",
+    "periodo_facturacion_inicio": "2026-04-02",
+    "periodo_facturacion_fin": "2026-06-03",
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_totales_fiscalidad_vencimientos": "lectura_visible_luna_general",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "categoria": "SUMINISTRO",
+    "requiere_conciliacion_albaranes": false,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF",
+    "proveedor_nombre_canonico": "ENDESA ENERGÍA, S.A.U."
+  },
+  "validaciones_monetarias": [
+    {
+      "nombre": "impuestos[0].cuota_iva",
+      "estado": "OK",
+      "esperado": "73.69",
+      "obtenido": "73.689",
+      "diferencia": "-0.001",
+      "tolerancia": "0.01"
+    }
+  ]
+}

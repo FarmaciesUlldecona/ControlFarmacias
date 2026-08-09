@@ -1,0 +1,794 @@
+{
+  "aislamiento": {
+    "cumple": true,
+    "hallazgos": []
+  },
+  "antes_luna": {
+    "campos_evaluados": 22,
+    "correctos": 16,
+    "incorrectos": 2,
+    "ausentes": 1,
+    "parciales": 3,
+    "inventados": 0,
+    "acierto_estricto": 72.73,
+    "cobertura": 95.45,
+    "coste_real_usd": 0.021867,
+    "duracion_segundos": 10.558,
+    "requiere_extraccion_literal_tablas": false
+  },
+  "despues_estandar": {
+    "campos_evaluados": 22,
+    "correctos": 17,
+    "incorrectos": 0,
+    "parciales": 3,
+    "ausentes": 2,
+    "acierto_estricto": 77.27,
+    "cobertura": 90.91,
+    "inventados": 11
+  },
+  "cantidad_incidencias": 0,
+  "incidencias": [],
+  "validaciones_monetarias": [
+    {
+      "nombre": "impuestos[0].cuota_iva",
+      "estado": "OK",
+      "esperado": "73.69",
+      "obtenido": "73.689",
+      "diferencia": "-0.001",
+      "tolerancia": "0.01"
+    }
+  ],
+  "comparaciones": [
+    {
+      "campo": "ajustes",
+      "estado": "PARCIAL",
+      "esperado": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "DESCUENTO",
+          "descripcion": "Descuento promocional",
+          "importe": -32.03,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        },
+        {
+          "orden": 2,
+          "tipo_ajuste": "GASTO",
+          "descripcion": "Alquiler de equipos gas",
+          "importe": 1.18,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        },
+        {
+          "orden": 3,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Impuesto de hidrocarburos",
+          "importe": 4.49,
+          "incluido_en_base": true,
+          "incluido_en_total": true
+        }
+      ],
+      "obtenido": [
+        {
+          "orden": 1,
+          "tipo_ajuste": "DESCUENTO",
+          "descripcion": "Descuento promocional -10 % x 320,32 Eur",
+          "importe": -32.03,
+          "incluido_en_base": true,
+          "incluido_en_total": true,
+          "procedencia": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          }
+        },
+        {
+          "orden": 2,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Alquiler de Equipos Gas",
+          "importe": 1.18,
+          "incluido_en_base": true,
+          "incluido_en_total": true,
+          "procedencia": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          }
+        },
+        {
+          "orden": 3,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Fijo",
+          "importe": 56.94,
+          "incluido_en_base": true,
+          "incluido_en_total": true,
+          "procedencia": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          }
+        },
+        {
+          "orden": 4,
+          "tipo_ajuste": "OTRO",
+          "descripcion": "Variable",
+          "importe": 320.32,
+          "incluido_en_base": true,
+          "incluido_en_total": true,
+          "procedencia": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          }
+        },
+        {
+          "orden": 5,
+          "tipo_ajuste": "IMPUESTO",
+          "descripcion": "Impuestos",
+          "importe": 78.18,
+          "incluido_en_base": null,
+          "incluido_en_total": true,
+          "procedencia": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          }
+        }
+      ],
+      "conteo_atomico": {
+        "INCORRECTO": 4,
+        "CORRECTO": 14,
+        "DIFERENCIA_FORMATO": 1,
+        "INVENTADO": 11
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes[0].descripcion",
+          "esperado": "Descuento promocional",
+          "obtenido": "Descuento promocional -10 % x 320,32 Eur",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].importe",
+          "esperado": -32.03,
+          "obtenido": -32.03,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[0].tipo_ajuste",
+          "esperado": "DESCUENTO",
+          "obtenido": "DESCUENTO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].descripcion",
+          "esperado": "Alquiler de equipos gas",
+          "obtenido": "Alquiler de Equipos Gas",
+          "estado": "DIFERENCIA_FORMATO"
+        },
+        {
+          "ruta": "ajustes[1].importe",
+          "esperado": 1.18,
+          "obtenido": 1.18,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].orden",
+          "esperado": 2,
+          "obtenido": 2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[1].tipo_ajuste",
+          "esperado": "GASTO",
+          "obtenido": "OTRO",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].descripcion",
+          "esperado": "Impuesto de hidrocarburos",
+          "obtenido": "Fijo",
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].importe",
+          "esperado": 4.49,
+          "obtenido": 56.94,
+          "estado": "INCORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].incluido_en_base",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].incluido_en_total",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].orden",
+          "esperado": 3,
+          "obtenido": 3,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[2].tipo_ajuste",
+          "esperado": "OTRO",
+          "obtenido": "OTRO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[3].descripcion",
+          "esperado": null,
+          "obtenido": "Variable",
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].importe",
+          "esperado": null,
+          "obtenido": 320.32,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].incluido_en_base",
+          "esperado": null,
+          "obtenido": true,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].incluido_en_total",
+          "esperado": null,
+          "obtenido": true,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].orden",
+          "esperado": null,
+          "obtenido": 4,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[3].tipo_ajuste",
+          "esperado": null,
+          "obtenido": "OTRO",
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].descripcion",
+          "esperado": null,
+          "obtenido": "Impuestos",
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].importe",
+          "esperado": null,
+          "obtenido": 78.18,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].incluido_en_base",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "ajustes[4].incluido_en_total",
+          "esperado": null,
+          "obtenido": true,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].orden",
+          "esperado": null,
+          "obtenido": 5,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "ajustes[4].tipo_ajuste",
+          "esperado": null,
+          "obtenido": "IMPUESTO",
+          "estado": "INVENTADO"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "estado": "CORRECTO",
+      "esperado": [],
+      "obtenido": [],
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes",
+          "esperado": [],
+          "obtenido": [],
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "estado": "CORRECTO",
+      "esperado": 350.9,
+      "obtenido": 350.9,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 350.9,
+          "obtenido": 350.9,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "estado": "CORRECTO",
+      "esperado": "SUMINISTRO",
+      "obtenido": "SUMINISTRO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "SUMINISTRO",
+          "obtenido": "SUMINISTRO",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "estado": "PARCIAL",
+      "esperado": {
+        "id_farmacia": "PIO",
+        "nombre": "FARMACIA PIO PUIG",
+        "cif": "40901058C",
+        "metodo_identificacion": "CIF"
+      },
+      "obtenido": {
+        "id_farmacia": "PIO",
+        "nombre": "PIO PUIG SALOMON",
+        "cif": null,
+        "metodo_identificacion": "CIF"
+      },
+      "conteo_atomico": {
+        "AUSENTE": 1,
+        "CORRECTO": 2,
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": "PIO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "CIF",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "PIO PUIG SALOMON",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "estado": "CORRECTO",
+      "esperado": "2026-06-16",
+      "obtenido": "2026-06-16",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": "2026-06-16",
+          "obtenido": "2026-06-16",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "estado": "CORRECTO",
+      "esperado": "2026-06-09",
+      "obtenido": "2026-06-09",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-06-09",
+          "obtenido": "2026-06-09",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "estado": "CORRECTO",
+      "esperado": 424.59,
+      "obtenido": 424.59,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 424.59,
+          "obtenido": 424.59,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "estado": "PARCIAL",
+      "esperado": [
+        {
+          "orden": 1,
+          "base_imponible": 350.9,
+          "tipo_iva": 21.0,
+          "cuota_iva": 73.69,
+          "tipo_recargo_equivalencia": 0.0,
+          "cuota_recargo_equivalencia": 0.0
+        }
+      ],
+      "obtenido": [
+        {
+          "orden": 1,
+          "base_imponible": 350.9,
+          "tipo_iva": 21.0,
+          "cuota_iva": 73.69,
+          "tipo_recargo_equivalencia": null,
+          "cuota_recargo_equivalencia": null,
+          "nota": null,
+          "procedencia": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          }
+        }
+      ],
+      "conteo_atomico": {
+        "CORRECTO": 5,
+        "AUSENTE": 2
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": 350.9,
+          "obtenido": 350.9,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": 73.69,
+          "obtenido": 73.69,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": 0.0,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "impuestos[0].nota",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": 21.0,
+          "obtenido": 21.0,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": 0.0,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "estado": "CORRECTO",
+      "esperado": 73.69,
+      "obtenido": 73.69,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 73.69,
+          "obtenido": 73.69,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "estado": "CORRECTO",
+      "esperado": null,
+      "obtenido": null,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "estado": "CORRECTO",
+      "esperado": "P26CON024967719",
+      "obtenido": "P26CON024967719",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "P26CON024967719",
+          "obtenido": "P26CON024967719",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "estado": "CORRECTO",
+      "esperado": 2,
+      "obtenido": 2,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 2,
+          "obtenido": 2,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "estado": "CORRECTO",
+      "esperado": 1,
+      "obtenido": 1,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "estado": "CORRECTO",
+      "esperado": "2026-06-03",
+      "obtenido": "2026-06-03",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": "2026-06-03",
+          "obtenido": "2026-06-03",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "estado": "CORRECTO",
+      "esperado": "2026-04-02",
+      "obtenido": "2026-04-02",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": "2026-04-02",
+          "obtenido": "2026-04-02",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "estado": "CORRECTO",
+      "esperado": "A81948077",
+      "obtenido": "A81948077",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "A81948077",
+          "obtenido": "A81948077",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "estado": "CORRECTO",
+      "esperado": "ENDESA ENERGÍA, S.A.U.",
+      "obtenido": "ENDESA ENERGÍA, S.A.U.",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "ENDESA ENERGÍA, S.A.U.",
+          "obtenido": "ENDESA ENERGÍA, S.A.U.",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "estado": "AUSENTE",
+      "esperado": 0.0,
+      "obtenido": null,
+      "conteo_atomico": {
+        "AUSENTE": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 0.0,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "estado": "CORRECTO",
+      "esperado": false,
+      "obtenido": false,
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": false,
+          "obtenido": false,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "tipo_documento",
+      "estado": "CORRECTO",
+      "esperado": "FACTURA",
+      "obtenido": "FACTURA",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "estado": "AUSENTE",
+      "esperado": [
+        {
+          "orden": 1,
+          "fecha_vencimiento": "2026-06-16",
+          "importe": 424.59
+        }
+      ],
+      "obtenido": [],
+      "conteo_atomico": {
+        "AUSENTE": 4
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos",
+          "esperado": null,
+          "obtenido": [],
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "vencimientos[0].fecha_vencimiento",
+          "esperado": "2026-06-16",
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "vencimientos[0].importe",
+          "esperado": 424.59,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        },
+        {
+          "ruta": "vencimientos[0].orden",
+          "esperado": 1,
+          "obtenido": null,
+          "estado": "AUSENTE"
+        }
+      ]
+    }
+  ]
+}
