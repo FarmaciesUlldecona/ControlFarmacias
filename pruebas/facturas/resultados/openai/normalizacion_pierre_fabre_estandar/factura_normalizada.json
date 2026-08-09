@@ -47,7 +47,21 @@
         }
       }
     ],
-    "albaranes": [],
+    "albaranes": [
+      {
+        "orden": 1,
+        "numero_albaran": "SCN0276685",
+        "fecha_albaran": null,
+        "tipo_movimiento": null,
+        "descripcion": null,
+        "importe_base": null,
+        "importe_total": null,
+        "procedencia": {
+          "tipo": "lectura_visible",
+          "fuente": "luna_general"
+        }
+      }
+    ],
     "ajustes": [
       {
         "orden": 1,

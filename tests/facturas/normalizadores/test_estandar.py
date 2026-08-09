@@ -331,7 +331,33 @@ def test_albaranes_y_ajustes_no_interpretables_se_bloquean(
     factura = resultado["resultado_normalizado"]
     assert factura["albaranes"] == []
     assert factura["ajustes"] == []
-    assert {x["campo"] for x in incidencias} >= {"albaranes", "ajustes[0]"}
+    assert {x["campo"] for x in incidencias} >= {
+        "albaranes[0]",
+        "ajustes[0]",
+    }
+
+
+@pytest.mark.parametrize(
+    "fila",
+    (
+        {"numero_albaran": campo(True)},
+        {"fecha_albaran": campo("2026-09")},
+        {"importe_total": campo("importe ambiguo")},
+    ),
+)
+def test_albaran_estandar_con_valor_incompatible_se_bloquea(
+    extraccion,
+    configuracion,
+    fila,
+) -> None:
+    extraccion["factura"]["albaranes"] = [fila]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
+    assert resultado["resultado_normalizado"]["albaranes"] == []
+    assert [incidencia["tipo_incidencia"] for incidencia in incidencias] == [
+        "ALBARAN_ESTANDAR_NO_INTERPRETABLE"
+    ]
 
 
 def test_ajuste_visible_estructurado_se_conserva_sin_clasificar(
@@ -410,10 +436,23 @@ def test_abono_estandar_conserva_signos_y_limites_visibles(
     assert factura["ajustes"][0]["importe"] == Decimal("-33.77")
     assert factura["vencimientos"][0]["importe"] is None
     assert factura["vencimientos"][0]["nota"] is None
-    assert factura["albaranes"] == []
+    assert factura["albaranes"] == [
+        {
+            "orden": 1,
+            "numero_albaran": "AB-0001",
+            "fecha_albaran": None,
+            "tipo_movimiento": None,
+            "descripcion": None,
+            "importe_base": None,
+            "importe_total": None,
+            "procedencia": {
+                "tipo": "lectura_visible",
+                "fuente": "luna_general",
+            },
+        }
+    ]
     assert {incidencia["tipo_incidencia"] for incidencia in incidencias} == {
         "IMPORTE_VENCIMIENTO_NO_VISIBLE",
-        "ALBARANES_NO_INTERPRETABLES_POR_RUTA_ESTANDAR",
     }
 
 

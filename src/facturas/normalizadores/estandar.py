@@ -17,6 +17,7 @@ from src.facturas.normalizadores.comun import (
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
     construir_ajustes,
+    construir_albaranes,
     construir_cabecera_documental,
     construir_destinatario,
     construir_impuestos,
@@ -131,6 +132,83 @@ def _interpretar_ajustes(
     return construir_ajustes(interpretadas)
 
 
+_CAMPOS_ALBARAN_ESTANDAR = frozenset(
+    {
+        "orden",
+        "numero_albaran",
+        "fecha_albaran",
+        "tipo_movimiento",
+        "descripcion",
+        "importe_base",
+        "importe_total",
+    }
+)
+
+
+def _interpretar_albaranes(
+    filas: Any,
+    incidencias: RegistroIncidencias,
+) -> list[dict[str, Any]]:
+    if not filas:
+        return []
+    if not isinstance(filas, list):
+        return _bloquear_coleccion_no_interpretable(
+            "albaranes", filas, incidencias
+        )
+
+    interpretadas: list[dict[str, Any]] = []
+    for indice, fila in enumerate(filas):
+        motivo = None
+        if not isinstance(fila, dict):
+            motivo = "La fila de albaran no tiene una estructura de campos valida."
+        elif not set(fila).issubset(_CAMPOS_ALBARAN_ESTANDAR):
+            motivo = "La fila contiene campos ajenos al contrato estandar de albaran."
+        else:
+            try:
+                numero = valor_visible(fila.get("numero_albaran"))
+                fecha = fecha_visible(fila.get("fecha_albaran"))
+                movimiento = valor_visible(fila.get("tipo_movimiento"))
+                descripcion = valor_visible(fila.get("descripcion"))
+                base = decimal_visible(fila.get("importe_base"))
+                total = decimal_visible(fila.get("importe_total"))
+            except ValueError:
+                motivo = "La fila contiene una fecha o importe visible no interpretable."
+            else:
+                numero_valido = numero is None or (
+                    isinstance(numero, (str, int))
+                    and not isinstance(numero, bool)
+                )
+                textos_validos = numero_valido and all(
+                    valor is None or isinstance(valor, str)
+                    for valor in (movimiento, descripcion)
+                )
+                if textos_validos:
+                    interpretadas.append(
+                        {
+                            "numero_albaran": numero,
+                            "fecha_albaran": fecha,
+                            "tipo_movimiento": movimiento,
+                            "descripcion": descripcion,
+                            "importe_base": base,
+                            "importe_total": total,
+                            "procedencia": procedencia_visible(),
+                        }
+                    )
+                    continue
+                motivo = "La fila contiene tipos incompatibles con el contrato de albaran."
+
+        incidencias.agregar(
+            campo=f"albaranes[{indice}]",
+            tipo="ALBARAN_ESTANDAR_NO_INTERPRETABLE",
+            nivel=NivelIncidencia.REVISION_MANUAL,
+            descripcion=motivo,
+            datos_visibles={"indice": indice},
+            decision="La fila no se incorpora a los albaranes normalizados.",
+        )
+
+    return construir_albaranes(interpretadas)
+
+
 def normalizar_estandar(
     extraccion_general: dict[str, Any],
     metadatos_tecnicos: dict[str, Any],
@@ -220,9 +298,7 @@ def normalizar_estandar(
             decision="No se asigna automaticamente el total de factura.",
         ),
     )
-    albaranes = _bloquear_coleccion_no_interpretable(
-        "albaranes", general.get("albaranes"), incidencias
-    )
+    albaranes = _interpretar_albaranes(general.get("albaranes"), incidencias)
     ajustes = _interpretar_ajustes(general.get("ajustes"), incidencias)
     cabecera = construir_cabecera_documental(
         general,

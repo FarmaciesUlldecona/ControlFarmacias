@@ -26,7 +26,7 @@
     "cobertura": 100.0,
     "inventados": 0
   },
-  "cantidad_incidencias": 2,
+  "cantidad_incidencias": 1,
   "incidencias": [
     {
       "orden": 1,
@@ -38,18 +38,6 @@
         "fecha_vencimiento": "2026-09-07"
       },
       "decision_tomada": "No se asigna automaticamente el total de factura.",
-      "requiere_revision_manual": true
-    },
-    {
-      "orden": 2,
-      "campo": "albaranes",
-      "tipo_incidencia": "ALBARANES_NO_INTERPRETABLES_POR_RUTA_ESTANDAR",
-      "nivel": "REVISION_MANUAL",
-      "descripcion": "La ruta estandar no interpreta automaticamente albaranes.",
-      "datos_visibles_disponibles": {
-        "cantidad_filas": 1
-      },
-      "decision_tomada": "Se devuelve albaranes=[] para evitar crear datos no demostrados.",
       "requiere_revision_manual": true
     }
   ],
@@ -155,17 +143,31 @@
           "importe_total": -96.73
         }
       ],
-      "obtenido": [],
+      "obtenido": [
+        {
+          "orden": 1,
+          "numero_albaran": "SCN0276685",
+          "fecha_albaran": null,
+          "tipo_movimiento": null,
+          "descripcion": null,
+          "importe_base": null,
+          "importe_total": null,
+          "procedencia": {
+            "tipo": "lectura_visible",
+            "fuente": "luna_general"
+          }
+        }
+      ],
       "conteo_atomico": {
-        "AUSENTE": 6,
-        "CORRECTO": 1
+        "CORRECTO": 4,
+        "AUSENTE": 3
       },
       "detalles": [
         {
-          "ruta": "albaranes",
+          "ruta": "albaranes[0].descripcion",
           "esperado": null,
-          "obtenido": [],
-          "estado": "AUSENTE"
+          "obtenido": null,
+          "estado": "CORRECTO"
         },
         {
           "ruta": "albaranes[0].fecha_albaran",
@@ -188,14 +190,14 @@
         {
           "ruta": "albaranes[0].numero_albaran",
           "esperado": "SCN0276685",
-          "obtenido": null,
-          "estado": "AUSENTE"
+          "obtenido": "SCN0276685",
+          "estado": "CORRECTO"
         },
         {
           "ruta": "albaranes[0].orden",
           "esperado": 1,
-          "obtenido": null,
-          "estado": "AUSENTE"
+          "obtenido": 1,
+          "estado": "CORRECTO"
         },
         {
           "ruta": "albaranes[0].tipo_movimiento",

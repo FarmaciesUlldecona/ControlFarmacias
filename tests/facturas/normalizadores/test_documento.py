@@ -13,6 +13,7 @@ from src.facturas.normalizadores.comun import RegistroIncidencias
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
 from src.facturas.normalizadores.documento import (
     construir_ajustes,
+    construir_albaranes,
     construir_cabecera_documental,
     construir_destinatario,
     construir_vencimientos,
@@ -399,6 +400,158 @@ def test_construir_ajustes_no_conoce_proveedores_ni_patron() -> None:
         "facturas/patron",
     )
     assert all(prohibido not in texto for prohibido in prohibidos)
+
+
+def test_construir_albaran_completo_conserva_contrato_real() -> None:
+    procedencia = {"tipo": "lectura_visible", "fuente": "prueba"}
+    assert construir_albaranes(
+        [
+            {
+                "numero_albaran": "AB-001",
+                "fecha_albaran": "2026-09-07",
+                "tipo_movimiento": "CARGO",
+                "descripcion": "Entrega visible",
+                "importe_base": Decimal("10.00"),
+                "importe_total": Decimal("12.10"),
+                "procedencia": procedencia,
+            }
+        ]
+    ) == [
+        {
+            "orden": 1,
+            "numero_albaran": "AB-001",
+            "fecha_albaran": "2026-09-07",
+            "tipo_movimiento": "CARGO",
+            "descripcion": "Entrega visible",
+            "importe_base": Decimal("10.00"),
+            "importe_total": Decimal("12.10"),
+            "procedencia": procedencia,
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("campos", "esperados"),
+    (
+        ({"numero_albaran": "SCN0276685"}, {"numero_albaran": "SCN0276685"}),
+        (
+            {"numero_albaran": "A-1", "fecha_albaran": "2026-09-07"},
+            {"numero_albaran": "A-1", "fecha_albaran": "2026-09-07"},
+        ),
+        (
+            {"numero_albaran": "A-1", "tipo_movimiento": "ABONO"},
+            {"numero_albaran": "A-1", "tipo_movimiento": "ABONO"},
+        ),
+    ),
+)
+def test_construir_albaran_parcial_conserva_solo_datos_presentes(
+    campos,
+    esperados,
+) -> None:
+    resultado = construir_albaranes([campos])[0]
+
+    assert resultado["orden"] == 1
+    for campo in (
+        "numero_albaran",
+        "fecha_albaran",
+        "tipo_movimiento",
+        "descripcion",
+        "importe_base",
+        "importe_total",
+    ):
+        assert resultado[campo] == esperados.get(campo)
+
+
+def test_construir_albaran_no_deriva_fecha_movimiento_ni_importes() -> None:
+    resultado = construir_albaranes([{"numero_albaran": "VISIBLE-1"}])[0]
+
+    assert resultado["fecha_albaran"] is None
+    assert resultado["tipo_movimiento"] is None
+    assert resultado["importe_base"] is None
+    assert resultado["importe_total"] is None
+
+
+def test_construir_albaran_con_importes_cero_no_se_omite() -> None:
+    resultado = construir_albaranes(
+        [{"importe_base": Decimal("0"), "importe_total": Decimal("0")}]
+    )
+
+    assert resultado[0]["importe_base"] == Decimal("0")
+    assert resultado[0]["importe_total"] == Decimal("0")
+
+
+@pytest.mark.parametrize(
+    ("visible", "esperado"),
+    (("ABC-001-Z", "ABC-001-Z"), ("0000123", "0000123"), (0, "0")),
+)
+def test_construir_albaran_preserva_identificador_como_texto(
+    visible,
+    esperado,
+) -> None:
+    resultado = construir_albaranes([{"numero_albaran": visible}])[0]
+    assert resultado["numero_albaran"] == esperado
+    assert isinstance(resultado["numero_albaran"], str)
+
+
+def test_construir_albaran_omite_solo_fila_completamente_vacia() -> None:
+    vacia = {
+        "numero_albaran": None,
+        "fecha_albaran": None,
+        "tipo_movimiento": None,
+        "descripcion": None,
+        "importe_base": None,
+        "importe_total": None,
+    }
+    assert construir_albaranes([vacia]) == []
+
+
+def test_construir_albaranes_mantiene_filas_orden_y_duplicados() -> None:
+    filas = [
+        {"numero_albaran": "DUPLICADO"},
+        {"numero_albaran": "DUPLICADO"},
+        {"numero_albaran": "TERCERO"},
+    ]
+    resultado = construir_albaranes(filas)
+
+    assert [fila["orden"] for fila in resultado] == [1, 2, 3]
+    assert [fila["numero_albaran"] for fila in resultado] == [
+        "DUPLICADO",
+        "DUPLICADO",
+        "TERCERO",
+    ]
+
+
+@pytest.mark.parametrize(
+    "procedencia",
+    (
+        {"tipo": "lectura_visible", "fuente": "prueba"},
+        {"tipo": "regla_determinista", "fuente": "python", "regla": "ya_decidida"},
+    ),
+)
+def test_construir_albaran_conserva_procedencia_decidida(procedencia) -> None:
+    resultado = construir_albaranes(
+        [{"numero_albaran": "A-1", "procedencia": procedencia}]
+    )
+    assert resultado[0]["procedencia"] is procedencia
+
+
+def test_construir_albaranes_es_determinista() -> None:
+    filas = [{"numero_albaran": "A-1"}, {"numero_albaran": "A-2"}]
+    assert construir_albaranes(filas) == construir_albaranes(filas)
+
+
+def test_construir_albaranes_no_conoce_proveedores_ni_patron() -> None:
+    fuente = inspect.getsource(construir_albaranes).casefold()
+    prohibidos = (
+        "pierre",
+        "suavinex",
+        "alliance",
+        "dermofarm",
+        "fedefarma",
+        "patron_oficial",
+        "facturas/patron",
+    )
+    assert all(prohibido not in fuente for prohibido in prohibidos)
 
 
 def test_vencimiento_con_fecha_importe_y_nota_preserva_valores() -> None:

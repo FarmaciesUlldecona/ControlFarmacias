@@ -193,6 +193,36 @@ def construir_vencimientos(
     return resultado
 
 
+def construir_albaranes(
+    filas: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Construye albaranes ya interpretados sin completar ni relacionar datos."""
+    resultado: list[dict[str, Any]] = []
+    campos = (
+        "numero_albaran",
+        "fecha_albaran",
+        "tipo_movimiento",
+        "descripcion",
+        "importe_base",
+        "importe_total",
+    )
+    for fila in filas:
+        valores = {
+            **{campo: fila.get(campo) for campo in campos},
+            "numero_albaran": normalizar_identificador(
+                fila.get("numero_albaran")
+            ),
+        }
+        if all(valor is None for valor in valores.values()):
+            continue
+
+        albaran = {"orden": len(resultado) + 1, **valores}
+        if "procedencia" in fila:
+            albaran["procedencia"] = fila["procedencia"]
+        resultado.append(albaran)
+    return resultado
+
+
 def construir_impuestos(
     filas: Iterable[Mapping[str, Any]],
     *,
