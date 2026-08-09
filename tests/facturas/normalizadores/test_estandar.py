@@ -30,6 +30,13 @@ def campo(valor, *, evidencia: bool = True) -> dict:
     }
 
 
+def campo_con_evidencia(valor, texto_visible: str) -> dict:
+    return {
+        "valor": valor,
+        "evidencias": [{"texto_visible": texto_visible, "pagina": 1}],
+    }
+
+
 @pytest.fixture
 def configuracion() -> ConfiguracionProveedor:
     return ConfiguracionProveedor(
@@ -402,7 +409,7 @@ def test_albaran_estandar_con_valor_incompatible_se_bloquea(
     ]
 
 
-def test_ajuste_visible_estructurado_se_conserva_sin_clasificar(
+def test_concepto_estructurado_sin_semantica_fuerte_se_bloquea(
     extraccion,
     configuracion,
 ) -> None:
@@ -418,18 +425,84 @@ def test_ajuste_visible_estructurado_se_conserva_sin_clasificar(
 
     resultado, incidencias = ejecutar(extraccion, configuracion)
 
+    assert resultado["resultado_normalizado"]["ajustes"] == []
+    assert [incidencia["tipo_incidencia"] for incidencia in incidencias] == [
+        "CONCEPTO_ESTANDAR_NO_CLASIFICABLE"
+    ]
+
+
+def test_ajuste_seguro_pasa_al_constructor_mecanico(
+    extraccion,
+    configuracion,
+) -> None:
+    evidencia = "Descuento aplicado -10,00 EUR"
+    extraccion["factura"]["ajustes"] = [
+        {
+            "tipo_ajuste": campo_con_evidencia("DESCUENTO", evidencia),
+            "descripcion": campo_con_evidencia("Descuento aplicado", evidencia),
+            "importe": campo_con_evidencia("-10,00", evidencia),
+            "incluido_en_base": campo(True),
+            "incluido_en_total": campo(True),
+        }
+    ]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+
     assert resultado["resultado_normalizado"]["ajustes"] == [
         {
             "orden": 1,
-            "tipo_ajuste": None,
-            "descripcion": "BONIFICACION visible",
-            "importe": Decimal("-70.31"),
+            "tipo_ajuste": "DESCUENTO",
+            "descripcion": "Descuento aplicado",
+            "importe": Decimal("-10.00"),
             "incluido_en_base": True,
             "incluido_en_total": True,
             "procedencia": {"tipo": "lectura_visible", "fuente": "luna_general"},
         }
     ]
     assert incidencias == []
+
+
+def test_filas_mixtas_solo_conservan_ajustes_seguros_y_reordenan(
+    extraccion,
+    configuracion,
+) -> None:
+    def ajuste(tipo, descripcion, importe, evidencia):
+        return {
+            "tipo_ajuste": campo_con_evidencia(tipo, evidencia),
+            "descripcion": campo_con_evidencia(descripcion, evidencia),
+            "importe": campo_con_evidencia(importe, evidencia),
+            "incluido_en_base": campo(True),
+            "incluido_en_total": campo(True),
+        }
+
+    extraccion["factura"]["ajustes"] = [
+        ajuste("OTRO", "Concepto", "3,00", "Concepto 3,00 EUR"),
+        ajuste("DESCUENTO", "Descuento uno", "-4,00", "Descuento uno -4,00 EUR"),
+        ajuste("IMPUESTO", "Total fiscal", "5,00", "Total fiscal 5,00 EUR"),
+        ajuste("BONIFICACIÓN", "Bonificación", "-1,00", "Bonificación -1,00 EUR"),
+    ]
+
+    resultado, incidencias = ejecutar(extraccion, configuracion)
+    ajustes = resultado["resultado_normalizado"]["ajustes"]
+
+    assert [ajuste["orden"] for ajuste in ajustes] == [1, 2]
+    assert [ajuste["importe"] for ajuste in ajustes] == [
+        Decimal("-4.00"),
+        Decimal("-1.00"),
+    ]
+    bloqueadas = [
+        incidencia
+        for incidencia in incidencias
+        if incidencia["tipo_incidencia"] == "CONCEPTO_ESTANDAR_NO_CLASIFICABLE"
+    ]
+    assert [incidencia["campo"] for incidencia in bloqueadas] == [
+        "ajustes[0]",
+        "ajustes[2]",
+    ]
+    assert all(
+        incidencia["datos_visibles_disponibles"]["clasificacion"] == "INCIERTO"
+        for incidencia in bloqueadas
+    )
 
 
 def test_abono_estandar_conserva_signos_y_limites_visibles(
@@ -461,9 +534,15 @@ def test_abono_estandar_conserva_signos_y_limites_visibles(
     general["albaranes"] = [{"numero_albaran": campo("AB-0001")}]
     general["ajustes"] = [
         {
-            "tipo_ajuste": campo("DESCUENTO"),
-            "descripcion": campo("Descuento visible"),
-            "importe": campo("-33,77"),
+            "tipo_ajuste": campo_con_evidencia(
+                "DESCUENTO", "Descuento visible -33,77 EUR"
+            ),
+            "descripcion": campo_con_evidencia(
+                "Descuento visible", "Descuento visible -33,77 EUR"
+            ),
+            "importe": campo_con_evidencia(
+                "-33,77", "Descuento visible -33,77 EUR"
+            ),
             "incluido_en_base": campo(True),
             "incluido_en_total": campo(True),
         }

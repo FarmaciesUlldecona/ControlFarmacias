@@ -1,6 +1,6 @@
 {
   "version_normalizador": "estandar_v1",
-  "fecha_ejecucion": "2026-08-09T09:45:35.354762+00:00",
+  "fecha_ejecucion": "2026-08-09T10:16:27.958543+00:00",
   "archivo_origen": "GAS CASA ABRIL-MAIG 2026.pdf",
   "paginas_originales": [
     1,
@@ -44,54 +44,6 @@
         "descripcion": "Descuento promocional -10 % x 320,32 Eur",
         "importe": -32.03,
         "incluido_en_base": true,
-        "incluido_en_total": true,
-        "procedencia": {
-          "tipo": "lectura_visible",
-          "fuente": "luna_general"
-        }
-      },
-      {
-        "orden": 2,
-        "tipo_ajuste": "OTRO",
-        "descripcion": "Alquiler de Equipos Gas",
-        "importe": 1.18,
-        "incluido_en_base": true,
-        "incluido_en_total": true,
-        "procedencia": {
-          "tipo": "lectura_visible",
-          "fuente": "luna_general"
-        }
-      },
-      {
-        "orden": 3,
-        "tipo_ajuste": "OTRO",
-        "descripcion": "Fijo",
-        "importe": 56.94,
-        "incluido_en_base": true,
-        "incluido_en_total": true,
-        "procedencia": {
-          "tipo": "lectura_visible",
-          "fuente": "luna_general"
-        }
-      },
-      {
-        "orden": 4,
-        "tipo_ajuste": "OTRO",
-        "descripcion": "Variable",
-        "importe": 320.32,
-        "incluido_en_base": true,
-        "incluido_en_total": true,
-        "procedencia": {
-          "tipo": "lectura_visible",
-          "fuente": "luna_general"
-        }
-      },
-      {
-        "orden": 5,
-        "tipo_ajuste": "IMPUESTO",
-        "descripcion": "Impuestos",
-        "importe": 78.18,
-        "incluido_en_base": null,
         "incluido_en_total": true,
         "procedencia": {
           "tipo": "lectura_visible",

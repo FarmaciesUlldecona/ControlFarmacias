@@ -24,10 +24,202 @@
     "ausentes": 2,
     "acierto_estricto": 77.27,
     "cobertura": 90.91,
-    "inventados": 11
+    "inventados": 0
   },
-  "cantidad_incidencias": 0,
-  "incidencias": [],
+  "cantidad_incidencias": 4,
+  "incidencias": [
+    {
+      "orden": 1,
+      "campo": "ajustes[1]",
+      "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La evidencia disponible no demuestra que el concepto sea un ajuste.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 2,
+        "tipo_luna": "OTRO",
+        "descripcion": "Alquiler de Equipos Gas",
+        "importe": 1.18,
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+            "pagina": 2
+          },
+          {
+            "campo": "tipo_ajuste",
+            "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+            "pagina": 2
+          },
+          {
+            "campo": "descripcion",
+            "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+            "pagina": 2
+          },
+          {
+            "campo": "importe",
+            "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+            "pagina": 2
+          },
+          {
+            "campo": "incluido_en_base",
+            "texto_visible": "Importe total 350,90 €",
+            "pagina": 2
+          },
+          {
+            "campo": "incluido_en_total",
+            "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+            "pagina": 2
+          }
+        ],
+        "motivo_bloqueo": "El tipo estructurado no demuestra un ajuste explicito.",
+        "clasificacion": "INCIERTO"
+      },
+      "decision_tomada": "El concepto no se incorpora a ajustes; se conserva su evidencia para revision.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 2,
+      "campo": "ajustes[2]",
+      "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La evidencia disponible no demuestra que el concepto sea un ajuste.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 3,
+        "tipo_luna": "OTRO",
+        "descripcion": "Fijo",
+        "importe": 56.94,
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Fijo 56,94 €",
+            "pagina": 1
+          },
+          {
+            "campo": "tipo_ajuste",
+            "texto_visible": "Fijo 56,94 €",
+            "pagina": 1
+          },
+          {
+            "campo": "descripcion",
+            "texto_visible": "Fijo 56,94 €",
+            "pagina": 1
+          },
+          {
+            "campo": "importe",
+            "texto_visible": "Fijo 56,94 €",
+            "pagina": 1
+          },
+          {
+            "campo": "incluido_en_base",
+            "texto_visible": "Importe total 350,90 €",
+            "pagina": 2
+          },
+          {
+            "campo": "incluido_en_total",
+            "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+            "pagina": 2
+          }
+        ],
+        "motivo_bloqueo": "El tipo estructurado no demuestra un ajuste explicito.",
+        "clasificacion": "INCIERTO"
+      },
+      "decision_tomada": "El concepto no se incorpora a ajustes; se conserva su evidencia para revision.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 3,
+      "campo": "ajustes[3]",
+      "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La evidencia disponible no demuestra que el concepto sea un ajuste.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 4,
+        "tipo_luna": "OTRO",
+        "descripcion": "Variable",
+        "importe": 320.32,
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Variable 320,32 €",
+            "pagina": 1
+          },
+          {
+            "campo": "tipo_ajuste",
+            "texto_visible": "Variable 320,32 €",
+            "pagina": 1
+          },
+          {
+            "campo": "descripcion",
+            "texto_visible": "Variable 320,32 €",
+            "pagina": 1
+          },
+          {
+            "campo": "importe",
+            "texto_visible": "Variable 320,32 €",
+            "pagina": 1
+          },
+          {
+            "campo": "incluido_en_base",
+            "texto_visible": "Importe total 350,90 €",
+            "pagina": 2
+          },
+          {
+            "campo": "incluido_en_total",
+            "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+            "pagina": 2
+          }
+        ],
+        "motivo_bloqueo": "El tipo estructurado no demuestra un ajuste explicito.",
+        "clasificacion": "INCIERTO"
+      },
+      "decision_tomada": "El concepto no se incorpora a ajustes; se conserva su evidencia para revision.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 4,
+      "campo": "ajustes[4]",
+      "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La evidencia disponible no demuestra que el concepto sea un ajuste.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 5,
+        "tipo_luna": "IMPUESTO",
+        "descripcion": "Impuestos",
+        "importe": 78.18,
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Impuestos 78,18 €",
+            "pagina": 1
+          },
+          {
+            "campo": "tipo_ajuste",
+            "texto_visible": "Impuestos 78,18 €",
+            "pagina": 1
+          },
+          {
+            "campo": "descripcion",
+            "texto_visible": "Impuestos 78,18 €",
+            "pagina": 1
+          },
+          {
+            "campo": "importe",
+            "texto_visible": "Impuestos 78,18 €",
+            "pagina": 1
+          },
+          {
+            "campo": "incluido_en_total",
+            "texto_visible": "Total 424,59 €",
+            "pagina": 1
+          }
+        ],
+        "motivo_bloqueo": "El tipo estructurado no demuestra un ajuste explicito.",
+        "clasificacion": "INCIERTO"
+      },
+      "decision_tomada": "El concepto no se incorpora a ajustes; se conserva su evidencia para revision.",
+      "requiere_revision_manual": true
+    }
+  ],
   "validaciones_monetarias": [
     {
       "nombre": "impuestos[0].cuota_iva",
@@ -80,61 +272,12 @@
             "tipo": "lectura_visible",
             "fuente": "luna_general"
           }
-        },
-        {
-          "orden": 2,
-          "tipo_ajuste": "OTRO",
-          "descripcion": "Alquiler de Equipos Gas",
-          "importe": 1.18,
-          "incluido_en_base": true,
-          "incluido_en_total": true,
-          "procedencia": {
-            "tipo": "lectura_visible",
-            "fuente": "luna_general"
-          }
-        },
-        {
-          "orden": 3,
-          "tipo_ajuste": "OTRO",
-          "descripcion": "Fijo",
-          "importe": 56.94,
-          "incluido_en_base": true,
-          "incluido_en_total": true,
-          "procedencia": {
-            "tipo": "lectura_visible",
-            "fuente": "luna_general"
-          }
-        },
-        {
-          "orden": 4,
-          "tipo_ajuste": "OTRO",
-          "descripcion": "Variable",
-          "importe": 320.32,
-          "incluido_en_base": true,
-          "incluido_en_total": true,
-          "procedencia": {
-            "tipo": "lectura_visible",
-            "fuente": "luna_general"
-          }
-        },
-        {
-          "orden": 5,
-          "tipo_ajuste": "IMPUESTO",
-          "descripcion": "Impuestos",
-          "importe": 78.18,
-          "incluido_en_base": null,
-          "incluido_en_total": true,
-          "procedencia": {
-            "tipo": "lectura_visible",
-            "fuente": "luna_general"
-          }
         }
       ],
       "conteo_atomico": {
-        "INCORRECTO": 4,
-        "CORRECTO": 14,
-        "DIFERENCIA_FORMATO": 1,
-        "INVENTADO": 11
+        "INCORRECTO": 1,
+        "CORRECTO": 5,
+        "AUSENTE": 12
       },
       "detalles": [
         {
@@ -176,146 +319,74 @@
         {
           "ruta": "ajustes[1].descripcion",
           "esperado": "Alquiler de equipos gas",
-          "obtenido": "Alquiler de Equipos Gas",
-          "estado": "DIFERENCIA_FORMATO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[1].importe",
           "esperado": 1.18,
-          "obtenido": 1.18,
-          "estado": "CORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[1].incluido_en_base",
           "esperado": true,
-          "obtenido": true,
-          "estado": "CORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[1].incluido_en_total",
           "esperado": true,
-          "obtenido": true,
-          "estado": "CORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[1].orden",
           "esperado": 2,
-          "obtenido": 2,
-          "estado": "CORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[1].tipo_ajuste",
           "esperado": "GASTO",
-          "obtenido": "OTRO",
-          "estado": "INCORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[2].descripcion",
           "esperado": "Impuesto de hidrocarburos",
-          "obtenido": "Fijo",
-          "estado": "INCORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[2].importe",
           "esperado": 4.49,
-          "obtenido": 56.94,
-          "estado": "INCORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[2].incluido_en_base",
           "esperado": true,
-          "obtenido": true,
-          "estado": "CORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[2].incluido_en_total",
           "esperado": true,
-          "obtenido": true,
-          "estado": "CORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[2].orden",
           "esperado": 3,
-          "obtenido": 3,
-          "estado": "CORRECTO"
+          "obtenido": null,
+          "estado": "AUSENTE"
         },
         {
           "ruta": "ajustes[2].tipo_ajuste",
           "esperado": "OTRO",
-          "obtenido": "OTRO",
-          "estado": "CORRECTO"
-        },
-        {
-          "ruta": "ajustes[3].descripcion",
-          "esperado": null,
-          "obtenido": "Variable",
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[3].importe",
-          "esperado": null,
-          "obtenido": 320.32,
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[3].incluido_en_base",
-          "esperado": null,
-          "obtenido": true,
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[3].incluido_en_total",
-          "esperado": null,
-          "obtenido": true,
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[3].orden",
-          "esperado": null,
-          "obtenido": 4,
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[3].tipo_ajuste",
-          "esperado": null,
-          "obtenido": "OTRO",
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[4].descripcion",
-          "esperado": null,
-          "obtenido": "Impuestos",
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[4].importe",
-          "esperado": null,
-          "obtenido": 78.18,
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[4].incluido_en_base",
-          "esperado": null,
           "obtenido": null,
-          "estado": "CORRECTO"
-        },
-        {
-          "ruta": "ajustes[4].incluido_en_total",
-          "esperado": null,
-          "obtenido": true,
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[4].orden",
-          "esperado": null,
-          "obtenido": 5,
-          "estado": "INVENTADO"
-        },
-        {
-          "ruta": "ajustes[4].tipo_ajuste",
-          "esperado": null,
-          "obtenido": "IMPUESTO",
-          "estado": "INVENTADO"
+          "estado": "AUSENTE"
         }
       ]
     },

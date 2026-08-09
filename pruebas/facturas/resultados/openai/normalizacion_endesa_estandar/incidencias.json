@@ -1,5 +1,197 @@
 {
   "version_normalizador": "estandar_v1",
   "archivo_origen": "GAS CASA ABRIL-MAIG 2026.pdf",
-  "incidencias": []
+  "incidencias": [
+    {
+      "orden": 1,
+      "campo": "ajustes[1]",
+      "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La evidencia disponible no demuestra que el concepto sea un ajuste.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 2,
+        "tipo_luna": "OTRO",
+        "descripcion": "Alquiler de Equipos Gas",
+        "importe": 1.18,
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+            "pagina": 2
+          },
+          {
+            "campo": "tipo_ajuste",
+            "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+            "pagina": 2
+          },
+          {
+            "campo": "descripcion",
+            "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+            "pagina": 2
+          },
+          {
+            "campo": "importe",
+            "texto_visible": "Alquiler de Equipos Gas 1,18 €",
+            "pagina": 2
+          },
+          {
+            "campo": "incluido_en_base",
+            "texto_visible": "Importe total 350,90 €",
+            "pagina": 2
+          },
+          {
+            "campo": "incluido_en_total",
+            "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+            "pagina": 2
+          }
+        ],
+        "motivo_bloqueo": "El tipo estructurado no demuestra un ajuste explicito.",
+        "clasificacion": "INCIERTO"
+      },
+      "decision_tomada": "El concepto no se incorpora a ajustes; se conserva su evidencia para revision.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 2,
+      "campo": "ajustes[2]",
+      "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La evidencia disponible no demuestra que el concepto sea un ajuste.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 3,
+        "tipo_luna": "OTRO",
+        "descripcion": "Fijo",
+        "importe": 56.94,
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Fijo 56,94 €",
+            "pagina": 1
+          },
+          {
+            "campo": "tipo_ajuste",
+            "texto_visible": "Fijo 56,94 €",
+            "pagina": 1
+          },
+          {
+            "campo": "descripcion",
+            "texto_visible": "Fijo 56,94 €",
+            "pagina": 1
+          },
+          {
+            "campo": "importe",
+            "texto_visible": "Fijo 56,94 €",
+            "pagina": 1
+          },
+          {
+            "campo": "incluido_en_base",
+            "texto_visible": "Importe total 350,90 €",
+            "pagina": 2
+          },
+          {
+            "campo": "incluido_en_total",
+            "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+            "pagina": 2
+          }
+        ],
+        "motivo_bloqueo": "El tipo estructurado no demuestra un ajuste explicito.",
+        "clasificacion": "INCIERTO"
+      },
+      "decision_tomada": "El concepto no se incorpora a ajustes; se conserva su evidencia para revision.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 3,
+      "campo": "ajustes[3]",
+      "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La evidencia disponible no demuestra que el concepto sea un ajuste.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 4,
+        "tipo_luna": "OTRO",
+        "descripcion": "Variable",
+        "importe": 320.32,
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Variable 320,32 €",
+            "pagina": 1
+          },
+          {
+            "campo": "tipo_ajuste",
+            "texto_visible": "Variable 320,32 €",
+            "pagina": 1
+          },
+          {
+            "campo": "descripcion",
+            "texto_visible": "Variable 320,32 €",
+            "pagina": 1
+          },
+          {
+            "campo": "importe",
+            "texto_visible": "Variable 320,32 €",
+            "pagina": 1
+          },
+          {
+            "campo": "incluido_en_base",
+            "texto_visible": "Importe total 350,90 €",
+            "pagina": 2
+          },
+          {
+            "campo": "incluido_en_total",
+            "texto_visible": "TOTAL IMPORTE FACTURA 424,59 €",
+            "pagina": 2
+          }
+        ],
+        "motivo_bloqueo": "El tipo estructurado no demuestra un ajuste explicito.",
+        "clasificacion": "INCIERTO"
+      },
+      "decision_tomada": "El concepto no se incorpora a ajustes; se conserva su evidencia para revision.",
+      "requiere_revision_manual": true
+    },
+    {
+      "orden": 4,
+      "campo": "ajustes[4]",
+      "tipo_incidencia": "CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+      "nivel": "REVISION_MANUAL",
+      "descripcion": "La evidencia disponible no demuestra que el concepto sea un ajuste.",
+      "datos_visibles_disponibles": {
+        "orden_entrada": 5,
+        "tipo_luna": "IMPUESTO",
+        "descripcion": "Impuestos",
+        "importe": 78.18,
+        "evidencias": [
+          {
+            "campo": "orden",
+            "texto_visible": "Impuestos 78,18 €",
+            "pagina": 1
+          },
+          {
+            "campo": "tipo_ajuste",
+            "texto_visible": "Impuestos 78,18 €",
+            "pagina": 1
+          },
+          {
+            "campo": "descripcion",
+            "texto_visible": "Impuestos 78,18 €",
+            "pagina": 1
+          },
+          {
+            "campo": "importe",
+            "texto_visible": "Impuestos 78,18 €",
+            "pagina": 1
+          },
+          {
+            "campo": "incluido_en_total",
+            "texto_visible": "Total 424,59 €",
+            "pagina": 1
+          }
+        ],
+        "motivo_bloqueo": "El tipo estructurado no demuestra un ajuste explicito.",
+        "clasificacion": "INCIERTO"
+      },
+      "decision_tomada": "El concepto no se incorpora a ajustes; se conserva su evidencia para revision.",
+      "requiere_revision_manual": true
+    }
+  ]
 }

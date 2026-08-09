@@ -15,6 +15,10 @@ from src.facturas.normalizadores.comun import (
     valor_visible,
 )
 from src.facturas.normalizadores.configuracion import ConfiguracionProveedor
+from src.facturas.normalizadores.conceptos import (
+    CategoriaConcepto,
+    clasificar_concepto_factura,
+)
 from src.facturas.normalizadores.documento import (
     construir_ajustes,
     construir_albaranes,
@@ -107,15 +111,47 @@ def _interpretar_ajustes(
                     for valor in (incluido_en_base, incluido_en_total)
                 )
                 if tipos_validos and descripcion_valida and inclusiones_validas:
-                    interpretadas.append(
-                        {
-                            "tipo_ajuste": tipo,
+                    clasificacion = clasificar_concepto_factura(fila)
+                    if clasificacion.categoria is CategoriaConcepto.AJUSTE:
+                        interpretadas.append(
+                            {
+                                "tipo_ajuste": tipo,
+                                "descripcion": descripcion,
+                                "importe": importe,
+                                "incluido_en_base": incluido_en_base,
+                                "incluido_en_total": incluido_en_total,
+                                "procedencia": procedencia_visible(),
+                            }
+                        )
+                        continue
+                    incidencias.agregar(
+                        campo=f"ajustes[{indice}]",
+                        tipo="CONCEPTO_ESTANDAR_NO_CLASIFICABLE",
+                        nivel=NivelIncidencia.REVISION_MANUAL,
+                        descripcion=(
+                            "La evidencia disponible no demuestra que el "
+                            "concepto sea un ajuste."
+                        ),
+                        datos_visibles={
+                            "orden_entrada": indice + 1,
+                            "tipo_luna": tipo,
                             "descripcion": descripcion,
                             "importe": importe,
-                            "incluido_en_base": incluido_en_base,
-                            "incluido_en_total": incluido_en_total,
-                            "procedencia": procedencia_visible(),
-                        }
+                            "evidencias": [
+                                {
+                                    "campo": evidencia.campo,
+                                    "texto_visible": evidencia.texto_visible,
+                                    "pagina": evidencia.pagina,
+                                }
+                                for evidencia in clasificacion.evidencias
+                            ],
+                            "motivo_bloqueo": clasificacion.motivo,
+                            "clasificacion": clasificacion.categoria.value,
+                        },
+                        decision=(
+                            "El concepto no se incorpora a ajustes; se conserva "
+                            "su evidencia para revision."
+                        ),
                     )
                     continue
                 motivo = "La fila contiene tipos incompatibles con el contrato de ajuste."

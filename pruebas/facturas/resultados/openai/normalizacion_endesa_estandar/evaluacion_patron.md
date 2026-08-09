@@ -4,8 +4,8 @@
 - Despues: 17/22 correctos.
 - Acierto estricto: 77.27 %.
 - Cobertura: 90.91 %.
-- Invenciones atomicas: 11.
-- Incidencias: 0.
+- Invenciones atomicas: 0.
+- Incidencias: 4.
 
 ## Diferencias
 
