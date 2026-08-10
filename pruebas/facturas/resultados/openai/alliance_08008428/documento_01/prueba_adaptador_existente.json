@@ -1,0 +1,35 @@
+{
+  "version": "alliance_v1.1",
+  "archivo_productivo_modificado": false,
+  "firma": "(extraccion_general: 'dict[str, Any]', tablas_literales: 'dict[str, Any]', configuracion: 'ConfiguracionAlliance', fecha_ejecucion: 'datetime | None' = None) -> 'tuple[dict[str, Any], list[dict[str, Any]]]'",
+  "entrada_general_disponible": true,
+  "entrada_tablas_literales_disponible": false,
+  "se_fabrico_entrada_literal": false,
+  "ejecucion_completa": false,
+  "motivo_bloqueo": "normalizar_alliance exige tablas_literales; sin ellas no puede construir vencimientos, albaranes ni ajustes.",
+  "bloques_generales_procesables_sin_tablas": {
+    "tipo_documento": "FACTURA",
+    "proveedor_nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+    "proveedor_cif": "A50004324",
+    "numero_factura": "08008428",
+    "fecha_factura": "2026-07-10",
+    "base_imponible_total": 2751.75,
+    "iva_total": 189.45,
+    "recargo_equivalencia_total": 31.5,
+    "importe_total": 2972.7,
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON PIUS",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    }
+  },
+  "bloques_que_el_adaptador_lee_exclusivamente_de_tablas_literales": [
+    "vencimientos",
+    "albaranes",
+    "ajustes",
+    "impuestos"
+  ],
+  "clasificacion": "B",
+  "generalizable": "AUN NO DEMOSTRADO"
+}

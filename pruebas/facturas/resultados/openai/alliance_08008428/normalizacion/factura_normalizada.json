@@ -1,0 +1,2289 @@
+{
+  "version_normalizador": "alliance_v1.1",
+  "fecha_ejecucion": "2026-08-10T17:38:06.392944+00:00",
+  "archivo_origen": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+  "paginas_originales": [
+    1,
+    3
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "FACTURA",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "pagina_inicio": 1,
+    "pagina_fin": 3,
+    "proveedor_nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+    "proveedor_cif": "A50004324",
+    "numero_factura": "08008428",
+    "fecha_factura": "2026-07-10",
+    "base_imponible_total": 2751.75,
+    "iva_total": 189.45,
+    "recargo_equivalencia_total": 31.5,
+    "importe_total": 2972.7,
+    "vencimientos": [
+      {
+        "orden": 1,
+        "fecha_vencimiento": "2026-09-10",
+        "importe": 2972.7,
+        "origen_fecha": "visible",
+        "nota": "Importe asignado mediante regla determinista de proveedor y vencimiento unico.",
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 1,
+          "texto_fecha": "10-09-2026",
+          "texto_importe": null,
+          "importe": "regla_proveedor_alliance_vencimiento_unico",
+          "importe_procede_de_lectura_literal": false
+        }
+      }
+    ],
+    "impuestos": [],
+    "albaranes": [
+      {
+        "orden": 1,
+        "numero_albaran": "08C27029",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 48.45,
+        "importe_total": 53.98,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 1,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08C27029",
+            "48,45",
+            "53,98"
+          ]
+        }
+      },
+      {
+        "orden": 2,
+        "numero_albaran": "08C27032",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 39.14,
+        "importe_total": 45.83,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 2,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08C27032",
+            "39,14",
+            "45,83"
+          ]
+        }
+      },
+      {
+        "orden": 3,
+        "numero_albaran": "08C27086",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 6.66,
+        "importe_total": 8.41,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 3,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08C27086",
+            "6,66",
+            "8,41"
+          ]
+        }
+      },
+      {
+        "orden": 4,
+        "numero_albaran": "08C27259",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 60.88,
+        "importe_total": 65.05,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 4,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08C27259",
+            "60,88",
+            "65,05"
+          ]
+        }
+      },
+      {
+        "orden": 5,
+        "numero_albaran": "08C27264",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 78.09,
+        "importe_total": 83.32,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 5,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08C27264",
+            "78,09",
+            "83,32"
+          ]
+        }
+      },
+      {
+        "orden": 6,
+        "numero_albaran": "08C27899",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 6.44,
+        "importe_total": 8.12,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 6,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08C27899",
+            "6,44",
+            "8,12"
+          ]
+        }
+      },
+      {
+        "orden": 7,
+        "numero_albaran": "08M29583",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 25.02,
+        "importe_total": 31.57,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 7,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08M29583",
+            "25,02",
+            "31,57"
+          ]
+        }
+      },
+      {
+        "orden": 8,
+        "numero_albaran": "08M29917",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 10.02,
+        "importe_total": 10.47,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 8,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08M29917",
+            "10,02",
+            "10,47"
+          ]
+        }
+      },
+      {
+        "orden": 9,
+        "numero_albaran": "08M30064",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 6.56,
+        "importe_total": 6.85,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 9,
+          "celdas_literales": [
+            "01-07-2026",
+            "PLATAFORMA 360",
+            "08M30064",
+            "6,56",
+            "6,85"
+          ]
+        }
+      },
+      {
+        "orden": 10,
+        "numero_albaran": "08C28369",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 6.72,
+        "importe_total": 7.02,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 10,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C28369",
+            "6,72",
+            "7,02"
+          ]
+        }
+      },
+      {
+        "orden": 11,
+        "numero_albaran": "08C28649",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 34.81,
+        "importe_total": 36.37,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 11,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C28649",
+            "34,81",
+            "36,37"
+          ]
+        }
+      },
+      {
+        "orden": 12,
+        "numero_albaran": "08C28657",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 294.41,
+        "importe_total": 307.66,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 12,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C28657",
+            "294,41",
+            "307,66"
+          ]
+        }
+      },
+      {
+        "orden": 13,
+        "numero_albaran": "08C28662",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 34.51,
+        "importe_total": 37.48,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 13,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C28662",
+            "34,51",
+            "37,48"
+          ]
+        }
+      },
+      {
+        "orden": 14,
+        "numero_albaran": "08C28668",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 220.49,
+        "importe_total": 230.41,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 14,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C28668",
+            "220,49",
+            "230,41"
+          ]
+        }
+      },
+      {
+        "orden": 15,
+        "numero_albaran": "08C28813",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.24,
+        "importe_total": 2.34,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 15,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C28813",
+            "2,24",
+            "2,34"
+          ]
+        }
+      },
+      {
+        "orden": 16,
+        "numero_albaran": "08C29059",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 11.42,
+        "importe_total": 11.94,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 16,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C29059",
+            "11,42",
+            "11,94"
+          ]
+        }
+      },
+      {
+        "orden": 17,
+        "numero_albaran": "08C29168",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 1.41,
+        "importe_total": 1.48,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 17,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C29168",
+            "1,41",
+            "1,48"
+          ]
+        }
+      },
+      {
+        "orden": 18,
+        "numero_albaran": "08C29186",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 9.52,
+        "importe_total": 9.95,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 18,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08C29186",
+            "9,52",
+            "9,95"
+          ]
+        }
+      },
+      {
+        "orden": 19,
+        "numero_albaran": "08M30281",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 24.84,
+        "importe_total": 25.95,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 19,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30281",
+            "24,84",
+            "25,95"
+          ]
+        }
+      },
+      {
+        "orden": 20,
+        "numero_albaran": "08M30607",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 11.06,
+        "importe_total": 11.56,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 20,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30607",
+            "11,06",
+            "11,56"
+          ]
+        }
+      },
+      {
+        "orden": 21,
+        "numero_albaran": "08M30608",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 14.52,
+        "importe_total": 18.33,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 21,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30608",
+            "14,52",
+            "18,33"
+          ]
+        }
+      },
+      {
+        "orden": 22,
+        "numero_albaran": "08M30656",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 5.26,
+        "importe_total": 5.86,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 22,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30656",
+            "5,26",
+            "5,86"
+          ]
+        }
+      },
+      {
+        "orden": 23,
+        "numero_albaran": "08M30732",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 0.84,
+        "importe_total": 0.93,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 23,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30732",
+            "0,84",
+            "0,93"
+          ]
+        }
+      },
+      {
+        "orden": 24,
+        "numero_albaran": "08M30737",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 43.51,
+        "importe_total": 45.47,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 24,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30737",
+            "43,51",
+            "45,47"
+          ]
+        }
+      },
+      {
+        "orden": 25,
+        "numero_albaran": "08M30915",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.52,
+        "importe_total": 2.63,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 25,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30915",
+            "2,52",
+            "2,63"
+          ]
+        }
+      },
+      {
+        "orden": 26,
+        "numero_albaran": "08M30923",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 18.08,
+        "importe_total": 20.52,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 26,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30923",
+            "18,08",
+            "20,52"
+          ]
+        }
+      },
+      {
+        "orden": 27,
+        "numero_albaran": "08M30925",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.21,
+        "importe_total": 2.46,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 27,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M30925",
+            "2,21",
+            "2,46"
+          ]
+        }
+      },
+      {
+        "orden": 28,
+        "numero_albaran": "08M31070",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.92,
+        "importe_total": 3.05,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 28,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08M31070",
+            "2,92",
+            "3,05"
+          ]
+        }
+      },
+      {
+        "orden": 29,
+        "numero_albaran": "08V19089",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 12.11,
+        "importe_total": 13.49,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 29,
+          "celdas_literales": [
+            "02-07-2026",
+            "PLATAFORMA 360",
+            "08V19089",
+            "12,11",
+            "13,49"
+          ]
+        }
+      },
+      {
+        "orden": 30,
+        "numero_albaran": "08C29779",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 24.32,
+        "importe_total": 25.41,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 30,
+          "celdas_literales": [
+            "03-07-2026",
+            "PLATAFORMA 360",
+            "08C29779",
+            "24,32",
+            "25,41"
+          ]
+        }
+      },
+      {
+        "orden": 31,
+        "numero_albaran": "08C29973",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 66.76,
+        "importe_total": 74.14,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 31,
+          "celdas_literales": [
+            "03-07-2026",
+            "PLATAFORMA 360",
+            "08C29973",
+            "66,76",
+            "74,14"
+          ]
+        }
+      },
+      {
+        "orden": 32,
+        "numero_albaran": "08C29976",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 24.1,
+        "importe_total": 25.56,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 32,
+          "celdas_literales": [
+            "03-07-2026",
+            "PLATAFORMA 360",
+            "08C29976",
+            "24,10",
+            "25,56"
+          ]
+        }
+      },
+      {
+        "orden": 33,
+        "numero_albaran": "08C30154",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 7.24,
+        "importe_total": 7.57,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 33,
+          "celdas_literales": [
+            "03-07-2026",
+            "PLATAFORMA 360",
+            "08C30154",
+            "7,24",
+            "7,57"
+          ]
+        }
+      },
+      {
+        "orden": 34,
+        "numero_albaran": "08C30420",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 61.91,
+        "importe_total": 68.97,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 34,
+          "celdas_literales": [
+            "03-07-2026",
+            "PLATAFORMA 360",
+            "08C30420",
+            "61,91",
+            "68,97"
+          ]
+        }
+      },
+      {
+        "orden": 35,
+        "numero_albaran": "08M31633",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 23.64,
+        "importe_total": 24.71,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 35,
+          "celdas_literales": [
+            "03-07-2026",
+            "PLATAFORMA 360",
+            "08M31633",
+            "23,64",
+            "24,71"
+          ]
+        }
+      },
+      {
+        "orden": 36,
+        "numero_albaran": "08M31835",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 7.51,
+        "importe_total": 8.37,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 36,
+          "celdas_literales": [
+            "03-07-2026",
+            "PLATAFORMA 360",
+            "08M31835",
+            "7,51",
+            "8,37"
+          ]
+        }
+      },
+      {
+        "orden": 37,
+        "numero_albaran": "08M31838",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 5.62,
+        "importe_total": 5.87,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 37,
+          "celdas_literales": [
+            "03-07-2026",
+            "PLATAFORMA 360",
+            "08M31838",
+            "5,62",
+            "5,87"
+          ]
+        }
+      },
+      {
+        "orden": 38,
+        "numero_albaran": "08C31296",
+        "fecha_albaran": "2026-07-04",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 96.18,
+        "importe_total": 104.86,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 38,
+          "celdas_literales": [
+            "04-07-2026",
+            "PLATAFORMA 360",
+            "08C31296",
+            "96,18",
+            "104,86"
+          ]
+        }
+      },
+      {
+        "orden": 39,
+        "numero_albaran": "08C31300",
+        "fecha_albaran": "2026-07-04",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 51.7,
+        "importe_total": 55.99,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 39,
+          "celdas_literales": [
+            "04-07-2026",
+            "PLATAFORMA 360",
+            "08C31300",
+            "51,70",
+            "55,99"
+          ]
+        }
+      },
+      {
+        "orden": 40,
+        "numero_albaran": "08C31488",
+        "fecha_albaran": "2026-07-04",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 10.59,
+        "importe_total": 11.06,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 40,
+          "celdas_literales": [
+            "04-07-2026",
+            "PLATAFORMA 360",
+            "08C31488",
+            "10,59",
+            "11,06"
+          ]
+        }
+      },
+      {
+        "orden": 41,
+        "numero_albaran": "08C31637",
+        "fecha_albaran": "2026-07-05",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 11.02,
+        "importe_total": 11.52,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 41,
+          "celdas_literales": [
+            "05-07-2026",
+            "PLATAFORMA 360",
+            "08C31637",
+            "11,02",
+            "11,52"
+          ]
+        }
+      },
+      {
+        "orden": 42,
+        "numero_albaran": "08C31644",
+        "fecha_albaran": "2026-07-05",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.5,
+        "importe_total": 2.61,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 42,
+          "celdas_literales": [
+            "05-07-2026",
+            "PLATAFORMA 360",
+            "08C31644",
+            "2,50",
+            "2,61"
+          ]
+        }
+      },
+      {
+        "orden": 43,
+        "numero_albaran": "08C31645",
+        "fecha_albaran": "2026-07-05",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 17.2,
+        "importe_total": 20.17,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 43,
+          "celdas_literales": [
+            "05-07-2026",
+            "PLATAFORMA 360",
+            "08C31645",
+            "17,20",
+            "20,17"
+          ]
+        }
+      },
+      {
+        "orden": 44,
+        "numero_albaran": "08C32022",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 25.77,
+        "importe_total": 28.71,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 44,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08C32022",
+            "25,77",
+            "28,71"
+          ]
+        }
+      },
+      {
+        "orden": 45,
+        "numero_albaran": "08C32341",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 60.52,
+        "importe_total": 67.53,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 45,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08C32341",
+            "60,52",
+            "67,53"
+          ]
+        }
+      },
+      {
+        "orden": 46,
+        "numero_albaran": "08C32347",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 47.76,
+        "importe_total": 53.09,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 46,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08C32347",
+            "47,76",
+            "53,09"
+          ]
+        }
+      },
+      {
+        "orden": 47,
+        "numero_albaran": "08M32279",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 87.58,
+        "importe_total": 91.52,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 47,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08M32279",
+            "87,58",
+            "91,52"
+          ]
+        }
+      },
+      {
+        "orden": 48,
+        "numero_albaran": "08M32580",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 24.6,
+        "importe_total": 27.4,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 48,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08M32580",
+            "24,60",
+            "27,40"
+          ]
+        }
+      },
+      {
+        "orden": 49,
+        "numero_albaran": "08M32581",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 6.74,
+        "importe_total": 7.5,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 49,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08M32581",
+            "6,74",
+            "7,50"
+          ]
+        }
+      },
+      {
+        "orden": 50,
+        "numero_albaran": "08M32942",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 7.29,
+        "importe_total": 9.2,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 2,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 50,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08M32942",
+            "7,29",
+            "9,20"
+          ]
+        }
+      },
+      {
+        "orden": 51,
+        "numero_albaran": "08M32943",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 26.07,
+        "importe_total": 27.77,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 1,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08M32943",
+            "26,07",
+            "27,77"
+          ]
+        }
+      },
+      {
+        "orden": 52,
+        "numero_albaran": "08M32961",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 23.0,
+        "importe_total": 24.04,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 2,
+          "celdas_literales": [
+            "06-07-2026",
+            "PLATAFORMA 360",
+            "08M32961",
+            "23,00",
+            "24,04"
+          ]
+        }
+      },
+      {
+        "orden": 53,
+        "numero_albaran": "08C33509",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.66,
+        "importe_total": 2.78,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 3,
+          "celdas_literales": [
+            "07-07-2026",
+            "PLATAFORMA 360",
+            "08C33509",
+            "2,66",
+            "2,78"
+          ]
+        }
+      },
+      {
+        "orden": 54,
+        "numero_albaran": "08C33617",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 7.43,
+        "importe_total": 9.38,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 4,
+          "celdas_literales": [
+            "07-07-2026",
+            "PLATAFORMA 360",
+            "08C33617",
+            "7,43",
+            "9,38"
+          ]
+        }
+      },
+      {
+        "orden": 55,
+        "numero_albaran": "08C33654",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 51.59,
+        "importe_total": 53.91,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 5,
+          "celdas_literales": [
+            "07-07-2026",
+            "PLATAFORMA 360",
+            "08C33654",
+            "51,59",
+            "53,91"
+          ]
+        }
+      },
+      {
+        "orden": 56,
+        "numero_albaran": "08C33659",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 44.33,
+        "importe_total": 47.16,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 6,
+          "celdas_literales": [
+            "07-07-2026",
+            "PLATAFORMA 360",
+            "08C33659",
+            "44,33",
+            "47,16"
+          ]
+        }
+      },
+      {
+        "orden": 57,
+        "numero_albaran": "08C33691",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 22.44,
+        "importe_total": 23.45,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 7,
+          "celdas_literales": [
+            "07-07-2026",
+            "PLATAFORMA 360",
+            "08C33691",
+            "22,44",
+            "23,45"
+          ]
+        }
+      },
+      {
+        "orden": 58,
+        "numero_albaran": "08C34238",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 17.55,
+        "importe_total": 22.15,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 8,
+          "celdas_literales": [
+            "07-07-2026",
+            "PLATAFORMA 360",
+            "08C34238",
+            "17,55",
+            "22,15"
+          ]
+        }
+      },
+      {
+        "orden": 59,
+        "numero_albaran": "08M33956",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 12.09,
+        "importe_total": 12.63,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 9,
+          "celdas_literales": [
+            "07-07-2026",
+            "PLATAFORMA 360",
+            "08M33956",
+            "12,09",
+            "12,63"
+          ]
+        }
+      },
+      {
+        "orden": 60,
+        "numero_albaran": "08M33957",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 22.57,
+        "importe_total": 24.45,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 10,
+          "celdas_literales": [
+            "07-07-2026",
+            "PLATAFORMA 360",
+            "08M33957",
+            "22,57",
+            "24,45"
+          ]
+        }
+      },
+      {
+        "orden": 61,
+        "numero_albaran": "08C34792",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 4.21,
+        "importe_total": 4.69,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 11,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08C34792",
+            "4,21",
+            "4,69"
+          ]
+        }
+      },
+      {
+        "orden": 62,
+        "numero_albaran": "08C34913",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 11.26,
+        "importe_total": 11.77,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 12,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08C34913",
+            "11,26",
+            "11,77"
+          ]
+        }
+      },
+      {
+        "orden": 63,
+        "numero_albaran": "08C35031",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 8.88,
+        "importe_total": 11.2,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 13,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08C35031",
+            "8,88",
+            "11,20"
+          ]
+        }
+      },
+      {
+        "orden": 64,
+        "numero_albaran": "08C35059",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 40.67,
+        "importe_total": 43.92,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 14,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08C35059",
+            "40,67",
+            "43,92"
+          ]
+        }
+      },
+      {
+        "orden": 65,
+        "numero_albaran": "08C35072",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 86.5,
+        "importe_total": 92.2,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 15,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08C35072",
+            "86,50",
+            "92,20"
+          ]
+        }
+      },
+      {
+        "orden": 66,
+        "numero_albaran": "08C35280",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 12.46,
+        "importe_total": 13.02,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 16,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08C35280",
+            "12,46",
+            "13,02"
+          ]
+        }
+      },
+      {
+        "orden": 67,
+        "numero_albaran": "08C35571",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 6.7,
+        "importe_total": 7.0,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 17,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08C35571",
+            "6,70",
+            "7,00"
+          ]
+        }
+      },
+      {
+        "orden": 68,
+        "numero_albaran": "08M34531",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 17.74,
+        "importe_total": 21.18,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 18,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08M34531",
+            "17,74",
+            "21,18"
+          ]
+        }
+      },
+      {
+        "orden": 69,
+        "numero_albaran": "08M34538",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "COSTO LABORAT.",
+        "importe_base": 145.84,
+        "importe_total": 162.46,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 19,
+          "celdas_literales": [
+            "08-07-2026",
+            "COSTO LABORAT.",
+            "08M34538",
+            "145,84",
+            "162,46"
+          ]
+        }
+      },
+      {
+        "orden": 70,
+        "numero_albaran": "08M34832",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 14.5,
+        "importe_total": 17.26,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 20,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08M34832",
+            "14,50",
+            "17,26"
+          ]
+        }
+      },
+      {
+        "orden": 71,
+        "numero_albaran": "08M34836",
+        "fecha_albaran": "2026-07-08",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 7.68,
+        "importe_total": 8.03,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 21,
+          "celdas_literales": [
+            "08-07-2026",
+            "PLATAFORMA 360",
+            "08M34836",
+            "7,68",
+            "8,03"
+          ]
+        }
+      },
+      {
+        "orden": 72,
+        "numero_albaran": "08C36328",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 52.4,
+        "importe_total": 56.19,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 22,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08C36328",
+            "52,40",
+            "56,19"
+          ]
+        }
+      },
+      {
+        "orden": 73,
+        "numero_albaran": "08C36329",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 85.75,
+        "importe_total": 89.8,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 23,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08C36329",
+            "85,75",
+            "89,80"
+          ]
+        }
+      },
+      {
+        "orden": 74,
+        "numero_albaran": "08C36401",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 28.32,
+        "importe_total": 29.59,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 24,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08C36401",
+            "28,32",
+            "29,59"
+          ]
+        }
+      },
+      {
+        "orden": 75,
+        "numero_albaran": "08C36874",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 4.15,
+        "importe_total": 4.34,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 25,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08C36874",
+            "4,15",
+            "4,34"
+          ]
+        }
+      },
+      {
+        "orden": 76,
+        "numero_albaran": "08M35556",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 39.29,
+        "importe_total": 43.42,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 26,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08M35556",
+            "39,29",
+            "43,42"
+          ]
+        }
+      },
+      {
+        "orden": 77,
+        "numero_albaran": "08M35757",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 5.0,
+        "importe_total": 5.23,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 27,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08M35757",
+            "5,00",
+            "5,23"
+          ]
+        }
+      },
+      {
+        "orden": 78,
+        "numero_albaran": "08M35854",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 4.99,
+        "importe_total": 6.02,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 28,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08M35854",
+            "4,99",
+            "6,02"
+          ]
+        }
+      },
+      {
+        "orden": 79,
+        "numero_albaran": "08M35862",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 5.52,
+        "importe_total": 5.77,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 29,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08M35862",
+            "5,52",
+            "5,77"
+          ]
+        }
+      },
+      {
+        "orden": 80,
+        "numero_albaran": "08M35882",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 1.07,
+        "importe_total": 1.12,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 30,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08M35882",
+            "1,07",
+            "1,12"
+          ]
+        }
+      },
+      {
+        "orden": 81,
+        "numero_albaran": "08M35911",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.72,
+        "importe_total": 2.84,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 31,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08M35911",
+            "2,72",
+            "2,84"
+          ]
+        }
+      },
+      {
+        "orden": 82,
+        "numero_albaran": "08M35912",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.21,
+        "importe_total": 2.31,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 32,
+          "celdas_literales": [
+            "09-07-2026",
+            "PLATAFORMA 360",
+            "08M35912",
+            "2,21",
+            "2,31"
+          ]
+        }
+      },
+      {
+        "orden": 83,
+        "numero_albaran": "08C37481",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 51.91,
+        "importe_total": 54.25,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 33,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08C37481",
+            "51,91",
+            "54,25"
+          ]
+        }
+      },
+      {
+        "orden": 84,
+        "numero_albaran": "08C37577",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 15.97,
+        "importe_total": 16.69,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 34,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08C37577",
+            "15,97",
+            "16,69"
+          ]
+        }
+      },
+      {
+        "orden": 85,
+        "numero_albaran": "08C37652",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 43.27,
+        "importe_total": 45.77,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 35,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08C37652",
+            "43,27",
+            "45,77"
+          ]
+        }
+      },
+      {
+        "orden": 86,
+        "numero_albaran": "08C37654",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 41.32,
+        "importe_total": 43.18,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 36,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08C37654",
+            "41,32",
+            "43,18"
+          ]
+        }
+      },
+      {
+        "orden": 87,
+        "numero_albaran": "08C37761",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 1.12,
+        "importe_total": 1.17,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 37,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08C37761",
+            "1,12",
+            "1,17"
+          ]
+        }
+      },
+      {
+        "orden": 88,
+        "numero_albaran": "08M36595",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 1.89,
+        "importe_total": 1.98,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 38,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08M36595",
+            "1,89",
+            "1,98"
+          ]
+        }
+      },
+      {
+        "orden": 89,
+        "numero_albaran": "08M36758",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 32.91,
+        "importe_total": 35.16,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 39,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08M36758",
+            "32,91",
+            "35,16"
+          ]
+        }
+      },
+      {
+        "orden": 90,
+        "numero_albaran": "08M36759",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 31.7,
+        "importe_total": 37.43,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 40,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08M36759",
+            "31,70",
+            "37,43"
+          ]
+        }
+      },
+      {
+        "orden": 91,
+        "numero_albaran": "08M36835",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 2.05,
+        "importe_total": 2.14,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 41,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08M36835",
+            "2,05",
+            "2,14"
+          ]
+        }
+      },
+      {
+        "orden": 92,
+        "numero_albaran": "08V19539",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "PLATAFORMA 360",
+        "importe_base": 6.81,
+        "importe_total": 7.59,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 3,
+          "orden_tabla": 4,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 42,
+          "celdas_literales": [
+            "10-07-2026",
+            "PLATAFORMA 360",
+            "08V19539",
+            "6,81",
+            "7,59"
+          ]
+        }
+      }
+    ],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON PIUS",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": null,
+    "periodo_facturacion_inicio": null,
+    "periodo_facturacion_fin": null,
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_y_totales": "luna_general",
+    "tipo_documento": "luna_general",
+    "vencimientos": "luna_tablas_literales",
+    "impuestos": "luna_tablas_literales",
+    "albaranes": "luna_tablas_literales",
+    "ajustes": "luna_tablas_literales",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna",
+    "destinatario.nombre_y_cif": "luna_general"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "proveedor": "Alliance",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF",
+    "factura_separada_inequivocamente": true,
+    "descuadre_total": false,
+    "pagos_parciales_o_fraccionamiento": false,
+    "importes_vencimiento_distintos": false
+  }
+}

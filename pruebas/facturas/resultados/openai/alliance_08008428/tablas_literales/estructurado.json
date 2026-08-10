@@ -1,0 +1,1233 @@
+{
+  "metadatos_prueba": {
+    "archivo_enviado": "documento_01.pdf",
+    "paginas_pdf": 3,
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_05c50d3efc69c6bb016a7a0bf72b7481a08e19ffae47f77030",
+    "fecha_hora_utc": "2026-08-10T17:36:10.971935+00:00",
+    "version_prompt": "alliance_08008427_tablas_literales_v1.0",
+    "reasoning_effort": "none",
+    "max_output_tokens": 32000,
+    "store": false,
+    "paginas_originales": [
+      1,
+      3
+    ],
+    "sha256_enviado": "1398ec536d48f8f291d3d76c1b568cce31fec46ca0209dadf16043fe65f8c8d0",
+    "contenido_patron_incluido": false
+  },
+  "transcripcion": {
+    "bloques_vencimiento": [
+      {
+        "texto_fecha": "10-09-2026",
+        "texto_importe": null,
+        "pagina": 1
+      }
+    ],
+    "tablas": [
+      {
+        "pagina": 1,
+        "titulo_visible": "COMPRAS",
+        "encabezados": [
+          "CONCEPTO",
+          "BASE IMPONIBLE",
+          "IVA",
+          "R.E.",
+          "TOTALES"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "CONCEPTO",
+              "4",
+              "10",
+              "21",
+              "4",
+              "10",
+              "21",
+              "0,50",
+              "1,40",
+              "5,20",
+              "TOTALES"
+            ]
+          },
+          {
+            "orden_visual": 2,
+            "celdas": [
+              "ESPECIALIDAD",
+              "687,38",
+              "",
+              "",
+              "27,49",
+              "",
+              "",
+              "3,44",
+              "",
+              "",
+              "718,31"
+            ]
+          },
+          {
+            "orden_visual": 3,
+            "celdas": [
+              "GENERlCOS",
+              "1.237,99",
+              "",
+              "",
+              "49,52",
+              "",
+              "",
+              "6,19",
+              "",
+              "",
+              "1.293,70"
+            ]
+          },
+          {
+            "orden_visual": 4,
+            "celdas": [
+              "NO ESPECIALIDAD",
+              "",
+              "555,42",
+              "270,96",
+              "",
+              "55,54",
+              "56,90",
+              "",
+              "7,78",
+              "14,09",
+              "960,69"
+            ]
+          },
+          {
+            "orden_visual": 5,
+            "celdas": [
+              "TOTAL COMPRAS",
+              "1.925,37",
+              "555,42",
+              "270,96",
+              "77,01",
+              "55,54",
+              "56,90",
+              "9,63",
+              "7,78",
+              "14,09",
+              "2.972,70"
+            ]
+          },
+          {
+            "orden_visual": 6,
+            "celdas": [
+              "CONCEPTO",
+              "4",
+              "10",
+              "21",
+              "4",
+              "10",
+              "21",
+              "",
+              "",
+              "",
+              "TOTALES"
+            ]
+          },
+          {
+            "orden_visual": 7,
+            "celdas": [
+              "TOTAL GASTOS",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "0,00"
+            ]
+          },
+          {
+            "orden_visual": 8,
+            "celdas": [
+              "TOTAL BASE IMPONIBLE",
+              "2.751,75",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          },
+          {
+            "orden_visual": 9,
+            "celdas": [
+              "TOTAL RECARGOS EQUIVALENCIA",
+              "31,50",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          },
+          {
+            "orden_visual": 10,
+            "celdas": [
+              "TOTAL FACTURA",
+              "2.972,70",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          },
+          {
+            "orden_visual": 11,
+            "celdas": [
+              "TOTAL IVAS",
+              "189,45",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          },
+          {
+            "orden_visual": 12,
+            "celdas": [
+              "FINANCIERO",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 2,
+        "titulo_visible": "CARGOS",
+        "encabezados": [
+          "FECHA",
+          "TIPO DE PEDIDO",
+          "NÚMERO ALBARÁN",
+          "TOTAL BASE",
+          "TOTAL ALBARÁN"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08C27029",
+              "48,45",
+              "53,98"
+            ]
+          },
+          {
+            "orden_visual": 2,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08C27032",
+              "39,14",
+              "45,83"
+            ]
+          },
+          {
+            "orden_visual": 3,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08C27086",
+              "6,66",
+              "8,41"
+            ]
+          },
+          {
+            "orden_visual": 4,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08C27259",
+              "60,88",
+              "65,05"
+            ]
+          },
+          {
+            "orden_visual": 5,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08C27264",
+              "78,09",
+              "83,32"
+            ]
+          },
+          {
+            "orden_visual": 6,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08C27899",
+              "6,44",
+              "8,12"
+            ]
+          },
+          {
+            "orden_visual": 7,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08M29583",
+              "25,02",
+              "31,57"
+            ]
+          },
+          {
+            "orden_visual": 8,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08M29917",
+              "10,02",
+              "10,47"
+            ]
+          },
+          {
+            "orden_visual": 9,
+            "celdas": [
+              "01-07-2026",
+              "PLATAFORMA 360",
+              "08M30064",
+              "6,56",
+              "6,85"
+            ]
+          },
+          {
+            "orden_visual": 10,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C28369",
+              "6,72",
+              "7,02"
+            ]
+          },
+          {
+            "orden_visual": 11,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C28649",
+              "34,81",
+              "36,37"
+            ]
+          },
+          {
+            "orden_visual": 12,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C28657",
+              "294,41",
+              "307,66"
+            ]
+          },
+          {
+            "orden_visual": 13,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C28662",
+              "34,51",
+              "37,48"
+            ]
+          },
+          {
+            "orden_visual": 14,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C28668",
+              "220,49",
+              "230,41"
+            ]
+          },
+          {
+            "orden_visual": 15,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C28813",
+              "2,24",
+              "2,34"
+            ]
+          },
+          {
+            "orden_visual": 16,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C29059",
+              "11,42",
+              "11,94"
+            ]
+          },
+          {
+            "orden_visual": 17,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C29168",
+              "1,41",
+              "1,48"
+            ]
+          },
+          {
+            "orden_visual": 18,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08C29186",
+              "9,52",
+              "9,95"
+            ]
+          },
+          {
+            "orden_visual": 19,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30281",
+              "24,84",
+              "25,95"
+            ]
+          },
+          {
+            "orden_visual": 20,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30607",
+              "11,06",
+              "11,56"
+            ]
+          },
+          {
+            "orden_visual": 21,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30608",
+              "14,52",
+              "18,33"
+            ]
+          },
+          {
+            "orden_visual": 22,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30656",
+              "5,26",
+              "5,86"
+            ]
+          },
+          {
+            "orden_visual": 23,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30732",
+              "0,84",
+              "0,93"
+            ]
+          },
+          {
+            "orden_visual": 24,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30737",
+              "43,51",
+              "45,47"
+            ]
+          },
+          {
+            "orden_visual": 25,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30915",
+              "2,52",
+              "2,63"
+            ]
+          },
+          {
+            "orden_visual": 26,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30923",
+              "18,08",
+              "20,52"
+            ]
+          },
+          {
+            "orden_visual": 27,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M30925",
+              "2,21",
+              "2,46"
+            ]
+          },
+          {
+            "orden_visual": 28,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08M31070",
+              "2,92",
+              "3,05"
+            ]
+          },
+          {
+            "orden_visual": 29,
+            "celdas": [
+              "02-07-2026",
+              "PLATAFORMA 360",
+              "08V19089",
+              "12,11",
+              "13,49"
+            ]
+          },
+          {
+            "orden_visual": 30,
+            "celdas": [
+              "03-07-2026",
+              "PLATAFORMA 360",
+              "08C29779",
+              "24,32",
+              "25,41"
+            ]
+          },
+          {
+            "orden_visual": 31,
+            "celdas": [
+              "03-07-2026",
+              "PLATAFORMA 360",
+              "08C29973",
+              "66,76",
+              "74,14"
+            ]
+          },
+          {
+            "orden_visual": 32,
+            "celdas": [
+              "03-07-2026",
+              "PLATAFORMA 360",
+              "08C29976",
+              "24,10",
+              "25,56"
+            ]
+          },
+          {
+            "orden_visual": 33,
+            "celdas": [
+              "03-07-2026",
+              "PLATAFORMA 360",
+              "08C30154",
+              "7,24",
+              "7,57"
+            ]
+          },
+          {
+            "orden_visual": 34,
+            "celdas": [
+              "03-07-2026",
+              "PLATAFORMA 360",
+              "08C30420",
+              "61,91",
+              "68,97"
+            ]
+          },
+          {
+            "orden_visual": 35,
+            "celdas": [
+              "03-07-2026",
+              "PLATAFORMA 360",
+              "08M31633",
+              "23,64",
+              "24,71"
+            ]
+          },
+          {
+            "orden_visual": 36,
+            "celdas": [
+              "03-07-2026",
+              "PLATAFORMA 360",
+              "08M31835",
+              "7,51",
+              "8,37"
+            ]
+          },
+          {
+            "orden_visual": 37,
+            "celdas": [
+              "03-07-2026",
+              "PLATAFORMA 360",
+              "08M31838",
+              "5,62",
+              "5,87"
+            ]
+          },
+          {
+            "orden_visual": 38,
+            "celdas": [
+              "04-07-2026",
+              "PLATAFORMA 360",
+              "08C31296",
+              "96,18",
+              "104,86"
+            ]
+          },
+          {
+            "orden_visual": 39,
+            "celdas": [
+              "04-07-2026",
+              "PLATAFORMA 360",
+              "08C31300",
+              "51,70",
+              "55,99"
+            ]
+          },
+          {
+            "orden_visual": 40,
+            "celdas": [
+              "04-07-2026",
+              "PLATAFORMA 360",
+              "08C31488",
+              "10,59",
+              "11,06"
+            ]
+          },
+          {
+            "orden_visual": 41,
+            "celdas": [
+              "05-07-2026",
+              "PLATAFORMA 360",
+              "08C31637",
+              "11,02",
+              "11,52"
+            ]
+          },
+          {
+            "orden_visual": 42,
+            "celdas": [
+              "05-07-2026",
+              "PLATAFORMA 360",
+              "08C31644",
+              "2,50",
+              "2,61"
+            ]
+          },
+          {
+            "orden_visual": 43,
+            "celdas": [
+              "05-07-2026",
+              "PLATAFORMA 360",
+              "08C31645",
+              "17,20",
+              "20,17"
+            ]
+          },
+          {
+            "orden_visual": 44,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08C32022",
+              "25,77",
+              "28,71"
+            ]
+          },
+          {
+            "orden_visual": 45,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08C32341",
+              "60,52",
+              "67,53"
+            ]
+          },
+          {
+            "orden_visual": 46,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08C32347",
+              "47,76",
+              "53,09"
+            ]
+          },
+          {
+            "orden_visual": 47,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08M32279",
+              "87,58",
+              "91,52"
+            ]
+          },
+          {
+            "orden_visual": 48,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08M32580",
+              "24,60",
+              "27,40"
+            ]
+          },
+          {
+            "orden_visual": 49,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08M32581",
+              "6,74",
+              "7,50"
+            ]
+          },
+          {
+            "orden_visual": 50,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08M32942",
+              "7,29",
+              "9,20"
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 2,
+        "titulo_visible": "ABONOS",
+        "encabezados": [
+          "FECHA",
+          "TIPO DE PEDIDO",
+          "NÚMERO ALBARÁN",
+          "TOTAL BASE",
+          "TOTAL ALBARÁN"
+        ],
+        "filas": []
+      },
+      {
+        "pagina": 3,
+        "titulo_visible": "CARGOS",
+        "encabezados": [
+          "FECHA",
+          "TIPO DE PEDIDO",
+          "NÚMERO ALBARÁN",
+          "TOTAL BASE",
+          "TOTAL ALBARÁN"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08M32943",
+              "26,07",
+              "27,77"
+            ]
+          },
+          {
+            "orden_visual": 2,
+            "celdas": [
+              "06-07-2026",
+              "PLATAFORMA 360",
+              "08M32961",
+              "23,00",
+              "24,04"
+            ]
+          },
+          {
+            "orden_visual": 3,
+            "celdas": [
+              "07-07-2026",
+              "PLATAFORMA 360",
+              "08C33509",
+              "2,66",
+              "2,78"
+            ]
+          },
+          {
+            "orden_visual": 4,
+            "celdas": [
+              "07-07-2026",
+              "PLATAFORMA 360",
+              "08C33617",
+              "7,43",
+              "9,38"
+            ]
+          },
+          {
+            "orden_visual": 5,
+            "celdas": [
+              "07-07-2026",
+              "PLATAFORMA 360",
+              "08C33654",
+              "51,59",
+              "53,91"
+            ]
+          },
+          {
+            "orden_visual": 6,
+            "celdas": [
+              "07-07-2026",
+              "PLATAFORMA 360",
+              "08C33659",
+              "44,33",
+              "47,16"
+            ]
+          },
+          {
+            "orden_visual": 7,
+            "celdas": [
+              "07-07-2026",
+              "PLATAFORMA 360",
+              "08C33691",
+              "22,44",
+              "23,45"
+            ]
+          },
+          {
+            "orden_visual": 8,
+            "celdas": [
+              "07-07-2026",
+              "PLATAFORMA 360",
+              "08C34238",
+              "17,55",
+              "22,15"
+            ]
+          },
+          {
+            "orden_visual": 9,
+            "celdas": [
+              "07-07-2026",
+              "PLATAFORMA 360",
+              "08M33956",
+              "12,09",
+              "12,63"
+            ]
+          },
+          {
+            "orden_visual": 10,
+            "celdas": [
+              "07-07-2026",
+              "PLATAFORMA 360",
+              "08M33957",
+              "22,57",
+              "24,45"
+            ]
+          },
+          {
+            "orden_visual": 11,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08C34792",
+              "4,21",
+              "4,69"
+            ]
+          },
+          {
+            "orden_visual": 12,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08C34913",
+              "11,26",
+              "11,77"
+            ]
+          },
+          {
+            "orden_visual": 13,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08C35031",
+              "8,88",
+              "11,20"
+            ]
+          },
+          {
+            "orden_visual": 14,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08C35059",
+              "40,67",
+              "43,92"
+            ]
+          },
+          {
+            "orden_visual": 15,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08C35072",
+              "86,50",
+              "92,20"
+            ]
+          },
+          {
+            "orden_visual": 16,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08C35280",
+              "12,46",
+              "13,02"
+            ]
+          },
+          {
+            "orden_visual": 17,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08C35571",
+              "6,70",
+              "7,00"
+            ]
+          },
+          {
+            "orden_visual": 18,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08M34531",
+              "17,74",
+              "21,18"
+            ]
+          },
+          {
+            "orden_visual": 19,
+            "celdas": [
+              "08-07-2026",
+              "COSTO LABORAT.",
+              "08M34538",
+              "145,84",
+              "162,46"
+            ]
+          },
+          {
+            "orden_visual": 20,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08M34832",
+              "14,50",
+              "17,26"
+            ]
+          },
+          {
+            "orden_visual": 21,
+            "celdas": [
+              "08-07-2026",
+              "PLATAFORMA 360",
+              "08M34836",
+              "7,68",
+              "8,03"
+            ]
+          },
+          {
+            "orden_visual": 22,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08C36328",
+              "52,40",
+              "56,19"
+            ]
+          },
+          {
+            "orden_visual": 23,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08C36329",
+              "85,75",
+              "89,80"
+            ]
+          },
+          {
+            "orden_visual": 24,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08C36401",
+              "28,32",
+              "29,59"
+            ]
+          },
+          {
+            "orden_visual": 25,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08C36874",
+              "4,15",
+              "4,34"
+            ]
+          },
+          {
+            "orden_visual": 26,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08M35556",
+              "39,29",
+              "43,42"
+            ]
+          },
+          {
+            "orden_visual": 27,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08M35757",
+              "5,00",
+              "5,23"
+            ]
+          },
+          {
+            "orden_visual": 28,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08M35854",
+              "4,99",
+              "6,02"
+            ]
+          },
+          {
+            "orden_visual": 29,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08M35862",
+              "5,52",
+              "5,77"
+            ]
+          },
+          {
+            "orden_visual": 30,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08M35882",
+              "1,07",
+              "1,12"
+            ]
+          },
+          {
+            "orden_visual": 31,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08M35911",
+              "2,72",
+              "2,84"
+            ]
+          },
+          {
+            "orden_visual": 32,
+            "celdas": [
+              "09-07-2026",
+              "PLATAFORMA 360",
+              "08M35912",
+              "2,21",
+              "2,31"
+            ]
+          },
+          {
+            "orden_visual": 33,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08C37481",
+              "51,91",
+              "54,25"
+            ]
+          },
+          {
+            "orden_visual": 34,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08C37577",
+              "15,97",
+              "16,69"
+            ]
+          },
+          {
+            "orden_visual": 35,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08C37652",
+              "43,27",
+              "45,77"
+            ]
+          },
+          {
+            "orden_visual": 36,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08C37654",
+              "41,32",
+              "43,18"
+            ]
+          },
+          {
+            "orden_visual": 37,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08C37761",
+              "1,12",
+              "1,17"
+            ]
+          },
+          {
+            "orden_visual": 38,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08M36595",
+              "1,89",
+              "1,98"
+            ]
+          },
+          {
+            "orden_visual": 39,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08M36758",
+              "32,91",
+              "35,16"
+            ]
+          },
+          {
+            "orden_visual": 40,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08M36759",
+              "31,70",
+              "37,43"
+            ]
+          },
+          {
+            "orden_visual": 41,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08M36835",
+              "2,05",
+              "2,14"
+            ]
+          },
+          {
+            "orden_visual": 42,
+            "celdas": [
+              "10-07-2026",
+              "PLATAFORMA 360",
+              "08V19539",
+              "6,81",
+              "7,59"
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 3,
+        "titulo_visible": "ABONOS",
+        "encabezados": [
+          "FECHA",
+          "TIPO DE PEDIDO",
+          "NÚMERO ALBARÁN",
+          "TOTAL BASE",
+          "TOTAL ALBARÁN"
+        ],
+        "filas": []
+      }
+    ],
+    "textos_ajustes": [
+      {
+        "texto_visible": "R.D. 143,03 0 0,00",
+        "pagina": 1
+      },
+      {
+        "texto_visible": "R.D. 260,95 0 0,00",
+        "pagina": 1
+      },
+      {
+        "texto_visible": "R.D. 578,15 0 0,00",
+        "pagina": 1
+      },
+      {
+        "texto_visible": "IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011 94,74 0,00",
+        "pagina": 1
+      },
+      {
+        "texto_visible": "DEDUCCION 0,54- 0,00",
+        "pagina": 1
+      }
+    ],
+    "textos_fiscales": []
+  }
+}

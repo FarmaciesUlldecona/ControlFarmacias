@@ -1,0 +1,4288 @@
+{
+  "caso": "alliance_08008428",
+  "version_normalizador": "alliance_v1.1",
+  "metodo": "proyecci?n al contrato de negocio del patr?n; metadatos de procedencia del adaptador se excluyen de invenciones",
+  "patron_leido_solo_por_evaluador": true,
+  "resumen_22_campos": {
+    "campos_evaluados": 22,
+    "correctos": 21,
+    "incorrectos": 0,
+    "parciales": 1,
+    "ausentes": 0,
+    "acierto_estricto": 95.45,
+    "cobertura": 100.0,
+    "invenciones": 0
+  },
+  "resumen_atomico_negocio": {
+    "campos_atomicos_negocio": 670,
+    "correctos": 669,
+    "incorrectos": 1,
+    "ausentes": 0,
+    "diferencias_formato": 0,
+    "inventados": 0,
+    "acierto_estricto": 99.85,
+    "cobertura": 100.0
+  },
+  "albaranes": {
+    "esperados": 92,
+    "extraidos": 92,
+    "numeros_correctos": 92,
+    "ausentes": 0,
+    "duplicados": 0,
+    "inventados": 0,
+    "fechas_correctas": 92,
+    "importes_correctos": 184,
+    "ordenes_correctos": 92
+  },
+  "invenciones": [],
+  "comparaciones": [
+    {
+      "campo": "tipo_documento",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "tipo_documento",
+          "esperado": "FACTURA",
+          "obtenido": "FACTURA",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "categoria",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "categoria",
+          "esperado": "MERCANCIA",
+          "obtenido": "MERCANCIA",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "requiere_conciliacion_albaranes",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "requiere_conciliacion_albaranes",
+          "esperado": true,
+          "obtenido": true,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_inicio",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_inicio",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "pagina_fin",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "pagina_fin",
+          "esperado": 3,
+          "obtenido": 3,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_nombre",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_nombre",
+          "esperado": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "obtenido": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "proveedor_cif",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "proveedor_cif",
+          "esperado": "A50004324",
+          "obtenido": "A50004324",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "numero_factura",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "numero_factura",
+          "esperado": "08008428",
+          "obtenido": "08008428",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_factura",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_factura",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "base_imponible_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "base_imponible_total",
+          "esperado": 2751.75,
+          "obtenido": 2751.75,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "iva_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "iva_total",
+          "esperado": 189.45,
+          "obtenido": 189.45,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "recargo_equivalencia_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "recargo_equivalencia_total",
+          "esperado": 31.5,
+          "obtenido": 31.5,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "importe_total",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "importe_total",
+          "esperado": 2972.7,
+          "obtenido": 2972.7,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "vencimientos",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 3
+      },
+      "detalles": [
+        {
+          "ruta": "vencimientos[0].fecha_vencimiento",
+          "esperado": "2026-09-10",
+          "obtenido": "2026-09-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].importe",
+          "esperado": 2972.7,
+          "obtenido": 2972.7,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "vencimientos[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "impuestos",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "impuestos",
+          "esperado": [],
+          "obtenido": [],
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "albaranes",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 644
+      },
+      "detalles": [
+        {
+          "ruta": "albaranes[0].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_base",
+          "esperado": 48.45,
+          "obtenido": 48.45,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].importe_total",
+          "esperado": 53.98,
+          "obtenido": 53.98,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].numero_albaran",
+          "esperado": "08C27029",
+          "obtenido": "08C27029",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].orden",
+          "esperado": 1,
+          "obtenido": 1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[0].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[10].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[10].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[10].importe_base",
+          "esperado": 34.81,
+          "obtenido": 34.81,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[10].importe_total",
+          "esperado": 36.37,
+          "obtenido": 36.37,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[10].numero_albaran",
+          "esperado": "08C28649",
+          "obtenido": "08C28649",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[10].orden",
+          "esperado": 11,
+          "obtenido": 11,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[10].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[11].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[11].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[11].importe_base",
+          "esperado": 294.41,
+          "obtenido": 294.41,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[11].importe_total",
+          "esperado": 307.66,
+          "obtenido": 307.66,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[11].numero_albaran",
+          "esperado": "08C28657",
+          "obtenido": "08C28657",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[11].orden",
+          "esperado": 12,
+          "obtenido": 12,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[11].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[12].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[12].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[12].importe_base",
+          "esperado": 34.51,
+          "obtenido": 34.51,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[12].importe_total",
+          "esperado": 37.48,
+          "obtenido": 37.48,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[12].numero_albaran",
+          "esperado": "08C28662",
+          "obtenido": "08C28662",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[12].orden",
+          "esperado": 13,
+          "obtenido": 13,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[12].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[13].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[13].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[13].importe_base",
+          "esperado": 220.49,
+          "obtenido": 220.49,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[13].importe_total",
+          "esperado": 230.41,
+          "obtenido": 230.41,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[13].numero_albaran",
+          "esperado": "08C28668",
+          "obtenido": "08C28668",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[13].orden",
+          "esperado": 14,
+          "obtenido": 14,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[13].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[14].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[14].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[14].importe_base",
+          "esperado": 2.24,
+          "obtenido": 2.24,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[14].importe_total",
+          "esperado": 2.34,
+          "obtenido": 2.34,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[14].numero_albaran",
+          "esperado": "08C28813",
+          "obtenido": "08C28813",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[14].orden",
+          "esperado": 15,
+          "obtenido": 15,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[14].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[15].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[15].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[15].importe_base",
+          "esperado": 11.42,
+          "obtenido": 11.42,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[15].importe_total",
+          "esperado": 11.94,
+          "obtenido": 11.94,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[15].numero_albaran",
+          "esperado": "08C29059",
+          "obtenido": "08C29059",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[15].orden",
+          "esperado": 16,
+          "obtenido": 16,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[15].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[16].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[16].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[16].importe_base",
+          "esperado": 1.41,
+          "obtenido": 1.41,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[16].importe_total",
+          "esperado": 1.48,
+          "obtenido": 1.48,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[16].numero_albaran",
+          "esperado": "08C29168",
+          "obtenido": "08C29168",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[16].orden",
+          "esperado": 17,
+          "obtenido": 17,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[16].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[17].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[17].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[17].importe_base",
+          "esperado": 9.52,
+          "obtenido": 9.52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[17].importe_total",
+          "esperado": 9.95,
+          "obtenido": 9.95,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[17].numero_albaran",
+          "esperado": "08C29186",
+          "obtenido": "08C29186",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[17].orden",
+          "esperado": 18,
+          "obtenido": 18,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[17].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[18].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[18].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[18].importe_base",
+          "esperado": 24.84,
+          "obtenido": 24.84,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[18].importe_total",
+          "esperado": 25.95,
+          "obtenido": 25.95,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[18].numero_albaran",
+          "esperado": "08M30281",
+          "obtenido": "08M30281",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[18].orden",
+          "esperado": 19,
+          "obtenido": 19,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[18].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[19].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[19].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[19].importe_base",
+          "esperado": 11.06,
+          "obtenido": 11.06,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[19].importe_total",
+          "esperado": 11.56,
+          "obtenido": 11.56,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[19].numero_albaran",
+          "esperado": "08M30607",
+          "obtenido": "08M30607",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[19].orden",
+          "esperado": 20,
+          "obtenido": 20,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[19].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].importe_base",
+          "esperado": 39.14,
+          "obtenido": 39.14,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].importe_total",
+          "esperado": 45.83,
+          "obtenido": 45.83,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].numero_albaran",
+          "esperado": "08C27032",
+          "obtenido": "08C27032",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].orden",
+          "esperado": 2,
+          "obtenido": 2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[1].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[20].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[20].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[20].importe_base",
+          "esperado": 14.52,
+          "obtenido": 14.52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[20].importe_total",
+          "esperado": 18.33,
+          "obtenido": 18.33,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[20].numero_albaran",
+          "esperado": "08M30608",
+          "obtenido": "08M30608",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[20].orden",
+          "esperado": 21,
+          "obtenido": 21,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[20].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[21].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[21].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[21].importe_base",
+          "esperado": 5.26,
+          "obtenido": 5.26,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[21].importe_total",
+          "esperado": 5.86,
+          "obtenido": 5.86,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[21].numero_albaran",
+          "esperado": "08M30656",
+          "obtenido": "08M30656",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[21].orden",
+          "esperado": 22,
+          "obtenido": 22,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[21].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[22].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[22].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[22].importe_base",
+          "esperado": 0.84,
+          "obtenido": 0.84,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[22].importe_total",
+          "esperado": 0.93,
+          "obtenido": 0.93,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[22].numero_albaran",
+          "esperado": "08M30732",
+          "obtenido": "08M30732",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[22].orden",
+          "esperado": 23,
+          "obtenido": 23,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[22].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[23].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[23].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[23].importe_base",
+          "esperado": 43.51,
+          "obtenido": 43.51,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[23].importe_total",
+          "esperado": 45.47,
+          "obtenido": 45.47,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[23].numero_albaran",
+          "esperado": "08M30737",
+          "obtenido": "08M30737",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[23].orden",
+          "esperado": 24,
+          "obtenido": 24,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[23].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[24].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[24].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[24].importe_base",
+          "esperado": 2.52,
+          "obtenido": 2.52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[24].importe_total",
+          "esperado": 2.63,
+          "obtenido": 2.63,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[24].numero_albaran",
+          "esperado": "08M30915",
+          "obtenido": "08M30915",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[24].orden",
+          "esperado": 25,
+          "obtenido": 25,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[24].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[25].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[25].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[25].importe_base",
+          "esperado": 18.08,
+          "obtenido": 18.08,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[25].importe_total",
+          "esperado": 20.52,
+          "obtenido": 20.52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[25].numero_albaran",
+          "esperado": "08M30923",
+          "obtenido": "08M30923",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[25].orden",
+          "esperado": 26,
+          "obtenido": 26,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[25].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[26].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[26].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[26].importe_base",
+          "esperado": 2.21,
+          "obtenido": 2.21,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[26].importe_total",
+          "esperado": 2.46,
+          "obtenido": 2.46,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[26].numero_albaran",
+          "esperado": "08M30925",
+          "obtenido": "08M30925",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[26].orden",
+          "esperado": 27,
+          "obtenido": 27,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[26].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[27].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[27].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[27].importe_base",
+          "esperado": 2.92,
+          "obtenido": 2.92,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[27].importe_total",
+          "esperado": 3.05,
+          "obtenido": 3.05,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[27].numero_albaran",
+          "esperado": "08M31070",
+          "obtenido": "08M31070",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[27].orden",
+          "esperado": 28,
+          "obtenido": 28,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[27].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[28].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[28].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[28].importe_base",
+          "esperado": 12.11,
+          "obtenido": 12.11,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[28].importe_total",
+          "esperado": 13.49,
+          "obtenido": 13.49,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[28].numero_albaran",
+          "esperado": "08V19089",
+          "obtenido": "08V19089",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[28].orden",
+          "esperado": 29,
+          "obtenido": 29,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[28].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[29].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[29].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": "2026-07-03",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[29].importe_base",
+          "esperado": 24.32,
+          "obtenido": 24.32,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[29].importe_total",
+          "esperado": 25.41,
+          "obtenido": 25.41,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[29].numero_albaran",
+          "esperado": "08C29779",
+          "obtenido": "08C29779",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[29].orden",
+          "esperado": 30,
+          "obtenido": 30,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[29].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].importe_base",
+          "esperado": 6.66,
+          "obtenido": 6.66,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].importe_total",
+          "esperado": 8.41,
+          "obtenido": 8.41,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].numero_albaran",
+          "esperado": "08C27086",
+          "obtenido": "08C27086",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].orden",
+          "esperado": 3,
+          "obtenido": 3,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[2].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[30].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[30].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": "2026-07-03",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[30].importe_base",
+          "esperado": 66.76,
+          "obtenido": 66.76,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[30].importe_total",
+          "esperado": 74.14,
+          "obtenido": 74.14,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[30].numero_albaran",
+          "esperado": "08C29973",
+          "obtenido": "08C29973",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[30].orden",
+          "esperado": 31,
+          "obtenido": 31,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[30].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[31].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[31].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": "2026-07-03",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[31].importe_base",
+          "esperado": 24.1,
+          "obtenido": 24.1,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[31].importe_total",
+          "esperado": 25.56,
+          "obtenido": 25.56,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[31].numero_albaran",
+          "esperado": "08C29976",
+          "obtenido": "08C29976",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[31].orden",
+          "esperado": 32,
+          "obtenido": 32,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[31].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[32].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[32].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": "2026-07-03",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[32].importe_base",
+          "esperado": 7.24,
+          "obtenido": 7.24,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[32].importe_total",
+          "esperado": 7.57,
+          "obtenido": 7.57,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[32].numero_albaran",
+          "esperado": "08C30154",
+          "obtenido": "08C30154",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[32].orden",
+          "esperado": 33,
+          "obtenido": 33,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[32].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[33].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[33].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": "2026-07-03",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[33].importe_base",
+          "esperado": 61.91,
+          "obtenido": 61.91,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[33].importe_total",
+          "esperado": 68.97,
+          "obtenido": 68.97,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[33].numero_albaran",
+          "esperado": "08C30420",
+          "obtenido": "08C30420",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[33].orden",
+          "esperado": 34,
+          "obtenido": 34,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[33].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[34].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[34].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": "2026-07-03",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[34].importe_base",
+          "esperado": 23.64,
+          "obtenido": 23.64,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[34].importe_total",
+          "esperado": 24.71,
+          "obtenido": 24.71,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[34].numero_albaran",
+          "esperado": "08M31633",
+          "obtenido": "08M31633",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[34].orden",
+          "esperado": 35,
+          "obtenido": 35,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[34].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[35].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[35].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": "2026-07-03",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[35].importe_base",
+          "esperado": 7.51,
+          "obtenido": 7.51,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[35].importe_total",
+          "esperado": 8.37,
+          "obtenido": 8.37,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[35].numero_albaran",
+          "esperado": "08M31835",
+          "obtenido": "08M31835",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[35].orden",
+          "esperado": 36,
+          "obtenido": 36,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[35].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[36].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[36].fecha_albaran",
+          "esperado": "2026-07-03",
+          "obtenido": "2026-07-03",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[36].importe_base",
+          "esperado": 5.62,
+          "obtenido": 5.62,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[36].importe_total",
+          "esperado": 5.87,
+          "obtenido": 5.87,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[36].numero_albaran",
+          "esperado": "08M31838",
+          "obtenido": "08M31838",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[36].orden",
+          "esperado": 37,
+          "obtenido": 37,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[36].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[37].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[37].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": "2026-07-04",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[37].importe_base",
+          "esperado": 96.18,
+          "obtenido": 96.18,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[37].importe_total",
+          "esperado": 104.86,
+          "obtenido": 104.86,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[37].numero_albaran",
+          "esperado": "08C31296",
+          "obtenido": "08C31296",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[37].orden",
+          "esperado": 38,
+          "obtenido": 38,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[37].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[38].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[38].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": "2026-07-04",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[38].importe_base",
+          "esperado": 51.7,
+          "obtenido": 51.7,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[38].importe_total",
+          "esperado": 55.99,
+          "obtenido": 55.99,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[38].numero_albaran",
+          "esperado": "08C31300",
+          "obtenido": "08C31300",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[38].orden",
+          "esperado": 39,
+          "obtenido": 39,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[38].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[39].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[39].fecha_albaran",
+          "esperado": "2026-07-04",
+          "obtenido": "2026-07-04",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[39].importe_base",
+          "esperado": 10.59,
+          "obtenido": 10.59,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[39].importe_total",
+          "esperado": 11.06,
+          "obtenido": 11.06,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[39].numero_albaran",
+          "esperado": "08C31488",
+          "obtenido": "08C31488",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[39].orden",
+          "esperado": 40,
+          "obtenido": 40,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[39].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].importe_base",
+          "esperado": 60.88,
+          "obtenido": 60.88,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].importe_total",
+          "esperado": 65.05,
+          "obtenido": 65.05,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].numero_albaran",
+          "esperado": "08C27259",
+          "obtenido": "08C27259",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].orden",
+          "esperado": 4,
+          "obtenido": 4,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[3].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[40].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[40].fecha_albaran",
+          "esperado": "2026-07-05",
+          "obtenido": "2026-07-05",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[40].importe_base",
+          "esperado": 11.02,
+          "obtenido": 11.02,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[40].importe_total",
+          "esperado": 11.52,
+          "obtenido": 11.52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[40].numero_albaran",
+          "esperado": "08C31637",
+          "obtenido": "08C31637",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[40].orden",
+          "esperado": 41,
+          "obtenido": 41,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[40].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[41].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[41].fecha_albaran",
+          "esperado": "2026-07-05",
+          "obtenido": "2026-07-05",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[41].importe_base",
+          "esperado": 2.5,
+          "obtenido": 2.5,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[41].importe_total",
+          "esperado": 2.61,
+          "obtenido": 2.61,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[41].numero_albaran",
+          "esperado": "08C31644",
+          "obtenido": "08C31644",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[41].orden",
+          "esperado": 42,
+          "obtenido": 42,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[41].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[42].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[42].fecha_albaran",
+          "esperado": "2026-07-05",
+          "obtenido": "2026-07-05",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[42].importe_base",
+          "esperado": 17.2,
+          "obtenido": 17.2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[42].importe_total",
+          "esperado": 20.17,
+          "obtenido": 20.17,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[42].numero_albaran",
+          "esperado": "08C31645",
+          "obtenido": "08C31645",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[42].orden",
+          "esperado": 43,
+          "obtenido": 43,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[42].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[43].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[43].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[43].importe_base",
+          "esperado": 25.77,
+          "obtenido": 25.77,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[43].importe_total",
+          "esperado": 28.71,
+          "obtenido": 28.71,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[43].numero_albaran",
+          "esperado": "08C32022",
+          "obtenido": "08C32022",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[43].orden",
+          "esperado": 44,
+          "obtenido": 44,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[43].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[44].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[44].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[44].importe_base",
+          "esperado": 60.52,
+          "obtenido": 60.52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[44].importe_total",
+          "esperado": 67.53,
+          "obtenido": 67.53,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[44].numero_albaran",
+          "esperado": "08C32341",
+          "obtenido": "08C32341",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[44].orden",
+          "esperado": 45,
+          "obtenido": 45,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[44].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[45].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[45].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[45].importe_base",
+          "esperado": 47.76,
+          "obtenido": 47.76,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[45].importe_total",
+          "esperado": 53.09,
+          "obtenido": 53.09,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[45].numero_albaran",
+          "esperado": "08C32347",
+          "obtenido": "08C32347",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[45].orden",
+          "esperado": 46,
+          "obtenido": 46,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[45].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[46].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[46].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[46].importe_base",
+          "esperado": 87.58,
+          "obtenido": 87.58,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[46].importe_total",
+          "esperado": 91.52,
+          "obtenido": 91.52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[46].numero_albaran",
+          "esperado": "08M32279",
+          "obtenido": "08M32279",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[46].orden",
+          "esperado": 47,
+          "obtenido": 47,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[46].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[47].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[47].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[47].importe_base",
+          "esperado": 24.6,
+          "obtenido": 24.6,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[47].importe_total",
+          "esperado": 27.4,
+          "obtenido": 27.4,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[47].numero_albaran",
+          "esperado": "08M32580",
+          "obtenido": "08M32580",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[47].orden",
+          "esperado": 48,
+          "obtenido": 48,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[47].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[48].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[48].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[48].importe_base",
+          "esperado": 6.74,
+          "obtenido": 6.74,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[48].importe_total",
+          "esperado": 7.5,
+          "obtenido": 7.5,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[48].numero_albaran",
+          "esperado": "08M32581",
+          "obtenido": "08M32581",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[48].orden",
+          "esperado": 49,
+          "obtenido": 49,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[48].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[49].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[49].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[49].importe_base",
+          "esperado": 7.29,
+          "obtenido": 7.29,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[49].importe_total",
+          "esperado": 9.2,
+          "obtenido": 9.2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[49].numero_albaran",
+          "esperado": "08M32942",
+          "obtenido": "08M32942",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[49].orden",
+          "esperado": 50,
+          "obtenido": 50,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[49].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].importe_base",
+          "esperado": 78.09,
+          "obtenido": 78.09,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].importe_total",
+          "esperado": 83.32,
+          "obtenido": 83.32,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].numero_albaran",
+          "esperado": "08C27264",
+          "obtenido": "08C27264",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].orden",
+          "esperado": 5,
+          "obtenido": 5,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[4].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[50].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[50].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[50].importe_base",
+          "esperado": 26.07,
+          "obtenido": 26.07,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[50].importe_total",
+          "esperado": 27.77,
+          "obtenido": 27.77,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[50].numero_albaran",
+          "esperado": "08M32943",
+          "obtenido": "08M32943",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[50].orden",
+          "esperado": 51,
+          "obtenido": 51,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[50].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[51].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[51].fecha_albaran",
+          "esperado": "2026-07-06",
+          "obtenido": "2026-07-06",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[51].importe_base",
+          "esperado": 23.0,
+          "obtenido": 23.0,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[51].importe_total",
+          "esperado": 24.04,
+          "obtenido": 24.04,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[51].numero_albaran",
+          "esperado": "08M32961",
+          "obtenido": "08M32961",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[51].orden",
+          "esperado": 52,
+          "obtenido": 52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[51].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[52].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[52].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": "2026-07-07",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[52].importe_base",
+          "esperado": 2.66,
+          "obtenido": 2.66,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[52].importe_total",
+          "esperado": 2.78,
+          "obtenido": 2.78,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[52].numero_albaran",
+          "esperado": "08C33509",
+          "obtenido": "08C33509",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[52].orden",
+          "esperado": 53,
+          "obtenido": 53,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[52].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[53].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[53].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": "2026-07-07",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[53].importe_base",
+          "esperado": 7.43,
+          "obtenido": 7.43,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[53].importe_total",
+          "esperado": 9.38,
+          "obtenido": 9.38,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[53].numero_albaran",
+          "esperado": "08C33617",
+          "obtenido": "08C33617",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[53].orden",
+          "esperado": 54,
+          "obtenido": 54,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[53].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[54].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[54].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": "2026-07-07",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[54].importe_base",
+          "esperado": 51.59,
+          "obtenido": 51.59,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[54].importe_total",
+          "esperado": 53.91,
+          "obtenido": 53.91,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[54].numero_albaran",
+          "esperado": "08C33654",
+          "obtenido": "08C33654",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[54].orden",
+          "esperado": 55,
+          "obtenido": 55,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[54].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[55].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[55].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": "2026-07-07",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[55].importe_base",
+          "esperado": 44.33,
+          "obtenido": 44.33,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[55].importe_total",
+          "esperado": 47.16,
+          "obtenido": 47.16,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[55].numero_albaran",
+          "esperado": "08C33659",
+          "obtenido": "08C33659",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[55].orden",
+          "esperado": 56,
+          "obtenido": 56,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[55].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[56].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[56].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": "2026-07-07",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[56].importe_base",
+          "esperado": 22.44,
+          "obtenido": 22.44,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[56].importe_total",
+          "esperado": 23.45,
+          "obtenido": 23.45,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[56].numero_albaran",
+          "esperado": "08C33691",
+          "obtenido": "08C33691",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[56].orden",
+          "esperado": 57,
+          "obtenido": 57,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[56].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[57].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[57].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": "2026-07-07",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[57].importe_base",
+          "esperado": 17.55,
+          "obtenido": 17.55,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[57].importe_total",
+          "esperado": 22.15,
+          "obtenido": 22.15,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[57].numero_albaran",
+          "esperado": "08C34238",
+          "obtenido": "08C34238",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[57].orden",
+          "esperado": 58,
+          "obtenido": 58,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[57].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[58].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[58].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": "2026-07-07",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[58].importe_base",
+          "esperado": 12.09,
+          "obtenido": 12.09,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[58].importe_total",
+          "esperado": 12.63,
+          "obtenido": 12.63,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[58].numero_albaran",
+          "esperado": "08M33956",
+          "obtenido": "08M33956",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[58].orden",
+          "esperado": 59,
+          "obtenido": 59,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[58].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[59].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[59].fecha_albaran",
+          "esperado": "2026-07-07",
+          "obtenido": "2026-07-07",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[59].importe_base",
+          "esperado": 22.57,
+          "obtenido": 22.57,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[59].importe_total",
+          "esperado": 24.45,
+          "obtenido": 24.45,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[59].numero_albaran",
+          "esperado": "08M33957",
+          "obtenido": "08M33957",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[59].orden",
+          "esperado": 60,
+          "obtenido": 60,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[59].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[5].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[5].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[5].importe_base",
+          "esperado": 6.44,
+          "obtenido": 6.44,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[5].importe_total",
+          "esperado": 8.12,
+          "obtenido": 8.12,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[5].numero_albaran",
+          "esperado": "08C27899",
+          "obtenido": "08C27899",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[5].orden",
+          "esperado": 6,
+          "obtenido": 6,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[5].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[60].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[60].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[60].importe_base",
+          "esperado": 4.21,
+          "obtenido": 4.21,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[60].importe_total",
+          "esperado": 4.69,
+          "obtenido": 4.69,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[60].numero_albaran",
+          "esperado": "08C34792",
+          "obtenido": "08C34792",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[60].orden",
+          "esperado": 61,
+          "obtenido": 61,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[60].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[61].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[61].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[61].importe_base",
+          "esperado": 11.26,
+          "obtenido": 11.26,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[61].importe_total",
+          "esperado": 11.77,
+          "obtenido": 11.77,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[61].numero_albaran",
+          "esperado": "08C34913",
+          "obtenido": "08C34913",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[61].orden",
+          "esperado": 62,
+          "obtenido": 62,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[61].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[62].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[62].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[62].importe_base",
+          "esperado": 8.88,
+          "obtenido": 8.88,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[62].importe_total",
+          "esperado": 11.2,
+          "obtenido": 11.2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[62].numero_albaran",
+          "esperado": "08C35031",
+          "obtenido": "08C35031",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[62].orden",
+          "esperado": 63,
+          "obtenido": 63,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[62].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[63].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[63].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[63].importe_base",
+          "esperado": 40.67,
+          "obtenido": 40.67,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[63].importe_total",
+          "esperado": 43.92,
+          "obtenido": 43.92,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[63].numero_albaran",
+          "esperado": "08C35059",
+          "obtenido": "08C35059",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[63].orden",
+          "esperado": 64,
+          "obtenido": 64,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[63].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[64].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[64].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[64].importe_base",
+          "esperado": 86.5,
+          "obtenido": 86.5,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[64].importe_total",
+          "esperado": 92.2,
+          "obtenido": 92.2,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[64].numero_albaran",
+          "esperado": "08C35072",
+          "obtenido": "08C35072",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[64].orden",
+          "esperado": 65,
+          "obtenido": 65,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[64].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[65].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[65].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[65].importe_base",
+          "esperado": 12.46,
+          "obtenido": 12.46,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[65].importe_total",
+          "esperado": 13.02,
+          "obtenido": 13.02,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[65].numero_albaran",
+          "esperado": "08C35280",
+          "obtenido": "08C35280",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[65].orden",
+          "esperado": 66,
+          "obtenido": 66,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[65].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[66].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[66].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[66].importe_base",
+          "esperado": 6.7,
+          "obtenido": 6.7,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[66].importe_total",
+          "esperado": 7.0,
+          "obtenido": 7.0,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[66].numero_albaran",
+          "esperado": "08C35571",
+          "obtenido": "08C35571",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[66].orden",
+          "esperado": 67,
+          "obtenido": 67,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[66].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[67].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[67].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[67].importe_base",
+          "esperado": 17.74,
+          "obtenido": 17.74,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[67].importe_total",
+          "esperado": 21.18,
+          "obtenido": 21.18,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[67].numero_albaran",
+          "esperado": "08M34531",
+          "obtenido": "08M34531",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[67].orden",
+          "esperado": 68,
+          "obtenido": 68,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[67].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[68].descripcion",
+          "esperado": "COSTO LABORAT.",
+          "obtenido": "COSTO LABORAT.",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[68].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[68].importe_base",
+          "esperado": 145.84,
+          "obtenido": 145.84,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[68].importe_total",
+          "esperado": 162.46,
+          "obtenido": 162.46,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[68].numero_albaran",
+          "esperado": "08M34538",
+          "obtenido": "08M34538",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[68].orden",
+          "esperado": 69,
+          "obtenido": 69,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[68].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[69].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[69].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[69].importe_base",
+          "esperado": 14.5,
+          "obtenido": 14.5,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[69].importe_total",
+          "esperado": 17.26,
+          "obtenido": 17.26,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[69].numero_albaran",
+          "esperado": "08M34832",
+          "obtenido": "08M34832",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[69].orden",
+          "esperado": 70,
+          "obtenido": 70,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[69].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[6].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[6].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[6].importe_base",
+          "esperado": 25.02,
+          "obtenido": 25.02,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[6].importe_total",
+          "esperado": 31.57,
+          "obtenido": 31.57,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[6].numero_albaran",
+          "esperado": "08M29583",
+          "obtenido": "08M29583",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[6].orden",
+          "esperado": 7,
+          "obtenido": 7,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[6].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[70].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[70].fecha_albaran",
+          "esperado": "2026-07-08",
+          "obtenido": "2026-07-08",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[70].importe_base",
+          "esperado": 7.68,
+          "obtenido": 7.68,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[70].importe_total",
+          "esperado": 8.03,
+          "obtenido": 8.03,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[70].numero_albaran",
+          "esperado": "08M34836",
+          "obtenido": "08M34836",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[70].orden",
+          "esperado": 71,
+          "obtenido": 71,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[70].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[71].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[71].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[71].importe_base",
+          "esperado": 52.4,
+          "obtenido": 52.4,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[71].importe_total",
+          "esperado": 56.19,
+          "obtenido": 56.19,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[71].numero_albaran",
+          "esperado": "08C36328",
+          "obtenido": "08C36328",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[71].orden",
+          "esperado": 72,
+          "obtenido": 72,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[71].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[72].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[72].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[72].importe_base",
+          "esperado": 85.75,
+          "obtenido": 85.75,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[72].importe_total",
+          "esperado": 89.8,
+          "obtenido": 89.8,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[72].numero_albaran",
+          "esperado": "08C36329",
+          "obtenido": "08C36329",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[72].orden",
+          "esperado": 73,
+          "obtenido": 73,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[72].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[73].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[73].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[73].importe_base",
+          "esperado": 28.32,
+          "obtenido": 28.32,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[73].importe_total",
+          "esperado": 29.59,
+          "obtenido": 29.59,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[73].numero_albaran",
+          "esperado": "08C36401",
+          "obtenido": "08C36401",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[73].orden",
+          "esperado": 74,
+          "obtenido": 74,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[73].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[74].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[74].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[74].importe_base",
+          "esperado": 4.15,
+          "obtenido": 4.15,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[74].importe_total",
+          "esperado": 4.34,
+          "obtenido": 4.34,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[74].numero_albaran",
+          "esperado": "08C36874",
+          "obtenido": "08C36874",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[74].orden",
+          "esperado": 75,
+          "obtenido": 75,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[74].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[75].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[75].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[75].importe_base",
+          "esperado": 39.29,
+          "obtenido": 39.29,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[75].importe_total",
+          "esperado": 43.42,
+          "obtenido": 43.42,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[75].numero_albaran",
+          "esperado": "08M35556",
+          "obtenido": "08M35556",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[75].orden",
+          "esperado": 76,
+          "obtenido": 76,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[75].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[76].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[76].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[76].importe_base",
+          "esperado": 5.0,
+          "obtenido": 5.0,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[76].importe_total",
+          "esperado": 5.23,
+          "obtenido": 5.23,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[76].numero_albaran",
+          "esperado": "08M35757",
+          "obtenido": "08M35757",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[76].orden",
+          "esperado": 77,
+          "obtenido": 77,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[76].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[77].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[77].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[77].importe_base",
+          "esperado": 4.99,
+          "obtenido": 4.99,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[77].importe_total",
+          "esperado": 6.02,
+          "obtenido": 6.02,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[77].numero_albaran",
+          "esperado": "08M35854",
+          "obtenido": "08M35854",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[77].orden",
+          "esperado": 78,
+          "obtenido": 78,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[77].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[78].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[78].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[78].importe_base",
+          "esperado": 5.52,
+          "obtenido": 5.52,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[78].importe_total",
+          "esperado": 5.77,
+          "obtenido": 5.77,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[78].numero_albaran",
+          "esperado": "08M35862",
+          "obtenido": "08M35862",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[78].orden",
+          "esperado": 79,
+          "obtenido": 79,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[78].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[79].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[79].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[79].importe_base",
+          "esperado": 1.07,
+          "obtenido": 1.07,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[79].importe_total",
+          "esperado": 1.12,
+          "obtenido": 1.12,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[79].numero_albaran",
+          "esperado": "08M35882",
+          "obtenido": "08M35882",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[79].orden",
+          "esperado": 80,
+          "obtenido": 80,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[79].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[7].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[7].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[7].importe_base",
+          "esperado": 10.02,
+          "obtenido": 10.02,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[7].importe_total",
+          "esperado": 10.47,
+          "obtenido": 10.47,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[7].numero_albaran",
+          "esperado": "08M29917",
+          "obtenido": "08M29917",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[7].orden",
+          "esperado": 8,
+          "obtenido": 8,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[7].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[80].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[80].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[80].importe_base",
+          "esperado": 2.72,
+          "obtenido": 2.72,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[80].importe_total",
+          "esperado": 2.84,
+          "obtenido": 2.84,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[80].numero_albaran",
+          "esperado": "08M35911",
+          "obtenido": "08M35911",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[80].orden",
+          "esperado": 81,
+          "obtenido": 81,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[80].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[81].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[81].fecha_albaran",
+          "esperado": "2026-07-09",
+          "obtenido": "2026-07-09",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[81].importe_base",
+          "esperado": 2.21,
+          "obtenido": 2.21,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[81].importe_total",
+          "esperado": 2.31,
+          "obtenido": 2.31,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[81].numero_albaran",
+          "esperado": "08M35912",
+          "obtenido": "08M35912",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[81].orden",
+          "esperado": 82,
+          "obtenido": 82,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[81].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[82].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[82].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[82].importe_base",
+          "esperado": 51.91,
+          "obtenido": 51.91,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[82].importe_total",
+          "esperado": 54.25,
+          "obtenido": 54.25,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[82].numero_albaran",
+          "esperado": "08C37481",
+          "obtenido": "08C37481",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[82].orden",
+          "esperado": 83,
+          "obtenido": 83,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[82].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[83].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[83].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[83].importe_base",
+          "esperado": 15.97,
+          "obtenido": 15.97,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[83].importe_total",
+          "esperado": 16.69,
+          "obtenido": 16.69,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[83].numero_albaran",
+          "esperado": "08C37577",
+          "obtenido": "08C37577",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[83].orden",
+          "esperado": 84,
+          "obtenido": 84,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[83].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[84].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[84].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[84].importe_base",
+          "esperado": 43.27,
+          "obtenido": 43.27,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[84].importe_total",
+          "esperado": 45.77,
+          "obtenido": 45.77,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[84].numero_albaran",
+          "esperado": "08C37652",
+          "obtenido": "08C37652",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[84].orden",
+          "esperado": 85,
+          "obtenido": 85,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[84].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[85].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[85].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[85].importe_base",
+          "esperado": 41.32,
+          "obtenido": 41.32,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[85].importe_total",
+          "esperado": 43.18,
+          "obtenido": 43.18,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[85].numero_albaran",
+          "esperado": "08C37654",
+          "obtenido": "08C37654",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[85].orden",
+          "esperado": 86,
+          "obtenido": 86,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[85].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[86].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[86].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[86].importe_base",
+          "esperado": 1.12,
+          "obtenido": 1.12,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[86].importe_total",
+          "esperado": 1.17,
+          "obtenido": 1.17,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[86].numero_albaran",
+          "esperado": "08C37761",
+          "obtenido": "08C37761",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[86].orden",
+          "esperado": 87,
+          "obtenido": 87,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[86].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[87].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[87].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[87].importe_base",
+          "esperado": 1.89,
+          "obtenido": 1.89,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[87].importe_total",
+          "esperado": 1.98,
+          "obtenido": 1.98,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[87].numero_albaran",
+          "esperado": "08M36595",
+          "obtenido": "08M36595",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[87].orden",
+          "esperado": 88,
+          "obtenido": 88,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[87].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[88].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[88].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[88].importe_base",
+          "esperado": 32.91,
+          "obtenido": 32.91,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[88].importe_total",
+          "esperado": 35.16,
+          "obtenido": 35.16,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[88].numero_albaran",
+          "esperado": "08M36758",
+          "obtenido": "08M36758",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[88].orden",
+          "esperado": 89,
+          "obtenido": 89,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[88].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[89].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[89].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[89].importe_base",
+          "esperado": 31.7,
+          "obtenido": 31.7,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[89].importe_total",
+          "esperado": 37.43,
+          "obtenido": 37.43,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[89].numero_albaran",
+          "esperado": "08M36759",
+          "obtenido": "08M36759",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[89].orden",
+          "esperado": 90,
+          "obtenido": 90,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[89].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[8].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[8].fecha_albaran",
+          "esperado": "2026-07-01",
+          "obtenido": "2026-07-01",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[8].importe_base",
+          "esperado": 6.56,
+          "obtenido": 6.56,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[8].importe_total",
+          "esperado": 6.85,
+          "obtenido": 6.85,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[8].numero_albaran",
+          "esperado": "08M30064",
+          "obtenido": "08M30064",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[8].orden",
+          "esperado": 9,
+          "obtenido": 9,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[8].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[90].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[90].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[90].importe_base",
+          "esperado": 2.05,
+          "obtenido": 2.05,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[90].importe_total",
+          "esperado": 2.14,
+          "obtenido": 2.14,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[90].numero_albaran",
+          "esperado": "08M36835",
+          "obtenido": "08M36835",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[90].orden",
+          "esperado": 91,
+          "obtenido": 91,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[90].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[91].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[91].fecha_albaran",
+          "esperado": "2026-07-10",
+          "obtenido": "2026-07-10",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[91].importe_base",
+          "esperado": 6.81,
+          "obtenido": 6.81,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[91].importe_total",
+          "esperado": 7.59,
+          "obtenido": 7.59,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[91].numero_albaran",
+          "esperado": "08V19539",
+          "obtenido": "08V19539",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[91].orden",
+          "esperado": 92,
+          "obtenido": 92,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[91].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[9].descripcion",
+          "esperado": "PLATAFORMA 360",
+          "obtenido": "PLATAFORMA 360",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[9].fecha_albaran",
+          "esperado": "2026-07-02",
+          "obtenido": "2026-07-02",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[9].importe_base",
+          "esperado": 6.72,
+          "obtenido": 6.72,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[9].importe_total",
+          "esperado": 7.02,
+          "obtenido": 7.02,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[9].numero_albaran",
+          "esperado": "08C28369",
+          "obtenido": "08C28369",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[9].orden",
+          "esperado": 10,
+          "obtenido": 10,
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "albaranes[9].tipo_movimiento",
+          "esperado": "CARGO",
+          "obtenido": "CARGO",
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "ajustes",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "ajustes",
+          "esperado": [],
+          "obtenido": [],
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "destinatario",
+      "clasificacion": "PARCIAL",
+      "conteo_atomico": {
+        "CORRECTO": 3,
+        "INCORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "destinatario.cif",
+          "esperado": "40901058C",
+          "obtenido": "40901058C",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.id_farmacia",
+          "esperado": "PIO",
+          "obtenido": "PIO",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.metodo_identificacion",
+          "esperado": "CIF",
+          "obtenido": "CIF",
+          "estado": "CORRECTO"
+        },
+        {
+          "ruta": "destinatario.nombre",
+          "esperado": "FARMACIA PIO PUIG",
+          "obtenido": "PUIG SALOMON PIUS",
+          "estado": "INCORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "fecha_cargo",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "fecha_cargo",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_inicio",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_inicio",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "periodo_facturacion_fin",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "periodo_facturacion_fin",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    },
+    {
+      "campo": "nota_revision",
+      "clasificacion": "CORRECTO",
+      "conteo_atomico": {
+        "CORRECTO": 1
+      },
+      "detalles": [
+        {
+          "ruta": "nota_revision",
+          "esperado": null,
+          "obtenido": null,
+          "estado": "CORRECTO"
+        }
+      ]
+    }
+  ],
+  "incidencias": [
+    {
+      "campo": "albaranes.orden",
+      "tipo_incidencia": "ORDEN_RECONSTRUIDO",
+      "descripcion": "Las tablas CARGOS y ABONOS pueden ser paralelas y no proporcionan una secuencia global inequívoca.",
+      "datos_visibles_disponibles": {
+        "tablas": [
+          "CARGOS",
+          "ABONOS",
+          "CARGOS",
+          "ABONOS"
+        ]
+      },
+      "decision_tomada": "Orden estable por página, orden de tabla y orden visual; orden_reconstruido=true.",
+      "requiere_revision_manual": false
+    },
+    {
+      "campo": "impuestos",
+      "tipo_incidencia": "DESGLOSE_FISCAL_INCOMPLETO",
+      "descripcion": "Las tablas literales contienen información fiscal parcial, pero no los totales fiscales finales completos.",
+      "datos_visibles_disponibles": {
+        "tablas_consideradas": [
+          "COMPRAS"
+        ]
+      },
+      "decision_tomada": "Se devuelve impuestos=[]; los totales agregados proceden de luna_general.",
+      "requiere_revision_manual": true
+    }
+  ]
+}
