@@ -1,0 +1,11 @@
+{
+  "id": "prueba_real_workspace_write_orquestador_v0_1_3",
+  "objetivo": "Realiza una única escritura mecánica, explícitamente autorizada e inocua en el repositorio real. Crea exclusivamente el archivo pruebas/orquestador_v0/VALIDACION_ORQUESTADOR_V0_1_3.md con este contenido exacto, respetando literalmente texto, acentos, mayúsculas y párrafos:\n\n# Validación real del Orquestador V0.1.3\n\nEsta archivo ha sido creado automáticamente por una tarea workspace_write controlada del Orquestador ControlFarmacias.\n\nObjetivo de la prueba: demostrar que el ejecutor puede realizar una escritura mecánica explícitamente autorizada en el repositorio real, que el orquestador detecta correctamente el cambio y que el supervisor permanece en modo read-only.\n\nNo contiene datos de negocio ni modifica código funcional de ControlFarmacias.\n\nDespués de crearlo, comprueba únicamente mediante lectura que el archivo existe y contiene exactamente ese texto. No crees archivos marcador ni modifiques ningún otro archivo. Si la creación y la comprobación son correctas, informa que el objetivo está cumplido para que el supervisor termine en FINALIZADO. Ante cualquier necesidad de escribir fuera de la ruta autorizada o cambiar cualquier otra cosa, no actúes y devuelve REQUIERE_OK_PIO.",
+  "criterio_finalizacion": "Existe exclusivamente la nueva escritura autorizada pruebas/orquestador_v0/VALIDACION_ORQUESTADOR_V0_1_3.md, su contenido coincide exactamente con el texto indicado en el objetivo, la comprobación posterior ha sido solo de lectura y no se ha modificado ninguna otra ruta ni el estado de Git.",
+  "contexto": "Primera tarea mecánica real workspace_write del Orquestador V0.1.3 sobre ControlFarmacias. Restricciones absolutas: no modificar ningún otro archivo de C:\\ControlFarmacias\\Programa; no modificar código Python, facturas ni artefactos Alliance existentes; no modificar .env; no acceder a SQL Server/Farmatic ni Supabase; no usar red; no ejecutar tests funcionales que puedan generar artefactos; no ejecutar git add, commit, push, restore o reset; no cambiar rama ni HEAD. El supervisor debe permanecer siempre en modo read-only.",
+  "modo": "workspace_write",
+  "rutas_permitidas": [
+    "pruebas/orquestador_v0/**"
+  ],
+  "max_ciclos": 2
+}

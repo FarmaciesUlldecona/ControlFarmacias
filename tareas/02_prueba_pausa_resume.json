@@ -1,0 +1,9 @@
+{
+  "id": "prueba_pausa_resume_orquestador",
+  "objetivo": "Ejecuta una prueba segura y completamente read-only del flujo REQUIERE_OK_PIO y --resume en dos fases. FASE 1: inspecciona únicamente mediante lectura el estado del repositorio (HEAD, rama y git status); después plantea exactamente esta decisión artificial e inocua: Pio debe elegir qué etiqueta conceptual usar en el informe final, OPCION_A = AUDITORIA_A u OPCION_B = AUDITORIA_B. Ambas alternativas son igualmente válidas y no tienen diferencia técnica ni de negocio. No elijas ninguna opción, no anticipes una preferencia y devuelve REQUIERE_OK_PIO para que el orquestador genere PAUSA_PIO.md. FASE 2, únicamente después de recibir mediante --resume una decisión explícita de Pio: respeta literalmente la opción elegida, realiza una última comprobación read-only de HEAD, rama y git status, incluye en el resultado final la etiqueta exacta decidida por Pio y termina en FINALIZADO.",
+  "criterio_finalizacion": "La tarea solo está finalizada después de una pausa REQUIERE_OK_PIO, de recibir por --resume la elección explícita de Pio entre OPCION_A = AUDITORIA_A y OPCION_B = AUDITORIA_B, de reproducir literalmente la etiqueta elegida y de completar una última comprobación read-only del repositorio sin modificar archivos.",
+  "contexto": "Prueba deliberada de pausa y reanudación de la arquitectura actual. En la fase inicial existe una decisión explícita reservada a Pio que el ejecutor y el supervisor no deben resolver. No usar archivos marcador, no escribir en el repositorio ni en C:\\ControlFarmacias\\Programa, no ejecutar git add, commit, push, reset o restore, y no cambiar la rama ni HEAD. PAUSA_PIO.md y FINALIZADO.md son artefactos propios del orquestador dentro del directorio del run, no acciones solicitadas al ejecutor.",
+  "modo": "read_only",
+  "rutas_permitidas": [],
+  "max_ciclos": 3
+}
