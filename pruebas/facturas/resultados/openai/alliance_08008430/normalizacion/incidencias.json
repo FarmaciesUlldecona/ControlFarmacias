@@ -9,9 +9,7 @@
       "datos_visibles_disponibles": {
         "tablas": [
           "CARGOS",
-          "ABONOS",
-          "CARGOS",
-          "CARGOS"
+          "ABONOS"
         ]
       },
       "decision_tomada": "Orden estable por página, orden de tabla y orden visual; orden_reconstruido=true.",

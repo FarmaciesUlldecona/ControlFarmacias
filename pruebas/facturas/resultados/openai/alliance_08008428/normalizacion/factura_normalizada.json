@@ -1,6 +1,6 @@
 {
-  "version_normalizador": "alliance_v1.1",
-  "fecha_ejecucion": "2026-08-10T17:38:06.392944+00:00",
+  "version_normalizador": "alliance_v1.2",
+  "fecha_ejecucion": "2026-08-11T17:05:18.687166+00:00",
   "archivo_origen": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
   "paginas_originales": [
     1,
@@ -37,7 +37,146 @@
         }
       }
     ],
-    "impuestos": [],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": 1925.37,
+        "tipo_iva": 4.0,
+        "cuota_iva": 77.01,
+        "tipo_recargo_equivalencia": 0.5,
+        "cuota_recargo_equivalencia": 9.63,
+        "nota": "COMPRAS",
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "tabla": "COMPRAS",
+          "pagina_relativa": 1,
+          "orden_visual": 5,
+          "cabecera_literal": [
+            "CONCEPTO",
+            "4",
+            "10",
+            "21",
+            "4",
+            "10",
+            "21",
+            "0,50",
+            "1,40",
+            "5,20",
+            "TOTALES"
+          ],
+          "celdas_literales": [
+            "TOTAL COMPRAS",
+            "1.925,37",
+            "555,42",
+            "270,96",
+            "77,01",
+            "55,54",
+            "56,90",
+            "9,63",
+            "7,78",
+            "14,09",
+            "2.972,70"
+          ],
+          "indices_celdas": {
+            "base_imponible": 1,
+            "cuota_iva": 4,
+            "cuota_recargo_equivalencia": 7
+          }
+        }
+      },
+      {
+        "orden": 2,
+        "base_imponible": 555.42,
+        "tipo_iva": 10.0,
+        "cuota_iva": 55.54,
+        "tipo_recargo_equivalencia": 1.4,
+        "cuota_recargo_equivalencia": 7.78,
+        "nota": "COMPRAS",
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "tabla": "COMPRAS",
+          "pagina_relativa": 1,
+          "orden_visual": 5,
+          "cabecera_literal": [
+            "CONCEPTO",
+            "4",
+            "10",
+            "21",
+            "4",
+            "10",
+            "21",
+            "0,50",
+            "1,40",
+            "5,20",
+            "TOTALES"
+          ],
+          "celdas_literales": [
+            "TOTAL COMPRAS",
+            "1.925,37",
+            "555,42",
+            "270,96",
+            "77,01",
+            "55,54",
+            "56,90",
+            "9,63",
+            "7,78",
+            "14,09",
+            "2.972,70"
+          ],
+          "indices_celdas": {
+            "base_imponible": 2,
+            "cuota_iva": 5,
+            "cuota_recargo_equivalencia": 8
+          }
+        }
+      },
+      {
+        "orden": 3,
+        "base_imponible": 270.96,
+        "tipo_iva": 21.0,
+        "cuota_iva": 56.9,
+        "tipo_recargo_equivalencia": 5.2,
+        "cuota_recargo_equivalencia": 14.09,
+        "nota": "COMPRAS",
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "tabla": "COMPRAS",
+          "pagina_relativa": 1,
+          "orden_visual": 5,
+          "cabecera_literal": [
+            "CONCEPTO",
+            "4",
+            "10",
+            "21",
+            "4",
+            "10",
+            "21",
+            "0,50",
+            "1,40",
+            "5,20",
+            "TOTALES"
+          ],
+          "celdas_literales": [
+            "TOTAL COMPRAS",
+            "1.925,37",
+            "555,42",
+            "270,96",
+            "77,01",
+            "55,54",
+            "56,90",
+            "9,63",
+            "7,78",
+            "14,09",
+            "2.972,70"
+          ],
+          "indices_celdas": {
+            "base_imponible": 3,
+            "cuota_iva": 6,
+            "cuota_recargo_equivalencia": 9
+          }
+        }
+      }
+    ],
     "albaranes": [
       {
         "orden": 1,

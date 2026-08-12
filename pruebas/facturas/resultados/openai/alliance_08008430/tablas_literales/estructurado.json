@@ -1,0 +1,248 @@
+{
+  "metadatos_prueba": {
+    "archivo_enviado": "documento_01.pdf",
+    "paginas_pdf": 2,
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_0f796dc9aa51d4f9016a7b50e314dc819da943f6eb56c6908f",
+    "fecha_hora_utc": "2026-08-11T16:42:17.825895+00:00",
+    "version_prompt": "alliance_08008427_tablas_literales_v1.0",
+    "reasoning_effort": "none",
+    "max_output_tokens": 32000,
+    "store": false,
+    "paginas_originales": [
+      10,
+      11
+    ],
+    "sha256_enviado": "abf087d691b5e5e0ae4434b83422263c09c29d7fdee41191270488af07a98121",
+    "contenido_patron_incluido": false
+  },
+  "transcripcion": {
+    "bloques_vencimiento": [
+      {
+        "texto_fecha": "06-11-2026",
+        "texto_importe": "162,67",
+        "pagina": 1
+      }
+    ],
+    "tablas": [
+      {
+        "pagina": 1,
+        "titulo_visible": "COMPRAS",
+        "encabezados": [
+          "CONCEPTO",
+          "4",
+          "10",
+          "21",
+          "4",
+          "10",
+          "21",
+          "0,50",
+          "1,40",
+          "5,20",
+          "TOTALES"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "NO ESPECIALIDAD",
+              "134,47",
+              "10,20",
+              "13,45",
+              "2,14",
+              "1,88",
+              "0,53",
+              "162,67"
+            ]
+          },
+          {
+            "orden_visual": 2,
+            "celdas": [
+              "TOTAL COMPRAS",
+              "",
+              "134,47",
+              "10,20",
+              "",
+              "13,45",
+              "2,14",
+              "",
+              "1,88",
+              "0,53",
+              "162,67"
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 1,
+        "titulo_visible": "GASTOS",
+        "encabezados": [
+          "CONCEPTO",
+          "4",
+          "10",
+          "21",
+          "4",
+          "10",
+          "21",
+          "TOTALES"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "TOTAL GASTOS",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "0,00"
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 1,
+        "titulo_visible": "TOTALES",
+        "encabezados": [
+          "TOTAL BASE IMPONIBLE",
+          "TOTAL RECARGOS EQUIVALENCIA",
+          "TOTAL FACTURA",
+          "TOTAL IVAS",
+          "FINANCIERO"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "144,67",
+              "2,41",
+              "162,67",
+              "15,59",
+              ""
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 2,
+        "titulo_visible": "CARGOS",
+        "encabezados": [
+          "FECHA",
+          "TIPO DE PEDIDO",
+          "NÚMERO ALBARÁN",
+          "TOTAL BASE",
+          "TOTAL ALBARÁN"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "30-06-2026",
+              "ECOCEUTICS",
+              "08C26323",
+              "19,73",
+              "21,98"
+            ]
+          },
+          {
+            "orden_visual": 2,
+            "celdas": [
+              "01-07-2026",
+              "ECOCEUTICS",
+              "08C27758",
+              "43,21",
+              "48,13"
+            ]
+          },
+          {
+            "orden_visual": 3,
+            "celdas": [
+              "03-07-2026",
+              "ECOCEUTICS",
+              "08C29987",
+              "13,35",
+              "14,88"
+            ]
+          },
+          {
+            "orden_visual": 4,
+            "celdas": [
+              "05-07-2026",
+              "ECOCEUTICS",
+              "08C31639",
+              "13,35",
+              "14,88"
+            ]
+          },
+          {
+            "orden_visual": 5,
+            "celdas": [
+              "06-07-2026",
+              "ECOCEUTICS",
+              "08C32804",
+              "19,76",
+              "22,02"
+            ]
+          },
+          {
+            "orden_visual": 6,
+            "celdas": [
+              "07-07-2026",
+              "ECOCEUTICS",
+              "08C33369",
+              "11,72",
+              "13,05"
+            ]
+          },
+          {
+            "orden_visual": 7,
+            "celdas": [
+              "09-07-2026",
+              "ECOCEUTICS",
+              "08M35864",
+              "6,75",
+              "8,52"
+            ]
+          },
+          {
+            "orden_visual": 8,
+            "celdas": [
+              "10-07-2026",
+              "ECOCEUTICS",
+              "08C37655",
+              "16,80",
+              "19,23"
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 2,
+        "titulo_visible": "ABONOS",
+        "encabezados": [
+          "FECHA",
+          "TIPO DE PEDIDO",
+          "NÚMERO ALBARÁN",
+          "TOTAL BASE",
+          "TOTAL ALBARÁN"
+        ],
+        "filas": []
+      }
+    ],
+    "textos_ajustes": [
+      {
+        "texto_visible": "R.D. 143,03 0 0,00    R.D. 260,95 0 0,00    R.D. 578,15 0 0,00",
+        "pagina": 1
+      },
+      {
+        "texto_visible": "IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011 0,00 0,00    DEDUCCION 0,00 0,00",
+        "pagina": 1
+      }
+    ],
+    "textos_fiscales": []
+  }
+}

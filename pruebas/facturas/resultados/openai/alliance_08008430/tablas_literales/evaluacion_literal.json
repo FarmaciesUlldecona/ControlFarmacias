@@ -1,0 +1,399 @@
+{
+  "caso": "08008430",
+  "patron_usado_solo_por_evaluador": true,
+  "resumen": {
+    "filas_totales_literal": 12,
+    "filas_esperadas": 8,
+    "filas_extraidas": 8,
+    "filas_correctas": 8,
+    "filas_incorrectas": 0,
+    "faltantes": 0,
+    "extras": 0,
+    "duplicadas": 0,
+    "identificadores_incorrectos": 0,
+    "ordenes_correctos": 8,
+    "fechas_correctas": 8,
+    "movimientos_correctos": 8,
+    "descripciones_correctas": 8,
+    "bases_correctas": 8,
+    "totales_correctos": 8,
+    "cargos": 8,
+    "abonos": 0,
+    "filas_literal_invalidas": 0,
+    "bloques_vencimiento_extraidos": 1,
+    "bloques_vencimiento_esperados": 1
+  },
+  "vencimientos_literal": [
+    {
+      "texto_fecha": "06-11-2026",
+      "texto_importe": "162,67",
+      "pagina": 1
+    }
+  ],
+  "vencimientos_esperados": [
+    {
+      "orden": 1,
+      "fecha_vencimiento": "2026-11-06",
+      "importe": 162.67
+    }
+  ],
+  "textos_ajustes_literal": [
+    {
+      "texto_visible": "R.D. 143,03 0 0,00    R.D. 260,95 0 0,00    R.D. 578,15 0 0,00",
+      "pagina": 1
+    },
+    {
+      "texto_visible": "IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011 0,00 0,00    DEDUCCION 0,00 0,00",
+      "pagina": 1
+    }
+  ],
+  "ajustes_esperados": [],
+  "textos_fiscales_literal": [],
+  "filas_invalidas": [],
+  "detalle_albaranes": [
+    {
+      "numero_albaran": "08C26323",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 1,
+        "numero_albaran": "08C26323",
+        "fecha_albaran": "2026-06-30",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 19.73,
+        "importe_total": 21.98
+      },
+      "literal": {
+        "orden": 1,
+        "numero_albaran": "08C26323",
+        "fecha_albaran": "2026-06-30",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 19.73,
+        "importe_total": 21.98,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 1,
+          "celdas": [
+            "30-06-2026",
+            "ECOCEUTICS",
+            "08C26323",
+            "19,73",
+            "21,98"
+          ]
+        }
+      }
+    },
+    {
+      "numero_albaran": "08C27758",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 2,
+        "numero_albaran": "08C27758",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 43.21,
+        "importe_total": 48.13
+      },
+      "literal": {
+        "orden": 2,
+        "numero_albaran": "08C27758",
+        "fecha_albaran": "2026-07-01",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 43.21,
+        "importe_total": 48.13,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 2,
+          "celdas": [
+            "01-07-2026",
+            "ECOCEUTICS",
+            "08C27758",
+            "43,21",
+            "48,13"
+          ]
+        }
+      }
+    },
+    {
+      "numero_albaran": "08C29987",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 3,
+        "numero_albaran": "08C29987",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 13.35,
+        "importe_total": 14.88
+      },
+      "literal": {
+        "orden": 3,
+        "numero_albaran": "08C29987",
+        "fecha_albaran": "2026-07-03",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 13.35,
+        "importe_total": 14.88,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 3,
+          "celdas": [
+            "03-07-2026",
+            "ECOCEUTICS",
+            "08C29987",
+            "13,35",
+            "14,88"
+          ]
+        }
+      }
+    },
+    {
+      "numero_albaran": "08C31639",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 4,
+        "numero_albaran": "08C31639",
+        "fecha_albaran": "2026-07-05",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 13.35,
+        "importe_total": 14.88
+      },
+      "literal": {
+        "orden": 4,
+        "numero_albaran": "08C31639",
+        "fecha_albaran": "2026-07-05",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 13.35,
+        "importe_total": 14.88,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 4,
+          "celdas": [
+            "05-07-2026",
+            "ECOCEUTICS",
+            "08C31639",
+            "13,35",
+            "14,88"
+          ]
+        }
+      }
+    },
+    {
+      "numero_albaran": "08C32804",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 5,
+        "numero_albaran": "08C32804",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 19.76,
+        "importe_total": 22.02
+      },
+      "literal": {
+        "orden": 5,
+        "numero_albaran": "08C32804",
+        "fecha_albaran": "2026-07-06",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 19.76,
+        "importe_total": 22.02,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 5,
+          "celdas": [
+            "06-07-2026",
+            "ECOCEUTICS",
+            "08C32804",
+            "19,76",
+            "22,02"
+          ]
+        }
+      }
+    },
+    {
+      "numero_albaran": "08C33369",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 6,
+        "numero_albaran": "08C33369",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 11.72,
+        "importe_total": 13.05
+      },
+      "literal": {
+        "orden": 6,
+        "numero_albaran": "08C33369",
+        "fecha_albaran": "2026-07-07",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 11.72,
+        "importe_total": 13.05,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 6,
+          "celdas": [
+            "07-07-2026",
+            "ECOCEUTICS",
+            "08C33369",
+            "11,72",
+            "13,05"
+          ]
+        }
+      }
+    },
+    {
+      "numero_albaran": "08C37655",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 8,
+        "numero_albaran": "08C37655",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 16.8,
+        "importe_total": 19.23
+      },
+      "literal": {
+        "orden": 8,
+        "numero_albaran": "08C37655",
+        "fecha_albaran": "2026-07-10",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 16.8,
+        "importe_total": 19.23,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 8,
+          "celdas": [
+            "10-07-2026",
+            "ECOCEUTICS",
+            "08C37655",
+            "16,80",
+            "19,23"
+          ]
+        }
+      }
+    },
+    {
+      "numero_albaran": "08M35864",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 7,
+        "numero_albaran": "08M35864",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 6.75,
+        "importe_total": 8.52
+      },
+      "literal": {
+        "orden": 7,
+        "numero_albaran": "08M35864",
+        "fecha_albaran": "2026-07-09",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "ECOCEUTICS",
+        "importe_base": 6.75,
+        "importe_total": 8.52,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 7,
+          "celdas": [
+            "09-07-2026",
+            "ECOCEUTICS",
+            "08M35864",
+            "6,75",
+            "8,52"
+          ]
+        }
+      }
+    }
+  ]
+}

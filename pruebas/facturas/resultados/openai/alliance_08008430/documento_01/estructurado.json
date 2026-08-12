@@ -1,0 +1,928 @@
+{
+  "metadatos_prueba": {
+    "indice": 1,
+    "archivo_original_local": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+    "nombre_neutro_enviado": "documento_01.pdf",
+    "numero_paginas": 2,
+    "tamano_bytes": 59473,
+    "sha256": "abf087d691b5e5e0ae4434b83422263c09c29d7fdee41191270488af07a98121",
+    "contenido_patron_incluido": false,
+    "modelo": "gpt-5.6-luna",
+    "response_id": "resp_0032450df9a0181e016a7b4fd557b881a29cb1f5673a56ea4b",
+    "version_prompt": "muestra_completa_ciega_v1.0",
+    "max_output_tokens": 16000,
+    "reasoning_effort": "none",
+    "store": false,
+    "paginas_originales": [
+      10,
+      11
+    ]
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "FACTURA",
+      "evidencias": [
+        {
+          "texto_visible": "FACTURA",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "MERCANCIA",
+      "evidencias": [
+        {
+          "texto_visible": "COMPRAS",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": true,
+      "evidencias": [
+        {
+          "texto_visible": "CARGOS",
+          "pagina": 2
+        },
+        {
+          "texto_visible": "NÚMERO ALBARÁN",
+          "pagina": 2
+        }
+      ]
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "PAGINA 01 DE 02",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 2,
+      "evidencias": [
+        {
+          "texto_visible": "PAGINA 02 DE 02",
+          "pagina": 2
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "evidencias": [
+        {
+          "texto_visible": "Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "A50004324",
+      "evidencias": [
+        {
+          "texto_visible": "CIF: A50004324",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "08008430",
+      "evidencias": [
+        {
+          "texto_visible": "NÚMERO FACTURA 08008430",
+          "pagina": 1
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-07-10",
+      "evidencias": [
+        {
+          "texto_visible": "FECHA FACTURA 10-07-2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 144.67,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL BASE IMPONIBLE 144,67",
+          "pagina": 1
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 15.59,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL IVAS 15,59",
+          "pagina": 1
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": 2.41,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL RECARGOS EQUIVALENCIA 2,41",
+          "pagina": 1
+        }
+      ]
+    },
+    "importe_total": {
+      "valor": 162.67,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL FACTURA 162,67",
+          "pagina": 1
+        }
+      ]
+    },
+    "vencimientos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "FECHA VENCIMIENTO 06-11-2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_vencimiento": {
+          "valor": "2026-11-06",
+          "evidencias": [
+            {
+              "texto_visible": "FECHA VENCIMIENTO 06-11-2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "4 10 21",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 134.47,
+          "evidencias": [
+            {
+              "texto_visible": "NO ESPECIALIDAD 134,47",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 10.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 10",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 13.45,
+          "evidencias": [
+            {
+              "texto_visible": "NO ESPECIALIDAD 134,47 10,20 13,45",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 1.4,
+          "evidencias": [
+            {
+              "texto_visible": "R.E. 0,50 1,40 5,20",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 1.88,
+          "evidencias": [
+            {
+              "texto_visible": "NO ESPECIALIDAD 134,47 10,20 13,45 2,14 1,88 0,53",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": "NO ESPECIALIDAD",
+          "evidencias": [
+            {
+              "texto_visible": "NO ESPECIALIDAD",
+              "pagina": 1
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 2,
+          "evidencias": [
+            {
+              "texto_visible": "4 10 21",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 10.2,
+          "evidencias": [
+            {
+              "texto_visible": "NO ESPECIALIDAD 134,47 10,20 13,45",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 4.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 4",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 2.14,
+          "evidencias": [
+            {
+              "texto_visible": "NO ESPECIALIDAD 134,47 10,20 13,45 2,14",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 0.5,
+          "evidencias": [
+            {
+              "texto_visible": "R.E. 0,50",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 0.53,
+          "evidencias": [
+            {
+              "texto_visible": "NO ESPECIALIDAD 134,47 10,20 13,45 2,14 1,88 0,53",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": "NO ESPECIALIDAD",
+          "evidencias": [
+            {
+              "texto_visible": "NO ESPECIALIDAD",
+              "pagina": 1
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 3,
+          "evidencias": [
+            {
+              "texto_visible": "4 10 21",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": null,
+          "evidencias": []
+        },
+        "tipo_iva": {
+          "valor": 21.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 21",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": null,
+          "evidencias": []
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 5.2,
+          "evidencias": [
+            {
+              "texto_visible": "R.E. 5,20",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "30-06-2026 ECOCEUTICS 08C26323 19,73 21,98",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C26323",
+          "evidencias": [
+            {
+              "texto_visible": "08C26323",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-06-30",
+          "evidencias": [
+            {
+              "texto_visible": "30-06-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGOS",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ECOCEUTICS",
+          "evidencias": [
+            {
+              "texto_visible": "ECOCEUTICS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 19.73,
+          "evidencias": [
+            {
+              "texto_visible": "19,73",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 21.98,
+          "evidencias": [
+            {
+              "texto_visible": "21,98",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 2,
+          "evidencias": [
+            {
+              "texto_visible": "01-07-2026 ECOCEUTICS 08C27758 43,21 48,13",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C27758",
+          "evidencias": [
+            {
+              "texto_visible": "08C27758",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-01",
+          "evidencias": [
+            {
+              "texto_visible": "01-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGOS",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ECOCEUTICS",
+          "evidencias": [
+            {
+              "texto_visible": "ECOCEUTICS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 43.21,
+          "evidencias": [
+            {
+              "texto_visible": "43,21",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 48.13,
+          "evidencias": [
+            {
+              "texto_visible": "48,13",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 3,
+          "evidencias": [
+            {
+              "texto_visible": "03-07-2026 ECOCEUTICS 08C29987 13,35 14,88",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C29987",
+          "evidencias": [
+            {
+              "texto_visible": "08C29987",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-03",
+          "evidencias": [
+            {
+              "texto_visible": "03-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGOS",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ECOCEUTICS",
+          "evidencias": [
+            {
+              "texto_visible": "ECOCEUTICS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 13.35,
+          "evidencias": [
+            {
+              "texto_visible": "13,35",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 14.88,
+          "evidencias": [
+            {
+              "texto_visible": "14,88",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 4,
+          "evidencias": [
+            {
+              "texto_visible": "05-07-2026 ECOCEUTICS 08C31639 13,35 14,88",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C31639",
+          "evidencias": [
+            {
+              "texto_visible": "08C31639",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-05",
+          "evidencias": [
+            {
+              "texto_visible": "05-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGOS",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ECOCEUTICS",
+          "evidencias": [
+            {
+              "texto_visible": "ECOCEUTICS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 13.35,
+          "evidencias": [
+            {
+              "texto_visible": "13,35",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 14.88,
+          "evidencias": [
+            {
+              "texto_visible": "14,88",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 5,
+          "evidencias": [
+            {
+              "texto_visible": "06-07-2026 ECOCEUTICS 08C32804 19,76 22,02",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C32804",
+          "evidencias": [
+            {
+              "texto_visible": "08C32804",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-06",
+          "evidencias": [
+            {
+              "texto_visible": "06-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGOS",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ECOCEUTICS",
+          "evidencias": [
+            {
+              "texto_visible": "ECOCEUTICS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 19.76,
+          "evidencias": [
+            {
+              "texto_visible": "19,76",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 22.02,
+          "evidencias": [
+            {
+              "texto_visible": "22,02",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 6,
+          "evidencias": [
+            {
+              "texto_visible": "07-07-2026 ECOCEUTICS 08C33369 11,72 13,05",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C33369",
+          "evidencias": [
+            {
+              "texto_visible": "08C33369",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-07",
+          "evidencias": [
+            {
+              "texto_visible": "07-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGOS",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ECOCEUTICS",
+          "evidencias": [
+            {
+              "texto_visible": "ECOCEUTICS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 11.72,
+          "evidencias": [
+            {
+              "texto_visible": "11,72",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 13.05,
+          "evidencias": [
+            {
+              "texto_visible": "13,05",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 7,
+          "evidencias": [
+            {
+              "texto_visible": "09-07-2026 ECOCEUTICS 08M35864 6,75 8,52",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08M35864",
+          "evidencias": [
+            {
+              "texto_visible": "08M35864",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-09",
+          "evidencias": [
+            {
+              "texto_visible": "09-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGOS",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ECOCEUTICS",
+          "evidencias": [
+            {
+              "texto_visible": "ECOCEUTICS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 6.75,
+          "evidencias": [
+            {
+              "texto_visible": "6,75",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 8.52,
+          "evidencias": [
+            {
+              "texto_visible": "8,52",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      {
+        "orden": {
+          "valor": 8,
+          "evidencias": [
+            {
+              "texto_visible": "10-07-2026 ECOCEUTICS 08C37655 16,80 19,23",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08C37655",
+          "evidencias": [
+            {
+              "texto_visible": "08C37655",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-10",
+          "evidencias": [
+            {
+              "texto_visible": "10-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "CARGOS",
+          "evidencias": [
+            {
+              "texto_visible": "CARGOS",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": "ECOCEUTICS",
+          "evidencias": [
+            {
+              "texto_visible": "ECOCEUTICS",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_base": {
+          "valor": 16.8,
+          "evidencias": [
+            {
+              "texto_visible": "16,80",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 19.23,
+          "evidencias": [
+            {
+              "texto_visible": "19,23",
+              "pagina": 2
+            }
+          ]
+        }
+      }
+    ],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": "006600",
+        "evidencias": [
+          {
+            "texto_visible": "40901058C 006600",
+            "pagina": 1
+          }
+        ]
+      },
+      "nombre": {
+        "valor": "PUIG SALOMON PIUS",
+        "evidencias": [
+          {
+            "texto_visible": "D/Dña PUIG SALOMON PIUS",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": "40901058C",
+        "evidencias": [
+          {
+            "texto_visible": "NIF 40901058C",
+            "pagina": 1
+          }
+        ]
+      },
+      "metodo_identificacion": {
+        "valor": "NIF",
+        "evidencias": [
+          {
+            "texto_visible": "NIF",
+            "pagina": 1
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_inicio": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_fin": {
+      "valor": null,
+      "evidencias": []
+    },
+    "nota_revision": {
+      "valor": null,
+      "evidencias": []
+    }
+  }
+}

@@ -1,26 +1,26 @@
 {
   "caso": "alliance_08008428",
-  "version_normalizador": "alliance_v1.1",
+  "version_normalizador": "alliance_v1.2",
   "metodo": "proyecci?n al contrato de negocio del patr?n; metadatos de procedencia del adaptador se excluyen de invenciones",
   "patron_leido_solo_por_evaluador": true,
   "resumen_22_campos": {
     "campos_evaluados": 22,
-    "correctos": 21,
-    "incorrectos": 0,
+    "correctos": 20,
+    "incorrectos": 1,
     "parciales": 1,
     "ausentes": 0,
-    "acierto_estricto": 95.45,
+    "acierto_estricto": 90.91,
     "cobertura": 100.0,
-    "invenciones": 0
+    "invenciones_atomicas": 18
   },
   "resumen_atomico_negocio": {
-    "campos_atomicos_negocio": 670,
-    "correctos": 669,
+    "campos_atomicos_negocio": 687,
+    "correctos": 668,
     "incorrectos": 1,
     "ausentes": 0,
     "diferencias_formato": 0,
-    "inventados": 0,
-    "acierto_estricto": 99.85,
+    "inventados": 18,
+    "acierto_estricto": 97.23,
     "cobertura": 100.0
   },
   "albaranes": {
@@ -34,7 +34,116 @@
     "importes_correctos": 184,
     "ordenes_correctos": 92
   },
-  "invenciones": [],
+  "invenciones": [
+    {
+      "ruta": "impuestos[0].orden",
+      "esperado": null,
+      "obtenido": 1,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[0].base_imponible",
+      "esperado": null,
+      "obtenido": 1925.37,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[0].tipo_iva",
+      "esperado": null,
+      "obtenido": 4.0,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[0].cuota_iva",
+      "esperado": null,
+      "obtenido": 77.01,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[0].tipo_recargo_equivalencia",
+      "esperado": null,
+      "obtenido": 0.5,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[0].cuota_recargo_equivalencia",
+      "esperado": null,
+      "obtenido": 9.63,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[1].orden",
+      "esperado": null,
+      "obtenido": 2,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[1].base_imponible",
+      "esperado": null,
+      "obtenido": 555.42,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[1].tipo_iva",
+      "esperado": null,
+      "obtenido": 10.0,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[1].cuota_iva",
+      "esperado": null,
+      "obtenido": 55.54,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[1].tipo_recargo_equivalencia",
+      "esperado": null,
+      "obtenido": 1.4,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[1].cuota_recargo_equivalencia",
+      "esperado": null,
+      "obtenido": 7.78,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[2].orden",
+      "esperado": null,
+      "obtenido": 3,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[2].base_imponible",
+      "esperado": null,
+      "obtenido": 270.96,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[2].tipo_iva",
+      "esperado": null,
+      "obtenido": 21.0,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[2].cuota_iva",
+      "esperado": null,
+      "obtenido": 56.9,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[2].tipo_recargo_equivalencia",
+      "esperado": null,
+      "obtenido": 5.2,
+      "estado": "INVENTADO"
+    },
+    {
+      "ruta": "impuestos[2].cuota_recargo_equivalencia",
+      "esperado": null,
+      "obtenido": 14.09,
+      "estado": "INVENTADO"
+    }
+  ],
   "comparaciones": [
     {
       "campo": "tipo_documento",
@@ -260,16 +369,118 @@
     },
     {
       "campo": "impuestos",
-      "clasificacion": "CORRECTO",
+      "clasificacion": "INCORRECTO",
       "conteo_atomico": {
-        "CORRECTO": 1
+        "INVENTADO": 18
       },
       "detalles": [
         {
-          "ruta": "impuestos",
-          "esperado": [],
-          "obtenido": [],
-          "estado": "CORRECTO"
+          "ruta": "impuestos[0].orden",
+          "esperado": null,
+          "obtenido": 1,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].base_imponible",
+          "esperado": null,
+          "obtenido": 1925.37,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_iva",
+          "esperado": null,
+          "obtenido": 4.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_iva",
+          "esperado": null,
+          "obtenido": 77.01,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 0.5,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[0].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 9.63,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].orden",
+          "esperado": null,
+          "obtenido": 2,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].base_imponible",
+          "esperado": null,
+          "obtenido": 555.42,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_iva",
+          "esperado": null,
+          "obtenido": 10.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_iva",
+          "esperado": null,
+          "obtenido": 55.54,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 1.4,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[1].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 7.78,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].orden",
+          "esperado": null,
+          "obtenido": 3,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].base_imponible",
+          "esperado": null,
+          "obtenido": 270.96,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].tipo_iva",
+          "esperado": null,
+          "obtenido": 21.0,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].cuota_iva",
+          "esperado": null,
+          "obtenido": 56.9,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].tipo_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 5.2,
+          "estado": "INVENTADO"
+        },
+        {
+          "ruta": "impuestos[2].cuota_recargo_equivalencia",
+          "esperado": null,
+          "obtenido": 14.09,
+          "estado": "INVENTADO"
         }
       ]
     },
@@ -4271,18 +4482,6 @@
       },
       "decision_tomada": "Orden estable por página, orden de tabla y orden visual; orden_reconstruido=true.",
       "requiere_revision_manual": false
-    },
-    {
-      "campo": "impuestos",
-      "tipo_incidencia": "DESGLOSE_FISCAL_INCOMPLETO",
-      "descripcion": "Las tablas literales contienen información fiscal parcial, pero no los totales fiscales finales completos.",
-      "datos_visibles_disponibles": {
-        "tablas_consideradas": [
-          "COMPRAS"
-        ]
-      },
-      "decision_tomada": "Se devuelve impuestos=[]; los totales agregados proceden de luna_general.",
-      "requiere_revision_manual": true
     }
   ]
 }

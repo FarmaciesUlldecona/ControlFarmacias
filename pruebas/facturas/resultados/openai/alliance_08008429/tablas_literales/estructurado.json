@@ -1,0 +1,164 @@
+{
+  "metadatos_prueba": {
+    "archivo_enviado": "documento_01.pdf",
+    "paginas_pdf": 2,
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_0c9b4bdd1a8b3133016a7a0ef0a14881a0b1644fa112db1e82",
+    "fecha_hora_utc": "2026-08-10T17:48:37.660824+00:00",
+    "version_prompt": "alliance_08008427_tablas_literales_v1.0",
+    "reasoning_effort": "none",
+    "max_output_tokens": 32000,
+    "store": false,
+    "paginas_originales": [
+      8,
+      9
+    ],
+    "sha256_enviado": "ac54e06280c412f288010ba523434b34b3b004b9f159ecb7dfe73b662690e062",
+    "contenido_patron_incluido": false
+  },
+  "transcripcion": {
+    "bloques_vencimiento": [
+      {
+        "texto_fecha": "10-10-2026",
+        "texto_importe": null,
+        "pagina": 1
+      },
+      {
+        "texto_fecha": "10-10-2026",
+        "texto_importe": null,
+        "pagina": 2
+      }
+    ],
+    "tablas": [
+      {
+        "pagina": 1,
+        "titulo_visible": "COMPRAS",
+        "encabezados": [
+          "CONCEPTO",
+          "4",
+          "10",
+          "21",
+          "4",
+          "10",
+          "21",
+          "0,50",
+          "1,40",
+          "5,20",
+          "TOTALES"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "NO ESPECIALIDAD",
+              "",
+              "196,80",
+              "",
+              "",
+              "19,68",
+              "",
+              "",
+              "2,76",
+              "",
+              "219,24"
+            ]
+          },
+          {
+            "orden_visual": 2,
+            "celdas": [
+              "TOTAL COMPRAS",
+              "",
+              "196,80",
+              "",
+              "",
+              "19,68",
+              "",
+              "",
+              "2,76",
+              "",
+              "219,24"
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 1,
+        "titulo_visible": "GASTOS",
+        "encabezados": [
+          "CONCEPTO",
+          "4",
+          "10",
+          "21",
+          "4",
+          "10",
+          "21",
+          "TOTALES"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "TOTAL GASTOS",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "0,00"
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 2,
+        "titulo_visible": "CARGOS",
+        "encabezados": [
+          "FECHA",
+          "TIPO DE PEDIDO",
+          "NÚMERO ALBARÁN",
+          "TOTAL BASE",
+          "TOTAL ALBARÁN"
+        ],
+        "filas": [
+          {
+            "orden_visual": 1,
+            "celdas": [
+              "02-07-2026",
+              "COSTO LABORAT.",
+              "08M30618",
+              "196,80",
+              "219,24"
+            ]
+          }
+        ]
+      },
+      {
+        "pagina": 2,
+        "titulo_visible": "ABONOS",
+        "encabezados": [
+          "FECHA",
+          "TIPO DE PEDIDO",
+          "NÚMERO ALBARÁN",
+          "TOTAL BASE",
+          "TOTAL ALBARÁN"
+        ],
+        "filas": []
+      }
+    ],
+    "textos_ajustes": [
+      {
+        "texto_visible": "IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011 0,00 0,00 DEDUCCION 0,00 0,00",
+        "pagina": 1
+      }
+    ],
+    "textos_fiscales": [
+      {
+        "texto_visible": "R.D. 143,03 0 0,00 R.D. 260,95 0 0,00 R.D. 578,15 0 0,00",
+        "pagina": 1
+      }
+    ]
+  }
+}

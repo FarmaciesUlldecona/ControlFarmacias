@@ -1,0 +1,104 @@
+{
+  "caso": "08008429",
+  "patron_usado_solo_por_evaluador": true,
+  "resumen": {
+    "filas_totales_literal": 4,
+    "filas_esperadas": 1,
+    "filas_extraidas": 1,
+    "filas_correctas": 1,
+    "filas_incorrectas": 0,
+    "faltantes": 0,
+    "extras": 0,
+    "duplicadas": 0,
+    "identificadores_incorrectos": 0,
+    "ordenes_correctos": 1,
+    "fechas_correctas": 1,
+    "movimientos_correctos": 1,
+    "descripciones_correctas": 1,
+    "bases_correctas": 1,
+    "totales_correctos": 1,
+    "cargos": 1,
+    "abonos": 0,
+    "filas_literal_invalidas": 0,
+    "bloques_vencimiento_extraidos": 2,
+    "bloques_vencimiento_esperados": 1
+  },
+  "vencimientos_literal": [
+    {
+      "texto_fecha": "10-10-2026",
+      "texto_importe": null,
+      "pagina": 1
+    },
+    {
+      "texto_fecha": "10-10-2026",
+      "texto_importe": null,
+      "pagina": 2
+    }
+  ],
+  "vencimientos_esperados": [
+    {
+      "orden": 1,
+      "fecha_vencimiento": "2026-10-10",
+      "importe": 219.24
+    }
+  ],
+  "textos_ajustes_literal": [
+    {
+      "texto_visible": "IMPORTE ARTICULOS SUJETOS RDL 08/2010 Y RDL 09/2011 0,00 0,00 DEDUCCION 0,00 0,00",
+      "pagina": 1
+    }
+  ],
+  "ajustes_esperados": [],
+  "textos_fiscales_literal": [
+    {
+      "texto_visible": "R.D. 143,03 0 0,00 R.D. 260,95 0 0,00 R.D. 578,15 0 0,00",
+      "pagina": 1
+    }
+  ],
+  "filas_invalidas": [],
+  "detalle_albaranes": [
+    {
+      "numero_albaran": "08M30618",
+      "estado": "CORRECTA",
+      "campos_correctos": {
+        "orden": true,
+        "numero_albaran": true,
+        "fecha_albaran": true,
+        "tipo_movimiento": true,
+        "descripcion": true,
+        "importe_base": true,
+        "importe_total": true
+      },
+      "esperado": {
+        "orden": 1,
+        "numero_albaran": "08M30618",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "COSTO LABORAT.",
+        "importe_base": 196.8,
+        "importe_total": 219.24
+      },
+      "literal": {
+        "orden": 1,
+        "numero_albaran": "08M30618",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "COSTO LABORAT.",
+        "importe_base": 196.8,
+        "importe_total": 219.24,
+        "procedencia_literal": {
+          "pagina": 2,
+          "tabla": "CARGOS",
+          "orden_visual": 1,
+          "celdas": [
+            "02-07-2026",
+            "COSTO LABORAT.",
+            "08M30618",
+            "196,80",
+            "219,24"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
 from src.facturas.normalizadores.comun import (
@@ -18,13 +18,17 @@ from src.facturas.normalizadores.comun import (
 from src.models.factura import FacturaNormalizada
 
 
-VERSION_NORMALIZADOR = "alliance_v1.1"
+VERSION_NORMALIZADOR = "alliance_v1.2"
 TITULOS_ALBARANES = {"CARGOS": "CARGO", "ABONOS": "ABONO"}
 NOMBRE_CANONICO_ALLIANCE = "ALLIANCE HEALTHCARE ESPAÑA, S.A."
 ALIAS_ALLIANCE = AliasProveedor(
     nombre_canonico=NOMBRE_CANONICO_ALLIANCE,
     alias=("CENCORA", "AH", "ALLIANCE", "ALLIANCE HEALTHCARE"),
 )
+
+
+class FiscalidadAllianceIncompleta(ValueError):
+    """La transcripcion literal no demuestra un desglose fiscal completo."""
 
 
 class FilaAlbaranInvalida(ValueError):
@@ -164,6 +168,266 @@ def _buscar_tabla(tablas: list[dict[str, Any]], titulo: str) -> dict[str, Any] |
         (tabla for tabla in tablas if str(tabla.get("titulo_visible") or "").strip().upper() == titulo),
         None,
     )
+
+
+def _centimos(valor: Decimal) -> Decimal:
+    return valor.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _decimal_literal(texto: Any) -> Decimal:
+    if not isinstance(texto, str) or not texto.strip():
+        raise FiscalidadAllianceIncompleta("Falta una celda fiscal literal obligatoria.")
+    try:
+        valor = importe_espanol_a_decimal(texto)
+    except ValueError as error:
+        raise FiscalidadAllianceIncompleta(f"Celda fiscal no numerica: {texto!r}.") from error
+    if valor is None:
+        raise FiscalidadAllianceIncompleta("Falta una celda fiscal literal obligatoria.")
+    return _centimos(valor)
+
+
+def _porcentaje_literal(texto: Any) -> Decimal:
+    if not isinstance(texto, str) or not texto.strip():
+        raise FiscalidadAllianceIncompleta("Falta un porcentaje fiscal literal.")
+    return _decimal_literal(texto.strip().replace("%", ""))
+
+
+def _cabecera_fiscal(tabla: dict[str, Any], grupos: int) -> tuple[list[str], int | None]:
+    candidatos = [
+        ([str(x).strip() for x in tabla.get("encabezados", [])], None),
+        *(
+            ([str(x).strip() for x in fila.get("celdas", [])], indice)
+            for indice, fila in enumerate(tabla.get("filas", []))
+        ),
+    ]
+    for celdas, indice in candidatos:
+        while len(celdas) > 2 and not celdas[-2]:
+            celdas = [*celdas[:-2], celdas[-1]]
+        interiores = celdas[1:-1]
+        if not (
+            celdas
+            and celdas[0].upper() == "CONCEPTO"
+            and celdas[-1].upper() == "TOTALES"
+            and interiores
+            and len(interiores) % grupos == 0
+        ):
+            continue
+        try:
+            [_porcentaje_literal(x) for x in interiores]
+        except FiscalidadAllianceIncompleta:
+            continue
+        return celdas, indice
+    raise FiscalidadAllianceIncompleta(
+        f"La tabla {tabla.get('titulo_visible')!r} no contiene una cabecera fiscal plana inequivoca."
+    )
+
+
+def _tramos_compras(tabla: dict[str, Any], orden_inicial: int = 1) -> list[dict[str, Any]]:
+    cabecera, indice_cabecera = _cabecera_fiscal(tabla, grupos=3)
+    interiores = cabecera[1:-1]
+    if not interiores or len(interiores) % 3:
+        raise FiscalidadAllianceIncompleta("La cabecera COMPRAS no separa base, IVA y RE por tramo.")
+    cantidad = len(interiores) // 3
+    tipos_base = [_porcentaje_literal(x) for x in interiores[:cantidad]]
+    tipos_iva = [_porcentaje_literal(x) for x in interiores[cantidad : cantidad * 2]]
+    tipos_re = [_porcentaje_literal(x) for x in interiores[cantidad * 2 :]]
+    if tipos_base != tipos_iva:
+        raise FiscalidadAllianceIncompleta("Las columnas de base e IVA de COMPRAS son ambiguas.")
+
+    filas = list(tabla.get("filas", []))
+    filas_total = [
+        fila for indice, fila in enumerate(filas)
+        if indice != indice_cabecera
+        and fila.get("celdas")
+        and str(fila["celdas"][0]).strip().upper() == "TOTAL COMPRAS"
+    ]
+    if len(filas_total) != 1:
+        raise FiscalidadAllianceIncompleta("Debe existir una unica fila TOTAL COMPRAS.")
+    fila = filas_total[0]
+    celdas = list(fila.get("celdas", []))
+    if len(celdas) != len(cabecera):
+        raise FiscalidadAllianceIncompleta("La fila TOTAL COMPRAS esta truncada o no coincide con su cabecera.")
+    total_visible = _decimal_literal(celdas[-1])
+
+    resultado = []
+    for indice in range(cantidad):
+        textos = (
+            celdas[1 + indice],
+            celdas[1 + cantidad + indice],
+            celdas[1 + cantidad * 2 + indice],
+        )
+        if not any(isinstance(x, str) and x.strip() for x in textos):
+            continue
+        base, cuota_iva, cuota_re = [_decimal_literal(x) for x in textos]
+        if _centimos(base * tipos_iva[indice] / Decimal("100")) != cuota_iva:
+            raise FiscalidadAllianceIncompleta("Una cuota IVA de COMPRAS no corresponde a su base y tipo visibles.")
+        if _centimos(base * tipos_re[indice] / Decimal("100")) != cuota_re:
+            raise FiscalidadAllianceIncompleta("Una cuota RE de COMPRAS no corresponde a su base y tipo visibles.")
+        resultado.append(
+            {
+                "orden": orden_inicial + len(resultado),
+                "base_imponible": base,
+                "tipo_iva": tipos_iva[indice],
+                "cuota_iva": cuota_iva,
+                "tipo_recargo_equivalencia": tipos_re[indice],
+                "cuota_recargo_equivalencia": cuota_re,
+                "nota": "COMPRAS",
+                "procedencia": {
+                    "fuente": "luna_tablas_literales",
+                    "tabla": "COMPRAS",
+                    "pagina_relativa": tabla.get("pagina"),
+                    "orden_visual": fila.get("orden_visual"),
+                    "cabecera_literal": cabecera,
+                    "celdas_literales": celdas,
+                    "indices_celdas": {
+                        "base_imponible": 1 + indice,
+                        "cuota_iva": 1 + cantidad + indice,
+                        "cuota_recargo_equivalencia": 1 + cantidad * 2 + indice,
+                    },
+                },
+            }
+        )
+    if not resultado:
+        raise FiscalidadAllianceIncompleta("TOTAL COMPRAS no contiene ningun tramo fiscal completo.")
+    total_calculado = _centimos(sum(
+        (
+            tramo["base_imponible"]
+            + tramo["cuota_iva"]
+            + tramo["cuota_recargo_equivalencia"]
+            for tramo in resultado
+        ),
+        Decimal("0"),
+    ))
+    if total_calculado != total_visible:
+        raise FiscalidadAllianceIncompleta(
+            "El total visible de TOTAL COMPRAS no reconcilia con base, IVA y RE."
+        )
+    return resultado
+
+
+def _tramos_gastos(tabla: dict[str, Any], orden_inicial: int) -> list[dict[str, Any]]:
+    cabecera, indice_cabecera = _cabecera_fiscal(tabla, grupos=2)
+    interiores = cabecera[1:-1]
+    if not interiores or len(interiores) % 2:
+        raise FiscalidadAllianceIncompleta("La cabecera GASTOS no separa base e IVA.")
+    cantidad = len(interiores) // 2
+    tipos_base = [_porcentaje_literal(x) for x in interiores[:cantidad]]
+    tipos_iva = [_porcentaje_literal(x) for x in interiores[cantidad:]]
+    if tipos_base != tipos_iva:
+        raise FiscalidadAllianceIncompleta("Las columnas de base e IVA de GASTOS son ambiguas.")
+
+    filas = list(tabla.get("filas", []))
+    filas_total = [
+        (indice, fila) for indice, fila in enumerate(filas)
+        if indice != indice_cabecera
+        and (indice_cabecera is None or indice > indice_cabecera)
+        and fila.get("celdas")
+        and str(fila["celdas"][0]).strip().upper() == "TOTAL GASTOS"
+    ]
+    if len(filas_total) != 1:
+        raise FiscalidadAllianceIncompleta("Debe existir una unica fila TOTAL GASTOS.")
+    indice_total, fila_total = filas_total[0]
+    numeros_total = [_centimos(x) for x in _numeros_no_vacios(list(fila_total.get("celdas", [])))]
+    filas_concepto = [
+        fila for indice, fila in enumerate(filas)
+        if indice != indice_cabecera
+        and (indice_cabecera is None or indice > indice_cabecera)
+        and indice < indice_total
+        and fila.get("celdas")
+        and str(fila["celdas"][0]).strip()
+        and not str(fila["celdas"][0]).strip().upper().startswith("TOTAL ")
+    ]
+    if not filas_concepto:
+        if numeros_total == [Decimal("0.00")]:
+            return []
+        raise FiscalidadAllianceIncompleta("GASTOS no permite demostrar que su fiscalidad sea cero.")
+
+    resultado = []
+    for fila in filas_concepto:
+        celdas = list(fila.get("celdas", []))
+        numeros = [_centimos(x) for x in _numeros_no_vacios(celdas)]
+        if len(numeros) != 3:
+            raise FiscalidadAllianceIncompleta("Una fila GASTOS no contiene exactamente base, IVA y total visibles.")
+        base, cuota_iva, total = numeros
+        candidatos = [
+            tipo for tipo in tipos_iva
+            if _centimos(base * tipo / Decimal("100")) == cuota_iva
+        ]
+        if len(candidatos) != 1 or _centimos(base + cuota_iva) != total:
+            raise FiscalidadAllianceIncompleta("La fila GASTOS no permite asociar un unico tipo IVA visible.")
+        resultado.append(
+            {
+                "orden": orden_inicial + len(resultado),
+                "base_imponible": base,
+                "tipo_iva": candidatos[0],
+                "cuota_iva": cuota_iva,
+                "tipo_recargo_equivalencia": None,
+                "cuota_recargo_equivalencia": None,
+                "nota": str(celdas[0]).strip(),
+                "procedencia": {
+                    "fuente": "luna_tablas_literales",
+                    "tabla": "GASTOS",
+                    "pagina_relativa": tabla.get("pagina"),
+                    "orden_visual": fila.get("orden_visual"),
+                    "cabecera_literal": cabecera,
+                    "celdas_literales": celdas,
+                    "asociacion_tipo_iva": "unico_tipo_visible_que_reconcilia_base_y_cuota",
+                },
+            }
+        )
+    totales_calculados = [
+        _centimos(sum((x["base_imponible"] for x in resultado), Decimal("0"))),
+        _centimos(sum((x["cuota_iva"] for x in resultado), Decimal("0"))),
+        _centimos(sum((x["base_imponible"] + x["cuota_iva"] for x in resultado), Decimal("0"))),
+    ]
+    if totales_calculados != numeros_total:
+        raise FiscalidadAllianceIncompleta("TOTAL GASTOS no reconcilia con sus filas fiscales.")
+    return resultado
+
+
+def _normalizar_impuestos(
+    tablas: list[dict[str, Any]],
+    base_total: Decimal | None,
+    iva_total: Decimal | None,
+    re_total: Decimal | None,
+    importe_total: Decimal | None,
+) -> list[dict[str, Any]]:
+    if None in (base_total, iva_total, re_total, importe_total):
+        raise FiscalidadAllianceIncompleta("Falta algun total agregado necesario para reconciliar.")
+    compras = _buscar_tabla(tablas, "COMPRAS")
+    gastos = _buscar_tabla(tablas, "GASTOS")
+    if gastos is None:
+        gastos = next(
+            (
+                tabla for tabla in tablas
+                if any(
+                    fila.get("celdas")
+                    and str(fila["celdas"][0]).strip().upper() == "TOTAL GASTOS"
+                    for fila in tabla.get("filas", [])
+                )
+            ),
+            None,
+        )
+    if compras is None or gastos is None:
+        raise FiscalidadAllianceIncompleta("Faltan las estructuras COMPRAS o GASTOS.")
+    impuestos = _tramos_compras(compras)
+    impuestos.extend(_tramos_gastos(gastos, len(impuestos) + 1))
+
+    suma_bases = _centimos(sum((x["base_imponible"] for x in impuestos), Decimal("0")))
+    suma_iva = _centimos(sum((x["cuota_iva"] for x in impuestos), Decimal("0")))
+    suma_re = _centimos(sum(
+        (x["cuota_recargo_equivalencia"] or Decimal("0") for x in impuestos),
+        Decimal("0"),
+    ))
+    if (suma_bases, suma_iva, suma_re) != (
+        _centimos(base_total), _centimos(iva_total), _centimos(re_total)
+    ):
+        raise FiscalidadAllianceIncompleta(
+            "Las sumas fiscales literales no coinciden exactamente con base, IVA y RE agregados."
+        )
+    if _centimos(base_total + iva_total + re_total) != _centimos(importe_total):
+        raise FiscalidadAllianceIncompleta("Base + IVA + RE no coincide exactamente con el total de factura.")
+    return impuestos
 
 
 def _numeros_no_vacios(celdas: list[str]) -> list[Decimal]:
@@ -402,8 +666,35 @@ def normalizar_alliance(
     proveedor_visible = valor_visible(general.get("proveedor_nombre"))
     proveedor_normalizado = _normalizar_razon_social(proveedor_visible)
     base_total = _decimal_general(general.get("base_imponible_total"))
+    iva_total = _decimal_general(general.get("iva_total"))
+    re_total = _decimal_general(general.get("recargo_equivalencia_total"))
     importe_total = _decimal_general(general.get("importe_total"))
     tablas = list(literal.get("tablas", []))
+    try:
+        impuestos = _normalizar_impuestos(
+            tablas, base_total, iva_total, re_total, importe_total
+        )
+    except FiscalidadAllianceIncompleta as error:
+        impuestos = []
+        incidencias.append(
+            crear_incidencia(
+                campo="impuestos",
+                tipo="DESGLOSE_FISCAL_INCOMPLETO",
+                descripcion=str(error),
+                datos_visibles={
+                    "tablas_consideradas": [
+                        t.get("titulo_visible") for t in tablas
+                        if str(t.get("titulo_visible") or "").upper() in {"COMPRAS", "GASTOS"}
+                    ],
+                    "base_total": base_total,
+                    "iva_total": iva_total,
+                    "recargo_equivalencia_total": re_total,
+                    "importe_total": importe_total,
+                },
+                decision="Se devuelve impuestos=[] porque la evidencia literal no reconcilia de forma completa.",
+                revision=True,
+            )
+        )
 
     tipo_documento = valor_visible(general.get("tipo_documento"))
     factura = {
@@ -417,8 +708,8 @@ def normalizar_alliance(
         "numero_factura": normalizar_identificador(valor_visible(general.get("numero_factura"))),
         "fecha_factura": _fecha_general(general.get("fecha_factura")),
         "base_imponible_total": base_total,
-        "iva_total": _decimal_general(general.get("iva_total")),
-        "recargo_equivalencia_total": _decimal_general(general.get("recargo_equivalencia_total")),
+        "iva_total": iva_total,
+        "recargo_equivalencia_total": re_total,
         "importe_total": importe_total,
         "vencimientos": _normalizar_vencimientos(
             list(literal.get("bloques_vencimiento", [])),
@@ -427,7 +718,7 @@ def normalizar_alliance(
             configuracion,
             incidencias,
         ),
-        "impuestos": [],
+        "impuestos": impuestos,
         "albaranes": _normalizar_albaranes(tablas, incidencias),
         "ajustes": _normalizar_ajustes(tablas, base_total, importe_total, incidencias),
         "destinatario": _normalizar_destinatario(general, configuracion),
@@ -436,17 +727,6 @@ def normalizar_alliance(
         "periodo_facturacion_fin": None,
         "nota_revision": None,
     }
-    incidencias.append(
-        crear_incidencia(
-            campo="impuestos",
-            tipo="DESGLOSE_FISCAL_INCOMPLETO",
-            descripcion="Las tablas literales contienen información fiscal parcial, pero no los totales fiscales finales completos.",
-            datos_visibles={"tablas_consideradas": [t.get("titulo_visible") for t in tablas if str(t.get("titulo_visible") or "").upper() in {"COMPRAS", "GASTOS"}]},
-            decision="Se devuelve impuestos=[]; los totales agregados proceden de luna_general.",
-            revision=True,
-        )
-    )
-
     # Valida compatibilidad con el modelo común, que ignora los metadatos extra de procedencia.
     modelo = FacturaNormalizada.desde_diccionario(factura)
     errores = modelo.validar()

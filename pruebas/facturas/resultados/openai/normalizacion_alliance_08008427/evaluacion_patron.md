@@ -9,11 +9,11 @@ El resultado normalizado ya existía antes de cargar el patrón. La inspección 
 | Métrica | Resultado |
 |---|---:|
 | Campos atómicos evaluados | 1056 |
-| Correctos | 1003 |
-| Diferencias reales | 52 |
+| Correctos | 1002 |
+| Diferencias reales | 53 |
 | Diferencias de formato | 1 |
 | Deliberadamente no completados | 0 |
-| Nota de acierto estricto | 94.98 % |
+| Nota de acierto estricto | 94.89 % |
 | Cobertura | 100.00 % |
 | Albaranes esperados / normalizados | 147 / 147 |
 | Albaranes con contenido correcto | 147 |
@@ -22,9 +22,9 @@ El resultado normalizado ya existía antes de cargar el patrón. La inspección 
 
 ## Diferencias relevantes
 
-- El importe del vencimiento queda deliberadamente en null porque no está unido visualmente a la fecha.
+- El importe del vencimiento se asigna mediante la regla determinista Alliance de vencimiento único ya existente.
 - Los 147 albaranes conservan número, fecha, movimiento, descripción, base y total. El orden difiere para 146 porque el normalizador usa orden físico determinista por tablas paralelas y lo marca como reconstruido.
-- `impuestos=[]` coincide con el patrón; la incidencia conserva que el desglose literal era incompleto.
+- Los 4 tramos fiscales documentales discrepan del `impuestos=[]` histórico del patrón. Es una DISCREPANCIA PATRÓN ↔ DOCUMENTO, no una invención documental.
 - El ajuste Servicio básico se reconstruye desde GASTOS y sus indicadores de inclusión quedan sustentados por sumas visibles.
 - El nombre visible del destinatario puede diferir del nombre interno esperado; ID y método proceden explícitamente de configuración interna.
 

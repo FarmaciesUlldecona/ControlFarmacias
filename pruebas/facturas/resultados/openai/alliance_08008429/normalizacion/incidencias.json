@@ -1,0 +1,55 @@
+{
+  "version_normalizador": "alliance_v1.2",
+  "archivo_origen": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+  "incidencias": [
+    {
+      "campo": "vencimientos.importe",
+      "tipo_incidencia": "REGLA_VENCIMIENTO_UNICO_NO_APLICABLE",
+      "descripcion": "No se cumplen todas las condiciones para asignar el total al vencimiento.",
+      "datos_visibles_disponibles": {
+        "bloques": [
+          {
+            "texto_fecha": "10-10-2026",
+            "texto_importe": null,
+            "pagina": 1
+          },
+          {
+            "texto_fecha": "10-10-2026",
+            "texto_importe": null,
+            "pagina": 2
+          }
+        ],
+        "condiciones": {
+          "proveedor_alliance": true,
+          "factura_separada_inequivocamente": true,
+          "unica_fecha_vencimiento": false,
+          "sin_vencimientos_multiples": false,
+          "sin_pagos_parciales_o_fraccionamiento": true,
+          "sin_importes_vencimiento_distintos": true,
+          "importe_total_valido": true,
+          "sin_descuadre_total": true,
+          "sin_importe_visible_incompatible": true
+        },
+        "bloqueos_regla": [
+          "precondicion:unica_fecha_vencimiento=False",
+          "precondicion:sin_vencimientos_multiples=False"
+        ]
+      },
+      "decision_tomada": "Se conserva la fecha visible y se devuelve importe=null.",
+      "requiere_revision_manual": true
+    },
+    {
+      "campo": "albaranes.orden",
+      "tipo_incidencia": "ORDEN_RECONSTRUIDO",
+      "descripcion": "Las tablas CARGOS y ABONOS pueden ser paralelas y no proporcionan una secuencia global inequívoca.",
+      "datos_visibles_disponibles": {
+        "tablas": [
+          "CARGOS",
+          "ABONOS"
+        ]
+      },
+      "decision_tomada": "Orden estable por página, orden de tabla y orden visual; orden_reconstruido=true.",
+      "requiere_revision_manual": false
+    }
+  ]
+}

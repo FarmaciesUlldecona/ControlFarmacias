@@ -1,0 +1,165 @@
+{
+  "version_normalizador": "alliance_v1.2",
+  "fecha_ejecucion": "2026-08-11T17:05:18.692467+00:00",
+  "archivo_origen": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+  "paginas_originales": [
+    8,
+    9
+  ],
+  "resultado_normalizado": {
+    "tipo_documento": "FACTURA",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "pagina_inicio": 8,
+    "pagina_fin": 9,
+    "proveedor_nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+    "proveedor_cif": "A50004324",
+    "numero_factura": "08008429",
+    "fecha_factura": "2026-07-10",
+    "base_imponible_total": 196.8,
+    "iva_total": 19.68,
+    "recargo_equivalencia_total": 2.76,
+    "importe_total": 219.24,
+    "vencimientos": [
+      {
+        "orden": 1,
+        "fecha_vencimiento": "2026-10-10",
+        "importe": null,
+        "origen_fecha": "visible",
+        "nota": null,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 1,
+          "texto_fecha": "10-10-2026",
+          "texto_importe": null,
+          "importe": null
+        }
+      },
+      {
+        "orden": 2,
+        "fecha_vencimiento": "2026-10-10",
+        "importe": null,
+        "origen_fecha": "visible",
+        "nota": null,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "texto_fecha": "10-10-2026",
+          "texto_importe": null,
+          "importe": null
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": 1,
+        "base_imponible": 196.8,
+        "tipo_iva": 10.0,
+        "cuota_iva": 19.68,
+        "tipo_recargo_equivalencia": 1.4,
+        "cuota_recargo_equivalencia": 2.76,
+        "nota": "COMPRAS",
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "tabla": "COMPRAS",
+          "pagina_relativa": 1,
+          "orden_visual": 2,
+          "cabecera_literal": [
+            "CONCEPTO",
+            "4",
+            "10",
+            "21",
+            "4",
+            "10",
+            "21",
+            "0,50",
+            "1,40",
+            "5,20",
+            "TOTALES"
+          ],
+          "celdas_literales": [
+            "TOTAL COMPRAS",
+            "",
+            "196,80",
+            "",
+            "",
+            "19,68",
+            "",
+            "",
+            "2,76",
+            "",
+            "219,24"
+          ],
+          "indices_celdas": {
+            "base_imponible": 2,
+            "cuota_iva": 5,
+            "cuota_recargo_equivalencia": 8
+          }
+        }
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": 1,
+        "numero_albaran": "08M30618",
+        "fecha_albaran": "2026-07-02",
+        "tipo_movimiento": "CARGO",
+        "descripcion": "COSTO LABORAT.",
+        "importe_base": 196.8,
+        "importe_total": 219.24,
+        "orden_reconstruido": true,
+        "procedencia": {
+          "fuente": "luna_tablas_literales",
+          "pagina_relativa": 2,
+          "orden_tabla": 3,
+          "titulo_tabla": "CARGOS",
+          "orden_visual": 1,
+          "celdas_literales": [
+            "02-07-2026",
+            "COSTO LABORAT.",
+            "08M30618",
+            "196,80",
+            "219,24"
+          ]
+        }
+      }
+    ],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": "PIO",
+      "nombre": "PUIG SALOMON PIUS",
+      "cif": "40901058C",
+      "metodo_identificacion": "CIF"
+    },
+    "fecha_cargo": null,
+    "periodo_facturacion_inicio": null,
+    "periodo_facturacion_fin": null,
+    "nota_revision": null
+  },
+  "procedencia_bloques": {
+    "cabecera_y_totales": "luna_general",
+    "tipo_documento": "luna_general",
+    "vencimientos": "luna_tablas_literales",
+    "impuestos": "luna_tablas_literales",
+    "albaranes": "luna_tablas_literales",
+    "ajustes": "luna_tablas_literales",
+    "paginas": "metadato_tecnico",
+    "categoria": "configuracion_interna",
+    "requiere_conciliacion_albaranes": "configuracion_interna",
+    "destinatario.id_farmacia": "configuracion_interna",
+    "destinatario.metodo_identificacion": "configuracion_interna",
+    "destinatario.nombre_y_cif": "luna_general"
+  },
+  "configuracion_interna_aplicada": {
+    "farmacia": "PIO",
+    "proveedor": "Alliance",
+    "categoria": "MERCANCIA",
+    "requiere_conciliacion_albaranes": true,
+    "destinatario_id_farmacia": "PIO",
+    "destinatario_metodo_identificacion": "CIF",
+    "factura_separada_inequivocamente": true,
+    "descuadre_total": false,
+    "pagos_parciales_o_fraccionamiento": false,
+    "importes_vencimiento_distintos": false
+  }
+}

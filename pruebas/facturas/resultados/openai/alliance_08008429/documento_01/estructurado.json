@@ -1,0 +1,353 @@
+{
+  "metadatos_prueba": {
+    "indice": 1,
+    "archivo_original_local": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+    "nombre_neutro_enviado": "documento_01.pdf",
+    "numero_paginas": 2,
+    "tamano_bytes": 59300,
+    "sha256": "ac54e06280c412f288010ba523434b34b3b004b9f159ecb7dfe73b662690e062",
+    "contenido_patron_incluido": false,
+    "modelo": "gpt-5.6-luna",
+    "response_id": "resp_067837d2bff76ea8016a7a0ea80e64819fa82cd9fcb440e034",
+    "version_prompt": "muestra_completa_ciega_v1.0",
+    "max_output_tokens": 16000,
+    "reasoning_effort": "none",
+    "store": false,
+    "paginas_originales": [
+      8,
+      9
+    ]
+  },
+  "factura": {
+    "tipo_documento": {
+      "valor": "FACTURA",
+      "evidencias": [
+        {
+          "texto_visible": "FACTURA",
+          "pagina": 1
+        }
+      ]
+    },
+    "categoria": {
+      "valor": "MERCANCIA",
+      "evidencias": [
+        {
+          "texto_visible": "COMPRAS",
+          "pagina": 1
+        }
+      ]
+    },
+    "requiere_conciliacion_albaranes": {
+      "valor": true,
+      "evidencias": [
+        {
+          "texto_visible": "CARGOS",
+          "pagina": 2
+        },
+        {
+          "texto_visible": "NÚMERO ALBARÁN",
+          "pagina": 2
+        }
+      ]
+    },
+    "pagina_inicio": {
+      "valor": 1,
+      "evidencias": [
+        {
+          "texto_visible": "PAGINA 01 DE 02",
+          "pagina": 1
+        }
+      ]
+    },
+    "pagina_fin": {
+      "valor": 2,
+      "evidencias": [
+        {
+          "texto_visible": "PAGINA 02 DE 02",
+          "pagina": 2
+        }
+      ]
+    },
+    "proveedor_nombre": {
+      "valor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "evidencias": [
+        {
+          "texto_visible": "Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+          "pagina": 1
+        }
+      ]
+    },
+    "proveedor_cif": {
+      "valor": "A50004324",
+      "evidencias": [
+        {
+          "texto_visible": "CIF: A50004324",
+          "pagina": 1
+        }
+      ]
+    },
+    "numero_factura": {
+      "valor": "08008429",
+      "evidencias": [
+        {
+          "texto_visible": "NÚMERO FACTURA 08008429",
+          "pagina": 1
+        }
+      ]
+    },
+    "fecha_factura": {
+      "valor": "2026-07-10",
+      "evidencias": [
+        {
+          "texto_visible": "FECHA FACTURA 10-07-2026",
+          "pagina": 1
+        }
+      ]
+    },
+    "base_imponible_total": {
+      "valor": 196.8,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL BASE IMPONIBLE 196,80",
+          "pagina": 1
+        }
+      ]
+    },
+    "iva_total": {
+      "valor": 19.68,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL IVAS 19,68",
+          "pagina": 1
+        }
+      ]
+    },
+    "recargo_equivalencia_total": {
+      "valor": 2.76,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL RECARGOS EQUIVALENCIA 2,76",
+          "pagina": 1
+        }
+      ]
+    },
+    "importe_total": {
+      "valor": 219.24,
+      "evidencias": [
+        {
+          "texto_visible": "TOTAL FACTURA 219,24",
+          "pagina": 1
+        }
+      ]
+    },
+    "vencimientos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "FECHA VENCIMIENTO 10-10-2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "fecha_vencimiento": {
+          "valor": "2026-10-10",
+          "evidencias": [
+            {
+              "texto_visible": "FECHA VENCIMIENTO 10-10-2026",
+              "pagina": 1
+            }
+          ]
+        },
+        "importe": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "impuestos": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "BASE IMPONIBLE IVA R.E. TOTALES",
+              "pagina": 1
+            }
+          ]
+        },
+        "base_imponible": {
+          "valor": 196.8,
+          "evidencias": [
+            {
+              "texto_visible": "196,80",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_iva": {
+          "valor": 10.0,
+          "evidencias": [
+            {
+              "texto_visible": "IVA 10",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_iva": {
+          "valor": 19.68,
+          "evidencias": [
+            {
+              "texto_visible": "19,68",
+              "pagina": 1
+            }
+          ]
+        },
+        "tipo_recargo_equivalencia": {
+          "valor": 1.4,
+          "evidencias": [
+            {
+              "texto_visible": "R.E. 1,40",
+              "pagina": 1
+            }
+          ]
+        },
+        "cuota_recargo_equivalencia": {
+          "valor": 2.76,
+          "evidencias": [
+            {
+              "texto_visible": "2,76",
+              "pagina": 1
+            }
+          ]
+        },
+        "nota": {
+          "valor": null,
+          "evidencias": []
+        }
+      }
+    ],
+    "albaranes": [
+      {
+        "orden": {
+          "valor": 1,
+          "evidencias": [
+            {
+              "texto_visible": "08M30618",
+              "pagina": 2
+            }
+          ]
+        },
+        "numero_albaran": {
+          "valor": "08M30618",
+          "evidencias": [
+            {
+              "texto_visible": "NÚMERO ALBARÁN 08M30618",
+              "pagina": 2
+            }
+          ]
+        },
+        "fecha_albaran": {
+          "valor": "2026-07-02",
+          "evidencias": [
+            {
+              "texto_visible": "02-07-2026",
+              "pagina": 2
+            }
+          ]
+        },
+        "tipo_movimiento": {
+          "valor": "COSTO LABORAT.",
+          "evidencias": [
+            {
+              "texto_visible": "COSTO LABORAT.",
+              "pagina": 2
+            }
+          ]
+        },
+        "descripcion": {
+          "valor": null,
+          "evidencias": []
+        },
+        "importe_base": {
+          "valor": 196.8,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL BASE 196,80",
+              "pagina": 2
+            }
+          ]
+        },
+        "importe_total": {
+          "valor": 219.24,
+          "evidencias": [
+            {
+              "texto_visible": "TOTAL ALBARÁN 219,24",
+              "pagina": 2
+            }
+          ]
+        }
+      }
+    ],
+    "ajustes": [],
+    "destinatario": {
+      "id_farmacia": {
+        "valor": "006600",
+        "evidencias": [
+          {
+            "texto_visible": "006600",
+            "pagina": 1
+          }
+        ]
+      },
+      "nombre": {
+        "valor": "PUIG SALOMON PIUS",
+        "evidencias": [
+          {
+            "texto_visible": "D/Dña PUIG SALOMON PIUS",
+            "pagina": 1
+          }
+        ]
+      },
+      "cif": {
+        "valor": "40901058C",
+        "evidencias": [
+          {
+            "texto_visible": "NIF 40901058C",
+            "pagina": 1
+          }
+        ]
+      },
+      "metodo_identificacion": {
+        "valor": "NIF",
+        "evidencias": [
+          {
+            "texto_visible": "NIF",
+            "pagina": 1
+          }
+        ]
+      }
+    },
+    "fecha_cargo": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_inicio": {
+      "valor": null,
+      "evidencias": []
+    },
+    "periodo_facturacion_fin": {
+      "valor": null,
+      "evidencias": []
+    },
+    "nota_revision": {
+      "valor": null,
+      "evidencias": []
+    }
+  }
+}

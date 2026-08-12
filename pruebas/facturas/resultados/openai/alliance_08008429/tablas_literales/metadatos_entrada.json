@@ -1,0 +1,14 @@
+{
+  "archivo_original_local": "ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+  "nombre_neutro_enviado": "documento_01.pdf",
+  "paginas_originales": [
+    8,
+    9
+  ],
+  "numero_paginas_enviadas": 2,
+  "tamano_bytes": 59300,
+  "sha256": "ac54e06280c412f288010ba523434b34b3b004b9f159ecb7dfe73b662690e062",
+  "contenido_patron_incluido": false,
+  "tipo_extraccion": "tablas_literales",
+  "response_id": "resp_0c9b4bdd1a8b3133016a7a0ef0a14881a0b1644fa112db1e82"
+}
