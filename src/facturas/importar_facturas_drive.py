@@ -280,6 +280,9 @@ def obtener_facturas_pdf() -> list[Path]:
                 archivo.is_file()
                 and archivo.suffix.lower()
                 == ".pdf"
+                and not es_factura_rita(
+                    archivo
+                )
             ):
                 facturas.append(
                     archivo
@@ -292,6 +295,21 @@ def obtener_facturas_pdf() -> list[Path]:
     )
 
     return facturas
+
+
+def es_factura_rita(
+    ruta_pdf: Path,
+) -> bool:
+    """
+    Indica si el nombre base del PDF termina en RITA.
+
+    La comparación ignora mayúsculas, minúsculas y
+    espacios finales del nombre base.
+    """
+
+    return ruta_pdf.stem.rstrip().casefold().endswith(
+        "rita"
+    )
 
 
 def obtener_conexion_indice() -> sqlite3.Connection:
