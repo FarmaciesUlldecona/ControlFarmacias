@@ -1,0 +1,18 @@
+{
+  "repo": "C:\\ControlFarmacias\\Programa",
+  "codex_exe": "codex",
+  "modelo": "",
+  "modelo_supervisor": "",
+  "timeout_seconds": 1800,
+  "max_ciclos_default": 5,
+  "rutas_protegidas": [
+    ".env",
+    ".env.*",
+    "**/.env",
+    "**/.env.*",
+    "pruebas/facturas/patron/**",
+    ".git/**",
+    ".codex/**",
+    ".agents/**"
+  ]
+}

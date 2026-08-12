@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "estado": {
+      "type": "string",
+      "enum": [
+        "AUTO_CONTINUE",
+        "REQUIERE_OK_PIO",
+        "FINALIZADO"
+      ]
+    },
+    "motivo": {
+      "type": "string"
+    },
+    "detalle": {
+      "type": "string"
+    },
+    "nivel_riesgo": {
+      "type": "string",
+      "enum": [
+        "BAJO",
+        "MEDIO",
+        "ALTO"
+      ]
+    },
+    "siguiente_instruccion": {
+      "type": "string"
+    },
+    "pregunta_para_pio": {
+      "type": "string"
+    },
+    "opciones_para_pio": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "estado",
+    "motivo",
+    "detalle",
+    "nivel_riesgo",
+    "siguiente_instruccion",
+    "pregunta_para_pio",
+    "opciones_para_pio"
+  ],
+  "additionalProperties": false
+}

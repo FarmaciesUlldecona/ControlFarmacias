@@ -1,0 +1,9 @@
+{
+  "id": "prueba_segura_orquestador",
+  "objetivo": "Audita el estado actual del repositorio ControlFarmacias sin modificar ningún archivo. Comprueba git status, HEAD, rama y ejecuta la suite tests/facturas. Resume el resultado y da la tarea por finalizada.",
+  "criterio_finalizacion": "Se ha informado del estado Git y del resultado de tests/facturas sin modificar el repositorio.",
+  "contexto": "Esta es la prueba inicial del orquestador. El trabajo de fiscalidad Alliance queda pausado y no debe retomarse.",
+  "modo": "read_only",
+  "rutas_permitidas": [],
+  "max_ciclos": 2
+}

@@ -1,0 +1,8 @@
+{
+  "id": "prueba_multiciclo_orquestador",
+  "objetivo": "Completa una auditoría read-only en tres ciclos mecánicos. Ciclo 1: comprueba HEAD y la rama actual y confirma que no hay cambio de rama. Ciclo 2: comprueba solo mediante lectura que existen los directorios esenciales del repositorio: src, tests y pruebas. Ciclo 3: realiza una última verificación Git de solo lectura, consolida los resultados de las comprobaciones y considera el objetivo cumplido. No finalices antes del tercer ciclo.",
+  "criterio_finalizacion": "Se han completado tres fases read-only: HEAD/rama, existencia de directorios esenciales y revisión final Git, y se ha informado del resultado consolidado sin modificar nada.",
+  "contexto": "Esta tarea es una prueba mecánica del orquestador para demostrar AUTO_CONTINUE → AUTO_CONTINUE → FINALIZADO en tres ciclos. No se debe escribir ningún archivo ni cambiar el repositorio.",
+  "modo": "read_only",
+  "max_ciclos": 3
+}

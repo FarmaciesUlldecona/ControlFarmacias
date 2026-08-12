@@ -1,0 +1,12 @@
+{
+  "id": "ejemplo_workspace_no_ejecutar",
+  "objetivo": "EJEMPLO: realizar una modificación mecánica ya aprobada y ejecutar sus tests. Sustituye este texto por una tarea real antes de usarla.",
+  "criterio_finalizacion": "La modificación aprobada está aplicada y las pruebas pasan.",
+  "contexto": "PLANTILLA. No ejecutar sin editar.",
+  "modo": "workspace_write",
+  "rutas_permitidas": [
+    "src/facturas/normalizadores/archivo_aprobado.py",
+    "tests/facturas/normalizadores/test_archivo_aprobado.py"
+  ],
+  "max_ciclos": 4
+}
