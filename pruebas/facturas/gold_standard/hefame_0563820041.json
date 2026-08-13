@@ -1,0 +1,231 @@
+{
+  "pdf_fuente": "HEFAME VTO 5.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "0563820041",
+      "pagina_inicio": 1,
+      "pagina_fin": 2,
+      "naturaleza_principal": "MIXTA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+        "nif": "F30004444",
+        "direccion": "CR SANTOMERA-ABANILLA 158; SANTOMERA; 30140 MURCIA"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON, PIO",
+        "nif": "40901058C",
+        "direccion": "CL SAN LUCAS, 34; 43550 ULLDECONA; Tarragona"
+      },
+      "fecha_emision": "31.07.2026",
+      "moneda": null,
+      "bases": [
+        {
+          "descripcion": "Base S.R.",
+          "base": 264.84,
+          "porcentaje_iva": 4,
+          "iva": 10.6,
+          "porcentaje_recargo_equivalencia": 0.5,
+          "recargo_equivalencia": 1.33,
+          "total": 276.77
+        },
+        {
+          "descripcion": "Base Re.",
+          "base": 62.49,
+          "porcentaje_iva": 10,
+          "iva": 6.25,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": 0.87,
+          "total": 69.61
+        },
+        {
+          "descripcion": "Base No.",
+          "base": 267.31,
+          "porcentaje_iva": 21,
+          "iva": 56.13,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 8.17,
+          "total": 331.61
+        },
+        {
+          "descripcion": "Base Ex.",
+          "base": 0,
+          "porcentaje_iva": 0,
+          "iva": 0,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 0
+        }
+      ],
+      "impuestos": {
+        "iva_total": 72.98,
+        "recargo_equivalencia_total": 10.37
+      },
+      "totales": {
+        "subtotal_desglose_importes_pedidos": 484.64,
+        "resumen_servicios_operativos": 110.0,
+        "base_imponible_total": 594.64,
+        "total_factura": 677.99
+      },
+      "vencimientos": [
+        {
+          "fecha": "05.08.2026",
+          "importe": 677.99,
+          "medio_pago": "Adeudos directos SEPA CORE"
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "4126735814",
+          "fecha": "21.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 9.32,
+          "total": null
+        },
+        {
+          "orden": 2,
+          "numero": "4126735944",
+          "fecha": "21.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 96.97,
+          "total": null
+        },
+        {
+          "orden": 3,
+          "numero": "4126746976",
+          "fecha": "22.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 5.25,
+          "total": null
+        },
+        {
+          "orden": 4,
+          "numero": "4126809981",
+          "fecha": "24.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 67.73,
+          "total": null
+        },
+        {
+          "orden": 5,
+          "numero": "4126815711",
+          "fecha": "24.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 59.36,
+          "total": null
+        },
+        {
+          "orden": 6,
+          "numero": "4126832802",
+          "fecha": "24.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 59.36,
+          "total": null
+        },
+        {
+          "orden": 7,
+          "numero": "4126884575",
+          "fecha": "25.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 12.02,
+          "total": null
+        },
+        {
+          "orden": 8,
+          "numero": "4126886802",
+          "fecha": "27.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 85.47,
+          "total": null
+        },
+        {
+          "orden": 9,
+          "numero": "4126921242",
+          "fecha": "28.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 39.1,
+          "total": null
+        },
+        {
+          "orden": 10,
+          "numero": "4126934304",
+          "fecha": "29.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 11.18,
+          "total": null
+        },
+        {
+          "orden": 11,
+          "numero": "4126989474",
+          "fecha": "30.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 24.47,
+          "total": null
+        },
+        {
+          "orden": 12,
+          "numero": "4127001247",
+          "fecha": "31.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 50.47,
+          "total": null
+        }
+      ],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "DEVOLUCION_MERCANCIA",
+          "descripcion": "ABO/DEVO",
+          "sentido": "ABONO",
+          "base": 116.32,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null
+        },
+        {
+          "orden": 2,
+          "tipo": "CONDICION_COMERCIAL",
+          "descripcion": "APROAFA",
+          "sentido": "CARGO",
+          "base": 0.26,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null
+        },
+        {
+          "orden": 3,
+          "tipo": "SERVICIO",
+          "descripcion": "Resumen Servicios Operativos",
+          "sentido": "CARGO",
+          "base": 110,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null
+        }
+      ],
+      "discrepancias": [
+        {
+          "tipo": "DIFERENCIA_CONCILIACION",
+          "descripcion": "El subtotal declarado por HEFAME (484,64 EUR) supera en 80,00 EUR la suma reconstruible a partir de los movimientos individualizados visibles en la relación de albaranes, ABO/DEVO y APROAFA. El PDF no permite identificar documentalmente el origen de esos 80,00 EUR. No inventar albarán, ajuste, servicio o concepto de 80.00 EUR. Mantener el total fiscal impreso y no modificar ninguna otra decisión del gold.",
+          "importe": 80.0
+        }
+      ],
+      "notas_conciliacion": [
+        "Los 12 albaranes/documentos de entrega se conservan separados de ABO/DEVO, APROAFA y servicios operativos; no se corrige la diferencia documental de 80,00."
+      ]
+    }
+  ]
+}

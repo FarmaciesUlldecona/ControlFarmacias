@@ -1,0 +1,65 @@
+{
+  "pdf_fuente": "LOGISTA PHARMA VTO 29.9.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "5011640669",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "LOGISTA PHARMA S.A.U.",
+        "nif": "ESA61674347",
+        "direccion": "P.I. POLVORANCA C/TRIGO 39; 28914 LEGANES; MADRID"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON PIO",
+        "nif": "40901058C",
+        "direccion": "SAN LUCAS, 34; 43550 ULLDECONA; Tarragona (España)"
+      },
+      "fecha_emision": "31.07.2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "IVA 4%",
+          "base": 428.71,
+          "porcentaje_iva": 4,
+          "iva": 17.15,
+          "porcentaje_recargo_equivalencia": 0.5,
+          "recargo_equivalencia": 2.14,
+          "total": 448
+        }
+      ],
+      "impuestos": {
+        "iva_total": 17.15,
+        "recargo_equivalencia_total": 2.14
+      },
+      "totales": {
+        "base_imponible_total": 428.71,
+        "total_factura": 448
+      },
+      "vencimientos": [
+        {
+          "fecha": "29.09.2026",
+          "importe": 448,
+          "medio_pago": "SEPA CORE A 60 DÍAS"
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "9319977575",
+          "fecha": "29.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 428.71,
+          "total": 448,
+          "pedido": "E-00495393-1"
+        }
+      ],
+      "movimientos_comerciales": [],
+      "discrepancias": [],
+      "notas_conciliacion": []
+    }
+  ]
+}

@@ -1,0 +1,249 @@
+{
+  "fecha_congelacion": "2026-08-13",
+  "validacion_manual_previa": "Pio",
+  "numero_pdfs": 14,
+  "numero_facturas": 18,
+  "pdfs": [
+    {
+      "pdf_fuente": "EPORTS VTO 5.8.26 PIO.pdf",
+      "archivo_json": "eports_tm-26075800.json",
+      "facturas": [
+        {
+          "numero_factura": "TM-26075800",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "FARMACIA GUIMERA VTO 29.7.26 PIO.pdf",
+      "archivo_json": "farmacia_guimera_624.json",
+      "facturas": [
+        {
+          "numero_factura": "624",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "FARMACIA GUIMERA VTO 29.8.26 PIO.pdf",
+      "archivo_json": "farmacia_guimera_743.json",
+      "facturas": [
+        {
+          "numero_factura": "743",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "FEDE VTO 15.8.26 PIO.pdf",
+      "archivo_json": "fedefarma_multifactura.json",
+      "facturas": [
+        {
+          "numero_factura": "VN2605-0005656",
+          "pagina_inicio": 2,
+          "pagina_fin": 2
+        },
+        {
+          "numero_factura": "SI26-04567",
+          "pagina_inicio": 3,
+          "pagina_fin": 3
+        },
+        {
+          "numero_factura": "VN26-0016742",
+          "pagina_inicio": 4,
+          "pagina_fin": 4
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "HEFAME VTO 5.8.26 PIO.pdf",
+      "archivo_json": "hefame_0563820041.json",
+      "facturas": [
+        {
+          "numero_factura": "0563820041",
+          "pagina_inicio": 1,
+          "pagina_fin": 2
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "LOGISTA PHARMA VTO 29.9.26 PIO.pdf",
+      "archivo_json": "logista_pharma_5011640669.json",
+      "facturas": [
+        {
+          "numero_factura": "5011640669",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "LOREAL VTO 3.8.26 PIO.pdf",
+      "archivo_json": "loreal_3401124788.json",
+      "facturas": [
+        {
+          "numero_factura": "3401124788",
+          "pagina_inicio": 1,
+          "pagina_fin": 3
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "MORETTI VTO 31.8.26 PIO.pdf",
+      "archivo_json": "moretti_003463fv26.json",
+      "facturas": [
+        {
+          "numero_factura": "003463FV26",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "TOTALCARE VTO 28.8.26 PIO.pdf",
+      "archivo_json": "totalcare_g-15.931.json",
+      "facturas": [
+        {
+          "numero_factura": "G/15.931",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "archivo_json": "alliance_cencora_multifactura.json",
+      "facturas": [
+        {
+          "numero_factura": "08009278",
+          "pagina_inicio": 1,
+          "pagina_fin": 4
+        },
+        {
+          "numero_factura": "08009277",
+          "pagina_inicio": 5,
+          "pagina_fin": 9
+        },
+        {
+          "numero_factura": "08009279",
+          "pagina_inicio": 10,
+          "pagina_fin": 11
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "COFARES VTO 30.8.26 PIO.pdf",
+      "archivo_json": "cofares_5450053457.json",
+      "facturas": [
+        {
+          "numero_factura": "5450053457",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "COFARES VTO 31.8.26 PIO.pdf",
+      "archivo_json": "cofares_5460017198.json",
+      "facturas": [
+        {
+          "numero_factura": "5460017198",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "ECOCEUTICS MENUSALITAT AGOST PIO.pdf",
+      "archivo_json": "ecoceutics_fr00263663.json",
+      "facturas": [
+        {
+          "numero_factura": "FR00263663",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    },
+    {
+      "pdf_fuente": "ECOCEUTICS VTO 29.9.26 PIO.pdf",
+      "archivo_json": "ecoceutics_fr00263826.json",
+      "facturas": [
+        {
+          "numero_factura": "FR00263826",
+          "pagina_inicio": 1,
+          "pagina_fin": 1
+        }
+      ]
+    }
+  ],
+  "facturas": [
+    "TM-26075800",
+    "624",
+    "743",
+    "VN2605-0005656",
+    "SI26-04567",
+    "VN26-0016742",
+    "0563820041",
+    "5011640669",
+    "3401124788",
+    "003463FV26",
+    "G/15.931",
+    "08009278",
+    "08009277",
+    "08009279",
+    "5450053457",
+    "5460017198",
+    "FR00263663",
+    "FR00263826"
+  ],
+  "archivos_creados": [
+    "eports_tm-26075800.json",
+    "farmacia_guimera_624.json",
+    "farmacia_guimera_743.json",
+    "fedefarma_multifactura.json",
+    "hefame_0563820041.json",
+    "logista_pharma_5011640669.json",
+    "loreal_3401124788.json",
+    "moretti_003463fv26.json",
+    "totalcare_g-15.931.json",
+    "alliance_cencora_multifactura.json",
+    "cofares_5450053457.json",
+    "cofares_5460017198.json",
+    "ecoceutics_fr00263663.json",
+    "ecoceutics_fr00263826.json",
+    "indice.json",
+    "README.md"
+  ],
+  "conteo_albaranes_por_factura": {
+    "TM-26075800": 0,
+    "624": 0,
+    "743": 0,
+    "VN2605-0005656": 5,
+    "SI26-04567": 0,
+    "VN26-0016742": 0,
+    "0563820041": 12,
+    "5011640669": 1,
+    "3401124788": 0,
+    "003463FV26": 2,
+    "G/15.931": 1,
+    "08009278": 109,
+    "08009277": 162,
+    "08009279": 5,
+    "5450053457": 39,
+    "5460017198": 0,
+    "FR00263663": 0,
+    "FR00263826": 1
+  },
+  "conteo_movimientos_comerciales_por_tipo_sentido": {
+    "ABONO_COMERCIAL|ABONO": 1,
+    "BONIFICACION|ABONO": 1,
+    "CONDICION_COMERCIAL|CARGO": 3,
+    "DESCUENTO|ABONO": 1,
+    "DEVOLUCION_MERCANCIA|ABONO": 3,
+    "RAPPEL|ABONO": 1,
+    "SERVICIO|CARGO": 15
+  }
+}

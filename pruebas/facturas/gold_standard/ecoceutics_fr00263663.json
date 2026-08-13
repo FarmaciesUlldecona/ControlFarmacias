@@ -1,0 +1,67 @@
+{
+  "pdf_fuente": "ECOCEUTICS MENUSALITAT AGOST PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "FR00263663",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "SERVICIOS",
+      "requiere_conciliacion_albaranes": false,
+      "emisor": {
+        "nombre": "Hygie31 España SLU.",
+        "nif": "B17733601",
+        "direccion": "Av. Diagonal, 472-476 Esc. A 1r 2ª; 08006 BARCELONA"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON, PIO",
+        "nif": "40901058C",
+        "direccion": "SANT LLUC 34; 43550 ULLDECONA; TARRAGONA"
+      },
+      "fecha_emision": "31/07/2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "21,00%",
+          "base": 339,
+          "porcentaje_iva": 21,
+          "iva": 71.19,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 410.19
+        }
+      ],
+      "impuestos": {
+        "iva_total": 71.19,
+        "recargo_equivalencia_total": 0
+      },
+      "totales": {
+        "base_imponible_total": 339,
+        "total_factura": 410.19
+      },
+      "vencimientos": [
+        {
+          "fecha": "01-08-2026",
+          "importe": 410.19,
+          "medio_pago": "Domicialiació"
+        }
+      ],
+      "albaranes": [],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "SERVICIO",
+          "descripcion": "QUOTA READY",
+          "sentido": "CARGO",
+          "base": 339,
+          "iva": 71.19,
+          "recargo_equivalencia": 0,
+          "importe": 410.19
+        }
+      ],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "Servicio puro: la ausencia de albaranes no es incidencia."
+      ]
+    }
+  ]
+}

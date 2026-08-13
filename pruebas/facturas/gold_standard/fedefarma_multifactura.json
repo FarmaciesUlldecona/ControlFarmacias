@@ -1,0 +1,293 @@
+{
+  "pdf_fuente": "FEDE VTO 15.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "VN2605-0005656",
+      "pagina_inicio": 2,
+      "pagina_fin": 2,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "Federació Farmacèutica S.Coop.C.L.",
+        "nif": "F-08-173395",
+        "direccion": "Carrer Coneixement 7-13 Illa A3.1 Centre de negocis Gavà Park; 08850 Gavà"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON PIO",
+        "nif": "40901058C",
+        "direccion": "CL SANT LLUC, 34; 43550 ULLDECONA; TARRAGONA"
+      },
+      "fecha_emision": "31-07-2026",
+      "moneda": null,
+      "bases": [
+        {
+          "descripcion": "I.V.A. 0%",
+          "base": 0,
+          "porcentaje_iva": 0,
+          "iva": 0,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 0
+        },
+        {
+          "descripcion": "I.V.A. 4%",
+          "base": 22.64,
+          "porcentaje_iva": 4,
+          "iva": 0.91,
+          "porcentaje_recargo_equivalencia": 0.5,
+          "recargo_equivalencia": 0.11,
+          "total": 23.66
+        },
+        {
+          "descripcion": "I.V.A. 10%",
+          "base": -7.92,
+          "porcentaje_iva": 10,
+          "iva": -0.79,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": -0.11,
+          "total": -8.82
+        },
+        {
+          "descripcion": "I.V.A. 21%",
+          "base": 4.06,
+          "porcentaje_iva": 21,
+          "iva": 0.85,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 0.21,
+          "total": 5.12
+        }
+      ],
+      "impuestos": {
+        "iva_total": 0.97,
+        "recargo_equivalencia_total": 0.21
+      },
+      "totales": {
+        "base_imponible_total": 18.78,
+        "total_factura": 19.96
+      },
+      "vencimientos": [
+        {
+          "fecha": "15-08-2026",
+          "importe": 19.96,
+          "medio_pago": null
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "P PA 2620-2173388",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 3.85,
+          "total": null
+        },
+        {
+          "orden": 2,
+          "numero": "P RE 2605-0221864",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 19.12,
+          "total": null
+        },
+        {
+          "orden": 3,
+          "numero": "P RE 2605-0222046",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 3.55,
+          "total": null
+        },
+        {
+          "orden": 4,
+          "numero": "P PA 2620-2217350",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 15.68,
+          "total": null
+        },
+        {
+          "orden": 5,
+          "numero": "P RE 2605-0228056",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 0,
+          "total": null
+        }
+      ],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "DEVOLUCION_MERCANCIA",
+          "descripcion": "T otal abonaments (consultar detalls): LACTOFLORA SUERO ORAL 6 SOBRES DUOC; origen 2605-0198761; abonament 2605A-022613; motiu NI; Q 2",
+          "sentido": "ABONO",
+          "base": 24.52,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": 24.52
+        },
+        {
+          "orden": 2,
+          "tipo": "BONIFICACION",
+          "descripcion": "Bonificació pagament inmediat",
+          "sentido": "ABONO",
+          "base": 0.03,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": 0.03,
+          "desglose_bases": {
+            "iva_4": -0.03,
+            "iva_10": 0.01,
+            "iva_21": -0.01
+          }
+        },
+        {
+          "orden": 3,
+          "tipo": "CONDICION_COMERCIAL",
+          "descripcion": "Condició Operativa",
+          "sentido": "CARGO",
+          "base": 1.13,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null,
+          "desglose_bases": {
+            "iva_10": 0.91,
+            "iva_21": 0.22
+          }
+        }
+      ],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "La página 1 del PDF es un resumen de pagos y no constituye una cuarta factura."
+      ]
+    },
+    {
+      "numero_factura": "SI26-04567",
+      "pagina_inicio": 3,
+      "pagina_fin": 3,
+      "naturaleza_principal": "SERVICIOS",
+      "requiere_conciliacion_albaranes": false,
+      "emisor": {
+        "nombre": "Federació Farmacèutica S.Coop.C.L.",
+        "nif": "F-08-173395",
+        "direccion": "Carrer Coneixement 7-13 Illa A3.1 Centre de negocis Gavà Park; 08850 Gavà"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON PIO",
+        "nif": "40901058C",
+        "direccion": "CL SANT LLUC, 34; 43550 ULLDECONA; TARRAGONA"
+      },
+      "fecha_emision": "31-07-2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "Nacional ordinario (sin recargo)",
+          "base": 67,
+          "porcentaje_iva": 21,
+          "iva": 14.07,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 81.07
+        }
+      ],
+      "impuestos": {
+        "iva_total": 14.07,
+        "recargo_equivalencia_total": 0
+      },
+      "totales": {
+        "base_imponible_total": 67,
+        "total_factura": 81.07
+      },
+      "vencimientos": [
+        {
+          "fecha": "15-08-2026",
+          "importe": 81.07,
+          "medio_pago": "RECIBO DOMICILIADO BANCO"
+        }
+      ],
+      "albaranes": [],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "SERVICIO",
+          "descripcion": "STSM202607-SUPORT TECNOLOGIC - MOVISTAR FACTURACIO DEL 18-05 AL 17-06",
+          "sentido": "CARGO",
+          "base": 67,
+          "iva": 14.07,
+          "recargo_equivalencia": 0,
+          "importe": 81.07
+        }
+      ],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "Servicio puro: la ausencia de albaranes no es incidencia."
+      ]
+    },
+    {
+      "numero_factura": "VN26-0016742",
+      "pagina_inicio": 4,
+      "pagina_fin": 4,
+      "naturaleza_principal": "SERVICIOS",
+      "requiere_conciliacion_albaranes": false,
+      "emisor": {
+        "nombre": "Federació Farmacèutica S.Coop.C.L.",
+        "nif": "F-08-173395",
+        "direccion": "Carrer Coneixement 7-13 Illa A3.1 Centre de negocis Gavà Park; 08850 Gavà"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON PIO",
+        "nif": "40901058C",
+        "direccion": "CL SANT LLUC, 34; 43550 ULLDECONA; TARRAGONA"
+      },
+      "fecha_emision": "31-07-2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "Nacional ordinario (sin recargo)",
+          "base": 255,
+          "porcentaje_iva": 21,
+          "iva": 53.55,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 308.55
+        }
+      ],
+      "impuestos": {
+        "iva_total": 53.55,
+        "recargo_equivalencia_total": 0
+      },
+      "totales": {
+        "base_imponible_total": 255,
+        "total_factura": 308.55
+      },
+      "vencimientos": [
+        {
+          "fecha": "15-08-2026",
+          "importe": 308.55,
+          "medio_pago": "RECIBO DOMICILIADO BANCO"
+        }
+      ],
+      "albaranes": [],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "SERVICIO",
+          "descripcion": "SVCOP202607-Cuota Mensual Servicios Cooperativos - 202607",
+          "sentido": "CARGO",
+          "base": 255,
+          "iva": 53.55,
+          "recargo_equivalencia": 0,
+          "importe": 308.55
+        }
+      ],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "Servicio puro: la ausencia de albaranes no es incidencia."
+      ]
+    }
+  ]
+}

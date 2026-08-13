@@ -1,0 +1,65 @@
+{
+  "pdf_fuente": "TOTALCARE VTO 28.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "G/15.931",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "TOTALCARE EUROPE, S.L.",
+        "nif": "B-66438722",
+        "direccion": "C/Amsterdam 1-3; 08191 Rubí; Barcelona"
+      },
+      "destinatario": {
+        "nombre": "PIO PUIG SALOMON",
+        "nif": "40901058C",
+        "direccion": "CL/SANT LLUC,34; 43550 ULLDECONA, TARRAGONA"
+      },
+      "fecha_emision": "29- 07- 2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "IVA 10% / Rec.Eq. 1,4%",
+          "base": 252.84,
+          "porcentaje_iva": 10,
+          "iva": 25.28,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": 3.54,
+          "total": 281.66
+        }
+      ],
+      "impuestos": {
+        "iva_total": 25.28,
+        "recargo_equivalencia_total": 3.54
+      },
+      "totales": {
+        "base_imponible_total": 252.84,
+        "total_factura": 281.66
+      },
+      "vencimientos": [
+        {
+          "fecha": "28-08-2026",
+          "importe": 281.66,
+          "medio_pago": "GIRO 30"
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "WEB/20.558",
+          "fecha": null,
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": 252.84,
+          "total": 281.66,
+          "pedido": "573834"
+        }
+      ],
+      "movimientos_comerciales": [],
+      "discrepancias": [],
+      "notas_conciliacion": []
+    }
+  ]
+}

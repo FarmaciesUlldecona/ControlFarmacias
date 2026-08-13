@@ -1,0 +1,77 @@
+{
+  "pdf_fuente": "MORETTI VTO 31.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "003463FV26",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "MORETTI IBERICA S.L.U.",
+        "nif": "B01959782",
+        "direccion": "C/Muntaner, 48-50, 1º 4ª; 08011 BARCELONA (ES)"
+      },
+      "destinatario": {
+        "nombre": "FARMACIA PIO PUIG SALOMON",
+        "nif": "40901058C",
+        "direccion": "CARRER SANT LLUC 34; 43550 ULLDECONA T; ESPAÑA"
+      },
+      "fecha_emision": "31/07/2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "RED IVA 10% Reducido",
+          "base": 118.2,
+          "porcentaje_iva": 10,
+          "iva": 11.82,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 130.02
+        }
+      ],
+      "impuestos": {
+        "iva_total": 11.82,
+        "recargo_equivalencia_total": 0
+      },
+      "totales": {
+        "base_imponible_total": 118.2,
+        "total_factura": 130.02
+      },
+      "vencimientos": [
+        {
+          "fecha": "30/08/2026",
+          "importe": 130.02,
+          "medio_pago": "GIRO 30 D"
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "005657AV26",
+          "fecha": "02/07/2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "Nota de Entrega",
+          "base": 47.8,
+          "total": null,
+          "pedido": "26/05309PV"
+        },
+        {
+          "orden": 2,
+          "numero": "005898AV26",
+          "fecha": "10/07/2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "Nota de Entrega",
+          "base": 70.4,
+          "total": null,
+          "pedido": "26/05531PV"
+        }
+      ],
+      "movimientos_comerciales": [],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "Exclusivamente para este caso/proveedor, Farmatic puede tener dos albaranes internos para una nota de entrega, incluidos números que empiecen por Q, cuya suma puede corresponder al importe. No se inventan números internos ni se generaliza esta regla."
+      ]
+    }
+  ]
+}

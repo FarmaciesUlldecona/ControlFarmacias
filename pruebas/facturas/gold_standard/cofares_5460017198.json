@@ -1,0 +1,132 @@
+{
+  "pdf_fuente": "COFARES VTO 31.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "5460017198",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "CONDICIONES_COMERCIALES",
+      "requiere_conciliacion_albaranes": false,
+      "emisor": {
+        "nombre": "COFARES",
+        "nif": "A80904576",
+        "direccion": null
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMÓN, PÍO",
+        "nif": "40901058C",
+        "direccion": "C. SANT LLUC, 34; 43550 ULLDECONA"
+      },
+      "fecha_emision": "31.07.2026",
+      "moneda": null,
+      "bases": [
+        {
+          "descripcion": "4,00 / 0,50",
+          "base": 0.36,
+          "porcentaje_iva": 4,
+          "iva": 0.01,
+          "porcentaje_recargo_equivalencia": 0.5,
+          "recargo_equivalencia": 0,
+          "total": 0.37
+        },
+        {
+          "descripcion": "10,00 / 1,40",
+          "base": 20.03,
+          "porcentaje_iva": 10,
+          "iva": 2,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": 0.28,
+          "total": 22.31
+        },
+        {
+          "descripcion": "21,00 / 0,00",
+          "base": 121.95,
+          "porcentaje_iva": 21,
+          "iva": 25.61,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 147.56
+        },
+        {
+          "descripcion": "21,00 / 5,20",
+          "base": 5.94,
+          "porcentaje_iva": 21,
+          "iva": 1.25,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 0.31,
+          "total": 7.5
+        }
+      ],
+      "impuestos": {
+        "iva_total": 28.87,
+        "recargo_equivalencia_total": 0.59
+      },
+      "totales": {
+        "base_imponible_total": 148.28,
+        "total_factura": 177.74
+      },
+      "vencimientos": [
+        {
+          "fecha": "30.08.2026",
+          "importe": 177.74,
+          "medio_pago": "Domiciliado cobro"
+        }
+      ],
+      "albaranes": [],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "CONDICION_COMERCIAL",
+          "descripcion": "Cargo Parafarmacia",
+          "sentido": "CARGO",
+          "base": 27.77,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null,
+          "base_calculo": 370.28,
+          "desglose_visible": {
+            "superreducida": 1.8,
+            "reducida": 20.03,
+            "normal": 5.94
+          }
+        },
+        {
+          "orden": 2,
+          "tipo": "SERVICIO",
+          "descripcion": "Servicio Cofares Directo",
+          "sentido": "CARGO",
+          "base": 6.95,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null,
+          "volumen_base_actividad": 409.11
+        },
+        {
+          "orden": 3,
+          "tipo": "SERVICIO",
+          "descripcion": "Servicio Logístico",
+          "sentido": "CARGO",
+          "base": 115,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null
+        },
+        {
+          "orden": 4,
+          "tipo": "DESCUENTO",
+          "descripcion": "Dto. adicional laboratorio",
+          "sentido": "ABONO",
+          "base": 1.44,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null,
+          "base_calculo": 30.86
+        }
+      ],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "Documento 'Rectificada de Condiciones Comerciales'; no requiere conciliación. En Servicio Cofares Directo, 409,11 EUR se conserva como volumen/base de actividad y 6,95 EUR como coste real."
+      ]
+    }
+  ]
+}

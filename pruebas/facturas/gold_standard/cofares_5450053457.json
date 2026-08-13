@@ -1,0 +1,602 @@
+{
+  "pdf_fuente": "COFARES VTO 30.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "5450053457",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "COFARES",
+        "nif": null,
+        "direccion": null
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMÓN, PÍO",
+        "nif": "40901058C",
+        "direccion": "C. SANT LLUC, 34; 43550 ULLDECONA"
+      },
+      "fecha_emision": "31.07.2026",
+      "moneda": null,
+      "bases": [
+        {
+          "descripcion": "4,00 / 0,50",
+          "base": 2048.05,
+          "porcentaje_iva": 4,
+          "iva": 81.92,
+          "porcentaje_recargo_equivalencia": 0.5,
+          "recargo_equivalencia": 10.24,
+          "total": 2140.21
+        },
+        {
+          "descripcion": "10,00 / 1,40",
+          "base": 219.3,
+          "porcentaje_iva": 10,
+          "iva": 21.93,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": 3.07,
+          "total": 244.3
+        },
+        {
+          "descripcion": "21,00 / 0,00",
+          "base": 85.39,
+          "porcentaje_iva": 21,
+          "iva": 17.93,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 103.32
+        },
+        {
+          "descripcion": "21,00 / 5,20",
+          "base": 106.71,
+          "porcentaje_iva": 21,
+          "iva": 22.41,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 5.55,
+          "total": 134.67
+        }
+      ],
+      "impuestos": {
+        "iva_total": 144.19,
+        "recargo_equivalencia_total": 18.86
+      },
+      "totales": {
+        "base_imponible_total": 2459.45,
+        "total_factura": 2622.5
+      },
+      "vencimientos": [
+        {
+          "fecha": "30.08.2026",
+          "importe": 2622.5,
+          "medio_pago": "Domiciliado cobro"
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "1010686313",
+          "fecha": "16.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 170.32,
+          "total": 177.98,
+          "desglose_bases": [
+            170.32
+          ]
+        },
+        {
+          "orden": 2,
+          "numero": "1010691453",
+          "fecha": "16.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 27.21,
+          "total": 28.44,
+          "desglose_bases": [
+            27.21
+          ]
+        },
+        {
+          "orden": 3,
+          "numero": "1010692835",
+          "fecha": "16.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 4.32,
+          "total": 4.52,
+          "desglose_bases": [
+            4.32
+          ]
+        },
+        {
+          "orden": 4,
+          "numero": "1010668357",
+          "fecha": "16.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 49.48,
+          "total": 53.01,
+          "desglose_bases": [
+            43.54,
+            5.94
+          ]
+        },
+        {
+          "orden": 5,
+          "numero": "1010713715",
+          "fecha": "17.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 17.06,
+          "total": 17.83,
+          "desglose_bases": [
+            17.06
+          ]
+        },
+        {
+          "orden": 6,
+          "numero": "1010806091",
+          "fecha": "20.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 23.66,
+          "total": 24.72,
+          "desglose_bases": [
+            23.66
+          ]
+        },
+        {
+          "orden": 7,
+          "numero": "1010814708",
+          "fecha": "20.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 30.52,
+          "total": 31.89,
+          "desglose_bases": [
+            30.52
+          ]
+        },
+        {
+          "orden": 8,
+          "numero": "1010788175",
+          "fecha": "20.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 178.7,
+          "total": 187.01,
+          "desglose_bases": [
+            174.8,
+            3.9
+          ]
+        },
+        {
+          "orden": 9,
+          "numero": "1010815513",
+          "fecha": "21.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 60.7,
+          "total": 67.62,
+          "desglose_bases": [
+            60.7
+          ]
+        },
+        {
+          "orden": 10,
+          "numero": "1010866731",
+          "fecha": "21.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 18.4,
+          "total": 23.22,
+          "desglose_bases": [
+            18.4
+          ]
+        },
+        {
+          "orden": 11,
+          "numero": "1010842015",
+          "fecha": "21.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 69.01,
+          "total": 72.62,
+          "desglose_bases": [
+            66.67,
+            2.34
+          ]
+        },
+        {
+          "orden": 12,
+          "numero": "1010842020",
+          "fecha": "21.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 10.68,
+          "total": 11.16,
+          "desglose_bases": [
+            10.68
+          ]
+        },
+        {
+          "orden": 13,
+          "numero": "1010909954",
+          "fecha": "22.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 3.23,
+          "total": 3.38,
+          "desglose_bases": [
+            3.23
+          ]
+        },
+        {
+          "orden": 14,
+          "numero": "1010884528",
+          "fecha": "22.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 91.2,
+          "total": 95.3,
+          "desglose_bases": [
+            91.2
+          ]
+        },
+        {
+          "orden": 15,
+          "numero": "1010895867",
+          "fecha": "22.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 55.7,
+          "total": 59.93,
+          "desglose_bases": [
+            30.94,
+            24.76
+          ]
+        },
+        {
+          "orden": 16,
+          "numero": "1010962906",
+          "fecha": "23.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 3.23,
+          "total": 3.38,
+          "desglose_bases": [
+            3.23
+          ]
+        },
+        {
+          "orden": 17,
+          "numero": "1010976104",
+          "fecha": "23.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 0.93,
+          "total": 0.97,
+          "desglose_bases": [
+            0.93
+          ]
+        },
+        {
+          "orden": 18,
+          "numero": "1010949281",
+          "fecha": "23.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 13.69,
+          "total": 14.31,
+          "desglose_bases": [
+            13.69
+          ]
+        },
+        {
+          "orden": 19,
+          "numero": "1011025246",
+          "fecha": "24.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 40.77,
+          "total": 43.88,
+          "desglose_bases": [
+            22.33,
+            18.44
+          ]
+        },
+        {
+          "orden": 20,
+          "numero": "1010999617",
+          "fecha": "24.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 46.73,
+          "total": 53.08,
+          "desglose_bases": [
+            27.21,
+            19.52
+          ]
+        },
+        {
+          "orden": 21,
+          "numero": "1010999380",
+          "fecha": "24.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 86.75,
+          "total": 90.66,
+          "desglose_bases": [
+            86.75
+          ]
+        },
+        {
+          "orden": 22,
+          "numero": "7038640610",
+          "fecha": "24.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 5.28,
+          "total": 6.66,
+          "desglose_bases": [
+            5.28
+          ]
+        },
+        {
+          "orden": 23,
+          "numero": "1011058885",
+          "fecha": "26.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 8.91,
+          "total": 9.92,
+          "desglose_bases": [
+            8.91
+          ]
+        },
+        {
+          "orden": 24,
+          "numero": "1011052387",
+          "fecha": "26.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 165.41,
+          "total": 178.21,
+          "desglose_bases": [
+            134.55,
+            9.12,
+            21.74
+          ]
+        },
+        {
+          "orden": 25,
+          "numero": "1011094853",
+          "fecha": "27.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 28.92,
+          "total": 31.33,
+          "desglose_bases": [
+            23.82,
+            5.1
+          ]
+        },
+        {
+          "orden": 26,
+          "numero": "1011064477",
+          "fecha": "27.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 1.6,
+          "total": 1.67,
+          "desglose_bases": [
+            1.6
+          ]
+        },
+        {
+          "orden": 27,
+          "numero": "1011064479",
+          "fecha": "27.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 26.98,
+          "total": 28.19,
+          "desglose_bases": [
+            26.98
+          ]
+        },
+        {
+          "orden": 28,
+          "numero": "1011080055",
+          "fecha": "27.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 51.3,
+          "total": 58.26,
+          "desglose_bases": [
+            14.86,
+            21.98,
+            14.46
+          ]
+        },
+        {
+          "orden": 29,
+          "numero": "1011079200",
+          "fecha": "27.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 32.64,
+          "total": 34.11,
+          "desglose_bases": [
+            32.64
+          ]
+        },
+        {
+          "orden": 30,
+          "numero": "1011073193",
+          "fecha": "27.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 36.03,
+          "total": 40.13,
+          "desglose_bases": [
+            36.03
+          ]
+        },
+        {
+          "orden": 31,
+          "numero": "1011080193",
+          "fecha": "27.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 701.53,
+          "total": 739.11,
+          "desglose_bases": [
+            655.71,
+            26.57,
+            19.25
+          ]
+        },
+        {
+          "orden": 32,
+          "numero": "1011153805",
+          "fecha": "28.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 13.7,
+          "total": 15.26,
+          "desglose_bases": [
+            13.7
+          ]
+        },
+        {
+          "orden": 33,
+          "numero": "1011151043",
+          "fecha": "28.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 89.6,
+          "total": 93.63,
+          "desglose_bases": [
+            89.6
+          ]
+        },
+        {
+          "orden": 34,
+          "numero": "1011164329",
+          "fecha": "28.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 15.27,
+          "total": 16.9,
+          "desglose_bases": [
+            1.64,
+            13.63
+          ]
+        },
+        {
+          "orden": 35,
+          "numero": "1011136053",
+          "fecha": "28.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 96.3,
+          "total": 100.63,
+          "desglose_bases": [
+            96.3
+          ]
+        },
+        {
+          "orden": 36,
+          "numero": "1011188106",
+          "fecha": "29.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 6.4,
+          "total": 6.69,
+          "desglose_bases": [
+            6.4
+          ]
+        },
+        {
+          "orden": 37,
+          "numero": "1011241814",
+          "fecha": "30.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 73.95,
+          "total": 77.29,
+          "desglose_bases": [
+            73.95
+          ]
+        },
+        {
+          "orden": 38,
+          "numero": "1011317245",
+          "fecha": "31.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 61.34,
+          "total": 64.1,
+          "desglose_bases": [
+            61.34
+          ]
+        },
+        {
+          "orden": 39,
+          "numero": "1011293020",
+          "fecha": "31.07.2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "603",
+          "base": 3.98,
+          "total": 5.03,
+          "desglose_bases": [
+            3.98
+          ]
+        }
+      ],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "DEVOLUCION_MERCANCIA",
+          "descripcion": "TOTAL DEVOLUCIONES",
+          "sentido": "ABONO",
+          "base": 47.37,
+          "iva": 4.58,
+          "recargo_equivalencia": 0.84,
+          "importe": 52.79,
+          "desglose_bases": {
+            "superreducida": 19.63,
+            "reducida": 18.44,
+            "normal": 9.3
+          }
+        },
+        {
+          "orden": 2,
+          "tipo": "SERVICIO",
+          "descripcion": "Serv Integral Distribución",
+          "sentido": "CARGO",
+          "base": 82.5,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null
+        },
+        {
+          "orden": 3,
+          "tipo": "SERVICIO",
+          "descripcion": "Domiciliación bancaria",
+          "sentido": "CARGO",
+          "base": 2.89,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": null
+        }
+      ],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "Se conservan los 39 albaranes visibles; las devoluciones y los dos servicios/conceptos operativos quedan separados."
+      ]
+    }
+  ]
+}

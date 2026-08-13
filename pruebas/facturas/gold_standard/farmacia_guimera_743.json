@@ -1,0 +1,65 @@
+{
+  "pdf_fuente": "FARMACIA GUIMERA VTO 29.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "743",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "FARMACIA GUIMERA C.B.",
+        "nif": "E12943437",
+        "direccion": "Plaza parroquial, 11; 12500 VINAROS"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON, PIO",
+        "nif": "40901058C",
+        "direccion": "SANT LLUC, 34; 43550 ULLDECONA (TARRAGONA)"
+      },
+      "fecha_emision": "31-07-2026",
+      "moneda": null,
+      "bases": [
+        {
+          "descripcion": "B4%",
+          "base": 182.32,
+          "porcentaje_iva": 4,
+          "iva": 7.3,
+          "porcentaje_recargo_equivalencia": 0.5,
+          "recargo_equivalencia": 0.91,
+          "total": 190.53
+        },
+        {
+          "descripcion": "B10%",
+          "base": 23.89,
+          "porcentaje_iva": 10,
+          "iva": 2.39,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": 0.33,
+          "total": 26.61
+        }
+      ],
+      "impuestos": {
+        "iva_total": 9.69,
+        "recargo_equivalencia_total": 1.24
+      },
+      "totales": {
+        "base_imponible_total": 206.21,
+        "total_factura": 217.14
+      },
+      "vencimientos": [],
+      "albaranes": [],
+      "movimientos_comerciales": [],
+      "discrepancias": [
+        {
+          "tipo": "ALBARANES_NO_VISIBLES",
+          "descripcion": "No se identifica ningún número de albarán inequívoco en el cuerpo documental.",
+          "importe": null
+        }
+      ],
+      "notas_conciliacion": [
+        "Requiere conciliación por ser mercancía; no se infiere vencimiento ni albarán."
+      ]
+    }
+  ]
+}

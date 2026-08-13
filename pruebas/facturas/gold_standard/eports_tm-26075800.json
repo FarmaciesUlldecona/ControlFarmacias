@@ -1,0 +1,105 @@
+{
+  "pdf_fuente": "EPORTS VTO 5.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "TM-26075800",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "SERVICIOS",
+      "requiere_conciliacion_albaranes": false,
+      "emisor": {
+        "nombre": "E-PORTS AMPLE DE BANDA I INTERNET SL",
+        "nif": "B55688410",
+        "direccion": "Plaça d'Alfons XII, 7 Baixos 1B; 43500 Tortosa; Tarragona; España"
+      },
+      "destinatario": {
+        "nombre": "SALOMON MARQUEZ, S.L.",
+        "nif": "ESB43419084",
+        "direccion": "C SANT LLUC Núm. 34; 43550 ULLDECONA; Tarragona; España"
+      },
+      "fecha_emision": "06/08/26",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "IVA 21%",
+          "base": 81,
+          "porcentaje_iva": 21,
+          "iva": 17.01,
+          "porcentaje_recargo_equivalencia": null,
+          "recargo_equivalencia": 0,
+          "total": 98.01
+        }
+      ],
+      "impuestos": {
+        "iva_total": 17.01,
+        "recargo_equivalencia_total": 0
+      },
+      "totales": {
+        "base_imponible_total": 81,
+        "total_factura": 98.01
+      },
+      "vencimientos": [
+        {
+          "fecha": "06/08/26",
+          "importe": 98.01,
+          "medio_pago": "Recibo Cliente"
+        }
+      ],
+      "albaranes": [],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "SERVICIO",
+          "descripcion": "Ip Fixa Dedicada ePorts",
+          "sentido": "CARGO",
+          "base": 5,
+          "iva": 1.05,
+          "recargo_equivalencia": 0,
+          "importe": 6.05
+        },
+        {
+          "orden": 2,
+          "tipo": "SERVICIO",
+          "descripcion": "ePorts Telefonia Fixa - Aire - 1500 Minuts A Mòbils I Fixes Nacionals + Fixes Internacionals Zona A",
+          "sentido": "CARGO",
+          "base": 15,
+          "iva": 3.15,
+          "recargo_equivalencia": 0,
+          "importe": 18.15
+        },
+        {
+          "orden": 3,
+          "tipo": "SERVICIO",
+          "descripcion": "EMMASCARAMENT NÚM. TRONCAL VODAF.",
+          "sentido": "CARGO",
+          "base": 10,
+          "iva": 2.1,
+          "recargo_equivalencia": 0,
+          "importe": 12.1
+        },
+        {
+          "orden": 4,
+          "tipo": "SERVICIO",
+          "descripcion": "LÍNIA BACKUP FARMÀCIA AMB RADIO",
+          "sentido": "CARGO",
+          "base": 21,
+          "iva": 4.41,
+          "recargo_equivalencia": 0,
+          "importe": 25.41
+        },
+        {
+          "orden": 5,
+          "tipo": "SERVICIO",
+          "descripcion": "Connexió Fibra Òptica Fins 1000Mbps",
+          "sentido": "CARGO",
+          "base": 30,
+          "iva": 6.3,
+          "recargo_equivalencia": 0,
+          "importe": 36.3
+        }
+      ],
+      "discrepancias": [],
+      "notas_conciliacion": []
+    }
+  ]
+}

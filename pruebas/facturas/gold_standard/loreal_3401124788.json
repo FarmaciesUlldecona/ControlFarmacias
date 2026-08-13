@@ -1,0 +1,61 @@
+{
+  "pdf_fuente": "LOREAL VTO 3.8.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "3401124788",
+      "pagina_inicio": 1,
+      "pagina_fin": 3,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "L'OREAL ESPANA S.A.",
+        "nif": "A28050359",
+        "direccion": "Calle Alcalá, 546; MADRID 28027"
+      },
+      "destinatario": {
+        "nombre": "PIO PUIG SALOMON",
+        "nif": "40901058C",
+        "direccion": "Carrer Sant Lluc, 34; 43550 Ulldecona; España"
+      },
+      "fecha_emision": "03/06/2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "SF 21,00 / 5,20",
+          "base": 319.56,
+          "porcentaje_iva": 21,
+          "iva": 67.11,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 16.62,
+          "total": 403.29
+        }
+      ],
+      "impuestos": {
+        "iva_total": 67.11,
+        "recargo_equivalencia_total": 16.62
+      },
+      "totales": {
+        "base_imponible_total": 319.56,
+        "total_factura": 403.29
+      },
+      "vencimientos": [
+        {
+          "fecha": "03/08/2026",
+          "importe": 403.29,
+          "medio_pago": "Domiciliacion bancaria"
+        }
+      ],
+      "albaranes": [],
+      "movimientos_comerciales": [],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "Delivery 504918055 es una referencia de entrega, no un albarán; albaranes queda vacío."
+      ],
+      "referencias_documentales": {
+        "po": "D-003589092",
+        "document_no": "105678096",
+        "delivery": "504918055"
+      }
+    }
+  ]
+}

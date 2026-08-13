@@ -1,0 +1,2756 @@
+{
+  "pdf_fuente": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "08009278",
+      "pagina_inicio": 1,
+      "pagina_fin": 4,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+        "nif": "A50004324",
+        "direccion": "Pol. Ind. Sector 4; 50830 VILLANUEVA DE GÁLLEGO (Zaragoza)"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON PIUS",
+        "nif": "40901058C",
+        "direccion": "CR SANT LLUC 34; 43550 ULLDECONA"
+      },
+      "fecha_emision": "31-07-2026",
+      "moneda": null,
+      "bases": [
+        {
+          "descripcion": "COMPRAS 4%",
+          "base": 2056.33,
+          "porcentaje_iva": 4,
+          "iva": 82.25,
+          "porcentaje_recargo_equivalencia": 0.5,
+          "recargo_equivalencia": 10.28,
+          "total": 2148.86
+        },
+        {
+          "descripcion": "COMPRAS 10%",
+          "base": 1042.8,
+          "porcentaje_iva": 10,
+          "iva": 104.28,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": 14.6,
+          "total": 1161.68
+        },
+        {
+          "descripcion": "COMPRAS 21%",
+          "base": 407.33,
+          "porcentaje_iva": 21,
+          "iva": 85.54,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 21.18,
+          "total": 514.05
+        }
+      ],
+      "impuestos": {
+        "iva_total": 272.07,
+        "recargo_equivalencia_total": 46.06
+      },
+      "totales": {
+        "base_imponible_total": 3506.46,
+        "total_factura": 3824.59
+      },
+      "vencimientos": [
+        {
+          "fecha": "30-09-2026",
+          "importe": 3824.59,
+          "medio_pago": null
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "08C48705",
+          "fecha": "20-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 1.44,
+          "total": 1.51
+        },
+        {
+          "orden": 2,
+          "numero": "08C49208",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 67.11,
+          "total": 70.13
+        },
+        {
+          "orden": 3,
+          "numero": "08C49382",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 15.2,
+          "total": 19.18
+        },
+        {
+          "orden": 4,
+          "numero": "08C49441",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 33.69,
+          "total": 37.53
+        },
+        {
+          "orden": 5,
+          "numero": "08C49472",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 84.74,
+          "total": 91.76
+        },
+        {
+          "orden": 6,
+          "numero": "08C49480",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 63.3,
+          "total": 69.19
+        },
+        {
+          "orden": 7,
+          "numero": "08C50117",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 3.29,
+          "total": 3.44
+        },
+        {
+          "orden": 8,
+          "numero": "08C50121",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.5,
+          "total": 6.13
+        },
+        {
+          "orden": 9,
+          "numero": "08M43103",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 7.54,
+          "total": 7.88
+        },
+        {
+          "orden": 10,
+          "numero": "08M43105",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 20.57,
+          "total": 21.49
+        },
+        {
+          "orden": 11,
+          "numero": "08M43135",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 4.12,
+          "total": 5.2
+        },
+        {
+          "orden": 12,
+          "numero": "08M43177",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 311.08,
+          "total": 325.08
+        },
+        {
+          "orden": 13,
+          "numero": "08C50606",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 16.2,
+          "total": 16.93
+        },
+        {
+          "orden": 14,
+          "numero": "08C50710",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 24.76,
+          "total": 27.59
+        },
+        {
+          "orden": 15,
+          "numero": "08C50769",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 59.7,
+          "total": 62.39
+        },
+        {
+          "orden": 16,
+          "numero": "08C50781",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 85.71,
+          "total": 90.73
+        },
+        {
+          "orden": 17,
+          "numero": "08C51508",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 6.51,
+          "total": 8.22
+        },
+        {
+          "orden": 18,
+          "numero": "08M43781",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 39.21,
+          "total": 43.68
+        },
+        {
+          "orden": 19,
+          "numero": "08M43824",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 9.07,
+          "total": 9.48
+        },
+        {
+          "orden": 20,
+          "numero": "08M43936",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 27.14,
+          "total": 28.37
+        },
+        {
+          "orden": 21,
+          "numero": "08M44116",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 81.02,
+          "total": 89.38
+        },
+        {
+          "orden": 22,
+          "numero": "08M44117",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 20.47,
+          "total": 21.39
+        },
+        {
+          "orden": 23,
+          "numero": "08M44252",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 7.31,
+          "total": 7.64
+        },
+        {
+          "orden": 24,
+          "numero": "08V19934",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.03,
+          "total": 5.26
+        },
+        {
+          "orden": 25,
+          "numero": "08C51976",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.27,
+          "total": 5.87
+        },
+        {
+          "orden": 26,
+          "numero": "08C52067",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.53,
+          "total": 5.78
+        },
+        {
+          "orden": 27,
+          "numero": "08C52165",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 125.09,
+          "total": 135.53
+        },
+        {
+          "orden": 28,
+          "numero": "08C52166",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 41.5,
+          "total": 44.42
+        },
+        {
+          "orden": 29,
+          "numero": "08C52242",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5,
+          "total": 5.23
+        },
+        {
+          "orden": 30,
+          "numero": "08C52342",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 4.03,
+          "total": 4.21
+        },
+        {
+          "orden": 31,
+          "numero": "08C52355",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 1.36,
+          "total": 1.42
+        },
+        {
+          "orden": 32,
+          "numero": "08C52550",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 2.55,
+          "total": 2.66
+        },
+        {
+          "orden": 33,
+          "numero": "08C52709",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 33.85,
+          "total": 37.71
+        },
+        {
+          "orden": 34,
+          "numero": "08M44413",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.41,
+          "total": 6.03
+        },
+        {
+          "orden": 35,
+          "numero": "08M44673",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 20.33,
+          "total": 21.24
+        },
+        {
+          "orden": 36,
+          "numero": "08M44939",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 22.15,
+          "total": 23.15
+        },
+        {
+          "orden": 37,
+          "numero": "08M44944",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 10.65,
+          "total": 11.13
+        },
+        {
+          "orden": 38,
+          "numero": "08M44966",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 1.31,
+          "total": 1.37
+        },
+        {
+          "orden": 39,
+          "numero": "08M45040",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.63,
+          "total": 5.89
+        },
+        {
+          "orden": 40,
+          "numero": "08M45093",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 37.15,
+          "total": 46.88
+        },
+        {
+          "orden": 41,
+          "numero": "08C53187",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 68.37,
+          "total": 76.17
+        },
+        {
+          "orden": 42,
+          "numero": "08C53242",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 20.66,
+          "total": 23.02
+        },
+        {
+          "orden": 43,
+          "numero": "08C53423",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 25.81,
+          "total": 28.31
+        },
+        {
+          "orden": 44,
+          "numero": "08C53430",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 96.87,
+          "total": 103.7
+        },
+        {
+          "orden": 45,
+          "numero": "08M45503",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 2.86,
+          "total": 2.98
+        },
+        {
+          "orden": 46,
+          "numero": "08M45799",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 10.4,
+          "total": 11.3
+        },
+        {
+          "orden": 47,
+          "numero": "08M45802",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 73.08,
+          "total": 76.94
+        },
+        {
+          "orden": 48,
+          "numero": "08M45820",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 20.16,
+          "total": 22.46
+        },
+        {
+          "orden": 49,
+          "numero": "08M45870",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 6.8,
+          "total": 7.1
+        },
+        {
+          "orden": 50,
+          "numero": "08C54303",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 18.99,
+          "total": 21.16
+        },
+        {
+          "orden": 51,
+          "numero": "08C54381",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 21.01,
+          "total": 23.4
+        },
+        {
+          "orden": 52,
+          "numero": "08C54733",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 100.21,
+          "total": 108.64
+        },
+        {
+          "orden": 53,
+          "numero": "08C54745",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 64.23,
+          "total": 71.11
+        },
+        {
+          "orden": 54,
+          "numero": "08C54811",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 7.96,
+          "total": 8.87
+        },
+        {
+          "orden": 55,
+          "numero": "08C54929",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 1.52,
+          "total": 1.59
+        },
+        {
+          "orden": 56,
+          "numero": "08C55079",
+          "fecha": "26-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 15.58,
+          "total": 17.49
+        },
+        {
+          "orden": 57,
+          "numero": "08C55080",
+          "fecha": "26-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 34.51,
+          "total": 38.04
+        },
+        {
+          "orden": 58,
+          "numero": "08C55104",
+          "fecha": "26-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 1.28,
+          "total": 1.34
+        },
+        {
+          "orden": 59,
+          "numero": "08C55145",
+          "fecha": "26-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 2.77,
+          "total": 2.89
+        },
+        {
+          "orden": 60,
+          "numero": "08C55269",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 2.84,
+          "total": 2.96
+        },
+        {
+          "orden": 61,
+          "numero": "08C56226",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 47.31,
+          "total": 52.7
+        },
+        {
+          "orden": 62,
+          "numero": "08C56242",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.81,
+          "total": 7.33
+        },
+        {
+          "orden": 63,
+          "numero": "08M46471",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 24.36,
+          "total": 27.14
+        },
+        {
+          "orden": 64,
+          "numero": "08M46789",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 35.42,
+          "total": 39.19
+        },
+        {
+          "orden": 65,
+          "numero": "08M46791",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 55.62,
+          "total": 58.12
+        },
+        {
+          "orden": 66,
+          "numero": "08M46792",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 22,
+          "total": 24.51
+        },
+        {
+          "orden": 67,
+          "numero": "08C56756",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 18.37,
+          "total": 22.98
+        },
+        {
+          "orden": 68,
+          "numero": "08C57045",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 78.05,
+          "total": 89.13
+        },
+        {
+          "orden": 69,
+          "numero": "08C57053",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 39.7,
+          "total": 42.53
+        },
+        {
+          "orden": 70,
+          "numero": "08C57466",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "COSTO LABORAT.",
+          "base": 136.32,
+          "total": 151.86
+        },
+        {
+          "orden": 71,
+          "numero": "08C57528",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 3.2,
+          "total": 3.35
+        },
+        {
+          "orden": 72,
+          "numero": "08C57584",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 13.34,
+          "total": 16.83
+        },
+        {
+          "orden": 73,
+          "numero": "08C57846",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 2.09,
+          "total": 2.18
+        },
+        {
+          "orden": 74,
+          "numero": "08M47327",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 22.05,
+          "total": 24.57
+        },
+        {
+          "orden": 75,
+          "numero": "08M47374",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 18.26,
+          "total": 20.35
+        },
+        {
+          "orden": 76,
+          "numero": "08M47398",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 3.3,
+          "total": 3.45
+        },
+        {
+          "orden": 77,
+          "numero": "08M47515",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.2,
+          "total": 5.44
+        },
+        {
+          "orden": 78,
+          "numero": "08M47709",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 12.23,
+          "total": 12.93
+        },
+        {
+          "orden": 79,
+          "numero": "08M47711",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 50.13,
+          "total": 52.39
+        },
+        {
+          "orden": 80,
+          "numero": "08C58196",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 2.08,
+          "total": 2.17
+        },
+        {
+          "orden": 81,
+          "numero": "08C58203",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 15.11,
+          "total": 16.22
+        },
+        {
+          "orden": 82,
+          "numero": "08C58331",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 14.42,
+          "total": 18.2
+        },
+        {
+          "orden": 83,
+          "numero": "08C58466",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 50.34,
+          "total": 56.07
+        },
+        {
+          "orden": 84,
+          "numero": "08C58579",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 69.71,
+          "total": 73.43
+        },
+        {
+          "orden": 85,
+          "numero": "08C58584",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 35.91,
+          "total": 40.25
+        },
+        {
+          "orden": 86,
+          "numero": "08C58703",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 1.31,
+          "total": 1.37
+        },
+        {
+          "orden": 87,
+          "numero": "08C59028",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 9.13,
+          "total": 10.17
+        },
+        {
+          "orden": 88,
+          "numero": "08C59253",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 16.79,
+          "total": 17.54
+        },
+        {
+          "orden": 89,
+          "numero": "08M48195",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 51.33,
+          "total": 63.18
+        },
+        {
+          "orden": 90,
+          "numero": "08M48621",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 21.18,
+          "total": 24.42
+        },
+        {
+          "orden": 91,
+          "numero": "08M48622",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 42.23,
+          "total": 44.13
+        },
+        {
+          "orden": 92,
+          "numero": "08C59567",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 4.15,
+          "total": 4.34
+        },
+        {
+          "orden": 93,
+          "numero": "08C59856",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 69.62,
+          "total": 75.87
+        },
+        {
+          "orden": 94,
+          "numero": "08C59860",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 104.81,
+          "total": 114.67
+        },
+        {
+          "orden": 95,
+          "numero": "08C60340",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 4.62,
+          "total": 4.82
+        },
+        {
+          "orden": 96,
+          "numero": "08M48811",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 8.67,
+          "total": 10.94
+        },
+        {
+          "orden": 97,
+          "numero": "08M49102",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 10,
+          "total": 10.45
+        },
+        {
+          "orden": 98,
+          "numero": "08M49288",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 14.88,
+          "total": 15.55
+        },
+        {
+          "orden": 99,
+          "numero": "08M49354",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 2.15,
+          "total": 2.25
+        },
+        {
+          "orden": 100,
+          "numero": "08M49434",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 10.6,
+          "total": 12.63
+        },
+        {
+          "orden": 101,
+          "numero": "08M49438",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 35.48,
+          "total": 39.67
+        },
+        {
+          "orden": 102,
+          "numero": "08M49568",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 8.67,
+          "total": 10.94
+        },
+        {
+          "orden": 103,
+          "numero": "08C60994",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 116.52,
+          "total": 129.36
+        },
+        {
+          "orden": 104,
+          "numero": "08C61248",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 100.39,
+          "total": 107.06
+        },
+        {
+          "orden": 105,
+          "numero": "08C61255",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 48.64,
+          "total": 50.83
+        },
+        {
+          "orden": 106,
+          "numero": "08M49978",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 26.61,
+          "total": 31.35
+        },
+        {
+          "orden": 107,
+          "numero": "08M50060",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 24.64,
+          "total": 25.75
+        },
+        {
+          "orden": 108,
+          "numero": "08M50265",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 65.91,
+          "total": 70.82
+        },
+        {
+          "orden": 109,
+          "numero": "08M50266",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "PLATAFORMA 360",
+          "base": 5.37,
+          "total": 5.61
+        }
+      ],
+      "movimientos_comerciales": [],
+      "discrepancias": [
+        {
+          "tipo": "DIFERENCIA_CONCILIACION",
+          "descripcion": "La suma documental de los 109 albaranes es 3.824,61 y el total fiscal de la factura es 3.824,59.",
+          "importe": 0.02
+        }
+      ],
+      "notas_conciliacion": [
+        "Se conserva la relación completa visible con tipo de pedido, fecha, número, base y total; no se corrige la diferencia documental de 0,02."
+      ]
+    },
+    {
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+        "nif": "A50004324",
+        "direccion": "Pol. Ind. Sector 4; 50830 VILLANUEVA DE GÁLLEGO (Zaragoza)"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON PIUS",
+        "nif": "40901058C",
+        "direccion": "CR SANT LLUC 34; 43550 ULLDECONA"
+      },
+      "fecha_emision": "31-07-2026",
+      "moneda": null,
+      "bases": [
+        {
+          "descripcion": "COMPRAS 4%",
+          "base": 8115,
+          "porcentaje_iva": 4,
+          "iva": 324.6,
+          "porcentaje_recargo_equivalencia": 0.5,
+          "recargo_equivalencia": 40.58,
+          "total": 8480.18
+        },
+        {
+          "descripcion": "COMPRAS 10%",
+          "base": 1058.63,
+          "porcentaje_iva": 10,
+          "iva": 105.86,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": 14.82,
+          "total": 1179.31
+        },
+        {
+          "descripcion": "COMPRAS 21%",
+          "base": 181.5,
+          "porcentaje_iva": 21,
+          "iva": 38.12,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 9.44,
+          "total": 229.06
+        },
+        {
+          "descripcion": "SERVICIOS 21%",
+          "base": 184.3,
+          "porcentaje_iva": 21,
+          "iva": 38.7,
+          "porcentaje_recargo_equivalencia": 0,
+          "recargo_equivalencia": 0,
+          "total": 223
+        }
+      ],
+      "impuestos": {
+        "iva_total": 507.28,
+        "recargo_equivalencia_total": 64.84
+      },
+      "totales": {
+        "base_imponible_total": 9539.43,
+        "total_factura": 10111.55
+      },
+      "vencimientos": [
+        {
+          "fecha": "06-10-2026",
+          "importe": 10111.55,
+          "medio_pago": null
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "08C48679",
+          "fecha": "20-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 5.94,
+          "total": 6.21
+        },
+        {
+          "orden": 2,
+          "numero": "08C48721",
+          "fecha": "20-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 25.72,
+          "total": 28.65
+        },
+        {
+          "orden": 3,
+          "numero": "08C61794",
+          "fecha": "31-07-2026",
+          "sentido": "ABONO",
+          "tipo_pedido": "ABONOS AGRUPADOS",
+          "base": 103.34,
+          "total": 122.27
+        },
+        {
+          "orden": 4,
+          "numero": "08C48737",
+          "fecha": "20-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 20.22,
+          "total": 22.52
+        },
+        {
+          "orden": 5,
+          "numero": "08C61795",
+          "fecha": "31-07-2026",
+          "sentido": "ABONO",
+          "tipo_pedido": "ABONOS AGRUPADOS",
+          "base": 371.4,
+          "total": 414.76
+        },
+        {
+          "orden": 6,
+          "numero": "08C48849",
+          "fecha": "20-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 3.56,
+          "total": 3.72
+        },
+        {
+          "orden": 7,
+          "numero": "08C49209",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 281.59,
+          "total": 297.76
+        },
+        {
+          "orden": 8,
+          "numero": "08C49210",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 13.11,
+          "total": 16.54
+        },
+        {
+          "orden": 9,
+          "numero": "08C49442",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 49.48,
+          "total": 55.12
+        },
+        {
+          "orden": 10,
+          "numero": "08C49481",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 393.75,
+          "total": 414.75
+        },
+        {
+          "orden": 11,
+          "numero": "08C49482",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 3.88,
+          "total": 4.06
+        },
+        {
+          "orden": 12,
+          "numero": "08C49959",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 217.55,
+          "total": 227.34
+        },
+        {
+          "orden": 13,
+          "numero": "08C49991",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 134.61,
+          "total": 140.66
+        },
+        {
+          "orden": 14,
+          "numero": "08C50118",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 7.74,
+          "total": 8.09
+        },
+        {
+          "orden": 15,
+          "numero": "08M42745",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 33.69,
+          "total": 35.21
+        },
+        {
+          "orden": 16,
+          "numero": "08M43093",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 16.21,
+          "total": 20.45
+        },
+        {
+          "orden": 17,
+          "numero": "08M43102",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 40.87,
+          "total": 42.7
+        },
+        {
+          "orden": 18,
+          "numero": "08M43116",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 23.23,
+          "total": 24.28
+        },
+        {
+          "orden": 19,
+          "numero": "08M43182",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 21.01,
+          "total": 23.4
+        },
+        {
+          "orden": 20,
+          "numero": "08M43237",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 4.69,
+          "total": 4.9
+        },
+        {
+          "orden": 21,
+          "numero": "08M43273",
+          "fecha": "21-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 9.65,
+          "total": 10.76
+        },
+        {
+          "orden": 22,
+          "numero": "08C50607",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 7.08,
+          "total": 7.4
+        },
+        {
+          "orden": 23,
+          "numero": "08C50644",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 22.86,
+          "total": 25.47
+        },
+        {
+          "orden": 24,
+          "numero": "08C50673",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 6.05,
+          "total": 6.32
+        },
+        {
+          "orden": 25,
+          "numero": "08C50770",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 6.14,
+          "total": 6.42
+        },
+        {
+          "orden": 26,
+          "numero": "08C50782",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 762.22,
+          "total": 801.56
+        },
+        {
+          "orden": 27,
+          "numero": "08C50793",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 9.73,
+          "total": 11.95
+        },
+        {
+          "orden": 28,
+          "numero": "08C50794",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 20.23,
+          "total": 21.14
+        },
+        {
+          "orden": 29,
+          "numero": "08C51359",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 165.62,
+          "total": 173.07
+        },
+        {
+          "orden": 30,
+          "numero": "08C51375",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 8.16,
+          "total": 8.53
+        },
+        {
+          "orden": 31,
+          "numero": "08C51376",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 34.84,
+          "total": 38.81
+        },
+        {
+          "orden": 32,
+          "numero": "08C51509",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 66.37,
+          "total": 69.35
+        },
+        {
+          "orden": 33,
+          "numero": "08C51510",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 1.26,
+          "total": 1.32
+        },
+        {
+          "orden": 34,
+          "numero": "08C51511",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 1.35,
+          "total": 1.41
+        },
+        {
+          "orden": 35,
+          "numero": "08M43916",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 82.62,
+          "total": 86.33
+        },
+        {
+          "orden": 36,
+          "numero": "08M44118",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 641.87,
+          "total": 670.75
+        },
+        {
+          "orden": 37,
+          "numero": "08M44253",
+          "fecha": "22-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 8.77,
+          "total": 9.16
+        },
+        {
+          "orden": 38,
+          "numero": "08C51973",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 100.52,
+          "total": 108.78
+        },
+        {
+          "orden": 39,
+          "numero": "08C51977",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 9.65,
+          "total": 10.76
+        },
+        {
+          "orden": 40,
+          "numero": "08C52008",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 1.47,
+          "total": 1.54
+        },
+        {
+          "orden": 41,
+          "numero": "08C52167",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 595.96,
+          "total": 623.55
+        },
+        {
+          "orden": 42,
+          "numero": "08C52171",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 10.28,
+          "total": 12.21
+        },
+        {
+          "orden": 43,
+          "numero": "08C52183",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 3.12,
+          "total": 3.26
+        },
+        {
+          "orden": 44,
+          "numero": "08C52239",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 10.2,
+          "total": 10.66
+        },
+        {
+          "orden": 45,
+          "numero": "08C52551",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 26.55,
+          "total": 27.74
+        },
+        {
+          "orden": 46,
+          "numero": "08C52591",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 14.84,
+          "total": 15.5
+        },
+        {
+          "orden": 47,
+          "numero": "08C52785",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 11.93,
+          "total": 12.47
+        },
+        {
+          "orden": 48,
+          "numero": "08M44390",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 26.14,
+          "total": 29.12
+        },
+        {
+          "orden": 49,
+          "numero": "08M44414",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 22.6,
+          "total": 23.61
+        },
+        {
+          "orden": 50,
+          "numero": "08M44492",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 11.34,
+          "total": 14.31
+        },
+        {
+          "orden": 51,
+          "numero": "08M44510",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 96.45,
+          "total": 100.79
+        },
+        {
+          "orden": 52,
+          "numero": "08M44534",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 79.21,
+          "total": 82.78
+        },
+        {
+          "orden": 53,
+          "numero": "08M44945",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 67.59,
+          "total": 70.63
+        },
+        {
+          "orden": 54,
+          "numero": "08M44956",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 69.82,
+          "total": 72.96
+        },
+        {
+          "orden": 55,
+          "numero": "08M45029",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 3.77,
+          "total": 3.94
+        },
+        {
+          "orden": 56,
+          "numero": "08C53188",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 102.84,
+          "total": 117.97
+        },
+        {
+          "orden": 57,
+          "numero": "08C53243",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 35.75,
+          "total": 39.83
+        },
+        {
+          "orden": 58,
+          "numero": "08C53328",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 6.97,
+          "total": 7.77
+        },
+        {
+          "orden": 59,
+          "numero": "08C53431",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 471.94,
+          "total": 494.39
+        },
+        {
+          "orden": 60,
+          "numero": "08C53437",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 12.89,
+          "total": 14.36
+        },
+        {
+          "orden": 61,
+          "numero": "08C53925",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 35.04,
+          "total": 36.62
+        },
+        {
+          "orden": 62,
+          "numero": "08C53956",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 11.18,
+          "total": 14.11
+        },
+        {
+          "orden": 63,
+          "numero": "08C54096",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 34.38,
+          "total": 35.93
+        },
+        {
+          "orden": 64,
+          "numero": "08M45203",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 96.45,
+          "total": 100.79
+        },
+        {
+          "orden": 65,
+          "numero": "08M45335",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 7.93,
+          "total": 8.83
+        },
+        {
+          "orden": 66,
+          "numero": "08M45351",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 130.3,
+          "total": 136.16
+        },
+        {
+          "orden": 67,
+          "numero": "08M45587",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 14.78,
+          "total": 15.44
+        },
+        {
+          "orden": 68,
+          "numero": "08M45800",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 114.76,
+          "total": 120.7
+        },
+        {
+          "orden": 69,
+          "numero": "08M45862",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 19.59,
+          "total": 20.47
+        },
+        {
+          "orden": 70,
+          "numero": "08M45869",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 25.69,
+          "total": 26.85
+        },
+        {
+          "orden": 71,
+          "numero": "08V20022",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 61.85,
+          "total": 64.63
+        },
+        {
+          "orden": 72,
+          "numero": "08C54396",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 6.38,
+          "total": 7.11
+        },
+        {
+          "orden": 73,
+          "numero": "08C54424",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 29.91,
+          "total": 31.26
+        },
+        {
+          "orden": 74,
+          "numero": "08C54458",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 3.08,
+          "total": 3.43
+        },
+        {
+          "orden": 75,
+          "numero": "08C54468",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 15.09,
+          "total": 15.77
+        },
+        {
+          "orden": 76,
+          "numero": "08C54711",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 11.9,
+          "total": 12.44
+        },
+        {
+          "orden": 77,
+          "numero": "08C54734",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 5.31,
+          "total": 6.71
+        },
+        {
+          "orden": 78,
+          "numero": "08C54746",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 364.71,
+          "total": 381.12
+        },
+        {
+          "orden": 79,
+          "numero": "08C54748",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 2.53,
+          "total": 3.19
+        },
+        {
+          "orden": 80,
+          "numero": "08C54749",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 6.38,
+          "total": 6.67
+        },
+        {
+          "orden": 81,
+          "numero": "08C54790",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 21.24,
+          "total": 26.8
+        },
+        {
+          "orden": 82,
+          "numero": "08C54812",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 74.49,
+          "total": 77.84
+        },
+        {
+          "orden": 83,
+          "numero": "08C54930",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 27.99,
+          "total": 30
+        },
+        {
+          "orden": 84,
+          "numero": "08C54980",
+          "fecha": "25-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 6.23,
+          "total": 6.51
+        },
+        {
+          "orden": 85,
+          "numero": "08C55081",
+          "fecha": "26-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 96.75,
+          "total": 101.1
+        },
+        {
+          "orden": 86,
+          "numero": "08C55105",
+          "fecha": "26-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 8.1,
+          "total": 8.46
+        },
+        {
+          "orden": 87,
+          "numero": "08C55146",
+          "fecha": "26-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 13.16,
+          "total": 13.76
+        },
+        {
+          "orden": 88,
+          "numero": "08C55501",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 26.65,
+          "total": 27.85
+        },
+        {
+          "orden": 89,
+          "numero": "08C56243",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 151.57,
+          "total": 163.45
+        },
+        {
+          "orden": 90,
+          "numero": "08C56268",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 7.27,
+          "total": 7.6
+        },
+        {
+          "orden": 91,
+          "numero": "08C56510",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 9.37,
+          "total": 9.79
+        },
+        {
+          "orden": 92,
+          "numero": "08M46474",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 13.14,
+          "total": 14.63
+        },
+        {
+          "orden": 93,
+          "numero": "08M46616",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 47.97,
+          "total": 50.13
+        },
+        {
+          "orden": 94,
+          "numero": "08M46790",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 210.16,
+          "total": 219.62
+        },
+        {
+          "orden": 95,
+          "numero": "08M46802",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 4.42,
+          "total": 4.62
+        },
+        {
+          "orden": 96,
+          "numero": "08M46887",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 7.37,
+          "total": 7.7
+        },
+        {
+          "orden": 97,
+          "numero": "08V20040",
+          "fecha": "27-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 7.28,
+          "total": 7.61
+        },
+        {
+          "orden": 98,
+          "numero": "08C56757",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 52.61,
+          "total": 57.4
+        },
+        {
+          "orden": 99,
+          "numero": "08C56918",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 33.8,
+          "total": 38.34
+        },
+        {
+          "orden": 100,
+          "numero": "08C57017",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 59.44,
+          "total": 62.12
+        },
+        {
+          "orden": 101,
+          "numero": "08C57046",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 204.1,
+          "total": 213.28
+        },
+        {
+          "orden": 102,
+          "numero": "08C57054",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 330.91,
+          "total": 346.49
+        },
+        {
+          "orden": 103,
+          "numero": "08C57057",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 24.74,
+          "total": 27.56
+        },
+        {
+          "orden": 104,
+          "numero": "08C57516",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 14.42,
+          "total": 16.06
+        },
+        {
+          "orden": 105,
+          "numero": "08C57529",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 22.74,
+          "total": 23.76
+        },
+        {
+          "orden": 106,
+          "numero": "08C57582",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 20.69,
+          "total": 23.05
+        },
+        {
+          "orden": 107,
+          "numero": "08C57595",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 1.12,
+          "total": 1.17
+        },
+        {
+          "orden": 108,
+          "numero": "08C57641",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 33.23,
+          "total": 34.73
+        },
+        {
+          "orden": 109,
+          "numero": "08C57847",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 9.43,
+          "total": 9.86
+        },
+        {
+          "orden": 110,
+          "numero": "08M47052",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 4.49,
+          "total": 4.69
+        },
+        {
+          "orden": 111,
+          "numero": "08M47124",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 63.48,
+          "total": 66.34
+        },
+        {
+          "orden": 112,
+          "numero": "08M47162",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 380.16,
+          "total": 397.27
+        },
+        {
+          "orden": 113,
+          "numero": "08M47358",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 29.1,
+          "total": 30.41
+        },
+        {
+          "orden": 114,
+          "numero": "08M47450",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 15.91,
+          "total": 17.72
+        },
+        {
+          "orden": 115,
+          "numero": "08M47463",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 3.18,
+          "total": 3.33
+        },
+        {
+          "orden": 116,
+          "numero": "08M47496",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 45.47,
+          "total": 47.52
+        },
+        {
+          "orden": 117,
+          "numero": "08M47552",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 18.79,
+          "total": 20.93
+        },
+        {
+          "orden": 118,
+          "numero": "08M47713",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 484.96,
+          "total": 506.78
+        },
+        {
+          "orden": 119,
+          "numero": "08M47715",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 4.75,
+          "total": 6
+        },
+        {
+          "orden": 120,
+          "numero": "08C58198",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 47.2,
+          "total": 52.33
+        },
+        {
+          "orden": 121,
+          "numero": "08C58204",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 7.97,
+          "total": 8.88
+        },
+        {
+          "orden": 122,
+          "numero": "08C58332",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 13.62,
+          "total": 15.17
+        },
+        {
+          "orden": 123,
+          "numero": "08C58585",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 164.21,
+          "total": 171.6
+        },
+        {
+          "orden": 124,
+          "numero": "08C59033",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 111.57,
+          "total": 116.59
+        },
+        {
+          "orden": 125,
+          "numero": "08C59254",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 6.1,
+          "total": 6.37
+        },
+        {
+          "orden": 126,
+          "numero": "08M47909",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 385.55,
+          "total": 402.9
+        },
+        {
+          "orden": 127,
+          "numero": "08M47952",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 7.55,
+          "total": 9.53
+        },
+        {
+          "orden": 128,
+          "numero": "08M47976",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 7.28,
+          "total": 7.61
+        },
+        {
+          "orden": 129,
+          "numero": "08M48067",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 62.83,
+          "total": 67.66
+        },
+        {
+          "orden": 130,
+          "numero": "08M48424",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 301.55,
+          "total": 315.12
+        },
+        {
+          "orden": 131,
+          "numero": "08M48623",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 280.94,
+          "total": 294.36
+        },
+        {
+          "orden": 132,
+          "numero": "08M48624",
+          "fecha": "29-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 16.34,
+          "total": 18.81
+        },
+        {
+          "orden": 133,
+          "numero": "08C59568",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 110.61,
+          "total": 120.06
+        },
+        {
+          "orden": 134,
+          "numero": "08C59642",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 24.72,
+          "total": 25.83
+        },
+        {
+          "orden": 135,
+          "numero": "08C59861",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 386.6,
+          "total": 404.75
+        },
+        {
+          "orden": 136,
+          "numero": "08C59870",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 56.47,
+          "total": 63.77
+        },
+        {
+          "orden": 137,
+          "numero": "08C59871",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 24.74,
+          "total": 27.56
+        },
+        {
+          "orden": 138,
+          "numero": "08C60272",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 36.31,
+          "total": 37.94
+        },
+        {
+          "orden": 139,
+          "numero": "08C60437",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 52.64,
+          "total": 58.64
+        },
+        {
+          "orden": 140,
+          "numero": "08M48884",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 24.65,
+          "total": 27.47
+        },
+        {
+          "orden": 141,
+          "numero": "08M49141",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 11,
+          "total": 11.5
+        },
+        {
+          "orden": 142,
+          "numero": "08M49163",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 68.73,
+          "total": 71.82
+        },
+        {
+          "orden": 143,
+          "numero": "08M49305",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 52.29,
+          "total": 58.25
+        },
+        {
+          "orden": 144,
+          "numero": "08M49306",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 60.28,
+          "total": 67.15
+        },
+        {
+          "orden": 145,
+          "numero": "08M49321",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 21.21,
+          "total": 23.63
+        },
+        {
+          "orden": 146,
+          "numero": "08M49439",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 227.17,
+          "total": 237.4
+        },
+        {
+          "orden": 147,
+          "numero": "08M49451",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 108.93,
+          "total": 113.83
+        },
+        {
+          "orden": 148,
+          "numero": "08M49569",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 3.96,
+          "total": 4.14
+        },
+        {
+          "orden": 149,
+          "numero": "08C60910",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 10.83,
+          "total": 13.66
+        },
+        {
+          "orden": 150,
+          "numero": "08C60995",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 360.25,
+          "total": 378.95
+        },
+        {
+          "orden": 151,
+          "numero": "08C61005",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 10.15,
+          "total": 12.81
+        },
+        {
+          "orden": 152,
+          "numero": "08C61053",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 19.33,
+          "total": 20.2
+        },
+        {
+          "orden": 153,
+          "numero": "08C61054",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 19.33,
+          "total": 20.2
+        },
+        {
+          "orden": 154,
+          "numero": "08C61056",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 22.06,
+          "total": 23.05
+        },
+        {
+          "orden": 155,
+          "numero": "08C61080",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 259.42,
+          "total": 271.1
+        },
+        {
+          "orden": 156,
+          "numero": "08C61121",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 5,
+          "total": 6.31
+        },
+        {
+          "orden": 157,
+          "numero": "08C61256",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 531.87,
+          "total": 568.05
+        },
+        {
+          "orden": 158,
+          "numero": "08C61263",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NETOS PLUS",
+          "base": 21.58,
+          "total": 24.78
+        },
+        {
+          "orden": 159,
+          "numero": "08M49775",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 16.65,
+          "total": 21.02
+        },
+        {
+          "orden": 160,
+          "numero": "08M49848",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 101.08,
+          "total": 105.63
+        },
+        {
+          "orden": 161,
+          "numero": "08M50102",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 3.13,
+          "total": 3.28
+        },
+        {
+          "orden": 162,
+          "numero": "08M50267",
+          "fecha": "31-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "NORMAL ACUSTICO",
+          "base": 306.9,
+          "total": 320.71
+        }
+      ],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "RAPPEL",
+          "descripcion": "RAPPEL GenerAH",
+          "sentido": "ABONO",
+          "base": 2310.23,
+          "iva": 92.41,
+          "recargo_equivalencia": 11.55,
+          "importe": 2414.19,
+          "referencia": "08P10623"
+        },
+        {
+          "orden": 2,
+          "tipo": "ABONO_COMERCIAL",
+          "descripcion": "ABONOS CLUBS",
+          "sentido": "ABONO",
+          "base": 788,
+          "iva": 31.52,
+          "recargo_equivalencia": 3.94,
+          "importe": 823.46,
+          "referencia": "08P10588"
+        },
+        {
+          "orden": 3,
+          "tipo": "SERVICIO",
+          "descripcion": "SERVICIO BASICO",
+          "sentido": "CARGO",
+          "base": 26,
+          "iva": 5.46,
+          "recargo_equivalencia": 0,
+          "importe": 31.46
+        },
+        {
+          "orden": 4,
+          "tipo": "SERVICIO",
+          "descripcion": "SERV.PLATAF.360",
+          "sentido": "CARGO",
+          "base": 158.3,
+          "iva": 33.24,
+          "recargo_equivalencia": 0,
+          "importe": 191.54,
+          "referencia": "08Z34777"
+        }
+      ],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "Contiene exactamente 160 albaranes CARGO y 2 albaranes ABONO; los ABONO son 08C61794 y 08C61795. 08P10588, 08P10623 y 08Z34777 son movimientos comerciales y no albaranes conciliables."
+      ]
+    },
+    {
+      "numero_factura": "08009279",
+      "pagina_inicio": 10,
+      "pagina_fin": 11,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+        "nif": "A50004324",
+        "direccion": "Pol. Ind. Sector 4; 50830 VILLANUEVA DE GÁLLEGO (Zaragoza)"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON PIUS",
+        "nif": "40901058C",
+        "direccion": "CR SANT LLUC 34; 43550 ULLDECONA"
+      },
+      "fecha_emision": "31-07-2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "NO ESPECIALIDAD 10%",
+          "base": 117.42,
+          "porcentaje_iva": 10,
+          "iva": 11.74,
+          "porcentaje_recargo_equivalencia": 1.4,
+          "recargo_equivalencia": 1.64,
+          "total": 130.8
+        },
+        {
+          "descripcion": "NO ESPECIALIDAD 21%",
+          "base": 8.09,
+          "porcentaje_iva": 21,
+          "iva": 1.7,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 0.42,
+          "total": 10.21
+        }
+      ],
+      "impuestos": {
+        "iva_total": 13.44,
+        "recargo_equivalencia_total": 2.06
+      },
+      "totales": {
+        "base_imponible_total": 125.51,
+        "total_factura": 141.01
+      },
+      "vencimientos": [
+        {
+          "fecha": "06-11-2026",
+          "importe": 141.01,
+          "medio_pago": null
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "08M44946",
+          "fecha": "23-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "ECOCEUTICS",
+          "base": 30.36,
+          "total": 33.83
+        },
+        {
+          "orden": 2,
+          "numero": "08C53189",
+          "fecha": "24-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "ECOCEUTICS",
+          "base": 14.5,
+          "total": 16.15
+        },
+        {
+          "orden": 3,
+          "numero": "08C57517",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "ECOCEUTICS",
+          "base": 12.15,
+          "total": 13.54
+        },
+        {
+          "orden": 4,
+          "numero": "08M47714",
+          "fecha": "28-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "ECOCEUTICS",
+          "base": 34,
+          "total": 37.88
+        },
+        {
+          "orden": 5,
+          "numero": "08C59869",
+          "fecha": "30-07-2026",
+          "sentido": "CARGO",
+          "tipo_pedido": "ECOCEUTICS",
+          "base": 34.5,
+          "total": 39.63
+        }
+      ],
+      "movimientos_comerciales": [],
+      "discrepancias": [
+        {
+          "tipo": "DIFERENCIA_CONCILIACION",
+          "descripcion": "La suma documental de los 5 albaranes ECOCEUTICS es 141,03 EUR y el total fiscal de la factura es 141,01 EUR.",
+          "importe": 0.02
+        }
+      ],
+      "notas_conciliacion": [
+        "No se corrige la diferencia documental de 0,02 EUR."
+      ],
+      "suma_documental_albaranes": 141.03
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "pdf_fuente": "ECOCEUTICS VTO 29.9.26 PIO.pdf",
+  "facturas": [
+    {
+      "numero_factura": "FR00263826",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "naturaleza_principal": "MERCANCIA",
+      "requiere_conciliacion_albaranes": true,
+      "emisor": {
+        "nombre": "Hygie31 España SLU.",
+        "nif": "B17733601",
+        "direccion": "Av. Diagonal, 472-476 Esc. A 1r 2ª; 08006 BARCELONA"
+      },
+      "destinatario": {
+        "nombre": "PUIG SALOMON, PIO",
+        "nif": "40901058C",
+        "direccion": "SANT LLUC 34; 43550 ULLDECONA; TARRAGONA"
+      },
+      "fecha_emision": "31/07/2026",
+      "moneda": "EUR",
+      "bases": [
+        {
+          "descripcion": "21,00% / RE 5,20%",
+          "base": 89.25,
+          "porcentaje_iva": 21,
+          "iva": 18.74,
+          "porcentaje_recargo_equivalencia": 5.2,
+          "recargo_equivalencia": 4.64,
+          "total": 112.63
+        }
+      ],
+      "impuestos": {
+        "iva_total": 18.74,
+        "recargo_equivalencia_total": 4.64
+      },
+      "totales": {
+        "base_imponible_total": 89.25,
+        "total_factura": 112.63
+      },
+      "vencimientos": [
+        {
+          "fecha": "29-09-2026",
+          "importe": 112.63,
+          "medio_pago": "Domicialiació"
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "numero": "2200656272",
+          "fecha": "03/07/2026",
+          "sentido": "CARGO",
+          "tipo_pedido": null,
+          "base": null,
+          "total": null
+        }
+      ],
+      "movimientos_comerciales": [],
+      "discrepancias": [],
+      "notas_conciliacion": [
+        "El importe individual del albarán es null porque el documento no lo asocia explícitamente."
+      ]
+    }
+  ]
+}
