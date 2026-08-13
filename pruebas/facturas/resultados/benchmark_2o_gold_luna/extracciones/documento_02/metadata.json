@@ -1,0 +1,31 @@
+{
+  "documento": "documento_02",
+  "archivo_original_local": "COFARES VTO 30.8.26 PIO.pdf",
+  "nombre_neutro_enviado": "documento_02.pdf",
+  "paginas": 1,
+  "tamano_bytes": 156315,
+  "sha256_pdf": "e28f2bde78eaa51c9e04827245a15f117dc21c0d583709e9985d07bd2fc5fc52",
+  "modelo_solicitado": "gpt-5.6-luna",
+  "modelo_utilizado": "gpt-5.6-luna",
+  "response_id": "resp_0a22fb0c934a4dd1016a7dfbdf4c0081928d20b50b22ea5689",
+  "estado": "completed",
+  "fecha_hora_utc": "2026-08-13T17:16:34.747939+00:00",
+  "duracion_segundos": 18.613,
+  "version_prompt": "benchmark_2o_gold_luna_0_n_ciego_v1",
+  "reasoning_effort": "none",
+  "max_output_tokens": 16000,
+  "store": false,
+  "sin_reintento": true,
+  "tokens_entrada": 6292,
+  "tokens_entrada_cacheados": 1760,
+  "tokens_salida": 2605,
+  "tokens_razonamiento": 0,
+  "coste_entrada_usd": 0.004708,
+  "coste_salida_usd": 0.01563,
+  "coste_total_usd": 0.020338,
+  "hashes_salidas": {
+    "original.json": "8f706ffc6fc76db9678c94af48852a607665106493aa7601ed348dc9c0e27d3b",
+    "estructurado.json": "c9c60c2f22c10c64b180e6f9a630a5c67605b061c2d04d33bb68f7ec576b9095",
+    "incidencias.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f"
+  }
+}

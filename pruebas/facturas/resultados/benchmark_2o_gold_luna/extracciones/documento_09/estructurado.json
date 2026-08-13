@@ -1,0 +1,1294 @@
+{
+  "metadata": {
+    "documento": "documento_09",
+    "archivo_original_local": "FEDE VTO 15.8.26 PIO.pdf",
+    "nombre_neutro_enviado": "documento_09.pdf",
+    "paginas": 4,
+    "tamano_bytes": 265474,
+    "sha256_pdf": "e9bea97f9a2b384141304c92dfd8f318ee224707d203d823c3830999987b90f3",
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_060170515af67f21016a7dfc29a2f081a1a1f341a1ae0d7aa5",
+    "estado": "completed",
+    "fecha_hora_utc": "2026-08-13T17:17:55.252043+00:00",
+    "duracion_segundos": 24.799,
+    "version_prompt": "benchmark_2o_gold_luna_0_n_ciego_v1",
+    "reasoning_effort": "none",
+    "max_output_tokens": 16000,
+    "store": false,
+    "sin_reintento": true,
+    "tokens_entrada": 14987,
+    "tokens_entrada_cacheados": 1760,
+    "tokens_salida": 4561,
+    "tokens_razonamiento": 0,
+    "coste_entrada_usd": 0.013403,
+    "coste_salida_usd": 0.027366,
+    "coste_total_usd": 0.040769
+  },
+  "facturas": [
+    {
+      "tipo_documento": {
+        "valor": "FACTURA",
+        "evidencias": [
+          {
+            "texto_visible": "Factura",
+            "pagina": 2
+          }
+        ]
+      },
+      "categoria": {
+        "valor": "CUOTA_SERVICIO",
+        "evidencias": [
+          {
+            "texto_visible": "Cuota Mensual Servicios Cooperativos",
+            "pagina": 4
+          }
+        ]
+      },
+      "requiere_conciliacion_albaranes": {
+        "valor": false,
+        "evidencias": []
+      },
+      "pagina_inicio": {
+        "valor": 2,
+        "evidencias": [
+          {
+            "texto_visible": "Pàgina 1 - 1",
+            "pagina": 2
+          }
+        ]
+      },
+      "pagina_fin": {
+        "valor": 2,
+        "evidencias": [
+          {
+            "texto_visible": "LÍQUID FACTURA 19,96",
+            "pagina": 2
+          }
+        ]
+      },
+      "proveedor_nombre": {
+        "valor": "Federació Farmacèutica S.Coop.C.L.",
+        "evidencias": [
+          {
+            "texto_visible": "Federació Farmacèutica S.Coop.C.L.",
+            "pagina": 2
+          }
+        ]
+      },
+      "proveedor_cif": {
+        "valor": "F-08-173395",
+        "evidencias": [
+          {
+            "texto_visible": "C.I.F. F-08-173395",
+            "pagina": 2
+          }
+        ]
+      },
+      "numero_factura": {
+        "valor": "VN2605-0005656",
+        "evidencias": [
+          {
+            "texto_visible": "Factura VN2605-0005656",
+            "pagina": 2
+          }
+        ]
+      },
+      "fecha_factura": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "Data factura 31-07-2026",
+            "pagina": 2
+          }
+        ]
+      },
+      "base_imponible_total": {
+        "valor": 18.78,
+        "evidencias": [
+          {
+            "texto_visible": "Bases imposables ... 18,78",
+            "pagina": 2
+          }
+        ]
+      },
+      "iva_total": {
+        "valor": 0.97,
+        "evidencias": [
+          {
+            "texto_visible": "I.V.A. S/Bases ... 0,97",
+            "pagina": 2
+          }
+        ]
+      },
+      "recargo_equivalencia_total": {
+        "valor": 0.21,
+        "evidencias": [
+          {
+            "texto_visible": "Recàrrec equivalència S/Bases ... 0,21",
+            "pagina": 2
+          }
+        ]
+      },
+      "importe_total": {
+        "valor": 19.96,
+        "evidencias": [
+          {
+            "texto_visible": "LÍQUID FACTURA 19,96",
+            "pagina": 2
+          }
+        ]
+      },
+      "vencimientos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "Venciments",
+                "pagina": 2
+              }
+            ]
+          },
+          "fecha_vencimiento": {
+            "valor": "2026-08-15",
+            "evidencias": [
+              {
+                "texto_visible": "15-08-2026",
+                "pagina": 2
+              }
+            ]
+          },
+          "importe": {
+            "valor": 19.96,
+            "evidencias": [
+              {
+                "texto_visible": "15-08-2026 19,96",
+                "pagina": 2
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "impuestos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "I.V.A. S/Bases",
+                "pagina": 2
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 22.64,
+            "evidencias": [
+              {
+                "texto_visible": "Bases imposables ... 22,64",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": 4.0,
+            "evidencias": [
+              {
+                "texto_visible": "4 0,91",
+                "pagina": 2
+              }
+            ]
+          },
+          "cuota_iva": {
+            "valor": 0.91,
+            "evidencias": [
+              {
+                "texto_visible": "4 0,91",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": 0.5,
+            "evidencias": [
+              {
+                "texto_visible": "0,5 0,11",
+                "pagina": 2
+              }
+            ]
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": 0.11,
+            "evidencias": [
+              {
+                "texto_visible": "0,5 0,11",
+                "pagina": 2
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        },
+        {
+          "orden": {
+            "valor": 2,
+            "evidencias": [
+              {
+                "texto_visible": "I.V.A. S/Bases",
+                "pagina": 2
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": -7.92,
+            "evidencias": [
+              {
+                "texto_visible": "Bases imposables ... -7,92",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": 10.0,
+            "evidencias": [
+              {
+                "texto_visible": "10 -0,79",
+                "pagina": 2
+              }
+            ]
+          },
+          "cuota_iva": {
+            "valor": -0.79,
+            "evidencias": [
+              {
+                "texto_visible": "10 -0,79",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": 1.4,
+            "evidencias": [
+              {
+                "texto_visible": "1,4 -0,11",
+                "pagina": 2
+              }
+            ]
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": -0.11,
+            "evidencias": [
+              {
+                "texto_visible": "1,4 -0,11",
+                "pagina": 2
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        },
+        {
+          "orden": {
+            "valor": 3,
+            "evidencias": [
+              {
+                "texto_visible": "I.V.A. S/Bases",
+                "pagina": 2
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 4.06,
+            "evidencias": [
+              {
+                "texto_visible": "Bases imposables ... 4,06",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": 21.0,
+            "evidencias": [
+              {
+                "texto_visible": "21 0,85",
+                "pagina": 2
+              }
+            ]
+          },
+          "cuota_iva": {
+            "valor": 0.85,
+            "evidencias": [
+              {
+                "texto_visible": "21 0,85",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": 5.2,
+            "evidencias": [
+              {
+                "texto_visible": "5,2 0,21",
+                "pagina": 2
+              }
+            ]
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": 0.21,
+            "evidencias": [
+              {
+                "texto_visible": "5,2 0,21",
+                "pagina": 2
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "24-07-2026 PA 2620-2173388",
+                "pagina": 2
+              }
+            ]
+          },
+          "numero_albaran": {
+            "valor": "2620-2173388",
+            "evidencias": [
+              {
+                "texto_visible": "2620-2173388",
+                "pagina": 2
+              }
+            ]
+          },
+          "fecha_albaran": {
+            "valor": "2026-07-24",
+            "evidencias": [
+              {
+                "texto_visible": "24-07-2026",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_movimiento": {
+            "valor": "P PA",
+            "evidencias": [
+              {
+                "texto_visible": "P PA",
+                "pagina": 2
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_total": {
+            "valor": 3.85,
+            "evidencias": [
+              {
+                "texto_visible": "3,85",
+                "pagina": 2
+              }
+            ]
+          }
+        },
+        {
+          "orden": {
+            "valor": 2,
+            "evidencias": [
+              {
+                "texto_visible": "25-07-2026 P RE 2605-0221864",
+                "pagina": 2
+              }
+            ]
+          },
+          "numero_albaran": {
+            "valor": "2605-0221864",
+            "evidencias": [
+              {
+                "texto_visible": "2605-0221864",
+                "pagina": 2
+              }
+            ]
+          },
+          "fecha_albaran": {
+            "valor": "2026-07-25",
+            "evidencias": [
+              {
+                "texto_visible": "25-07-2026",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_movimiento": {
+            "valor": "P RE",
+            "evidencias": [
+              {
+                "texto_visible": "P RE",
+                "pagina": 2
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_total": {
+            "valor": 19.12,
+            "evidencias": [
+              {
+                "texto_visible": "19,12",
+                "pagina": 2
+              }
+            ]
+          }
+        },
+        {
+          "orden": {
+            "valor": 3,
+            "evidencias": [
+              {
+                "texto_visible": "25-07-2026 P RE 2605-0222046",
+                "pagina": 2
+              }
+            ]
+          },
+          "numero_albaran": {
+            "valor": "2605-0222046",
+            "evidencias": [
+              {
+                "texto_visible": "2605-0222046",
+                "pagina": 2
+              }
+            ]
+          },
+          "fecha_albaran": {
+            "valor": "2026-07-25",
+            "evidencias": [
+              {
+                "texto_visible": "25-07-2026",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_movimiento": {
+            "valor": "P RE",
+            "evidencias": [
+              {
+                "texto_visible": "P RE",
+                "pagina": 2
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_total": {
+            "valor": 3.55,
+            "evidencias": [
+              {
+                "texto_visible": "3,55",
+                "pagina": 2
+              }
+            ]
+          }
+        },
+        {
+          "orden": {
+            "valor": 4,
+            "evidencias": [
+              {
+                "texto_visible": "29-07-2026 P PA 2620-2217350",
+                "pagina": 2
+              }
+            ]
+          },
+          "numero_albaran": {
+            "valor": "2620-2217350",
+            "evidencias": [
+              {
+                "texto_visible": "2620-2217350",
+                "pagina": 2
+              }
+            ]
+          },
+          "fecha_albaran": {
+            "valor": "2026-07-29",
+            "evidencias": [
+              {
+                "texto_visible": "29-07-2026",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_movimiento": {
+            "valor": "P PA",
+            "evidencias": [
+              {
+                "texto_visible": "P PA",
+                "pagina": 2
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_total": {
+            "valor": 15.68,
+            "evidencias": [
+              {
+                "texto_visible": "15,68",
+                "pagina": 2
+              }
+            ]
+          }
+        },
+        {
+          "orden": {
+            "valor": 5,
+            "evidencias": [
+              {
+                "texto_visible": "31-07-2026 P RE 2605-0228056",
+                "pagina": 2
+              }
+            ]
+          },
+          "numero_albaran": {
+            "valor": "2605-0228056",
+            "evidencias": [
+              {
+                "texto_visible": "2605-0228056",
+                "pagina": 2
+              }
+            ]
+          },
+          "fecha_albaran": {
+            "valor": "2026-07-31",
+            "evidencias": [
+              {
+                "texto_visible": "31-07-2026",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_movimiento": {
+            "valor": "P RE",
+            "evidencias": [
+              {
+                "texto_visible": "P RE",
+                "pagina": 2
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_total": {
+            "valor": 0.0,
+            "evidencias": [
+              {
+                "texto_visible": "0,00",
+                "pagina": 2
+              }
+            ]
+          }
+        }
+      ],
+      "ajustes": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "Total abonaments (consultar detalls)",
+                "pagina": 2
+              }
+            ]
+          },
+          "tipo_ajuste": {
+            "valor": "ABONAMIENTO",
+            "evidencias": [
+              {
+                "texto_visible": "Total abonaments (consultar detalls)",
+                "pagina": 2
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": "LACTOFLORA SUERO ORAL 6 SOBRES DUOC",
+            "evidencias": [
+              {
+                "texto_visible": "LACTOFLORA SUERO ORAL 6 SOBRES DUOC",
+                "pagina": 2
+              }
+            ]
+          },
+          "importe": {
+            "valor": -24.52,
+            "evidencias": [
+              {
+                "texto_visible": "-24,52",
+                "pagina": 2
+              }
+            ]
+          },
+          "incluido_en_base": {
+            "valor": true,
+            "evidencias": [
+              {
+                "texto_visible": "Bases imposables ... -7,92",
+                "pagina": 2
+              }
+            ]
+          },
+          "incluido_en_total": {
+            "valor": true,
+            "evidencias": [
+              {
+                "texto_visible": "TOTALS ... 19,96",
+                "pagina": 2
+              }
+            ]
+          }
+        }
+      ],
+      "destinatario": {
+        "id_farmacia": {
+          "valor": "S30213",
+          "evidencias": [
+            {
+              "texto_visible": "Codi S30213",
+              "pagina": 1
+            }
+          ]
+        },
+        "nombre": {
+          "valor": "PUIG SALOMON PIO",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON PIO",
+              "pagina": 2
+            }
+          ]
+        },
+        "cif": {
+          "valor": "40901058C",
+          "evidencias": [
+            {
+              "texto_visible": "CIF 40901058C",
+              "pagina": 2
+            }
+          ]
+        },
+        "metodo_identificacion": {
+          "valor": "Farmàcia 0500 - 050171 - S30213",
+          "evidencias": [
+            {
+              "texto_visible": "Farmàcia 0500 - 050171 - S30213",
+              "pagina": 2
+            }
+          ]
+        }
+      },
+      "fecha_cargo": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_inicio": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_fin": {
+        "valor": null,
+        "evidencias": []
+      },
+      "nota_revision": {
+        "valor": null,
+        "evidencias": []
+      }
+    },
+    {
+      "tipo_documento": {
+        "valor": "FACTURA",
+        "evidencias": [
+          {
+            "texto_visible": "Factura",
+            "pagina": 3
+          }
+        ]
+      },
+      "categoria": {
+        "valor": "SUMINISTRO",
+        "evidencias": [
+          {
+            "texto_visible": "SUPORT TECNOLOGIC - MOVISTAR",
+            "pagina": 3
+          }
+        ]
+      },
+      "requiere_conciliacion_albaranes": {
+        "valor": false,
+        "evidencias": []
+      },
+      "pagina_inicio": {
+        "valor": 3,
+        "evidencias": [
+          {
+            "texto_visible": "Factura SI26-04567",
+            "pagina": 3
+          }
+        ]
+      },
+      "pagina_fin": {
+        "valor": 3,
+        "evidencias": [
+          {
+            "texto_visible": "Total factura 81,07",
+            "pagina": 3
+          }
+        ]
+      },
+      "proveedor_nombre": {
+        "valor": "Federació Farmacèutica S.Coop.C.L.",
+        "evidencias": [
+          {
+            "texto_visible": "Federació Farmacèutica S.Coop.C.L.",
+            "pagina": 3
+          }
+        ]
+      },
+      "proveedor_cif": {
+        "valor": "F-08-173395",
+        "evidencias": [
+          {
+            "texto_visible": "C.I.F. F-08-173395",
+            "pagina": 3
+          }
+        ]
+      },
+      "numero_factura": {
+        "valor": "SI26-04567",
+        "evidencias": [
+          {
+            "texto_visible": "Factura SI26-04567",
+            "pagina": 3
+          }
+        ]
+      },
+      "fecha_factura": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "Data factura 31-07-2026",
+            "pagina": 3
+          }
+        ]
+      },
+      "base_imponible_total": {
+        "valor": 67.0,
+        "evidencias": [
+          {
+            "texto_visible": "Nacional ordinario (sin recargo) 67,00",
+            "pagina": 3
+          }
+        ]
+      },
+      "iva_total": {
+        "valor": 14.07,
+        "evidencias": [
+          {
+            "texto_visible": "Nacional ordinario (sin recargo) ... 14,07",
+            "pagina": 3
+          }
+        ]
+      },
+      "recargo_equivalencia_total": {
+        "valor": null,
+        "evidencias": []
+      },
+      "importe_total": {
+        "valor": 81.07,
+        "evidencias": [
+          {
+            "texto_visible": "Total factura 81,07",
+            "pagina": 3
+          }
+        ]
+      },
+      "vencimientos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "RECIBO DOMICILIADO BANCO 15-08-2026 81,07",
+                "pagina": 3
+              }
+            ]
+          },
+          "fecha_vencimiento": {
+            "valor": "2026-08-15",
+            "evidencias": [
+              {
+                "texto_visible": "15-08-2026",
+                "pagina": 3
+              }
+            ]
+          },
+          "importe": {
+            "valor": 81.07,
+            "evidencias": [
+              {
+                "texto_visible": "15-08-2026 81,07",
+                "pagina": 3
+              }
+            ]
+          },
+          "nota": {
+            "valor": "RECIBO DOMICILIADO BANCO",
+            "evidencias": [
+              {
+                "texto_visible": "RECIBO DOMICILIADO BANCO",
+                "pagina": 3
+              }
+            ]
+          }
+        }
+      ],
+      "impuestos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "Nacional ordinario (sin recargo)",
+                "pagina": 3
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 67.0,
+            "evidencias": [
+              {
+                "texto_visible": "67,00",
+                "pagina": 3
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": 21.0,
+            "evidencias": [
+              {
+                "texto_visible": "21,00",
+                "pagina": 3
+              }
+            ]
+          },
+          "cuota_iva": {
+            "valor": 14.07,
+            "evidencias": [
+              {
+                "texto_visible": "14,07",
+                "pagina": 3
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "nota": {
+            "valor": "Nacional ordinario (sin recargo)",
+            "evidencias": [
+              {
+                "texto_visible": "Nacional ordinario (sin recargo)",
+                "pagina": 3
+              }
+            ]
+          }
+        }
+      ],
+      "albaranes": [],
+      "ajustes": [],
+      "destinatario": {
+        "id_farmacia": {
+          "valor": "S30213",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON PIO (S30213)",
+              "pagina": 3
+            }
+          ]
+        },
+        "nombre": {
+          "valor": "PUIG SALOMON PIO",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON PIO",
+              "pagina": 3
+            }
+          ]
+        },
+        "cif": {
+          "valor": "40901058C",
+          "evidencias": [
+            {
+              "texto_visible": "NIF: 40901058C",
+              "pagina": 3
+            }
+          ]
+        },
+        "metodo_identificacion": {
+          "valor": "0500 - 050171 - S30213",
+          "evidencias": [
+            {
+              "texto_visible": "Farmàcia 0500 - 050171 - S30213",
+              "pagina": 3
+            }
+          ]
+        }
+      },
+      "fecha_cargo": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "Pagats 31-07-2026",
+            "pagina": 3
+          }
+        ]
+      },
+      "periodo_facturacion_inicio": {
+        "valor": "18-05",
+        "evidencias": [
+          {
+            "texto_visible": "FACTURACIO DEL 18-05",
+            "pagina": 3
+          }
+        ]
+      },
+      "periodo_facturacion_fin": {
+        "valor": "17-06",
+        "evidencias": [
+          {
+            "texto_visible": "AL 17-06",
+            "pagina": 3
+          }
+        ]
+      },
+      "nota_revision": {
+        "valor": null,
+        "evidencias": []
+      }
+    },
+    {
+      "tipo_documento": {
+        "valor": "FACTURA",
+        "evidencias": [
+          {
+            "texto_visible": "Factura",
+            "pagina": 4
+          }
+        ]
+      },
+      "categoria": {
+        "valor": "CUOTA_SERVICIO",
+        "evidencias": [
+          {
+            "texto_visible": "Cuota Mensual Servicios Cooperativos",
+            "pagina": 4
+          }
+        ]
+      },
+      "requiere_conciliacion_albaranes": {
+        "valor": false,
+        "evidencias": []
+      },
+      "pagina_inicio": {
+        "valor": 4,
+        "evidencias": [
+          {
+            "texto_visible": "Factura VN26-0016742",
+            "pagina": 4
+          }
+        ]
+      },
+      "pagina_fin": {
+        "valor": 4,
+        "evidencias": [
+          {
+            "texto_visible": "Total factura 308,55",
+            "pagina": 4
+          }
+        ]
+      },
+      "proveedor_nombre": {
+        "valor": "Federació Farmacèutica S.Coop.C.L.",
+        "evidencias": [
+          {
+            "texto_visible": "Federació Farmacèutica S.Coop.C.L.",
+            "pagina": 4
+          }
+        ]
+      },
+      "proveedor_cif": {
+        "valor": "F-08-173395",
+        "evidencias": [
+          {
+            "texto_visible": "C.I.F. F-08-173395",
+            "pagina": 4
+          }
+        ]
+      },
+      "numero_factura": {
+        "valor": "VN26-0016742",
+        "evidencias": [
+          {
+            "texto_visible": "Factura VN26-0016742",
+            "pagina": 4
+          }
+        ]
+      },
+      "fecha_factura": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "Data factura 31-07-2026",
+            "pagina": 4
+          }
+        ]
+      },
+      "base_imponible_total": {
+        "valor": 255.0,
+        "evidencias": [
+          {
+            "texto_visible": "Nacional ordinario (sin recargo) 255,00",
+            "pagina": 4
+          }
+        ]
+      },
+      "iva_total": {
+        "valor": 53.55,
+        "evidencias": [
+          {
+            "texto_visible": "Nacional ordinario (sin recargo) ... 53,55",
+            "pagina": 4
+          }
+        ]
+      },
+      "recargo_equivalencia_total": {
+        "valor": null,
+        "evidencias": []
+      },
+      "importe_total": {
+        "valor": 308.55,
+        "evidencias": [
+          {
+            "texto_visible": "Total factura 308,55",
+            "pagina": 4
+          }
+        ]
+      },
+      "vencimientos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "RECIBO DOMICILIADO BANCO 15-08-2026 308,55",
+                "pagina": 4
+              }
+            ]
+          },
+          "fecha_vencimiento": {
+            "valor": "2026-08-15",
+            "evidencias": [
+              {
+                "texto_visible": "15-08-2026",
+                "pagina": 4
+              }
+            ]
+          },
+          "importe": {
+            "valor": 308.55,
+            "evidencias": [
+              {
+                "texto_visible": "15-08-2026 308,55",
+                "pagina": 4
+              }
+            ]
+          },
+          "nota": {
+            "valor": "RECIBO DOMICILIADO BANCO",
+            "evidencias": [
+              {
+                "texto_visible": "RECIBO DOMICILIADO BANCO",
+                "pagina": 4
+              }
+            ]
+          }
+        }
+      ],
+      "impuestos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "Nacional ordinario (sin recargo)",
+                "pagina": 4
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 255.0,
+            "evidencias": [
+              {
+                "texto_visible": "255,00",
+                "pagina": 4
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": 21.0,
+            "evidencias": [
+              {
+                "texto_visible": "21,00",
+                "pagina": 4
+              }
+            ]
+          },
+          "cuota_iva": {
+            "valor": 53.55,
+            "evidencias": [
+              {
+                "texto_visible": "53,55",
+                "pagina": 4
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "nota": {
+            "valor": "Nacional ordinario (sin recargo)",
+            "evidencias": [
+              {
+                "texto_visible": "Nacional ordinario (sin recargo)",
+                "pagina": 4
+              }
+            ]
+          }
+        }
+      ],
+      "albaranes": [],
+      "ajustes": [],
+      "destinatario": {
+        "id_farmacia": {
+          "valor": "S30213",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON PIO (S30213)",
+              "pagina": 4
+            }
+          ]
+        },
+        "nombre": {
+          "valor": "PUIG SALOMON PIO",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON PIO",
+              "pagina": 4
+            }
+          ]
+        },
+        "cif": {
+          "valor": "40901058C",
+          "evidencias": [
+            {
+              "texto_visible": "NIF: 40901058C",
+              "pagina": 4
+            }
+          ]
+        },
+        "metodo_identificacion": {
+          "valor": "0500 - 050171 - S30213",
+          "evidencias": [
+            {
+              "texto_visible": "Farmàcia 0500 - 050171 - S30213",
+              "pagina": 4
+            }
+          ]
+        }
+      },
+      "fecha_cargo": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "Pagats 31-07-2026",
+            "pagina": 4
+          }
+        ]
+      },
+      "periodo_facturacion_inicio": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_fin": {
+        "valor": null,
+        "evidencias": []
+      },
+      "nota_revision": {
+        "valor": null,
+        "evidencias": []
+      }
+    }
+  ]
+}

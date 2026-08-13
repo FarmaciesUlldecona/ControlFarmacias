@@ -1,0 +1,338 @@
+{
+  "metadata": {
+    "documento": "documento_14",
+    "archivo_original_local": "TOTALCARE VTO 28.8.26 PIO.pdf",
+    "nombre_neutro_enviado": "documento_14.pdf",
+    "paginas": 1,
+    "tamano_bytes": 57950,
+    "sha256_pdf": "0dba035a98997f231cb284010c35bee6f893ba46402af5cc78794be7708e3297",
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_019e3229d834f3a0016a7dfc6ce03881a19d5d95e2901cfae4",
+    "estado": "completed",
+    "fecha_hora_utc": "2026-08-13T17:18:45.099025+00:00",
+    "duracion_segundos": 7.437,
+    "version_prompt": "benchmark_2o_gold_luna_0_n_ciego_v1",
+    "reasoning_effort": "none",
+    "max_output_tokens": 16000,
+    "store": false,
+    "sin_reintento": true,
+    "tokens_entrada": 5263,
+    "tokens_entrada_cacheados": 1760,
+    "tokens_salida": 1063,
+    "tokens_razonamiento": 0,
+    "coste_entrada_usd": 0.003679,
+    "coste_salida_usd": 0.006378,
+    "coste_total_usd": 0.010057
+  },
+  "facturas": [
+    {
+      "tipo_documento": {
+        "valor": "FACTURA",
+        "evidencias": [
+          {
+            "texto_visible": "FACTURA",
+            "pagina": 1
+          }
+        ]
+      },
+      "categoria": {
+        "valor": "MERCANCIA",
+        "evidencias": [
+          {
+            "texto_visible": "Producto",
+            "pagina": 1
+          }
+        ]
+      },
+      "requiere_conciliacion_albaranes": {
+        "valor": true,
+        "evidencias": [
+          {
+            "texto_visible": "Albarán núm.: WEB/20.558",
+            "pagina": 1
+          }
+        ]
+      },
+      "pagina_inicio": {
+        "valor": 1,
+        "evidencias": [
+          {
+            "texto_visible": "Pág. 1",
+            "pagina": 1
+          }
+        ]
+      },
+      "pagina_fin": {
+        "valor": 1,
+        "evidencias": [
+          {
+            "texto_visible": "Pág. 1",
+            "pagina": 1
+          }
+        ]
+      },
+      "proveedor_nombre": {
+        "valor": "TotalCare Europe",
+        "evidencias": [
+          {
+            "texto_visible": "Emite TotalCare Europe",
+            "pagina": 1
+          }
+        ]
+      },
+      "proveedor_cif": {
+        "valor": "B66438722",
+        "evidencias": [
+          {
+            "texto_visible": "CIF: B66438722",
+            "pagina": 1
+          }
+        ]
+      },
+      "numero_factura": {
+        "valor": "G/15.931",
+        "evidencias": [
+          {
+            "texto_visible": "Factura G/15.931",
+            "pagina": 1
+          }
+        ]
+      },
+      "fecha_factura": {
+        "valor": "2026-07-29",
+        "evidencias": [
+          {
+            "texto_visible": "29- 07- 2026",
+            "pagina": 1
+          }
+        ]
+      },
+      "base_imponible_total": {
+        "valor": 252.84,
+        "evidencias": [
+          {
+            "texto_visible": "Base IVA 252,84",
+            "pagina": 1
+          }
+        ]
+      },
+      "iva_total": {
+        "valor": 25.28,
+        "evidencias": [
+          {
+            "texto_visible": "Cuota IVA 25,28",
+            "pagina": 1
+          }
+        ]
+      },
+      "recargo_equivalencia_total": {
+        "valor": 3.54,
+        "evidencias": [
+          {
+            "texto_visible": "Cuota rec. 3,54",
+            "pagina": 1
+          }
+        ]
+      },
+      "importe_total": {
+        "valor": 281.66,
+        "evidencias": [
+          {
+            "texto_visible": "Total factura 281,66€",
+            "pagina": 1
+          }
+        ]
+      },
+      "vencimientos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "Vencimientos",
+                "pagina": 1
+              }
+            ]
+          },
+          "fecha_vencimiento": {
+            "valor": "2026-08-28",
+            "evidencias": [
+              {
+                "texto_visible": "28-08-2026",
+                "pagina": 1
+              }
+            ]
+          },
+          "importe": {
+            "valor": 281.66,
+            "evidencias": [
+              {
+                "texto_visible": "281,66€",
+                "pagina": 1
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "impuestos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "10,00",
+                "pagina": 1
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 252.84,
+            "evidencias": [
+              {
+                "texto_visible": "Base IVA 252,84",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": 10.0,
+            "evidencias": [
+              {
+                "texto_visible": "%IVA 10,00",
+                "pagina": 1
+              }
+            ]
+          },
+          "cuota_iva": {
+            "valor": 25.28,
+            "evidencias": [
+              {
+                "texto_visible": "Cuota IVA 25,28",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": 1.4,
+            "evidencias": [
+              {
+                "texto_visible": "%Rec.Eq. 1,4",
+                "pagina": 1
+              }
+            ]
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": 3.54,
+            "evidencias": [
+              {
+                "texto_visible": "Cuota rec. 3,54",
+                "pagina": 1
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "Albarán núm.: WEB/20.558",
+                "pagina": 1
+              }
+            ]
+          },
+          "numero_albaran": {
+            "valor": "WEB/20.558",
+            "evidencias": [
+              {
+                "texto_visible": "Albarán núm.: WEB/20.558",
+                "pagina": 1
+              }
+            ]
+          },
+          "fecha_albaran": {
+            "valor": null,
+            "evidencias": []
+          },
+          "tipo_movimiento": {
+            "valor": null,
+            "evidencias": []
+          },
+          "descripcion": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe_total": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "ajustes": [],
+      "destinatario": {
+        "id_farmacia": {
+          "valor": null,
+          "evidencias": []
+        },
+        "nombre": {
+          "valor": "PIO PUIG SALOMON",
+          "evidencias": [
+            {
+              "texto_visible": "Cliente PIO PUIG SALOMON",
+              "pagina": 1
+            }
+          ]
+        },
+        "cif": {
+          "valor": "40901058C",
+          "evidencias": [
+            {
+              "texto_visible": "CIF: 40901058C",
+              "pagina": 1
+            }
+          ]
+        },
+        "metodo_identificacion": {
+          "valor": "CIF",
+          "evidencias": [
+            {
+              "texto_visible": "CIF: 40901058C",
+              "pagina": 1
+            }
+          ]
+        }
+      },
+      "fecha_cargo": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_inicio": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_fin": {
+        "valor": null,
+        "evidencias": []
+      },
+      "nota_revision": {
+        "valor": null,
+        "evidencias": []
+      }
+    }
+  ]
+}

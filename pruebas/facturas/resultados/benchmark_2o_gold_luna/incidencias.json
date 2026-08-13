@@ -1,0 +1,22 @@
+[
+  {
+    "tipo": "checkpoint_no_contabilizado",
+    "detalle": "Intento inicial documento_01 HTTP 401 por credencial invalida, sin extraccion, response_id, tokens ni resultado utilizable; repeticion autorizada por Pio tras corregir la credencial. Solo las 14 extracciones validas forman el benchmark; el intento fallido se preserva en checkpoint_401_no_valido."
+  },
+  {
+    "tipo": "nota_metodologica_aprobada",
+    "detalle": "Pipeline original unifactura; adaptador multifaktura minimo, aislado y exclusivo del benchmark para 0..N facturas por PDF, autorizado por Pio antes de Luna, sin conocimiento del gold ni de la cantidad esperada y sin modificar produccion. Pio acepta el benchmark como valido y conforme."
+  },
+  {
+    "tipo": "avisos_serializacion_sdk",
+    "detalle": "El SDK emiti? avisos Pydantic al serializar respuestas parseadas; las 14 respuestas quedaron completed y los hashes fueron verificados."
+  },
+  {
+    "tipo": "desajuste_schema_movimientos",
+    "detalle": "El schema Luna no dispone de movimientos_comerciales; se informan ajustes candidatos y elementos mal clasificados sin reclasificaci?n heur?stica."
+  },
+  {
+    "tipo": "tarifa_congelada_distinta_documentacion_actual",
+    "detalle": "Se conserva el coste calculado por el runner congelado y se a?ade rec?lculo separado con la tarifa oficial consultada post-extracci?n."
+  }
+]

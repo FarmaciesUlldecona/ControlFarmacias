@@ -1,0 +1,960 @@
+{
+  "metadata": {
+    "documento": "documento_01",
+    "archivo_original_local": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+    "nombre_neutro_enviado": "documento_01.pdf",
+    "paginas": 11,
+    "tamano_bytes": 186224,
+    "sha256_pdf": "7b806565a4f09e182c5ec9d75b40b959fd39c4af86da77b7a8cb745c6e1192b2",
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_0e1c720075732425016a7dfbc4b77c819eb6c1bf66a3cf720f",
+    "estado": "completed",
+    "fecha_hora_utc": "2026-08-13T17:16:15.980881+00:00",
+    "duracion_segundos": 28.873,
+    "version_prompt": "benchmark_2o_gold_luna_0_n_ciego_v1",
+    "reasoning_effort": "none",
+    "max_output_tokens": 16000,
+    "store": false,
+    "sin_reintento": true,
+    "tokens_entrada": 43055,
+    "tokens_entrada_cacheados": 0,
+    "tokens_salida": 3312,
+    "tokens_razonamiento": 0,
+    "coste_entrada_usd": 0.043055,
+    "coste_salida_usd": 0.019872,
+    "coste_total_usd": 0.062927
+  },
+  "facturas": [
+    {
+      "tipo_documento": {
+        "valor": "FACTURA",
+        "evidencias": [
+          {
+            "texto_visible": "FACTURA DUPLICADO",
+            "pagina": 1
+          }
+        ]
+      },
+      "categoria": {
+        "valor": null,
+        "evidencias": []
+      },
+      "requiere_conciliacion_albaranes": {
+        "valor": true,
+        "evidencias": [
+          {
+            "texto_visible": "CARGOS ABONOS",
+            "pagina": 2
+          }
+        ]
+      },
+      "pagina_inicio": {
+        "valor": 1,
+        "evidencias": [
+          {
+            "texto_visible": "PAGINA 01 DE 04",
+            "pagina": 1
+          }
+        ]
+      },
+      "pagina_fin": {
+        "valor": 4,
+        "evidencias": [
+          {
+            "texto_visible": "PAGINA 04 DE 04",
+            "pagina": 4
+          }
+        ]
+      },
+      "proveedor_nombre": {
+        "valor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+        "evidencias": [
+          {
+            "texto_visible": "Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+            "pagina": 1
+          }
+        ]
+      },
+      "proveedor_cif": {
+        "valor": "A50004324",
+        "evidencias": [
+          {
+            "texto_visible": "CIF: A50004324",
+            "pagina": 1
+          }
+        ]
+      },
+      "numero_factura": {
+        "valor": "08009278",
+        "evidencias": [
+          {
+            "texto_visible": "08009278",
+            "pagina": 1
+          }
+        ]
+      },
+      "fecha_factura": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "31-07-2026",
+            "pagina": 1
+          }
+        ]
+      },
+      "base_imponible_total": {
+        "valor": 3506.46,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL BASE IMPONIBLE 3.506,46",
+            "pagina": 1
+          }
+        ]
+      },
+      "iva_total": {
+        "valor": 272.07,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL IVAS 272,07",
+            "pagina": 1
+          }
+        ]
+      },
+      "recargo_equivalencia_total": {
+        "valor": 46.06,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL RECARGOS EQUIVALENCIA 46,06",
+            "pagina": 1
+          }
+        ]
+      },
+      "importe_total": {
+        "valor": 3824.59,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL FACTURA 3.824,59",
+            "pagina": 1
+          }
+        ]
+      },
+      "vencimientos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "FECHA VENCIMIENTO 30-09-2026",
+                "pagina": 1
+              }
+            ]
+          },
+          "fecha_vencimiento": {
+            "valor": "2026-09-30",
+            "evidencias": [
+              {
+                "texto_visible": "30-09-2026",
+                "pagina": 1
+              }
+            ]
+          },
+          "importe": {
+            "valor": null,
+            "evidencias": []
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "impuestos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "4 10 21 4 10 21",
+                "pagina": 1
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 2056.33,
+            "evidencias": [
+              {
+                "texto_visible": "TOTAL COMPRAS 2.056,33",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_iva": {
+            "valor": 82.25,
+            "evidencias": [
+              {
+                "texto_visible": "TOTAL COMPRAS 2.056,33 1.042,80 407,33 82,25",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": 10.28,
+            "evidencias": [
+              {
+                "texto_visible": "TOTAL COMPRAS ... 10,28",
+                "pagina": 1
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        },
+        {
+          "orden": {
+            "valor": 2,
+            "evidencias": [
+              {
+                "texto_visible": "4 10 21 4 10 21",
+                "pagina": 1
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 1042.8,
+            "evidencias": [
+              {
+                "texto_visible": "NO ESPECIALIDAD 1.042,80",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_iva": {
+            "valor": 104.28,
+            "evidencias": [
+              {
+                "texto_visible": "NO ESPECIALIDAD ... 104,28",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": 14.6,
+            "evidencias": [
+              {
+                "texto_visible": "NO ESPECIALIDAD ... 14,60",
+                "pagina": 1
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        },
+        {
+          "orden": {
+            "valor": 3,
+            "evidencias": [
+              {
+                "texto_visible": "4 10 21 4 10 21",
+                "pagina": 1
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 407.33,
+            "evidencias": [
+              {
+                "texto_visible": "NO ESPECIALIDAD ... 407,33",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_iva": {
+            "valor": 85.54,
+            "evidencias": [
+              {
+                "texto_visible": "NO ESPECIALIDAD ... 85,54",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": 21.18,
+            "evidencias": [
+              {
+                "texto_visible": "NO ESPECIALIDAD ... 21,18",
+                "pagina": 1
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "albaranes": [],
+      "ajustes": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "DEDUCCION 0,00 0,11-",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_ajuste": {
+            "valor": "DEDUCCION",
+            "evidencias": [
+              {
+                "texto_visible": "DEDUCCION",
+                "pagina": 1
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe": {
+            "valor": -0.11,
+            "evidencias": [
+              {
+                "texto_visible": "0,11-",
+                "pagina": 1
+              }
+            ]
+          },
+          "incluido_en_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "incluido_en_total": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "destinatario": {
+        "id_farmacia": {
+          "valor": "006600",
+          "evidencias": [
+            {
+              "texto_visible": "40901058C 006600",
+              "pagina": 1
+            }
+          ]
+        },
+        "nombre": {
+          "valor": "PUIG SALOMON PIUS",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON PIUS",
+              "pagina": 1
+            }
+          ]
+        },
+        "cif": {
+          "valor": "40901058C",
+          "evidencias": [
+            {
+              "texto_visible": "40901058C 006600",
+              "pagina": 1
+            }
+          ]
+        },
+        "metodo_identificacion": {
+          "valor": "NIF",
+          "evidencias": [
+            {
+              "texto_visible": "NIF",
+              "pagina": 1
+            }
+          ]
+        }
+      },
+      "fecha_cargo": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_inicio": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_fin": {
+        "valor": null,
+        "evidencias": []
+      },
+      "nota_revision": {
+        "valor": null,
+        "evidencias": []
+      }
+    },
+    {
+      "tipo_documento": {
+        "valor": "FACTURA",
+        "evidencias": [
+          {
+            "texto_visible": "FACTURA DUPLICADO",
+            "pagina": 5
+          }
+        ]
+      },
+      "categoria": {
+        "valor": null,
+        "evidencias": []
+      },
+      "requiere_conciliacion_albaranes": {
+        "valor": true,
+        "evidencias": [
+          {
+            "texto_visible": "CARGOS ABONOS",
+            "pagina": 6
+          }
+        ]
+      },
+      "pagina_inicio": {
+        "valor": 5,
+        "evidencias": [
+          {
+            "texto_visible": "PAGINA 01 DE 05",
+            "pagina": 5
+          }
+        ]
+      },
+      "pagina_fin": {
+        "valor": 9,
+        "evidencias": [
+          {
+            "texto_visible": "PAGINA 05 DE 05",
+            "pagina": 9
+          }
+        ]
+      },
+      "proveedor_nombre": {
+        "valor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+        "evidencias": [
+          {
+            "texto_visible": "Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+            "pagina": 5
+          }
+        ]
+      },
+      "proveedor_cif": {
+        "valor": "A50004324",
+        "evidencias": [
+          {
+            "texto_visible": "CIF: A50004324",
+            "pagina": 5
+          }
+        ]
+      },
+      "numero_factura": {
+        "valor": "08009277",
+        "evidencias": [
+          {
+            "texto_visible": "08009277",
+            "pagina": 5
+          }
+        ]
+      },
+      "fecha_factura": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "31-07-2026",
+            "pagina": 5
+          }
+        ]
+      },
+      "base_imponible_total": {
+        "valor": 9539.43,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL BASE IMPONIBLE 9.539,43",
+            "pagina": 5
+          }
+        ]
+      },
+      "iva_total": {
+        "valor": 507.28,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL IVAS 507,28",
+            "pagina": 5
+          }
+        ]
+      },
+      "recargo_equivalencia_total": {
+        "valor": 64.84,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL RECARGOS EQUIVALENCIA 64,84",
+            "pagina": 5
+          }
+        ]
+      },
+      "importe_total": {
+        "valor": 10111.55,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL FACTURA 10.111,55",
+            "pagina": 5
+          }
+        ]
+      },
+      "vencimientos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "FECHA VENCIMIENTO 06-10-2026",
+                "pagina": 5
+              }
+            ]
+          },
+          "fecha_vencimiento": {
+            "valor": "2026-10-06",
+            "evidencias": [
+              {
+                "texto_visible": "06-10-2026",
+                "pagina": 5
+              }
+            ]
+          },
+          "importe": {
+            "valor": null,
+            "evidencias": []
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "impuestos": [],
+      "albaranes": [],
+      "ajustes": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "RAPPEL GenerAH 2.310,23-",
+                "pagina": 5
+              }
+            ]
+          },
+          "tipo_ajuste": {
+            "valor": "RAPPEL",
+            "evidencias": [
+              {
+                "texto_visible": "RAPPEL GenerAH",
+                "pagina": 5
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": "GenerAH",
+            "evidencias": [
+              {
+                "texto_visible": "RAPPEL GenerAH",
+                "pagina": 5
+              }
+            ]
+          },
+          "importe": {
+            "valor": -2310.23,
+            "evidencias": [
+              {
+                "texto_visible": "2.310,23-",
+                "pagina": 5
+              }
+            ]
+          },
+          "incluido_en_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "incluido_en_total": {
+            "valor": null,
+            "evidencias": []
+          }
+        },
+        {
+          "orden": {
+            "valor": 2,
+            "evidencias": [
+              {
+                "texto_visible": "ABONOS CLUBS 788,00-",
+                "pagina": 5
+              }
+            ]
+          },
+          "tipo_ajuste": {
+            "valor": "ABONOS",
+            "evidencias": [
+              {
+                "texto_visible": "ABONOS CLUBS",
+                "pagina": 5
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": "CLUBS",
+            "evidencias": [
+              {
+                "texto_visible": "ABONOS CLUBS",
+                "pagina": 5
+              }
+            ]
+          },
+          "importe": {
+            "valor": -788.0,
+            "evidencias": [
+              {
+                "texto_visible": "788,00-",
+                "pagina": 5
+              }
+            ]
+          },
+          "incluido_en_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "incluido_en_total": {
+            "valor": null,
+            "evidencias": []
+          }
+        },
+        {
+          "orden": {
+            "valor": 3,
+            "evidencias": [
+              {
+                "texto_visible": "DEDUCCION 23,65- 4,98-",
+                "pagina": 5
+              }
+            ]
+          },
+          "tipo_ajuste": {
+            "valor": "DEDUCCION",
+            "evidencias": [
+              {
+                "texto_visible": "DEDUCCION",
+                "pagina": 5
+              }
+            ]
+          },
+          "descripcion": {
+            "valor": null,
+            "evidencias": []
+          },
+          "importe": {
+            "valor": -23.65,
+            "evidencias": [
+              {
+                "texto_visible": "23,65-",
+                "pagina": 5
+              }
+            ]
+          },
+          "incluido_en_base": {
+            "valor": null,
+            "evidencias": []
+          },
+          "incluido_en_total": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "destinatario": {
+        "id_farmacia": {
+          "valor": "006600",
+          "evidencias": [
+            {
+              "texto_visible": "40901058C 006600",
+              "pagina": 5
+            }
+          ]
+        },
+        "nombre": {
+          "valor": "PUIG SALOMON PIUS",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON PIUS",
+              "pagina": 5
+            }
+          ]
+        },
+        "cif": {
+          "valor": "40901058C",
+          "evidencias": [
+            {
+              "texto_visible": "40901058C 006600",
+              "pagina": 5
+            }
+          ]
+        },
+        "metodo_identificacion": {
+          "valor": "NIF",
+          "evidencias": [
+            {
+              "texto_visible": "NIF",
+              "pagina": 5
+            }
+          ]
+        }
+      },
+      "fecha_cargo": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_inicio": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_fin": {
+        "valor": null,
+        "evidencias": []
+      },
+      "nota_revision": {
+        "valor": null,
+        "evidencias": []
+      }
+    },
+    {
+      "tipo_documento": {
+        "valor": "FACTURA",
+        "evidencias": [
+          {
+            "texto_visible": "FACTURA DUPLICADO",
+            "pagina": 10
+          }
+        ]
+      },
+      "categoria": {
+        "valor": null,
+        "evidencias": []
+      },
+      "requiere_conciliacion_albaranes": {
+        "valor": true,
+        "evidencias": [
+          {
+            "texto_visible": "CARGOS ABONOS",
+            "pagina": 11
+          }
+        ]
+      },
+      "pagina_inicio": {
+        "valor": 10,
+        "evidencias": [
+          {
+            "texto_visible": "PAGINA 01 DE 02",
+            "pagina": 10
+          }
+        ]
+      },
+      "pagina_fin": {
+        "valor": 11,
+        "evidencias": [
+          {
+            "texto_visible": "PAGINA 02 DE 02",
+            "pagina": 11
+          }
+        ]
+      },
+      "proveedor_nombre": {
+        "valor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+        "evidencias": [
+          {
+            "texto_visible": "Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+            "pagina": 10
+          }
+        ]
+      },
+      "proveedor_cif": {
+        "valor": "A50004324",
+        "evidencias": [
+          {
+            "texto_visible": "CIF: A50004324",
+            "pagina": 10
+          }
+        ]
+      },
+      "numero_factura": {
+        "valor": "08009279",
+        "evidencias": [
+          {
+            "texto_visible": "08009279",
+            "pagina": 10
+          }
+        ]
+      },
+      "fecha_factura": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "31-07-2026",
+            "pagina": 10
+          }
+        ]
+      },
+      "base_imponible_total": {
+        "valor": 125.51,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL BASE IMPONIBLE 125,51",
+            "pagina": 10
+          }
+        ]
+      },
+      "iva_total": {
+        "valor": 13.44,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL IVAS 13,44",
+            "pagina": 10
+          }
+        ]
+      },
+      "recargo_equivalencia_total": {
+        "valor": 2.06,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL RECARGOS EQUIVALENCIA 2,06",
+            "pagina": 10
+          }
+        ]
+      },
+      "importe_total": {
+        "valor": 141.01,
+        "evidencias": [
+          {
+            "texto_visible": "TOTAL FACTURA 141,01",
+            "pagina": 10
+          }
+        ]
+      },
+      "vencimientos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "FECHA VENCIMIENTO 06-11-2026",
+                "pagina": 10
+              }
+            ]
+          },
+          "fecha_vencimiento": {
+            "valor": "2026-11-06",
+            "evidencias": [
+              {
+                "texto_visible": "06-11-2026",
+                "pagina": 10
+              }
+            ]
+          },
+          "importe": {
+            "valor": null,
+            "evidencias": []
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "impuestos": [],
+      "albaranes": [],
+      "ajustes": [],
+      "destinatario": {
+        "id_farmacia": {
+          "valor": "006600",
+          "evidencias": [
+            {
+              "texto_visible": "40901058C 006600",
+              "pagina": 10
+            }
+          ]
+        },
+        "nombre": {
+          "valor": "PUIG SALOMON PIUS",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON PIUS",
+              "pagina": 10
+            }
+          ]
+        },
+        "cif": {
+          "valor": "40901058C",
+          "evidencias": [
+            {
+              "texto_visible": "40901058C 006600",
+              "pagina": 10
+            }
+          ]
+        },
+        "metodo_identificacion": {
+          "valor": "NIF",
+          "evidencias": [
+            {
+              "texto_visible": "NIF",
+              "pagina": 10
+            }
+          ]
+        }
+      },
+      "fecha_cargo": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_inicio": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_fin": {
+        "valor": null,
+        "evidencias": []
+      },
+      "nota_revision": {
+        "valor": null,
+        "evidencias": []
+      }
+    }
+  ]
+}

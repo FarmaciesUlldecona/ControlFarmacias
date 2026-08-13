@@ -1,0 +1,282 @@
+{
+  "metadata": {
+    "documento": "documento_04",
+    "archivo_original_local": "ECOCEUTICS MENUSALITAT AGOST PIO.pdf",
+    "nombre_neutro_enviado": "documento_04.pdf",
+    "paginas": 1,
+    "tamano_bytes": 107311,
+    "sha256_pdf": "0d52227df94514838af7fb0e9e244caf622d3ffb8279429dd15267bd86386b7f",
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_031ad57d9c20c386016a7dfbfe32588192b114cbaf1de14e27",
+    "estado": "completed",
+    "fecha_hora_utc": "2026-08-13T17:16:55.440888+00:00",
+    "duracion_segundos": 8.664,
+    "version_prompt": "benchmark_2o_gold_luna_0_n_ciego_v1",
+    "reasoning_effort": "none",
+    "max_output_tokens": 16000,
+    "store": false,
+    "sin_reintento": true,
+    "tokens_entrada": 5080,
+    "tokens_entrada_cacheados": 1760,
+    "tokens_salida": 859,
+    "tokens_razonamiento": 0,
+    "coste_entrada_usd": 0.003496,
+    "coste_salida_usd": 0.005154,
+    "coste_total_usd": 0.00865
+  },
+  "facturas": [
+    {
+      "tipo_documento": {
+        "valor": "FACTURA",
+        "evidencias": [
+          {
+            "texto_visible": "Factura/",
+            "pagina": 1
+          }
+        ]
+      },
+      "categoria": {
+        "valor": "CUOTA_SERVICIO",
+        "evidencias": [
+          {
+            "texto_visible": "QUOTA READY",
+            "pagina": 1
+          }
+        ]
+      },
+      "requiere_conciliacion_albaranes": {
+        "valor": false,
+        "evidencias": []
+      },
+      "pagina_inicio": {
+        "valor": 1,
+        "evidencias": [
+          {
+            "texto_visible": "Full Núm. 1/1",
+            "pagina": 1
+          }
+        ]
+      },
+      "pagina_fin": {
+        "valor": 1,
+        "evidencias": [
+          {
+            "texto_visible": "Full Núm. 1/1",
+            "pagina": 1
+          }
+        ]
+      },
+      "proveedor_nombre": {
+        "valor": "Hygie31 España SLU.",
+        "evidencias": [
+          {
+            "texto_visible": "Hygie31 España SLU.",
+            "pagina": 1
+          }
+        ]
+      },
+      "proveedor_cif": {
+        "valor": "B17733601",
+        "evidencias": [
+          {
+            "texto_visible": "B17733601",
+            "pagina": 1
+          }
+        ]
+      },
+      "numero_factura": {
+        "valor": "FR00263663",
+        "evidencias": [
+          {
+            "texto_visible": "Número de fra. FR00263663",
+            "pagina": 1
+          }
+        ]
+      },
+      "fecha_factura": {
+        "valor": "2026-07-31",
+        "evidencias": [
+          {
+            "texto_visible": "Data factura 31/07/2026",
+            "pagina": 1
+          }
+        ]
+      },
+      "base_imponible_total": {
+        "valor": 339.0,
+        "evidencias": [
+          {
+            "texto_visible": "339,00€",
+            "pagina": 1
+          }
+        ]
+      },
+      "iva_total": {
+        "valor": 71.19,
+        "evidencias": [
+          {
+            "texto_visible": "71,19€",
+            "pagina": 1
+          }
+        ]
+      },
+      "recargo_equivalencia_total": {
+        "valor": null,
+        "evidencias": []
+      },
+      "importe_total": {
+        "valor": 410.19,
+        "evidencias": [
+          {
+            "texto_visible": "410,19€",
+            "pagina": 1
+          }
+        ]
+      },
+      "vencimientos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "01-08-2026",
+                "pagina": 1
+              }
+            ]
+          },
+          "fecha_vencimiento": {
+            "valor": "2026-08-01",
+            "evidencias": [
+              {
+                "texto_visible": "01-08-2026",
+                "pagina": 1
+              }
+            ]
+          },
+          "importe": {
+            "valor": 410.19,
+            "evidencias": [
+              {
+                "texto_visible": "410,19",
+                "pagina": 1
+              }
+            ]
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "impuestos": [
+        {
+          "orden": {
+            "valor": 1,
+            "evidencias": [
+              {
+                "texto_visible": "21,00% 71,19€",
+                "pagina": 1
+              }
+            ]
+          },
+          "base_imponible": {
+            "valor": 339.0,
+            "evidencias": [
+              {
+                "texto_visible": "339,00€",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_iva": {
+            "valor": 21.0,
+            "evidencias": [
+              {
+                "texto_visible": "21,00%",
+                "pagina": 1
+              }
+            ]
+          },
+          "cuota_iva": {
+            "valor": 71.19,
+            "evidencias": [
+              {
+                "texto_visible": "71,19€",
+                "pagina": 1
+              }
+            ]
+          },
+          "tipo_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "cuota_recargo_equivalencia": {
+            "valor": null,
+            "evidencias": []
+          },
+          "nota": {
+            "valor": null,
+            "evidencias": []
+          }
+        }
+      ],
+      "albaranes": [],
+      "ajustes": [],
+      "destinatario": {
+        "id_farmacia": {
+          "valor": "430340",
+          "evidencias": [
+            {
+              "texto_visible": "Client 430340",
+              "pagina": 1
+            }
+          ]
+        },
+        "nombre": {
+          "valor": "PUIG SALOMON, PIO",
+          "evidencias": [
+            {
+              "texto_visible": "PUIG SALOMON, PIO",
+              "pagina": 1
+            }
+          ]
+        },
+        "cif": {
+          "valor": "40901058C",
+          "evidencias": [
+            {
+              "texto_visible": "N.I.F. 40901058C",
+              "pagina": 1
+            }
+          ]
+        },
+        "metodo_identificacion": {
+          "valor": "N.I.F.",
+          "evidencias": [
+            {
+              "texto_visible": "N.I.F.",
+              "pagina": 1
+            }
+          ]
+        }
+      },
+      "fecha_cargo": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_inicio": {
+        "valor": null,
+        "evidencias": []
+      },
+      "periodo_facturacion_fin": {
+        "valor": null,
+        "evidencias": []
+      },
+      "nota_revision": {
+        "valor": null,
+        "evidencias": []
+      }
+    }
+  ]
+}

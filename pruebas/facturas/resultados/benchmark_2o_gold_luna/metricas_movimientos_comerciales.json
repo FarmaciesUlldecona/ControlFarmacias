@@ -1,0 +1,245 @@
+{
+  "agregado": {
+    "esperados": 25,
+    "ajustes_detectados_candidatos": 11,
+    "coincidencias_estrictas": 0,
+    "coincidencias_por_magnitud_informativas": 1,
+    "mal_clasificados_como_albaran": 2
+  },
+  "por_factura": [
+    {
+      "documento": "documento_01",
+      "numero_factura": "08009278",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 1,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_01",
+      "numero_factura": "08009277",
+      "esperados": 4,
+      "ajustes_detectados_candidatos": 3,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_01",
+      "numero_factura": "08009279",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_02",
+      "numero_factura": "5450053457",
+      "esperados": 3,
+      "ajustes_detectados_candidatos": 2,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_03",
+      "numero_factura": "5460017198",
+      "esperados": 4,
+      "ajustes_detectados_candidatos": 1,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_04",
+      "numero_factura": "FR00263663",
+      "esperados": 1,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_05",
+      "numero_factura": "FR00263826",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_06",
+      "numero_factura": "TM-26075800",
+      "esperados": 5,
+      "ajustes_detectados_candidatos": 1,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_07",
+      "numero_factura": "624",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 2,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_08",
+      "numero_factura": "743",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_09",
+      "numero_factura": "VN2605-0005656",
+      "esperados": 3,
+      "ajustes_detectados_candidatos": 1,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 1,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [
+        {
+          "gold": 1,
+          "ajuste": 1,
+          "tipo_gold": "DEVOLUCION_MERCANCIA",
+          "tipo_ajuste": "ABONAMIENTO"
+        }
+      ],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_09",
+      "numero_factura": "SI26-04567",
+      "esperados": 1,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_09",
+      "numero_factura": "VN26-0016742",
+      "esperados": 1,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_10",
+      "numero_factura": "0563820041",
+      "esperados": 3,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [
+        {
+          "orden": 1,
+          "tipo": "DEVOLUCION_MERCANCIA",
+          "valor_en_albaranes": "ABO/DEVO"
+        },
+        {
+          "orden": 2,
+          "tipo": "CONDICION_COMERCIAL",
+          "valor_en_albaranes": "APROAFA"
+        }
+      ],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_11",
+      "numero_factura": "5011640669",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_12",
+      "numero_factura": "3401124788",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_13",
+      "numero_factura": "003463FV26",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    },
+    {
+      "documento": "documento_14",
+      "numero_factura": "G/15.931",
+      "esperados": 0,
+      "ajustes_detectados_candidatos": 0,
+      "coincidencias_estrictas_tipo_importe_firmado": 0,
+      "coincidencias_por_magnitud_informativas": 0,
+      "movimientos_mal_clasificados_como_albaran": [],
+      "detalle_estricto": [],
+      "detalle_magnitud": [],
+      "nota": "El schema de extracci?n no contiene movimientos_comerciales; ajustes se informa como representaci?n candidata sin reclasificaci?n heur?stica."
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "modelo": "gpt-5.6-luna",
+  "estimacion_previa_prudente_usd": 1.694,
+  "limite_usd": 2.0,
+  "coste_total_registrado_tarifa_congelada_usd": 0.27615,
+  "coste_medio_registrado_por_pdf_usd": 0.019725,
+  "coste_recalculado_tarifa_oficial_2026_08_13_usd": 0.05523,
+  "coste_medio_recalculado_por_pdf_usd": 0.003945,
+  "tarifa_congelada_runner_por_millon": {
+    "entrada": 1.0,
+    "cacheada": 0.1,
+    "salida": 6.0
+  },
+  "tarifa_oficial_consultada_por_millon": {
+    "entrada": 0.2,
+    "cacheada": 0.02,
+    "salida": 1.2
+  },
+  "tokens": {
+    "entrada": 134106,
+    "entrada_cacheados": 22880,
+    "salida": 27106,
+    "razonamiento": 0
+  },
+  "por_pdf": [
+    {
+      "documento": "documento_01",
+      "coste_registrado_usd": 0.062927,
+      "tokens_entrada": 43055,
+      "tokens_cacheados": 0,
+      "tokens_salida": 3312,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_02",
+      "coste_registrado_usd": 0.020338,
+      "tokens_entrada": 6292,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 2605,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_03",
+      "coste_registrado_usd": 0.016244,
+      "tokens_entrada": 5486,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 2057,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_04",
+      "coste_registrado_usd": 0.00865,
+      "tokens_entrada": 5080,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 859,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_05",
+      "coste_registrado_usd": 0.010296,
+      "tokens_entrada": 5148,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 1122,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_06",
+      "coste_registrado_usd": 0.009628,
+      "tokens_entrada": 5158,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 1009,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_07",
+      "coste_registrado_usd": 0.011899,
+      "tokens_entrada": 4735,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 1458,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_08",
+      "coste_registrado_usd": 0.009655,
+      "tokens_entrada": 4735,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 1084,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_09",
+      "coste_registrado_usd": 0.040769,
+      "tokens_entrada": 14987,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 4561,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_10",
+      "coste_registrado_usd": 0.03204,
+      "tokens_entrada": 8556,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 4178,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_11",
+      "coste_registrado_usd": 0.011795,
+      "tokens_entrada": 5591,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 1298,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_12",
+      "coste_registrado_usd": 0.020325,
+      "tokens_entrada": 14811,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 1183,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_13",
+      "coste_registrado_usd": 0.011527,
+      "tokens_entrada": 5209,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 1317,
+      "tokens_razonamiento": 0
+    },
+    {
+      "documento": "documento_14",
+      "coste_registrado_usd": 0.010057,
+      "tokens_entrada": 5263,
+      "tokens_cacheados": 1760,
+      "tokens_salida": 1063,
+      "tokens_razonamiento": 0
+    }
+  ]
+}
