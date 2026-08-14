@@ -1,0 +1,146 @@
+{
+  "total": 5,
+  "nota": "Inventados según la clave exacta común; los cinco tienen contraparte documental estructural demostrada.",
+  "registros": [
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN2605-0005656",
+      "valor_B": "2620-2173388",
+      "registro_B": {
+        "orden": 1,
+        "fecha": "24-07-2026",
+        "numero": "2620-2173388",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "PA",
+        "importe_base": null,
+        "importe_total": 3.85
+      },
+      "realidad_gold_documental": {
+        "numero": "P PA 2620-2173388",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 3.85,
+        "importe_total": null
+      },
+      "estado_evaluador": "inventado_por_clave_numero_no_coincidente",
+      "causa_probable_categoria": "lectura incorrecta",
+      "evidencia_demostrada": "Misma página/factura, orden, fecha e importe; B separa PA/RE como tipo_pedido y omite el prefijo documental inicial P y el componente PA/RE del número.",
+      "inferencia": "Error de lectura/representación del identificador compuesto; no hay evidencia de que el número base haya sido fabricado."
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN2605-0005656",
+      "valor_B": "2605-0221864",
+      "registro_B": {
+        "orden": 2,
+        "fecha": "25-07-2026",
+        "numero": "2605-0221864",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "RE",
+        "importe_base": null,
+        "importe_total": 19.12
+      },
+      "realidad_gold_documental": {
+        "numero": "P RE 2605-0221864",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 19.12,
+        "importe_total": null
+      },
+      "estado_evaluador": "inventado_por_clave_numero_no_coincidente",
+      "causa_probable_categoria": "lectura incorrecta",
+      "evidencia_demostrada": "Misma página/factura, orden, fecha e importe; B separa PA/RE como tipo_pedido y omite el prefijo documental inicial P y el componente PA/RE del número.",
+      "inferencia": "Error de lectura/representación del identificador compuesto; no hay evidencia de que el número base haya sido fabricado."
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN2605-0005656",
+      "valor_B": "2605-0222046",
+      "registro_B": {
+        "orden": 3,
+        "fecha": "25-07-2026",
+        "numero": "2605-0222046",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "RE",
+        "importe_base": null,
+        "importe_total": 3.55
+      },
+      "realidad_gold_documental": {
+        "numero": "P RE 2605-0222046",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 3.55,
+        "importe_total": null
+      },
+      "estado_evaluador": "inventado_por_clave_numero_no_coincidente",
+      "causa_probable_categoria": "lectura incorrecta",
+      "evidencia_demostrada": "Misma página/factura, orden, fecha e importe; B separa PA/RE como tipo_pedido y omite el prefijo documental inicial P y el componente PA/RE del número.",
+      "inferencia": "Error de lectura/representación del identificador compuesto; no hay evidencia de que el número base haya sido fabricado."
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN2605-0005656",
+      "valor_B": "2620-2217350",
+      "registro_B": {
+        "orden": 4,
+        "fecha": "29-07-2026",
+        "numero": "2620-2217350",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "PA",
+        "importe_base": null,
+        "importe_total": 15.68
+      },
+      "realidad_gold_documental": {
+        "numero": "P PA 2620-2217350",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 15.68,
+        "importe_total": null
+      },
+      "estado_evaluador": "inventado_por_clave_numero_no_coincidente",
+      "causa_probable_categoria": "lectura incorrecta",
+      "evidencia_demostrada": "Misma página/factura, orden, fecha e importe; B separa PA/RE como tipo_pedido y omite el prefijo documental inicial P y el componente PA/RE del número.",
+      "inferencia": "Error de lectura/representación del identificador compuesto; no hay evidencia de que el número base haya sido fabricado."
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN2605-0005656",
+      "valor_B": "2605-0228056",
+      "registro_B": {
+        "orden": 5,
+        "fecha": "31-07-2026",
+        "numero": "2605-0228056",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "RE",
+        "importe_base": null,
+        "importe_total": 0.0
+      },
+      "realidad_gold_documental": {
+        "numero": "P RE 2605-0228056",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 0,
+        "importe_total": null
+      },
+      "estado_evaluador": "inventado_por_clave_numero_no_coincidente",
+      "causa_probable_categoria": "lectura incorrecta",
+      "evidencia_demostrada": "Misma página/factura, orden, fecha e importe; B separa PA/RE como tipo_pedido y omite el prefijo documental inicial P y el componente PA/RE del número.",
+      "inferencia": "Error de lectura/representación del identificador compuesto; no hay evidencia de que el número base haya sido fabricado."
+    }
+  ]
+}

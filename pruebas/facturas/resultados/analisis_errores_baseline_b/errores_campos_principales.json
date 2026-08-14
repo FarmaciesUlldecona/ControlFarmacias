@@ -1,0 +1,522 @@
+{
+  "reconciliacion": {
+    "evaluables": 251,
+    "errores": 25,
+    "correctos": 214,
+    "ausencias": 12,
+    "invenciones": 13,
+    "cobertura_pct": 95.22,
+    "acierto_pct": 85.26
+  },
+  "formula_acierto": "214/251=85.26%",
+  "formula_cobertura": "(214+25)/251=95.22%",
+  "conteo_errores_listados": 50,
+  "conteo_por_tipo": {
+    "clasificacion_incorrecta": 18,
+    "valor_incorrecto": 7,
+    "invencion": 13,
+    "ausencia": 12
+  },
+  "errores": [
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "numero_factura": "08009278",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "numero_factura": "08009277",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "MIXTO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "numero_factura": "08009279",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "COFARES VTO 30.8.26 PIO.pdf",
+      "documento": "documento_02",
+      "proveedor": "COFARES",
+      "numero_factura": "5450053457",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "COFARES VTO 30.8.26 PIO.pdf",
+      "documento": "documento_02",
+      "proveedor": "COFARES",
+      "numero_factura": "5450053457",
+      "campo": "proveedor_nombre",
+      "gold": "COFARES",
+      "B": "COFARES CATALUÑA Y ARAGÓN",
+      "tipo": "valor_incorrecto"
+    },
+    {
+      "pdf": "COFARES VTO 30.8.26 PIO.pdf",
+      "documento": "documento_02",
+      "proveedor": "COFARES",
+      "numero_factura": "5450053457",
+      "campo": "proveedor_cif",
+      "gold": null,
+      "B": "A80904576",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "COFARES VTO 30.8.26 PIO.pdf",
+      "documento": "documento_02",
+      "proveedor": "COFARES",
+      "numero_factura": "5450053457",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "DISCASA APLAZ. 30 DIAS DM",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "COFARES VTO 31.8.26 PIO.pdf",
+      "documento": "documento_03",
+      "proveedor": "COFARES",
+      "numero_factura": "5460017198",
+      "campo": "naturaleza_principal",
+      "gold": "CONDICIONES_COMERCIALES",
+      "B": "MIXTO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "COFARES VTO 31.8.26 PIO.pdf",
+      "documento": "documento_03",
+      "proveedor": "COFARES",
+      "numero_factura": "5460017198",
+      "campo": "proveedor_nombre",
+      "gold": "COFARES",
+      "B": "COFARES CATALUÑA Y ARAGÓN",
+      "tipo": "valor_incorrecto"
+    },
+    {
+      "pdf": "COFARES VTO 31.8.26 PIO.pdf",
+      "documento": "documento_03",
+      "proveedor": "COFARES",
+      "numero_factura": "5460017198",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "DISCASA APLAZ. 30 DIAS DM",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "ECOCEUTICS MENUSALITAT AGOST PIO.pdf",
+      "documento": "documento_04",
+      "proveedor": "Hygie31 España SLU.",
+      "numero_factura": "FR00263663",
+      "campo": "naturaleza_principal",
+      "gold": "SERVICIOS",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "ECOCEUTICS MENUSALITAT AGOST PIO.pdf",
+      "documento": "documento_04",
+      "proveedor": "Hygie31 España SLU.",
+      "numero_factura": "FR00263663",
+      "campo": "requiere_conciliacion_albaranes",
+      "gold": false,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "ECOCEUTICS MENUSALITAT AGOST PIO.pdf",
+      "documento": "documento_04",
+      "proveedor": "Hygie31 España SLU.",
+      "numero_factura": "FR00263663",
+      "campo": "recargo_equivalencia_total",
+      "gold": 0,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "ECOCEUTICS MENUSALITAT AGOST PIO.pdf",
+      "documento": "documento_04",
+      "proveedor": "Hygie31 España SLU.",
+      "numero_factura": "FR00263663",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "Domiciliació",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "ECOCEUTICS VTO 29.9.26 PIO.pdf",
+      "documento": "documento_05",
+      "proveedor": "Hygie31 España SLU.",
+      "numero_factura": "FR00263826",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "ECOCEUTICS VTO 29.9.26 PIO.pdf",
+      "documento": "documento_05",
+      "proveedor": "Hygie31 España SLU.",
+      "numero_factura": "FR00263826",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "Domicialiació",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "EPORTS VTO 5.8.26 PIO.pdf",
+      "documento": "documento_06",
+      "proveedor": "E-PORTS AMPLE DE BANDA I INTERNET SL",
+      "numero_factura": "TM-26075800",
+      "campo": "naturaleza_principal",
+      "gold": "SERVICIOS",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "EPORTS VTO 5.8.26 PIO.pdf",
+      "documento": "documento_06",
+      "proveedor": "E-PORTS AMPLE DE BANDA I INTERNET SL",
+      "numero_factura": "TM-26075800",
+      "campo": "requiere_conciliacion_albaranes",
+      "gold": false,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "EPORTS VTO 5.8.26 PIO.pdf",
+      "documento": "documento_06",
+      "proveedor": "E-PORTS AMPLE DE BANDA I INTERNET SL",
+      "numero_factura": "TM-26075800",
+      "campo": "recargo_equivalencia_total",
+      "gold": 0,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "EPORTS VTO 5.8.26 PIO.pdf",
+      "documento": "documento_06",
+      "proveedor": "E-PORTS AMPLE DE BANDA I INTERNET SL",
+      "numero_factura": "TM-26075800",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "Recibo Cliente ES97210001090002002*****",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "FARMACIA GUIMERA VTO 29.7.26 PIO.pdf",
+      "documento": "documento_07",
+      "proveedor": "FARMACIA GUIMERA C.B.",
+      "numero_factura": "624",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "FARMACIA GUIMERA VTO 29.7.26 PIO.pdf",
+      "documento": "documento_07",
+      "proveedor": "FARMACIA GUIMERA C.B.",
+      "numero_factura": "624",
+      "campo": "requiere_conciliacion_albaranes",
+      "gold": true,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "FARMACIA GUIMERA VTO 29.7.26 PIO.pdf",
+      "documento": "documento_07",
+      "proveedor": "FARMACIA GUIMERA C.B.",
+      "numero_factura": "624",
+      "campo": "destinatario_cif",
+      "gold": "40901058C",
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "FARMACIA GUIMERA VTO 29.8.26 PIO.pdf",
+      "documento": "documento_08",
+      "proveedor": "FARMACIA GUIMERA C.B.",
+      "numero_factura": "743",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "FARMACIA GUIMERA VTO 29.8.26 PIO.pdf",
+      "documento": "documento_08",
+      "proveedor": "FARMACIA GUIMERA C.B.",
+      "numero_factura": "743",
+      "campo": "requiere_conciliacion_albaranes",
+      "gold": true,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "FARMACIA GUIMERA VTO 29.8.26 PIO.pdf",
+      "documento": "documento_08",
+      "proveedor": "FARMACIA GUIMERA C.B.",
+      "numero_factura": "743",
+      "campo": "destinatario_cif",
+      "gold": "40901058C",
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN2605-0005656",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "MIXTO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "SI26-04567",
+      "campo": "naturaleza_principal",
+      "gold": "SERVICIOS",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "SI26-04567",
+      "campo": "recargo_equivalencia_total",
+      "gold": 0,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "SI26-04567",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "RECIBO DOMICILIADO BANCO",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN26-0016742",
+      "campo": "naturaleza_principal",
+      "gold": "SERVICIOS",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN26-0016742",
+      "campo": "recargo_equivalencia_total",
+      "gold": 0,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "numero_factura": "VN26-0016742",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "RECIBO DOMICILIADO BANCO",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "HEFAME VTO 5.8.26 PIO.pdf",
+      "documento": "documento_10",
+      "proveedor": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "numero_factura": "0563820041",
+      "campo": "naturaleza_principal",
+      "gold": "MIXTA",
+      "B": "MIXTO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "HEFAME VTO 5.8.26 PIO.pdf",
+      "documento": "documento_10",
+      "proveedor": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "numero_factura": "0563820041",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "Adeudos directos SEPA CORE",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "LOGISTA PHARMA VTO 29.9.26 PIO.pdf",
+      "documento": "documento_11",
+      "proveedor": "LOGISTA PHARMA S.A.U.",
+      "numero_factura": "5011640669",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "LOGISTA PHARMA VTO 29.9.26 PIO.pdf",
+      "documento": "documento_11",
+      "proveedor": "LOGISTA PHARMA S.A.U.",
+      "numero_factura": "5011640669",
+      "campo": "destinatario_nombre",
+      "gold": "PUIG SALOMON PIO",
+      "B": "PUIG SALOMON PIO FARMACIA",
+      "tipo": "valor_incorrecto"
+    },
+    {
+      "pdf": "LOGISTA PHARMA VTO 29.9.26 PIO.pdf",
+      "documento": "documento_11",
+      "proveedor": "LOGISTA PHARMA S.A.U.",
+      "numero_factura": "5011640669",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "SEPA CORE A 60 DÍAS",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "LOREAL VTO 3.8.26 PIO.pdf",
+      "documento": "documento_12",
+      "proveedor": "L'OREAL ESPANA S.A.",
+      "numero_factura": "3401124788",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "LOREAL VTO 3.8.26 PIO.pdf",
+      "documento": "documento_12",
+      "proveedor": "L'OREAL ESPANA S.A.",
+      "numero_factura": "3401124788",
+      "campo": "requiere_conciliacion_albaranes",
+      "gold": true,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "LOREAL VTO 3.8.26 PIO.pdf",
+      "documento": "documento_12",
+      "proveedor": "L'OREAL ESPANA S.A.",
+      "numero_factura": "3401124788",
+      "campo": "pagina_fin",
+      "gold": 3,
+      "B": 2,
+      "tipo": "valor_incorrecto"
+    },
+    {
+      "pdf": "LOREAL VTO 3.8.26 PIO.pdf",
+      "documento": "documento_12",
+      "proveedor": "L'OREAL ESPANA S.A.",
+      "numero_factura": "3401124788",
+      "campo": "iva_total",
+      "gold": 67.11,
+      "B": 83.73,
+      "tipo": "valor_incorrecto"
+    },
+    {
+      "pdf": "LOREAL VTO 3.8.26 PIO.pdf",
+      "documento": "documento_12",
+      "proveedor": "L'OREAL ESPANA S.A.",
+      "numero_factura": "3401124788",
+      "campo": "recargo_equivalencia_total",
+      "gold": 16.62,
+      "B": null,
+      "tipo": "ausencia"
+    },
+    {
+      "pdf": "LOREAL VTO 3.8.26 PIO.pdf",
+      "documento": "documento_12",
+      "proveedor": "L'OREAL ESPANA S.A.",
+      "numero_factura": "3401124788",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "Domiciliacion bancaria; Vcto. 60 dias, Debito Directo",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "MORETTI VTO 31.8.26 PIO.pdf",
+      "documento": "documento_13",
+      "proveedor": "MORETTI IBERICA S.L.U.",
+      "numero_factura": "003463FV26",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "MORETTI VTO 31.8.26 PIO.pdf",
+      "documento": "documento_13",
+      "proveedor": "MORETTI IBERICA S.L.U.",
+      "numero_factura": "003463FV26",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "GIRO 30 D",
+      "tipo": "invencion"
+    },
+    {
+      "pdf": "TOTALCARE VTO 28.8.26 PIO.pdf",
+      "documento": "documento_14",
+      "proveedor": "TOTALCARE EUROPE, S.L.",
+      "numero_factura": "G/15.931",
+      "campo": "naturaleza_principal",
+      "gold": "MERCANCIA",
+      "B": "CARGO",
+      "tipo": "clasificacion_incorrecta"
+    },
+    {
+      "pdf": "TOTALCARE VTO 28.8.26 PIO.pdf",
+      "documento": "documento_14",
+      "proveedor": "TOTALCARE EUROPE, S.L.",
+      "numero_factura": "G/15.931",
+      "campo": "proveedor_cif",
+      "gold": "B-66438722",
+      "B": "B66438722",
+      "tipo": "valor_incorrecto"
+    },
+    {
+      "pdf": "TOTALCARE VTO 28.8.26 PIO.pdf",
+      "documento": "documento_14",
+      "proveedor": "TOTALCARE EUROPE, S.L.",
+      "numero_factura": "G/15.931",
+      "campo": "fecha_factura",
+      "gold": "29- 07- 2026",
+      "B": "29-07-2026",
+      "tipo": "valor_incorrecto"
+    },
+    {
+      "pdf": "TOTALCARE VTO 28.8.26 PIO.pdf",
+      "documento": "documento_14",
+      "proveedor": "TOTALCARE EUROPE, S.L.",
+      "numero_factura": "G/15.931",
+      "campo": "forma_pago",
+      "gold": null,
+      "B": "GIRO",
+      "tipo": "invencion"
+    }
+  ]
+}

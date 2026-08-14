@@ -1,0 +1,84 @@
+{
+  "archivos": [
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/albaranes_ausentes.json",
+      "sha256": "62815db72a7a520f9ec56ba74ac513bedfde70a6ac6d44f3aacb10a22a5425f1",
+      "bytes": 92315
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/albaranes_inventados.json",
+      "sha256": "a0c969e28ed09358cf6e02cb7c3a1a621adc2db44eb7119c3e9d66ede0cb8ec7",
+      "bytes": 6068
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/albaranes_por_factura.json",
+      "sha256": "cb42934593ba3d3cc80c1bae9b2a0c299acf15959b07a57adb8485e1584185ac",
+      "bytes": 5915
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/analizar.py",
+      "sha256": "3f2522c9e95714b92b1a98d81bfcef4d147c491e121d9c6f4817200a54619706",
+      "bytes": 35048
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/discrepancias_documentales.json",
+      "sha256": "4ac3ecaad7344d93491f77e6fba4759446b86eab584da55738bdfea9915facc6",
+      "bytes": 3668
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/duplicados.json",
+      "sha256": "92ec3d27dbea45d1dff6da538e96999a0f19072331dfe106e472c69d2de3e442",
+      "bytes": 9585
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/errores_campos_principales.json",
+      "sha256": "6f225130d2964681037729c45b227556a5b0d4c7016b2023c3f306f173de8e65",
+      "bytes": 15735
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/errores_fiscalidad.json",
+      "sha256": "c43df5164b4948858645b9e02b429896dfafa74464025e304041879078112036",
+      "bytes": 7563
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/manifest_fuentes_ac_inicial.json",
+      "sha256": "1490b59a47fd96d53a4da776ad8675ace500ca3f2d4fbe1293853ec58ce1a8f7",
+      "bytes": 90165
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/manifest_fuentes_inicial.json",
+      "sha256": "a6f81f0a4d09d2b9455ca8a31f2a159e08c851bd6ce16a56f69a92ece5220fcc",
+      "bytes": 37731
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/movimientos_comerciales.json",
+      "sha256": "36bbce5537fcd7d2cbacfa77c32e0648ff3c80201501f5e2cf9364052031d8fc",
+      "bytes": 21955
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/recomendacion_arquitectonica.md",
+      "sha256": "80aedb1eb711f3df589aa31155b0d2957b549574b40ed0a0faeca085867947da",
+      "bytes": 2793
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/recuperacion_b_vs_c.json",
+      "sha256": "9ce07bde07b78f80ba10fc15a39e63a5cc007b70d171ef92c42d3679eeba6ff4",
+      "bytes": 143175
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/resumen.json",
+      "sha256": "31875aeff7bf5cf354f9af5e4b0444d36d4f9977ab403021bf856b8f0e6c469d",
+      "bytes": 10681
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/resumen.md",
+      "sha256": "1972d1d90b62c412819afec369c1a5eb5204b982b908fa6f6ed699fd88597677",
+      "bytes": 2922
+    },
+    {
+      "ruta": "pruebas/facturas/resultados/analisis_errores_baseline_b/validacion_final.json",
+      "sha256": "15a9eb13f04c06392bbdc39d4bcc1814c2ce77c7f30e88cd5762935014d72b9a",
+      "bytes": 3144
+    }
+  ]
+}

@@ -1,0 +1,571 @@
+{
+  "metadata": {
+    "baseline": "C",
+    "segmento": "segmento_18",
+    "documento_origen": "documento_12",
+    "pagina_inicio_original": 3,
+    "pagina_fin_original": 3,
+    "confianza_splitter": 0.9447376728057861,
+    "nombre_neutro_enviado": "segmento_18.pdf",
+    "sha256_pdf_segmento": "25A4E5E5CC7D982600BEAD3E99A1C508B9B0B90BC677B3624ED71C1D2C4B7136",
+    "prompt_sha256": "169CDBA865E9A130FC0A5C07AB9B9AF3C1A94F980A319893DD94377EA3C8C60D",
+    "schema_sha256": "BFB6D2C277A585EB75703EC6F03548B282EF927D0C5850E6E66590F0FBA1EC71",
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_0c8d66cb4ccbc521016a7ec3b02ec481a2a6254741340aedf0",
+    "estado": "completed",
+    "duracion_segundos": 2.163,
+    "reasoning_effort": "none",
+    "store": false,
+    "sdk_max_retries": 0,
+    "sin_reintento": true,
+    "tokens": {
+      "input_tokens": 6775,
+      "input_tokens_details": {
+        "cache_write_tokens": 5403,
+        "cached_tokens": 1369
+      },
+      "output_tokens": 17,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 6792
+    },
+    "coste_entrada_usd": 0.00110858,
+    "coste_salida_usd": 2.04e-05,
+    "coste_total_usd": 0.00112898,
+    "fecha_hora_utc": "2026-08-14T07:28:50.538249+00:00"
+  },
+  "respuesta_original": {
+    "id": "resp_0c8d66cb4ccbc521016a7ec3b02ec481a2a6254741340aedf0",
+    "created_at": 1786692528.0,
+    "error": null,
+    "incomplete_details": null,
+    "instructions": null,
+    "metadata": {},
+    "model": "gpt-5.6-luna",
+    "object": "response",
+    "output": [
+      {
+        "id": "msg_0c8d66cb4ccbc521016a7ec3b1cedc81a2ad0cab0eeca42dbd",
+        "content": [
+          {
+            "annotations": [],
+            "text": "{\"facturas\":[]}",
+            "type": "output_text",
+            "logprobs": []
+          }
+        ],
+        "role": "assistant",
+        "status": "completed",
+        "type": "message",
+        "phase": "final_answer"
+      }
+    ],
+    "parallel_tool_calls": true,
+    "temperature": 1.0,
+    "tool_choice": "auto",
+    "tools": [],
+    "top_p": 0.98,
+    "background": false,
+    "completed_at": 1786692530.0,
+    "conversation": null,
+    "max_output_tokens": 24000,
+    "max_tool_calls": null,
+    "moderation": null,
+    "previous_response_id": null,
+    "prompt": null,
+    "prompt_cache_key": null,
+    "prompt_cache_options": null,
+    "prompt_cache_retention": "24h",
+    "reasoning": {
+      "context": "all_turns",
+      "effort": "none",
+      "generate_summary": null,
+      "mode": "standard",
+      "summary": null
+    },
+    "safety_identifier": null,
+    "service_tier": "default",
+    "status": "completed",
+    "text": {
+      "format": {
+        "name": "lote_facturas_v2",
+        "schema_": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "facturas"
+          ],
+          "properties": {
+            "facturas": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "tipo_documento",
+                  "naturaleza_principal",
+                  "requiere_conciliacion_albaranes",
+                  "pagina_inicio",
+                  "pagina_fin",
+                  "proveedor_nombre",
+                  "proveedor_cif",
+                  "numero_factura",
+                  "fecha_factura",
+                  "base_imponible_total",
+                  "iva_total",
+                  "recargo_equivalencia_total",
+                  "importe_total",
+                  "vencimientos",
+                  "impuestos",
+                  "albaranes",
+                  "movimientos_comerciales",
+                  "destinatario",
+                  "forma_pago",
+                  "discrepancias_documentales"
+                ],
+                "properties": {
+                  "tipo_documento": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "naturaleza_principal": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CARGO",
+                          "ABONO",
+                          "MIXTO",
+                          "OTRO"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "requiere_conciliacion_albaranes": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "pagina_inicio": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1
+                  },
+                  "pagina_fin": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1
+                  },
+                  "proveedor_nombre": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "proveedor_cif": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "numero_factura": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "fecha_factura": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "base_imponible_total": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "iva_total": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "recargo_equivalencia_total": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "importe_total": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "vencimientos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "orden",
+                        "fecha",
+                        "importe"
+                      ],
+                      "properties": {
+                        "orden": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "fecha": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "importe": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "impuestos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "orden",
+                        "base",
+                        "tipo_iva",
+                        "cuota_iva",
+                        "tipo_recargo_equivalencia",
+                        "cuota_recargo_equivalencia"
+                      ],
+                      "properties": {
+                        "orden": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "base": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "tipo_iva": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "cuota_iva": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "tipo_recargo_equivalencia": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "cuota_recargo_equivalencia": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "albaranes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "orden",
+                        "fecha",
+                        "numero",
+                        "naturaleza",
+                        "tipo_pedido",
+                        "importe_base",
+                        "importe_total"
+                      ],
+                      "properties": {
+                        "orden": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "fecha": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "numero": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "naturaleza": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CARGO",
+                                "ABONO"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "tipo_pedido": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "importe_base": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "importe_total": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "movimientos_comerciales": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "orden",
+                        "tipo",
+                        "descripcion_literal",
+                        "sentido",
+                        "base",
+                        "iva",
+                        "recargo_equivalencia",
+                        "importe"
+                      ],
+                      "properties": {
+                        "orden": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "RAPPEL",
+                            "ABONO_COMERCIAL",
+                            "DEVOLUCION_MERCANCIA",
+                            "DESCUENTO",
+                            "BONIFICACION",
+                            "SERVICIO",
+                            "CONDICION_COMERCIAL",
+                            "OTRO"
+                          ]
+                        },
+                        "descripcion_literal": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "sentido": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ABONO",
+                                "CARGO"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "base": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "iva": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "recargo_equivalencia": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "importe": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "destinatario": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "nombre",
+                          "cif",
+                          "direccion"
+                        ],
+                        "properties": {
+                          "nombre": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "cif": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "direccion": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "forma_pago": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "discrepancias_documentales": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "campo",
+                        "valores_literales",
+                        "descripcion_literal"
+                      ],
+                      "properties": {
+                        "campo": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "valores_literales": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "descripcion_literal": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "type": "json_schema",
+        "description": null,
+        "strict": true
+      },
+      "verbosity": "medium"
+    },
+    "top_logprobs": 0,
+    "truncation": "disabled",
+    "usage": {
+      "input_tokens": 6775,
+      "input_tokens_details": {
+        "cache_write_tokens": 5403,
+        "cached_tokens": 1369
+      },
+      "output_tokens": 17,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 6792
+    },
+    "user": null,
+    "billing": {
+      "payer": "developer"
+    },
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "store": false,
+    "tool_usage": {
+      "image_gen": {
+        "input_tokens": 0,
+        "input_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "image_tokens": 0,
+          "text_tokens": 0
+        },
+        "total_tokens": 0
+      },
+      "web_search": {
+        "num_requests": 0
+      }
+    }
+  }
+}

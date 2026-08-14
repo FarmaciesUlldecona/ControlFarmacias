@@ -1,0 +1,41 @@
+{
+  "baseline": "B",
+  "documento": "documento_05",
+  "nombre_neutro_enviado": "documento_05.pdf",
+  "paginas": 1,
+  "tamano_bytes": 107448,
+  "sha256_pdf": "16E164977E51315692A81001091F1030D83BFB1C902F0FB2C79DD5329A565038",
+  "prompt_sha256": "169CDBA865E9A130FC0A5C07AB9B9AF3C1A94F980A319893DD94377EA3C8C60D",
+  "schema_sha256": "BFB6D2C277A585EB75703EC6F03548B282EF927D0C5850E6E66590F0FBA1EC71",
+  "modelo_solicitado": "gpt-5.6-luna",
+  "modelo_utilizado": "gpt-5.6-luna",
+  "response_id": "resp_05553fac31cbcea1016a7e0c6bcdf8819f93b5cab7e17987b0",
+  "estado": "completed",
+  "fecha_hora_utc": "2026-08-13T18:26:59.367617+00:00",
+  "duracion_segundos": 7.015,
+  "reasoning_effort": "none",
+  "max_output_tokens": 24000,
+  "store": false,
+  "sdk_max_retries": 0,
+  "sin_reintento": true,
+  "tokens": {
+    "input_tokens": 4695,
+    "input_tokens_details": {
+      "cache_write_tokens": 3323,
+      "cached_tokens": 1369
+    },
+    "output_tokens": 394,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 5089
+  },
+  "coste_entrada_usd": 0.00069258,
+  "coste_salida_usd": 0.0004728,
+  "coste_total_usd": 0.00116538,
+  "hashes_salidas": {
+    "original.json": "1594860D78026FFB2756326999DEEF078393ED7C73F65262459C0FDFC57E6257",
+    "estructurado.json": "2ADCA9639D4BC0CE579B32F207FEC188618EBF2E77415DE738D1C63A59EAB175",
+    "incidencias.json": "A5338D955B09046EC0B16F3A9625B7955C763AAE07DC722E474E6078745F932F"
+  }
+}

@@ -1,0 +1,871 @@
+[
+  {
+    "documento": "documento_01",
+    "numero_factura_gold": "08009278",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "NO_EVALUABLE"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 3,
+        "detectados": 3,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 109,
+        "detectados": 109,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_01",
+    "numero_factura_gold": "08009277",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "NO_EVALUABLE"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 4,
+        "detectados": 3,
+        "ausentes": 1,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 162,
+        "detectados": 0,
+        "ausentes": 162,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 4,
+        "detectados": 4,
+        "ausentes": 0,
+        "inventados": 1
+      }
+    }
+  },
+  {
+    "documento": "documento_01",
+    "numero_factura_gold": "08009279",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "NO_EVALUABLE"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 2,
+        "detectados": 2,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 5,
+        "detectados": 5,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_02",
+    "numero_factura_gold": "5450053457",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "ERROR",
+      "proveedor_cif": "INVENCION",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 4,
+        "detectados": 4,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 39,
+        "detectados": 39,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 3,
+        "detectados": 3,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_03",
+    "numero_factura_gold": "5460017198",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "ERROR",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 4,
+        "detectados": 4,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 4,
+        "detectados": 3,
+        "ausentes": 1,
+        "inventados": 1
+      }
+    }
+  },
+  {
+    "documento": "documento_04",
+    "numero_factura_gold": "FR00263663",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "AUSENTE",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "AUSENTE",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 0,
+        "ausentes": 1,
+        "inventados": 1
+      },
+      "albaranes": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 1,
+        "detectados": 0,
+        "ausentes": 1,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_05",
+    "numero_factura_gold": "FR00263826",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_06",
+    "numero_factura_gold": "TM-26075800",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "AUSENTE",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "AUSENTE",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 5,
+        "detectados": 0,
+        "ausentes": 5,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_07",
+    "numero_factura_gold": "624",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "AUSENTE",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "AUSENTE",
+      "forma_pago": "NO_EVALUABLE"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 2,
+        "detectados": 2,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 1
+      }
+    }
+  },
+  {
+    "documento": "documento_08",
+    "numero_factura_gold": "743",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "AUSENTE",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "AUSENTE",
+      "forma_pago": "NO_EVALUABLE"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 2,
+        "detectados": 2,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_09",
+    "numero_factura_gold": "VN2605-0005656",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "NO_EVALUABLE"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 4,
+        "detectados": 4,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 5,
+        "detectados": 0,
+        "ausentes": 5,
+        "inventados": 5
+      },
+      "movimientos_comerciales": {
+        "gold": 3,
+        "detectados": 1,
+        "ausentes": 2,
+        "inventados": 2
+      }
+    }
+  },
+  {
+    "documento": "documento_09",
+    "numero_factura_gold": "SI26-04567",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "AUSENTE",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 0,
+        "ausentes": 1,
+        "inventados": 1
+      },
+      "albaranes": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 1,
+        "detectados": 0,
+        "ausentes": 1,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_09",
+    "numero_factura_gold": "VN26-0016742",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "AUSENTE",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 0,
+        "ausentes": 1,
+        "inventados": 1
+      },
+      "albaranes": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 1,
+        "detectados": 0,
+        "ausentes": 1,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_10",
+    "numero_factura_gold": "0563820041",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 4,
+        "detectados": 2,
+        "ausentes": 2,
+        "inventados": 2
+      },
+      "albaranes": {
+        "gold": 12,
+        "detectados": 12,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 3,
+        "detectados": 0,
+        "ausentes": 3,
+        "inventados": 2
+      }
+    }
+  },
+  {
+    "documento": "documento_11",
+    "numero_factura_gold": "5011640669",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "ERROR",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 3
+      },
+      "albaranes": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_12",
+    "numero_factura_gold": "3401124788",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "AUSENTE",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "ERROR",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "ERROR",
+      "recargo_equivalencia_total": "AUSENTE",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 0,
+        "ausentes": 1,
+        "inventados": 2
+      },
+      "albaranes": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_13",
+    "numero_factura_gold": "003463FV26",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "CORRECTO",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "CORRECTO",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 0,
+        "ausentes": 1,
+        "inventados": 1
+      },
+      "albaranes": {
+        "gold": 2,
+        "detectados": 2,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_14",
+    "numero_factura_gold": "G/15.931",
+    "estado": "IDENTIFICADA",
+    "campos_principales": {
+      "naturaleza_principal": "ERROR",
+      "requiere_conciliacion_albaranes": "CORRECTO",
+      "pagina_inicio": "CORRECTO",
+      "pagina_fin": "CORRECTO",
+      "proveedor_nombre": "CORRECTO",
+      "proveedor_cif": "ERROR",
+      "numero_factura": "CORRECTO",
+      "fecha_factura": "ERROR",
+      "base_imponible_total": "CORRECTO",
+      "iva_total": "CORRECTO",
+      "recargo_equivalencia_total": "CORRECTO",
+      "importe_total": "CORRECTO",
+      "destinatario_nombre": "CORRECTO",
+      "destinatario_cif": "CORRECTO",
+      "forma_pago": "INVENCION"
+    },
+    "listas": {
+      "vencimientos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "impuestos": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "albaranes": {
+        "gold": 1,
+        "detectados": 1,
+        "ausentes": 0,
+        "inventados": 0
+      },
+      "movimientos_comerciales": {
+        "gold": 0,
+        "detectados": 0,
+        "ausentes": 0,
+        "inventados": 0
+      }
+    }
+  },
+  {
+    "documento": "documento_09",
+    "numero_factura_salida": null,
+    "estado": "INVENTADA"
+  }
+]

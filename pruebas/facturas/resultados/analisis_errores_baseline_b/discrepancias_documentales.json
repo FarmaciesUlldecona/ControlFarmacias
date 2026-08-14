@@ -1,0 +1,97 @@
+{
+  "metrica_comun": {
+    "gold": 5,
+    "detectadas": 0,
+    "ausentes": 5,
+    "inventadas": 11,
+    "deteccion_pct": 0.0
+  },
+  "casos_solicitados": [
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "numero_factura": "08009278",
+      "gold": [
+        {
+          "tipo": "DIFERENCIA_CONCILIACION",
+          "descripcion": "La suma documental de los 109 albaranes es 3.824,61 y el total fiscal de la factura es 3.824,59.",
+          "importe": 0.02
+        }
+      ],
+      "literales_B": [],
+      "deteccion_exacta_evaluador": false,
+      "ocultacion": true,
+      "correccion_por_B": false,
+      "explicacion_inventada_por_B": false,
+      "preservacion_valores_documentales": {
+        "importe_total_gold": 3824.59,
+        "importe_total_B": 3824.59,
+        "preservado": true
+      },
+      "conclusion": "B omite la discrepancia específica de 0,02 EUR."
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "numero_factura": "08009279",
+      "gold": [
+        {
+          "tipo": "DIFERENCIA_CONCILIACION",
+          "descripcion": "La suma documental de los 5 albaranes ECOCEUTICS es 141,03 EUR y el total fiscal de la factura es 141,01 EUR.",
+          "importe": 0.02
+        }
+      ],
+      "literales_B": [],
+      "deteccion_exacta_evaluador": false,
+      "ocultacion": true,
+      "correccion_por_B": false,
+      "explicacion_inventada_por_B": false,
+      "preservacion_valores_documentales": {
+        "importe_total_gold": 141.01,
+        "importe_total_B": 141.01,
+        "preservado": true
+      },
+      "conclusion": "B omite la discrepancia específica de 0,02 EUR."
+    },
+    {
+      "pdf": "HEFAME VTO 5.8.26 PIO.pdf",
+      "proveedor": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "numero_factura": "0563820041",
+      "gold": [
+        {
+          "tipo": "DIFERENCIA_CONCILIACION",
+          "descripcion": "El subtotal declarado por HEFAME (484,64 EUR) supera en 80,00 EUR la suma reconstruible a partir de los movimientos individualizados visibles en la relación de albaranes, ABO/DEVO y APROAFA. El PDF no permite identificar documentalmente el origen de esos 80,00 EUR. No inventar albarán, ajuste, servicio o concepto de 80.00 EUR. Mantener el total fiscal impreso y no modificar ninguna otra decisión del gold.",
+          "importe": 80.0
+        }
+      ],
+      "literales_B": [
+        {
+          "campo": "base_imponible_total",
+          "valores_literales": [
+            "594,64",
+            "484,64"
+          ],
+          "descripcion_literal": "La base imponible total del desglose de la factura es 594,64, mientras que el total de bases de la relación de albaranes es 484,64."
+        },
+        {
+          "campo": "base_no",
+          "valores_literales": [
+            "267,31",
+            "157,31"
+          ],
+          "descripcion_literal": "La Base No. del desglose de la factura es 267,31, mientras que la Base No. de la relación de albaranes es 157,31."
+        }
+      ],
+      "deteccion_exacta_evaluador": false,
+      "ocultacion": false,
+      "correccion_por_B": false,
+      "explicacion_inventada_por_B": false,
+      "preservacion_valores_documentales": {
+        "importe_total_gold": 677.99,
+        "importe_total_B": 677.99,
+        "preservado": true
+      },
+      "conclusion": "B registra diferencias literales de 110 EUR (594,64-484,64 y 267,31-157,31), pero no identifica ni explica los 80 EUR no reconstruibles del gold."
+    }
+  ]
+}

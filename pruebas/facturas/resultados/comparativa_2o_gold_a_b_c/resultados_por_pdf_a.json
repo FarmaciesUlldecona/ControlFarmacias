@@ -1,0 +1,128 @@
+[
+  {
+    "documento": "documento_01",
+    "facturas_gold": 3,
+    "facturas_detectadas": 3,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": true,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_02",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_03",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_04",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_05",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_06",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_07",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_08",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_09",
+    "facturas_gold": 3,
+    "facturas_detectadas": 3,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": true,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_10",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_11",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_12",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_13",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  },
+  {
+    "documento": "documento_14",
+    "facturas_gold": 1,
+    "facturas_detectadas": 1,
+    "omitidas": 0,
+    "inventadas": 0,
+    "multifactura_gold": false,
+    "multifactura_exacta": true
+  }
+]

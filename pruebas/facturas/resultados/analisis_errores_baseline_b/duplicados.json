@@ -1,0 +1,305 @@
+{
+  "facturas_inventadas_B": 1,
+  "caso": {
+    "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+    "documento": "documento_09",
+    "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+    "salida_adicional_B": {
+      "documento": "documento_09",
+      "numero_factura": null,
+      "tipo_documento": "Información de facturas/càrrec - avisos de pagament",
+      "naturaleza_principal": "OTRO",
+      "requiere_conciliacion_albaranes": null,
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "proveedor_nombre": "Federació Farmacèutica S.Coop.C.L.",
+      "proveedor_cif": "F-08-173395",
+      "fecha_factura": "31-07-2026",
+      "base_imponible_total": null,
+      "iva_total": null,
+      "recargo_equivalencia_total": null,
+      "importe_total": 409.58,
+      "destinatario_nombre": "PUIG SALOMON PIO",
+      "destinatario_cif": "40901058C",
+      "forma_pago": null,
+      "vencimientos": [
+        {
+          "orden": 1,
+          "fecha": "15-08-2026",
+          "importe": 19.96
+        },
+        {
+          "orden": 2,
+          "fecha": "15-08-2026",
+          "importe": 308.55
+        },
+        {
+          "orden": 3,
+          "fecha": "15-08-2026",
+          "importe": 81.07
+        }
+      ],
+      "impuestos": [],
+      "albaranes": [],
+      "movimientos_comerciales": [],
+      "discrepancias_documentales": []
+    },
+    "facturas_reales_B_del_mismo_pdf": [
+      {
+        "documento": "documento_09",
+        "numero_factura": "VN2605-0005656",
+        "tipo_documento": "Factura",
+        "naturaleza_principal": "MIXTO",
+        "requiere_conciliacion_albaranes": true,
+        "pagina_inicio": 2,
+        "pagina_fin": 2,
+        "proveedor_nombre": "Federació Farmacèutica S.Coop.C.L.",
+        "proveedor_cif": "F-08-173395",
+        "fecha_factura": "31-07-2026",
+        "base_imponible_total": 18.78,
+        "iva_total": 0.97,
+        "recargo_equivalencia_total": 0.21,
+        "importe_total": 19.96,
+        "destinatario_nombre": "PUIG SALOMON PIO",
+        "destinatario_cif": "40901058C",
+        "forma_pago": null,
+        "vencimientos": [
+          {
+            "orden": 1,
+            "fecha": "15-08-2026",
+            "importe": 19.96
+          }
+        ],
+        "impuestos": [
+          {
+            "orden": 1,
+            "base": 0.0,
+            "tipo_iva": 0.0,
+            "cuota_iva": 0.0,
+            "tipo_recargo_equivalencia": 0.0,
+            "cuota_recargo_equivalencia": 0.0
+          },
+          {
+            "orden": 2,
+            "base": 22.64,
+            "tipo_iva": 4.0,
+            "cuota_iva": 0.91,
+            "tipo_recargo_equivalencia": 0.5,
+            "cuota_recargo_equivalencia": 0.11
+          },
+          {
+            "orden": 3,
+            "base": -7.92,
+            "tipo_iva": 10.0,
+            "cuota_iva": -0.79,
+            "tipo_recargo_equivalencia": 1.4,
+            "cuota_recargo_equivalencia": -0.11
+          },
+          {
+            "orden": 4,
+            "base": 4.06,
+            "tipo_iva": 21.0,
+            "cuota_iva": 0.85,
+            "tipo_recargo_equivalencia": 5.2,
+            "cuota_recargo_equivalencia": 0.21
+          }
+        ],
+        "albaranes": [
+          {
+            "orden": 1,
+            "fecha": "24-07-2026",
+            "numero": "2620-2173388",
+            "naturaleza": "CARGO",
+            "tipo_pedido": "PA",
+            "importe_base": null,
+            "importe_total": 3.85
+          },
+          {
+            "orden": 2,
+            "fecha": "25-07-2026",
+            "numero": "2605-0221864",
+            "naturaleza": "CARGO",
+            "tipo_pedido": "RE",
+            "importe_base": null,
+            "importe_total": 19.12
+          },
+          {
+            "orden": 3,
+            "fecha": "25-07-2026",
+            "numero": "2605-0222046",
+            "naturaleza": "CARGO",
+            "tipo_pedido": "RE",
+            "importe_base": null,
+            "importe_total": 3.55
+          },
+          {
+            "orden": 4,
+            "fecha": "29-07-2026",
+            "numero": "2620-2217350",
+            "naturaleza": "CARGO",
+            "tipo_pedido": "PA",
+            "importe_base": null,
+            "importe_total": 15.68
+          },
+          {
+            "orden": 5,
+            "fecha": "31-07-2026",
+            "numero": "2605-0228056",
+            "naturaleza": "CARGO",
+            "tipo_pedido": "RE",
+            "importe_base": null,
+            "importe_total": 0.0
+          }
+        ],
+        "movimientos_comerciales": [
+          {
+            "orden": 1,
+            "tipo": "DEVOLUCION_MERCANCIA",
+            "descripcion_literal": "Total abonaments (consultar detalls)",
+            "sentido": "ABONO",
+            "base": null,
+            "iva": -24.52,
+            "recargo_equivalencia": null,
+            "importe": -24.52
+          },
+          {
+            "orden": 2,
+            "tipo": "ABONO_COMERCIAL",
+            "descripcion_literal": "Bonificació pagament immediat",
+            "sentido": "ABONO",
+            "base": null,
+            "iva": -0.03,
+            "recargo_equivalencia": null,
+            "importe": -0.03
+          },
+          {
+            "orden": 3,
+            "tipo": "CONDICION_COMERCIAL",
+            "descripcion_literal": "Condició Operativa",
+            "sentido": "CARGO",
+            "base": null,
+            "iva": 1.13,
+            "recargo_equivalencia": null,
+            "importe": 1.13
+          }
+        ],
+        "discrepancias_documentales": []
+      },
+      {
+        "documento": "documento_09",
+        "numero_factura": "SI26-04567",
+        "tipo_documento": "Factura",
+        "naturaleza_principal": "CARGO",
+        "requiere_conciliacion_albaranes": false,
+        "pagina_inicio": 3,
+        "pagina_fin": 3,
+        "proveedor_nombre": "Federació Farmacèutica S.Coop.C.L.",
+        "proveedor_cif": "F-08-173395",
+        "fecha_factura": "31-07-2026",
+        "base_imponible_total": 67.0,
+        "iva_total": 14.07,
+        "recargo_equivalencia_total": null,
+        "importe_total": 81.07,
+        "destinatario_nombre": "PUIG SALOMON PIO",
+        "destinatario_cif": "40901058C",
+        "forma_pago": "RECIBO DOMICILIADO BANCO",
+        "vencimientos": [
+          {
+            "orden": 1,
+            "fecha": "15-08-2026",
+            "importe": 81.07
+          }
+        ],
+        "impuestos": [
+          {
+            "orden": 1,
+            "base": 67.0,
+            "tipo_iva": 21.0,
+            "cuota_iva": 14.07,
+            "tipo_recargo_equivalencia": null,
+            "cuota_recargo_equivalencia": null
+          }
+        ],
+        "albaranes": [],
+        "movimientos_comerciales": [],
+        "discrepancias_documentales": []
+      },
+      {
+        "documento": "documento_09",
+        "numero_factura": "VN26-0016742",
+        "tipo_documento": "Factura",
+        "naturaleza_principal": "CARGO",
+        "requiere_conciliacion_albaranes": false,
+        "pagina_inicio": 4,
+        "pagina_fin": 4,
+        "proveedor_nombre": "Federació Farmacèutica S.Coop.C.L.",
+        "proveedor_cif": "F-08-173395",
+        "fecha_factura": "31-07-2026",
+        "base_imponible_total": 255.0,
+        "iva_total": 53.55,
+        "recargo_equivalencia_total": null,
+        "importe_total": 308.55,
+        "destinatario_nombre": "PUIG SALOMON PIO",
+        "destinatario_cif": "40901058C",
+        "forma_pago": "RECIBO DOMICILIADO BANCO",
+        "vencimientos": [
+          {
+            "orden": 1,
+            "fecha": "15-08-2026",
+            "importe": 308.55
+          }
+        ],
+        "impuestos": [
+          {
+            "orden": 1,
+            "base": 255.0,
+            "tipo_iva": 21.0,
+            "cuota_iva": 53.55,
+            "tipo_recargo_equivalencia": null,
+            "cuota_recargo_equivalencia": null
+          }
+        ],
+        "albaranes": [],
+        "movimientos_comerciales": [],
+        "discrepancias_documentales": []
+      }
+    ],
+    "coincidencias": {
+      "mismo_proveedor": true,
+      "misma_fecha": true,
+      "importe_resumen_B": 409.58,
+      "suma_tres_facturas_B": 409.58,
+      "suma_exacta": true
+    },
+    "diferencias": {
+      "numero_factura_resumen": null,
+      "numeros_facturas_reales": [
+        "VN2605-0005656",
+        "SI26-04567",
+        "VN26-0016742"
+      ],
+      "pagina_resumen": [
+        1,
+        1
+      ],
+      "paginas_facturas": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ]
+    },
+    "criterio_evaluador": "match_invoices no encuentra clave gold para numero_factura nulo y clasifica la portada-resumen como factura inventada.",
+    "eliminable_deterministamente": true,
+    "regla_especifica": "Si una salida carece de numero_factura, esta rotulada como resumen/avisos y su total coincide exactamente con la suma de facturas numeradas del mismo proveedor y PDF, clasificarla como agregado documental, no como factura."
+  },
+  "regla_general_propuesta_no_implementada": "Deduplicar facturas numeradas por proveedor normalizado + numero_factura normalizado; fecha+importe solo apoyan. Tratar agregados sin numero con la regla especifica anterior y no descartarlos si falta evidencia."
+}

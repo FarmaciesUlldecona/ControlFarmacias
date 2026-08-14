@@ -1,0 +1,253 @@
+{
+  "metadata": {
+    "baseline": "C",
+    "segmento": "segmento_15",
+    "documento_origen": "documento_10",
+    "pagina_inicio_original": 1,
+    "pagina_fin_original": 2,
+    "confianza_splitter": 0.9998968243598938,
+    "nombre_neutro_enviado": "segmento_15.pdf",
+    "sha256_pdf_segmento": "96E2BD67C32520F1509CD39F35C85E4BE231D2F9515548DA614A3913B3B5BD28",
+    "prompt_sha256": "169CDBA865E9A130FC0A5C07AB9B9AF3C1A94F980A319893DD94377EA3C8C60D",
+    "schema_sha256": "BFB6D2C277A585EB75703EC6F03548B282EF927D0C5850E6E66590F0FBA1EC71",
+    "modelo_solicitado": "gpt-5.6-luna",
+    "modelo_utilizado": "gpt-5.6-luna",
+    "response_id": "resp_075e92228321ad23016a7ec39ea97c81a0850731069e36984c",
+    "estado": "completed",
+    "duracion_segundos": 7.549,
+    "reasoning_effort": "none",
+    "store": false,
+    "sdk_max_retries": 0,
+    "sin_reintento": true,
+    "tokens": {
+      "input_tokens": 8103,
+      "input_tokens_details": {
+        "cache_write_tokens": 6731,
+        "cached_tokens": 1369
+      },
+      "output_tokens": 1197,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 9300
+    },
+    "coste_entrada_usd": 0.00137418,
+    "coste_salida_usd": 0.0014364,
+    "coste_total_usd": 0.00281058,
+    "fecha_hora_utc": "2026-08-14T07:28:38.419498+00:00"
+  },
+  "facturas": [
+    {
+      "tipo_documento": "Factura",
+      "naturaleza_principal": "MIXTO",
+      "requiere_conciliacion_albaranes": true,
+      "pagina_inicio": 1,
+      "pagina_fin": 2,
+      "proveedor_nombre": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "proveedor_cif": "F30004444",
+      "numero_factura": "0563820041",
+      "fecha_factura": "31.07.2026",
+      "base_imponible_total": 594.64,
+      "iva_total": 72.98,
+      "recargo_equivalencia_total": 10.37,
+      "importe_total": 677.99,
+      "vencimientos": [
+        {
+          "orden": 1,
+          "fecha": "05.08.2026",
+          "importe": 677.99
+        }
+      ],
+      "impuestos": [
+        {
+          "orden": 1,
+          "base": 264.84,
+          "tipo_iva": 4,
+          "cuota_iva": 10.6,
+          "tipo_recargo_equivalencia": 0.5,
+          "cuota_recargo_equivalencia": 1.33
+        },
+        {
+          "orden": 2,
+          "base": 62.49,
+          "tipo_iva": 10,
+          "cuota_iva": 6.25,
+          "tipo_recargo_equivalencia": 1.4,
+          "cuota_recargo_equivalencia": 0.87
+        },
+        {
+          "orden": 3,
+          "base": 267.31,
+          "tipo_iva": 21,
+          "cuota_iva": 56.13,
+          "tipo_recargo_equivalencia": 3.05,
+          "cuota_recargo_equivalencia": 8.17
+        },
+        {
+          "orden": 4,
+          "base": 0,
+          "tipo_iva": null,
+          "cuota_iva": 0,
+          "tipo_recargo_equivalencia": null,
+          "cuota_recargo_equivalencia": 0
+        }
+      ],
+      "albaranes": [
+        {
+          "orden": 1,
+          "fecha": "21.07.2026",
+          "numero": "4126735814",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 9.32,
+          "importe_total": 9.32
+        },
+        {
+          "orden": 2,
+          "fecha": "21.07.2026",
+          "numero": "4126735944",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 96.97,
+          "importe_total": 96.97
+        },
+        {
+          "orden": 3,
+          "fecha": "22.07.2026",
+          "numero": "4126746976",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 5.25,
+          "importe_total": 5.25
+        },
+        {
+          "orden": 4,
+          "fecha": "24.07.2026",
+          "numero": "4126809981",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 67.73,
+          "importe_total": 67.73
+        },
+        {
+          "orden": 5,
+          "fecha": "24.07.2026",
+          "numero": "4126815711",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 59.36,
+          "importe_total": 59.36
+        },
+        {
+          "orden": 6,
+          "fecha": "24.07.2026",
+          "numero": "4126832802",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 59.36,
+          "importe_total": 59.36
+        },
+        {
+          "orden": 7,
+          "fecha": "25.07.2026",
+          "numero": "4126884575",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 12.02,
+          "importe_total": 12.02
+        },
+        {
+          "orden": 8,
+          "fecha": "27.07.2026",
+          "numero": "4126886802",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 85.47,
+          "importe_total": 85.47
+        },
+        {
+          "orden": 9,
+          "fecha": "28.07.2026",
+          "numero": "4126921242",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 39.1,
+          "importe_total": 39.1
+        },
+        {
+          "orden": 10,
+          "fecha": "29.07.2026",
+          "numero": "4126934304",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 11.18,
+          "importe_total": 11.18
+        },
+        {
+          "orden": 11,
+          "fecha": "30.07.2026",
+          "numero": "4126989474",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 24.47,
+          "importe_total": 24.47
+        },
+        {
+          "orden": 12,
+          "fecha": "31.07.2026",
+          "numero": "4127001247",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 50.47,
+          "importe_total": 50.47
+        },
+        {
+          "orden": 13,
+          "fecha": "31.07.2026",
+          "numero": "ABO/DEVO",
+          "naturaleza": "ABONO",
+          "tipo_pedido": null,
+          "importe_base": -116.32,
+          "importe_total": -116.32
+        },
+        {
+          "orden": 14,
+          "fecha": "31.07.2026",
+          "numero": "APROAFA",
+          "naturaleza": "CARGO",
+          "tipo_pedido": null,
+          "importe_base": 0.26,
+          "importe_total": 0.26
+        }
+      ],
+      "movimientos_comerciales": [
+        {
+          "orden": 1,
+          "tipo": "DEVOLUCION_MERCANCIA",
+          "descripcion_literal": "ABO/DEVO",
+          "sentido": "ABONO",
+          "base": -116.32,
+          "iva": null,
+          "recargo_equivalencia": null,
+          "importe": -116.32
+        }
+      ],
+      "destinatario": {
+        "nombre": "PUIG SALOMON, PIO",
+        "cif": "40901058C",
+        "direccion": "CL SAN LUCAS, 34, 43550 ULLDECONA, Tarragona"
+      },
+      "forma_pago": "Adeudos directos SEPA CORE",
+      "discrepancias_documentales": [
+        {
+          "campo": "base_imponible_total",
+          "valores_literales": [
+            "484,64",
+            "594,64"
+          ],
+          "descripcion_literal": "La tabla de relación de albaranes muestra Totales de 484,64, mientras que el desglose de importes total factura muestra Base Total de 594,64."
+        }
+      ]
+    }
+  ]
+}

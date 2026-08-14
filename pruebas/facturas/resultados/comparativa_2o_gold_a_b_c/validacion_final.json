@@ -1,0 +1,19 @@
+{
+  "checks": {
+    "head_baseline_a": true,
+    "hito_a_sha256": true,
+    "gold_igual_commit_congelado": true,
+    "prompt_hash": true,
+    "schema_hash": true,
+    "contrato_b_c_byte_a_byte": true,
+    "coste_b_bajo_2": true,
+    "coste_c_bajo_3": true,
+    "c_limites_llamadas": true,
+    "c_cobertura_paginas": true,
+    "gold_no_consultado_en_hitos_b_c": true,
+    "response_ids_unicos_b_c": true,
+    "hashes_hito_b": true,
+    "hashes_hito_c": true
+  },
+  "todos_correctos": true
+}

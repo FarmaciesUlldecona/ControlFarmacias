@@ -1,0 +1,24 @@
+{
+  "fecha_utc": "2026-08-13T18:01:41.506513+00:00",
+  "gold_consultado": false,
+  "openai_api_key_presente": true,
+  "openai_autenticacion_minima_sin_pdf": true,
+  "modelo_disponible": true,
+  "google_autenticacion_read_only": true,
+  "google_region": "eu",
+  "google_processor_configurado": true,
+  "google_processor_tipo": "CUSTOM_SPLITTING_PROCESSOR",
+  "google_version_objetivo": "pretrained-splitter-v1.5-2025-07-14",
+  "google_version_exacta_disponible": true,
+  "google_version_estado": "DEPLOYED",
+  "tarifa_luna_usd_por_millon": {
+    "input": 0.2,
+    "cached_input": 0.02,
+    "output": 1.2
+  },
+  "tarifa_google_custom_splitter_usd_por_1000_paginas": 5.0,
+  "fuente_tarifa_openai": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+  "fuente_tarifa_google": "https://cloud.google.com/products/document-ai/pricing",
+  "commit_a": "9b332545aaf39d4a6738459456ff919358f7d7a8",
+  "hito_a_sha256": "D2F0228CA301A06D6D24E72C0D57A095FE1B2B040B19DA13F67CEE64A2DB16F0"
+}

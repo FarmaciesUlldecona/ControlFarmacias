@@ -1,0 +1,88 @@
+{
+  "json_parseados": [
+    "albaranes_ausentes.json",
+    "albaranes_inventados.json",
+    "albaranes_por_factura.json",
+    "discrepancias_documentales.json",
+    "duplicados.json",
+    "errores_campos_principales.json",
+    "errores_fiscalidad.json",
+    "manifest_artefactos.json",
+    "manifest_fuentes_ac_inicial.json",
+    "manifest_fuentes_inicial.json",
+    "movimientos_comerciales.json",
+    "recuperacion_b_vs_c.json",
+    "resumen.json",
+    "validacion_final.json"
+  ],
+  "json_validos": true,
+  "reconciliaciones": {
+    "albaranes": true,
+    "movimientos": true,
+    "campos": true,
+    "fiscalidad": true,
+    "recuperacion_C": true
+  },
+  "invariancia_fuentes": [
+    {
+      "manifest": "manifest_fuentes_inicial.json",
+      "archivos": 96,
+      "cambios": [
+        {
+          "ruta": "pruebas/facturas/resultados/comparativa_2o_gold_a_b_c/__pycache__/evaluar.cpython-313.pyc",
+          "inicial": {
+            "ruta": "pruebas/facturas/resultados/comparativa_2o_gold_a_b_c/__pycache__/evaluar.cpython-313.pyc",
+            "sha256": "42fe75b7d55e9c36958070bb73670767dd395482d5a661323098fc6dad569e37",
+            "mtime_utc": "2026-08-14T07:35:56.0364289Z",
+            "bytes": 49721
+          },
+          "final": {
+            "sha256": "1e42c8b89ee4f90808b137a5d029655f0f759cc3df4d5cba73e872b104e4a08c",
+            "mtime_utc": 1786706894766758700,
+            "bytes": 50324
+          }
+        }
+      ],
+      "invariante": false
+    },
+    {
+      "manifest": "manifest_fuentes_ac_inicial.json",
+      "archivos": 221,
+      "cambios": [],
+      "invariante": true
+    }
+  ],
+  "head_inicial_esperado": "9b332545aaf39d4a6738459456ff919358f7d7a8",
+  "head_final": "9b332545aaf39d4a6738459456ff919358f7d7a8",
+  "head_invariante": true,
+  "git_status_short": [
+    "?? pruebas/facturas/documentos/2o_gold_standard/",
+    "?? pruebas/facturas/resultados/analisis_errores_baseline_b/",
+    "?? pruebas/facturas/resultados/benchmark_2o_gold_google_splitter_luna_v2/",
+    "?? pruebas/facturas/resultados/benchmark_2o_gold_luna_v2/",
+    "?? pruebas/facturas/resultados/comparativa_2o_gold_a_b_c/",
+    "?? pruebas/orquestador_v0/"
+  ],
+  "cero_llamadas_red_api_iniciadas_por_script": true,
+  "cero_procesos_externos_api_iniciados": true,
+  "commit_realizado": false,
+  "push_realizado": false,
+  "fuentes_semanticas_A_B_C_gold_comparativa_invariantes": true,
+  "incidencia_cache_python": [
+    {
+      "ruta": "pruebas/facturas/resultados/comparativa_2o_gold_a_b_c/__pycache__/evaluar.cpython-313.pyc",
+      "inicial": {
+        "ruta": "pruebas/facturas/resultados/comparativa_2o_gold_a_b_c/__pycache__/evaluar.cpython-313.pyc",
+        "sha256": "42fe75b7d55e9c36958070bb73670767dd395482d5a661323098fc6dad569e37",
+        "mtime_utc": "2026-08-14T07:35:56.0364289Z",
+        "bytes": 49721
+      },
+      "final": {
+        "sha256": "1e42c8b89ee4f90808b137a5d029655f0f759cc3df4d5cba73e872b104e4a08c",
+        "mtime_utc": 1786706894766758700,
+        "bytes": 50324
+      }
+    }
+  ],
+  "criterio_final_completo": true
+}

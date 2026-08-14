@@ -1,0 +1,3042 @@
+{
+  "total": 167,
+  "distribucion_por_factura": {
+    "08009278": 0,
+    "08009277": 162,
+    "08009279": 0,
+    "5450053457": 0,
+    "0563820041": 0,
+    "VN2605-0005656": 5,
+    "resto": 0
+  },
+  "distribucion_por_proveedor": {
+    "Alliance": {
+      "ausentes": 162,
+      "pct_sobre_167": 97.01
+    },
+    "Cofares": {
+      "ausentes": 0,
+      "pct_sobre_167": 0.0
+    },
+    "HEFAME": {
+      "ausentes": 0,
+      "pct_sobre_167": 0.0
+    },
+    "FEDEFARMA": {
+      "ausentes": 5,
+      "pct_sobre_167": 2.99
+    },
+    "resto": {
+      "ausentes": 0,
+      "pct_sobre_167": 0.0
+    }
+  },
+  "registros": [
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C48679",
+        "fecha": "20-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 5.94,
+        "importe_total": 6.21
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C48721",
+        "fecha": "20-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 25.72,
+        "importe_total": 28.65
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61794",
+        "fecha": "31-07-2026",
+        "naturaleza": "ABONO",
+        "tipo_pedido": "ABONOS AGRUPADOS",
+        "importe_base": 103.34,
+        "importe_total": 122.27
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C48737",
+        "fecha": "20-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 20.22,
+        "importe_total": 22.52
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61795",
+        "fecha": "31-07-2026",
+        "naturaleza": "ABONO",
+        "tipo_pedido": "ABONOS AGRUPADOS",
+        "importe_base": 371.4,
+        "importe_total": 414.76
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C48849",
+        "fecha": "20-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 3.56,
+        "importe_total": 3.72
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C49209",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 281.59,
+        "importe_total": 297.76
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C49210",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 13.11,
+        "importe_total": 16.54
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C49442",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 49.48,
+        "importe_total": 55.12
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C49481",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 393.75,
+        "importe_total": 414.75
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C49482",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 3.88,
+        "importe_total": 4.06
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C49959",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 217.55,
+        "importe_total": 227.34
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C49991",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 134.61,
+        "importe_total": 140.66
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C50118",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 7.74,
+        "importe_total": 8.09
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M42745",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 33.69,
+        "importe_total": 35.21
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M43093",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 16.21,
+        "importe_total": 20.45
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M43102",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 40.87,
+        "importe_total": 42.7
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M43116",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 23.23,
+        "importe_total": 24.28
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M43182",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 21.01,
+        "importe_total": 23.4
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M43237",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 4.69,
+        "importe_total": 4.9
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M43273",
+        "fecha": "21-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 9.65,
+        "importe_total": 10.76
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C50607",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 7.08,
+        "importe_total": 7.4
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C50644",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 22.86,
+        "importe_total": 25.47
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C50673",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 6.05,
+        "importe_total": 6.32
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C50770",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 6.14,
+        "importe_total": 6.42
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C50782",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 762.22,
+        "importe_total": 801.56
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C50793",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 9.73,
+        "importe_total": 11.95
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C50794",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 20.23,
+        "importe_total": 21.14
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C51359",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 165.62,
+        "importe_total": 173.07
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C51375",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 8.16,
+        "importe_total": 8.53
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C51376",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 34.84,
+        "importe_total": 38.81
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C51509",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 66.37,
+        "importe_total": 69.35
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C51510",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 1.26,
+        "importe_total": 1.32
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C51511",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 1.35,
+        "importe_total": 1.41
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M43916",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 82.62,
+        "importe_total": 86.33
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44118",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 641.87,
+        "importe_total": 670.75
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44253",
+        "fecha": "22-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 8.77,
+        "importe_total": 9.16
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C51973",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 100.52,
+        "importe_total": 108.78
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C51977",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 9.65,
+        "importe_total": 10.76
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C52008",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 1.47,
+        "importe_total": 1.54
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C52167",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 595.96,
+        "importe_total": 623.55
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C52171",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 10.28,
+        "importe_total": 12.21
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C52183",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 3.12,
+        "importe_total": 3.26
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C52239",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 10.2,
+        "importe_total": 10.66
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C52551",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 26.55,
+        "importe_total": 27.74
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C52591",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 14.84,
+        "importe_total": 15.5
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C52785",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 11.93,
+        "importe_total": 12.47
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44390",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 26.14,
+        "importe_total": 29.12
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44414",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 22.6,
+        "importe_total": 23.61
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44492",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 11.34,
+        "importe_total": 14.31
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44510",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 96.45,
+        "importe_total": 100.79
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44534",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 79.21,
+        "importe_total": 82.78
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44945",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 67.59,
+        "importe_total": 70.63
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M44956",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 69.82,
+        "importe_total": 72.96
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M45029",
+        "fecha": "23-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 3.77,
+        "importe_total": 3.94
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C53188",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 102.84,
+        "importe_total": 117.97
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C53243",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 35.75,
+        "importe_total": 39.83
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C53328",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 6.97,
+        "importe_total": 7.77
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C53431",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 471.94,
+        "importe_total": 494.39
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C53437",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 12.89,
+        "importe_total": 14.36
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C53925",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 35.04,
+        "importe_total": 36.62
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C53956",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 11.18,
+        "importe_total": 14.11
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54096",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 34.38,
+        "importe_total": 35.93
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M45203",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 96.45,
+        "importe_total": 100.79
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M45335",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 7.93,
+        "importe_total": 8.83
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M45351",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 130.3,
+        "importe_total": 136.16
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M45587",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 14.78,
+        "importe_total": 15.44
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M45800",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 114.76,
+        "importe_total": 120.7
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M45862",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 19.59,
+        "importe_total": 20.47
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M45869",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 25.69,
+        "importe_total": 26.85
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08V20022",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 61.85,
+        "importe_total": 64.63
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54396",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 6.38,
+        "importe_total": 7.11
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54424",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 29.91,
+        "importe_total": 31.26
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54458",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 3.08,
+        "importe_total": 3.43
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54468",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 15.09,
+        "importe_total": 15.77
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54711",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 11.9,
+        "importe_total": 12.44
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54734",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 5.31,
+        "importe_total": 6.71
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54746",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 364.71,
+        "importe_total": 381.12
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54748",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 2.53,
+        "importe_total": 3.19
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54749",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 6.38,
+        "importe_total": 6.67
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54790",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 21.24,
+        "importe_total": 26.8
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54812",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 74.49,
+        "importe_total": 77.84
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54930",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 27.99,
+        "importe_total": 30
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C54980",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 6.23,
+        "importe_total": 6.51
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C55081",
+        "fecha": "26-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 96.75,
+        "importe_total": 101.1
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C55105",
+        "fecha": "26-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 8.1,
+        "importe_total": 8.46
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C55146",
+        "fecha": "26-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 13.16,
+        "importe_total": 13.76
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C55501",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 26.65,
+        "importe_total": 27.85
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C56243",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 151.57,
+        "importe_total": 163.45
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C56268",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 7.27,
+        "importe_total": 7.6
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C56510",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 9.37,
+        "importe_total": 9.79
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M46474",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 13.14,
+        "importe_total": 14.63
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M46616",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 47.97,
+        "importe_total": 50.13
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M46790",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 210.16,
+        "importe_total": 219.62
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M46802",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 4.42,
+        "importe_total": 4.62
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M46887",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 7.37,
+        "importe_total": 7.7
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08V20040",
+        "fecha": "27-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 7.28,
+        "importe_total": 7.61
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C56757",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 52.61,
+        "importe_total": 57.4
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C56918",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 33.8,
+        "importe_total": 38.34
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57017",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 59.44,
+        "importe_total": 62.12
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57046",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 204.1,
+        "importe_total": 213.28
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57054",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 330.91,
+        "importe_total": 346.49
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57057",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 24.74,
+        "importe_total": 27.56
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57516",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 14.42,
+        "importe_total": 16.06
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57529",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 22.74,
+        "importe_total": 23.76
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57582",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 20.69,
+        "importe_total": 23.05
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57595",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 1.12,
+        "importe_total": 1.17
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57641",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 33.23,
+        "importe_total": 34.73
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C57847",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 9.43,
+        "importe_total": 9.86
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47052",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 4.49,
+        "importe_total": 4.69
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47124",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 63.48,
+        "importe_total": 66.34
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47162",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 380.16,
+        "importe_total": 397.27
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47358",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 29.1,
+        "importe_total": 30.41
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47450",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 15.91,
+        "importe_total": 17.72
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47463",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 3.18,
+        "importe_total": 3.33
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47496",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 45.47,
+        "importe_total": 47.52
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47552",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 18.79,
+        "importe_total": 20.93
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47713",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 484.96,
+        "importe_total": 506.78
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47715",
+        "fecha": "28-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 4.75,
+        "importe_total": 6
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C58198",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 47.2,
+        "importe_total": 52.33
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C58204",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 7.97,
+        "importe_total": 8.88
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C58332",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 13.62,
+        "importe_total": 15.17
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C58585",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 164.21,
+        "importe_total": 171.6
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C59033",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 111.57,
+        "importe_total": 116.59
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C59254",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 6.1,
+        "importe_total": 6.37
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47909",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 385.55,
+        "importe_total": 402.9
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47952",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 7.55,
+        "importe_total": 9.53
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M47976",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 7.28,
+        "importe_total": 7.61
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M48067",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 62.83,
+        "importe_total": 67.66
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M48424",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 301.55,
+        "importe_total": 315.12
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M48623",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 280.94,
+        "importe_total": 294.36
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M48624",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 16.34,
+        "importe_total": 18.81
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C59568",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 110.61,
+        "importe_total": 120.06
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C59642",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 24.72,
+        "importe_total": 25.83
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C59861",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 386.6,
+        "importe_total": 404.75
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C59870",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 56.47,
+        "importe_total": 63.77
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C59871",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 24.74,
+        "importe_total": 27.56
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C60272",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 36.31,
+        "importe_total": 37.94
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C60437",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 52.64,
+        "importe_total": 58.64
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M48884",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 24.65,
+        "importe_total": 27.47
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49141",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 11,
+        "importe_total": 11.5
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49163",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 68.73,
+        "importe_total": 71.82
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49305",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 52.29,
+        "importe_total": 58.25
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49306",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 60.28,
+        "importe_total": 67.15
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49321",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 21.21,
+        "importe_total": 23.63
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49439",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 227.17,
+        "importe_total": 237.4
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49451",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 108.93,
+        "importe_total": 113.83
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49569",
+        "fecha": "30-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 3.96,
+        "importe_total": 4.14
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C60910",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 10.83,
+        "importe_total": 13.66
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C60995",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 360.25,
+        "importe_total": 378.95
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61005",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 10.15,
+        "importe_total": 12.81
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61053",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 19.33,
+        "importe_total": 20.2
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61054",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 19.33,
+        "importe_total": 20.2
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61056",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 22.06,
+        "importe_total": 23.05
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61080",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 259.42,
+        "importe_total": 271.1
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61121",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 5,
+        "importe_total": 6.31
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61256",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 531.87,
+        "importe_total": 568.05
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08C61263",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NETOS PLUS",
+        "importe_base": 21.58,
+        "importe_total": 24.78
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49775",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 16.65,
+        "importe_total": 21.02
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M49848",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 101.08,
+        "importe_total": 105.63
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M50102",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 3.13,
+        "importe_total": 3.28
+      }
+    },
+    {
+      "pdf": "ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "documento": "documento_01",
+      "proveedor": "ALLIANCE HEALTHCARE ESPAÑA, S.A.",
+      "grupo_proveedor": "Alliance",
+      "numero_factura": "08009277",
+      "pagina_inicio": 5,
+      "pagina_fin": 9,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "08M50267",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": "NORMAL ACUSTICO",
+        "importe_base": 306.9,
+        "importe_total": 320.71
+      }
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "grupo_proveedor": "FEDEFARMA",
+      "numero_factura": "VN2605-0005656",
+      "pagina_inicio": 2,
+      "pagina_fin": 2,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "P PA 2620-2173388",
+        "fecha": "24-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 3.85,
+        "importe_total": null
+      }
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "grupo_proveedor": "FEDEFARMA",
+      "numero_factura": "VN2605-0005656",
+      "pagina_inicio": 2,
+      "pagina_fin": 2,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "P RE 2605-0221864",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 19.12,
+        "importe_total": null
+      }
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "grupo_proveedor": "FEDEFARMA",
+      "numero_factura": "VN2605-0005656",
+      "pagina_inicio": 2,
+      "pagina_fin": 2,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "P RE 2605-0222046",
+        "fecha": "25-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 3.55,
+        "importe_total": null
+      }
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "grupo_proveedor": "FEDEFARMA",
+      "numero_factura": "VN2605-0005656",
+      "pagina_inicio": 2,
+      "pagina_fin": 2,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "P PA 2620-2217350",
+        "fecha": "29-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 15.68,
+        "importe_total": null
+      }
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "documento": "documento_09",
+      "proveedor": "Federació Farmacèutica S.Coop.C.L.",
+      "grupo_proveedor": "FEDEFARMA",
+      "numero_factura": "VN2605-0005656",
+      "pagina_inicio": 2,
+      "pagina_fin": 2,
+      "orden_gold": null,
+      "albaran_gold": {
+        "numero": "P RE 2605-0228056",
+        "fecha": "31-07-2026",
+        "naturaleza": "CARGO",
+        "tipo_pedido": null,
+        "importe_base": 0,
+        "importe_total": null
+      }
+    }
+  ]
+}

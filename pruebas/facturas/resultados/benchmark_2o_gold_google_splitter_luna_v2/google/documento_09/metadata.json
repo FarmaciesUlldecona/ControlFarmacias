@@ -1,0 +1,49 @@
+{
+  "baseline": "C",
+  "documento": "documento_09",
+  "region": "eu",
+  "version": "pretrained-splitter-v1.5-2025-07-14",
+  "processor_aprobado_verificado_sin_persistir_id": true,
+  "paginas": 4,
+  "segmentos": [
+    {
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "paginas": [
+        1
+      ],
+      "confianza": 0.9998543858528137
+    },
+    {
+      "pagina_inicio": 2,
+      "pagina_fin": 2,
+      "paginas": [
+        2
+      ],
+      "confianza": 0.8991588950157166
+    },
+    {
+      "pagina_inicio": 3,
+      "pagina_fin": 3,
+      "paginas": [
+        3
+      ],
+      "confianza": 0.9992390275001526
+    },
+    {
+      "pagina_inicio": 4,
+      "pagina_fin": 4,
+      "paginas": [
+        4
+      ],
+      "confianza": 0.9992330074310303
+    }
+  ],
+  "numero_segmentos": 4,
+  "duracion_segundos": 3.158,
+  "coste_google_usd": 0.02,
+  "sin_reintento": true,
+  "sha256_pdf_original": "E9BEA97F9A2B384141304C92DFD8F318EE224707D203D823C3830999987B90F3",
+  "sha256_respuesta_original": "EAD26371E3D042FAFBF5E634EAF54F78F65B60B4AA5CA5F378E462DED0897E20",
+  "fecha_hora_utc": "2026-08-14T07:26:13.600724+00:00"
+}

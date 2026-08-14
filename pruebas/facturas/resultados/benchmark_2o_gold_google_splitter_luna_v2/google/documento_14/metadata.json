@@ -1,0 +1,25 @@
+{
+  "baseline": "C",
+  "documento": "documento_14",
+  "region": "eu",
+  "version": "pretrained-splitter-v1.5-2025-07-14",
+  "processor_aprobado_verificado_sin_persistir_id": true,
+  "paginas": 1,
+  "segmentos": [
+    {
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "paginas": [
+        1
+      ],
+      "confianza": 0.9999473690986633
+    }
+  ],
+  "numero_segmentos": 1,
+  "duracion_segundos": 2.579,
+  "coste_google_usd": 0.005,
+  "sin_reintento": true,
+  "sha256_pdf_original": "0DBA035A98997F231CB284010C35BEE6F893BA46402AF5CC78794BE7708E3297",
+  "sha256_respuesta_original": "6616274C3183BF1A929CA9701B287F8AADFAC53A945A6A150FBAA8D3916DD3E1",
+  "fecha_hora_utc": "2026-08-14T07:26:32.043140+00:00"
+}
