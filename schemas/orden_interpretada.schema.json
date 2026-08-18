@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "controlfarmacias://schemas/orden-interpretada-v1",
+  "title": "OrdenInterpretada V0.2.10",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "interpretation_id", "schema_version", "texto_original", "objetivo",
+    "tipo_intencion", "repo_candidato", "worktree_candidato",
+    "modo_solicitado", "acciones", "restricciones", "autorizaciones",
+    "condiciones", "coste_maximo", "commit", "push",
+    "task_id_referencia", "decision_id_referencia", "retry_id_referencia",
+    "confianza", "ambigua", "ambiguedades", "datos_faltantes",
+    "referencias_no_resueltas", "timestamp", "metadata", "fuente"
+  ],
+  "properties": {
+    "interpretation_id": {"type": "string", "format": "uuid"},
+    "schema_version": {"const": 1},
+    "texto_original": {"type": "string", "minLength": 1},
+    "objetivo": {"type": "string"},
+    "tipo_intencion": {"enum": ["CREAR_TAREA", "CONTINUAR_TAREA", "CONSULTAR_ESTADO", "RESPONDER_DECISION", "CANCELAR_TAREA", "PREPARAR_REINTENTO", "EJECUTAR_REINTENTO", "CONSULTAR_RESULTADO", "REGISTRAR_REGLA", "DESACTIVAR_REGLA", "OTRA"]},
+    "repo_candidato": {"type": ["string", "null"]},
+    "worktree_candidato": {"type": ["string", "null"]},
+    "modo_solicitado": {"enum": ["read_only", "workspace_write"]},
+    "acciones": {"type": "array", "items": {"$ref": "#/$defs/accion"}},
+    "restricciones": {"type": "array", "items": {"type": "string"}},
+    "autorizaciones": {"$ref": "#/$defs/autorizaciones"},
+    "condiciones": {"type": "array", "items": {"type": "string"}},
+    "coste_maximo": {"type": ["number", "null"], "minimum": 0},
+    "commit": {"type": "boolean"},
+    "push": {"type": "boolean"},
+    "task_id_referencia": {"type": ["string", "null"]},
+    "decision_id_referencia": {"type": ["string", "null"]},
+    "retry_id_referencia": {"type": ["string", "null"]},
+    "confianza": {"type": "number", "minimum": 0, "maximum": 1},
+    "ambigua": {"type": "boolean"},
+    "ambiguedades": {"type": "array", "items": {"type": "string"}},
+    "datos_faltantes": {"type": "array", "items": {"type": "string"}},
+    "referencias_no_resueltas": {"type": "array", "items": {"type": "string"}},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "metadata": {"type": "object"},
+    "fuente": {"enum": ["PARSER_LOCAL", "PROVEEDOR_INYECTADO"]}
+  },
+  "$defs": {
+    "accion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["orden", "tipo", "alcance", "condicion", "datos"],
+      "properties": {
+        "orden": {"type": "integer", "minimum": 1},
+        "tipo": {"enum": ["CONSULTAR_ESTADO", "CONSULTAR_TAREAS", "CONSULTAR_DECISIONES", "CONSULTAR_RESULTADO", "COMPROBAR_GIT", "MODIFICAR_ALCANCE", "EJECUTAR_TESTS", "COMMIT", "PUSH", "CONTINUAR", "CANCELAR", "RESPONDER_DECISION", "PREPARAR_REINTENTO", "EJECUTAR_REINTENTO", "REGISTRAR_REGLA", "DESACTIVAR_REGLA", "ESCRIBIR_FARMATIC", "OTRA"]},
+        "alcance": {"type": ["string", "null"]},
+        "condicion": {"type": "object"},
+        "datos": {"type": "object"}
+      }
+    },
+    "autorizaciones": {
+      "type": "object", "additionalProperties": false,
+      "required": ["escritura", "commit", "commit_condicionado_tests", "push"],
+      "properties": {
+        "escritura": {"type": "boolean"}, "commit": {"type": "boolean"},
+        "commit_condicionado_tests": {"type": "boolean"}, "push": {"type": "boolean"}
+      }
+    }
+  }
+}

@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 from orquestador_snapshot import SnapshotError, comparar_snapshots, tomar_snapshot
 
@@ -49,17 +49,94 @@ def ejecutar(
     input_text: str | None = None,
     timeout: int = 120,
     check: bool = True,
+    observador_proceso: Callable[[str, dict[str, Any]], None] | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    proc = subprocess.run(
-        args,
-        cwd=str(cwd),
-        input=input_text,
-        text=True,
-        capture_output=True,
-        timeout=timeout,
-        encoding="utf-8",
-        errors="replace",
-    )
+    inicio = datetime.now().astimezone().isoformat()
+    try:
+        proceso = subprocess.Popen(
+            args,
+            cwd=str(cwd),
+            stdin=subprocess.PIPE if input_text is not None else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+        )
+    except OSError as exc:
+        if observador_proceso:
+            observador_proceso(
+                "PROCESS_ERROR",
+                {
+                    "pid": None,
+                    "comando": args,
+                    "inicio": inicio,
+                    "fin": datetime.now().astimezone().isoformat(),
+                    "error": str(exc),
+                },
+            )
+        raise
+
+    if observador_proceso:
+        observador_proceso(
+            "PROCESS_STARTED",
+            {
+                "pid": proceso.pid,
+                "comando": args,
+                "inicio": inicio,
+                "timeout_seconds": timeout,
+            },
+        )
+    try:
+        stdout, stderr = proceso.communicate(input=input_text, timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
+        proceso.terminate()
+        terminacion = "terminate"
+        try:
+            stdout, stderr = proceso.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            proceso.kill()
+            terminacion = "kill_after_terminate_timeout"
+            stdout, stderr = proceso.communicate()
+        if observador_proceso:
+            observador_proceso(
+                "PROCESS_TIMEOUT",
+                {
+                    "pid": proceso.pid,
+                    "comando": args,
+                    "inicio": inicio,
+                    "fin": datetime.now().astimezone().isoformat(),
+                    "timeout_seconds": timeout,
+                    "returncode": proceso.returncode,
+                    "terminacion": terminacion,
+                    "stdout_chars": len(stdout or ""),
+                    "stderr_chars": len(stderr or ""),
+                },
+            )
+        raise subprocess.TimeoutExpired(
+            exc.cmd,
+            exc.timeout,
+            output=stdout,
+            stderr=stderr,
+        ) from exc
+
+    proc = subprocess.CompletedProcess(args, proceso.returncode, stdout, stderr)
+    if observador_proceso:
+        observador_proceso(
+            "PROCESS_FINISHED",
+            {
+                "pid": proceso.pid,
+                "comando": args,
+                "inicio": inicio,
+                "fin": datetime.now().astimezone().isoformat(),
+                "timeout_seconds": timeout,
+                "returncode": proceso.returncode,
+                "stdout_chars": len(stdout),
+                "stderr_chars": len(stderr),
+            },
+        )
     if check and proc.returncode != 0:
         raise OrquestadorError(
             "Comando fallido:\n"
@@ -281,6 +358,7 @@ def invocar_codex(
     prompt: str,
     timeout: int,
     model: str | None,
+    observador_proceso: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     # Los flags de política/entorno son GLOBALES en Codex CLI y deben
     # situarse antes del subcomando "exec". Los flags de salida estructurada
@@ -321,12 +399,24 @@ def invocar_codex(
     else:
         launch_cmd = [resolved_codex, *cmd[1:]]
 
+    entorno_codex = dict(os.environ)
+    if not entorno_codex.get("HOME") and entorno_codex.get("USERPROFILE"):
+        # Codex CLI necesita un home para localizar su configuración/autenticación.
+        entorno_codex["HOME"] = entorno_codex["USERPROFILE"]
+    if not entorno_codex.get("CODEX_HOME") and entorno_codex.get("USERPROFILE"):
+        # La autenticación de `codex exec` se resuelve explícitamente en CODEX_HOME.
+        entorno_codex["CODEX_HOME"] = str(
+            Path(entorno_codex["USERPROFILE"]) / ".codex"
+        )
+
     proc = ejecutar(
         launch_cmd,
         cwd=repo,
         input_text=prompt,
         timeout=timeout,
         check=False,
+        observador_proceso=observador_proceso,
+        env=entorno_codex,
     )
 
     (output_path.parent / f"{output_path.stem}.stdout.txt").write_text(
@@ -395,6 +485,7 @@ def ejecutar_ciclo(
     state: dict[str, Any],
     run_dir: Path,
     decision_pio: str | None,
+    observador_proceso: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[str, dict[str, Any]]:
     repo = Path(config["repo"])
     reglas = cargar_reglas(base_dir)
@@ -436,6 +527,11 @@ def ejecutar_ciclo(
         prompt=prompt_executor,
         timeout=int(config.get("timeout_seconds", 1800)),
         model=config.get("modelo") or None,
+        observador_proceso=(
+            (lambda evento, datos: observador_proceso(evento, {**datos, "rol": "ejecutor"}))
+            if observador_proceso
+            else None
+        ),
     )
 
     snapshot_despues_ejecutor = tomar_snapshot(repo)
@@ -506,6 +602,11 @@ def ejecutar_ciclo(
         prompt=prompt_supervisor,
         timeout=int(config.get("timeout_seconds", 1800)),
         model=config.get("modelo_supervisor") or config.get("modelo") or None,
+        observador_proceso=(
+            (lambda evento, datos: observador_proceso(evento, {**datos, "rol": "supervisor"}))
+            if observador_proceso
+            else None
+        ),
     )
 
     snapshot_final_ciclo = tomar_snapshot(repo)
@@ -744,12 +845,24 @@ def main() -> int:
         action="store_true",
         help="Comprueba entorno/configuración sin ejecutar Codex.",
     )
+    parser.add_argument(
+        "--v02-status",
+        action="store_true",
+        help="Inicia la fachada V0.2, ejecuta recovery y muestra su estado global.",
+    )
     args = parser.parse_args()
 
     base_dir = Path(__file__).resolve().parent
     config = cargar_json(args.config)
 
     try:
+        if args.v02_status:
+            from fachada_v02 import OrquestadorV02
+
+            resultado = OrquestadorV02(base_dir).iniciar()
+            print(json.dumps(resultado.__dict__, ensure_ascii=False, indent=2))
+            return 0 if resultado.ok else EXIT_ERROR
+
         if args.check:
             repo = comprobar_entorno(config, base_dir)
             print(f"OK Orquestador V{VERSION}")
@@ -776,7 +889,7 @@ def main() -> int:
                 tarea_path=args.task.resolve(),
             )
 
-        parser.error("Usa --task, --resume o --check.")
+        parser.error("Usa --task, --resume, --check o --v02-status.")
         return EXIT_ERROR
 
     except KeyboardInterrupt:
