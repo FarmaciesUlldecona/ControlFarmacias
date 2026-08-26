@@ -1,0 +1,597 @@
+{
+  "archivos": [
+    {
+      "bytes": 618,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/README.md",
+      "sha256": "ea23c607d1d6a0fd0a4c85742018a54f4bd4b3add0a7159783443bd13bb12e07"
+    },
+    {
+      "bytes": 11560,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/LICENSES/Apache-2.0.txt",
+      "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+    },
+    {
+      "bytes": 1485,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/LICENSES/BSD-3-Clause.txt",
+      "sha256": "ad9a9e823df025f42389c1812eae28019f657d1ed7b3a4ebfd5010b0736a0da4"
+    },
+    {
+      "bytes": 11562,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/abseil.txt",
+      "sha256": "e8de1a7393457e9c88768b78e6ba790622fbefb040ce48194c2cb0f1b6d4e9ff"
+    },
+    {
+      "bytes": 725,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/agg23.txt",
+      "sha256": "c110d3ea2ad77467ce0dcff7d3337e6c8be8049a5103f4b9bd5fd911a77972e5"
+    },
+    {
+      "bytes": 1106,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/fast_float.txt",
+      "sha256": "bf1b57355feca8fce77ee95f48002f8d4789fb71b30ec7599c06cda4901fbb2b"
+    },
+    {
+      "bytes": 6741,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/freetype.txt",
+      "sha256": "f4b133e25df1f86ad3ffea453aa0e613f0474f34778dbbb3e437e7b2724937d8"
+    },
+    {
+      "bytes": 28286,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/icu.txt",
+      "sha256": "93679f4389d53b6835d89843f251844fb9bc455b35bab036d3c8e7abe497a47a"
+    },
+    {
+      "bytes": 1353,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/lcms.txt",
+      "sha256": "7312b68c5b25e9bf2b828706fb4e29588f22705112f411fd42e1f7d84c3d139a"
+    },
+    {
+      "bytes": 13059,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/libjpeg_turbo.ijg",
+      "sha256": "db16a04128171879c60708d171b88d97345a2dd20f9bfc173680a4497c73f704"
+    },
+    {
+      "bytes": 5755,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/libjpeg_turbo.md",
+      "sha256": "be2b2b5ab168bce87bc3e31f2a5c5adba4b7f6e9e51d618e958d1d46972ebd95"
+    },
+    {
+      "bytes": 1794,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/libopenjpeg.txt",
+      "sha256": "c5ab0890a737c2dfa7ba675036554f6d17741d98629b0c2a145354d00617e6b2"
+    },
+    {
+      "bytes": 5479,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/libpng.txt",
+      "sha256": "452390433ba0f88aa3e2b122c647741b72a0c117cd6ed7a329b49785aecb5511"
+    },
+    {
+      "bytes": 1139,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/libtiff.txt",
+      "sha256": "92b72ba97e6c2749c2a94bc0ef646b47080217f1e772a482b33cf5a5f98a6506"
+    },
+    {
+      "bytes": 15418,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/llvm-libc.txt",
+      "sha256": "3b6226c32e168c83b891d8d6f0d3c29c2116dc3ef93dc93c307b54f279ecf383"
+    },
+    {
+      "bytes": 1184,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/pdfium-binaries.txt",
+      "sha256": "8854f4388f1ca13b3ad9baa42e95f5546b4c0b17109c159256d3eca7be39b09b"
+    },
+    {
+      "bytes": 12818,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/pdfium.txt",
+      "sha256": "961eacd9633fff6d051db7208b755e9210e30efac7adec3e6a6d52798f0ccf0e"
+    },
+    {
+      "bytes": 1077,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/simdutf.txt",
+      "sha256": "c172a0ba936ff31230febb5dad869e25cb7c1a07480c7a381be8cf011bb52719"
+    },
+    {
+      "bytes": 1332,
+      "clasificacion": "LICENCIA_OBLIGATORIA",
+      "ruta": "THIRD_PARTY_NOTICES/pypdfium2-5.12.1/windows_x64/BUILD_LICENSES/zlib.txt",
+      "sha256": "33fd641c9f3b0e0be64bc78fea9e94807674cdd70c48477599226cb8956565fe"
+    },
+    {
+      "bytes": 41131,
+      "clasificacion": "DOCUMENTACION_OBLIGATORIA",
+      "ruta": "docs/normalizador_facturas_v2.md",
+      "sha256": "43f779f3f6c2757aab120abfaf22329bfc6c92b17e1b3ef11e39337a4b6b9158"
+    },
+    {
+      "bytes": 3104,
+      "clasificacion": "CHECKPOINT_MINIMO",
+      "ruta": "pruebas/facturas/resultados/cierre_base_normalizador_local_v01/01_inventario.json",
+      "sha256": "0e621d13a39ee268b09ea07ac293dd12d98e42f0dc11dd81b034e3d8cad5ffb1"
+    },
+    {
+      "bytes": 7455,
+      "clasificacion": "CHECKPOINT_MINIMO",
+      "ruta": "pruebas/facturas/resultados/cierre_base_normalizador_local_v01/02_clasificacion_archivos.json",
+      "sha256": "d023416703e6b74fb66a77450dc5f124fbe07fbb70e482ff643694131bcf3f11"
+    },
+    {
+      "bytes": 5689,
+      "clasificacion": "CHECKPOINT_MINIMO",
+      "ruta": "pruebas/facturas/resultados/cierre_base_normalizador_local_v01/03_allowlist_final.txt",
+      "sha256": "267f0c8c480879647912b5ee7c53cea12beadf728fddd7f50045774551064fe1"
+    },
+    {
+      "bytes": 652,
+      "clasificacion": "CHECKPOINT_MINIMO",
+      "ruta": "pruebas/facturas/resultados/cierre_base_normalizador_local_v01/04_privacidad.json",
+      "sha256": "6a2f19947f9e29d2fe89590e812dad878b445e680ae25b8ac94e843f7b2a8ed2"
+    },
+    {
+      "bytes": 544,
+      "clasificacion": "CHECKPOINT_MINIMO",
+      "ruta": "pruebas/facturas/resultados/cierre_base_normalizador_local_v01/05_autocontencion.json",
+      "sha256": "ade16979c196d9d4a7eef70220c2318838efcf1eb0bcf0a260a827c3d774c892"
+    },
+    {
+      "bytes": 632,
+      "clasificacion": "CHECKPOINT_MINIMO",
+      "ruta": "pruebas/facturas/resultados/cierre_base_normalizador_local_v01/06_tests.json",
+      "sha256": "9ca823328d6aa875c0b043a9a9059d7747ead8cae61f5ffbd9ce5e98f1463400"
+    },
+    {
+      "bytes": 712,
+      "clasificacion": "CHECKPOINT_MINIMO",
+      "ruta": "pruebas/facturas/resultados/cierre_base_normalizador_local_v01/07_informe_final.md",
+      "sha256": "c2a242017506aa2ac2f67cb33548ae0bfb0209459f77a9c4431c7769a25ff355"
+    },
+    {
+      "bytes": 2084,
+      "clasificacion": "DOCUMENTACION_OBLIGATORIA",
+      "ruta": "src/facturas/motor_local/ARQUITECTURA_MOTOR_LOCAL.md",
+      "sha256": "4d6f7236da3da95d2b1cb16797989abed8d155f3dda998916fb67edeb7175050"
+    },
+    {
+      "bytes": 1025,
+      "clasificacion": "DOCUMENTACION_OBLIGATORIA",
+      "ruta": "src/facturas/motor_local/DEPENDENCIAS.md",
+      "sha256": "b9b801bbaf3f665b2d703c14f9246f1c986b268ce96398c771b4f742a8d82988"
+    },
+    {
+      "bytes": 936,
+      "clasificacion": "DOCUMENTACION_OBLIGATORIA",
+      "ruta": "src/facturas/motor_local/LICENCIAS.md",
+      "sha256": "d50a89174b678cc9201fecd279fa00edafbae18c8f1ada5c64caf8138424914a"
+    },
+    {
+      "bytes": 1050,
+      "clasificacion": "DOCUMENTACION_OBLIGATORIA",
+      "ruta": "src/facturas/motor_local/MOVIMIENTOS_COMERCIALES.md",
+      "sha256": "868a647609f28d610a2c2b53e98d3b7b7c5307c83eba75cca5b5b6c76cc528a6"
+    },
+    {
+      "bytes": 1078,
+      "clasificacion": "DOCUMENTACION_OBLIGATORIA",
+      "ruta": "src/facturas/motor_local/PRIVACIDAD.md",
+      "sha256": "9806cdf459f62eb83542446cfbaf63524988875900ddcc24a1560189464b4024"
+    },
+    {
+      "bytes": 706,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/__init__.py",
+      "sha256": "129507c972fe43df7d690106cc07e5f6510f29625080120715a302f4de3a7823"
+    },
+    {
+      "bytes": 226,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/adaptadores/__init__.py",
+      "sha256": "bf1c33cefa1841ebd44f9648653fd6f32e9f9fd90a5dfc4bd65beb66d8bf149b"
+    },
+    {
+      "bytes": 2965,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/adaptadores/base.py",
+      "sha256": "b046da81b6f13ea89f2fc8acf912dbc3c82894c9f7350f632a3208856432777f"
+    },
+    {
+      "bytes": 4923,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/adaptadores/cofares.py",
+      "sha256": "f79159a222a6e658fd74aeda3f2186f258d89edde0b5156541145bef613b320a"
+    },
+    {
+      "bytes": 24851,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/adaptadores/hefame.py",
+      "sha256": "501e3c6ce7e2e5aca3b04ebdd1731c0829f5ef2997d6e166da20f6a2186de315"
+    },
+    {
+      "bytes": 219,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/adaptadores/registro.py",
+      "sha256": "2887bda006be82bffe24add98bdc4e658f7e0e0b1ef13666abe7e834175309e0"
+    },
+    {
+      "bytes": 5070,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/autoridad.py",
+      "sha256": "257ca7ea7d806f2bc006bbb0b0eb37bea70ee29b5b6b3827da21585c609c65aa"
+    },
+    {
+      "bytes": 55,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/backend/__init__.py",
+      "sha256": "ce82f43108460685fa5c03cbcdee782c69b675b295e158fb009a6144e86bec41"
+    },
+    {
+      "bytes": 377,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/backend/base.py",
+      "sha256": "cf8b244f3728289eb2b82bd5e2c16aadda7ae029126546251e58b55c95bc52a3"
+    },
+    {
+      "bytes": 3403,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/backend/pdfium.py",
+      "sha256": "7512bfe221f2093add8ebe245a4c416fe5d23c9d9d17bfcd9d3e73c90220ee4d"
+    },
+    {
+      "bytes": 3936,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/comparador.py",
+      "sha256": "d8938812d1f5b122a4935ce540dc61f5e7f2beeb3e4b3f49c4db5c867a285dfe"
+    },
+    {
+      "bytes": 4702,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/conciliacion.py",
+      "sha256": "03f54cab642e87b8d0ea63b53f39d5a178af109c5d2d435dd13431cf28cf8a25"
+    },
+    {
+      "bytes": 712,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/configuracion.py",
+      "sha256": "c258d903192bbda6e2ed1d38551d3eacde92586cf0b7697462ce900403dac4b3"
+    },
+    {
+      "bytes": 10172,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/coordinador_documento.py",
+      "sha256": "8025b2976de13764c9afaa284370f63e223b20a2d3886b365d65461bd37ccd33"
+    },
+    {
+      "bytes": 102,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/evidencia/__init__.py",
+      "sha256": "d72b3b10d3d9bb537476f22052d2be647d758716f0451a49c944b4c8cfa52caf"
+    },
+    {
+      "bytes": 184,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/evidencia/modelos.py",
+      "sha256": "4284d2685c2b99410ddf9e3aa95f14154e55dd85f14e20cbcf8735592a0cd2cf"
+    },
+    {
+      "bytes": 408,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/geometria/__init__.py",
+      "sha256": "943b66266729e4fa7df62fb4f436b820ba4c0465fd073958dbf458c7c4fdfe89"
+    },
+    {
+      "bytes": 1313,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/geometria/campos.py",
+      "sha256": "cc54798e93b63d8be9be9a33320cff2eb61ccd2900309769495cc581385f7f3a"
+    },
+    {
+      "bytes": 1322,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/geometria/columnas.py",
+      "sha256": "b43e677f660384586b74e9aaf5acd34e651292acee437512c0a47a7c60de0a8b"
+    },
+    {
+      "bytes": 1570,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/geometria/lineas.py",
+      "sha256": "738a81b06a7f99a81f0711c6e2c2feb70f88ae6a2c673af52640a0772aa5a72e"
+    },
+    {
+      "bytes": 1468,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/geometria/tablas.py",
+      "sha256": "9fb82429e8aff3d91f39e68276f2589fc49070892232c0f521eba210e5190e95"
+    },
+    {
+      "bytes": 3336,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/modelos.py",
+      "sha256": "2bfe53bc146d532e2387f45529cd42b8fe545a93233d3575b38bee9edb34fe5b"
+    },
+    {
+      "bytes": 999,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/observabilidad.py",
+      "sha256": "3bfd487d0e0668d7bc14a80741b07e7e992b599dd8dc5f77c7acb71e50ea0d14"
+    },
+    {
+      "bytes": 6064,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/puente_cofares.py",
+      "sha256": "fa740edeb4962691ba45f98986074e2a69210d684538b5f7c13d16d0849c6f64"
+    },
+    {
+      "bytes": 88,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/segmentacion/__init__.py",
+      "sha256": "23b042acd096126dfb0630f7a2654f43d3b406303af90a311b6be7e0a0fae082"
+    },
+    {
+      "bytes": 65,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/segmentacion/modelos.py",
+      "sha256": "ede25f924fa7136bea8e75da38526b26f6da80d774951b9b792be87e2950df5c"
+    },
+    {
+      "bytes": 2797,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/segmentacion/segmentador.py",
+      "sha256": "1fa09f413adacd2ad6e64f53da629223337983998d5d6ea15597a8f44cc84572"
+    },
+    {
+      "bytes": 6030,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/servicio.py",
+      "sha256": "c24d9d9a20e0e3496e59a66cc2bdda08c7ce74752418afa079caf76a809f07d2"
+    },
+    {
+      "bytes": 4479,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/motor_local/shadow.py",
+      "sha256": "b4cb555524823b08c81a80fd28a925ba7c13eb55eb12e726422acd82224a8a2d"
+    },
+    {
+      "bytes": 192,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/__init__.py",
+      "sha256": "7b6b22387643ef739ac657d421cfc82cdbc7c1f5257302f6b342fbbe03e7d046"
+    },
+    {
+      "bytes": 7270,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/adaptador_luna.py",
+      "sha256": "8c5f3fe305a65ec9177291b68f2bd3b3243305b9b181d9425c643bf5be444af9"
+    },
+    {
+      "bytes": 17958,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/consolidacion_representaciones.py",
+      "sha256": "9f0217d6ed58c19cf53c13bb5f684fce87ac948138d4238c5088349d0209b315"
+    },
+    {
+      "bytes": 20698,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/contrato_luna.py",
+      "sha256": "8edde67323915dd09589bb4d3f88eb53e0f81f1be98811f33a4f2d4dacf1c352"
+    },
+    {
+      "bytes": 10091,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/modelos.py",
+      "sha256": "13d2bd547fc62830cd295496c3dc0a106502db22355a93efb285e5a4f1904f79"
+    },
+    {
+      "bytes": 4668,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/multifactura.py",
+      "sha256": "3bc9ffc6feb95d19f71c2f30f4ea673f2b1ae6f5cf5a3dcc160dcf722a692730"
+    },
+    {
+      "bytes": 48271,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/normalizador_general.py",
+      "sha256": "0e71c4fead11391cad2f190b553575c7968bab218244eaff725505567212dc14"
+    },
+    {
+      "bytes": 3391,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/observabilidad.py",
+      "sha256": "df54215153649318be5d14b779e7e213e8545acc7911fb7217ff3e387b53a58c"
+    },
+    {
+      "bytes": 16912,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/pipeline.py",
+      "sha256": "bbbd9edc7f44a1d30c8e636c37dff13c0d3b77eb2075b6e6bb23f827df00e529"
+    },
+    {
+      "bytes": 3891,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/reglas.py",
+      "sha256": "be3bc117df4cf722b5cc2facf40fe83587a727d08dc3dcf9d7d0034a43483853"
+    },
+    {
+      "bytes": 2888,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/servicio_google.py",
+      "sha256": "3d33cfe37f93cf3e1c4890759bcff5fd3970cfec85ea45b2fd94770cb91ba5b0"
+    },
+    {
+      "bytes": 18209,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/splitter.py",
+      "sha256": "299b0cc0efa4ab1ba26c479e116b345b75998c9e68a9a1392a5079f13897eb58"
+    },
+    {
+      "bytes": 13547,
+      "clasificacion": "PRODUCTIVO_OBLIGATORIO",
+      "ruta": "src/facturas/normalizador_v2/validadores.py",
+      "sha256": "6a9b3d6296f06fa0c5a90df28ce0e843a2d1631b15d1911629ba06557bc58d7a"
+    },
+    {
+      "bytes": 2906,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/motor_local/test_conciliacion_documental.py",
+      "sha256": "bd53cd92bfadcbc9669e08a6911edccede6717ce5ce77c47402b9be2821daa32"
+    },
+    {
+      "bytes": 6925,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/motor_local/test_coordinador_documento_cofares.py",
+      "sha256": "da8008928e6aeaaecb3ff19a196851cb094d910b4ab3bf95454dc168a229335d"
+    },
+    {
+      "bytes": 6137,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/motor_local/test_hefame_local_v1.py",
+      "sha256": "c1f4ffc1c7d163147b77d93e2d148ba0f490c0c2d195c6dfa8e15f905a172389"
+    },
+    {
+      "bytes": 2501,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/motor_local/test_integracion_shadow_pipeline.py",
+      "sha256": "339f0cec7179d598c5329efff13a522e9e9f19c0946394ea968d7ece50af380a"
+    },
+    {
+      "bytes": 8467,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/motor_local/test_motor_local.py",
+      "sha256": "0b2b66935c97647902e66bbb16e89c85ae082e3d5127ae419cf3e087cf521234"
+    },
+    {
+      "bytes": 6917,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/motor_local/test_preparacion_autoridad_cofares.py",
+      "sha256": "7cc3f841ea2fc2d9e1de8041d648d92a40e92151ce3d5bd69286d9b58ebd5338"
+    },
+    {
+      "bytes": 3685,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_cierre_bloqueos_motor_local_v01.py",
+      "sha256": "e5403ea79793601992b227ea226794ea92bed3423f8678d823ce573a4ccb958b"
+    },
+    {
+      "bytes": 7338,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_consolidacion_documental_v01.py",
+      "sha256": "1ced75eb7d9fa5f0eddff158ec649094bd5e5801efd8d29543eadecec26a4789"
+    },
+    {
+      "bytes": 8095,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_contrato_evidencia_v21.py",
+      "sha256": "a9ed074e12630c06912032610b092d36b4fdad49411ff5dc8203a5c8060ce8ca"
+    },
+    {
+      "bytes": 8772,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_contrato_evidencia_v22.py",
+      "sha256": "0b24b45e5f496f610c1b0d35f24a9c1d11ee094c8521231f240300af972eca32"
+    },
+    {
+      "bytes": 16071,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_contrato_evidencia_v23.py",
+      "sha256": "12dc8349dec34f3e7e761c10bee8d7d42fc524c5f083cdc8ce3f4ee4ea081db2"
+    },
+    {
+      "bytes": 7094,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_correccion_local_v22.py",
+      "sha256": "8844701776de0adca764bd9b219e2f764fc26efb650fc19fee637ad7f1f315ee"
+    },
+    {
+      "bytes": 12595,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_correcciones_post_paginas_v23.py",
+      "sha256": "0fce2303a56ef3531739b9d089cf8b95cb1fde42d5d73b2131f4059ad8a1c5e6"
+    },
+    {
+      "bytes": 4699,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_01_modelos.py",
+      "sha256": "1e23b3694f0cd96dfd83ae99932c47d6bef7be313b66a8edd1b2a177b59e9bc0"
+    },
+    {
+      "bytes": 4496,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_02_validadores.py",
+      "sha256": "a8620ca555d7f8c9c06e6caa42ef107699a233e9e3a57884a8588ecedbcc51ac"
+    },
+    {
+      "bytes": 3810,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_03_adaptador_luna.py",
+      "sha256": "2a54826069db3701f6b2c9ddb7da7d6a49a1c2852bf76bfce04474ad0eb2374f"
+    },
+    {
+      "bytes": 2546,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_04_normalizador_general.py",
+      "sha256": "a8f130050f1090f8b8ce5e8e86ad42305edd98efc94a96d25395877169271f70"
+    },
+    {
+      "bytes": 4160,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_05_reglas.py",
+      "sha256": "0bde926aa48b3f195250e85e556be92c5ad9a0ae21d002886d41d397aeb80c66"
+    },
+    {
+      "bytes": 3068,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_06_multifactura.py",
+      "sha256": "61c3d9618205d721c6624530d721b52250d7659ce733f217b58b4c5a6ecad288"
+    },
+    {
+      "bytes": 4226,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_07_splitter.py",
+      "sha256": "7e8080b95c227d1304ec3759341c71a7cb1087f1500c0c4a03c17693838098e2"
+    },
+    {
+      "bytes": 4785,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_08_pipeline.py",
+      "sha256": "2d100d7ac0af3f3417d98e5fe789ae7b0431d6703bdd4da19c612ac46bb6dd49"
+    },
+    {
+      "bytes": 18073,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_fase_09_correcciones.py",
+      "sha256": "675c829a81e608dd84ec66a672949260530bc7209d5e9a31d1222bc6a2d225e2"
+    },
+    {
+      "bytes": 3967,
+      "clasificacion": "TEST_OBLIGATORIO",
+      "ruta": "tests/facturas/normalizador_v2/test_sentido_movimientos_v24.py",
+      "sha256": "ffe94c45a0ee46c2a80d5145b170f5632d4cbc586437e0f9f739bbf46e13bb50"
+    }
+  ],
+  "archivos_manifestados": 97,
+  "autorreferencia_excluida": "08_manifest_commit.json",
+  "conteos": {
+    "CHECKPOINT_MINIMO": 8,
+    "DOCUMENTACION_OBLIGATORIA": 6,
+    "LICENCIA_OBLIGATORIA": 19,
+    "PRODUCTIVO_OBLIGATORIO": 42,
+    "TEST_OBLIGATORIO": 23
+  },
+  "estado": "PROPUESTA_COMMIT_VALIDADA",
+  "total_allowlist": 98
+}

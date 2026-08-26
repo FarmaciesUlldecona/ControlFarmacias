@@ -463,6 +463,14 @@ Ese conciliador podrá tratar relaciones uno-a-varios, códigos internos o difer
 - Tolerancia EUR por defecto: 0,01; versionada y registrada.
 - Normalizador general + configuración + reglas pequeñas; sin motores por proveedor no justificados.
 
+## Movimientos comerciales y sentido nullable
+
+Desde el contrato `normalizador-v2.4-luna-1`, albaranes y movimientos documentados pueden conservar `sentido = null`. La descripción o categoría de un concepto no demuestra por sí sola CARGO o ABONO. Tampoco se deriva sentido por signo, proveedor, identificador, prefijo, nombre de archivo, DIRECT, posición u orden.
+
+Un movimiento con descripción demostrable no se descarta por carecer de sentido. Conserva `descripcion_literal`, `tipo`, importes y evidencia. `tipo` representa una categoría conceptual y no un sentido económico. Cuando el sentido no está documentado se añade `SENTIDO_NO_DOCUMENTADO`, no bloqueante, y cualquier control dependiente queda `NO_EVALUABLE`.
+
+Para análisis históricos futuros se separan `CARGOS_CONFIRMADOS`, `ABONOS_CONFIRMADOS` y `SENTIDO_INDETERMINADO`; estos últimos nunca se agregan automáticamente a los dos primeros. La salida canónica usa `sentido`; el alias histórico de entrada `tipo_movimiento` se mantiene para `AlbaranDocumental`.
+
 ## 29. Cuestiones explícitamente fuera de alcance
 
 No quedan decisiones funcionales abiertas necesarias para implementar este contrato. Cualquier elección futura sobre modelos/prompts, schema productivo físico, servicio de persistencia, infraestructura, nuevas tolerancias, nuevos proveedores, excepciones contables, acceso a Farmatic, algoritmo de conciliación, relaciones uno-a-varios o códigos Q requiere una tarea y aprobación separadas. Ninguna se resuelve por inferencia en esta especificación.
