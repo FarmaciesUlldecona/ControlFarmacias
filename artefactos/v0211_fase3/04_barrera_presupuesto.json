@@ -1,0 +1,9 @@
+{
+  "codigo": "REQUIERE_OK_PIO_COSTE",
+  "motivo_saldo_insuficiente": "PRESUPUESTO_SEMANAL_INSUFICIENTE",
+  "momento": "antes de crear el ejecutor",
+  "light_standard_si_cabe": "continua si no existe otra barrera",
+  "heavy": "siempre requiere autorización",
+  "local_only": "no se bloquea por presupuesto",
+  "autorizacion_excepcional": "no modifica presupuesto_total"
+}

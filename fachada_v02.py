@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Callable
 
@@ -14,6 +16,16 @@ from entornos import (
     EntornoTarea,
     ErrorEntorno,
     validar_entorno,
+)
+from contabilidad_recursos import (
+    DatoMonetarioInvalido,
+    ErrorContabilidadRecursos,
+)
+from ejecutor_local import (
+    EjecutorLocal,
+    ErrorSolicitudLocal,
+    OperacionLocal,
+    SolicitudEjecucionLocal,
 )
 from reintentos_persistentes import ResultadoOperacionReintento
 from lenguaje_natural import (
@@ -29,6 +41,12 @@ from lenguaje_natural import (
     TipoIntencion,
 )
 from orquestador_snapshot import SnapshotError, tomar_snapshot
+from politica_recursos import (
+    EvaluacionRecursos,
+    PoliticaRecursos,
+    SolicitudRecursos,
+    TipoTrabajo,
+)
 from reglas_persistentes import ReglaInvalida, TipoRegla
 from runs_persistentes import EstadoInternoRun, RunPersistente
 from supervisor_v02 import DecisionSupervisor, SolicitudAccion
@@ -103,6 +121,7 @@ class OrquestadorV02:
         inspector_procesos: Any | None = None,
         proveedor_interpretacion: ProveedorInterpretacion | None = None,
         repos_conocidos: dict[str, dict[str, Any]] | None = None,
+        ejecutor_local: EjecutorLocal | None = None,
     ) -> None:
         self._ejecutor_factory = ejecutor_factory
         self._arranque = ServicioArranque(
@@ -111,6 +130,7 @@ class OrquestadorV02:
             inspector_procesos=inspector_procesos,
         )
         self._interprete_natural = InterpreteOrdenNatural(proveedor_interpretacion)
+        self._ejecutor_local = ejecutor_local or EjecutorLocal()
         self._repos_conocidos = {
             str(nombre).upper(): dict(datos)
             for nombre, datos in (repos_conocidos or {}).items()
@@ -234,10 +254,82 @@ class OrquestadorV02:
                 snapshot = tomar_snapshot(Path(orden.worktree_candidato))
             except (SnapshotError, OSError) as exc:
                 return self._error("LOCAL_QUERY_FAILED", str(exc))
+            evaluacion_recursos = self._evaluar_recursos_orden(orden)
             return self._ok(
                 "LOCAL_GIT_QUERY", "estado Git consultado sin crear tarea ni lanzar Codex",
-                datos={"rama": snapshot.rama, "head": snapshot.head, "limpio": not (snapshot.staged_paths or snapshot.unstaged_paths)},
+                datos={
+                    "rama": snapshot.rama,
+                    "head": snapshot.head,
+                    "limpio": not (snapshot.staged_paths or snapshot.unstaged_paths),
+                    "recursos": self._datos_recursos(evaluacion_recursos),
+                },
             )
+
+        evaluacion_recursos = self._evaluar_recursos_orden(orden)
+
+        if not evaluacion_recursos.requiere_codex:
+            if (
+                len(orden.acciones) == 1
+                and orden.acciones[0].tipo is TipoAccionNatural.EJECUTAR_TESTS
+            ):
+                accion = orden.acciones[0]
+                rutas_solicitadas = accion.datos.get("rutas", ())
+                if "ruta" in accion.datos:
+                    rutas_solicitadas = (accion.datos["ruta"],)
+                if isinstance(rutas_solicitadas, list):
+                    rutas_solicitadas = tuple(rutas_solicitadas)
+                if not isinstance(rutas_solicitadas, tuple):
+                    rutas_solicitadas = ()
+                try:
+                    solicitud_local = SolicitudEjecucionLocal(
+                        operacion=OperacionLocal.EJECUTAR_TESTS,
+                        raiz=orden.worktree_candidato,
+                        rutas=rutas_solicitadas,
+                        nivel_tests=evaluacion_recursos.nivel_tests,
+                        timeout_segundos=accion.datos.get(
+                            "timeout_segundos", 120.0
+                        ),
+                    )
+                    resultado_local = self._ejecutor_local.ejecutar(solicitud_local)
+                except (ErrorSolicitudLocal, TypeError, OSError) as exc:
+                    return self._error(
+                        "LOCAL_EXECUTION_FAILED",
+                        "la solicitud de ejecución local no es válida",
+                        datos={
+                            "recursos": self._datos_recursos(evaluacion_recursos),
+                            "ejecucion_local": {
+                                "operacion": OperacionLocal.EJECUTAR_TESTS.value,
+                                "exito": False,
+                                "returncode": None,
+                                "stdout": "",
+                                "stderr": "",
+                                "timeout": False,
+                                "error": str(exc),
+                                "datos": {},
+                            },
+                        },
+                    )
+                datos = {
+                    "recursos": self._datos_recursos(evaluacion_recursos),
+                    "ejecucion_local": resultado_local.a_dict(),
+                }
+                if resultado_local.exito:
+                    return self._ok(
+                        "LOCAL_TESTS_EXECUTED",
+                        "tests ejecutados localmente sin lanzar Codex",
+                        datos=datos,
+                    )
+                return self._error(
+                    "LOCAL_EXECUTION_FAILED",
+                    "la ejecución local de tests no terminó correctamente",
+                    datos=datos,
+                )
+            return self._error(
+                "LOCAL_EXECUTOR_REQUIRED",
+                "la política exige ejecución local y esta acción todavía no tiene ejecutor local",
+                datos={"recursos": self._datos_recursos(evaluacion_recursos)},
+            )
+
         repo_info = dict(orden.metadata.get("repo_contexto") or {})
         try:
             especificacion = EspecificacionTareaV02(
@@ -265,6 +357,11 @@ class OrquestadorV02:
             creada.task_id, "NATURAL_ORDER_INTERPRETED",
             {"interpretation_id": orden.interpretation_id, "interpretacion": orden.a_dict()},
         )
+        self._arranque.gestor_tareas.anadir_evento(
+            creada.task_id,
+            "RESOURCE_CLASSIFIED",
+            self._datos_recursos(evaluacion_recursos),
+        )
         for accion in orden.acciones:
             solicitud = self._solicitud_desde_accion_natural(creada.task_id, accion, orden)
             evaluada = self.evaluar_accion(solicitud)
@@ -277,7 +374,17 @@ class OrquestadorV02:
                 )
             if evaluada.requiere_intervencion:
                 return evaluada
-        return self.ejecutar_tarea(creada.task_id)
+        resultado = self.ejecutar_tarea(creada.task_id)
+        return replace(
+            resultado,
+            datos={
+                **resultado.datos,
+                "recursos": {
+                    **self._datos_recursos(evaluacion_recursos),
+                    **dict(resultado.datos.get("recursos") or {}),
+                },
+            },
+        )
 
     def _contexto_interpretacion(self) -> ContextoInterpretacion:
         tareas = tuple(
@@ -303,6 +410,81 @@ class OrquestadorV02:
             if item.estado.value == "PREPARADO"
         )
         return ContextoInterpretacion(tareas, decisiones, retries, self._repos_conocidos)
+
+    @staticmethod
+    def _evaluar_recursos_orden(orden: OrdenInterpretada) -> EvaluacionRecursos:
+        """Clasifica recursos sin ejecutar Codex ni realizar llamadas externas."""
+
+        tipos = tuple(accion.tipo for accion in orden.acciones)
+        metadata = orden.metadata
+
+        requiere_escritura = any(
+            tipo in {
+                TipoAccionNatural.MODIFICAR_ALCANCE,
+                TipoAccionNatural.ESCRIBIR_FARMATIC,
+            }
+            for tipo in tipos
+        )
+
+        requiere_razonamiento = requiere_escritura or any(
+            tipo is TipoAccionNatural.OTRA for tipo in tipos
+        )
+
+        accion = (
+            "GIT_STATUS"
+            if len(tipos) == 1 and tipos[0] is TipoAccionNatural.COMPROBAR_GIT
+            else "EJECUTAR_TESTS"
+            if len(tipos) == 1 and tipos[0] is TipoAccionNatural.EJECUTAR_TESTS
+            else tipos[0].value
+            if len(tipos) == 1
+            else "ORDEN_COMPUESTA"
+        )
+
+        archivos_afectados = metadata.get("archivos_afectados", 0)
+        if (
+            not isinstance(archivos_afectados, int)
+            or isinstance(archivos_afectados, bool)
+            or archivos_afectados < 0
+        ):
+            archivos_afectados = 0
+
+        tipo_trabajo = metadata.get("tipo_trabajo")
+        if tipo_trabajo is None:
+            tipo_trabajo = (
+                TipoTrabajo.DESARROLLO
+                if requiere_escritura
+                else TipoTrabajo.DETERMINISTA
+            )
+
+        return PoliticaRecursos.evaluar(
+            SolicitudRecursos(
+                tipo_trabajo=tipo_trabajo,
+                accion=accion,
+                archivos_afectados=archivos_afectados,
+                requiere_escritura_codigo=requiere_escritura,
+                requiere_razonamiento=requiere_razonamiento,
+                multiples_modulos=metadata.get("multiples_modulos") is True,
+                riesgo_transversal=metadata.get("riesgo_transversal") is True,
+                cierre_hito=metadata.get("cierre_hito") is True,
+                commit_importante=metadata.get("commit_importante") is True,
+                infraestructura_comun=metadata.get("infraestructura_comun") is True,
+                incertidumbre_alta=metadata.get("incertidumbre_alta") is True,
+                problema_dificil=metadata.get("problema_dificil") is True,
+                escalado_significativo=metadata.get("escalado_significativo") is True,
+                nivel_tests_explicito=metadata.get("nivel_tests_explicito"),
+                nivel_tests_anterior=metadata.get("nivel_tests_anterior"),
+                nivel_recurso_anterior=metadata.get("nivel_recurso_anterior"),
+                coste_estimado=metadata.get("coste_estimado"),
+                presupuesto_disponible=orden.coste_maximo,
+                motivo_escalado=metadata.get("motivo_escalado"),
+            )
+        )
+
+    @staticmethod
+    def _datos_recursos(evaluacion: EvaluacionRecursos) -> dict[str, Any]:
+        datos = evaluacion.a_dict()
+        datos["motivos"] = list(evaluacion.motivos)
+        return datos
 
     @staticmethod
     def _solicitud_desde_accion_natural(task_id: str, accion: Any, orden: OrdenInterpretada) -> SolicitudAccion:
@@ -436,6 +618,7 @@ class OrquestadorV02:
         *,
         ejecutor: EjecutorCiclo | None = None,
         clave_idempotencia: str | None = None,
+        autorizacion_coste: bool = False,
     ) -> ResultadoPublicoV02:
         no_listo = self._requiere_listo()
         if no_listo:
@@ -463,6 +646,79 @@ class OrquestadorV02:
                 decision_id=pendiente.decision_id,
                 requiere_intervencion=True,
             )
+        clasificacion_recursos = self._clasificacion_recursos_tarea(tarea)
+        barrera_coste = self._barrera_coste_pendiente(tarea)
+        comprobacion_presupuesto = None
+        coste_estimado = None
+        if (
+            clasificacion_recursos is not None
+            and clasificacion_recursos.get("requiere_codex") is True
+            and clasificacion_recursos.get("coste_estimado") is not None
+        ):
+            try:
+                coste_estimado = self._decimal_monetario(
+                    clasificacion_recursos["coste_estimado"]
+                )
+                comprobacion_presupuesto = (
+                    self._arranque.contabilidad_recursos.comprobar_presupuesto(
+                        coste_estimado,
+                        referencia=tarea.id,
+                    )
+                )
+            except (
+                DatoMonetarioInvalido,
+                ErrorContabilidadRecursos,
+                InvalidOperation,
+            ) as exc:
+                return self._resultado_tarea(
+                    False,
+                    "INVALID_RESOURCE_COST",
+                    str(exc),
+                    tarea,
+                    requiere_intervencion=True,
+                )
+        presupuesto_insuficiente = (
+            comprobacion_presupuesto is not None
+            and not comprobacion_presupuesto.exito
+        )
+        metricas_recursos = dict(clasificacion_recursos or {})
+        if comprobacion_presupuesto is not None:
+            metricas_recursos.update(comprobacion_presupuesto.resumen.a_dict())
+            metricas_recursos["coste_estimado_operacion"] = (
+                comprobacion_presupuesto.datos["coste_estimado"]
+            )
+            metricas_recursos["sobre_presupuesto"] = presupuesto_insuficiente
+            metricas_recursos["exceso_estimado"] = (
+                comprobacion_presupuesto.datos["exceso_estimado"]
+            )
+        if (
+            barrera_coste is not None or presupuesto_insuficiente
+        ) and not autorizacion_coste:
+            if presupuesto_insuficiente:
+                metricas_recursos["motivo_barrera_coste"] = (
+                    "PRESUPUESTO_SEMANAL_INSUFICIENTE"
+                )
+            self._evento_tarea_unico(
+                tarea.id,
+                "RESOURCE_COST_AUTHORIZATION_REQUIRED",
+                metricas_recursos,
+            )
+            return self._resultado_tarea(
+                False,
+                "REQUIERE_OK_PIO_COSTE",
+                "la operación requiere autorización de coste antes de ejecutarse",
+                tarea,
+                requiere_intervencion=True,
+                datos={"recursos": metricas_recursos},
+            )
+        if barrera_coste is not None or presupuesto_insuficiente:
+            metricas_recursos["autorizacion_excepcional"] = presupuesto_insuficiente
+            self._evento_tarea_unico(
+                tarea.id,
+                "RESOURCE_COST_AUTHORIZATION_GRANTED",
+                metricas_recursos,
+            )
+            tarea = self._arranque.gestor_tareas.cargar(tarea.id)
         if clave_idempotencia:
             run_existente = self._run_por_clave(tarea, clave_idempotencia)
             if run_existente is not None:
@@ -470,13 +726,40 @@ class OrquestadorV02:
                     True, "RUN_ALREADY_EXECUTED", "ejecución ya aplicada",
                     tarea, run_existente, datos={"idempotente": True},
                 )
+        if ejecutor is None and self._ejecutor_factory is None:
+            return self._resultado_tarea(
+                False, "EXECUTOR_REQUIRED", "no hay ejecutor configurado", tarea
+            )
+        if clasificacion_recursos is not None and clasificacion_recursos.get(
+            "requiere_codex"
+        ) is True:
+            if coste_estimado is not None:
+                reserva_coste = self._arranque.contabilidad_recursos.reservar_coste(
+                    tarea.id,
+                    coste_estimado,
+                    task_id=tarea.id,
+                    nivel_recurso=clasificacion_recursos.get("nivel_recurso"),
+                    autorizacion_excepcional=presupuesto_insuficiente,
+                )
+                metricas_recursos.update(reserva_coste.resumen.a_dict())
+                metricas_recursos["reserva_coste"] = reserva_coste.datos.get(
+                    "importe"
+                )
         ejecutor_final = ejecutor or self._crear_ejecutor(tarea)
         if ejecutor_final is None:
+            self._arranque.contabilidad_recursos.liberar_reserva(
+                task_id=task_id,
+                motivo="ejecutor no disponible",
+            )
             return self._resultado_tarea(
                 False, "EXECUTOR_REQUIRED", "no hay ejecutor configurado", tarea
             )
         preparacion = self._arranque.gestor_runs.preparar_run(task_id)
         if not preparacion.exito or preparacion.run is None:
+            self._arranque.contabilidad_recursos.liberar_reserva(
+                task_id=task_id,
+                motivo="preparación de run rechazada",
+            )
             return self._resultado_tarea(
                 False,
                 self._codigo_precondicion(preparacion.errores),
@@ -485,6 +768,21 @@ class OrquestadorV02:
                 requiere_intervencion=True,
                 errores=preparacion.errores,
             )
+        if (
+            clasificacion_recursos is not None
+            and clasificacion_recursos.get("requiere_codex") is True
+            and coste_estimado is None
+        ):
+            desconocido = (
+                self._arranque.contabilidad_recursos.registrar_coste_desconocido(
+                    preparacion.run.run_id,
+                    task_id=tarea.id,
+                    run_id=preparacion.run.run_id,
+                    nivel_recurso=clasificacion_recursos.get("nivel_recurso"),
+                )
+            )
+            metricas_recursos.update(desconocido.resumen.a_dict())
+            metricas_recursos["coste_desconocido"] = True
         controlada = self._arranque.ejecutar_run_controlado(
             preparacion.run.run_id, ejecutor_final
         )
@@ -527,6 +825,7 @@ class OrquestadorV02:
                 "resumen": ejecucion_visible.resultado.resumen,
                 "evaluacion_supervisor": evaluacion_visible.a_dict() if evaluacion_visible else None,
                 "auto_resume": completada.auto_resume is not None,
+                "recursos": metricas_recursos,
             },
         )
 
@@ -754,6 +1053,14 @@ class OrquestadorV02:
         reserva = self._arranque.gestor_entornos.obtener_reserva(tarea.worktree)
         if reserva is not None and reserva.task_id == task_id:
             self._arranque.gestor_entornos.liberar_worktree(task_id, tarea.worktree)
+        self._arranque.contabilidad_recursos.liberar_reserva(
+            task_id=task_id,
+            motivo="tarea cancelada antes del cierre de coste",
+            fecha=(
+                datetime.fromisoformat(run.ultima_actualizacion)
+                if run is not None else None
+            ),
+        )
         return self._resultado_tarea(
             True,
             "TASK_CANCELLED",
@@ -774,12 +1081,137 @@ class OrquestadorV02:
         return self._resultado_retry(resultado)
 
     def ejecutar_reintento(
-        self, retry_id: str, *, ejecutor: EjecutorCiclo | None = None
+        self,
+        retry_id: str,
+        *,
+        ejecutor: EjecutorCiclo | None = None,
+        autorizacion_coste: bool = False,
+        coste_estimado: Decimal | str | int | None = None,
     ) -> ResultadoPublicoV02:
         resultado = self._arranque.servicio_reintentos.ejecutar_reintento(
-            retry_id, ejecutor
+            retry_id,
+            ejecutor,
+            autorizacion_coste=autorizacion_coste,
+            coste_estimado=coste_estimado,
         )
         return self._resultado_retry(resultado)
+
+    def consultar_presupuesto(
+        self, *, semana_id: str | None = None
+    ) -> ResultadoPublicoV02:
+        """Consulta LOCAL_ONLY del presupuesto semanal persistente."""
+        try:
+            resumen = self._arranque.contabilidad_recursos.consultar_presupuesto(
+                semana_id=semana_id
+            )
+        except ErrorContabilidadRecursos as exc:
+            return self._error("BUDGET_QUERY_FAILED", str(exc))
+        return self._ok(
+            "LOCAL_WEEKLY_BUDGET_QUERY",
+            "presupuesto semanal consultado localmente",
+            datos={
+                "presupuesto": resumen.a_dict(),
+                "recursos": {
+                    "nivel_recurso": "LOCAL_ONLY",
+                    "requiere_codex": False,
+                },
+            },
+        )
+
+    def consultar_consumo(
+        self,
+        *,
+        semana_id: str | None = None,
+        historico: bool = False,
+    ) -> ResultadoPublicoV02:
+        """Consulta LOCAL_ONLY del consumo actual, semanal o histórico."""
+        try:
+            consumo = self._arranque.contabilidad_recursos.consultar_consumo(
+                semana_id=semana_id,
+                historico=historico,
+            )
+        except ErrorContabilidadRecursos as exc:
+            return self._error("CONSUMPTION_QUERY_FAILED", str(exc))
+        return self._ok(
+            "LOCAL_RESOURCE_CONSUMPTION_QUERY",
+            "consumo de recursos consultado localmente",
+            datos={
+                "consumo": consumo,
+                "recursos": {
+                    "nivel_recurso": "LOCAL_ONLY",
+                    "requiere_codex": False,
+                },
+            },
+        )
+
+    def establecer_presupuesto_semanal(
+        self,
+        importe: Decimal | str | int,
+        *,
+        motivo: str | None = None,
+    ) -> ResultadoPublicoV02:
+        """Actualiza explícitamente el techo de la semana actual."""
+        try:
+            resultado = (
+                self._arranque.contabilidad_recursos.establecer_presupuesto_semanal(
+                    importe,
+                    motivo=motivo,
+                )
+            )
+        except (DatoMonetarioInvalido, ErrorContabilidadRecursos) as exc:
+            return self._error("INVALID_WEEKLY_BUDGET", str(exc))
+        return self._ok(
+            resultado.codigo,
+            "presupuesto semanal actualizado explícitamente",
+            datos={
+                "presupuesto": resultado.resumen.a_dict(),
+                "idempotente": resultado.idempotente,
+                "evento": resultado.datos,
+            },
+        )
+
+    def registrar_coste_real(
+        self,
+        run_id: str,
+        importe: Decimal | str | int,
+        *,
+        origen: str,
+    ) -> ResultadoPublicoV02:
+        """Registra coste real explícito sin derivarlo de una estimación."""
+        try:
+            run = self._arranque.gestor_runs.obtener_run(run_id)
+            if run.resultado is None:
+                return self._error(
+                    "RUN_RESULT_REQUIRED",
+                    "el run debe tener resultado antes de registrar coste real",
+                    run_id=run_id,
+                    task_id=run.task_id,
+                )
+            tarea = self._arranque.gestor_tareas.cargar(run.task_id)
+            clasificacion = self._clasificacion_recursos_tarea(tarea) or {}
+            fecha = datetime.fromisoformat(run.resultado.timestamp)
+            resultado = self._arranque.contabilidad_recursos.registrar_coste_real(
+                run_id,
+                importe,
+                task_id=run.task_id,
+                retry_id=run.retry_id,
+                origen=origen,
+                nivel_recurso=clasificacion.get("nivel_recurso"),
+                fecha=fecha,
+            )
+        except (DatoMonetarioInvalido, ErrorContabilidadRecursos, ValueError) as exc:
+            return self._error("INVALID_RESOURCE_COST", str(exc), run_id=run_id)
+        return self._ok(
+            resultado.codigo,
+            "coste real registrado localmente",
+            task_id=run.task_id,
+            run_id=run_id,
+            datos={
+                "presupuesto": resultado.resumen.a_dict(),
+                "coste": resultado.datos,
+                "idempotente": resultado.idempotente,
+            },
+        )
 
     def resumen_sistema(self) -> ResumenSistemaV02:
         tareas = self._arranque.gestor_tareas.listar()
@@ -805,6 +1237,55 @@ class OrquestadorV02:
 
     def _crear_ejecutor(self, tarea: Tarea) -> EjecutorCiclo | None:
         return self._ejecutor_factory(tarea) if self._ejecutor_factory else None
+
+    @staticmethod
+    def _clasificacion_recursos_tarea(tarea: Tarea) -> dict[str, Any] | None:
+        evento = next(
+            (
+                item for item in reversed(tarea.historial)
+                if item.tipo == "RESOURCE_CLASSIFIED"
+            ),
+            None,
+        )
+        return dict(evento.datos) if evento is not None else None
+
+    @staticmethod
+    def _barrera_coste_pendiente(tarea: Tarea) -> dict[str, Any] | None:
+        indice_clasificacion = next(
+            (
+                indice
+                for indice in range(len(tarea.historial) - 1, -1, -1)
+                if tarea.historial[indice].tipo == "RESOURCE_CLASSIFIED"
+            ),
+            None,
+        )
+        if indice_clasificacion is None:
+            return None
+        clasificacion = tarea.historial[indice_clasificacion]
+        if clasificacion.datos.get("requiere_ok_pio_coste") is not True:
+            return None
+        if any(
+            evento.tipo == "RESOURCE_COST_AUTHORIZATION_GRANTED"
+            for evento in tarea.historial[indice_clasificacion + 1 :]
+        ):
+            return None
+        return dict(clasificacion.datos)
+
+    def _evento_tarea_unico(
+        self, task_id: str, tipo: str, datos: dict[str, Any]
+    ) -> None:
+        tarea = self._arranque.gestor_tareas.cargar(task_id)
+        if any(evento.tipo == tipo and evento.datos == datos for evento in tarea.historial):
+            return
+        self._arranque.gestor_tareas.anadir_evento(task_id, tipo, datos)
+
+    @staticmethod
+    def _decimal_monetario(valor: Any) -> Decimal:
+        if isinstance(valor, bool):
+            raise DatoMonetarioInvalido("el importe no puede ser booleano")
+        if isinstance(valor, Decimal):
+            return valor
+        return Decimal(str(valor))
 
     def _requiere_listo(self) -> ResultadoPublicoV02 | None:
         if self.estado() is EstadoGlobalOrquestador.LISTO:
@@ -883,6 +1364,7 @@ class OrquestadorV02:
                 "estrategia": plan.estrategia.value if plan else None,
                 "checkpoint_id": plan.checkpoint_id if plan else None,
                 "idempotente": resultado.idempotente,
+                "recursos": dict(resultado.metricas_recursos),
             },
             errores=resultado.errores,
         )

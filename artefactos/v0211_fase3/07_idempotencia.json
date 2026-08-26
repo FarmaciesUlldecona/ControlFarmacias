@@ -1,0 +1,8 @@
+{
+  "inicializacion_semana": "idempotente por semana_id",
+  "coste_real": "idempotente por run_id",
+  "reserva": "idempotente por referencia",
+  "liberacion": "no duplica evento ni altera saldo si ya estaba liberada",
+  "comprobacion_presupuesto": "evento idempotente por referencia e importe",
+  "recovery": "recarga sin reaplicar movimientos"
+}

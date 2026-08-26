@@ -1,0 +1,17 @@
+{
+  "flujo_anterior": [
+    "CODEX_EJECUTOR",
+    "CODEX_SUPERVISOR_READ_ONLY"
+  ],
+  "doble_llamada_por_defecto": true,
+  "flujo_final": [
+    "CONTEXTO_LOCAL_ESTRUCTURADO",
+    "CODEX_PRIMARIO_SI_APORTA_VALOR",
+    "BARRERAS_Y_VALIDACION_LOCAL",
+    "SUPERVISION_DETERMINISTA_LOCAL",
+    "CORRECCION_CODEX_SOLO_CON_FALLO_DEMOSTRADO"
+  ],
+  "supervisor_codex_por_defecto": false,
+  "session_id_cli_reanudable_comprobado": false,
+  "reutilizacion_contexto_local_retry": true
+}

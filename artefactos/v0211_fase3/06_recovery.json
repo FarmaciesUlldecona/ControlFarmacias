@@ -1,0 +1,13 @@
+{
+  "fuente_reconstruccion": "archivos JSON semanales y configuracion persistente",
+  "estado_solo_en_memoria": false,
+  "reconstruye": [
+    "presupuesto semanal",
+    "costes reales",
+    "reservas activas y liberadas",
+    "costes desconocidos",
+    "autorizaciones excepcionales",
+    "saldo disponible"
+  ],
+  "historico_conservado": true
+}

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import Enum
 import json
 import os
@@ -17,10 +18,17 @@ from checkpoints_persistentes import (
     CheckpointPersistente,
     GestorCheckpoints,
 )
+from contabilidad_recursos import ContabilidadRecursos
 from contrato_ejecutor import ContextoRetryEjecutor
 from ejecucion_v02 import EjecutorCiclo, ServicioEjecucionRuns
 from entornos import GestorEntornos, validar_entorno
 from runs_persistentes import EstadoInternoRun, GestorRuns, RunPersistente
+from politica_recursos import (
+    NivelRecurso,
+    PoliticaRecursos,
+    SolicitudRecursos,
+    TipoTrabajo,
+)
 from tareas_persistentes import (
     CapacidadCheckpoint,
     EstadoTarea,
@@ -167,6 +175,7 @@ class ResultadoOperacionReintento:
     run: RunPersistente | None
     idempotente: bool
     errores: tuple[str, ...]
+    metricas_recursos: dict[str, Any] = field(default_factory=dict)
 
 
 class ServicioReintentos:
@@ -182,6 +191,7 @@ class ServicioReintentos:
         *,
         estado_listo: Callable[[], bool] | None = None,
         ejecutor_factory: Callable[[Tarea], EjecutorCiclo] | None = None,
+        contabilidad_recursos: ContabilidadRecursos | None = None,
     ) -> None:
         self.gestor_tareas = gestor_tareas
         self.gestor_entornos = gestor_entornos
@@ -190,6 +200,7 @@ class ServicioReintentos:
         self.directorio = Path(directorio)
         self.estado_listo = estado_listo or (lambda: True)
         self.ejecutor_factory = ejecutor_factory
+        self.contabilidad_recursos = contabilidad_recursos
 
     def preparar_reintento(
         self,
@@ -290,7 +301,12 @@ class ServicioReintentos:
         return ResultadoOperacionReintento(True, "RETRY_PREPARED", plan, None, False, ())
 
     def ejecutar_reintento(
-        self, retry_id: str, ejecutor: EjecutorCiclo | None = None
+        self,
+        retry_id: str,
+        ejecutor: EjecutorCiclo | None = None,
+        *,
+        autorizacion_coste: bool = False,
+        coste_estimado: Decimal | str | int | None = None,
     ) -> ResultadoOperacionReintento:
         try:
             plan = self.obtener_reintento(retry_id)
@@ -311,6 +327,71 @@ class ServicioReintentos:
             return self._rechazo("RETRY_FAILED", plan, "retry previamente fallido")
 
         tarea = self.gestor_tareas.cargar(plan.task_id)
+        comprobacion_presupuesto = None
+        coste_decimal = None
+        if coste_estimado is not None and self.contabilidad_recursos is not None:
+            comprobacion_presupuesto = self.contabilidad_recursos.comprobar_presupuesto(
+                coste_estimado,
+                referencia=plan.retry_id,
+            )
+            coste_decimal = Decimal(comprobacion_presupuesto.datos["coste_estimado"])
+        evaluacion_recursos = self._evaluar_recursos_retry(
+            tarea,
+            plan,
+            coste_estimado=coste_decimal,
+            presupuesto_disponible=(
+                max(
+                    Decimal("0.00"),
+                    comprobacion_presupuesto.resumen.presupuesto_disponible,
+                )
+                if comprobacion_presupuesto is not None else tarea.presupuesto_api
+            ),
+        )
+        metricas = evaluacion_recursos.a_dict()
+        if comprobacion_presupuesto is not None:
+            metricas.update(comprobacion_presupuesto.resumen.a_dict())
+            metricas["coste_estimado_operacion"] = comprobacion_presupuesto.datos[
+                "coste_estimado"
+            ]
+            metricas["sobre_presupuesto"] = not comprobacion_presupuesto.exito
+            metricas["exceso_estimado"] = comprobacion_presupuesto.datos[
+                "exceso_estimado"
+            ]
+        presupuesto_insuficiente = (
+            comprobacion_presupuesto is not None
+            and not comprobacion_presupuesto.exito
+        )
+        self._evento_unico(
+            plan.task_id,
+            "RETRY_RESOURCE_CLASSIFIED",
+            {"retry_id": plan.retry_id, **metricas},
+        )
+        if (
+            evaluacion_recursos.requiere_ok_pio_coste or presupuesto_insuficiente
+        ) and not autorizacion_coste:
+            if presupuesto_insuficiente:
+                metricas["motivo_barrera_coste"] = "PRESUPUESTO_SEMANAL_INSUFICIENTE"
+            self._evento_unico(
+                plan.task_id,
+                "RESOURCE_COST_AUTHORIZATION_REQUIRED",
+                {"retry_id": plan.retry_id, **metricas},
+            )
+            return ResultadoOperacionReintento(
+                False,
+                "REQUIERE_OK_PIO_COSTE",
+                plan,
+                None,
+                False,
+                (str(metricas.get("motivo_barrera_coste") or "retry costoso"),),
+                metricas,
+            )
+        if evaluacion_recursos.requiere_ok_pio_coste or presupuesto_insuficiente:
+            metricas["autorizacion_excepcional"] = presupuesto_insuficiente
+            self._evento_unico(
+                plan.task_id,
+                "RESOURCE_COST_AUTHORIZATION_GRANTED",
+                {"retry_id": plan.retry_id, **metricas},
+            )
         error_entorno = self._validar_entorno_retry(tarea)
         if error_entorno:
             return self._fallar(plan, "INVALID_ENVIRONMENT", error_entorno)
@@ -329,11 +410,43 @@ class ServicioReintentos:
                 "RETRY_IN_PROGRESS", plan, "el run del retry ya está INICIADO"
             )
 
+        if ejecutor is None and self.ejecutor_factory is None:
+            return self._rechazo("EXECUTOR_REQUIRED", plan, "falta ejecutor inyectado")
+
+        if coste_decimal is not None and self.contabilidad_recursos is not None:
+            reserva = self.contabilidad_recursos.reservar_coste(
+                plan.retry_id,
+                coste_decimal,
+                task_id=plan.task_id,
+                retry_id=plan.retry_id,
+                nivel_recurso=evaluacion_recursos.nivel_recurso.value,
+                autorizacion_excepcional=presupuesto_insuficiente,
+            )
+            metricas.update(reserva.resumen.a_dict())
+            metricas["reserva_coste"] = reserva.datos.get("importe")
         ejecutor_final = ejecutor or (
             self.ejecutor_factory(tarea) if self.ejecutor_factory is not None else None
         )
         if ejecutor_final is None:
+            if self.contabilidad_recursos is not None:
+                self.contabilidad_recursos.liberar_reserva(
+                    retry_id=plan.retry_id,
+                    motivo="ejecutor de retry no disponible",
+                )
             return self._rechazo("EXECUTOR_REQUIRED", plan, "falta ejecutor inyectado")
+        if (
+            coste_decimal is None
+            and self.contabilidad_recursos is not None
+            and evaluacion_recursos.requiere_ok_pio_coste
+        ):
+            self.contabilidad_recursos.registrar_coste_desconocido(
+                plan.retry_id,
+                task_id=plan.task_id,
+                retry_id=plan.retry_id,
+                nivel_recurso=evaluacion_recursos.nivel_recurso.value,
+            )
+            metricas["coste_desconocido"] = True
+
         if plan.estado is EstadoReintento.PREPARADO:
             plan = replace(
                 plan, estado=EstadoReintento.EJECUTANDO,
@@ -386,9 +499,51 @@ class ServicioReintentos:
         completada = ServicioEjecucionRuns(self.gestor_runs).ejecutar_run(
             run.run_id, ejecutor_final
         )
-        return self._cerrar_desde_run(
+        resultado = self._cerrar_desde_run(
             self.obtener_reintento(plan.retry_id),
             self.gestor_runs.obtener_run(completada.resultado.run_id),
+        )
+        return replace(
+            resultado,
+            metricas_recursos=metricas,
+        )
+
+    @staticmethod
+    def _evaluar_recursos_retry(
+        tarea: Tarea,
+        plan: PlanReintento,
+        *,
+        coste_estimado: Decimal | None = None,
+        presupuesto_disponible: Decimal | int | float | None = None,
+    ):
+        nivel_anterior = next(
+            (
+                evento.datos.get("nivel_recurso")
+                for evento in reversed(tarea.historial)
+                if evento.tipo == "RESOURCE_CLASSIFIED"
+                and evento.datos.get("nivel_recurso")
+            ),
+            None,
+        )
+        return PoliticaRecursos.evaluar(
+            SolicitudRecursos(
+                tipo_trabajo=TipoTrabajo.DETERMINISTA,
+                accion="REINTENTAR",
+                nivel_recurso_anterior=(
+                    NivelRecurso(nivel_anterior) if nivel_anterior else None
+                ),
+                retry=True,
+                estrategia_retry=plan.estrategia.value,
+                repite_trabajo=plan.repite_trabajo,
+                potencial_nuevo_coste=plan.potencial_nuevo_coste,
+                coste_estimado=coste_estimado,
+                presupuesto_disponible=presupuesto_disponible,
+                motivo_escalado=(
+                    "retry full run repite trabajo previamente ejecutado"
+                    if plan.repite_trabajo
+                    else None
+                ),
+            )
         )
 
     def cancelar_reintento(self, retry_id: str) -> ResultadoOperacionReintento:
@@ -411,6 +566,12 @@ class ServicioReintentos:
         )
         self._guardar(cancelado)
         self._evento_unico(plan.task_id, "RETRY_CANCELLED", {"retry_id": retry_id})
+        if self.contabilidad_recursos is not None:
+            self.contabilidad_recursos.liberar_reserva(
+                retry_id=retry_id,
+                motivo="retry cancelado",
+                fecha=datetime.fromisoformat(plan.timestamp),
+            )
         return ResultadoOperacionReintento(True, "RETRY_CANCELLED", cancelado, None, False, ())
 
     def obtener_reintento(self, retry_id: str) -> PlanReintento:

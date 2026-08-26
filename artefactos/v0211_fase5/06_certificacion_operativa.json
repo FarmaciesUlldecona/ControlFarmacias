@@ -1,0 +1,21 @@
+{
+  "estado_fase":"CUMPLE",
+  "clasificacion":"OPERATIVO_CON_LIMITACIONES",
+  "lenguaje_natural":"SI_CON_LIMITACIONES",
+  "evidencia": {
+    "escenarios_aprobados":16,"escenarios_totales":16,
+    "test_focal":{"passed":2,"failed":0},
+    "shadow_e2e":{"passed":16,"failed":0},
+    "test_modulo":{"passed":268,"failed":0},
+    "suite_completa":{"passed":396,"failed":0},
+    "codex_real":false
+  },
+  "capacidades_certificadas":["consultas","pruebas locales","cambios pequeños","cambios multiarchivo","correccion acotada","barrera HEAVY","presupuesto","retries","seguridad","commit/push protegidos","ambiguedad local"],
+  "limitaciones_demostradas":[
+    "El parser local cubre un vocabulario intencionalmente acotado; órdenes fuera de él requieren proveedor inyectado o aclaración.",
+    "No existe continuación real de sesión Codex CLI; solo contexto local persistido y aislado.",
+    "El coste real del proveedor no se captura automáticamente y permanece desconocido hasta registro explícito.",
+    "El descubrimiento automático de tests es conservador.",
+    "El locking de contabilidad es intra-proceso."
+  ]
+}

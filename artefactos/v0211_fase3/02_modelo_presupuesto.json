@@ -1,0 +1,19 @@
+{
+  "store": "ContabilidadRecursos",
+  "persistencia": "estado/presupuestos",
+  "configuracion": "configuracion.json",
+  "historico": "un JSON por semana ISO",
+  "moneda": "EUR",
+  "tipo_monetario": "Decimal",
+  "presupuesto_predeterminado": "3.80",
+  "umbral_proximidad_porcentaje": "80.00",
+  "umbral_proximidad_predeterminado": "3.04",
+  "estados_presupuesto": [
+    "normal",
+    "cerca_del_limite",
+    "limite_alcanzado_o_superado"
+  ],
+  "semana": "lunes 00:00 a domingo 23:59:59.999999, hora local",
+  "formula_disponible": "presupuesto_total - coste_real_acumulado - coste_comprometido_vigente",
+  "rollover": false
+}

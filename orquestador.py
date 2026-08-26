@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import fnmatch
 import json
 import os
@@ -13,7 +14,14 @@ import time
 from datetime import datetime
 from typing import Any, Callable
 
+from contexto_codex import (
+    LIMITES_CONTEXTO,
+    PlanContextoCodex,
+    ampliar_contexto,
+    crear_plan_contexto,
+)
 from orquestador_snapshot import SnapshotError, comparar_snapshots, tomar_snapshot
+from validacion_local_codex import ResultadoValidacionLocal, validar_cambios_localmente
 
 
 VERSION = "0.1.3"
@@ -249,9 +257,14 @@ def construir_prompt_ejecutor(
     instruccion: str,
     ciclo: int,
     decision_pio: str | None = None,
+    contexto_codex: PlanContextoCodex | None = None,
 ) -> str:
     decision = decision_pio or "(ninguna decisión nueva de Pio)"
     rutas = "\n".join(f"- {p}" for p in tarea.get("rutas_permitidas", [])) or "- ninguna"
+    contexto_optimizado = (
+        json.dumps(contexto_codex.a_dict(), ensure_ascii=False, indent=2)
+        if contexto_codex is not None else "{}"
+    )
     return f"""
 Eres el EJECUTOR técnico de ControlFarmacias dentro de un orquestador supervisado.
 
@@ -263,8 +276,8 @@ OBJETIVO APROBADO POR PIO:
 CRITERIO DE FINALIZACIÓN:
 {tarea.get("criterio_finalizacion", "Completar únicamente el objetivo aprobado.")}
 
-CONTEXTO:
-{tarea.get("contexto", "")}
+CONTEXTO CODEX ESTRUCTURADO Y LIMITADO:
+{contexto_optimizado}
 
 INSTRUCCIÓN MECÁNICA ACTUAL:
 {instruccion}
@@ -279,7 +292,8 @@ REGLAS PERMANENTES:
 {reglas}
 
 OBLIGACIONES DE ESTE TURNO:
-1. Ejecuta únicamente el paso mecánico solicitado y ya autorizado.
+1. Resuelve el objetivo autorizado en una sola llamada cuando sea técnicamente posible.
+   Consulta únicamente los archivos/rangos necesarios; no cargues todo el repositorio.
 2. No amplíes el alcance.
 3. Si aparece una decisión de negocio, arquitectura, representación de datos, heurística dudosa,
    cambio de modelo/prompt/schema, nueva llamada IA externa, acceso a SQL/Farmatic/Supabase,
@@ -477,6 +491,137 @@ def validar_tarea(tarea: dict[str, Any]) -> None:
         )
 
 
+def preparar_contexto_codex(
+    tarea: dict[str, Any], *, decision_pio: str | None = None
+) -> PlanContextoCodex:
+    nivel = str(tarea.get("nivel_recurso") or "CODEX_STANDARD")
+    previo = tarea.get("contexto_codex_previo")
+    if tarea.get("retry") is True and isinstance(previo, dict):
+        plan = PlanContextoCodex.desde_dict(previo)
+        if plan.task_id != str(tarea["id"]):
+            raise OrquestadorError("el contexto previo pertenece a otra tarea")
+        recursos = {
+            "nivel_tests": tarea.get("nivel_tests"),
+            "coste_estimado": tarea.get("coste_estimado"),
+            "autorizacion_coste": tarea.get("autorizacion_coste") is True,
+        }
+        if plan.nivel_recurso != nivel:
+            plan = crear_plan_contexto(
+                task_id=plan.task_id,
+                nivel_recurso=nivel,
+                objetivo=plan.objetivo,
+                restricciones=plan.restricciones,
+                reglas_absolutas=plan.reglas_absolutas,
+                decisiones_aplicables=plan.decisiones_aplicables,
+                archivos_candidatos=[
+                    {
+                        "ruta": item.ruta,
+                        "motivo": "CONTEXTO_RETRY_REUTILIZADO",
+                        "linea_inicio": item.linea_inicio,
+                        "linea_fin": item.linea_fin,
+                    }
+                    for item in plan.fragmentos
+                ],
+                tests_relevantes=plan.tests_relevantes,
+                errores_concretos=plan.errores_concretos,
+                contexto_retry=dict(tarea.get("contexto_retry") or {}),
+                recursos=recursos,
+                retry=True,
+                session_id=tarea.get("session_id"),
+            )
+        else:
+            plan = replace(
+                plan,
+                retry=True,
+                contexto_retry=dict(tarea.get("contexto_retry") or {}),
+                recursos=recursos,
+                session_id=tarea.get("session_id"),
+                sesion_reutilizada=False,
+                soporte_reanudacion_cli=False,
+            )
+        if decision_pio:
+            plan = replace(
+                plan,
+                decisiones_aplicables=tuple(
+                    dict.fromkeys((*plan.decisiones_aplicables, decision_pio))
+                ),
+            )
+        return plan
+    return crear_plan_contexto(
+        task_id=str(tarea["id"]),
+        nivel_recurso=nivel,
+        objetivo=str(tarea["objetivo"]),
+        restricciones=(*tarea.get("restricciones", ()), *tarea.get("rutas_protegidas", ())),
+        reglas_absolutas=("FARMATIC_READ_ONLY", "FACTURAS_ZERO_INVENTIONS"),
+        decisiones_aplicables=((decision_pio,) if decision_pio else ()),
+        archivos_candidatos=tarea.get("archivos_candidatos", tarea.get("rutas_permitidas", ())),
+        tests_relevantes=tarea.get("tests_relevantes", ()),
+        contexto_retry=dict(tarea.get("contexto_retry") or {}),
+        recursos={
+            "nivel_tests": tarea.get("nivel_tests"),
+            "coste_estimado": tarea.get("coste_estimado"),
+            "autorizacion_coste": tarea.get("autorizacion_coste") is True,
+        },
+        retry=tarea.get("retry") is True,
+        session_id=tarea.get("session_id"),
+    )
+
+
+def metricas_consumo_inicial(plan: PlanContextoCodex) -> dict[str, Any]:
+    return {
+        "llamadas_codex_solicitadas": 0,
+        "llamadas_codex_ejecutadas": 0,
+        "llamadas_codex_evitadas": 0,
+        "llamadas": [],
+        "motivo_llamada": None,
+        "motivo_evitar_llamada": None,
+        "llamada_primaria": False,
+        "correccion": False,
+        "ciclo_codex": 0,
+        **plan.metricas(),
+        "contexto_reutilizado_localmente": plan.retry and bool(plan.contexto_base),
+        "validacion_local_realizada": False,
+        "resultado_validacion_local": None,
+        "segunda_llamada_necesaria": False,
+        "motivo_segunda_llamada": None,
+        "coste_estimado": None,
+        "coste_real": None,
+    }
+
+
+def registrar_llamada_codex(
+    metricas: dict[str, Any], *, tipo: str, motivo: str
+) -> None:
+    metricas["llamadas_codex_solicitadas"] += 1
+    metricas["llamadas_codex_ejecutadas"] += 1
+    metricas["ciclo_codex"] = metricas["llamadas_codex_ejecutadas"]
+    metricas["motivo_llamada"] = motivo
+    metricas["llamada_primaria"] = tipo == "LLAMADA_PRIMARIA" or metricas["llamada_primaria"]
+    metricas["correccion"] = tipo == "CORRECCION" or metricas["correccion"]
+    metricas["llamadas"].append({"tipo": tipo, "motivo": motivo})
+
+
+def registrar_llamada_evitada(metricas: dict[str, Any], motivo: str) -> None:
+    metricas["llamadas_codex_evitadas"] += 1
+    metricas["motivo_evitar_llamada"] = motivo
+
+
+def validar_tras_codex(
+    repo: Path,
+    changed: set[str],
+    plan: PlanContextoCodex,
+    *,
+    timeout_seconds: int,
+) -> ResultadoValidacionLocal:
+    return validar_cambios_localmente(
+        repo,
+        changed,
+        nivel_recurso=plan.nivel_recurso,
+        tests_relevantes=plan.tests_relevantes,
+        timeout_seconds=min(timeout_seconds, 600),
+    )
+
+
 def ejecutar_ciclo(
     *,
     base_dir: Path,
@@ -489,86 +634,70 @@ def ejecutar_ciclo(
 ) -> tuple[str, dict[str, Any]]:
     repo = Path(config["repo"])
     reglas = cargar_reglas(base_dir)
+    timeout = int(config.get("timeout_seconds", 1800))
     ciclo = int(state["ciclo"]) + 1
     cycle_dir = run_dir / f"ciclo_{ciclo:02d}"
     cycle_dir.mkdir(parents=True, exist_ok=True)
+    plan = preparar_contexto_codex(tarea, decision_pio=decision_pio)
+    metricas = metricas_consumo_inicial(plan)
+    metricas["coste_estimado"] = tarea.get("coste_estimado")
+    state["contexto_codex"] = plan.a_dict()
+    state["metricas_consumo_codex"] = metricas
+
+    if plan.nivel_recurso == "LOCAL_ONLY":
+        registrar_llamada_evitada(metricas, "TRABAJO_DETERMINISTA_LOCAL_ONLY")
+        state.update({
+            "ciclo": ciclo,
+            "status": "FINALIZADO",
+            "ultima_decision_supervisor": {
+                "estado": "FINALIZADO",
+                "motivo": "trabajo LOCAL_ONLY derivado al ejecutor local sin lanzar Codex",
+                "origen": "ROUTING_DETERMINISTA_LOCAL",
+            },
+        })
+        guardar_json(run_dir / "state.json", state)
+        return "FINALIZADO", state
 
     estado_previo = estado_git(repo)
-
-    # Barreras de Git: el orquestador nunca debe moverse de rama/HEAD por sí mismo.
     if estado_previo["head"] != state["head_inicial"]:
         crear_pausa(
             run_dir,
             motivo="HEAD cambió desde el inicio del run.",
             detalle=f"Inicial: {state['head_inicial']}\nActual: {estado_previo['head']}",
         )
-        return "REQUIERE_OK_PIO", state
-
-    instruccion = state.get("siguiente_instruccion") or tarea["objetivo"]
-    prompt_executor = construir_prompt_ejecutor(
-        tarea=tarea,
-        reglas=reglas,
-        instruccion=instruccion,
-        ciclo=ciclo,
-        decision_pio=decision_pio,
-    )
-    (cycle_dir / "prompt_ejecutor.md").write_text(prompt_executor, encoding="utf-8")
-
-    sandbox = "workspace-write" if tarea.get("modo") == "workspace_write" else "read-only"
-    # Línea base inmediata: los cambios preexistentes no se atribuyen al ciclo.
-    snapshot_antes = tomar_snapshot(repo)
-    estado_antes = snapshot_antes.estado_git()
-    executor_result = invocar_codex(
-        codex_exe=config.get("codex_exe", "codex"),
-        repo=repo,
-        sandbox=sandbox,
-        schema=base_dir / "schemas" / "executor.schema.json",
-        output_path=cycle_dir / "resultado_ejecutor.json",
-        prompt=prompt_executor,
-        timeout=int(config.get("timeout_seconds", 1800)),
-        model=config.get("modelo") or None,
-        observador_proceso=(
-            (lambda evento, datos: observador_proceso(evento, {**datos, "rol": "ejecutor"}))
-            if observador_proceso
-            else None
-        ),
-    )
-
-    snapshot_despues_ejecutor = tomar_snapshot(repo)
-    cambios_ejecutor = comparar_snapshots(snapshot_antes, snapshot_despues_ejecutor)
-    estado_despues_ejecutor = snapshot_despues_ejecutor.estado_git()
-    changed = cambios_ejecutor.paths_cambiados
-
-    ok_paths, problemas_paths = validar_rutas(
-        changed,
-        rutas_permitidas=tarea.get("rutas_permitidas", []),
-        rutas_protegidas=config.get("rutas_protegidas", []),
-        permitir_escritura=(tarea.get("modo") == "workspace_write"),
-    )
-
-    # Barreras duras: cualquier violación detiene ANTES del revisor.
-    hard_errors: list[str] = []
-    if not ok_paths:
-        hard_errors.extend(problemas_paths)
-    if cambios_ejecutor.cambio_head:
-        hard_errors.append("Codex cambió HEAD/creó un commit, acción prohibida en V0.")
-    if cambios_ejecutor.cambio_rama:
-        hard_errors.append("Codex cambió de rama, acción prohibida en V0.")
-    if cambios_ejecutor.cambio_staged:
-        hard_errors.append("Cambió el índice Git (git add/staging), acción prohibida en V0.")
-
-    if hard_errors:
-        crear_pausa(
-            run_dir,
-            motivo="Barrera dura del orquestador activada.",
-            pregunta="¿Cómo quieres proceder tras esta desviación?",
-            detalle="\n".join(f"- {x}" for x in hard_errors),
-        )
-        state["ciclo"] = ciclo
         state["status"] = "REQUIERE_OK_PIO"
         guardar_json(run_dir / "state.json", state)
         return "REQUIERE_OK_PIO", state
 
+    instruccion = state.get("siguiente_instruccion") or tarea["objetivo"]
+    prompt_executor = construir_prompt_ejecutor(
+        tarea=tarea, reglas=reglas, instruccion=instruccion, ciclo=ciclo,
+        decision_pio=decision_pio, contexto_codex=plan,
+    )
+    (cycle_dir / "prompt_ejecutor.md").write_text(prompt_executor, encoding="utf-8")
+    sandbox = "workspace-write" if tarea.get("modo") == "workspace_write" else "read-only"
+    snapshot_antes = tomar_snapshot(repo)
+    registrar_llamada_codex(
+        metricas, tipo="LLAMADA_PRIMARIA", motivo="TRABAJO_NO_DETERMINISTA_AUTORIZADO"
+    )
+    executor_result = invocar_codex(
+        codex_exe=config.get("codex_exe", "codex"), repo=repo, sandbox=sandbox,
+        schema=base_dir / "schemas" / "executor.schema.json",
+        output_path=cycle_dir / "resultado_ejecutor.json", prompt=prompt_executor,
+        timeout=timeout, model=config.get("modelo") or None,
+        observador_proceso=(
+            (lambda evento, datos: observador_proceso(evento, {**datos, "rol": "ejecutor_primario"}))
+            if observador_proceso else None
+        ),
+    )
+    snapshot_actual = tomar_snapshot(repo)
+    cambios = comparar_snapshots(snapshot_antes, snapshot_actual)
+    hard_errors = _errores_barrera_cambios(cambios, tarea, config)
+    if hard_errors:
+        return _pausar_ciclo(
+            run_dir, state, ciclo, metricas,
+            "Barrera dura del orquestador activada.", hard_errors,
+        )
     if executor_result.get("estado") in ("REQUIERE_OK_PIO", "BLOQUEADO"):
         crear_pausa(
             run_dir,
@@ -577,107 +706,170 @@ def ejecutar_ciclo(
             opciones=executor_result.get("opciones_para_pio", []),
             detalle=executor_result.get("detalle", ""),
         )
-        state["ciclo"] = ciclo
-        state["status"] = "REQUIERE_OK_PIO"
+        state.update({"ciclo": ciclo, "status": "REQUIERE_OK_PIO"})
         guardar_json(run_dir / "state.json", state)
         return "REQUIERE_OK_PIO", state
 
-    prompt_supervisor = construir_prompt_supervisor(
-        tarea=tarea,
-        reglas=reglas,
-        resultado_ejecutor=executor_result,
-        changed_paths=changed,
-        estado_antes=estado_antes,
-        estado_despues=estado_despues_ejecutor,
-        ciclo=ciclo,
+    validacion = validar_tras_codex(
+        repo, cambios.paths_cambiados, plan, timeout_seconds=timeout
     )
-    (cycle_dir / "prompt_supervisor.md").write_text(prompt_supervisor, encoding="utf-8")
+    if executor_result.get("tests_correctos") is not True:
+        validacion = replace(
+            validacion,
+            exito=False,
+            errores=(*validacion.errores, "el ejecutor declaró tests_correctos=false"),
+        )
+    guardar_json(cycle_dir / "validacion_local_primaria.json", validacion.a_dict())
+    metricas["validacion_local_realizada"] = True
+    metricas["resultado_validacion_local"] = "OK" if validacion.exito else "NO_OK"
 
-    supervisor_result = invocar_codex(
-        codex_exe=config.get("codex_exe", "codex"),
-        repo=repo,
-        sandbox="read-only",
-        schema=base_dir / "schemas" / "supervisor.schema.json",
-        output_path=cycle_dir / "decision_supervisor.json",
-        prompt=prompt_supervisor,
-        timeout=int(config.get("timeout_seconds", 1800)),
-        model=config.get("modelo_supervisor") or config.get("modelo") or None,
-        observador_proceso=(
-            (lambda evento, datos: observador_proceso(evento, {**datos, "rol": "supervisor"}))
-            if observador_proceso
-            else None
-        ),
-    )
-
-    snapshot_final_ciclo = tomar_snapshot(repo)
-    cambios_supervisor = comparar_snapshots(
-        snapshot_despues_ejecutor, snapshot_final_ciclo
-    )
-    estado_final_ciclo = snapshot_final_ciclo.estado_git()
-    # El supervisor es read-only: cualquier cambio del workspace o Git pausa.
-    if cambios_supervisor.hay_cambios:
-        crear_pausa(
-            run_dir,
-            motivo="El estado Git cambió durante el turno read-only del supervisor.",
-            detalle=json.dumps(
-                {
-                    "antes_supervisor": estado_despues_ejecutor,
-                    "despues_supervisor": estado_final_ciclo,
-                },
-                ensure_ascii=False,
-                indent=2,
+    if not validacion.exito:
+        metricas["segunda_llamada_necesaria"] = True
+        metricas["motivo_segunda_llamada"] = "FALLO_VALIDACION_LOCAL_DEMOSTRADO"
+        limite = LIMITES_CONTEXTO[plan.nivel_recurso]
+        if limite.max_llamadas <= metricas["llamadas_codex_ejecutadas"]:
+            registrar_llamada_evitada(metricas, "LIMITE_CICLOS_CODEX_REQUIERE_OK_PIO_COSTE")
+            return _pausar_ciclo(
+                run_dir, state, ciclo, metricas,
+                "La corrección supera el límite automático de ciclos Codex.",
+                [*validacion.errores, "REQUIERE_OK_PIO_COSTE"],
+            )
+        plan = ampliar_contexto(
+            plan,
+            task_id=str(tarea["id"]),
+            motivo="FALLO_VALIDACION_LOCAL_DEMOSTRADO",
+            errores_concretos=validacion.errores,
+        )
+        state["contexto_codex"] = plan.a_dict()
+        metricas.update(plan.metricas())
+        prompt_correccion = construir_prompt_ejecutor(
+            tarea=tarea,
+            reglas=reglas,
+            instruccion=(
+                "Corrige exclusivamente los fallos locales concretos incluidos en "
+                "errores_concretos; conserva el resto del trabajo."
+            ),
+            ciclo=ciclo,
+            decision_pio=decision_pio,
+            contexto_codex=plan,
+        )
+        (cycle_dir / "prompt_correccion.md").write_text(
+            prompt_correccion, encoding="utf-8"
+        )
+        registrar_llamada_codex(
+            metricas, tipo="CORRECCION", motivo="FALLO_VALIDACION_LOCAL_DEMOSTRADO"
+        )
+        correccion = invocar_codex(
+            codex_exe=config.get("codex_exe", "codex"), repo=repo, sandbox=sandbox,
+            schema=base_dir / "schemas" / "executor.schema.json",
+            output_path=cycle_dir / "resultado_correccion.json", prompt=prompt_correccion,
+            timeout=timeout, model=config.get("modelo") or None,
+            observador_proceso=(
+                (lambda evento, datos: observador_proceso(evento, {**datos, "rol": "ejecutor_correccion"}))
+                if observador_proceso else None
             ),
         )
-        state["ciclo"] = ciclo
-        state["status"] = "REQUIERE_OK_PIO"
-        guardar_json(run_dir / "state.json", state)
-        return "REQUIERE_OK_PIO", state
-
-    decision = supervisor_result.get("estado")
-    state["ciclo"] = ciclo
-    state["ultima_decision_supervisor"] = supervisor_result
-    state["decision_pio_consumida"] = decision_pio or ""
-    state["status"] = decision
-
-    if decision == "AUTO_CONTINUE":
-        next_instruction = supervisor_result.get("siguiente_instruccion", "").strip()
-        if not next_instruction:
-            crear_pausa(
-                run_dir,
-                motivo="Supervisor pidió AUTO_CONTINUE pero no dio siguiente instrucción.",
+        snapshot_actual = tomar_snapshot(repo)
+        cambios = comparar_snapshots(snapshot_antes, snapshot_actual)
+        hard_errors = _errores_barrera_cambios(cambios, tarea, config)
+        if hard_errors:
+            return _pausar_ciclo(
+                run_dir, state, ciclo, metricas,
+                "Barrera dura tras la corrección Codex.", hard_errors,
             )
-            state["status"] = "REQUIERE_OK_PIO"
+        if correccion.get("estado") in ("REQUIERE_OK_PIO", "BLOQUEADO"):
+            crear_pausa(
+                run_dir, motivo=correccion.get("resumen", "La corrección se detuvo."),
+                pregunta=correccion.get("pregunta_para_pio", ""),
+                opciones=correccion.get("opciones_para_pio", []),
+                detalle=correccion.get("detalle", ""),
+            )
+            state.update({"ciclo": ciclo, "status": "REQUIERE_OK_PIO"})
             guardar_json(run_dir / "state.json", state)
             return "REQUIERE_OK_PIO", state
-        state["siguiente_instruccion"] = next_instruction
-        guardar_json(run_dir / "state.json", state)
-        return "AUTO_CONTINUE", state
+        validacion = validar_tras_codex(
+            repo, cambios.paths_cambiados, plan, timeout_seconds=timeout
+        )
+        if correccion.get("tests_correctos") is not True:
+            validacion = replace(
+                validacion,
+                exito=False,
+                errores=(*validacion.errores, "la corrección declaró tests_correctos=false"),
+            )
+        guardar_json(cycle_dir / "validacion_local_correccion.json", validacion.a_dict())
+        metricas["resultado_validacion_local"] = "OK" if validacion.exito else "NO_OK"
+        if not validacion.exito:
+            registrar_llamada_evitada(metricas, "LIMITE_CICLOS_CODEX_ALCANZADO")
+            return _pausar_ciclo(
+                run_dir, state, ciclo, metricas,
+                "La validación sigue fallando tras la corrección permitida.",
+                [*validacion.errores, "REQUIERE_OK_PIO_COSTE"],
+            )
 
-    if decision == "FINALIZADO":
-        summary = [
-            "# Orquestación finalizada",
-            "",
-            f"Tarea: **{tarea['id']}**",
-            "",
-            supervisor_result.get("motivo", "Objetivo completado."),
-            "",
-            f"Ciclos ejecutados: {ciclo}",
-            "",
-            "No se ha realizado commit ni push.",
-            "",
-        ]
-        (run_dir / "FINALIZADO.md").write_text("\n".join(summary), encoding="utf-8")
-        guardar_json(run_dir / "state.json", state)
-        return "FINALIZADO", state
+    registrar_llamada_evitada(metricas, "SUPERVISION_DETERMINISTA_LOCAL_SUFICIENTE")
+    supervisor_result = {
+        "estado": "FINALIZADO",
+        "motivo": "objetivo validado localmente; no se necesita supervisor Codex",
+        "detalle": "barreras duras y validación local superadas",
+        "siguiente_instruccion": "",
+        "pregunta_para_pio": "",
+        "opciones_para_pio": [],
+        "origen": "SUPERVISOR_DETERMINISTA_LOCAL",
+    }
+    guardar_json(cycle_dir / "decision_supervisor.json", supervisor_result)
+    state.update({
+        "ciclo": ciclo,
+        "ultima_decision_supervisor": supervisor_result,
+        "decision_pio_consumida": decision_pio or "",
+        "status": "FINALIZADO",
+        "metricas_consumo_codex": metricas,
+    })
+    summary = [
+        "# Orquestación finalizada", "", f"Tarea: **{tarea['id']}**", "",
+        supervisor_result["motivo"], "", f"Ciclos ejecutados: {ciclo}", "",
+        "No se ha realizado commit ni push.", "",
+    ]
+    (run_dir / "FINALIZADO.md").write_text("\n".join(summary), encoding="utf-8")
+    guardar_json(run_dir / "state.json", state)
+    return "FINALIZADO", state
 
+
+def _errores_barrera_cambios(cambios, tarea: dict[str, Any], config: dict[str, Any]) -> list[str]:
+    ok_paths, problemas = validar_rutas(
+        cambios.paths_cambiados,
+        rutas_permitidas=tarea.get("rutas_permitidas", []),
+        rutas_protegidas=config.get("rutas_protegidas", []),
+        permitir_escritura=tarea.get("modo") == "workspace_write",
+    )
+    errores = [] if ok_paths else list(problemas)
+    if cambios.cambio_head:
+        errores.append("Codex cambió HEAD/creó un commit, acción prohibida en V0.")
+    if cambios.cambio_rama:
+        errores.append("Codex cambió de rama, acción prohibida en V0.")
+    if cambios.cambio_staged:
+        errores.append("Cambió el índice Git (git add/staging), acción prohibida en V0.")
+    return errores
+
+
+def _pausar_ciclo(
+    run_dir: Path,
+    state: dict[str, Any],
+    ciclo: int,
+    metricas: dict[str, Any],
+    motivo: str,
+    errores: list[str],
+) -> tuple[str, dict[str, Any]]:
     crear_pausa(
         run_dir,
-        motivo=supervisor_result.get("motivo", "El supervisor requiere decisión de Pio."),
-        pregunta=supervisor_result.get("pregunta_para_pio", ""),
-        opciones=supervisor_result.get("opciones_para_pio", []),
-        detalle=supervisor_result.get("detalle", ""),
+        motivo=motivo,
+        pregunta="¿Autorizas un nuevo ciclo Codex o prefieres revisar el estado?",
+        detalle="\n".join(f"- {item}" for item in errores),
     )
-    state["status"] = "REQUIERE_OK_PIO"
+    state.update({
+        "ciclo": ciclo,
+        "status": "REQUIERE_OK_PIO",
+        "metricas_consumo_codex": metricas,
+    })
     guardar_json(run_dir / "state.json", state)
     return "REQUIERE_OK_PIO", state
 

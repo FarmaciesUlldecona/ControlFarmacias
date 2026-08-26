@@ -1,0 +1,15 @@
+{
+  "resultado":"CUMPLE",
+  "checkpoint": {
+    "escenario":"J","estrategia":"RETRY_FROM_CHECKPOINT","acciones_omitidas":["uno"],
+    "acciones_pendientes":["dos"],"misma_task_id":true,"contexto_cruzado":false,
+    "ejecuciones_fake":1,"segunda_peticion_idempotente":true
+  },
+  "full_run": {
+    "escenario":"K","estrategia":"RETRY_FULL_RUN","barrera_inicial":"REQUIERE_OK_PIO_COSTE",
+    "ejecuciones_antes_ok":0,"ejecuciones_tras_ok":1,"segunda_peticion_idempotente":true,
+    "bucle_automatico":false
+  },
+  "reanudacion_cli_real":false,
+  "nota":"Se reutiliza contexto local persistido de la misma tarea; no se afirma continuidad de sesión CLI."
+}

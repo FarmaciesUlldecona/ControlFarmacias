@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from pathlib import Path
 import subprocess
 from uuid import UUID
@@ -199,7 +200,11 @@ def test_ejecutar_retry_crea_nuevo_run_trazable(tmp_path, capacidad):
     plan = servicio.servicio_reintentos.preparar_reintento(tarea.id, cp.checkpoint_id).retry
     fake = EjecutorCicloFake()
 
-    resultado = servicio.servicio_reintentos.ejecutar_reintento(plan.retry_id, fake)
+    resultado = servicio.servicio_reintentos.ejecutar_reintento(
+        plan.retry_id,
+        fake,
+        autorizacion_coste=capacidad is CapacidadCheckpoint.FULL_RUN_ONLY,
+    )
 
     assert resultado.exito
     assert resultado.retry.estado is EstadoReintento.COMPLETADO
@@ -228,6 +233,119 @@ def test_ejecutar_retry_dos_veces_no_duplica_run_ni_ejecutor(tmp_path):
     assert segundo.run.run_id == primero.run.run_id
     assert len(fake.llamadas) == 1
     assert len(servicio.gestor_runs.listar_runs_tarea(tarea.id)) == 2
+    assert primero.metricas_recursos["retry"] is True
+    assert primero.metricas_recursos["estrategia_retry"] == "RETRY_FROM_CHECKPOINT"
+    eventos = servicio.gestor_tareas.cargar(tarea.id).historial
+    assert any(e.tipo == "RETRY_RESOURCE_CLASSIFIED" for e in eventos)
+
+
+def test_retry_full_run_costoso_requiere_ok_antes_del_ejecutor(tmp_path):
+    servicio, (_, tarea, _, cp) = _listo(
+        tmp_path, CapacidadCheckpoint.FULL_RUN_ONLY
+    )
+    plan = servicio.servicio_reintentos.preparar_reintento(
+        tarea.id, cp.checkpoint_id
+    ).retry
+    fake = EjecutorCicloFake()
+
+    bloqueado = servicio.servicio_reintentos.ejecutar_reintento(
+        plan.retry_id, fake
+    )
+
+    assert bloqueado.codigo == "REQUIERE_OK_PIO_COSTE"
+    assert bloqueado.metricas_recursos["retry"] is True
+    assert bloqueado.metricas_recursos["repite_trabajo"] is True
+    assert bloqueado.metricas_recursos["coste_estimado"] is None
+    assert fake.llamadas == []
+
+    autorizado = servicio.servicio_reintentos.ejecutar_reintento(
+        plan.retry_id, fake, autorizacion_coste=True
+    )
+    assert autorizado.exito is True
+    assert len(fake.llamadas) == 1
+
+
+def test_retry_checkpoint_de_tarea_heavy_tambien_requiere_ok(tmp_path):
+    servicio, (_, tarea, _, cp) = _listo(tmp_path)
+    servicio.gestor_tareas.anadir_evento(
+        tarea.id,
+        "RESOURCE_CLASSIFIED",
+        {"nivel_recurso": "CODEX_HEAVY", "requiere_ok_pio_coste": True},
+    )
+    plan = servicio.servicio_reintentos.preparar_reintento(
+        tarea.id, cp.checkpoint_id
+    ).retry
+    fake = EjecutorCicloFake()
+
+    resultado = servicio.servicio_reintentos.ejecutar_reintento(
+        plan.retry_id, fake
+    )
+
+    assert resultado.codigo == "REQUIERE_OK_PIO_COSTE"
+    assert resultado.metricas_recursos["nivel_recurso"] == "CODEX_HEAVY"
+    assert resultado.metricas_recursos["estrategia_retry"] == "RETRY_FROM_CHECKPOINT"
+    assert fake.llamadas == []
+
+
+def test_retry_checkpoint_con_coste_nuevo_que_cabe_continua_y_reserva(tmp_path):
+    servicio, (_, tarea, _, cp) = _listo(tmp_path)
+    plan = servicio.servicio_reintentos.preparar_reintento(
+        tarea.id, cp.checkpoint_id
+    ).retry
+    fake = EjecutorCicloFake()
+
+    resultado = servicio.servicio_reintentos.ejecutar_reintento(
+        plan.retry_id,
+        fake,
+        coste_estimado=Decimal("0.20"),
+    )
+
+    assert resultado.exito is True
+    assert resultado.metricas_recursos["reserva_coste"] == "0.20"
+    assert resultado.metricas_recursos["sobre_presupuesto"] is False
+    assert len(fake.llamadas) == 1
+
+
+def test_retry_checkpoint_con_coste_nuevo_que_excede_se_bloquea(tmp_path):
+    servicio, (_, tarea, _, cp) = _listo(tmp_path)
+    servicio.contabilidad_recursos.registrar_coste_real(
+        "previo", Decimal("3.90"), task_id="previa", origen="fixture"
+    )
+    plan = servicio.servicio_reintentos.preparar_reintento(
+        tarea.id, cp.checkpoint_id
+    ).retry
+    fake = EjecutorCicloFake()
+
+    resultado = servicio.servicio_reintentos.ejecutar_reintento(
+        plan.retry_id,
+        fake,
+        coste_estimado=Decimal("0.20"),
+    )
+
+    assert resultado.codigo == "REQUIERE_OK_PIO_COSTE"
+    assert resultado.metricas_recursos["motivo_barrera_coste"] == "PRESUPUESTO_SEMANAL_INSUFICIENTE"
+    assert resultado.metricas_recursos["exceso_estimado"] == "0.30"
+    assert fake.llamadas == []
+
+
+def test_retry_full_run_pide_ok_aunque_estimacion_quepa(tmp_path):
+    servicio, (_, tarea, _, cp) = _listo(
+        tmp_path, CapacidadCheckpoint.FULL_RUN_ONLY
+    )
+    plan = servicio.servicio_reintentos.preparar_reintento(
+        tarea.id, cp.checkpoint_id
+    ).retry
+    fake = EjecutorCicloFake()
+
+    resultado = servicio.servicio_reintentos.ejecutar_reintento(
+        plan.retry_id,
+        fake,
+        coste_estimado=Decimal("0.10"),
+    )
+
+    assert resultado.codigo == "REQUIERE_OK_PIO_COSTE"
+    assert resultado.metricas_recursos["sobre_presupuesto"] is False
+    assert fake.llamadas == []
 
 
 def test_retry_cancelado_no_ejecuta_y_cancelar_es_idempotente(tmp_path):

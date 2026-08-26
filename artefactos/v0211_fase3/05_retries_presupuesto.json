@@ -1,0 +1,8 @@
+{
+  "retry_checkpoint_sin_coste_nuevo": "continua si no era HEAVY",
+  "retry_checkpoint_con_estimacion": "comprueba saldo semanal",
+  "retry_full_run": "siempre requiere autorización",
+  "retry_tarea_heavy": "siempre requiere autorización",
+  "reserva": "se crea antes de ejecutar cuando existe estimación",
+  "cancelacion": "libera reserva de forma idempotente"
+}

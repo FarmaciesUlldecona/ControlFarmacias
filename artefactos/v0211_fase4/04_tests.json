@@ -1,0 +1,16 @@
+{
+  "test_focal": [
+    {"alcance": "contexto_y_flujo_nuevos", "passed": 9, "failed": 0, "duracion_segundos": 6.35},
+    {"alcance": "contexto_retry", "passed": 6, "failed": 0, "duracion_segundos": 0.20},
+    {"alcance": "evento_metricas", "passed": 1, "failed": 0, "duracion_segundos": 3.63},
+    {"alcance": "focal_final_tras_contexto_retry_recursos", "passed": 11, "failed": 0, "duracion_segundos": 9.74},
+    {"alcance": "retry_reaplica_nivel_actual_y_limite_heavy", "passed": 7, "failed": 0, "duracion_segundos": 1.84}
+  ],
+  "test_modulo": [
+    {"alcance": "ejecucion_supervisor_y_fase4", "passed": 59, "failed": 0, "duracion_segundos": 104.43},
+    {"alcance": "14_modulos_relevantes_fases_1_a_4", "passed": 262, "failed": 0, "duracion_segundos": 570.79}
+  ],
+  "suite_completa": false,
+  "codex_real": false,
+  "api_externa": false
+}

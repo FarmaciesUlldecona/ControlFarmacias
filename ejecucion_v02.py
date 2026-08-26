@@ -378,6 +378,19 @@ class EjecutorCicloReal:
             "objetivo": tarea.objetivo,
             "modo": tarea.modo.value,
             "rutas_permitidas": list(tarea.rutas_permitidas),
+            "rutas_protegidas": list(tarea.rutas_protegidas),
+            "restricciones": list(tarea.contrato.restricciones_adicionales),
+            "criterio_finalizacion": tarea.condicion_finalizacion,
+            "nivel_recurso": self._nivel_recurso(tarea),
+            "nivel_tests": self._nivel_tests(tarea),
+            "coste_estimado": self._coste_estimado(tarea),
+            "autorizacion_coste": self._autorizacion_coste(tarea),
+            "archivos_candidatos": list(tarea.rutas_permitidas),
+            "tests_relevantes": [],
+            "session_id": run.entorno.get("session_id"),
+            "retry": run.retry_id is not None,
+            "contexto_retry": dict(run.retry_context or {}),
+            "contexto_codex_previo": self._contexto_codex_previo(run),
         }
         state = {
             "version": "0.2.4",
@@ -475,6 +488,68 @@ class EjecutorCicloReal:
                 state,
                 procesos,
             )
+
+    @staticmethod
+    def _nivel_recurso(tarea: Tarea) -> str:
+        evento = next(
+            (
+                item for item in reversed(tarea.historial)
+                if item.tipo in {"RETRY_RESOURCE_CLASSIFIED", "RESOURCE_CLASSIFIED"}
+                and item.datos.get("nivel_recurso")
+            ),
+            None,
+        )
+        return str(evento.datos["nivel_recurso"]) if evento else "CODEX_STANDARD"
+
+    @staticmethod
+    def _nivel_tests(tarea: Tarea) -> str | None:
+        evento = next(
+            (
+                item for item in reversed(tarea.historial)
+                if item.tipo in {"RETRY_RESOURCE_CLASSIFIED", "RESOURCE_CLASSIFIED"}
+                and item.datos.get("nivel_tests")
+            ),
+            None,
+        )
+        return str(evento.datos["nivel_tests"]) if evento else None
+
+    @staticmethod
+    def _coste_estimado(tarea: Tarea) -> Any:
+        evento = next(
+            (
+                item for item in reversed(tarea.historial)
+                if item.tipo in {"RETRY_RESOURCE_CLASSIFIED", "RESOURCE_CLASSIFIED"}
+                and item.datos.get("coste_estimado") is not None
+            ),
+            None,
+        )
+        return evento.datos["coste_estimado"] if evento else None
+
+    @staticmethod
+    def _autorizacion_coste(tarea: Tarea) -> bool:
+        return any(
+            evento.tipo == "RESOURCE_COST_AUTHORIZATION_GRANTED"
+            for evento in tarea.historial
+        )
+
+    @staticmethod
+    def _contexto_codex_previo(run: RunPersistente) -> dict[str, Any] | None:
+        if run.retry_de is None:
+            return None
+        directorio_runs = Path(run.directorio_run).parent
+        coincidencias = list(directorio_runs.glob(f"*_{run.retry_de}/run.json"))
+        if len(coincidencias) != 1:
+            return None
+        try:
+            datos_run = json.loads(coincidencias[0].read_text(encoding="utf-8"))
+            if datos_run.get("task_id") != run.task_id:
+                return None
+            estado_path = coincidencias[0].parent / "state.json"
+            estado = json.loads(estado_path.read_text(encoding="utf-8"))
+            contexto = estado.get("contexto_codex")
+            return dict(contexto) if isinstance(contexto, dict) else None
+        except (OSError, json.JSONDecodeError):
+            return None
 
     def _fallo(
         self,
@@ -653,6 +728,19 @@ class ServicioEjecucionRuns:
 
         salida = self._normalizar_salida(run, salida)
         salida = self._validar_evidencia_retry_despues(run, salida)
+        metricas_consumo = salida.state_historico.get("metricas_consumo_codex")
+        if isinstance(metricas_consumo, dict):
+            tarea_actual = self.gestor_runs.gestor_tareas.cargar(run.task_id)
+            if not any(
+                evento.tipo == "CODEX_USAGE_RECORDED"
+                and evento.datos.get("run_id") == run.run_id
+                for evento in tarea_actual.historial
+            ):
+                self.gestor_runs.gestor_tareas.anadir_evento(
+                    run.task_id,
+                    "CODEX_USAGE_RECORDED",
+                    {"run_id": run.run_id, **metricas_consumo},
+                )
         metadata = self._persistir_salida(run, salida)
         estado = EstadoInternoRun.FALLIDO if salida.fallo_tecnico else salida.estado_interno
         resultado = self.gestor_runs.registrar_resultado(

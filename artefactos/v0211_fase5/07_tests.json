@@ -1,0 +1,18 @@
+{
+  "python":"C:\\ControlFarmacias\\Programa\\.venv\\Scripts\\python.exe",
+  "basetemp":"externo bajo TEMP",
+  "ejecuciones": [
+    {"tipo":"INTENTO_PREVIO","alcance":"shadow A-P","passed":0,"failed":0,"errors":16,"duracion_segundos":1.11,"causa":"basetemp externo solicitado no escribible por sandbox; no se ejecutaron casos"},
+    {"tipo":"DESARROLLO_SHADOW","alcance":"shadow A-P antes de ajustes de fixture","passed":8,"failed":8,"errors":0,"duracion_segundos":38.32,"causa":"ajuste exclusivo de datos/textos de la suite de certificación"},
+    {"tipo":"DESARROLLO_SHADOW","alcance":"shadow A-P corregido","passed":16,"failed":0,"errors":0,"duracion_segundos":51.88},
+    {"tipo":"TEST_FOCAL","alcance":"D y F","passed":2,"failed":0,"errors":0,"duracion_segundos":13.69},
+    {"tipo":"SHADOW_E2E","alcance":"A-P final","passed":16,"failed":0,"errors":0,"duracion_segundos":51.18},
+    {"tipo":"TEST_MODULO","alcance":"14 módulos/archivos de tests relevantes, incluida certificación","passed":268,"failed":0,"errors":0,"duracion_segundos":479.02},
+    {"tipo":"SUITE_COMPLETA_INTENTO","alcance":"workspace","passed":0,"failed":0,"errors":1,"duracion_segundos":1.04,"causa":"colección de directorio preexistente tmp_pytest con acceso denegado"},
+    {"tipo":"SUITE_COMPLETA","alcance":"tests/","passed":396,"failed":0,"errors":0,"duracion_segundos":762.95}
+  ],
+  "repeticiones_pytest":8,
+  "fallos_funcionales_finales":0,
+  "codex_real_en_tests":false,
+  "api_externa":false
+}

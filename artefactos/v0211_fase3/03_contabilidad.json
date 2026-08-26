@@ -1,0 +1,13 @@
+{
+  "coste_estimado_es_real": false,
+  "coste_real_idempotente_por": "run_id",
+  "reservas_idempotentes_por": "referencia",
+  "coste_desconocido": "COSTE_DESCONOCIDO",
+  "coste_desconocido_imputado_como_cero": false,
+  "registro_real": {
+    "libera_reserva": true,
+    "conserva_estimacion": true,
+    "calcula_diferencia": true,
+    "permite_superar_presupuesto": true
+  }
+}

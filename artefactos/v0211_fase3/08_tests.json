@@ -1,0 +1,27 @@
+{
+  "test_focal": [
+    {"alcance": "contabilidad_recursos", "passed": 13, "failed": 0, "duracion_segundos": 0.48},
+    {"alcance": "fachada_presupuesto_inicial", "passed": 5, "failed": 4, "duracion_segundos": 25.85},
+    {"alcance": "fachada_presupuesto_corregida", "passed": 9, "failed": 0, "duracion_segundos": 25.04},
+    {"alcance": "retries_presupuesto_inicial", "passed": 2, "failed": 1, "duracion_segundos": 17.84},
+    {"alcance": "retry_exceso_corregido", "passed": 1, "failed": 0, "duracion_segundos": 4.65},
+    {"alcance": "politica_y_cancelaciones", "passed": 36, "failed": 0, "duracion_segundos": 9.21},
+    {"alcance": "cierre_presupuesto_3_80_y_aviso", "passed": 30, "failed": 0, "duracion_segundos": 31.34},
+    {"alcance": "retry_saldo_negativo_corregido", "passed": 1, "failed": 0, "duracion_segundos": 5.11}
+  ],
+  "test_modulo": {
+    "passed": 175,
+    "failed": 0,
+    "duracion_segundos": 342.63,
+    "archivos_test": 9
+  },
+  "test_modulo_intermedio": {
+    "passed": 174,
+    "failed": 1,
+    "duracion_segundos": 347.07,
+    "causa": "saldo negativo entregado a la validacion de politica del retry; corregido y revalidado"
+  },
+  "suite_completa": false,
+  "codex_real": false,
+  "api_externa": false
+}

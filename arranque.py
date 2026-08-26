@@ -13,6 +13,7 @@ from typing import Any, Callable
 from uuid import uuid4
 
 from checkpoints_persistentes import GestorCheckpoints
+from contabilidad_recursos import ContabilidadRecursos
 from decisiones_persistentes import GestorDecisiones
 from ejecucion_v02 import EjecutorCiclo, EjecucionRunCompletada, ServicioEjecucionRuns
 from entornos import GestorEntornos
@@ -103,6 +104,7 @@ class ServicioArranque:
             self.gestor_tareas, self.gestor_runs, estado / "decisiones"
         )
         self.gestor_reglas = GestorReglas(estado / "reglas")
+        self.contabilidad_recursos = ContabilidadRecursos(estado / "presupuestos")
         self.supervisor = SupervisorV02(self.gestor_reglas, self.gestor_tareas)
         self.gestor_checkpoints = GestorCheckpoints(
             self.gestor_tareas, self.gestor_runs, estado / "checkpoints"
@@ -129,6 +131,7 @@ class ServicioArranque:
             estado / "retries",
             estado_listo=lambda: self.estado_global is EstadoGlobalOrquestador.LISTO,
             ejecutor_factory=ejecutor_factory,
+            contabilidad_recursos=self.contabilidad_recursos,
         )
 
     def obtener_estado_global(self) -> EstadoGlobalOrquestador:

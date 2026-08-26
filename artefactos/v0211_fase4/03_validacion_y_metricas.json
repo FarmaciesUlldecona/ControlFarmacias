@@ -1,0 +1,36 @@
+{
+  "validacion_local": [
+    "git diff --check",
+    "compilacion in-process de Python modificado",
+    "deteccion de whitespace en archivos cambiados",
+    "pytest focal declarado o descubierto"
+  ],
+  "metricas": [
+    "llamadas_codex_solicitadas",
+    "llamadas_codex_ejecutadas",
+    "llamadas_codex_evitadas",
+    "motivo_llamada",
+    "motivo_evitar_llamada",
+    "llamada_primaria",
+    "correccion",
+    "ciclo_codex",
+    "session_id",
+    "sesion_reutilizada",
+    "contexto_archivos",
+    "contexto_fragmentos",
+    "contexto_caracteres",
+    "contexto_ampliado",
+    "motivo_ampliacion",
+    "validacion_local_realizada",
+    "resultado_validacion_local",
+    "segunda_llamada_necesaria",
+    "motivo_segunda_llamada",
+    "nivel_recurso",
+    "retry",
+    "coste_estimado",
+    "coste_real"
+  ],
+  "evento": "CODEX_USAGE_RECORDED",
+  "tokens_inventados": false,
+  "costes_inventados": false
+}

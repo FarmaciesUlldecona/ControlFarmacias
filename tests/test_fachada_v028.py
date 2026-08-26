@@ -400,6 +400,7 @@ def test_full_run_only_no_afirma_reutilizar_checkpoint(tmp_path):
     resultado = orquestador.ejecutar_reintento(
         preparado.datos["retry_id"],
         ejecutor=EjecutorCicloFake(capacidad_checkpoint=CapacidadCheckpoint.FULL_RUN_ONLY),
+        autorizacion_coste=True,
     )
     evidencia = orquestador._arranque.gestor_runs.obtener_run(
         resultado.run_id

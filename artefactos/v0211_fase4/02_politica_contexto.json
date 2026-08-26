@@ -1,0 +1,28 @@
+{
+  "LOCAL_ONLY": {
+    "max_archivos": 0,
+    "max_fragmentos": 0,
+    "max_llamadas_codex": 0
+  },
+  "CODEX_LIGHT": {
+    "max_archivos": 3,
+    "max_fragmentos": 6,
+    "max_caracteres": 12000,
+    "max_llamadas_codex": 2
+  },
+  "CODEX_STANDARD": {
+    "max_archivos": 8,
+    "max_fragmentos": 16,
+    "max_caracteres": 40000,
+    "max_llamadas_codex": 2
+  },
+  "CODEX_HEAVY": {
+    "max_archivos": 16,
+    "max_fragmentos": 32,
+    "max_caracteres": 80000,
+    "max_llamadas_codex": 1
+  },
+  "tokens_estimados": null,
+  "contexto_incremental": "contexto_base + ampliaciones_contexto",
+  "aislamiento": "task_id obligatorio e inmutable"
+}

@@ -1,0 +1,27 @@
+{
+  "alcance": "escenarios A-P",
+  "llamadas_reales_codex": 0,
+  "llamadas_fake_ejecutor_totales": 7,
+  "llamadas_primarias_fake": 6,
+  "correcciones_fake": 1,
+  "escenarios_0_llamadas": ["A","B","C","G","I","L","M","N","O","P"],
+  "escenarios_1_llamada": ["D","E","H","J","K"],
+  "escenarios_2_llamadas": ["F"],
+  "llamadas_evitadas_demostradas": ["A","B","C","G","I","L","M","N","O","P"],
+  "contexto": {
+    "LOCAL_ONLY":{"max_archivos":0,"max_fragmentos":0,"max_caracteres":0,"max_llamadas":0},
+    "CODEX_LIGHT":{"max_archivos":3,"max_fragmentos":6,"max_caracteres":12000,"max_llamadas":2},
+    "CODEX_STANDARD":{"max_archivos":8,"max_fragmentos":16,"max_caracteres":40000,"max_llamadas":2},
+    "CODEX_HEAVY":{"max_archivos":16,"max_fragmentos":32,"max_caracteres":80000,"max_llamadas":1}
+  },
+  "validacion_local": {"D":"OK","E":"OK","F_primera":"ERROR_VERIFICABLE","F_correccion":"OK"},
+  "contexto_ampliado": {"D":false,"E":false,"F":true},
+  "presupuesto": {
+    "total_semanal":"3.80","umbral_aviso":"3.04",
+    "H":{"antes":"0.76 disponible","estimacion":"0.10","reserva":"0.10","barrera":"AVISO_NO_BLOQUEANTE"},
+    "I":{"antes":"0.10 disponible","estimacion":"0.20","reserva":null,"exceso":"0.10","barrera":"REQUIERE_OK_PIO_COSTE"}
+  },
+  "tokens_reales": null,
+  "coste_real_proveedor": null,
+  "nota": "No se inventan tokens ni costes reales. Los tamaños efectivos de contexto son métricas persistidas por cada run efímero; se certifican sus límites y su carácter incremental, no se reconstruyen tras destruir la fixture."
+}

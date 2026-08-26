@@ -313,6 +313,34 @@ def test_ejecutor_real_es_inyectable_y_llama_funcion_in_process(tmp_path, monkey
     assert "V0_1_3" not in json.dumps(completada.salida.procesos)
 
 
+def test_metricas_consumo_codex_se_registran_en_evento_del_run(tmp_path):
+    _, tareas, _, runs, tarea, run = _contexto(tmp_path)
+    metricas = {
+        "llamadas_codex_solicitadas": 1,
+        "llamadas_codex_ejecutadas": 1,
+        "llamadas_codex_evitadas": 1,
+        "contexto_archivos": 2,
+        "contexto_fragmentos": 2,
+        "sesion_reutilizada": False,
+        "validacion_local_realizada": True,
+        "resultado_validacion_local": "OK",
+    }
+    fake = EjecutorCicloFake(
+        state_historico={"metricas_consumo_codex": metricas}
+    )
+
+    ServicioEjecucionRuns(runs).ejecutar_run(run.run_id, fake)
+
+    eventos = [
+        evento for evento in tareas.cargar(tarea.id).historial
+        if evento.tipo == "CODEX_USAGE_RECORDED"
+    ]
+    assert len(eventos) == 1
+    assert eventos[0].datos["run_id"] == run.run_id
+    assert eventos[0].datos["llamadas_codex_ejecutadas"] == 1
+    assert eventos[0].datos["resultado_validacion_local"] == "OK"
+
+
 def test_pytest_bloquea_ejecutor_real_por_defecto(tmp_path):
     _, tareas, _, _, tarea, run = _contexto(tmp_path)
     real = EjecutorCicloReal(Path(__file__).resolve().parents[1], {})

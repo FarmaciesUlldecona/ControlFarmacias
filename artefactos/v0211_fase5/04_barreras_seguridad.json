@@ -1,0 +1,15 @@
+{
+  "resultado":"CUMPLE",
+  "barreras": [
+    {"regla":"FARMATIC_READ_ONLY","escenario":"L","resultado":"ABSOLUTE_RULE_VIOLATION","escrituras":0,"codex":0},
+    {"regla":"FACTURAS_ZERO_INVENTIONS","escenario":"M","resultado":"ABSOLUTE_RULE_VIOLATION","contrato_ausencia":{"escalar":null,"coleccion":[],"incidencia":true}},
+    {"regla":"COMMIT_EXPLICITO","escenario":"N","resultado":"ACTION_BLOCKED_REQUIERE_INTERVENCION","git_add":false,"commit":false},
+    {"regla":"PUSH_EXPLICITO","escenario":"O","resultado":"ACTION_BLOCKED_REQUIERE_INTERVENCION","push":false},
+    {"regla":"HEAVY_COST_GATE","escenario":"G","resultado":"REQUIERE_OK_PIO_COSTE","ejecutor_creado":false,"reserva":"0.00"},
+    {"regla":"WEEKLY_BUDGET","escenario":"I","resultado":"REQUIERE_OK_PIO_COSTE","exceso":"0.10","ejecutor_creado":false},
+    {"regla":"AMBIGUITY_GATE","escenario":"P","resultado":"INTERPRETATION_INCOMPLETE","codex":0}
+  ],
+  "api_externa":false,
+  "datos_sensibles":false,
+  "otro_repo_real":false
+}

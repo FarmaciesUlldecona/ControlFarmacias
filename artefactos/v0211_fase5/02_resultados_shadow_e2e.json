@@ -1,0 +1,25 @@
+{
+  "ejecucion_final": {"passed":16,"failed":0,"errors":0,"duracion_segundos":51.18},
+  "flujo_publico": "procesar_orden -> interpretacion -> politica -> supervisor -> presupuesto -> ejecutor local/Codex fake -> validacion -> resultado/eventos",
+  "resultados": [
+    {"id":"A","resultado":"CUMPLE","codigo":"LOCAL_STATUS_QUERY","codex_ejecutado":0,"observacion":"respuesta directa y ninguna tarea"},
+    {"id":"B","resultado":"CUMPLE","codigo":"LOCAL_GIT_QUERY","codex_ejecutado":0,"observacion":"Git de lectura sobre fixture"},
+    {"id":"C","resultado":"CUMPLE","codigo":"LOCAL_TESTS_EXECUTED","codex_ejecutado":0,"observacion":"TEST_FOCAL por ejecutor local"},
+    {"id":"D","resultado":"CUMPLE","codigo":"RUN_COMPLETED","codex_ejecutado":1,"observacion":"motor historico real, primaria fake, validacion OK"},
+    {"id":"E","resultado":"CUMPLE","codigo":"RUN_COMPLETED","codex_ejecutado":1,"observacion":"dos archivos fixture, TEST_MODULO"},
+    {"id":"F","resultado":"CUMPLE","codigo":"RUN_COMPLETED","codex_ejecutado":2,"observacion":"error modulo.py:1 y tests_correctos=false llegaron a la correccion"},
+    {"id":"G","resultado":"CUMPLE","codigo":"REQUIERE_OK_PIO_COSTE","codex_ejecutado":0,"observacion":"sin ejecutor ni reserva"},
+    {"id":"H","resultado":"CUMPLE","codigo":"RUN_COMPLETED","codex_ejecutado":1,"observacion":"3.04 EUR activa aviso; estimacion 0.10 EUR cabe"},
+    {"id":"I","resultado":"CUMPLE","codigo":"REQUIERE_OK_PIO_COSTE","codex_ejecutado":0,"observacion":"exceso estimado exacto 0.10 EUR"},
+    {"id":"J","resultado":"CUMPLE","codigo":"RETRY_COMPLETED","codex_ejecutado":1,"observacion":"segunda solicitud idempotente; misma task_id"},
+    {"id":"K","resultado":"CUMPLE","codigo":"REQUIERE_OK_PIO_COSTE/RETRY_COMPLETED","codex_ejecutado":1,"observacion":"cero antes del OK; repeticion idempotente"},
+    {"id":"L","resultado":"CUMPLE","codigo":"ABSOLUTE_RULE_VIOLATION","codex_ejecutado":0,"observacion":"cero escritura"},
+    {"id":"M","resultado":"CUMPLE","codigo":"ABSOLUTE_RULE_VIOLATION","codex_ejecutado":0,"observacion":"null, [], incidencia y bloqueo"},
+    {"id":"N","resultado":"CUMPLE","codigo":"ACTION_BLOCKED","codex_ejecutado":0,"observacion":"requiere intervención; HEAD inalterado"},
+    {"id":"O","resultado":"CUMPLE","codigo":"ACTION_BLOCKED","codex_ejecutado":0,"observacion":"requiere intervención; sin remoto ni push"},
+    {"id":"P","resultado":"CUMPLE","codigo":"INTERPRETATION_INCOMPLETE","codex_ejecutado":0,"observacion":"aclaracion previa"}
+  ],
+  "codex_real": false,
+  "red": false,
+  "farmatic": false
+}
