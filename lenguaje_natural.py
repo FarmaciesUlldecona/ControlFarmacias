@@ -43,6 +43,7 @@ class TipoIntencion(str, Enum):
     PREPARAR_REINTENTO = "PREPARAR_REINTENTO"
     EJECUTAR_REINTENTO = "EJECUTAR_REINTENTO"
     CONSULTAR_RESULTADO = "CONSULTAR_RESULTADO"
+    CONSULTAR_PRESUPUESTO = "CONSULTAR_PRESUPUESTO"
     REGISTRAR_REGLA = "REGISTRAR_REGLA"
     DESACTIVAR_REGLA = "DESACTIVAR_REGLA"
     OTRA = "OTRA"
@@ -53,6 +54,7 @@ class TipoAccionNatural(str, Enum):
     CONSULTAR_TAREAS = "CONSULTAR_TAREAS"
     CONSULTAR_DECISIONES = "CONSULTAR_DECISIONES"
     CONSULTAR_RESULTADO = "CONSULTAR_RESULTADO"
+    CONSULTAR_PRESUPUESTO = "CONSULTAR_PRESUPUESTO"
     COMPROBAR_GIT = "COMPROBAR_GIT"
     MODIFICAR_ALCANCE = "MODIFICAR_ALCANCE"
     EJECUTAR_TESTS = "EJECUTAR_TESTS"
@@ -286,8 +288,14 @@ class ProveedorInterpretacion(Protocol):
 
 
 class InterpreteOrdenNatural:
-    def __init__(self, proveedor: ProveedorInterpretacion | None = None) -> None:
+    def __init__(
+        self,
+        proveedor: ProveedorInterpretacion | None = None,
+        *,
+        preferir_proveedor: bool = False,
+    ) -> None:
         self.proveedor = proveedor
+        self.preferir_proveedor = preferir_proveedor
 
     def interpretar(
         self, texto: str, contexto: ContextoInterpretacion | None = None,
@@ -298,11 +306,18 @@ class InterpreteOrdenNatural:
         if not isinstance(texto, str) or not texto.strip():
             raise InterpretacionInvalida("orden vacía")
         contexto = contexto or ContextoInterpretacion()
+        if self.preferir_proveedor and self.proveedor is not None:
+            return self._interpretar_proveedor(texto, contexto)
         local = self._parser_local(texto, contexto)
         if local is not None:
             return local
         if self.proveedor is None:
             return self._otra_ambigua(texto, "orden no cubierta por el parser local")
+        return self._interpretar_proveedor(texto, contexto)
+
+    def _interpretar_proveedor(
+        self, texto: str, contexto: ContextoInterpretacion
+    ) -> OrdenInterpretada:
         try:
             datos = self.proveedor.interpretar(texto, contexto.para_proveedor())
             orden = OrdenInterpretada.desde_dict(datos)

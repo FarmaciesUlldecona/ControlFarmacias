@@ -18,7 +18,7 @@
     "schema_version": {"const": 1},
     "texto_original": {"type": "string", "minLength": 1},
     "objetivo": {"type": "string"},
-    "tipo_intencion": {"enum": ["CREAR_TAREA", "CONTINUAR_TAREA", "CONSULTAR_ESTADO", "RESPONDER_DECISION", "CANCELAR_TAREA", "PREPARAR_REINTENTO", "EJECUTAR_REINTENTO", "CONSULTAR_RESULTADO", "REGISTRAR_REGLA", "DESACTIVAR_REGLA", "OTRA"]},
+    "tipo_intencion": {"enum": ["CREAR_TAREA", "CONTINUAR_TAREA", "CONSULTAR_ESTADO", "CONSULTAR_PRESUPUESTO", "RESPONDER_DECISION", "CANCELAR_TAREA", "PREPARAR_REINTENTO", "EJECUTAR_REINTENTO", "CONSULTAR_RESULTADO", "REGISTRAR_REGLA", "DESACTIVAR_REGLA", "OTRA"]},
     "repo_candidato": {"type": ["string", "null"]},
     "worktree_candidato": {"type": ["string", "null"]},
     "modo_solicitado": {"enum": ["read_only", "workspace_write"]},
@@ -47,7 +47,7 @@
       "required": ["orden", "tipo", "alcance", "condicion", "datos"],
       "properties": {
         "orden": {"type": "integer", "minimum": 1},
-        "tipo": {"enum": ["CONSULTAR_ESTADO", "CONSULTAR_TAREAS", "CONSULTAR_DECISIONES", "CONSULTAR_RESULTADO", "COMPROBAR_GIT", "MODIFICAR_ALCANCE", "EJECUTAR_TESTS", "COMMIT", "PUSH", "CONTINUAR", "CANCELAR", "RESPONDER_DECISION", "PREPARAR_REINTENTO", "EJECUTAR_REINTENTO", "REGISTRAR_REGLA", "DESACTIVAR_REGLA", "ESCRIBIR_FARMATIC", "OTRA"]},
+        "tipo": {"enum": ["CONSULTAR_ESTADO", "CONSULTAR_TAREAS", "CONSULTAR_DECISIONES", "CONSULTAR_RESULTADO", "CONSULTAR_PRESUPUESTO", "COMPROBAR_GIT", "MODIFICAR_ALCANCE", "EJECUTAR_TESTS", "COMMIT", "PUSH", "CONTINUAR", "CANCELAR", "RESPONDER_DECISION", "PREPARAR_REINTENTO", "EJECUTAR_REINTENTO", "REGISTRAR_REGLA", "DESACTIVAR_REGLA", "ESCRIBIR_FARMATIC", "OTRA"]},
         "alcance": {"type": ["string", "null"]},
         "condicion": {"type": "object"},
         "datos": {"type": "object"}

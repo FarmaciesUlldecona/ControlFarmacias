@@ -120,6 +120,7 @@ class OrquestadorV02:
         ejecutor_factory: Callable[[Tarea], EjecutorCiclo] | None = None,
         inspector_procesos: Any | None = None,
         proveedor_interpretacion: ProveedorInterpretacion | None = None,
+        preferir_proveedor_interpretacion: bool = False,
         repos_conocidos: dict[str, dict[str, Any]] | None = None,
         ejecutor_local: EjecutorLocal | None = None,
     ) -> None:
@@ -129,7 +130,10 @@ class OrquestadorV02:
             ejecutor_factory=ejecutor_factory,
             inspector_procesos=inspector_procesos,
         )
-        self._interprete_natural = InterpreteOrdenNatural(proveedor_interpretacion)
+        self._interprete_natural = InterpreteOrdenNatural(
+            proveedor_interpretacion,
+            preferir_proveedor=preferir_proveedor_interpretacion,
+        )
         self._ejecutor_local = ejecutor_local or EjecutorLocal()
         self._repos_conocidos = {
             str(nombre).upper(): dict(datos)
@@ -229,6 +233,8 @@ class OrquestadorV02:
                 task_id=orden.task_id_referencia, run_id=run.run_id if run else None,
                 datos={"run": run.a_dict() if run else None},
             )
+        if orden.tipo_intencion is TipoIntencion.CONSULTAR_PRESUPUESTO:
+            return self.consultar_presupuesto()
         if orden.tipo_intencion is TipoIntencion.CONTINUAR_TAREA:
             return self.ejecutar_tarea(orden.task_id_referencia)
         if orden.tipo_intencion is TipoIntencion.CANCELAR_TAREA:
