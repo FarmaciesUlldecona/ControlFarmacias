@@ -37,6 +37,81 @@ def sentido_desde_seccion_documental(
     return None
 
 
+def documentar_sentido_desde_relacion(
+    candidato: dict[str, Any],
+    relacion: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Documenta sentido solo desde una relación económica 1:1 demostrada."""
+    if not relacion:
+        return None
+    if (
+        relacion.get("tipo_relacion") != "CONCILIACION_ECONOMICA_EXACTA_UNICA_EN_FACTURA"
+        or relacion.get("cardinalidad") != "1:1"
+        or relacion.get("inequivoca") is not True
+        or not relacion.get("evidencias")
+    ):
+        return None
+    sentido_candidato = candidato.get("sentido")
+    if not sentido_candidato or sentido_candidato.get("valor") not in {"CARGO", "ABONO"}:
+        return None
+    if not sentido_candidato.get("evidencias"):
+        return None
+    return {
+        "valor": sentido_candidato["valor"],
+        "sentido_fuente": "RELACION_DOCUMENTAL",
+        "tipo_evidencia": "SENTIDO_DERIVADO_RELACION_DOCUMENTAL",
+        "candidato_relacionado": relacion["candidato"],
+        "seccion_origen": sentido_candidato,
+        "relacion_documental": {
+            "orden": relacion["orden"],
+            "tipo_relacion": relacion["tipo_relacion"],
+            "cardinalidad": relacion["cardinalidad"],
+            "evidencias": relacion["evidencias"],
+            "provenance": relacion["provenance"],
+        },
+        "evidencias": [*sentido_candidato["evidencias"], *relacion["evidencias"]],
+        "provenance": {
+            "regla": "SENTIDO_DERIVADO_RELACION_DOCUMENTAL",
+            "adaptador": relacion["provenance"]["adaptador"],
+            "version_adaptador": relacion["provenance"]["version_adaptador"],
+            "transferencia_rol": False,
+            "fusion_entidades": False,
+        },
+    }
+
+
+def documentar_sentido_decision_funcional_pio(literal: str) -> dict[str, Any] | None:
+    """Aplica únicamente las decisiones literales autorizadas para Alliance."""
+    decisiones = {
+        "SERVICIO BASICO": "CARGO",
+        "CONDIC. COMERCIAL": "CARGO",
+    }
+    literal_normalizado = normalizar_texto(literal)
+    sentido = decisiones.get(literal_normalizado)
+    if sentido is None:
+        return None
+    return {
+        "valor": sentido,
+        "sentido_fuente": "DECISION_FUNCIONAL_PIO",
+        "tipo_evidencia": "DECISION_FUNCIONAL_PIO",
+        "evidencia_documental_directa": False,
+        "literal_autorizado": literal_normalizado,
+        "alcance": {
+            "proveedor": "ALLIANCE",
+            "adaptador": "alliance-local",
+            "layout": "ALLIANCE_FACTURA_DENSO_V1",
+        },
+        "evidencias": [],
+        "provenance": {
+            "autoridad": "PIO",
+            "regla": "DECISION_FUNCIONAL_PIO_LITERAL_EXACTO_ALLIANCE",
+            "inferencia_por_categoria": False,
+            "inferencia_por_signo": False,
+            "inferencia_por_gold": False,
+        },
+    }
+
+
 class AdaptadorAlliance(AdaptadorBase):
     """Extractor local del layout tabular Alliance/Cencora auditado.
 
@@ -293,6 +368,9 @@ class AdaptadorAlliance(AdaptadorBase):
                 seccion["literal_encabezado"]["valor"] if seccion else None,
                 pertenencia_demostrada=seccion is not None,
             )
+            decision_pio = documentar_sentido_decision_funcional_pio(literal) if sentido is None else None
+            if decision_pio:
+                sentido = decision_pio["valor"]
             salida.append({
                 "orden": len(salida) + 1,
                 "descripcion_literal": self.campo_documentado(documento, literal, concepto_words, linea, "movimientos", "descripcion", "CONCEPTO_ECONOMICO_VISIBLE"),
@@ -307,10 +385,12 @@ class AdaptadorAlliance(AdaptadorBase):
                 "seccion_documental": seccion,
                 "pertenencia_demostrada": seccion is not None,
                 "sentido": sentido,
+                "sentido_fuente": "DECISION_FUNCIONAL_PIO" if decision_pio else ("SECCION_DIRECTA" if sentido else None),
+                "sentido_documentacion": decision_pio,
                 "provenance": {
                     "pagina": pagina.numero,
                     "bloque": seccion["nombre"] if seccion else "NO_DETERMINADO",
-                    "regla_sentido": "SOLO_SECCION_EXPLICITA_CARGO_O_ABONO",
+                    "regla_sentido": decision_pio["provenance"]["regla"] if decision_pio else "SOLO_SECCION_EXPLICITA_CARGO_O_ABONO",
                 },
                 "incidencias": [] if sentido else [{"codigo": "SENTIDO_NO_DOCUMENTADO"}],
             })
@@ -354,7 +434,8 @@ class AdaptadorAlliance(AdaptadorBase):
         """Relaciona objetos solo por conciliación económica exacta y única.
 
         La relación es de trazabilidad: no cambia, fusiona ni deduplica ninguno
-        de los objetos y no transfiere rol, categoría o sentido.
+        de los objetos. Solo habilita la propagación documental de sentido que
+        se aplica en una fase posterior y nunca transfiere rol o categoría.
         """
         candidatos_por_clave: dict[tuple[float, float], list[dict[str, Any]]] = {}
         movimientos_por_clave: dict[tuple[float, float], list[dict[str, Any]]] = {}
@@ -381,9 +462,11 @@ class AdaptadorAlliance(AdaptadorBase):
                 *movimiento["base"]["evidencias"],
                 *movimiento["importe"]["evidencias"],
             ]
-            relaciones.append({
+            relacion = {
                 "orden": len(relaciones) + 1,
                 "tipo_relacion": "CONCILIACION_ECONOMICA_EXACTA_UNICA_EN_FACTURA",
+                "cardinalidad": "1:1",
+                "inequivoca": True,
                 "candidato": {
                     "tipo_objeto": "CANDIDATO_FILA",
                     "orden": candidato["orden"],
@@ -408,10 +491,31 @@ class AdaptadorAlliance(AdaptadorBase):
                     "adaptador": self.id,
                     "version_adaptador": self.version,
                     "regla": "BASE_Y_TOTAL_EXACTOS_UNICOS_DENTRO_DE_FACTURA",
-                    "transferencia_semantica": False,
+                    "transferencia_sentido": "AUTORIZADA_SOLO_DESDE_SECCION_DOCUMENTADA",
+                    "transferencia_rol": False,
+                    "transferencia_categoria": False,
+                    "fusion_entidades": False,
                 },
-            })
+            }
+            relaciones.append(relacion)
+            self._aplicar_sentido_documental(candidato, movimiento, relacion)
         return relaciones
+
+    def _aplicar_sentido_documental(self, candidato, movimiento, relacion):
+        if movimiento["sentido"] is not None:
+            return
+        documentacion = documentar_sentido_desde_relacion(candidato, relacion)
+        if documentacion is None:
+            return
+        movimiento["sentido"] = documentacion["valor"]
+        movimiento["sentido_fuente"] = documentacion["sentido_fuente"]
+        movimiento["sentido_documentacion"] = documentacion
+        movimiento["provenance"]["regla_sentido"] = "SENTIDO_DERIVADO_RELACION_DOCUMENTAL"
+        movimiento["incidencias"] = [
+            incidencia
+            for incidencia in movimiento["incidencias"]
+            if incidencia.get("codigo") != "SENTIDO_NO_DOCUMENTADO"
+        ]
 
     def _candidatos_fila(self, documento: DocumentoLocal, paginas) -> list[dict[str, Any]]:
         salida = []

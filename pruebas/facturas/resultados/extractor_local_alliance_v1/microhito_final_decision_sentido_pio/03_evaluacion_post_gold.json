@@ -1,0 +1,79 @@
+{
+  "detalle": [
+    {
+      "numero_factura": "08009278",
+      "sentidos": {}
+    },
+    {
+      "numero_factura": "08009277",
+      "sentidos": {
+        "ABONOS CLUBS": {
+          "fuente_local": "RELACION_DOCUMENTAL",
+          "gold": "ABONO",
+          "local": "ABONO"
+        },
+        "RAPPEL GenerAH": {
+          "fuente_local": "RELACION_DOCUMENTAL",
+          "gold": "ABONO",
+          "local": "ABONO"
+        },
+        "SERV.PLATAF.360": {
+          "fuente_local": "RELACION_DOCUMENTAL",
+          "gold": "CARGO",
+          "local": "CARGO"
+        },
+        "SERVICIO BASICO": {
+          "fuente_local": "DECISION_FUNCIONAL_PIO",
+          "gold": "CARGO",
+          "local": "CARGO"
+        }
+      }
+    },
+    {
+      "numero_factura": "08009279",
+      "sentidos": {}
+    }
+  ],
+  "dictamen": {
+    "decisiones_funcionales_pio": [
+      "SERVICIO BASICO",
+      "CONDIC. COMERCIAL"
+    ],
+    "reglas_generadas_desde_gold": 0,
+    "roles_modificados": 0,
+    "sentidos_gold_cubiertos_correctos": 4
+  },
+  "estado": "EVALUACION_POST_GOLD_COMPLETADA",
+  "freeze": "01_extraccion_ciega.json",
+  "freeze_modificado": false,
+  "freeze_sha256_antes": "a51caaacd73c18234f0c5335ba72e95e304761b57b7a886f2d1183b96f094120",
+  "freeze_sha256_despues": "a51caaacd73c18234f0c5335ba72e95e304761b57b7a886f2d1183b96f094120",
+  "gold_sha256": "a804675d26e03e74510f0b0f910bb0c5ae3fe2c8535ddec20ee996644f6a9f36",
+  "metricas": {
+    "candidatos": {
+      "fn": 0,
+      "fp": 3,
+      "tp": 276
+    },
+    "movimientos": {
+      "fn": 0,
+      "fp": 1,
+      "tp": 4
+    },
+    "relaciones_documentales": {
+      "fn": 0,
+      "fp": 0,
+      "tp": 3
+    },
+    "sentidos_movimiento": {
+      "fn": 0,
+      "fp": 0,
+      "tp": 4
+    },
+    "sentidos_por_relacion_1a1": {
+      "fn": 0,
+      "fp": 0,
+      "tp": 3
+    }
+  }
+}

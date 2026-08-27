@@ -1,0 +1,106 @@
+{
+  "adaptador": "alliance-local@1.0.0",
+  "allowlist_paths": 9,
+  "api": 0,
+  "archivos": [
+    {
+      "bytes": 4424,
+      "ruta": "src/facturas/motor_local/ARQUITECTURA_MOTOR_LOCAL.md",
+      "sha256": "8ef7f57467a4ca1c550b26811fcf3f75ddcb954144047a11007816d64ab51343"
+    },
+    {
+      "bytes": 40066,
+      "ruta": "src/facturas/motor_local/adaptadores/alliance.py",
+      "sha256": "6df5a65431f5e50665f826cd9aed0bdf07cdbd158eede8b14bbbbe98f81fa5f6"
+    },
+    {
+      "bytes": 14154,
+      "ruta": "tests/facturas/motor_local/test_alliance_local_v1.py",
+      "sha256": "0f869f48ec69a1549e34fbcd1e56303e288600a94b35725fb703fd866e2b82eb"
+    },
+    {
+      "bytes": 13843,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_decision_sentido_pio/02_hito_ciego.json",
+      "sha256": "bbbdb012f5cb9ec0cc012a7fd76612df105b6b2af31a1669c526486427808f90"
+    },
+    {
+      "bytes": 1917,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_decision_sentido_pio/03_evaluacion_post_gold.json",
+      "sha256": "241eb4a44dc95ee3e143988fee468ba199dd0cefbd3411543bb58b8b867fda60"
+    },
+    {
+      "bytes": 466,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_decision_sentido_pio/04_tests.json",
+      "sha256": "87d782e087ef66f86bfd54e358683b850d1a96c464de66a43035ab8184bf08e1"
+    },
+    {
+      "bytes": 1378,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_decision_sentido_pio/05_informe.md",
+      "sha256": "3ef337a4c76c8815a3b34b1efad0c0e43c43efd7f971d676065eaa8cbefce14b"
+    },
+    {
+      "bytes": 833,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_decision_sentido_pio/06_allowlist_propuesta.txt",
+      "sha256": "7def05e826b9328439defded51dba5e7c7c3924bd969059b38d323bdcc8b18f4"
+    }
+  ],
+  "autoridad_productiva_modificada": false,
+  "backups_en_allowlist": 0,
+  "caches_en_allowlist": 0,
+  "candidatos": 527,
+  "checkpoint_anterior_preservado": true,
+  "checkpoint_anterior_sha256": {
+    "01_extraccion_ciega.json": "1c16d432cc0c84142700770bb4ed7d9b1b9082fccd4dd2db62ba31d54e14ee31",
+    "02_hito_ciego.json": "2856c7575bb749d4b47b03b5c1b5f1c40e44e69343e1e4f737e6200df24c6b8b",
+    "03_evaluacion_post_gold.json": "13f5f3420db5737e6d34cea134aa0c3413305730ae7736a16af12eb3c0b14cc4",
+    "04_tests.json": "b8171293a1d9e209cebb425034a046ad105095485f0cfe4fb350ba9a01f6c7b9",
+    "05_informe.md": "e7fa1c0c43dd61c6162496c6fc9cd430b5542146cc32ec17202caa32e4f65f41",
+    "06_allowlist_propuesta.txt": "c44cb3b602d0ef6c2a83cf87e98adcaff2b20f2bfc4dc4ba4a2c33a7b171a31e",
+    "07_manifest.json": "2af1f9f479a61fed7c7fa6b2bd91de8ef8262a066aa48b9fe4bbcaed20045bc9",
+    "ejecutar_ciego.py": "17487bc3b54dbf267a7e8b8bb672d1f2ad8bfb1e58b171bccde7373c74c9f63d",
+    "evaluar_post_gold.py": "b21c21f70c9e528fbc6dbb7e495edb901c55def0265fb8a8b0e25e7eb9a415f4",
+    "finalizar_checkpoint.py": "ce80fccccd4ead275f6391a1c1604dd763285e8b8bd033573e580a992ed24073"
+  },
+  "clasificacion": "LOCAL_COMPLETO",
+  "clasificacion_allowlist": {
+    "checkpoint": 6,
+    "documentacion": 1,
+    "productivos": 1,
+    "tests": 1
+  },
+  "commit": false,
+  "corpus_en_allowlist": 0,
+  "estado": "CHECKPOINT_FINAL_CONGELADO",
+  "facturas": 7,
+  "freeze_ciego_voluminoso_en_allowlist": 0,
+  "fuentes_sentido": {
+    "DECISION_FUNCIONAL_PIO": 3,
+    "RELACION_DOCUMENTAL": 3
+  },
+  "git_add": false,
+  "google": 0,
+  "head_base": "830681260ec5ba5c8b4c79bfed1340e28f25b15d",
+  "imagenes_en_allowlist": 0,
+  "layout": "ALLIANCE_FACTURA_DENSO_V1",
+  "luna": 0,
+  "movimientos": 6,
+  "ocr": 0,
+  "pdfs_en_allowlist": 0,
+  "push": false,
+  "rama": "main",
+  "raw_api_en_allowlist": 0,
+  "regresiones": 0,
+  "relaciones_documentales_1a1": 3,
+  "reproducibilidad": "3/3 por PDF",
+  "roles_detalle_albaran": 0,
+  "roles_indeterminado": 527,
+  "sentidos_finales": {
+    "ABONO": 2,
+    "CARGO": 4,
+    "null": 0
+  },
+  "staging_vacio": true,
+  "temporales_en_allowlist": 0,
+  "tests": "605 passed",
+  "web": 0
+}

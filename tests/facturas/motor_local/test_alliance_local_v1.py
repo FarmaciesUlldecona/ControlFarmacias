@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 
 from src.facturas.motor_local.autoridad import COFARES_LOCAL_AUTHORITY
-from src.facturas.motor_local.adaptadores.alliance import sentido_desde_seccion_documental
+from src.facturas.motor_local.adaptadores.alliance import (
+    documentar_sentido_decision_funcional_pio,
+    documentar_sentido_desde_relacion,
+    sentido_desde_seccion_documental,
+)
 from src.facturas.motor_local.backend.pdfium import BackendPdfium
 from src.facturas.motor_local.servicio import MotorDocumentoLocal, hash_funcional
 
@@ -70,7 +74,11 @@ def test_movimientos_historicos_y_sentido_independiente(resultados):
     assert movimientos["SERV.PLATAF.360"]["categoria"] == "SERVICIO"
     assert movimientos["SERVICIO BASICO"]["categoria"] == "SERVICIO"
     assert movimientos["CONDIC. COMERCIAL"]["categoria"] == "CONDICION_COMERCIAL"
-    assert all(m["sentido"] is None for m in movimientos.values())
+    assert movimientos["RAPPEL GenerAH"]["sentido"] == "ABONO"
+    assert movimientos["ABONOS CLUBS"]["sentido"] == "ABONO"
+    assert movimientos["SERV.PLATAF.360"]["sentido"] == "CARGO"
+    assert movimientos["SERVICIO BASICO"]["sentido"] == "CARGO"
+    assert movimientos["CONDIC. COMERCIAL"]["sentido"] == "CARGO"
 
 
 def test_seccion_cargos_inequivoca_determina_sentido_cargo():
@@ -98,7 +106,7 @@ def test_signo_negativo_sin_seccion_no_basta():
     assert sentido_desde_seccion_documental(None, pertenencia_demostrada=False) is None
 
 
-@pytest.mark.parametrize("categoria", ["DEVOLUCION_MERCANCIA", "RAPPEL", "SERVICIO"])
+@pytest.mark.parametrize("categoria", ["DEVOLUCION_MERCANCIA", "RAPPEL", "SERVICIO", "ABONO_COMERCIAL"])
 def test_categoria_no_implica_sentido(categoria):
     assert categoria
     assert sentido_desde_seccion_documental(None, pertenencia_demostrada=False) is None
@@ -129,7 +137,115 @@ def test_relacion_no_fusiona_objetos(resultados):
         assert candidato["tipo_objeto"] == "CANDIDATO_FILA"
         assert movimiento["tipo_objeto"] == "MOVIMIENTO_COMERCIAL"
         assert candidato["identidad"]["valor"] != movimiento["identidad"]["valor"]
-        assert relacion["provenance"]["transferencia_semantica"] is False
+        assert relacion["provenance"]["transferencia_rol"] is False
+        assert relacion["provenance"]["transferencia_categoria"] is False
+        assert relacion["provenance"]["fusion_entidades"] is False
+
+
+def _candidato_sintetico(sentido):
+    return {
+        "sentido": {
+            "valor": sentido,
+            "literal": f"{sentido}S",
+            "evidencias": [{"regla": "SECCION_DOCUMENTAL_CARGOS_ABONOS"}],
+        },
+        "rol_fila": "INDETERMINADO",
+    }
+
+
+def _relacion_sintetica(*, inequivoca=True):
+    return {
+        "orden": 1,
+        "tipo_relacion": "CONCILIACION_ECONOMICA_EXACTA_UNICA_EN_FACTURA",
+        "cardinalidad": "1:1",
+        "inequivoca": inequivoca,
+        "candidato": {"tipo_objeto": "CANDIDATO_FILA", "orden": 1},
+        "evidencias": [{"regla": "BASE_Y_TOTAL_EXACTOS_UNICOS_DENTRO_DE_FACTURA"}],
+        "provenance": {"adaptador": "alliance-local", "version_adaptador": "1.0.0"},
+    }
+
+
+def test_candidato_abono_y_relacion_univoca_propagan_abono():
+    documentacion = documentar_sentido_desde_relacion(_candidato_sintetico("ABONO"), _relacion_sintetica())
+    assert documentacion["valor"] == "ABONO"
+
+
+def test_candidato_cargo_y_relacion_univoca_propagan_cargo():
+    documentacion = documentar_sentido_desde_relacion(_candidato_sintetico("CARGO"), _relacion_sintetica())
+    assert documentacion["valor"] == "CARGO"
+
+
+def test_relacion_ambigua_no_propaga_sentido():
+    assert documentar_sentido_desde_relacion(_candidato_sintetico("ABONO"), _relacion_sintetica(inequivoca=False)) is None
+
+
+def test_provenance_del_sentido_relacionado_se_preserva(resultados):
+    factura = _factura(resultados, "08009277")
+    heredados = [m for m in factura["movimientos"] if m["sentido_fuente"] == "RELACION_DOCUMENTAL"]
+    assert len(heredados) == 3
+    for movimiento in heredados:
+        documentacion = movimiento["sentido_documentacion"]
+        assert documentacion["tipo_evidencia"] == "SENTIDO_DERIVADO_RELACION_DOCUMENTAL"
+        assert documentacion["candidato_relacionado"]
+        assert documentacion["seccion_origen"]["evidencias"]
+        assert len(documentacion["relacion_documental"]["evidencias"]) == 6
+        assert documentacion["provenance"]["transferencia_rol"] is False
+        assert documentacion["provenance"]["fusion_entidades"] is False
+
+
+def test_movimientos_sin_relacion_aplican_solo_decisiones_pio_autorizadas(resultados):
+    movimientos = [m for r in resultados for f in r.facturas for m in f["movimientos"]]
+    assert sum(m["sentido_fuente"] == "RELACION_DOCUMENTAL" for m in movimientos) == 3
+    assert sum(m["sentido_fuente"] == "DECISION_FUNCIONAL_PIO" for m in movimientos) == 3
+    assert all(m["sentido"] is not None for m in movimientos)
+
+
+def test_servicio_basico_alliance_es_cargo_por_decision_pio(resultados):
+    movimientos = [m for r in resultados for f in r.facturas for m in f["movimientos"]]
+    servicios = [m for m in movimientos if m["descripcion_literal"]["valor"] == "SERVICIO BASICO"]
+    assert len(servicios) == 2
+    assert all(m["sentido"] == "CARGO" and m["sentido_fuente"] == "DECISION_FUNCIONAL_PIO" for m in servicios)
+
+
+def test_condic_comercial_alliance_es_cargo_por_decision_pio(resultados):
+    movimiento = next(
+        m for r in resultados for f in r.facturas for m in f["movimientos"]
+        if m["descripcion_literal"]["valor"] == "CONDIC. COMERCIAL"
+    )
+    assert movimiento["sentido"] == "CARGO"
+    assert movimiento["sentido_fuente"] == "DECISION_FUNCIONAL_PIO"
+
+
+def test_provenance_decision_funcional_no_simula_evidencia_pdf(resultados):
+    movimientos = [m for r in resultados for f in r.facturas for m in f["movimientos"]]
+    decisiones = [m["sentido_documentacion"] for m in movimientos if m["sentido_fuente"] == "DECISION_FUNCIONAL_PIO"]
+    assert len(decisiones) == 3
+    for decision in decisiones:
+        assert decision["tipo_evidencia"] == "DECISION_FUNCIONAL_PIO"
+        assert decision["evidencia_documental_directa"] is False
+        assert decision["evidencias"] == []
+        assert decision["provenance"]["autoridad"] == "PIO"
+        assert decision["alcance"]["proveedor"] == "ALLIANCE"
+
+
+def test_servicio_generico_distinto_no_hereda_cargo():
+    assert documentar_sentido_decision_funcional_pio("SERVICIO PREMIUM") is None
+
+
+def test_condicion_comercial_generica_distinta_no_hereda_cargo():
+    assert documentar_sentido_decision_funcional_pio("OTRA CONDICION COMERCIAL") is None
+
+
+def test_decision_pio_no_altera_relaciones_ni_roles(resultados):
+    factura = _factura(resultados, "08009277")
+    assert len(factura["relaciones_documentales"]) == 3
+    assert all(c["rol_fila"] == "INDETERMINADO" for c in factura["candidatos_fila"])
+
+
+def test_decision_pio_alliance_no_se_extiende_a_otros_adaptadores():
+    for nombre in ("hefame.py", "fedefarma.py", "cofares.py"):
+        fuente = (ROOT / "src/facturas/motor_local/adaptadores" / nombre).read_text(encoding="utf-8")
+        assert "DECISION_FUNCIONAL_PIO_LITERAL_EXACTO_ALLIANCE" not in fuente
 
 
 def test_direct_no_determina_rol(resultados):
