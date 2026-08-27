@@ -16,6 +16,10 @@ def identidades(text: str) -> list[str]:
         r"(?:NUMERO\s+(?:DE\s+)?FACTURA|FACTURA)\s*[:#]?\s*(\d{8,12})\b",
         r"\bFACTURA\s*\n\s*(\d{8,12})\b",
         r"\bFACTURA\b(?:\s+\S+){0,20}\s+NUMERO\s+(\d{8,12})\b",
+        # Cabeceras tabulares donde el literal NUMERO puede perder el acento
+        # durante la extraccion de texto, pero la identidad queda anclada por
+        # las dos fechas documentales contiguas.
+        r"\b(\d{8,12})\s+\d{2}[./-]\d{2}[./-]\d{4}\s+\d{2}[./-]\d{2}[./-]\d{4}\b",
     ]:
         values.extend(m.group(1) for m in re.finditer(pattern, normalized, re.I))
     return list(dict.fromkeys(values))

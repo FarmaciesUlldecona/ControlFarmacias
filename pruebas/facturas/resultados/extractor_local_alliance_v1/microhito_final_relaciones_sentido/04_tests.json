@@ -1,0 +1,23 @@
+{
+  "estado": "OK",
+  "focales": {
+    "resultado": "25 passed",
+    "regresiones": 0
+  },
+  "motor_local": {
+    "resultado": "69 passed",
+    "regresiones": 0
+  },
+  "normalizador_v2_mas_motor": {
+    "resultado": "276 passed",
+    "regresiones": 0
+  },
+  "suite_completa_facturas": {
+    "resultado": "592 passed",
+    "ejecuciones_post_cambio_productivo": 1,
+    "regresiones": 0
+  },
+  "tests_obligatorios_microhito": 13,
+  "fallos_funcionales": 0,
+  "incidencia_infraestructura_no_funcional": "Una primera pasada motor tuvo 3 errores de fixture por permisos del basetemp externo; repetida en basetemp aislado del workspace: 69 passed."
+}

@@ -1,0 +1,14 @@
+src/facturas/motor_local/ARQUITECTURA_MOTOR_LOCAL.md
+src/facturas/motor_local/PRIVACIDAD.md
+src/facturas/motor_local/adaptadores/__init__.py
+src/facturas/motor_local/adaptadores/alliance.py
+src/facturas/motor_local/adaptadores/registro.py
+src/facturas/motor_local/segmentacion/segmentador.py
+tests/facturas/motor_local/test_alliance_local_v1.py
+tests/facturas/motor_local/test_motor_local.py
+pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/02_hito_ciego.json
+pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/03_evaluacion_post_gold.json
+pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/04_tests.json
+pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/05_informe.md
+pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/06_allowlist_propuesta.txt
+pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/07_manifest.json

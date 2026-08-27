@@ -1,0 +1,126 @@
+{
+  "adaptador": "alliance-local@1.0.0",
+  "alliance_autoridad_iniciada": false,
+  "allowlist_paths": 14,
+  "api": 0,
+  "archivos": [
+    {
+      "bytes": 3842,
+      "ruta": "src/facturas/motor_local/ARQUITECTURA_MOTOR_LOCAL.md",
+      "sha256": "5014967d369cac31886779234fe03f67fd4719e0c6f1d5b35f203b87c4685f31"
+    },
+    {
+      "bytes": 1101,
+      "ruta": "src/facturas/motor_local/PRIVACIDAD.md",
+      "sha256": "8335518ac0cc0a565b4d08fecf3c55a5005e4903a27d6f6e6a11187458b07cdc"
+    },
+    {
+      "bytes": 417,
+      "ruta": "src/facturas/motor_local/adaptadores/__init__.py",
+      "sha256": "568a7cea36c084499e503c4b6ca5106ac14cf65bd38bafd901b9f11ef1d225a1"
+    },
+    {
+      "bytes": 35597,
+      "ruta": "src/facturas/motor_local/adaptadores/alliance.py",
+      "sha256": "b357914038cfb6f4be00e41e22ec465a6818f36ca18728430032038094344b31"
+    },
+    {
+      "bytes": 344,
+      "ruta": "src/facturas/motor_local/adaptadores/registro.py",
+      "sha256": "83d4da0ba3ad41fa8c7437f31e9efd15f20cc1528154e49414f035d6bc5b0e27"
+    },
+    {
+      "bytes": 3164,
+      "ruta": "src/facturas/motor_local/segmentacion/segmentador.py",
+      "sha256": "4c39c48503c037465e45c1f71de8efeb461c4f6d66cd67d13a68d7c3c5e8fc82"
+    },
+    {
+      "bytes": 8855,
+      "ruta": "tests/facturas/motor_local/test_alliance_local_v1.py",
+      "sha256": "e5dd7aa663848d0bd9b6a19c26c64d29b55b45dd5aaf4f0d5b5a8a9e2b0c303e"
+    },
+    {
+      "bytes": 8579,
+      "ruta": "tests/facturas/motor_local/test_motor_local.py",
+      "sha256": "475b1160406d63de9989f4cdf81d7f3178d60b75b5f006b78b6daa301b719b66"
+    },
+    {
+      "bytes": 20106,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/02_hito_ciego.json",
+      "sha256": "430f02c63c72cf6109ce861ba54d40950486c4340b2498c157c370a5838993aa"
+    },
+    {
+      "bytes": 2371,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/03_evaluacion_post_gold.json",
+      "sha256": "d3fd2f48c20a1707898878a7760846f697cc868f34c3e0a0e5db648de7af8a35"
+    },
+    {
+      "bytes": 644,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/04_tests.json",
+      "sha256": "bd2ec32387422a7b105642d7e5802a943a81394f49308cd2729d47d9d14f60e0"
+    },
+    {
+      "bytes": 1880,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/05_informe.md",
+      "sha256": "7639190acfba3b9dc448c919d0c0f0fceb190ffa66dc99d63eea4c61ebbd2799"
+    },
+    {
+      "bytes": 1058,
+      "ruta": "pruebas/facturas/resultados/extractor_local_alliance_v1/microhito_final_relaciones_sentido/06_allowlist_propuesta.txt",
+      "sha256": "9b0d2f427f5a7037c030d8b434d569ac29e7a9a29ad2129a6c81b66cb7c9a6a0"
+    }
+  ],
+  "backups_en_allowlist": 0,
+  "caches_en_allowlist": 0,
+  "candidatos": 527,
+  "clasificacion": "LOCAL_COMPLETO",
+  "clasificacion_allowlist": {
+    "checkpoint": 6,
+    "documentacion": 2,
+    "productivos": 4,
+    "tests": 2
+  },
+  "commit": false,
+  "corpus_en_allowlist": 0,
+  "estado": "CHECKPOINT_FINAL_CONGELADO",
+  "facturas": 7,
+  "freeze_ciego_voluminoso_en_allowlist": 0,
+  "freeze_historico_preservado": true,
+  "freeze_historico_sha256": {
+    "01_inventario.json": "5278f1be8699af0080c3856c40542caa0269c1717da3b9036fee163897dd9b7b",
+    "02_layouts.json": "c51ce83b1677374b2850600cbc03c409e9162f4f7ee0dcf973b32e10d6eff918",
+    "03_extraccion_ciega.json": "665960dcd49edc7c12569e22beccc9caf59c02135b1421ac0450fd16a88e3c80",
+    "04_hito_ciego.json": "337dc0ee2aa1d72ce095062981615de84c2621223e88b6b9d186685b9833da3a",
+    "05_evaluacion_gold.json": "bc390116b97ff7db5aca8cf42f44a72bf1568fbd23a7bcb395808aa75451c4c8",
+    "06_matriz_cobertura.json": "1a8dfcacf35f5606923326a3dba93b62dcb2696582d17218afe5051cc2517311",
+    "07_informe_final.md": "220ea750e942e78ffc24054394d9a231445c17e78f266f1e9e23d420128f1440",
+    "08_manifest_final.json": "b954cf2708993f8d8f4b4f017015748114214b327999dcf51b05dc80fce9b0f9",
+    "09_tests.json": "d76e36728aae565fb317ed0b722fa96b0c2a0b936d325cb3405409e9044eb694",
+    "ejecutar_ciego.py": "69907220f0e5ebca38f1e21570bbb8bdb172cfe545de8b44b577a9be24f72967",
+    "evaluar_post_gold.py": "53ed01ae1f9bc4c4699a6574592f2a1eb1374562f11ea7175fb6671b4546a8e5",
+    "finalizar_manifest.py": "34c5ab569c54696644d58e4e66326cdf840629154b3bdd74edc7c0d7235c9b68"
+  },
+  "git_add": false,
+  "google": 0,
+  "head_base": "ac9924455b044a52ec88e6561618e1075bc585d1",
+  "imagenes_en_allowlist": 0,
+  "layout": "ALLIANCE_FACTURA_DENSO_V1",
+  "luna": 0,
+  "movimientos": 6,
+  "ocr": 0,
+  "pdfs_en_allowlist": 0,
+  "push": false,
+  "rama": "main",
+  "raw_api_en_allowlist": 0,
+  "regresiones": 0,
+  "relaciones_documentales": 3,
+  "reproducibilidad": "3/3 por PDF",
+  "roles_detalle_albaran": 0,
+  "roles_indeterminado": 527,
+  "sentidos_movimiento_documentados": 0,
+  "sentidos_movimiento_null": 6,
+  "staging_vacio": true,
+  "temporales_en_allowlist": 0,
+  "tests": "592 passed",
+  "web": 0
+}
