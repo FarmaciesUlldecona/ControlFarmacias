@@ -1,0 +1,27 @@
+{
+  "estado": "CHECKPOINT_FINAL_CONGELADO",
+  "generado_utc": "2026-08-27T16:24:02.0248730Z",
+  "head_base": "f39060dbe5dcaaae806dc1ea85cc018a2c5ac49e",
+  "motor": "controlfarmacias-local-engine@0.4.0",
+  "adaptador": "fedefarma-local@1.2.0",
+  "clasificacion": "LOCAL_COMPLETO",
+  "archivos": {
+    "01_auditoria_condicion_cooperativa.json": "1d8134f7dea638a9b8ca1994be576239c732dc861fd38b9f9363f918e525e307",
+    "02_cierre_fedefarma_v12.json": "5e70d4138be962e02a85dbb6e0ce7f8748ff7e11777fdab138126385a2223d0b",
+    "03_tests.json": "9b6fd2c70ebe4dbc4cb5f6032cf965c00846f77821b8734c714036f407118903",
+    "04_informe.md": "afc689c3d3654b9eadb403d6e64662b4b4fcadb0ceb7b76adc8a0d7339f31ed2",
+    "05_allowlist_propuesta.txt": "3572bda3f886db47be7a995b98277c6df8ee7cf33df759eb86faea62dab188aa"
+  },
+  "allowlist_paths": 25,
+  "pdfs_reales_en_allowlist": 0,
+  "corpus_en_allowlist": 0,
+  "temporales_en_allowlist": 0,
+  "caches_en_allowlist": 0,
+  "backups_en_allowlist": 0,
+  "resultados_historicos_en_allowlist": 0,
+  "staging": false,
+  "commit": false,
+  "push": false,
+  "llamadas_externas": 0,
+  "ocr": 0
+}

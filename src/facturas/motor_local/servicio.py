@@ -42,6 +42,7 @@ class MotorDocumentoLocal:
         impuestos = adaptador.extraer_impuestos(documento, segmentos) if adaptador else []
         vencimientos = adaptador.extraer_vencimientos(documento, segmentos) if adaptador else []
         otros = adaptador.extraer_otros(documento, segmentos) if adaptador else []
+        facturas = adaptador.extraer_facturas(documento, segmentos) if adaptador else []
         controles_conciliacion = evaluar_conciliaciones(adaptador.declarar_conciliaciones(
             documento,
             segmentos,
@@ -51,6 +52,7 @@ class MotorDocumentoLocal:
             impuestos=impuestos,
             vencimientos=vencimientos,
             otros=otros,
+            facturas=facturas,
         )) if adaptador else []
         if adaptador:
             incidencias.extend(adaptador.incidencias_extraccion(documento, segmentos))
@@ -58,7 +60,7 @@ class MotorDocumentoLocal:
         if duplicados:
             incidencias.append({"codigo": "FILAS_DUPLICADAS_EVIDENCIA_IDENTICA", "cantidad": duplicados})
         evidencias = _recoger_evidencias([
-            cabecera, albaranes, movimientos, impuestos, vencimientos, otros, controles_conciliacion,
+            facturas, cabecera, albaranes, movimientos, impuestos, vencimientos, otros, controles_conciliacion,
         ])
         capacidades = adaptador.capacidades if adaptador else {
             k: "NO_SOPORTADO" for k in ["segmentacion", "cabecera", "albaranes", "movimientos", "impuestos", "vencimientos"]
@@ -83,6 +85,7 @@ class MotorDocumentoLocal:
                 ],
             },
             segmentos=segmentos,
+            facturas=facturas,
             cabecera=cabecera,
             albaranes=albaranes,
             movimientos=movimientos,

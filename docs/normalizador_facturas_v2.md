@@ -152,7 +152,7 @@ Para cálculos de control se usa `efecto(x) = +x` para `CARGO` y `-x` para `ABON
 | `EstrategiaLectura` | `LUNA_V2`, `LUNA_V2_MAS_SPLITTER_SEGMENTADO` |
 | `TipoReferencia` | `DELIVERY`, `PEDIDO`, `PO`, `ORDER`, `DOCUMENTO`, `OTRA` |
 | `TipoDiscrepancia` | `CUADRE_FISCAL`, `CUADRE_ALBARANES`, `SUBTOTAL_NO_EXPLICADO`, `IDENTIFICADOR_AMBIGUO`, `OTRA` |
-| `TipoMovimiento` | `RAPPEL`, `ABONO_COMERCIAL`, `DEVOLUCION_MERCANCIA`, `DESCUENTO`, `BONIFICACION`, `SERVICIO`, `CONDICION_COMERCIAL`, `OTRO` |
+| `TipoMovimiento` | `RAPPEL`, `ABONO_COMERCIAL`, `DEVOLUCION_MERCANCIA`, `DESCUENTO`, `BONIFICACION`, `SERVICIO`, `CONDICION_COMERCIAL`, `CONDICION_COOPERATIVA`, `OTRO` |
 | `Sentido` | `ABONO`, `CARGO` |
 
 `tipo_documento`, `tipo_pedido`, descripciones y rótulos no se fuerzan a una enumeración cuando el documento usa vocabulario propio; se conserva el literal.

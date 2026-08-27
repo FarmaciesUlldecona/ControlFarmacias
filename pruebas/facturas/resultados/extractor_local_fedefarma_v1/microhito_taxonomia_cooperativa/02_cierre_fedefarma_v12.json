@@ -1,0 +1,61 @@
+{
+  "estado": "CONGELADO_LOCAL_COMPLETO",
+  "clasificacion": "LOCAL_COMPLETO",
+  "generado_utc": "2026-08-27T16:24:02.0248730Z",
+  "motor": "controlfarmacias-local-engine@0.4.0",
+  "adaptador": "fedefarma-local@1.2.0",
+  "autoridad_productiva_modificada": false,
+  "freeze_historico_reescrito": false,
+  "llamadas_externas": 0,
+  "ocr": 0,
+  "decisiones": {
+    "detall_abonament_categoria": "DEVOLUCION_MERCANCIA",
+    "detall_abonament_origen": "DECISION_FUNCIONAL_PIO_ESPECIFICA_FEDEFARMA",
+    "detall_abonament_sentido": null,
+    "condicion_cooperativa_categoria": "CONDICION_COOPERATIVA",
+    "condicion_cooperativa_sentido": null
+  },
+  "evaluacion_post_gold": {
+    "candidatos_modificados_por_gold": false,
+    "detall_abonament_ahora_coincide": true,
+    "condicion_cooperativa_gold_generico": "SERVICIO",
+    "condicion_cooperativa_local_especifica": "CONDICION_COOPERATIVA",
+    "clasificacion_diferencia": "DIFERENCIA_DE_TAXONOMIA",
+    "diferencias_documentales_reales": 0,
+    "datos_visibles_no_extraidos": 0
+  },
+  "casos_abonamento": [
+    {
+      "factura": "VN2605-0005381",
+      "producto": "NATURGREEN ACEITE DE COCO MCT 500ML",
+      "importe": -14.04
+    },
+    {
+      "factura": "VN2605-0005656",
+      "producto": "LACTOFLORA SUERO ORAL 6 SOBRES DUOC",
+      "importe": -24.52
+    }
+  ],
+  "replay_local": [
+    {
+      "pdf": "FEDE VTO 5.8.26 PIO.pdf",
+      "sha_documento": "8a9fba8dafff8ae6d6cdc5283de09033ed6a93bacdb454f36fdc5d741ac945d0",
+      "hash_funcional": "4cc8fdf2d6a5cb2a6a230b28e5bea52605a2167c707b10219e25ced9dec8b615"
+    },
+    {
+      "pdf": "FEDE VTO 15.8.26 PIO.pdf",
+      "sha_documento": "e9bea97f9a2b384141304c92dfd8f318ee224707d203d823c3830999987b90f3",
+      "hash_funcional": "6037f384c42df0fb10846e24d11fd7207588eede2d3d6f4070c9da4b2f7e14e0"
+    }
+  ],
+  "invariantes": {
+    "facturas": 4,
+    "albaranes": 9,
+    "movimientos": 8,
+    "vencimientos": 4,
+    "conciliaciones_ok": 18,
+    "conciliaciones_total": 18,
+    "sentidos_inventados": 0,
+    "regresiones": 0
+  }
+}

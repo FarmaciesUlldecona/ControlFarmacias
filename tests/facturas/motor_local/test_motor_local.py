@@ -63,9 +63,13 @@ def test_modelos_geometria_y_serializacion_deterministas():
     assert hash_funcional(resultado) == hash_funcional(resultado)
 
 
-def test_registro_productivo_contiene_cofares_y_hefame():
+def test_registro_productivo_contiene_cofares_hefame_y_fedefarma():
     motor = MotorDocumentoLocal(BackendFalso(_documento_cofares_falso()))
-    assert [(a.id, a.version) for a in motor.adaptadores] == [("cofares-local", "1.0.0"), ("hefame-local", "1.1.0")]
+    assert [(a.id, a.version) for a in motor.adaptadores] == [
+        ("cofares-local", "1.0.0"),
+        ("hefame-local", "1.1.0"),
+        ("fedefarma-local", "1.2.0"),
+    ]
 
 
 def test_primitivas_generales_fecha_e_importes_sin_hefame():

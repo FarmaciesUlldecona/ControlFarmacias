@@ -4,6 +4,6 @@
 
 La única dependencia PDF del runtime es `pypdfium2==5.12.1`, encapsulada en `backend/pdfium.py`. La geometría, segmentación, evidencia, reglas, consolidación, matcher y simulación pertenecen a ControlFarmacias.
 
-El shadow está desactivado por defecto. Cuando se habilita expresamente, su salida es lateral, local y sin autoridad. HEFAME permanece en shadow y `COFARES_LOCAL_AUTHORITY` permanece `False`. Las rutas externas existentes del programa están separadas y este paquete no las importa ni las llama.
+El shadow está desactivado por defecto. Cuando se habilita expresamente, su salida es lateral, local y sin autoridad. HEFAME y FEDEFARMA permanecen en shadow y `COFARES_LOCAL_AUTHORITY` permanece `False`. Las rutas externas existentes del programa están separadas y este paquete no las importa ni las llama.
 
 Los PDFs y resultados documentales reales son corpus local externo. Los tests de replay los detectan y hacen `skip` explícito cuando no están presentes; no deben incorporarse a Git.

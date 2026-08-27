@@ -8,7 +8,7 @@ from .modelos import (
 )
 from .validadores import validar_factura
 
-VERSION_REGLAS = "normalizador-v2.reglas-pequenas.3"
+VERSION_REGLAS = "normalizador-v2.reglas-pequenas.4"
 
 
 _CLASIFICACIONES_CONCEPTUALES = (
@@ -16,6 +16,9 @@ _CLASIFICACIONES_CONCEPTUALES = (
     ("abonos clubs", TipoMovimiento.ABONO_COMERCIAL, "movimiento.concepto.abonos_clubs.v2"),
     ("servicio basico", TipoMovimiento.SERVICIO, "movimiento.concepto.servicio_basico.v2"),
     ("serv.plataf.360", TipoMovimiento.SERVICIO, "movimiento.concepto.servicio_plataforma.v2"),
+    ("condicion cooperativa", TipoMovimiento.CONDICION_COOPERATIVA, "movimiento.concepto.condicion_cooperativa.v1"),
+    ("cuota cooperativa", TipoMovimiento.CONDICION_COOPERATIVA, "movimiento.concepto.cuota_cooperativa.v1"),
+    ("servicios cooperativos", TipoMovimiento.CONDICION_COOPERATIVA, "movimiento.concepto.servicios_cooperativos.v1"),
 )
 
 

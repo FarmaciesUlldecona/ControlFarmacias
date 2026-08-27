@@ -130,12 +130,14 @@ class AlbaranLocal:
     orden: int
     evidencias: dict[str, EvidenciaLocal | None]
     bases_por_categoria: dict[str, float] = field(default_factory=dict)
+    atributos_documentales: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class DocumentoExtraidoLocal:
     documento: dict[str, Any]
     segmentos: list[SegmentoLocal]
+    facturas: list[dict[str, Any]]
     cabecera: dict[str, Any]
     albaranes: list[AlbaranLocal]
     movimientos: list[dict[str, Any]]

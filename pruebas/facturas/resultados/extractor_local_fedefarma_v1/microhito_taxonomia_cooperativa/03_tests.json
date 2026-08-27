@@ -1,0 +1,14 @@
+{
+  "estado": "PASS",
+  "focales": {"resultado": "26 passed", "duracion_segundos": 2.33},
+  "motor_local": {"resultado": "44 passed", "duracion_segundos": 4.99},
+  "normalizador_v2_mas_motor": {"resultado": "251 passed", "duracion_segundos": 6.58},
+  "suite_completa_facturas": {
+    "primer_arranque": "COLLECTION_BLOQUEADA_POR_PERMISO_SANDBOX_EN_LOG_LOCAL",
+    "resultado_final": "567 passed",
+    "duracion_segundos": 9.04,
+    "regresiones": 0
+  },
+  "llamadas_externas": 0,
+  "ocr": 0
+}

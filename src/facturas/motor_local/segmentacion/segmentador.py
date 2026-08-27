@@ -26,11 +26,12 @@ def segmentar(documento: DocumentoLocal) -> tuple[list[SegmentoLocal], list[dict
     for pagina in documento.paginas:
         ids = identidades(pagina.texto)
         normal = normalizar_texto(pagina.texto)
-        rol = (
-            "RESUMEN_MULTI_DOCUMENTO"
-            if len(ids) > 1 and ("RELACIO DE FACTURES" in normal or "INFORMACIO DE FACTURES" in normal)
-            else "DOCUMENTO"
-        )
+        es_resumen_facturacion = any(senal in normal for senal in (
+            "RELACIO DE FACTURES",
+            "INFORMACIO DE FACTURES",
+            "INFORMACIO FACTURES/CARREC",
+        ))
+        rol = "RESUMEN_MULTI_DOCUMENTO" if es_resumen_facturacion else "DOCUMENTO"
         match = re.search(r"PAGINA\s+(\d+)\s*(?:DE|[-/])\s*(\d+)", normal)
         paginacion = (
             {"current": int(match.group(1)), "total": int(match.group(2)), "literal": match.group(0)}

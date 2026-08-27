@@ -54,8 +54,18 @@ def ejecutar_shadow_cofares_sobre_resultado(
     try:
         resultado = motor_local.extraer(ruta_pdf)
         adaptador_id = resultado.documento.get("layout")
-        if adaptador_id not in {"cofares-local", "hefame-local"}:
+        if adaptador_id not in {"cofares-local", "hefame-local", "fedefarma-local"}:
             return resultado_oficial
+        familias_locales = {
+            "cabecera": bool(resultado.cabecera) or bool(resultado.facturas),
+            "albaranes": len(resultado.albaranes) + sum(len(f["albaranes"]) for f in resultado.facturas),
+            "movimientos": len(resultado.movimientos) + sum(len(f["movimientos"]) for f in resultado.facturas),
+            "impuestos": len(resultado.impuestos) + sum(len(f["impuestos"]) for f in resultado.facturas),
+            "vencimientos": len(resultado.vencimientos) + sum(len(f["vencimientos"]) for f in resultado.facturas),
+            "otros": len(resultado.otros) + sum(len(f["otros"]) for f in resultado.facturas),
+        }
+        if resultado.facturas:
+            familias_locales["facturas"] = len(resultado.facturas)
         evento = {
             "tipo": "SHADOW_LOCAL_RESULTADO",
             "timestamp_local": datetime.now(timezone.utc).isoformat(),
@@ -65,15 +75,8 @@ def ejecutar_shadow_cofares_sobre_resultado(
             "version_adaptador": resultado.documento.get("layout_version"),
             "duracion_segundos": time.perf_counter() - inicio,
             "segmentos": len(resultado.segmentos),
-            "candidatos": len(resultado.albaranes),
-            "familias_locales": {
-                "cabecera": bool(resultado.cabecera),
-                "albaranes": len(resultado.albaranes),
-                "movimientos": len(resultado.movimientos),
-                "impuestos": len(resultado.impuestos),
-                "vencimientos": len(resultado.vencimientos),
-                "otros": len(resultado.otros),
-            },
+            "candidatos": len(resultado.albaranes) + sum(len(f["albaranes"]) for f in resultado.facturas),
+            "familias_locales": familias_locales,
             "evidencias": len(resultado.evidencias),
             "incidencias": resultado.incidencias,
             "hash_funcional": hash_funcional(resultado),

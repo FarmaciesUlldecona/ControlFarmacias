@@ -243,6 +243,7 @@ class AdaptadorHefame(AdaptadorBase):
         impuestos,
         vencimientos,
         otros,
+        facturas,
     ):
         if self.reconocer(documento).estado != "RECONOCIDO":
             return []

@@ -74,6 +74,22 @@ def test_roundtrip_y_particion_futura_no_mezclan_indeterminados():
     assert roundtrip.json_estable() == original.json_estable()
 
 
+def test_condicion_cooperativa_es_consultable_y_no_implica_cargo():
+    salida = aplicar_reglas_pequenas(factura([
+        movimiento("SVCOP202607-Cuota Mensual Servicios Cooperativos 202607", tipo=TipoMovimiento.SERVICIO),
+    ]))
+    movimiento_cooperativo = salida.movimientos_comerciales[0]
+    assert movimiento_cooperativo.tipo == TipoMovimiento.CONDICION_COOPERATIVA
+    assert movimiento_cooperativo.sentido is None
+
+    roundtrip = FacturaNormalizada.model_validate_json(salida.json_estable())
+    importes = [
+        item.importe.valor for item in roundtrip.movimientos_comerciales
+        if item.tipo == TipoMovimiento.CONDICION_COOPERATIVA and item.importe is not None
+    ]
+    assert sum(importes, Decimal("0")) == Decimal("12.10")
+
+
 def test_contrato_v24_admite_sentido_null_sin_alterar_v23_congelado():
     schema = schema_luna_v24()
     factura_schema = schema["properties"]["facturas"]["items"]
