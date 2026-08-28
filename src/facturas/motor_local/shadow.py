@@ -56,13 +56,23 @@ def ejecutar_shadow_cofares_sobre_resultado(
         adaptador_id = resultado.documento.get("layout")
         if adaptador_id not in {"cofares-local", "hefame-local", "fedefarma-local"}:
             return resultado_oficial
+        # Cuando el adaptador publica facturas completas, las colecciones de
+        # nivel superior pueden existir como fachada de compatibilidad. No son
+        # ocurrencias adicionales y no deben sumarse dos veces.
+        colecciones_factura = resultado.facturas or []
+        def cantidad(nombre):
+            superior = list(getattr(resultado, nombre))
+            internas = [item for f in colecciones_factura for item in f[nombre]]
+            if not colecciones_factura:
+                return len(superior)
+            return len(internas) if superior == internas else len(superior) + len(internas)
         familias_locales = {
             "cabecera": bool(resultado.cabecera) or bool(resultado.facturas),
-            "albaranes": len(resultado.albaranes) + sum(len(f["albaranes"]) for f in resultado.facturas),
-            "movimientos": len(resultado.movimientos) + sum(len(f["movimientos"]) for f in resultado.facturas),
-            "impuestos": len(resultado.impuestos) + sum(len(f["impuestos"]) for f in resultado.facturas),
-            "vencimientos": len(resultado.vencimientos) + sum(len(f["vencimientos"]) for f in resultado.facturas),
-            "otros": len(resultado.otros) + sum(len(f["otros"]) for f in resultado.facturas),
+            "albaranes": cantidad("albaranes"),
+            "movimientos": cantidad("movimientos"),
+            "impuestos": cantidad("impuestos"),
+            "vencimientos": cantidad("vencimientos"),
+            "otros": cantidad("otros"),
         }
         if resultado.facturas:
             familias_locales["facturas"] = len(resultado.facturas)
@@ -75,7 +85,7 @@ def ejecutar_shadow_cofares_sobre_resultado(
             "version_adaptador": resultado.documento.get("layout_version"),
             "duracion_segundos": time.perf_counter() - inicio,
             "segmentos": len(resultado.segmentos),
-            "candidatos": len(resultado.albaranes) + sum(len(f["albaranes"]) for f in resultado.facturas),
+            "candidatos": cantidad("albaranes"),
             "familias_locales": familias_locales,
             "evidencias": len(resultado.evidencias),
             "incidencias": resultado.incidencias,

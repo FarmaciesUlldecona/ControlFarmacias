@@ -66,7 +66,7 @@ def test_modelos_geometria_y_serializacion_deterministas():
 def test_registro_local_contiene_cofares_hefame_fedefarma_y_alliance():
     motor = MotorDocumentoLocal(BackendFalso(_documento_cofares_falso()))
     assert [(a.id, a.version) for a in motor.adaptadores] == [
-        ("cofares-local", "1.0.0"),
+        ("cofares-local", "2.1.0"),
         ("hefame-local", "1.1.0"),
         ("fedefarma-local", "1.2.0"),
         ("alliance-local", "1.0.0"),

@@ -37,9 +37,14 @@ def test_reconocimiento_inequivoco_y_capacidades_honestas():
     assert reconocimiento.estado == "RECONOCIDO" and reconocimiento.puntuacion == 100
     assert all(item["presente"] for item in reconocimiento.evidencias)
     assert resultado.capacidades == {
-        "segmentacion": "SOPORTADO_MONOPAGINA", "cabecera": "NO_SOPORTADO",
-        "albaranes": "SOPORTADO", "movimientos": "NO_SOPORTADO",
-        "impuestos": "NO_SOPORTADO", "vencimientos": "NO_SOPORTADO",
+        "segmentacion": "SOPORTADO_MONOPAGINA_MULTILAYOUT",
+        "cabecera": "SOPORTADO_NULLS_DOCUMENTALES",
+        "albaranes": "SOPORTADO",
+        "movimientos": "SOPORTADO_SENTIDO_DOCUMENTAL_O_DECISION_PIO_O_NULL",
+        "impuestos": "SOPORTADO_TIPOS_IMPRESOS",
+        "vencimientos": "SOPORTADO_OCURRENCIAS_DOCUMENTALES",
+        "otros": "SOPORTADO",
+        "conciliacion_documental": "SOPORTADO",
     }
     assert evaluar_elegibilidad_cofares(documento, resultado, reconocimiento).estado == EstadoElegibilidad.ELEGIBLE
 
@@ -55,7 +60,7 @@ def test_adaptacion_39_preserva_evidencia_sha_bbox_bases_y_sentido_null():
         ubicacion = adaptado.numero.evidencia[0].ubicacion
         assert ubicacion["sha_documento"] == documento.sha_documento
         assert ubicacion["bbox"] and ubicacion["fila_literal"]
-        assert ubicacion["adaptador"] == "cofares-local" and ubicacion["version_adaptador"] == "1.0.0"
+        assert ubicacion["adaptador"] == "cofares-local" and ubicacion["version_adaptador"] == "2.1.0"
         assert adaptado.importe_base.evidencia[0].ubicacion["bases_componentes"] == original.bases
 
 

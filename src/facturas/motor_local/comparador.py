@@ -11,9 +11,9 @@ ESTADOS = {"COINCIDE", "DIFIERE", "SOLO_LOCAL", "SOLO_PIPELINE", "NO_COMPARABLE"
 
 def comparar_pipeline_local(resultado_oficial: Any, resultado_local: Any) -> dict[str, Any]:
     oficiales = _oficiales(resultado_oficial)
-    filas_locales = list(resultado_local.albaranes)
-    for factura in resultado_local.facturas:
-        filas_locales.extend(factura["albaranes"])
+    superiores = list(resultado_local.albaranes)
+    internas = [fila for factura in resultado_local.facturas for fila in factura["albaranes"]]
+    filas_locales = internas if superiores == internas else [*superiores, *internas]
     locales = [_fila_local(fila, i) for i, fila in enumerate(filas_locales)]
     conteo_o = Counter(f["numero"] for f in oficiales)
     conteo_l = Counter(f["numero"] for f in locales)
