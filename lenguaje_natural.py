@@ -44,6 +44,7 @@ class TipoIntencion(str, Enum):
     EJECUTAR_REINTENTO = "EJECUTAR_REINTENTO"
     CONSULTAR_RESULTADO = "CONSULTAR_RESULTADO"
     CONSULTAR_PRESUPUESTO = "CONSULTAR_PRESUPUESTO"
+    CONSULTAR_CONSUMO = "CONSULTAR_CONSUMO"
     REGISTRAR_REGLA = "REGISTRAR_REGLA"
     DESACTIVAR_REGLA = "DESACTIVAR_REGLA"
     OTRA = "OTRA"
@@ -55,7 +56,9 @@ class TipoAccionNatural(str, Enum):
     CONSULTAR_DECISIONES = "CONSULTAR_DECISIONES"
     CONSULTAR_RESULTADO = "CONSULTAR_RESULTADO"
     CONSULTAR_PRESUPUESTO = "CONSULTAR_PRESUPUESTO"
+    CONSULTAR_CONSUMO = "CONSULTAR_CONSUMO"
     COMPROBAR_GIT = "COMPROBAR_GIT"
+    ANALIZAR_ALCANCE = "ANALIZAR_ALCANCE"
     MODIFICAR_ALCANCE = "MODIFICAR_ALCANCE"
     EJECUTAR_TESTS = "EJECUTAR_TESTS"
     COMMIT = "COMMIT"
@@ -334,7 +337,10 @@ class InterpreteOrdenNatural:
         normal = _normalizar(texto).strip()
         restricciones = self._restricciones(normal)
         coste = self._coste(normal)
-        no_escritura = any(r in restricciones for r in ("SOLO_LECTURA", "NO_CAMBIAR_NADA"))
+        no_escritura = any(r in restricciones for r in (
+            "SOLO_LECTURA", "SOLO_CONSULTA", "NO_CAMBIAR_NADA",
+            "NO_MODIFICAR_ARCHIVOS", "NO_ESCRIBIR",
+        ))
         no_commit = "NO_COMMIT" in restricciones
         no_push = "NO_PUSH" in restricciones
         commit_cond = (
@@ -456,9 +462,15 @@ class InterpreteOrdenNatural:
     def _restricciones(normal: str) -> list[str]:
         resultado = []
         if "solo lectura" in normal: resultado.append("SOLO_LECTURA")
-        if re.search(r"\bno (?:cambies|modifiques) nada\b", normal): resultado.append("NO_CAMBIAR_NADA")
-        if re.search(r"\bno (?:hagas? )?commit\b", normal): resultado.append("NO_COMMIT")
-        if re.search(r"\bno (?:hagas? )?push\b", normal): resultado.append("NO_PUSH")
+        if "solo consulta" in normal: resultado.append("SOLO_CONSULTA")
+        if re.search(r"\bno modifiques? (?:los )?archivos\b", normal): resultado.append("NO_MODIFICAR_ARCHIVOS")
+        if re.search(r"\bno (?:cambies|modifiques) nada\b|\bno hagas cambios\b", normal): resultado.append("NO_CAMBIAR_NADA")
+        if re.search(r"\bno escribas\b", normal): resultado.append("NO_ESCRIBIR")
+        if re.search(r"\b(?:no hagas?|sin(?: hacer)?) commit\b", normal): resultado.append("NO_COMMIT")
+        if re.search(r"\b(?:no hagas?|sin(?: hacer)?) push\b", normal): resultado.append("NO_PUSH")
+        if re.search(r"\b(?:no uses|sin) codex\b", normal): resultado.append("NO_CODEX")
+        if re.search(r"\b(?:no uses|sin) api\b|\bno llames? a servicios externos\b", normal): resultado.append("NO_API_EXTERNA")
+        if re.search(r"\bno gastes\b", normal): resultado.append("NO_GASTAR")
         if "no toques el gold" in normal: resultado.append("NO_TOCAR_GOLD")
         if "no modifiques programa" in normal: resultado.append("NO_MODIFICAR_PROGRAMA")
         solo = re.search(r"\bsolo\s+(alliance|hefame|farmatic)\b", normal)
@@ -503,11 +515,18 @@ class InterpreteOrdenNatural:
     @staticmethod
     def _validar_no_amplia_permisos(texto: str, orden: OrdenInterpretada) -> None:
         normal = _normalizar(texto)
-        if ("solo lectura" in normal or re.search(r"no (?:cambies|modifiques) nada", normal)) and (orden.modo_solicitado != "read_only" or orden.autorizaciones.escritura):
+        no_escritura = (
+            "solo lectura" in normal
+            or "solo consulta" in normal
+            or re.search(r"no (?:cambies|modifiques) nada|no hagas cambios", normal)
+            or re.search(r"no modifiques? (?:los )?archivos", normal)
+            or re.search(r"no escribas", normal)
+        )
+        if no_escritura and (orden.modo_solicitado != "read_only" or orden.autorizaciones.escritura):
             raise InterpretacionInvalida("el proveedor intentó ampliar read_only")
-        if re.search(r"no (?:hagas? )?push", normal) and orden.push:
+        if re.search(r"(?:no (?:hagas? )?|sin(?: hacer)? )push", normal) and orden.push:
             raise InterpretacionInvalida("el proveedor intentó autorizar push prohibido")
-        if re.search(r"no (?:hagas? )?commit", normal) and orden.commit:
+        if re.search(r"(?:no (?:hagas? )?|sin(?: hacer)? )commit", normal) and orden.commit:
             raise InterpretacionInvalida("el proveedor intentó autorizar commit prohibido")
         if any(a.tipo is TipoAccionNatural.OTRA and not orden.ambigua for a in orden.acciones):
             raise InterpretacionInvalida("acción desconocida presentada como segura")

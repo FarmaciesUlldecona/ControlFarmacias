@@ -38,7 +38,11 @@ class SesionCLI:
         self.inicio = app.iniciar()
 
     def procesar(self, orden: str, *, como_json: bool = False) -> int:
-        resultado = self.app.procesar_orden(orden) if self.inicio.ok else self.inicio
+        callback = None if como_json else self._mostrar_orden_aceptada
+        resultado = (
+            self.app.procesar_orden(orden, al_aceptar=callback)
+            if self.inicio.ok else self.inicio
+        )
         presupuesto = self.app.consultar_presupuesto() if self.inicio.ok else None
         texto = (
             resultado_json(orden, resultado, presupuesto)
@@ -46,6 +50,16 @@ class SesionCLI:
         )
         print(texto, file=self.salida)
         return 0 if resultado.ok else 2 if resultado.requiere_intervencion else 1
+
+    def _mostrar_orden_aceptada(self, datos: dict[str, object]) -> None:
+        print("ORDEN ACEPTADA", file=self.salida)
+        print(f"PROYECTO: {datos.get('proyecto') or 'No aplica'}", file=self.salida)
+        print(f"MODO: {datos.get('nivel_recurso') or 'No clasificado'}", file=self.salida)
+        print(
+            "CODEX: Se utilizará" if datos.get("requiere_codex") else "CODEX: No se utilizará",
+            file=self.salida,
+        )
+        print("ESTADO: Ejecutando análisis...", file=self.salida, flush=True)
 
     def interactivo(self, *, como_json: bool = False) -> int:
         print("ControlFarmacias Orquestador V0.2.12", file=self.salida)

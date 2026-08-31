@@ -150,7 +150,12 @@ class OrquestadorV02:
     def estado(self) -> EstadoGlobalOrquestador:
         return self._arranque.obtener_estado_global()
 
-    def procesar_orden(self, texto: str) -> ResultadoPublicoV02:
+    def procesar_orden(
+        self,
+        texto: str,
+        *,
+        al_aceptar: Callable[[dict[str, Any]], None] | None = None,
+    ) -> ResultadoPublicoV02:
         """Interpreta únicamente el canal explícito y despacha operaciones seguras."""
         no_listo = self._requiere_listo()
         if no_listo:
@@ -194,6 +199,20 @@ class OrquestadorV02:
                 requiere_intervencion=True,
                 datos={"order_id": order_id, "interpretacion": orden.a_dict()},
             )
+        if al_aceptar is not None:
+            evaluacion = self._evaluar_recursos_orden(orden)
+            codex_prohibido = bool(
+                {"NO_CODEX", "NO_API_EXTERNA", "NO_GASTAR"}.intersection(
+                    orden.restricciones
+                )
+            )
+            al_aceptar({
+                "order_id": order_id,
+                "proyecto": orden.metadata.get("proyecto"),
+                "nivel_recurso": evaluacion.nivel_recurso.value,
+                "requiere_codex": evaluacion.requiere_codex and not codex_prohibido,
+                "modo_solicitado": orden.modo_solicitado,
+            })
         resultado = self._despachar_orden_natural(orden)
         self._registro_natural.registrar(
             "NATURAL_ORDER_EXECUTED",
@@ -235,6 +254,8 @@ class OrquestadorV02:
             )
         if orden.tipo_intencion is TipoIntencion.CONSULTAR_PRESUPUESTO:
             return self.consultar_presupuesto()
+        if orden.tipo_intencion is TipoIntencion.CONSULTAR_CONSUMO:
+            return self.consultar_consumo()
         if orden.tipo_intencion is TipoIntencion.CONTINUAR_TAREA:
             return self.ejecutar_tarea(orden.task_id_referencia)
         if orden.tipo_intencion is TipoIntencion.CANCELAR_TAREA:
@@ -272,6 +293,20 @@ class OrquestadorV02:
             )
 
         evaluacion_recursos = self._evaluar_recursos_orden(orden)
+
+        restricciones_sin_codex = {
+            "NO_CODEX", "NO_API_EXTERNA", "NO_GASTAR",
+        }.intersection(orden.restricciones)
+        if evaluacion_recursos.requiere_codex and restricciones_sin_codex:
+            return self._error(
+                "CODEX_PROHIBITED_BY_ORDER",
+                "la tarea requiere razonamiento Codex, pero la orden lo prohíbe",
+                requiere_intervencion=True,
+                datos={
+                    "restricciones": sorted(restricciones_sin_codex),
+                    "recursos": self._datos_recursos(evaluacion_recursos),
+                },
+            )
 
         if not evaluacion_recursos.requiere_codex:
             if (
@@ -433,7 +468,8 @@ class OrquestadorV02:
         )
 
         requiere_razonamiento = requiere_escritura or any(
-            tipo is TipoAccionNatural.OTRA for tipo in tipos
+            tipo in {TipoAccionNatural.ANALIZAR_ALCANCE, TipoAccionNatural.OTRA}
+            for tipo in tipos
         )
 
         accion = (
@@ -500,6 +536,8 @@ class OrquestadorV02:
             return SolicitudAccion(task_id, "COMMIT", "GIT", datos={"tests_correctos": bool(accion.condicion.get("tests_correctos", True))}, autorizacion_requerida="COMMIT", contexto=orden.texto_original)
         if accion.tipo is TipoAccionNatural.PUSH:
             return SolicitudAccion(task_id, "PUSH", "GIT", autorizacion_requerida="PUSH", contexto=orden.texto_original)
+        if accion.tipo is TipoAccionNatural.ANALIZAR_ALCANCE:
+            return SolicitudAccion(task_id, "ANALIZAR_ALCANCE", accion.alcance or "REPO", contexto=orden.texto_original, clasificacion="TECNICA")
         return SolicitudAccion(task_id, "EJECUTAR_TEST" if accion.tipo is TipoAccionNatural.EJECUTAR_TESTS else "MODIFICAR_CLASE_EN_ALCANCE", accion.alcance or "REPO", datos={"ruta": None}, contexto=orden.texto_original, clasificacion="TECNICA")
 
     @staticmethod

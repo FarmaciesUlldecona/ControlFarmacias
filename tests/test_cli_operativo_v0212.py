@@ -9,7 +9,12 @@ import pytest
 from cli_operativo import SesionCLI, construir_parser
 from ejecucion_v02 import EjecutorCicloFake
 from ejecutor_local import ResultadoEjecucionLocal
-from interfaz_operativa import ConfiguracionOperativa, crear_orquestador_operativo
+from interfaz_operativa import (
+    ConfiguracionOperativa,
+    ProveedorContextoOperativo,
+    crear_orquestador_operativo,
+)
+from lenguaje_natural import OrdenInterpretada
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -79,6 +84,13 @@ def _orden(entorno, texto: str):
     app, fake, local, _ = entorno
     assert app.iniciar().ok
     return app.procesar_orden(texto), fake, local, app
+
+
+def _interpretar(config: ConfiguracionOperativa, texto: str) -> OrdenInterpretada:
+    datos = ProveedorContextoOperativo().interpretar(
+        texto, {"repos": config.repos_conocidos()}
+    )
+    return OrdenInterpretada.desde_dict(datos)
 
 
 def test_a_estado_local_only_cero_codex(entorno):
@@ -300,3 +312,78 @@ def test_u_presupuesto_superado_bloquea(entorno):
 def test_v_entrada_shell_no_se_ejecuta(entorno):
     resultado, fake, _, _ = _orden(entorno, "powershell; Remove-Item -Recurse")
     assert resultado.requiere_intervencion and fake.llamadas == []
+
+
+def test_w_orden_real_resuelve_programa_y_conserva_solo_lectura(entorno):
+    texto = (
+        "comprueba en Programa el estado actual de Alliance y dime si está "
+        "preparado para iniciar el extractor local completo. No modifiques archivos."
+    )
+    resultado, fake, _, _ = _orden(entorno, texto)
+
+    interpretacion = resultado.datos["interpretacion"]
+    assert resultado.codigo != "AMBIGUOUS_REFERENCE"
+    assert interpretacion["metadata"]["proyecto"] == "PROGRAMA"
+    assert interpretacion["modo_solicitado"] == "read_only"
+    assert "NO_MODIFICAR_ARCHIVOS" in interpretacion["restricciones"]
+    assert interpretacion["autorizaciones"]["escritura"] is False
+    assert len(fake.llamadas) <= 1
+
+
+@pytest.mark.parametrize(
+    "texto,proyecto",
+    [
+        ("comprueba en Programa el estado de Cofares", "PROGRAMA"),
+        ("revisa HEFAME en Programa", "PROGRAMA"),
+        ("revisa el normalizador", "PROGRAMA"),
+        ("comprueba el estado del Orquestador", "ORQUESTADOR"),
+        ("comprueba en el Orquestador el estado Git", "ORQUESTADOR"),
+        ("revisa Programa y Alliance", "PROGRAMA"),
+        ("revisa Programa, Cofares y HEFAME", "PROGRAMA"),
+    ],
+)
+def test_x_repositorio_y_entidades_de_dominio_no_compiten(texto, proyecto, entorno):
+    _, _, _, config = entorno
+    orden = _interpretar(config, texto)
+    assert not orden.ambigua
+    assert orden.metadata["proyecto"] == proyecto
+
+
+def test_y_programa_y_orquestador_no_fingen_un_repo_unico(entorno):
+    _, _, _, config = entorno
+    orden = _interpretar(config, "compara Programa y Orquestador")
+    assert orden.ambigua
+    assert orden.repo_candidato is None
+    assert orden.worktree_candidato is None
+
+
+@pytest.mark.parametrize("actual,proyecto", [("programa", "PROGRAMA"), ("orquestador", "ORQUESTADOR")])
+def test_z_este_repo_usa_cwd(actual, proyecto, entorno):
+    _, _, _, config = entorno
+    cwd = config.programa_repo if actual == "programa" else config.orquestador_repo
+    config_cwd = ConfiguracionOperativa(
+        config.orquestador_repo, config.programa_repo, config.python, cwd
+    )
+    orden = _interpretar(config_cwd, "revisa este repo")
+    assert not orden.ambigua
+    assert orden.metadata["proyecto"] == proyecto
+
+
+def test_aa_feedback_precede_a_una_tarea_codex(entorno):
+    app, _, _, _ = entorno
+    salida = StringIO()
+    sesion = SesionCLI(app, salida=salida)
+    sesion.procesar("comprueba Alliance")
+    texto = salida.getvalue()
+    assert "ORDEN ACEPTADA" in texto
+    assert "PROYECTO: PROGRAMA" in texto
+    assert "MODO: CODEX_STANDARD" in texto
+    assert "CODEX: Se utilizará" in texto
+    assert texto.index("ORDEN ACEPTADA") < texto.index("ORDEN: comprueba Alliance")
+
+
+def test_ab_restriccion_sin_codex_devuelve_control_sin_invocarlo(entorno):
+    resultado, fake, _, _ = _orden(entorno, "analiza Alliance sin Codex")
+    assert resultado.codigo == "CODEX_PROHIBITED_BY_ORDER"
+    assert resultado.requiere_intervencion
+    assert fake.llamadas == []

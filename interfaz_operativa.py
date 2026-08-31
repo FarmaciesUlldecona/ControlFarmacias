@@ -26,10 +26,11 @@ from lenguaje_natural import (
     TipoAccionNatural,
     TipoIntencion,
 )
+from repositorios import ORQUESTADOR_ACTIVO, PROGRAMA, repo_operativo_para_cwd
 
 
-ORQUESTADOR_REPO = Path(r"C:\ControlFarmacias\ControlFarmacias_Orquestador_V0_2_dev")
-PROGRAMA_REPO = Path(r"C:\ControlFarmacias\Programa")
+ORQUESTADOR_REPO = ORQUESTADOR_ACTIVO
+PROGRAMA_REPO = PROGRAMA
 PYTHON_CONTROLFARMACIAS = Path(r"C:\ControlFarmacias\Programa\.venv\Scripts\python.exe")
 
 
@@ -70,14 +71,7 @@ class ConfiguracionOperativa:
             "PROGRAMA", self.programa_repo,
             ("src/**", "tests/**", "pruebas/**"),
         )
-        repos = {
-            "ORQUESTADOR": orquestador,
-            "PROGRAMA": programa,
-            "COFARES": programa,
-            "HEFAME": programa,
-            "FEDEFARMA": programa,
-            "NORMALIZADOR": programa,
-        }
+        repos = {"ORQUESTADOR": orquestador, "PROGRAMA": programa}
         actual = self._actual(orquestador, programa)
         if actual is not None:
             repos["ACTUAL"] = actual
@@ -103,49 +97,70 @@ class ConfiguracionOperativa:
     def _actual(
         self, orquestador: dict[str, Any], programa: dict[str, Any]
     ) -> dict[str, Any] | None:
-        actual = self.cwd or Path.cwd().resolve()
-        for repo in (orquestador, programa):
-            try:
-                actual.relative_to(Path(repo["repo"]))
-                return repo
-            except ValueError:
-                continue
-        return None
+        nombre = repo_operativo_para_cwd(
+            self.cwd or Path.cwd(),
+            {"ORQUESTADOR": orquestador["repo"], "PROGRAMA": programa["repo"]},
+        )
+        return {"ORQUESTADOR": orquestador, "PROGRAMA": programa}.get(nombre)
 
 
 class ProveedorContextoOperativo:
     """Proveedor local determinista; no usa IA, red ni comandos libres."""
 
-    _PROGRAMA = ("programa", "normalizador", "proveedor", "factura", "cofares", "hefame", "fedefarma")
-    _ORQUESTADOR = ("orquestador", "configuracion del orquestador")
+    _ENTIDADES_PROGRAMA = {
+        "alliance": "ALLIANCE", "cencora": "CENCORA", "cofares": "COFARES",
+        "hefame": "HEFAME", "fedefarma": "FEDEFARMA",
+        "normalizador": "NORMALIZADOR", "normalizadores": "NORMALIZADOR",
+        "factura": "FACTURAS", "facturas": "FACTURAS",
+        "albaran": "ALBARANES", "albaranes": "ALBARANES",
+        "proveedor": "PROVEEDORES", "proveedores": "PROVEEDORES",
+        "conciliacion": "CONCILIACION", "banco": "BANCO",
+        "cashflow": "CASHFLOW", "pedido": "PEDIDOS", "pedidos": "PEDIDOS",
+        "laboratorio": "LABORATORIOS", "laboratorios": "LABORATORIOS",
+        "supabase": "SUPABASE", "farmatic": "FARMATIC",
+    }
+    _TERMINOS_ORQUESTADOR = (
+        "orquestador", "cf", "cli", "routing", "local_only", "codex_light",
+        "codex_standard", "codex_heavy", "supervisor", "launcher",
+    )
 
     def interpretar(self, texto: str, contexto: dict[str, Any]) -> dict[str, Any]:
         normal = _normalizar(texto).strip()
         repos = dict(contexto.get("repos") or {})
         if self._parece_shell(normal):
             return self._ambigua(texto, "la entrada parece un comando de shell, no una orden natural").a_dict()
-        if self._es_estado(normal):
+        if self._es_estado_global(normal):
             return self._consulta(texto, TipoIntencion.CONSULTAR_ESTADO, TipoAccionNatural.CONSULTAR_ESTADO).a_dict()
         if self._es_presupuesto(normal):
             return self._consulta(texto, TipoIntencion.CONSULTAR_PRESUPUESTO, TipoAccionNatural.CONSULTAR_PRESUPUESTO).a_dict()
+        if self._es_consumo(normal):
+            return self._consulta(texto, TipoIntencion.CONSULTAR_CONSUMO, TipoAccionNatural.CONSULTAR_CONSUMO).a_dict()
         if self._solicita_commit_push(normal):
             return self._ambigua(texto, "commit/push requiere una tarea y autorización explícita verificable").a_dict()
 
-        proyecto = self._proyecto(normal, repos)
+        proyecto, conflicto = self._proyecto(normal, repos)
+        if conflicto:
+            return self._ambigua(texto, conflicto).a_dict()
         if self._es_git(normal):
             proyecto = proyecto or repos.get("ORQUESTADOR")
             return self._git_orden(texto, proyecto).a_dict() if proyecto else self._ambigua(texto, "no se pudo resolver el repositorio").a_dict()
+        if "farmatic" in normal and self._es_escritura(normal):
+            proyecto = repos.get("PROGRAMA")
+            return self._tarea(texto, normal, proyecto, farmatic=True).a_dict()
+        if self._es_escritura(normal):
+            if proyecto is None:
+                return self._ambigua(texto, "no se pudo resolver con seguridad el proyecto de destino").a_dict()
+            if self._es_solo_lectura(normal):
+                return self._ambigua(texto, "la orden combina escritura y una restricción de solo lectura").a_dict()
+            return self._tarea(texto, normal, proyecto).a_dict()
         if self._es_tests(normal):
             if proyecto is None:
                 return self._ambigua(texto, "'este módulo' no tiene un contexto de proyecto resoluble").a_dict()
             return self._tests(texto, normal, proyecto).a_dict()
-        if "farmatic" in normal and self._es_escritura(normal):
-            proyecto = repos.get("PROGRAMA")
-            return self._tarea(texto, normal, proyecto, farmatic=True).a_dict()
-        if self._es_escritura(normal) or self._es_auditoria(normal):
+        if self._es_auditoria(normal) or self._es_consulta_proyecto(normal):
             if proyecto is None:
                 return self._ambigua(texto, "no se pudo resolver con seguridad el proyecto de destino").a_dict()
-            return self._tarea(texto, normal, proyecto).a_dict()
+            return self._tarea(texto, normal, proyecto, solo_lectura=True).a_dict()
         return self._ambigua(texto, "orden no cubierta por las reglas operativas locales").a_dict()
 
     @staticmethod
@@ -176,11 +191,14 @@ class ProveedorContextoOperativo:
         )
 
     def _tarea(
-        self, texto: str, normal: str, repo: dict[str, Any], *, farmatic: bool = False
+        self, texto: str, normal: str, repo: dict[str, Any], *,
+        farmatic: bool = False, solo_lectura: bool = False,
     ) -> OrdenInterpretada:
         acciones = [AccionOrden(
             1,
-            TipoAccionNatural.ESCRIBIR_FARMATIC if farmatic else TipoAccionNatural.MODIFICAR_ALCANCE,
+            TipoAccionNatural.ESCRIBIR_FARMATIC if farmatic
+            else TipoAccionNatural.ANALIZAR_ALCANCE if solo_lectura
+            else TipoAccionNatural.MODIFICAR_ALCANCE,
             "FARMATIC" if farmatic else repo["nombre"],
         )]
         if "test" in normal or "valid" in normal or "prueb" in normal:
@@ -193,15 +211,17 @@ class ProveedorContextoOperativo:
             "archivos_afectados": archivos,
             "multiples_modulos": multi or heavy,
             "riesgo_transversal": heavy,
-            "tipo_trabajo": "AUDITORIA" if heavy else "DESARROLLO",
+            "tipo_trabajo": "AUDITORIA" if self._es_auditoria(normal) else "DESARROLLO",
+            "entidades": list(self._entidades(normal)),
+            "requiere_razonamiento": solo_lectura,
         }
-        restricciones = []
-        if re.search(r"no (?:hagas? )?commit", normal): restricciones.append("NO_COMMIT")
-        if re.search(r"no (?:hagas? )?push", normal): restricciones.append("NO_PUSH")
+        restricciones = self._restricciones(normal)
+        if solo_lectura: restricciones.append("SOLO_LECTURA")
         return self._crear(
             texto, TipoIntencion.CREAR_TAREA, tuple(acciones), repo,
-            "workspace_write", metadata=metadata, restricciones=tuple(restricciones),
-            escritura=True,
+            "read_only" if solo_lectura else "workspace_write",
+            metadata=metadata, restricciones=tuple(dict.fromkeys(restricciones)),
+            escritura=not solo_lectura,
         )
 
     @staticmethod
@@ -260,23 +280,46 @@ class ProveedorContextoOperativo:
             candidatos = [item for item in (preferido, respaldo) if item.is_file()]
         return tuple(item.relative_to(repo).as_posix() for item in candidatos[:4])
 
-    def _proyecto(self, normal: str, repos: dict[str, Any]) -> dict[str, Any] | None:
-        programa = any(item in normal for item in self._PROGRAMA)
-        orquestador = any(item in normal for item in self._ORQUESTADOR)
-        if programa and orquestador: return None
-        if programa: return repos.get("PROGRAMA")
-        if orquestador: return repos.get("ORQUESTADOR")
-        if "este modulo" in normal or "este repo" in normal or "rama actual" in normal:
-            return repos.get("ACTUAL")
-        return None
+    def _proyecto(
+        self, normal: str, repos: dict[str, Any]
+    ) -> tuple[dict[str, Any] | None, str | None]:
+        if re.search(r"\bv0[._ -]?1[._ -]?3\b|controlfarmacias_orquestador_v0_1_3", normal):
+            return None, "V0.1.3 es histórico y no es un destino operativo nuevo"
+        programa_explicito = bool(re.search(
+            r"\b(?:repo(?:sitorio)?\s+(?:de(?:l)?\s+)?programa|controlfarmacias\s+programa|en\s+(?:el\s+)?programa|programa)\b",
+            normal,
+        ))
+        orquestador_explicito = bool(re.search(
+            r"\b(?:repo(?:sitorio)?\s+(?:de(?:l)?\s+)?orquestador|en\s+(?:el\s+)?orquestador|orquestador)\b",
+            normal,
+        ))
+        if programa_explicito and orquestador_explicito:
+            return None, "la orden nombra Programa y Orquestador como destinos incompatibles"
+        if programa_explicito: return repos.get("PROGRAMA"), None
+        if orquestador_explicito: return repos.get("ORQUESTADOR"), None
+
+        entidades = self._entidades(normal)
+        dominio_orquestador = self._menciona_dominio_orquestador(normal)
+        if entidades and dominio_orquestador:
+            return None, "la orden mezcla dominios de Programa y Orquestador sin destino explícito"
+        if entidades: return repos.get("PROGRAMA"), None
+        if dominio_orquestador: return repos.get("ORQUESTADOR"), None
+        if re.search(r"\b(?:este repo|este repositorio|este modulo|aqui|rama actual)\b", normal):
+            actual = repos.get("ACTUAL")
+            return (actual, None) if actual else (None, "el directorio actual no está dentro de un repositorio conocido")
+        return None, None
 
     @staticmethod
-    def _es_estado(normal: str) -> bool:
-        return normal == "estado" or "estado del orquestador" in normal or "que esta haciendo el orquestador" in normal
+    def _es_estado_global(normal: str) -> bool:
+        return normal in {"estado", "consulta el estado"} or "que esta haciendo el orquestador" in normal
 
     @staticmethod
     def _es_presupuesto(normal: str) -> bool:
         return "presupuesto" in normal or ("cuanto" in normal and "queda" in normal)
+
+    @staticmethod
+    def _es_consumo(normal: str) -> bool:
+        return bool(re.search(r"\b(?:cuanto|que)\s+(?:hemos\s+)?gastad\w*\b", normal))
 
     @staticmethod
     def _es_git(normal: str) -> bool:
@@ -284,20 +327,76 @@ class ProveedorContextoOperativo:
 
     @staticmethod
     def _es_tests(normal: str) -> bool:
-        return bool(re.search(r"\b(?:ejecuta|lanza|corre)\b.*\b(?:test|tests|pruebas)\b", normal))
+        return bool(
+            re.search(r"\b(?:ejecuta|lanza|corre|pasa)\w*\b.*\b(?:test|tests|pruebas)\b", normal)
+            or re.search(r"\b(?:valida|prueba)\w*\b", normal)
+            or re.search(r"\bcomprueba\b.*\b(?:funciona|regresiones)\b", normal)
+        )
 
     @staticmethod
     def _es_escritura(normal: str) -> bool:
-        return bool(re.search(r"\b(?:corrige|modifica|implementa|actualiza|cambia|escribe)\b", normal))
+        return bool(re.search(
+            r"\b(?:corrige|arregla|modifica|cambia|implementa|anade|crea|adapta|"
+            r"mejora|completa|termina|prepara|desarrolla|actualiza|escribe)\b",
+            normal,
+        ))
 
     @staticmethod
     def _es_auditoria(normal: str) -> bool:
-        return bool(re.search(r"\b(?:audita|auditoria|refactoriza|refactor)\b", normal))
+        return bool(re.search(r"\b(?:audita|auditoria|examina)\b", normal))
+
+    @staticmethod
+    def _es_consulta_proyecto(normal: str) -> bool:
+        return bool(
+            re.search(r"\b(?:comprueba|revisa|mira|consulta|analiza|dime|verifica|averigua|examina)\b", normal)
+            or re.search(r"\b(?:estado|situacion|como va|como esta|esta preparado|esta listo|que falta)\b", normal)
+        )
+
+    @classmethod
+    def _entidades(cls, normal: str) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(
+            entidad for termino, entidad in cls._ENTIDADES_PROGRAMA.items()
+            if re.search(rf"\b{re.escape(termino)}\b", normal)
+        ))
+
+    @classmethod
+    def _menciona_dominio_orquestador(cls, normal: str) -> bool:
+        if any(re.search(rf"\b{re.escape(item)}\b", normal) for item in cls._TERMINOS_ORQUESTADOR):
+            return True
+        return bool(re.search(
+            r"\b(?:comando\s+cf|parser\s+del\s+orquestador|presupuesto\s+codex)\b",
+            normal,
+        ))
+
+    @staticmethod
+    def _es_solo_lectura(normal: str) -> bool:
+        return bool(
+            re.search(r"\b(?:solo lectura|solo consulta|no escribas|no hagas cambios)\b", normal)
+            or re.search(r"\bno modifiques? (?:los )?archivos\b", normal)
+            or re.search(r"\bno (?:cambies|modifiques) nada\b", normal)
+        )
+
+    @staticmethod
+    def _restricciones(normal: str) -> list[str]:
+        patrones = (
+            ("NO_MODIFICAR_ARCHIVOS", r"\bno modifiques? (?:los )?archivos\b"),
+            ("NO_CAMBIAR_NADA", r"\bno (?:cambies|modifiques) nada\b|\bno hagas cambios\b"),
+            ("SOLO_CONSULTA", r"\bsolo consulta\b"),
+            ("NO_ESCRIBIR", r"\bno escribas\b"),
+            ("NO_COMMIT", r"\b(?:no hagas?|sin) commit\b|\bsin hacer commit\b"),
+            ("NO_PUSH", r"\b(?:no hagas?|sin) push\b|\bsin hacer push\b"),
+            ("NO_CODEX", r"\b(?:no uses|sin) codex\b"),
+            ("NO_API_EXTERNA", r"\b(?:no uses|sin) api\b|\bno llames? a servicios externos\b"),
+            ("NO_GASTAR", r"\bno gastes\b"),
+        )
+        resultado = [nombre for nombre, patron in patrones if re.search(patron, normal)]
+        if "solo lectura" in normal: resultado.append("SOLO_LECTURA")
+        return list(dict.fromkeys(resultado))
 
     @staticmethod
     def _solicita_commit_push(normal: str) -> bool:
-        commit = "commit" in normal and not re.search(r"no (?:hagas? )?commit", normal)
-        push = "push" in normal and not re.search(r"no (?:hagas? )?push", normal)
+        commit = "commit" in normal and not re.search(r"(?:no (?:hagas? )?|sin(?: hacer)? )commit", normal)
+        push = "push" in normal and not re.search(r"(?:no (?:hagas? )?|sin(?: hacer)? )push", normal)
         return bool(commit or push)
 
     @staticmethod
