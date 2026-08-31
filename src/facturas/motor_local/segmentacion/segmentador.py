@@ -16,6 +16,7 @@ def identidades(text: str) -> list[str]:
     values = [m.group(0) for m in INVOICE_FORMAT.finditer(text)]
     normalized = normalizar_texto(text)
     for pattern in [
+        r"\bFACTURA\s+N\S{0,3}M\S{0,3}\s*[:.]?\s*(\d{1,12})\b",
         r"(?:NUMERO\s+(?:DE\s+)?FACTURA|FACTURA)\s*[:#]?\s*(\d{8,12})\b",
         r"\bN\S?\s*FACTURA\s*[.:#]?\s*(\d{8,12})\b",
         r"\bFACTURA\s*\n\s*(\d{8,12})\b",

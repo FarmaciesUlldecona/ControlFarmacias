@@ -76,6 +76,7 @@ def test_registro_local_contiene_cofares_hefame_fedefarma_y_alliance():
         ("loreal-local", "1.1.0"),
         ("moretti-local", "1.0.0"),
         ("totalcare-local", "1.0.0"),
+        ("farmacia-guimera-ocr-local", "1.0.0"),
     ]
 
 

@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import hashlib
 import importlib.metadata
+from io import BytesIO
 from pathlib import Path
 
 import pypdfium2 as pdfium
+from PIL import Image
 
 from ..geometria.lineas import agrupar_por_linea
-from ..modelos import DocumentoLocal, PaginaLocal, PalabraLocal, RegionLocal
+from ..modelos import DocumentoLocal, LineaLocal, PaginaLocal, PalabraLocal, RegionLocal
+from ..ocr.windows_media import MotorWindowsMediaOcr
 
 
 VERSION_PYPDFIUM2_REQUERIDA = "5.12.1"
@@ -89,3 +92,121 @@ class BackendPdfium:
                     )
                 start = None
         return palabras
+
+
+class BackendPdfiumConOcr(BackendPdfium):
+    """Completa solo paginas sin texto mediante OCR local secundario."""
+
+    id = "pypdfium2+windows-media-ocr"
+    version = f"{VERSION_PYPDFIUM2_REQUERIDA}+ocr-1.0.0"
+    render_scale = 1.35
+
+    def __init__(self, ocr: MotorWindowsMediaOcr | None = None) -> None:
+        super().__init__()
+        self.ocr = ocr or MotorWindowsMediaOcr()
+
+    def cargar_pdf(self, ruta: str | Path) -> DocumentoLocal:
+        documento = super().cargar_pdf(ruta)
+        pendientes = [pagina for pagina in documento.paginas if not pagina.texto.strip() and not pagina.palabras]
+        if not pendientes:
+            return documento
+        pdf = pdfium.PdfDocument(str(ruta))
+        hashes: list[str] = []
+        try:
+            for pagina in pendientes:
+                page = pdf[pagina.numero - 1]
+                try:
+                    image = self._imagen_ocr(page, pagina.ancho, pagina.alto)
+                finally:
+                    page.close()
+                resultado = self.ocr.reconocer_pagina(image, pagina.numero, pagina.ancho, pagina.alto)
+                palabras = [
+                    PalabraLocal(
+                        word.texto, pagina.numero,
+                        RegionLocal(word.bbox.x0, word.bbox.y0, word.bbox.x1, word.bbox.y1),
+                        word.orden,
+                    )
+                    for word in resultado.palabras
+                ]
+                lineas = [
+                    LineaLocal(pagina.numero, [palabras[word.orden] for word in line.palabras], line.orden)
+                    for line in resultado.lineas
+                ]
+                pagina.texto = resultado.texto
+                pagina.palabras = palabras
+                pagina.lineas = lineas
+                pagina.origen = "OCR_LOCAL"
+                pagina.metadatos_ocr = {
+                    "motor": resultado.motor,
+                    "idioma": resultado.idioma,
+                    "confidence_disponible": resultado.confidence_disponible,
+                    "confidence": None,
+                    "angulo_texto": resultado.angulo_texto,
+                    "preprocesado": resultado.preprocesado,
+                    "hash_ocr": resultado.hash_ocr,
+                }
+                hashes.append(resultado.hash_ocr)
+        finally:
+            pdf.close()
+        documento.ocr = {
+            "ejecutado": True,
+            "fuente": "OCR_LOCAL_SECUNDARIO",
+            "motor": self.ocr.id,
+            "version": self.ocr.version,
+            "idioma": self.ocr.idioma,
+            "paginas": [pagina.metadatos_ocr for pagina in documento.paginas if pagina.origen == "OCR_LOCAL"],
+            "hash_resultado": hashlib.sha256("".join(hashes).encode("ascii")).hexdigest(),
+            "red": False,
+        }
+        return documento
+
+    def _imagen_ocr(self, page, ancho: float, alto: float):
+        candidatas = []
+        for objeto in page.get_objects():
+            if type(objeto).__name__ != "PdfImage":
+                continue
+            left, bottom, right, top = objeto.get_bounds()
+            cobertura = max(0.0, right - left) * max(0.0, top - bottom) / (ancho * alto)
+            if cobertura >= 0.8:
+                px = objeto.get_px_size()
+                candidatas.append((px[0] * px[1], objeto))
+        if candidatas:
+            objeto = max(candidatas, key=lambda item: item[0])[1]
+            if objeto.get_filters() == ["DCTDecode"]:
+                with Image.open(BytesIO(bytes(objeto.get_data()))) as image:
+                    return image.convert("RGB").copy()
+            bitmap = objeto.get_bitmap()
+            try:
+                return bitmap.to_pil().copy()
+            finally:
+                bitmap.close()
+        bitmap = page.render(scale=self.render_scale)
+        try:
+            return bitmap.to_pil().copy()
+        finally:
+            bitmap.close()
+
+    def refinar_ocr(self, documento: DocumentoLocal, solicitudes) -> None:
+        if not solicitudes:
+            return
+        pdf = pdfium.PdfDocument(documento.ruta)
+        lecturas = []
+        try:
+            imagenes = {}
+            for solicitud in solicitudes:
+                pagina = documento.paginas[solicitud.pagina - 1]
+                if solicitud.pagina not in imagenes:
+                    page = pdf[solicitud.pagina - 1]
+                    try:
+                        imagenes[solicitud.pagina] = self._imagen_ocr(page, pagina.ancho, pagina.alto)
+                    finally:
+                        page.close()
+                lecturas.append(self.ocr.reconocer_region(
+                    imagenes[solicitud.pagina], solicitud, pagina.ancho, pagina.alto,
+                ))
+        finally:
+            pdf.close()
+        documento.ocr["regiones"] = lecturas
+        documento.ocr["hash_regiones"] = hashlib.sha256(
+            "".join(item["hash_ocr"] for item in lecturas).encode("ascii")
+        ).hexdigest()

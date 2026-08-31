@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..conciliacion import EspecificacionConciliacion
-from ..modelos import AlbaranLocal, DocumentoLocal, EvidenciaLocal, LineaLocal, PalabraLocal, SegmentoLocal, union_bbox
+from ..modelos import AlbaranLocal, DocumentoLocal, EvidenciaLocal, EvidenciaOCRLocal, LineaLocal, PalabraLocal, SegmentoLocal, union_bbox
 
 
 @dataclass(frozen=True)
@@ -65,6 +65,10 @@ class AdaptadorBase(ABC):
     def incidencias_extraccion(self, documento: DocumentoLocal, segmentos: list[SegmentoLocal]) -> list[dict[str, Any]]:
         return []
 
+    def solicitudes_ocr(self, documento: DocumentoLocal):
+        """Regiones de segundo pase solicitadas tras reconocer un layout OCR."""
+        return []
+
     def evidencia(
         self,
         documento: DocumentoLocal,
@@ -78,6 +82,21 @@ class AdaptadorBase(ABC):
         regla: str,
         tipo: str = "GEOMETRIA_LOCAL",
     ) -> EvidenciaLocal:
+        pagina_doc = next((p for p in documento.paginas if p.numero == pagina), None)
+        if pagina_doc is not None and pagina_doc.origen == "OCR_LOCAL":
+            metadata = pagina_doc.metadatos_ocr
+            return EvidenciaOCRLocal(
+                documento.sha_documento, pagina, literal, bbox.to_list() if bbox else None,
+                fila, fila, bbox_fila.to_list() if bbox_fila else None, tabla, columna,
+                self.id, self.version, regla, "OCR_LOCAL", "OCR_LOCAL_SECUNDARIO",
+                metadata.get("confidence"),
+                {
+                    "motor": metadata.get("motor"), "idioma": metadata.get("idioma"),
+                    "confidence_disponible": metadata.get("confidence_disponible", False),
+                    "hash_ocr": metadata.get("hash_ocr"), "preprocesado": metadata.get("preprocesado"),
+                    "gold_usado": False,
+                },
+            )
         return EvidenciaLocal(
             documento.sha_documento,
             pagina,

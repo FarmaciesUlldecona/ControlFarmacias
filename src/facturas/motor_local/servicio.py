@@ -14,7 +14,7 @@ from .segmentacion.segmentador import segmentar
 
 class MotorDocumentoLocal:
     id = "controlfarmacias-local-engine"
-    version = "0.4.0"
+    version = "0.5.0"
 
     def __init__(self, backend: BackendPdf, adaptadores: tuple[AdaptadorBase, ...] | None = None):
         self.backend = backend
@@ -43,6 +43,10 @@ class MotorDocumentoLocal:
                 "estado": "SIN_TEXTO_NATIVO" if sin_texto_nativo else "NO_RECONOCIDO",
                 "ocr_ejecutado": False,
             })
+        if adaptador is not None and hasattr(self.backend, "refinar_ocr"):
+            solicitudes = adaptador.solicitudes_ocr(documento)
+            if solicitudes:
+                self.backend.refinar_ocr(documento, solicitudes)
         cabecera = adaptador.extraer_cabecera(documento, segmentos) if adaptador else {}
         albaranes = adaptador.extraer_albaranes(documento, segmentos) if adaptador else []
         movimientos = adaptador.extraer_movimientos(documento, segmentos) if adaptador else []
@@ -90,6 +94,27 @@ class MotorDocumentoLocal:
                     }
                     for adapter, reconocimiento in reconocimientos
                 ],
+                **({
+                    "ocr": documento.ocr,
+                    "ocr_paginas": [
+                        {
+                            "pagina": pagina.numero,
+                            "texto": pagina.texto,
+                            "palabras": [
+                                {
+                                    "texto": palabra.texto,
+                                    "bbox": palabra.bbox.to_list(),
+                                    "orden": palabra.orden,
+                                    "confidence": pagina.metadatos_ocr.get("confidence"),
+                                }
+                                for palabra in pagina.palabras
+                            ],
+                            "lineas": [linea.texto for linea in pagina.lineas],
+                            "provenance": pagina.metadatos_ocr,
+                        }
+                        for pagina in documento.paginas if pagina.origen == "OCR_LOCAL"
+                    ],
+                } if documento.ocr else {}),
             },
             segmentos=segmentos,
             facturas=facturas,

@@ -81,6 +81,8 @@ class PaginaLocal:
     texto: str
     palabras: list[PalabraLocal]
     lineas: list[LineaLocal]
+    origen: str = "TEXTO_NATIVO"
+    metadatos_ocr: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -88,6 +90,7 @@ class DocumentoLocal:
     ruta: str
     sha_documento: str
     paginas: list[PaginaLocal]
+    ocr: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -106,6 +109,12 @@ class EvidenciaLocal:
     regla: str
     tipo_evidencia: str
     origen_autoridad: str
+
+
+@dataclass
+class EvidenciaOCRLocal(EvidenciaLocal):
+    confidence: float | None = None
+    provenance: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
