@@ -35,7 +35,14 @@ class MotorDocumentoLocal:
             else:
                 incidencias.append({"codigo": "LAYOUT_AMBIGUO", "estado": "AMBIGUO"})
         else:
-            incidencias.append({"codigo": "LAYOUT_NO_RECONOCIDO", "estado": "NO_RECONOCIDO"})
+            sin_texto_nativo = bool(documento.paginas) and all(
+                not pagina.texto.strip() and not pagina.palabras for pagina in documento.paginas
+            )
+            incidencias.append({
+                "codigo": "PENDIENTE_OCR" if sin_texto_nativo else "LAYOUT_NO_RECONOCIDO",
+                "estado": "SIN_TEXTO_NATIVO" if sin_texto_nativo else "NO_RECONOCIDO",
+                "ocr_ejecutado": False,
+            })
         cabecera = adaptador.extraer_cabecera(documento, segmentos) if adaptador else {}
         albaranes = adaptador.extraer_albaranes(documento, segmentos) if adaptador else []
         movimientos = adaptador.extraer_movimientos(documento, segmentos) if adaptador else []
