@@ -12,6 +12,12 @@ from .gold_pequenos import (
     AdaptadorTotalcare,
 )
 from .guimera import AdaptadorGuimera, AdaptadorGuimeraHistorico
+from .historicos_gold1 import (
+    AdaptadorDermofarmHistorico,
+    AdaptadorGasCasaHistorico,
+    AdaptadorPierreFabreHistorico,
+    AdaptadorSuavinexHistorico,
+)
 
 
 def adaptadores_productivos() -> tuple[AdaptadorBase, ...]:
@@ -22,4 +28,6 @@ def adaptadores_productivos() -> tuple[AdaptadorBase, ...]:
         AdaptadorEcoceutics(), AdaptadorEports(), AdaptadorLogista(), AdaptadorLoreal(),
         AdaptadorMoretti(), AdaptadorTotalcare(),
         AdaptadorGuimera(), AdaptadorGuimeraHistorico(),
+        AdaptadorDermofarmHistorico(), AdaptadorGasCasaHistorico(),
+        AdaptadorPierreFabreHistorico(), AdaptadorSuavinexHistorico(),
     )

@@ -21,6 +21,14 @@ def identidades(text: str) -> list[str]:
         r"\bN\S?\s*FACTURA\s*[.:#]?\s*(\d{8,12})\b",
         r"\bFACTURA\s*\n\s*(\d{8,12})\b",
         r"\bFACTURA\b(?:\s+\S+){0,20}\s+NUMERO\s+(\d{8,12})\b",
+        # Cabeceras etiquetadas con identidades alfanumericas de suministros.
+        r"\bN[Oº°]?\s+DE\s+FACTURA\s*:\s*([A-Z0-9-]{8,})\b",
+        r"\bFACTURA\s+N[Oº°]?\s*:\s*([A-Z0-9-]{8,})\b",
+        # Cabecera tabular: fecha, factura, pedido y albaran en una misma fila.
+        r"\bFECHA\s+FACTURA\s+N[Oº°]?.?\s+FACTURA(?:\s+N[Oº°]?.?\s+PEDIDO)?(?:\s+N[Oº°]?.?\s+ALBARAN)?(?:\s+DIVISION)?\s+\d{2}[./-]\d{2}[./-]\d{4}\s+([A-Z]{2,}[A-Z0-9-]{5,})\b",
+        # Formularios donde el motor PDF entrega primero valores y despues
+        # sus etiquetas por el orden interno de dibujo.
+        r"\b(\d{8,12})\s+FECHA\s*:\s+N[Oº°]?\s*:",
         # Cabeceras tabulares donde el literal NUMERO puede perder el acento
         # durante la extraccion de texto, pero la identidad queda anclada por
         # las dos fechas documentales contiguas.
@@ -64,7 +72,12 @@ def segmentar(documento: DocumentoLocal) -> tuple[list[SegmentoLocal], list[dict
         paginas.append({"pagina": pagina.numero, "identidades": ids, "paginacion": paginacion, "rol": rol})
     activas = [p for p in paginas if p["rol"] == "DOCUMENTO"]
     segmentos: list[SegmentoLocal] = []
-    if any(p["paginacion"] for p in activas):
+    identidades_documento = list(dict.fromkeys(
+        identidad for pagina in activas for identidad in pagina["identidades"]
+    ))
+    if not any(p["paginacion"] for p in activas) and len(identidades_documento) == 1:
+        segmentos = [_segmento(activas, "IDENTIDAD_UNICA_DE_DOCUMENTO")]
+    elif any(p["paginacion"] for p in activas):
         actual = []
         for pagina in activas:
             if actual and pagina["paginacion"] and pagina["paginacion"]["current"] == 1:
