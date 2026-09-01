@@ -22,7 +22,7 @@ def _numero_flexible(texto: str) -> float | None:
 
 
 class AdaptadorGuimera(AdaptadorGoldPequenoBase):
-    id, version = "farmacia-guimera-ocr-local", "1.0.0"
+    id, version = "farmacia-guimera-ocr-local", "1.1.0"
     layout, constructor = "GUIMERA_FACTURA_FORMULACION_OCR_V1", "_construir"
     capacidades = {
         **AdaptadorGoldPequenoBase.capacidades,
@@ -30,15 +30,21 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
         "vencimientos": "AUSENTE_EN_LAYOUT",
         "autoridad": "SHADOW_SIN_AUTORIDAD_PRODUCTIVA",
     }
+    tipo_re_incompleto_bloqueante = True
 
     def reconocer(self, documento: DocumentoLocal) -> Reconocimiento:
         texto = normalizar_texto("\n".join(linea.texto for pagina in documento.paginas for linea in pagina.lineas))
+        total_combinado = any(
+            "SUMA:" in normalizar_texto(linea.texto) and "BASE IMP" in normalizar_texto(linea.texto)
+            for pagina in documento.paginas for linea in pagina.lineas
+        )
         checks = {
             "farmacia_guimera": "FARMACIA GUIMERA C.B." in texto,
             "factura": "FACTURA" in texto,
             "base_imponible": "BASE IMP" in texto,
             "debe": "DEBE" in texto,
             "origen_ocr_local": bool(documento.ocr.get("ejecutado")),
+            "totales_layout_actual": total_combinado,
         }
         completo = all(checks.values())
         return Reconocimiento(
@@ -51,7 +57,12 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
         if self.reconocer(documento).estado != "RECONOCIDO":
             return []
         pagina = documento.paginas[0]
-        suma = next(linea for linea in pagina.lineas if "SUMA:" in normalizar_texto(linea.texto) and "BASE IMP" in normalizar_texto(linea.texto))
+        suma = next((
+            linea for linea in pagina.lineas
+            if "SUMA:" in normalizar_texto(linea.texto) and "BASE IMP" in normalizar_texto(linea.texto)
+        ), None)
+        if suma is None:
+            return []
         filas = self._filas_detalle(pagina)
         filas_cuatro = [fila for fila in filas if any(re.fullmatch(r"\(4%\)", p.texto) for p in fila)]
         fila_cuatro = min(filas_cuatro, key=lambda fila: abs(fila[0].bbox.y0 - pagina.alto * 0.29)) if filas_cuatro else None
@@ -100,14 +111,16 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
         ]
         envio = next((linea for linea in pagina.lineas if "ALLIANCE HEALTHCARE" in normalizar_texto(linea.texto)), None)
         resumen = next(linea for linea in pagina.lineas if "IVA4%" in normalizar_texto(linea.texto) and len(linea.palabras) >= 9)
-        suma = next(linea for linea in pagina.lineas if "SUMA:" in normalizar_texto(linea.texto) and "BASE IMP" in normalizar_texto(linea.texto))
+        suma = next(linea for linea in pagina.lineas if "SUMA:" in normalizar_texto(linea.texto))
+        base_line = next(linea for linea in pagina.lineas if "BASE IMP" in normalizar_texto(linea.texto))
         debe = next(linea for linea in pagina.lineas if "DEBE:" in normalizar_texto(linea.texto))
 
         proveedor_dir_words = [word for linea in proveedor_direccion for word in linea.palabras]
         destinatario_dir_words = [word for linea in destinatario_direccion for word in linea.palabras]
         suma_words = sorted(suma.palabras, key=lambda word: word.bbox.x0)
+        base_words = sorted(base_line.palabras, key=lambda word: word.bbox.x0)
         total_word = next(word for word in debe.palabras if _numero_flexible(word.texto) is not None)
-        base_word = next(word for word in suma_words if word.bbox.x0 > pagina.ancho * 0.3 and _numero_flexible(word.texto) is not None)
+        base_word = next(word for word in base_words if word.bbox.x0 > pagina.ancho * 0.3 and _numero_flexible(word.texto) is not None)
         cabecera = {
             "proveedor": {
                 "nombre": self._campo(documento, proveedor, proveedor.palabras, "FARMACIA GUIMERA C.B.", "proveedor_nombre", "NORMALIZACION_LITERAL_OCR_TITULO"),
@@ -126,7 +139,7 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
             "codigo_cliente": self._campo(documento, datos_line, [codigo_cliente], codigo_cliente.texto, "codigo_cliente", "CODIGO_CLIENTE_OCR"),
             "forma_envio": self._campo(documento, envio, envio.palabras, envio.texto, "forma_envio", "FORMA_ENVIO_OCR") if envio else None,
             "forma_pago": None,
-            "base_imponible_total": self._dinero_flexible(documento, suma, base_word, "base_imponible_total"),
+            "base_imponible_total": self._dinero_flexible(documento, base_line, base_word, "base_imponible_total"),
             "iva_total": None,
             "recargo_equivalencia_total": None,
             "importe_total": self._dinero_flexible(documento, debe, total_word, "importe_total"),
@@ -140,9 +153,9 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
         re_diez = self._lectura_region(documento, "re_fila_iva_10_guimera")
         match_re_diez = re.search(r"\((\d+[,.]\d+)", re_diez.get("texto", "")) if re_diez else None
         if not match_re_diez:
-            incidencias.append({"codigo": "TIPO_RE_IVA_10_NO_DEMOSTRADO_OCR", "bloqueante": True})
+            incidencias.append({"codigo": "TIPO_RE_IVA_10_NO_DEMOSTRADO_OCR", "bloqueante": self.tipo_re_incompleto_bloqueante})
         if not match_re_cuatro:
-            incidencias.append({"codigo": "TIPO_RE_IVA_4_NO_DEMOSTRADO_OCR", "bloqueante": True})
+            incidencias.append({"codigo": "TIPO_RE_IVA_4_NO_DEMOSTRADO_OCR", "bloqueante": self.tipo_re_incompleto_bloqueante})
         tipo_re_cuatro = self._campo_region(documento, re_cuatro, float(match_re_cuatro.group(1).replace(",", ".")), "tipo_recargo") if match_re_cuatro else None
         tipo_re_diez = self._campo_region(documento, re_diez, float(match_re_diez.group(1).replace(",", ".")), "tipo_recargo") if match_re_diez else None
         impuestos = []
@@ -177,40 +190,55 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
         if cabecera["iva_total"] is None or cabecera["recargo_equivalencia_total"] is None:
             incidencias.append({"codigo": "TOTALES_IMPUESTOS_OCR_INCOMPLETOS", "bloqueante": True})
 
-        detalles, incidencias_detalle = self._detalles(documento, pagina)
+        descuento_word = next((
+            word for word in suma_words
+            if (_numero_flexible(word.texto) or 0) < 0
+        ), None)
+        descuento_label = (
+            suma_words[suma_words.index(descuento_word) - 1]
+            if descuento_word is not None and suma_words.index(descuento_word) > 0 else None
+        )
+        detalles, incidencias_detalle = self._detalles(
+            documento, pagina, descuento_obligatorio=descuento_word is not None,
+        )
         incidencias.extend(incidencias_detalle)
-        descuento_word = next(word for word in suma_words if word.bbox.x0 > pagina.ancho * 0.18 and _numero_flexible(word.texto) is not None)
-        descuento = {
-            "orden": 1,
-            "descripcion_literal": self._campo(documento, suma, suma_words[2:4], " ".join(word.texto for word in suma_words[2:4]), "descripcion", "DTO_AGREGADO_VISIBLE", "movimientos"),
-            "concepto_normalizado": "DESCUENTO_GLOBAL_FACTURA",
-            "categoria": "DESCUENTO",
-            "importe": self._dinero_flexible(documento, suma, descuento_word, "importe", tabla="movimientos"),
-            "base": None, "iva": None, "recargo_equivalencia": None,
-            "sentido": None,
-            "es_movimiento_economico_independiente": False,
-            "participa_en_conciliacion_base": True,
-            "confidence": None,
-            "incidencias": [{"codigo": "SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE"}],
-            "provenance": {"fuente": "OCR_LOCAL_SECUNDARIO", "inferencia_por_signo": False, "gold_usado": False},
-        }
+        movimientos = []
+        if descuento_label is not None and descuento_word is not None:
+            descripcion_words = [descuento_label, descuento_word]
+            movimientos.append({
+                "orden": 1,
+                "descripcion_literal": self._campo(documento, suma, descripcion_words, " ".join(word.texto for word in descripcion_words), "descripcion", "DTO_AGREGADO_VISIBLE", "movimientos"),
+                "concepto_normalizado": "DESCUENTO_GLOBAL_FACTURA",
+                "categoria": "DESCUENTO",
+                "importe": self._dinero_flexible(documento, suma, descuento_word, "importe", tabla="movimientos"),
+                "base": None, "iva": None, "recargo_equivalencia": None,
+                "sentido": None,
+                "es_movimiento_economico_independiente": False,
+                "participa_en_conciliacion_base": True,
+                "confidence": None,
+                "incidencias": [{"codigo": "SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE"}],
+                "provenance": {"fuente": "OCR_LOCAL_SECUNDARIO", "inferencia_por_signo": False, "gold_usado": False},
+            })
+        subtotal_word = next(word for word in suma_words if _numero_flexible(word.texto) is not None)
         otros = [
             {"tipo": "DETALLE_FORMULACION", "rol": "DETALLE_PRODUCTOS", "lineas": detalles},
             {
                 "tipo": "TOTALES_COMERCIALES_VISIBLES",
-                "subtotal_suma": self._dinero_flexible(documento, suma, suma_words[1], "subtotal_suma", tabla="totales"),
+                "subtotal_suma": self._dinero_flexible(documento, suma, subtotal_word, "subtotal_suma", tabla="totales"),
                 "pvp_total": self._campo_region(documento, total_region, self._valor_etiquetado(total_region, "PVP"), "pvp_total") if self._valor_etiquetado(total_region, "PVP") is not None else None,
                 "pvf_total": self._pvf(documento, pagina),
             },
         ]
-        factura = self._factura(documento, segmento, cabecera, movimientos=[descuento], impuestos=impuestos, otros=otros, incidencias=incidencias)
+        factura = self._factura(documento, segmento, cabecera, movimientos=movimientos, impuestos=impuestos, otros=otros, incidencias=incidencias)
         factura["provenance"] = {
             "adaptador": self.id, "version": self.version, "fuente": "OCR_LOCAL_SECUNDARIO",
             "motor_ocr": documento.ocr.get("motor"), "hash_ocr": documento.ocr.get("hash_resultado"),
             "hash_regiones": documento.ocr.get("hash_regiones"), "confidence_disponible": False,
             "gold_usado_extraccion": False,
         }
-        factura["null_legitimos"] = ["moneda_no_visible", "forma_pago_no_visible", "vencimientos_no_visibles", "albaranes_no_visibles", "sentido_descuento_no_etiquetado"]
+        factura["null_legitimos"] = ["moneda_no_visible", "forma_pago_no_visible", "vencimientos_no_visibles", "albaranes_no_visibles"]
+        if movimientos:
+            factura["null_legitimos"].append("sentido_descuento_no_etiquetado")
         return factura
 
     def _dinero_flexible(self, documento, linea, palabra, columna, *, tabla="economico"):
@@ -241,7 +269,7 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
             for numero in sorted(numeros, key=lambda word: word.bbox.y0)
         ]
 
-    def _detalles(self, documento, pagina):
+    def _detalles(self, documento, pagina, *, descuento_obligatorio=True):
         salida, incidencias = [], []
         lectura_re_diez = self._lectura_region(documento, "re_fila_iva_10_guimera")
         cuota_re_diez_match = re.search(r"(?:^|\s),(\d{3})", lectura_re_diez.get("texto", "")) if lectura_re_diez else None
@@ -275,7 +303,21 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
                 "pvp": self._campo(documento, linea, [pvp_word], pvp_value, "pvp", "PREFIJO_MONETARIO_ANTES_FECHA", "detalle") if pvp_value is not None else None,
                 "concepto_literal": self._campo(documento, linea, [w for w in words if pagina.ancho * 0.64 <= w.bbox.x0 < pagina.ancho * 0.84], " ".join(w.texto for w in words if pagina.ancho * 0.64 <= w.bbox.x0 < pagina.ancho * 0.84), "concepto", "COLUMNA_CONCEPTO_OCR", "detalle") if any(pagina.ancho * 0.64 <= w.bbox.x0 < pagina.ancho * 0.84 for w in words) else None,
             }
-            faltantes = [key for key in ("suma", "descuento", "base", "cuota_iva", "pvf", "pvp", "concepto_literal") if row[key] is None]
+            if not descuento_obligatorio and row["descuento"] is None and row["suma"] and row["base"]:
+                row["descuento"] = {
+                    "valor": round(row["base"]["valor"] - row["suma"]["valor"], 2),
+                    "literal": f'{row["suma"]["literal"]} {row["base"]["literal"]}',
+                    "evidencias": [*row["suma"]["evidencias"], *row["base"]["evidencias"]],
+                    "provenance": {
+                        "regla": "DIFERENCIA_DOCUMENTAL_SUMA_MENOS_BASE_FILA",
+                        "evidencia_documental_directa": False,
+                        "gold_usado": False,
+                    },
+                }
+            requeridos = ["suma", "base", "cuota_iva", "pvf", "pvp", "concepto_literal"]
+            if descuento_obligatorio:
+                requeridos.insert(1, "descuento")
+            faltantes = [key for key in requeridos if row[key] is None]
             if faltantes:
                 row["incidencias"] = [{"codigo": "CAMPOS_DETALLE_NO_RECUPERADOS_OCR", "campos": faltantes}]
                 incidencias.append({"codigo": "DETALLE_OCR_PARCIAL", "fila": orden, "campos": faltantes, "bloqueante": True})
@@ -298,3 +340,185 @@ class AdaptadorGuimera(AdaptadorGoldPequenoBase):
             return None
         match = re.search(rf"{re.escape(etiqueta)}:\s*(\d+[,.]\d{{1,2}})", lectura["texto"], re.I)
         return float(match.group(1).replace(",", ".")) if match else None
+
+
+class AdaptadorGuimeraHistorico(AdaptadorGuimera):
+    id, version = "farmacia-guimera-historico-ocr-local", "1.0.0"
+    layout, constructor = "GUIMERA_FACTURA_FORMULACION_OCR_HISTORICO_V1", "_construir"
+    tipo_re_incompleto_bloqueante = False
+
+    def reconocer(self, documento: DocumentoLocal) -> Reconocimiento:
+        texto = normalizar_texto("\n".join(linea.texto for pagina in documento.paginas for linea in pagina.lineas))
+        lineas = [linea for pagina in documento.paginas for linea in pagina.lineas]
+        suma_separada = any(
+            "SUMA:" in normalizar_texto(linea.texto) and "BASE IMP" not in normalizar_texto(linea.texto)
+            for linea in lineas
+        )
+        base_separada = any(
+            "BASE IMP" in normalizar_texto(linea.texto) and "SUMA:" not in normalizar_texto(linea.texto)
+            for linea in lineas
+        )
+        checks = {
+            "farmacia_guimera": "FARMACIA GUIMERA C.B." in texto,
+            "factura": "FACTURA" in texto,
+            "debe": "DEBE" in texto,
+            "origen_ocr_local": bool(documento.ocr.get("ejecutado")),
+            "suma_separada": suma_separada,
+            "base_imponible_separada": base_separada,
+        }
+        completo = all(checks.values())
+        return Reconocimiento(
+            "RECONOCIDO" if completo else ("AMBIGUO" if any(checks.values()) else "NO_RECONOCIDO"),
+            100 if completo else round(100 * sum(checks.values()) / len(checks)),
+            [{"senal": key, "presente": value, "origen": "OCR_LOCAL_SECUNDARIO"} for key, value in checks.items()],
+        )
+
+    def solicitudes_ocr(self, documento: DocumentoLocal):
+        if self.reconocer(documento).estado != "RECONOCIDO" or not documento.paginas:
+            return []
+        pagina = documento.paginas[0]
+        anclas = [
+            linea for linea in pagina.lineas
+            if any(token in normalizar_texto(linea.texto) for token in ("SUMA:", "BASE IMP", "DEBE:"))
+        ]
+        if not anclas:
+            return []
+        y0 = min(linea.bbox.y0 for linea in anclas)
+        y1 = max(linea.bbox.y1 for linea in anclas)
+        solicitudes = [SolicitudRegionOCR(
+            "totales_guimera", pagina.numero,
+            RegionOCR(
+                pagina.ancho * 0.05, max(0, y0 - 10),
+                pagina.ancho * 0.94, min(pagina.alto, y1 + 25),
+            ),
+            escala=10,
+        )]
+        filas = self._filas_detalle(pagina)
+        filas_cuatro = [fila for fila in filas if any(re.fullmatch(r"\(4%\)", palabra.texto) for palabra in fila)]
+        fila_cuatro = filas_cuatro[0] if filas_cuatro else None
+        fila_diez = next((
+            fila for fila in filas
+            if any("10%" in palabra.texto for palabra in fila)
+            or not any(re.fullmatch(r"\(4%\)", palabra.texto) for palabra in fila)
+        ), None)
+        for region_id, fila in (
+            ("re_fila_iva_4_guimera", fila_cuatro),
+            ("re_fila_iva_10_guimera", fila_diez),
+        ):
+            if fila:
+                fila_y0 = round(min(word.bbox.y0 for word in fila))
+                solicitudes.append(SolicitudRegionOCR(
+                    region_id, pagina.numero,
+                    RegionOCR(
+                        round(pagina.ancho * 0.374), max(0, fila_y0 - 8),
+                        round(pagina.ancho * 0.434), min(pagina.alto, fila_y0 + 9),
+                    ),
+                    escala=14,
+                ))
+        return solicitudes
+
+    def _construir(self, documento, segmento):
+        factura = super()._construir(documento, segmento)
+        detalles = factura["otros"][0]["lineas"]
+        pagina = documento.paginas[0]
+        dto_line = next((
+            linea for linea in pagina.lineas
+            if "DTO" in normalizar_texto(linea.texto) and "SUMA" in normalizar_texto(linea.texto)
+        ), None)
+        dto_word = next((
+            word for word in dto_line.palabras if "DTO" in normalizar_texto(word.texto)
+        ), None) if dto_line else None
+        descuentos = [fila["descuento"] for fila in detalles if fila.get("descuento")]
+        if dto_line and dto_word and len(descuentos) == len(detalles):
+            descuento_total = round(sum(campo["valor"] for campo in descuentos), 2)
+            factura["movimientos"] = [{
+                "orden": 1,
+                "descripcion_literal": self._campo(
+                    documento, dto_line, [dto_word], dto_word.texto,
+                    "descripcion", "CABECERA_DTO_VISIBLE", "movimientos",
+                ),
+                "concepto_normalizado": "DESCUENTO_GLOBAL_FACTURA",
+                "categoria": "DESCUENTO",
+                "importe": {
+                    "valor": descuento_total,
+                    "literal": " + ".join(campo["literal"] for campo in descuentos),
+                    "evidencias": [evidencia for campo in descuentos for evidencia in campo["evidencias"]],
+                    "provenance": {
+                        "regla": "SUMA_DESCUENTOS_FILAS_DOCUMENTALES",
+                        "evidencia_documental_directa": False,
+                        "gold_usado": False,
+                    },
+                },
+                "base": None, "iva": None, "recargo_equivalencia": None,
+                "sentido": None,
+                "es_movimiento_economico_independiente": False,
+                "participa_en_conciliacion_base": True,
+                "confidence": None,
+                "incidencias": [{"codigo": "SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE"}],
+                "provenance": {
+                    "fuente": "OCR_LOCAL_SECUNDARIO",
+                    "inferencia_por_signo": False,
+                    "gold_usado": False,
+                },
+            }]
+            factura["null_legitimos"].append("sentido_descuento_no_etiquetado")
+
+        tipo_re_reconstruido = False
+        for tramo in factura["impuestos"]:
+            if tramo["tipo_recargo_equivalencia"] is None and tramo.get("base") and tramo.get("cuota_recargo_equivalencia"):
+                base = tramo["base"]
+                cuota = tramo["cuota_recargo_equivalencia"]
+                tramo["tipo_recargo_equivalencia"] = {
+                    "valor": round(100 * cuota["valor"] / base["valor"], 1),
+                    "literal": f'{base["literal"]} {cuota["literal"]}',
+                    "evidencias": [*base["evidencias"], *cuota["evidencias"]],
+                    "provenance": {
+                        "regla": "TIPO_RE_RECONSTRUIDO_DESDE_BASE_Y_CUOTA_DOCUMENTALES",
+                        "evidencia_documental_directa": False,
+                        "gold_usado": False,
+                    },
+                }
+                tipo_re_reconstruido = True
+        tipos_re_por_iva = {
+            tramo["tipo_iva"]["valor"]: tramo["tipo_recargo_equivalencia"]
+            for tramo in factura["impuestos"] if tramo.get("tipo_recargo_equivalencia")
+        }
+        for fila in detalles:
+            base, cuota_iva = fila.get("base"), fila.get("cuota_iva")
+            if not base or not cuota_iva:
+                continue
+            tipo_iva = round(100 * cuota_iva["valor"] / base["valor"])
+            tipo_re = tipos_re_por_iva.get(float(tipo_iva))
+            if tipo_re is None:
+                continue
+            cuota_re_valor = round(base["valor"] * tipo_re["valor"] / 100, 3)
+            fila["cuota_re"] = {
+                "valor": cuota_re_valor,
+                "literal": f'{base["literal"]} {tipo_re["literal"]}',
+                "evidencias": [*base["evidencias"], *tipo_re["evidencias"]],
+                "provenance": {
+                    "regla": "CUOTA_RE_RECONSTRUIDA_DESDE_BASE_Y_TIPO_DOCUMENTALES",
+                    "evidencia_documental_directa": False,
+                    "gold_usado": False,
+                },
+            }
+            fila["pvf"] = {
+                "valor": round(base["valor"] + cuota_iva["valor"] + cuota_re_valor, 3),
+                "literal": f'{base["literal"]} {cuota_iva["literal"]} {fila["cuota_re"]["literal"]}',
+                "evidencias": [*base["evidencias"], *cuota_iva["evidencias"], *fila["cuota_re"]["evidencias"]],
+                "provenance": {
+                    "regla": "PVF_RECONSTRUIDO_DESDE_BASE_IVA_Y_RE_DOCUMENTALES",
+                    "evidencia_documental_directa": False,
+                    "gold_usado": False,
+                },
+            }
+            faltantes = [key for key in ("suma", "descuento", "base", "cuota_iva", "cuota_re", "pvf", "pvp", "concepto_literal") if fila.get(key) is None]
+            fila["incidencias"] = [] if not faltantes else [{"codigo": "CAMPOS_DETALLE_NO_RECUPERADOS_OCR", "campos": faltantes}]
+        if all(not fila["incidencias"] for fila in detalles):
+            factura["incidencias"] = [
+                incidencia for incidencia in factura["incidencias"]
+                if incidencia.get("codigo") != "DETALLE_OCR_PARCIAL"
+            ]
+        if tipo_re_reconstruido:
+            factura["null_legitimos"].append("tipo_re_no_legible_directamente_por_ocr")
+        return factura

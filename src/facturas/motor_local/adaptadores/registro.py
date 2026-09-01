@@ -11,7 +11,7 @@ from .gold_pequenos import (
     AdaptadorMoretti,
     AdaptadorTotalcare,
 )
-from .guimera import AdaptadorGuimera
+from .guimera import AdaptadorGuimera, AdaptadorGuimeraHistorico
 
 
 def adaptadores_productivos() -> tuple[AdaptadorBase, ...]:
@@ -21,5 +21,5 @@ def adaptadores_productivos() -> tuple[AdaptadorBase, ...]:
         AdaptadorCofares(), AdaptadorHefame(), AdaptadorFedefarma(), AdaptadorAlliance(),
         AdaptadorEcoceutics(), AdaptadorEports(), AdaptadorLogista(), AdaptadorLoreal(),
         AdaptadorMoretti(), AdaptadorTotalcare(),
-        AdaptadorGuimera(),
+        AdaptadorGuimera(), AdaptadorGuimeraHistorico(),
     )
