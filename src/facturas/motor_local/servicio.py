@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from .adaptadores.base import AdaptadorBase
-from .adaptadores.registro import adaptadores_productivos
+from .adaptadores.registro import adaptadores_locales
 from .backend.base import BackendPdf
 from .conciliacion import evaluar_conciliaciones
 from .modelos import DocumentoExtraidoLocal
@@ -18,7 +18,7 @@ class MotorDocumentoLocal:
 
     def __init__(self, backend: BackendPdf, adaptadores: tuple[AdaptadorBase, ...] | None = None):
         self.backend = backend
-        self.adaptadores = adaptadores if adaptadores is not None else adaptadores_productivos()
+        self.adaptadores = adaptadores if adaptadores is not None else adaptadores_locales()
 
     def extraer(self, ruta: str | Path) -> DocumentoExtraidoLocal:
         documento = self.backend.cargar_pdf(ruta)

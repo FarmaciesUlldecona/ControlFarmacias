@@ -13,9 +13,10 @@ from src.facturas.normalizador_v2.validadores import validar_factura
 
 from .adaptadores.base import Reconocimiento
 from .autoridad import (
-    COFARES_LOCAL_AUTHORITY, AutoridadExtraccion, ElegibilidadAutoridad,
-    EstadoElegibilidad, evaluar_elegibilidad_cofares,
+    AutoridadExtraccion, ElegibilidadAutoridad, EstadoElegibilidad,
+    autoridad_productiva_habilitada, evaluar_elegibilidad_cofares,
 )
+from .catalogo import ProveedorLocal
 from .modelos import AlbaranLocal, DocumentoExtraidoLocal, DocumentoLocal, EvidenciaLocal
 
 
@@ -60,7 +61,7 @@ def ensamblar_factura_cofares(
             EstadoElegibilidad.LOCAL_NO_APLICABLE,
             tuple([*elegibilidad.razones, "IDENTIDAD_FACTURA_NO_COINCIDE"]), 0,
         )
-    habilitada = simular or COFARES_LOCAL_AUTHORITY
+    habilitada = simular or autoridad_productiva_habilitada(ProveedorLocal.COFARES)
     if elegibilidad.estado != EstadoElegibilidad.ELEGIBLE:
         return _resultado_sin_aplicar(factura_pipeline, simular, elegibilidad, "LOCAL_NO_APLICABLE")
     if not habilitada:

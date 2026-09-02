@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.facturas.motor_local.autoridad import COFARES_LOCAL_AUTHORITY
+from src.facturas.motor_local.autoridad import autoridad_productiva_habilitada
+from src.facturas.motor_local.catalogo import ProveedorLocal
 from src.facturas.motor_local.adaptadores.alliance import (
     documentar_sentido_decision_funcional_pio,
     documentar_sentido_desde_relacion,
@@ -300,4 +301,4 @@ def test_produccion_no_contiene_ids_historicos_ni_nombres_pdf():
 
 
 def test_alliance_permanece_sin_autoridad_productiva():
-    assert COFARES_LOCAL_AUTHORITY is False
+    assert autoridad_productiva_habilitada(ProveedorLocal.ALLIANCE) is False

@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.facturas.motor_local.autoridad import COFARES_LOCAL_AUTHORITY
+from src.facturas.motor_local.autoridad import autoridad_productiva_habilitada
+from src.facturas.motor_local.catalogo import ProveedorLocal
 from src.facturas.motor_local.backend.pdfium import BackendPdfium
 from src.facturas.motor_local.servicio import MotorDocumentoLocal, hash_funcional
 
@@ -145,7 +146,15 @@ def test_replay_funcional_es_determinista(resultados):
 
 
 def test_adaptadores_nuevos_permanecen_shadow():
-    assert COFARES_LOCAL_AUTHORITY is False
+    proveedores = (
+        ProveedorLocal.ECOCEUTICS,
+        ProveedorLocal.EPORTS,
+        ProveedorLocal.LOGISTA_PHARMA,
+        ProveedorLocal.LOREAL,
+        ProveedorLocal.MORETTI,
+        ProveedorLocal.TOTALCARE,
+    )
+    assert all(not autoridad_productiva_habilitada(proveedor) for proveedor in proveedores)
 
 
 def test_produccion_no_contiene_ids_del_corpus_ni_nombres_de_pdf():

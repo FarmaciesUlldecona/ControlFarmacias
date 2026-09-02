@@ -192,8 +192,8 @@ def normalizar_pdf(
     def finalizar(documento: DocumentoNormalizado) -> DocumentoNormalizado:
         traza.registrar("F_ESTADO_FINAL", documento)
         emitir_traza(traza, directorio=directorio_observabilidad, sink=sink_observabilidad)
-        from src.facturas.motor_local.shadow import ejecutar_shadow_cofares_sobre_resultado
-        return ejecutar_shadow_cofares_sobre_resultado(
+        from src.facturas.motor_local.shadow import ejecutar_shadow_local_sobre_resultado
+        return ejecutar_shadow_local_sobre_resultado(
             documento,
             ruta,
             configuracion=configuracion_shadow_local,

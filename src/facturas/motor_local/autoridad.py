@@ -5,9 +5,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from math import isfinite
-from typing import Any
+from types import MappingProxyType
+from typing import Any, Mapping
 
 from .adaptadores.base import Reconocimiento
+from .catalogo import ProveedorLocal
 from .modelos import AlbaranLocal, DocumentoExtraidoLocal, DocumentoLocal, EvidenciaLocal
 
 
@@ -17,8 +19,37 @@ class AutoridadExtraccion(StrEnum):
     INDETERMINADO = "INDETERMINADO"
 
 
-# Preparado para una decision posterior de Pio. En este hito debe permanecer OFF.
-COFARES_LOCAL_AUTHORITY = False
+@dataclass(frozen=True)
+class AutoridadExtractorLocal:
+    """Autoridad productiva independiente; no representa ejecucion shadow."""
+
+    proveedor: ProveedorLocal
+    habilitada: bool = False
+
+
+AUTORIDADES_EXTRACTORES_LOCALES: Mapping[ProveedorLocal, AutoridadExtractorLocal] = MappingProxyType({
+    proveedor: AutoridadExtractorLocal(proveedor=proveedor, habilitada=False)
+    for proveedor in ProveedorLocal
+})
+
+
+def autoridad_productiva_habilitada(proveedor: ProveedorLocal | str) -> bool:
+    return AUTORIDADES_EXTRACTORES_LOCALES[ProveedorLocal(proveedor)].habilitada
+
+
+def autoridad_para_proveedor(
+    proveedor: ProveedorLocal | str,
+    *,
+    salida_oficial_disponible: bool,
+) -> AutoridadExtraccion:
+    if autoridad_productiva_habilitada(proveedor):
+        return AutoridadExtraccion.LOCAL
+    return AutoridadExtraccion.IA if salida_oficial_disponible else AutoridadExtraccion.INDETERMINADO
+
+
+# LEGACY_COMPATIBILITY: alias booleano exclusivo de COFARES. No es una
+# autoridad global y permanece ligado a la entrada COFARES del registro nuevo.
+COFARES_LOCAL_AUTHORITY = autoridad_productiva_habilitada(ProveedorLocal.COFARES)
 
 
 class EstadoElegibilidad(StrEnum):
@@ -116,6 +147,8 @@ def _hay_solapamientos(filas: list[AlbaranLocal]) -> bool:
 
 
 def autoridad_cofares(*, salida_oficial_disponible: bool) -> AutoridadExtraccion:
-    if COFARES_LOCAL_AUTHORITY:
-        return AutoridadExtraccion.LOCAL
-    return AutoridadExtraccion.IA if salida_oficial_disponible else AutoridadExtraccion.INDETERMINADO
+    """LEGACY_COMPATIBILITY para consumidores historicos exclusivos de COFARES."""
+    return autoridad_para_proveedor(
+        ProveedorLocal.COFARES,
+        salida_oficial_disponible=salida_oficial_disponible,
+    )

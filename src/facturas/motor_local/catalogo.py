@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from enum import StrEnum
+
+
+class ProveedorLocal(StrEnum):
+    ALLIANCE = "ALLIANCE"
+    COFARES = "COFARES"
+    HEFAME = "HEFAME"
+    FEDEFARMA = "FEDEFARMA"
+    ECOCEUTICS = "ECOCEUTICS"
+    EPORTS = "EPORTS"
+    LOGISTA_PHARMA = "LOGISTA_PHARMA"
+    MORETTI = "MORETTI"
+    TOTALCARE = "TOTALCARE"
+    LOREAL = "LOREAL"
+    GUIMERA = "GUIMERA"
+    DERMOFARM = "DERMOFARM"
+    GAS_CASA = "GAS_CASA"
+    PIERRE_FABRE = "PIERRE_FABRE"
+    SUAVINEX = "SUAVINEX"
+
+
+class BackendLocalRequerido(StrEnum):
+    PDFIUM_NATIVO = "PDFIUM_NATIVO"
+    PDFIUM_CON_OCR_LOCAL = "PDFIUM_CON_OCR_LOCAL"
+
+
+PROVEEDORES_NO_IMPLEMENTADOS = ("SAFA", "BEIERSDORF")
