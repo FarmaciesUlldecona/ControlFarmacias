@@ -39,11 +39,8 @@ class SesionCLI:
 
     def procesar(self, orden: str, *, como_json: bool = False) -> int:
         callback = None if como_json else self._mostrar_orden_aceptada
-        resultado = (
-            self.app.procesar_orden(orden, al_aceptar=callback)
-            if self.inicio.ok else self.inicio
-        )
-        presupuesto = self.app.consultar_presupuesto() if self.inicio.ok else None
+        resultado = self.app.procesar_orden(orden, al_aceptar=callback)
+        presupuesto = self.app.consultar_presupuesto()
         texto = (
             resultado_json(orden, resultado, presupuesto)
             if como_json else resultado_humano(orden, resultado, presupuesto)

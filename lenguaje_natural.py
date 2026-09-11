@@ -368,8 +368,9 @@ class InterpreteOrdenNatural:
         elif re.search(r"\b(?:resultado|ultimo run|como termino)\b", normal):
             intencion = TipoIntencion.CONSULTAR_RESULTADO
             acciones.append(AccionOrden(1, TipoAccionNatural.CONSULTAR_RESULTADO, alcance))
-            task_id, problema = self._resolver_tarea(contexto, alcance)
-            if problema: referencias.append(problema)
+            if alcance:
+                task_id, problema = self._resolver_tarea(contexto, alcance)
+                if problema: referencias.append(problema)
         elif re.search(r"\b(?:continua|continuar|hazlo|la anterior|vuelve a probarlo)\b", normal):
             intencion = TipoIntencion.CONTINUAR_TAREA
             acciones.append(AccionOrden(1, TipoAccionNatural.CONTINUAR, alcance))

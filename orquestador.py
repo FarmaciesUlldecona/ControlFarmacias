@@ -690,6 +690,7 @@ def ejecutar_ciclo(
             if observador_proceso else None
         ),
     )
+    state["resultado_funcional"] = executor_result
     snapshot_actual = tomar_snapshot(repo)
     cambios = comparar_snapshots(snapshot_antes, snapshot_actual)
     hard_errors = _errores_barrera_cambios(cambios, tarea, config)
@@ -769,6 +770,7 @@ def ejecutar_ciclo(
                 if observador_proceso else None
             ),
         )
+        state["resultado_funcional"] = correccion
         snapshot_actual = tomar_snapshot(repo)
         cambios = comparar_snapshots(snapshot_antes, snapshot_actual)
         hard_errors = _errores_barrera_cambios(cambios, tarea, config)

@@ -83,6 +83,7 @@ TRANSICIONES_PERMITIDAS: dict[EstadoTarea, frozenset[EstadoTarea]] = {
             EstadoTarea.TRABAJANDO,
             EstadoTarea.ESPERANDO_DECISION,
             EstadoTarea.BLOQUEADA,
+            EstadoTarea.FINALIZADA,
             EstadoTarea.CANCELADA,
         }
     ),

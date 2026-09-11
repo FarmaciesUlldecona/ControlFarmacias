@@ -94,6 +94,7 @@ class ServicioRecuperacion:
             "RECOVERY_PROCESS_MISSING",
             "RECOVERY_LOCK_VALIDATED",
             "RECOVERY_LOCK_AMBIGUOUS",
+            "ENTORNO_CAMBIADO_DESPUES_DEL_RUN",
         }
     )
 
@@ -150,6 +151,8 @@ class ServicioRecuperacion:
         checkpoint = self.gestor_checkpoints.obtener_ultimo_checkpoint(
             task_id=tarea.id, run_id=run.run_id if run else None
         )
+        if self._es_read_only_cerrado(tarea, run, decision):
+            return self._cerrar_read_only_historico(tarea, previo, run, checkpoint)
         lock_ok, entorno_ok, causa_lock, warnings = self._validar_lock_entorno(tarea, run)
         if not lock_ok or not entorno_ok:
             return self._bloquear(
@@ -271,6 +274,74 @@ class ServicioRecuperacion:
         return self._resultado(
             tarea.id, previo, AccionRecuperacion.SIN_ACCION, run, None, False,
             True, True, False, False, "sin acción pendiente", warnings, checkpoint,
+        )
+
+    @staticmethod
+    def _es_read_only_cerrado(
+        tarea: Tarea, run: RunPersistente | None, decision: Any
+    ) -> bool:
+        return bool(
+            tarea.modo.value == "read_only"
+            and run is not None
+            and run.retry_id is None
+            and run.estado_interno is EstadoInternoRun.FINALIZADO
+            and run.resultado is not None
+            and not run.resultado.requiere_decision
+            and not run.resultado.errores
+            and decision is None
+        )
+
+    def _cerrar_read_only_historico(
+        self,
+        tarea: Tarea,
+        previo: EstadoTarea,
+        run: RunPersistente,
+        checkpoint: Any,
+    ) -> ResultadoRecuperacionTarea:
+        entorno = validar_entorno(tarea)
+        warnings: list[str] = []
+        if not entorno.es_valido:
+            detalle = "; ".join(entorno.discrepancias)
+            warnings.append(f"ENTORNO_CAMBIADO_DESPUES_DEL_RUN: {detalle}")
+            self._evento_unico(
+                tarea.id,
+                "ENTORNO_CAMBIADO_DESPUES_DEL_RUN",
+                {"run_id": run.run_id, "detalle": detalle},
+            )
+
+        actual = self.gestor_tareas.cargar(tarea.id)
+        if actual.estado is EstadoTarea.BLOQUEADA:
+            actual = self.gestor_tareas.actualizar_estado(
+                actual, EstadoTarea.RECUPERANDO
+            )
+        if actual.estado in {EstadoTarea.RECUPERANDO, EstadoTarea.TRABAJANDO}:
+            actual = self.gestor_tareas.actualizar_estado(
+                actual, EstadoTarea.FINALIZADA
+            )
+
+        reserva = self.gestor_entornos.obtener_reserva(tarea.worktree)
+        if reserva is not None and reserva.task_id == tarea.id and actual.es_terminal:
+            self.gestor_entornos.liberar_worktree(tarea.id, tarea.worktree)
+
+        self._evento_unico(tarea.id, "RECOVERY_STARTED", {"run_id": run.run_id})
+        self._evento_unico(
+            tarea.id, "RECOVERY_RUN_RECONCILED", {"run_id": run.run_id}
+        )
+        self._evento_unico(tarea.id, "RECOVERY_COMPLETED", {"run_id": run.run_id})
+        return self._resultado(
+            tarea.id,
+            previo,
+            AccionRecuperacion.RUN_RECONCILIADO,
+            run,
+            None,
+            False,
+            True,
+            entorno.es_valido,
+            True,
+            False,
+            "run read_only cerrado reconciliado sin depender del HEAD actual",
+            tuple(warnings),
+            checkpoint,
         )
 
     def _validar_lock_entorno(

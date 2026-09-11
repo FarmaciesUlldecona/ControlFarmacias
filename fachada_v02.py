@@ -49,6 +49,10 @@ from politica_recursos import (
 )
 from reglas_persistentes import ReglaInvalida, TipoRegla
 from runs_persistentes import EstadoInternoRun, RunPersistente
+from resultados_funcionales import (
+    ResultadoFuncionalNoDisponible,
+    obtener_resultado_funcional,
+)
 from supervisor_v02 import DecisionSupervisor, SolicitudAccion
 from tareas_persistentes import (
     CapacidadCheckpoint,
@@ -157,9 +161,6 @@ class OrquestadorV02:
         al_aceptar: Callable[[dict[str, Any]], None] | None = None,
     ) -> ResultadoPublicoV02:
         """Interpreta únicamente el canal explícito y despacha operaciones seguras."""
-        no_listo = self._requiere_listo()
-        if no_listo:
-            return no_listo
         order_id = self._nuevo_order_id()
         self._registro_natural.registrar(
             "NATURAL_ORDER_RECEIVED",
@@ -183,6 +184,20 @@ class OrquestadorV02:
             "NATURAL_ORDER_INTERPRETED",
             {"order_id": order_id, "interpretacion": orden.a_dict()},
         )
+        consultas_seguras = {
+            TipoIntencion.CONSULTAR_ESTADO,
+            TipoIntencion.CONSULTAR_RESULTADO,
+            TipoIntencion.CONSULTAR_PRESUPUESTO,
+            TipoIntencion.CONSULTAR_CONSUMO,
+        }
+        estado_global = self.estado()
+        if estado_global is not EstadoGlobalOrquestador.LISTO and (
+            estado_global is not EstadoGlobalOrquestador.BLOQUEADO
+            or orden.tipo_intencion not in consultas_seguras
+        ):
+            no_listo = self._requiere_listo()
+            if no_listo:
+                return no_listo
         if orden.ambigua or orden.datos_faltantes:
             codigo = "AMBIGUOUS_REFERENCE" if orden.referencias_no_resueltas else "INTERPRETATION_INCOMPLETE"
             self._registro_natural.registrar(
@@ -244,13 +259,32 @@ class OrquestadorV02:
                 datos={"resumen": resumen.__dict__},
             )
         if orden.tipo_intencion is TipoIntencion.CONSULTAR_RESULTADO:
-            if orden.task_id_referencia is None:
-                return self._error("TASK_REFERENCE_REQUIRED", "falta tarea inequívoca", requiere_intervencion=True)
-            run = self._arranque.gestor_runs.obtener_ultimo_run(orden.task_id_referencia)
+            task_id = orden.task_id_referencia
+            run = (
+                self._arranque.gestor_runs.obtener_ultimo_run(task_id)
+                if task_id is not None
+                else self._ultimo_run_con_resultado()
+            )
+            if run is None or run.resultado is None:
+                return self._error(
+                    "RESULT_CONTENT_UNAVAILABLE",
+                    "no hay un resultado de run persistido",
+                    task_id=task_id,
+                )
+            try:
+                funcional = obtener_resultado_funcional(run)
+            except ResultadoFuncionalNoDisponible as exc:
+                return self._error(
+                    "RESULT_CONTENT_UNAVAILABLE",
+                    str(exc),
+                    task_id=run.task_id,
+                    run_id=run.run_id,
+                    datos={"run": run.a_dict()},
+                )
             return self._ok(
-                "LOCAL_RESULT_QUERY", "resultado consultado localmente",
-                task_id=orden.task_id_referencia, run_id=run.run_id if run else None,
-                datos={"run": run.a_dict() if run else None},
+                "LOCAL_RESULT_QUERY", "resultado funcional consultado localmente",
+                task_id=run.task_id, run_id=run.run_id,
+                datos={"run": run.a_dict(), "resultado_funcional": funcional},
             )
         if orden.tipo_intencion is TipoIntencion.CONSULTAR_PRESUPUESTO:
             return self.consultar_presupuesto()
@@ -1340,6 +1374,19 @@ class OrquestadorV02:
             requiere_intervencion=self.estado() is EstadoGlobalOrquestador.BLOQUEADO,
         )
 
+    def _ultimo_run_con_resultado(self) -> RunPersistente | None:
+        candidatos = [
+            run
+            for tarea in self._arranque.gestor_tareas.listar()
+            for run in self._arranque.gestor_runs.listar_runs_tarea(tarea.id)
+            if run.resultado is not None
+        ]
+        return max(
+            candidatos,
+            key=lambda run: (run.resultado.timestamp, run.run_id),
+            default=None,
+        )
+
     def _tarea_por_clave(self, clave: str) -> Tarea | None:
         return next(
             (
@@ -1466,12 +1513,19 @@ class OrquestadorV02:
         requiere_intervencion: bool = False,
         datos: dict[str, Any] | None = None,
     ) -> ResultadoPublicoV02:
+        datos_run = dict(datos or {})
+        if run is not None and run.resultado is not None:
+            try:
+                datos_run["resultado_funcional"] = obtener_resultado_funcional(run)
+            except ResultadoFuncionalNoDisponible as exc:
+                datos_run["resultado_funcional_disponible"] = False
+                datos_run["motivo_resultado_funcional_no_disponible"] = str(exc)
         return self._resultado_tarea(
             ok, codigo, mensaje, tarea,
             run_id=run.run_id if run else None,
             decision_id=decision_id,
             requiere_intervencion=requiere_intervencion,
-            datos=datos,
+            datos=datos_run,
         )
 
     def _ok(self, codigo: str, mensaje: str, **kwargs: Any) -> ResultadoPublicoV02:

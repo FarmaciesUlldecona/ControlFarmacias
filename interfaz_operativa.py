@@ -135,6 +135,12 @@ class ProveedorContextoOperativo:
             return self._consulta(texto, TipoIntencion.CONSULTAR_PRESUPUESTO, TipoAccionNatural.CONSULTAR_PRESUPUESTO).a_dict()
         if self._es_consumo(normal):
             return self._consulta(texto, TipoIntencion.CONSULTAR_CONSUMO, TipoAccionNatural.CONSULTAR_CONSUMO).a_dict()
+        if re.search(r"\b(?:resultado|ultimo run|como termino)\b", normal):
+            return self._consulta(
+                texto,
+                TipoIntencion.CONSULTAR_RESULTADO,
+                TipoAccionNatural.CONSULTAR_RESULTADO,
+            ).a_dict()
         if self._solicita_commit_push(normal):
             return self._ambigua(texto, "commit/push requiere una tarea y autorización explícita verificable").a_dict()
 
@@ -462,6 +468,22 @@ def resultado_humano(
         f"MODO: {nivel or 'No clasificado'}",
         f"CODEX: {codex}",
     ]
+    funcional = resultado.datos.get("resultado_funcional")
+    if isinstance(funcional, dict):
+        lineas.append(f"RESULTADO FUNCIONAL: {funcional.get('resumen')}")
+        if funcional.get("detalle"):
+            lineas.append(f"EVIDENCIA: {funcional['detalle']}")
+        if funcional.get("siguiente_paso"):
+            lineas.append(f"PENDIENTE: {funcional['siguiente_paso']}")
+        archivos = funcional.get("archivos_modificados") or []
+        lineas.append(
+            "ARCHIVOS MODIFICADOS: "
+            + (", ".join(archivos) if archivos else "ninguno")
+        )
+    elif resultado.codigo in {"RUN_COMPLETED", "RESULT_CONTENT_UNAVAILABLE"}:
+        lineas.append(
+            "RESULTADO FUNCIONAL: no disponible en los artefactos persistidos"
+        )
     if presupuesto and presupuesto.ok:
         datos = presupuesto.datos.get("presupuesto") or {}
         lineas.extend([
