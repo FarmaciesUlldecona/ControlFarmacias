@@ -39,6 +39,18 @@ PALABRAS_PROHIBIDAS = {
     "ROLLBACK",
     "SAVE",
     "WAITFOR",
+    # Pistas que pueden bloquear o degradar Farmatic aunque no escriban.
+    "UPDLOCK",
+    "HOLDLOCK",
+    "XLOCK",
+    "TABLOCK",
+    "TABLOCKX",
+    "ROWLOCK",
+    "PAGLOCK",
+    "READPAST",
+    "NOWAIT",
+    # Impide sugerencias de ejecución potencialmente costosas o disruptivas.
+    "OPTION",
 }
 
 
@@ -174,6 +186,9 @@ def ejecutar_pruebas() -> None:
         "SELECT * FROM Albaran; DELETE FROM Albaran",
         "SELECT * FROM Albaran -- comentario",
         "WITH Datos AS (SELECT * FROM Albaran) DELETE FROM Datos",
+        "SELECT * FROM Albaran WITH (UPDLOCK, HOLDLOCK)",
+        "SELECT * FROM Albaran WITH (XLOCK)",
+        "SELECT * FROM Albaran OPTION (MAXDOP 0)",
     ]
 
     for consulta in consultas_permitidas:
