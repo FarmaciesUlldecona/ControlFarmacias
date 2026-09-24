@@ -22,11 +22,26 @@ Fecha: 2026-09-24.
 
 ## Certificación final
 
-- Pruebas focales: `66 passed` en 3,41 s.
+- Seguridad Farmatic focal: `23 passed` en 0,13 s.
+- Multifactura y workers focales: `49 passed` en 1,79 s.
+- Aislamiento focal: `3 passed` en 1,01 s.
+- Módulo runtime Supabase, seguridad y aislamiento: `216 passed` en 4,30 s.
 - Suite final desde la raíz, limitada por `pytest.ini` a `tests/`:
-  `1058 passed` en 51,95 s.
+  `1058 passed` en 53,54 s.
 - Instantánea antes/después: `logs/` sin cambios.
 - Instantánea antes/después: `data/` sin cambios.
 - No se conectó a Farmatic ni Supabase y no se modificó producción.
 - La recolección desde la raíz detectó temporales históricos con ACL denegada;
   `pytest.ini` fija `tests/` como raíz oficial y excluye temporales.
+
+## Cierre 2026-09-24
+
+- `main` se subió por fast-forward a `origin/main` y quedó `0 ahead / 0 behind`
+  en `f87b32ba804aa6676fa7866b131b46e6c16540e5` antes del cierre documental.
+- El contexto canónico se organiza en `docs/contexto/CONTEXTO_MAESTRO.md`,
+  `ESTADO_ACTUAL.md` y `REGLAS_CRITICAS.md`.
+- Farmatic: los bypass históricos de `Connection.execute()` y `Cursor.commit()`
+  están cerrados y cubiertos por tests unitarios.
+- Multifactura: clasificación A, funcional y correcta; runtime y helper usan la
+  firma de siete parámetros autorizada por la migración 16.
+- No se modificaron SQL, comportamiento productivo ni automatismos en este cierre.
