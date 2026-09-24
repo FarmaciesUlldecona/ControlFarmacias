@@ -18,6 +18,7 @@ from .gold_pequenos import (
 )
 from .guimera import AdaptadorGuimera, AdaptadorGuimeraHistorico
 from .hefame import AdaptadorHefame
+from .hplus_consumo import AdaptadorHplusConsumo
 from .historicos_gold1 import (
     AdaptadorDermofarmHistorico,
     AdaptadorGasCasaHistorico,
@@ -51,6 +52,7 @@ class EntradaAdaptadorLocal:
 REGISTRO_ADAPTADORES_LOCALES: tuple[EntradaAdaptadorLocal, ...] = (
     EntradaAdaptadorLocal(ProveedorLocal.COFARES, AdaptadorCofares),
     EntradaAdaptadorLocal(ProveedorLocal.HEFAME, AdaptadorHefame),
+    EntradaAdaptadorLocal(ProveedorLocal.HPLUS_CONSUMO, AdaptadorHplusConsumo),
     EntradaAdaptadorLocal(ProveedorLocal.FEDEFARMA, AdaptadorFedefarma),
     EntradaAdaptadorLocal(ProveedorLocal.ALLIANCE, AdaptadorAlliance),
     EntradaAdaptadorLocal(ProveedorLocal.ECOCEUTICS, AdaptadorEcoceutics),

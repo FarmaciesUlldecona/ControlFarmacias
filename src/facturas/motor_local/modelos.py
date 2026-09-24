@@ -158,6 +158,7 @@ class DocumentoExtraidoLocal:
     evidencias: list[EvidenciaLocal]
     capacidades: dict[str, str]
     motor: dict[str, Any]
+    documento_completo_demostrado: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

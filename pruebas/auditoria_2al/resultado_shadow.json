@@ -1,0 +1,26 @@
+{
+  "candidatos_reclamados": 1,
+  "candidatos_simulados": 135,
+  "documentos_pio": 140,
+  "documento_elegido": "ae53897a-355a-488f-bc3e-1783f39e0f13",
+  "fecha_importacion": "2026-07-25T10:05:44.218056+00:00",
+  "flag_normalizacion_automatica": false,
+  "modo": "MANUAL_ONE_SHOT",
+  "ordering": [
+    "reprocesar_solicitado_at DESC",
+    "fecha_importacion ASC",
+    "id ASC"
+  ],
+  "persistencias_memoria": 0,
+  "persistencias_productivas": 0,
+  "produccion_modificada": false,
+  "provenance": "MANUAL_ONE_SHOT",
+  "posiciones_documentos_nuevos": {
+    "4243688f2939325a4fd3a6ba57ea824114728b0a8e47e34b68a6616500d25b76": 134,
+    "fbc3205d21616541b476fe9250550cce111607f0b3f5d4fb3aed0ebb78710c9d": 135
+  },
+  "resultado": "FAIL_CLOSED_EVIDENCIA_DOCUMENTAL_NO_SIMULADA",
+  "segundo_candidato_probado": false,
+  "selector_automatico": null,
+  "sha": "4faa899bda8fdb08f9f425b31074dbfb521a3c6051efacb2f3ee5e7259d9d9f1"
+}

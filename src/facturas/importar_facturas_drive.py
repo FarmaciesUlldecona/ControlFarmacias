@@ -1,5 +1,6 @@
 import hashlib
 import mimetypes
+import os
 import re
 import sqlite3
 import time
@@ -8,14 +9,29 @@ from datetime import date, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from dotenv import load_dotenv
+
 from config.config import NOMBRE_FARMACIA
 from src.supabase_client.conexion_supabase import obtener_cliente_supabase
 from src.utils.logger import obtener_logger
 
 
-RUTA_FACTURAS = Path(
-    r"G:\Mi unidad\FACTURES PIO"
-)
+RAIZ_PROYECTO = Path(__file__).resolve().parents[2]
+load_dotenv(RAIZ_PROYECTO / ".env")
+
+RUTA_FACTURAS_HISTORICA = Path(r"G:\Mi unidad\FACTURES PIO")
+FACTURAS_PIO_DIR = os.getenv("FACTURAS_PIO_DIR", "").strip()
+
+
+def resolver_ruta_facturas(valor_configurado: str | None = None) -> Path:
+    """Resuelve una ruta explicita o conserva el fallback historico interactivo."""
+    valor = FACTURAS_PIO_DIR if valor_configurado is None else valor_configurado.strip()
+    if not valor:
+        return RUTA_FACTURAS_HISTORICA
+    return Path(os.path.expandvars(valor)).expanduser()
+
+
+RUTA_FACTURAS = resolver_ruta_facturas()
 
 FECHA_INICIO_IMPORTACION = date(2026, 6, 1)
 
@@ -79,17 +95,37 @@ def validar_configuracion() -> None:
             f"pero config.py contiene {NOMBRE_FARMACIA}."
         )
 
-    if not RUTA_FACTURAS.exists():
-        raise FileNotFoundError(
-            "No existe la carpeta de facturas: "
-            f"{RUTA_FACTURAS}"
+    try:
+        if FACTURAS_PIO_DIR and not RUTA_FACTURAS.is_absolute():
+            raise ValueError(
+                "FACTURAS_PIO_DIR debe ser una ruta absoluta."
+            )
+        if RUTA_FACTURAS.name.casefold() != "factures pio":
+            raise ValueError(
+                "FACTURAS_PIO_DIR debe señalar al directorio FACTURES PIO."
+            )
+        if not RUTA_FACTURAS.exists():
+            raise FileNotFoundError(
+                "No existe la carpeta de facturas: "
+                f"{RUTA_FACTURAS}"
+            )
+        if not RUTA_FACTURAS.is_dir():
+            raise NotADirectoryError(
+                "La ruta de facturas no es una carpeta: "
+                f"{RUTA_FACTURAS}"
+            )
+        # Fuerza una lectura real: exists/is_dir no siempre distingue permisos
+        # insuficientes en unidades virtuales o perfiles no interactivos.
+        with os.scandir(RUTA_FACTURAS) as entradas:
+            next(entradas, None)
+    except (OSError, ValueError) as error:
+        logger.error(
+            "Ruta de facturas no disponible; importacion cancelada antes "
+            "de acceder a SQLite o Supabase | Ruta: %s | Error: %s",
+            RUTA_FACTURAS,
+            error,
         )
-
-    if not RUTA_FACTURAS.is_dir():
-        raise NotADirectoryError(
-            "La ruta de facturas no es una carpeta: "
-            f"{RUTA_FACTURAS}"
-        )
+        raise
 
 
 def normalizar_texto(

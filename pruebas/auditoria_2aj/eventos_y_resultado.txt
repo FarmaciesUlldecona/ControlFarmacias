@@ -1,0 +1,44 @@
+HITO 2AJ - EJECUCION UNICA TASK SCHEDULER
+
+Instancia: {DB2FED4E-7A8A-45D4-A968-DC05D9EAA3F7}
+Inicio Task Scheduler: 2026-09-22 20:02:28 +02:00
+Fin Task Scheduler: 2026-09-22 20:02:32 +02:00
+Duracion Scheduler: 4 segundos
+Duracion aplicativa: 2.51 segundos
+Principal Windows: MOSTRADOR\Usuari
+Accion Scheduler: C:\WINDOWS\SYSTEM32\cmd.exe
+Tarea configurada con: C:\ControlFarmacias\Programa\ejecutar_importacion_facturas.bat
+Codigo devuelto: 0
+LastTaskResult: 0
+Eventos: 325, 129, 100, 200, 110, 201, 102
+Eventos 100 en la ventana controlada: 1
+
+Resultado aplicativo:
+- farmacia: PIO
+- ruta usada: C:\GoogleDrive\FACTURES PIO
+- PDF detectados: 141
+- omitidos sin abrir por indice: 141
+- existentes anadidos al indice: 0
+- documentos nuevos importados: 0
+- recuperados tras reintento: 0
+- archivos modificados: 0
+- errores: 0
+
+Inventario READ_ONLY:
+- PDF totales bajo el Mirror: 587
+- PDF del flujo desde junio de 2026, excluyendo RITA: 141
+- PDF RITA excluidos: 17
+- hashes unicos en origen del flujo: 136
+- repeticiones binarias intraorigen: 5
+- archivos del flujo ya conocidos por SHA: 141
+- hashes potencialmente nuevos: 0
+
+Estado final:
+- tarea Enabled=false
+- instancias activas: 0
+- documentos PIO: 138
+- hashes PIO: 138
+- objetos Storage PIO: 138
+- pendientes/reclamables por worker: 133
+- workers: 0
+- locks: 0

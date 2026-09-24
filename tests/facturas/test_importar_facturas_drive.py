@@ -54,3 +54,43 @@ def test_obtener_facturas_pdf_excluye_rita_del_flujo(
     }
 
     assert encontrados == nombres_incluidos
+
+
+def test_ruta_explicita_tiene_prioridad() -> None:
+    ruta = importar_facturas_drive.resolver_ruta_facturas(
+        r"C:\Datos\FACTURES PIO"
+    )
+
+    assert ruta == Path(r"C:\Datos\FACTURES PIO")
+
+
+def test_ruta_vacia_conserva_fallback_historico() -> None:
+    assert importar_facturas_drive.resolver_ruta_facturas("   ") == Path(
+        r"G:\Mi unidad\FACTURES PIO"
+    )
+
+
+def test_validacion_falla_antes_de_acceder_a_supabase_o_sqlite(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    inexistente = tmp_path / "FACTURES PIO"
+    monkeypatch.setattr(importar_facturas_drive, "RUTA_FACTURAS", inexistente)
+    monkeypatch.setattr(
+        importar_facturas_drive,
+        "FACTURAS_PIO_DIR",
+        str(inexistente),
+    )
+    monkeypatch.setattr(
+        importar_facturas_drive,
+        "obtener_conexion_indice",
+        lambda: pytest.fail("SQLite no debe abrirse"),
+    )
+    monkeypatch.setattr(
+        importar_facturas_drive,
+        "obtener_cliente_supabase",
+        lambda: pytest.fail("Supabase no debe abrirse"),
+    )
+
+    with pytest.raises(FileNotFoundError):
+        importar_facturas_drive.importar_facturas()

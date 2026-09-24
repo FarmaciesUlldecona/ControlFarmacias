@@ -39,6 +39,10 @@ def guardar_albaran(
     no vuelve a insertarlo.
     """
 
+    id_proveedor = albaran.get("id_proveedor")
+    if id_proveedor is not None and not isinstance(id_proveedor, str):
+        raise TypeError("id_proveedor debe llegar como literal text o null")
+
     cliente = obtener_cliente_supabase()
 
     try:

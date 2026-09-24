@@ -1,0 +1,9 @@
+2026-09-21T19:00:27+02:00 Start-ScheduledTask solicitado una vez.
+Resultado: 0x80070005 Acceso denegado.
+Comprobacion posterior: LastRunTime sin cambios (2026-09-20T21:30:30+02:00),
+estado Ready, sin eventos nuevos, sin proceso python y sin logs nuevos.
+
+2026-09-21T19:02:00+02:00 schtasks /Run solicitado como alternativa oficial.
+Resultado: Acceso denegado.
+
+No se ejecuto el BAT ni python directamente. Ejecuciones reales: 0.

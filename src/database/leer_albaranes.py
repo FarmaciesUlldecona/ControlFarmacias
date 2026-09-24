@@ -3,7 +3,7 @@ from datetime import date
 import pyodbc
 
 from src.database.conexion_sql import obtener_conexion
-from src.models.albaran import Albaran
+from src.models.albaran import Albaran, conservar_id_proveedor
 
 
 def convertir_fila_en_albaran(fila) -> Albaran:
@@ -25,7 +25,7 @@ def convertir_fila_en_albaran(fila) -> Albaran:
 
     return Albaran(
         id_contador=int(fila.IdContador),
-        id_proveedor=int(fila.IdProveedor),
+        id_proveedor=conservar_id_proveedor(fila.IdProveedor),
         proveedor=proveedor,
         id_albaran=id_albaran,
         fecha=fila.Fecha,

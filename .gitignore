@@ -17,6 +17,7 @@ google-application-credentials.json
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
 # Logs
 logs/
@@ -27,6 +28,17 @@ data/
 *.sqlite
 *.sqlite3
 *.db
+
+# Temporales, dependencias de sondeo y copias locales
+tmp/
+tmp_*/
+*.backup
+*.env.backup
+*.bak_*
+
+# Evidencia binaria y resultados reproducibles no versionables
+pruebas/facturas/documentos/2o_gold_standard/
+pruebas/facturas/resultados/
 
 # Visual Studio Code
 .vscode/

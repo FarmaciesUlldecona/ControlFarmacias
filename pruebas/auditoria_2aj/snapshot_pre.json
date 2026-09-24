@@ -1,0 +1,894 @@
+{
+  "captured_at": "2026-09-22T18:01:07.158292+00:00",
+  "mode": "filesystem read-only + PostgreSQL READ ONLY/rollback",
+  "mirror": "C:\\GoogleDrive\\FACTURES PIO",
+  "pdfs_all_under_mirror": 587,
+  "pdfs_pipeline_detected": 141,
+  "pdfs_rita_excluded": 17,
+  "source_unique_hashes": 136,
+  "source_duplicate_sha_occurrences": 5,
+  "source_known_by_sha": 141,
+  "source_potentially_new_unique": 0,
+  "inventory": [
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\ALLIANCE VTO 30.9-6.10-6.11 PIO.pdf",
+      "size": 186224,
+      "mtime_utc": "2026-08-03T08:26:27+00:00",
+      "sha256": "7b806565a4f09e182c5ec9d75b40b959fd39c4af86da77b7a8cb745c6e1192b2"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\COFARES VTO 30.8.26 PIO.pdf",
+      "size": 156315,
+      "mtime_utc": "2026-08-05T07:33:19+00:00",
+      "sha256": "e28f2bde78eaa51c9e04827245a15f117dc21c0d583709e9985d07bd2fc5fc52"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\COFARES VTO 31.8.26 PIO.pdf",
+      "size": 41310,
+      "mtime_utc": "2026-08-05T07:33:24+00:00",
+      "sha256": "c720e95ced67b726facf4ad54a07b5a90707bc08c227445b90bacea502e4a422"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\ECOCEUTICS MENUSALITAT AGOST PIO.pdf",
+      "size": 107311,
+      "mtime_utc": "2026-08-03T08:29:59+00:00",
+      "sha256": "0d52227df94514838af7fb0e9e244caf622d3ffb8279429dd15267bd86386b7f"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\ECOCEUTICS VTO 29.9.26 PIO.pdf",
+      "size": 107448,
+      "mtime_utc": "2026-08-03T08:29:53+00:00",
+      "sha256": "16e164977e51315692a81001091f1030d83bfb1c902f0fb2c79dd5329a565038"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\EPORTS VTO 5.8.26 PIO.pdf",
+      "size": 498897,
+      "mtime_utc": "2026-08-07T07:42:14+00:00",
+      "sha256": "34047efe97fbda44e070f96ed5611cc119f9e797ab715614c23306955b1ad8b3"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\FARMACIA GUIMERA VTO 29.7.26 PIO.pdf",
+      "size": 336156,
+      "mtime_utc": "2026-08-03T08:30:06+00:00",
+      "sha256": "2191e6481200f89e09202769e3d046f1a1400fccc105932818f30264aa94ce63"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\FARMACIA GUIMERA VTO 29.8.26 PIO.pdf",
+      "size": 364439,
+      "mtime_utc": "2026-08-03T08:29:18+00:00",
+      "sha256": "d35432db0fcc9086a0a63c8a3bea8603faba7038551992f15ed9204544864b56"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\FEDE VTO 15.8.26 PIO.pdf",
+      "size": 265474,
+      "mtime_utc": "2026-08-05T07:49:43+00:00",
+      "sha256": "e9bea97f9a2b384141304c92dfd8f318ee224707d203d823c3830999987b90f3"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\HEFAME VTO 5.8.26 PIO.pdf",
+      "size": 84511,
+      "mtime_utc": "2026-08-03T15:20:56+00:00",
+      "sha256": "4e66185426265ae5a000b5268557271a2a589af9701ec14d533fcb0bd939c4e7"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\LOGISTA PHARMA VTO 29.9.26 PIO.pdf",
+      "size": 32160,
+      "mtime_utc": "2026-08-03T08:28:50+00:00",
+      "sha256": "742b36450bbe8d116fd92375a6b20d457043da53b73415672a4730629c832494"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\LOREAL VTO 3.8.26 PIO.pdf",
+      "size": 32373,
+      "mtime_utc": "2026-08-06T08:59:36+00:00",
+      "sha256": "95421ef898e54b000c6ccfdc2da09ed35af67a8dd67d512f8c2b7da0d4118960"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\MORETTI VTO 31.8.26 PIO.pdf",
+      "size": 105636,
+      "mtime_utc": "2026-08-03T08:24:37+00:00",
+      "sha256": "bc30f13776857d514676fa16720a615724e047b277586dd567fec5c3bbb65995"
+    },
+    {
+      "relative_path": "AGOST 26\\1A DESENA\\TOTALCARE VTO 28.8.26 PIO.pdf",
+      "size": 57950,
+      "mtime_utc": "2026-08-04T16:16:09+00:00",
+      "sha256": "0dba035a98997f231cb284010c35bee6f893ba46402af5cc78794be7708e3297"
+    },
+    {
+      "relative_path": "AGOST 26\\2A DESENA\\ALLIANCE VTO 10.8-10.10-6.11-6.12 PIO.pdf",
+      "size": 241134,
+      "mtime_utc": "2026-08-11T09:34:26+00:00",
+      "sha256": "94020c46952d685e61db084171d9e8cadc331109de8105a6775b3d36f751f65e"
+    },
+    {
+      "relative_path": "AGOST 26\\2A DESENA\\HEFAME VTO 15.8-10.11 PIO.pdf",
+      "size": 72631,
+      "mtime_utc": "2026-08-12T08:06:03+00:00",
+      "sha256": "51f4c8d41c0734d89f9146bbd7a90d63556fda92a56f129d5bf3ce78e70d2f8e"
+    },
+    {
+      "relative_path": "AGOST 26\\2A DESENA\\LOGISTA ABONO VTO 20.8.26 PIO.pdf",
+      "size": 30820,
+      "mtime_utc": "2026-08-14T07:26:07+00:00",
+      "sha256": "11b0bc759a1f1cd9fe4f8c6ecc00184d528fe97ddd7a1107c537b6af182e7922"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\ALLIANCE VTO 20.10-6.11-6.12-6.2.27 PIO.pdf",
+      "size": 243357,
+      "mtime_utc": "2026-08-21T09:37:58+00:00",
+      "sha256": "850164675bff23e32b804ed6d478cceb9488a1dca826f52ddc2b48602ba5c87c"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\COFARES VTO 14.9.26 PIO.pdf",
+      "size": 139885,
+      "mtime_utc": "2026-08-26T09:47:59+00:00",
+      "sha256": "19ab09c9c0d6a40c87c2412d233ba1f4e5c10f217a4da20f473d1ac8fdaee625"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\ECOCEUTICS  VTO 10.9.26 PIO.pdf",
+      "size": 107463,
+      "mtime_utc": "2026-08-27T08:42:40+00:00",
+      "sha256": "63c387fa52fed0133b8abba0d8b0d4cb614b072d8f33ca36b03ca09ffac14a33"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\ECOCEUTICS ABONO PIO 1.9.26.pdf",
+      "size": 107464,
+      "mtime_utc": "2026-08-21T08:00:03+00:00",
+      "sha256": "60db57b14b32976f31fdd90f1a8bbb67f82a035f963e462fd92f0e69028e9dbc"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\ECOCEUTICS VTO 20.8.26 PIO.pdf",
+      "size": 107479,
+      "mtime_utc": "2026-08-20T07:45:15+00:00",
+      "sha256": "b12d061d5f4b6d24a2f29000cdd6af37e34f0a9b96532aac586f69ea74fa2c54"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\FEDE VTO 5.9.26 PIO.pdf",
+      "size": 186798,
+      "mtime_utc": "2026-08-26T09:48:36+00:00",
+      "sha256": "e130b216ca28d347248014b5795a93a84df0eea547eb57daafda30b0abe0280b"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\HEFAME VTO 25.8.26 PIO.pdf",
+      "size": 79831,
+      "mtime_utc": "2026-08-26T09:42:16+00:00",
+      "sha256": "b41d04cc21d37a7795dd4b1c9a4b95b54acfaf6268babcc803f98e258bc2f316"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\KENVUE VTO 22.8.26 PIO.pdf",
+      "size": 38639,
+      "mtime_utc": "2026-08-27T08:42:50+00:00",
+      "sha256": "7da0243a9f2b26f0ef0e647b1dac812c118ee265060881b5b476d064ebb65f98"
+    },
+    {
+      "relative_path": "AGOST 26\\3A DESENA\\PIERRE FABRE VTO 7.12.26 PIO.pdf",
+      "size": 189806,
+      "mtime_utc": "2026-08-21T08:00:42+00:00",
+      "sha256": "4970656ea2b32b4bbc6ab3077e2766d7ff28edaf07cdfe7d393bb62263b3673a"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\ALLIANCE VTO 31.8-6.9-30.9-6.10-30.11 PIO.pdf",
+      "size": 300570,
+      "mtime_utc": "2026-07-01T16:05:04+00:00",
+      "sha256": "4faa899bda8fdb08f9f425b31074dbfb521a3c6051efacb2f3ee5e7259d9d9f1"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\BEIERSDORF VTO 31.8.26 PIO.pdf",
+      "size": 40732,
+      "mtime_utc": "2026-07-03T07:19:10+00:00",
+      "sha256": "45c765aa99b5cbf1bd8bc0c3cc9157f90cae0aa5acf8280b9c24a8f66c0d2b73"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\COFARES VTO 15.7.26 PIO.pdf",
+      "size": 136589,
+      "mtime_utc": "2026-07-06T08:05:59+00:00",
+      "sha256": "cab3ae4fc49df36599dd1bfc660c9593d1046d07387df91127a193fdcde4743d"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\COFARES VTO 29.7.26 PIO.pdf",
+      "size": 117843,
+      "mtime_utc": "2026-07-06T08:06:10+00:00",
+      "sha256": "65c2611c74ffcf7c2f2ce9606df2cf62e54101906d6239188f045f0950356af3"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\COFARES VTO 30.7.26 PIO.pdf",
+      "size": 38014,
+      "mtime_utc": "2026-07-06T08:06:12+00:00",
+      "sha256": "e0d6e94334304180d494872051d8740837552ed2d61d60069ccecea7d8ac3883"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\ECOCEUTICS MENSUALIDAD PIO.pdf",
+      "size": 107203,
+      "mtime_utc": "2026-06-30T11:01:09+00:00",
+      "sha256": "62416a0f4b22ff24c51ecdabf59696bca6e8473f1685548fb4b8815733f3f9e8"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\ECOCEUTICS VTO 29.8.26 PIO.pdf",
+      "size": 107421,
+      "mtime_utc": "2026-07-02T08:45:21+00:00",
+      "sha256": "75b6fb8d2ffbea671dc267538744d82f010f36543324627a8f35074b74ceff9a"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\EPORTS VTO 25.7.26 PIO.pdf",
+      "size": 498898,
+      "mtime_utc": "2026-07-06T16:23:16+00:00",
+      "sha256": "0bc11cdaff643bcaaa7bb8caa06f80401c570da802b4cf1fdb5b8bd8403457c5"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\HEFAME VTO 5.7.26-30.9 PIO.pdf",
+      "size": 67182,
+      "mtime_utc": "2026-07-01T16:01:23+00:00",
+      "sha256": "88a7bba177e8cadaa0d5ee9e0fec04870703bdffc6150e010b95f5612a29b30e"
+    },
+    {
+      "relative_path": "JULIOL 26\\1A DESENA\\KONE ASCENSORES VTO 30.7.26 PIO.pdf",
+      "size": 30862,
+      "mtime_utc": "2026-07-09T07:13:44+00:00",
+      "sha256": "0cc52ac06354102146419be9a23eb0d014d7eaa1d4f1ce1b28678e00b28f116b"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\ALLIANCE VTO 10.9-6.10-10.10-6.11 PIO.pdf",
+      "size": 242323,
+      "mtime_utc": "2026-07-13T11:04:19+00:00",
+      "sha256": "0795c8c6aa39389bd9c51713e52716bcc4d78462fd95bbca48e2c0077c58c573"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\BOIRON VTO 25.7.26 PIO.pdf",
+      "size": 56933,
+      "mtime_utc": "2026-07-03T15:41:06+00:00",
+      "sha256": "806236a0f2fb8440c18ac74c865f1768951bb464fdde9d9f6910b8e6681af5bb"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\CARGO MENSUAL FEDE VTO 15.7.26 PIO.pdf",
+      "size": 106138,
+      "mtime_utc": "2026-07-15T17:02:12+00:00",
+      "sha256": "c96878e2fa4d3a7517f97637a2acbb4c5803e86a1d09675eb27d085a98c1b6f2"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\DERMOFARM VTO 10.10.26 PIO.pdf",
+      "size": 152038,
+      "mtime_utc": "2026-07-16T16:30:51+00:00",
+      "sha256": "b65305f2009702bf9f31b3f88a28172b8940cf7cdd0a60e1e0990a73b3e26e47"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\DICTATOR VTO 30.7.26 PIO.pdf",
+      "size": 30862,
+      "mtime_utc": "2026-07-08T15:24:05+00:00",
+      "sha256": "0cc52ac06354102146419be9a23eb0d014d7eaa1d4f1ce1b28678e00b28f116b"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\EXPOFARM VTO 20.7.26 PIO.pdf",
+      "size": 43117,
+      "mtime_utc": "2026-07-17T15:10:57+00:00",
+      "sha256": "81e0c7f93f8870473a4f41a8471d02f48b584955cc3d183eff74a03282a56932"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\FEDE CUOTA SERVEIS PIO VTO 16.7.26.pdf",
+      "size": 106138,
+      "mtime_utc": "2026-07-17T16:11:40+00:00",
+      "sha256": "691d8f2eb02b54b0b02b239c4ebc35e8f64f061c720aa2dc6f1d0947da5dead9"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\FEDE VTO 15.7.26 PIO.pdf",
+      "size": 269646,
+      "mtime_utc": "2026-07-03T15:41:24+00:00",
+      "sha256": "72bf721290454a6f9a43b9717b4e518e05de8d2788e353628801f0fcb120b26f"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\FEDE VTO 16.7.26 PIO.pdf",
+      "size": 134831,
+      "mtime_utc": "2026-07-17T16:11:31+00:00",
+      "sha256": "c33996ee33008664e1fb397626a7883b3be73e821e4ea489e49f66e22c78bf4f"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\FEDE VTO 25.7.26 PIO.pdf",
+      "size": 187152,
+      "mtime_utc": "2026-07-13T10:50:13+00:00",
+      "sha256": "1edaff09bc55615ef0ec0c32e3499dd400140d91773139583292a20b14bc869c"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\HEFAME VTO 15.7.26 PIO.pdf",
+      "size": 71804,
+      "mtime_utc": "2026-07-14T10:39:44+00:00",
+      "sha256": "91f230f011cd5ec2d37c73c506c79d7a2156de247f63d48d0bfd01e2bb75d6c5"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\SUAVINEX VTO 15.8.26 PIO.pdf",
+      "size": 200924,
+      "mtime_utc": "2026-07-15T16:49:10+00:00",
+      "sha256": "f8ccbf1971f79adbdc37a35b0d5c73ce53285190d8da3089b2cc3e0fb41836a9"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\TELEFONOS FEDE ABRIL-MAIG PIO.pdf",
+      "size": 127391,
+      "mtime_utc": "2026-07-17T16:11:36+00:00",
+      "sha256": "5bd0f50080cc522ba9c04e528df67166c32206be420cad1bcb38ca26cd34e913"
+    },
+    {
+      "relative_path": "JULIOL 26\\2A DESENA\\THUASNE VTO 10.8.26 PIO.pdf",
+      "size": 204224,
+      "mtime_utc": "2026-07-11T10:42:14+00:00",
+      "sha256": "df6d2be03ea2ca9d7b425b8bbf5de3cea0fb6532c865ab6266f4568a185345bd"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\ALLIANE VTO 20.9-6.10-20.10-6.11 PIO.pdf",
+      "size": 241884,
+      "mtime_utc": "2026-07-22T08:02:50+00:00",
+      "sha256": "b51b2a5632e75c1298292764f39e93d330c69b584d4e0f27cee2bab2c19dfd64"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\COFARES VTO 14.8.26 PIO.pdf",
+      "size": 115005,
+      "mtime_utc": "2026-07-22T07:58:36+00:00",
+      "sha256": "457b4ee8977f3c8fc6362e897b00a97db69305f0f3c2104cca81476e8e03d568"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\COFARES VTO 30.10.26 PIO.pdf",
+      "size": 27252,
+      "mtime_utc": "2026-07-22T08:24:09+00:00",
+      "sha256": "f4a047a2a3a0a6d98a28ab7bf495f562c3228019fb6aebe9f2228e3c269111c2"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\DERMOFARM ABONO VTO 5.8.26 PIO.pdf",
+      "size": 180988,
+      "mtime_utc": "2026-07-22T08:03:10+00:00",
+      "sha256": "1337762f4e6ce2e8cd6b7a859bd2c03da56d80d8a69ded058727646b03933614"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\DERMOFARM VTO 19.10.26 PIO.pdf",
+      "size": 149894,
+      "mtime_utc": "2026-07-27T07:29:52+00:00",
+      "sha256": "74052da8025c7ac49519881bc5de025fe7d8b3db9fe39005781a3cb5cbbf9229"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\ENDESA LLUM CARRER SANT LLUC SL.pdf",
+      "size": 2426833,
+      "mtime_utc": "2026-07-27T07:58:44+00:00",
+      "sha256": "66e786417e5b3dc9f71430554f6b2ad9d6f2a7b38afffcd4b0b4173558ed3001"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\FEDE VTO 5.8.26 PIO.pdf",
+      "size": 188272,
+      "mtime_utc": "2026-07-22T07:57:21+00:00",
+      "sha256": "8a9fba8dafff8ae6d6cdc5283de09033ed6a93bacdb454f36fdc5d741ac945d0"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\HEFAME VTO 25.7.26 PIO.pdf",
+      "size": 71800,
+      "mtime_utc": "2026-07-22T07:56:50+00:00",
+      "sha256": "764b35ea6d717f2729566dcfaf54f99798d19fa6546fce3800bfc0073595cd54"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\LLUM ENDESA SANT LLUC 34 SL.pdf",
+      "size": 691957,
+      "mtime_utc": "2026-07-27T08:01:12+00:00",
+      "sha256": "076be10a0c9b3385d1c0bbad32ebb54b0f169974067e45b42e1a3fd995abbbd9"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX 7.9.26 PIO.PDF",
+      "size": 624464,
+      "mtime_utc": "2026-07-28T08:18:01+00:00",
+      "sha256": "88db4573e16c1ee46fe9aa944ce6ef824eaab68c0d2efbef2715148218ffe0de"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX ABNO VTO 19.7.26 PIO.PDF",
+      "size": 597540,
+      "mtime_utc": "2026-07-28T08:18:58+00:00",
+      "sha256": "3f5d0257fe7bf2ba421ea47a34b507b144f142d46dbace7d906d7295ba73ba39"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX ABONO VTO 1.8.26 PIO.PDF",
+      "size": 602515,
+      "mtime_utc": "2026-07-28T08:18:34+00:00",
+      "sha256": "ee163082de9d3a100a088af42dc2bb9f61f21bc919e7d551eb4abd46cdfeef06"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX ABONO VTO 20.7.26 PIO.PDF",
+      "size": 597538,
+      "mtime_utc": "2026-07-28T08:18:50+00:00",
+      "sha256": "7f53c9c39da3737d2475f94c353a053a405aba0b5e082e209f307f9f6c4b1ac2"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX VTO 1.8.26 PIO.PDF",
+      "size": 599030,
+      "mtime_utc": "2026-07-28T08:18:26+00:00",
+      "sha256": "f6a42cc61c92fe782d24467d8a357ec953547c7ef381391e66f37924010a7d0d"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX VTO 17.7.26 PIO.PDF",
+      "size": 653330,
+      "mtime_utc": "2026-07-28T08:19:13+00:00",
+      "sha256": "35e5e1a894ec237a9a74ac07caeed2f7b0fd98f06827c4686b204976b2067aff"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX VTO 18.7.26 PIO.PDF",
+      "size": 597996,
+      "mtime_utc": "2026-07-28T08:19:04+00:00",
+      "sha256": "e2020684e80776f9950c2ced84f41e636710607695a44d46fb2f7f77e624b64b"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX VTO 19.8.26 PIO.PDF",
+      "size": 604845,
+      "mtime_utc": "2026-07-28T08:18:15+00:00",
+      "sha256": "ecfd1e1ef17e6982330c3ea6067eadcfba809c2d26a6af12f699308d432d9567"
+    },
+    {
+      "relative_path": "JULIOL 26\\3A DESENA\\SUAVINEX VTO 29.8.26 PIO.PDF",
+      "size": 598116,
+      "mtime_utc": "2026-07-28T08:18:07+00:00",
+      "sha256": "375b40c06d622b5d9a616d9880c702e4390f0fc75c384afef3579045859ae19d"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\ALLIANCE VTO 31.7-6.8-31.8-6.9 PIO.pdf",
+      "size": 241553,
+      "mtime_utc": "2026-06-02T14:44:58+00:00",
+      "sha256": "71edcc3c5b347e6129fd397c7295133ec810a3314d961cc08ab6c635d6930bcd"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\BEIERSDORF VTO 1.9.26 PIO.pdf",
+      "size": 41167,
+      "mtime_utc": "2026-06-02T14:45:57+00:00",
+      "sha256": "48b6d60d652647df9ae7f5e9d6aebd7c384d6fcc6f104f311b3d01880a147c30"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\BEIERSDORF VTO 29.7.26 PIO.pdf",
+      "size": 88256,
+      "mtime_utc": "2026-06-02T14:45:55+00:00",
+      "sha256": "f9cff80480ee767c871ed8d09453feb02f3f4bad745efc4247764646b755202a"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\COFARES VTO 15.6.26 PIO.pdf",
+      "size": 23674,
+      "mtime_utc": "2026-06-03T08:40:53+00:00",
+      "sha256": "24726f09fb7c90ad08becc960ac7acd5f09cc81c5967d68ee15d742054528815"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\COFARES VTO 30.6.26 PIO.pdf",
+      "size": 24326,
+      "mtime_utc": "2026-06-03T08:41:27+00:00",
+      "sha256": "679a04a8539ee8da2d74095756937f42e40e8093b228b7561fc1f9fe447102de"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\ECOCEUTICS ABONO PIO.pdf",
+      "size": 107720,
+      "mtime_utc": "2026-06-02T14:45:19+00:00",
+      "sha256": "a63ea3e50016ecdd22160375adb37bd0f16f1820c918df2886e58428e182fd9f"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\ECOCEUTICS QUOTA JUNY PIO.pdf",
+      "size": 107413,
+      "mtime_utc": "2026-06-02T14:45:30+00:00",
+      "sha256": "62f6f5a764c65d992269052388a80aadb534e2181c1d19f95ad04753e027ff21"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\ECOCEUTICS VTO 29.7.26 PIO.pdf",
+      "size": 107480,
+      "mtime_utc": "2026-06-02T14:36:55+00:00",
+      "sha256": "a54891fd9ad645ee2912dc9b39f2e156408be6f9baa82b4269fc89583026af4a"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\EPORTS VTO 5.6.26 PIO.pdf",
+      "size": 501743,
+      "mtime_utc": "2026-06-09T08:44:56+00:00",
+      "sha256": "ff48d0a3694732da7332f9f281e85248eeb103e7fab3a1b2b4c742ef4a708f60"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\FARMACIA GUIMERA VTO 30.6.26 PIO.pdf",
+      "size": 355518,
+      "mtime_utc": "2026-06-02T14:45:27+00:00",
+      "sha256": "bdaa8c8c3c6d6edb4fb48d7c8a8ee5c3263672d9bae4f42f97ddb1d7f89282b8"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\FEDE VTO 15.6.26 PIO.pdf",
+      "size": 263310,
+      "mtime_utc": "2026-06-04T08:09:37+00:00",
+      "sha256": "98f15768395f1a6aa1c8fe410a7c761074dff26cf655e8f2a8cfd2f876c5c7ac"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\HEFAME VTO 5.6.26 PIO.pdf",
+      "size": 20145,
+      "mtime_utc": "2026-06-04T08:09:54+00:00",
+      "sha256": "1808c405179d9858cf65a4ccefb569be4c37fb48f027544b9dfd9e7001a5225e"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\HEFAME VTO 5.6.26-31.8.26 PIO.pdf",
+      "size": 137336,
+      "mtime_utc": "2026-06-02T14:35:32+00:00",
+      "sha256": "741bc25eca6aa504bc06893f3220e2486cd2d7a9aae00ebceb1a383874552caf"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\INCOFAR VALLES VTO 31.7.26 PIO.pdf",
+      "size": 84685,
+      "mtime_utc": "2026-09-10T07:44:09+00:00",
+      "sha256": "2ea96c1159a06ddc6b16d71f4a1bea30eb8facb5745937135baf9e21aa8818e8"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\LLUM FARMACIA PIO MARÇ-MAIG.pdf",
+      "size": 692095,
+      "mtime_utc": "2026-06-02T14:47:49+00:00",
+      "sha256": "93f78a6211032f80e14e6613fd9289fb17c111188f87b1610d9ce13cc4e81a00"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\LLUM SANT LLUC SL.pdf",
+      "size": 693067,
+      "mtime_utc": "2026-06-02T14:46:52+00:00",
+      "sha256": "8b9096e63b62284304bd157fc7ed87fbed85caec6391381c1d91d6000b9d12f7"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\NEO VTO 28.7.26 PIO.pdf",
+      "size": 203068,
+      "mtime_utc": "2026-06-02T14:37:08+00:00",
+      "sha256": "173146d4deb175f4af5bd00143d6becdd0302d8dd5cd5da069d059aac945ac82"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\SBFARMACONSULTORES VTO 1.6.26 PIO.pdf",
+      "size": 22367,
+      "mtime_utc": "2026-06-02T14:36:10+00:00",
+      "sha256": "3a5f3d504ee23c0f6fb8d420420cc368cab3e420e0439fa278bf308aa6f9108f"
+    },
+    {
+      "relative_path": "JUNY 26\\1A DESENA\\THUASNE VTO 22.6.26 PIO.pdf",
+      "size": 204142,
+      "mtime_utc": "2026-05-27T08:35:50+00:00",
+      "sha256": "c95f7b5e0de0c7c650c280a07a0d6299c78a15d269cc2a81279eb92c8fc0fc1e"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\ECOCEUTICS ABONO PIO JUNY.pdf",
+      "size": 107223,
+      "mtime_utc": "2026-06-18T07:08:04+00:00",
+      "sha256": "1d035a88e82cb0ecdcd05b75017e50ad5ea3e68be80af76c3b90354e249cfbca"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\ENDESA SANT LLUC 34 GENER.pdf",
+      "size": 711793,
+      "mtime_utc": "2026-05-12T07:32:50+00:00",
+      "sha256": "8fb2e17346d8f9ea820e31e6ab20ff3465a831f2a2dda74fce73972f578d09dc"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\FEDE VTO 25.6.26 PIO.pdf",
+      "size": 186575,
+      "mtime_utc": "2026-06-12T16:24:40+00:00",
+      "sha256": "bd211151c24ab2771546bada68145c0f5a938d9bb2fa7fdd930b17ac04200b9d"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\GAS CARRER SANT LLUC 34.pdf",
+      "size": 144491,
+      "mtime_utc": "2026-06-16T07:26:34+00:00",
+      "sha256": "c9fbece3a7c76b34f7c5a915f72e024913b54a89a620c0a928a583723c560604"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\GAS CASA ABRIL-MAIG 2026.pdf",
+      "size": 174005,
+      "mtime_utc": "2026-06-12T16:09:52+00:00",
+      "sha256": "c4da5833d8b2099ac4af951b0e40f90e19bb1c0b6a8e72bc92a31bea2242ceef"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\HEFAME VTO 15.6.26PIO.pdf",
+      "size": 68721,
+      "mtime_utc": "2026-06-15T09:44:14+00:00",
+      "sha256": "453d42ae63162c0ee2d7357d355a26ffc336918c5e7677a63671f3565f6b4d3e"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\SISFARMA ABONO VTO 30.6.26 PIO.pdf",
+      "size": 126851,
+      "mtime_utc": "2026-06-19T08:39:56+00:00",
+      "sha256": "0977216b00ef784eaa412742c8371679665dd39e33cf550f1639cfe52f4f33c8"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\SISFARMA VTO 27.7.26 PIO.pdf",
+      "size": 141627,
+      "mtime_utc": "2026-06-19T08:39:08+00:00",
+      "sha256": "3a7844768cf15a8a4a9f8813af0b516a2e50a410da3b43a63d1cc0860347b01d"
+    },
+    {
+      "relative_path": "JUNY 26\\2A DESENA\\THUASNE VTO 13.7.26 PIO.pdf",
+      "size": 204408,
+      "mtime_utc": "2026-06-12T16:25:02+00:00",
+      "sha256": "628a16bd222e22854701068465e57df7fac0273cbbca0dd110bcec78a6b67cd7"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\AIGUA CARRER SANT LLUC 34-3.pdf",
+      "size": 740066,
+      "mtime_utc": "2026-06-29T17:45:04+00:00",
+      "sha256": "a14b5ea83fd7d13b3e170a711b524673f8e16334da925a842bfa69e1540fcbc1"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\AIGUA CARRER SANT LLUC 34.pdf",
+      "size": 739991,
+      "mtime_utc": "2026-06-29T17:44:24+00:00",
+      "sha256": "9955a4ce0bbc9cdf90e8ee9b5c1771b12cc6c6a185b7822152ddf7b64ebbd288"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\ALLIANCE VTO 20.8-6.9-20.9-6.10 PIO.pdf",
+      "size": 242124,
+      "mtime_utc": "2026-06-22T08:39:40+00:00",
+      "sha256": "7bdcad2125f5a5498c5aba334cc5ffab5384d934b027546211c122070d057e96"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\AREAFAR VTO 27.6.26 PIO.pdf",
+      "size": 876402,
+      "mtime_utc": "2026-06-22T08:58:30+00:00",
+      "sha256": "6434ef4256048d85651d2a12329eff8398501e635434ed0cb60fd80897e04f40"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\AREAFAR VTOI 22.6.26 PIO.pdf",
+      "size": 876826,
+      "mtime_utc": "2026-06-22T08:55:40+00:00",
+      "sha256": "405a90c7047b999ecb2008e22f226b6db62ec6981866bac807b78c1574fea42d"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\ECOCEUTICS ABONO VTO 30.5.26 PIO.pdf",
+      "size": 171809,
+      "mtime_utc": "2026-06-23T16:32:16+00:00",
+      "sha256": "a5d2b5d245ab369a831ac9ddb96657b04e15084afb3c825ae5c73801b7c998d0"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\ECOCEUTICS VTO 30.5.26 PIO.pdf",
+      "size": 171658,
+      "mtime_utc": "2026-06-23T16:32:13+00:00",
+      "sha256": "7960af6634b6fa4825f10efa34818571e1f3861f65ab9110eeba58c94b79c9fd"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\ENDESA SANT LLUC 34  ABRIL-JUNY 26.pdf",
+      "size": 1497392,
+      "mtime_utc": "2026-06-22T08:41:16+00:00",
+      "sha256": "30ab79ae3a069259e30dadd0f161a64b198c7530f6ed49c37756b079d4eaafb3"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\GAS CARRER SANT LLUC 34.pdf",
+      "size": 144491,
+      "mtime_utc": "2026-06-16T07:26:34+00:00",
+      "sha256": "c9fbece3a7c76b34f7c5a915f72e024913b54a89a620c0a928a583723c560604"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\HEFAME VTO 25.6.26 PIO.pdf",
+      "size": 68723,
+      "mtime_utc": "2026-06-22T17:38:48+00:00",
+      "sha256": "69960edf2cee5d92e7ba2a55b554c55d990714cba6cf4099275f0b055e9e453e"
+    },
+    {
+      "relative_path": "JUNY 26\\3A DESENA\\PIERRE FABRE ABONO VTO 7.9.26 PIO.pdf",
+      "size": 189063,
+      "mtime_utc": "2026-06-29T17:49:09+00:00",
+      "sha256": "b5bd15253ae919ecd8badb60deefdc0efc5f157e73fa0d535bb1d5550722b79b"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\31.10-6.11-6.12-6.4.27 PIO.pdf",
+      "size": 242076,
+      "mtime_utc": "2026-09-02T08:23:03+00:00",
+      "sha256": "62ca57087780b02f6d2127d43f1f06bbd0a0de08988a70c6268d93f412d2555e"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\ALTER VTO 3.1.27 PIO.PDF",
+      "size": 113688,
+      "mtime_utc": "2026-09-07T09:14:45+00:00",
+      "sha256": "46816e70ef427646d946583f44b77e3cf178ffaf524e7ef29a342f6e409371b7"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\ARKO VTO 1.4.27 PIO.pdf",
+      "size": 238384,
+      "mtime_utc": "2026-09-03T10:31:58+00:00",
+      "sha256": "b5d57a0098b4a2392667c053e561c6b5aa6e6740e44569e8561dc6677dc75896"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\COFARS VTO 30.9.26 PIO.pdf",
+      "size": 119850,
+      "mtime_utc": "2026-09-03T10:35:16+00:00",
+      "sha256": "d6d64ce957c069472780c2247627e06d5ab7005b79ea43eaf69739e846eb7032"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\ECOCEUTICS QUOTA MENSUAL SETEMBRE PIO.pdf",
+      "size": 107548,
+      "mtime_utc": "2026-08-31T09:28:08+00:00",
+      "sha256": "72a4eb220454e3a2b0444d38ca2c51e41a4b65fef356ae1c1b969f8b53102cbc"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\ECOCEUTICS VTO 30.10.26 PIO.pdf",
+      "size": 107666,
+      "mtime_utc": "2026-09-02T08:21:07+00:00",
+      "sha256": "19d5f6080caedaa419aab0a206428ccf3390f45174b0b91028af6d3e9e71533a"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\FEDE VTO 15.9.26 PIO.pdf",
+      "size": 186106,
+      "mtime_utc": "2026-09-03T10:33:12+00:00",
+      "sha256": "12e4fdde5aa44b5258c7c167caa010d3468e8dd9b9e5b0867d1f3dc05afc3355"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\FEDE VTO 5.9.26 PIO.pdf",
+      "size": 135814,
+      "mtime_utc": "2026-09-07T09:23:42+00:00",
+      "sha256": "0a85bc3a2d5bf175e78630ed6f40a355f6462d463ea2ce99949bf9b4d31abc47"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\FEINE ENERGIA VTO 30.9.26 PIO.pdf",
+      "size": 517812,
+      "mtime_utc": "2026-09-07T09:09:15+00:00",
+      "sha256": "5525cc9be6aeb708dd39be1d31f7b94bdc41579421bd0416c1e9ec970d255b07"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\GUIMERA VTO 30.9.26 PIO.pdf",
+      "size": 290661,
+      "mtime_utc": "2026-09-02T08:20:37+00:00",
+      "sha256": "339a84ce8f00c0d1abc29247acdbf11bd6a259bc2d71aec921e3dd7b5c8334d4"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\HEFAME VTO 5.9.26 PIO.pdf",
+      "size": 28305,
+      "mtime_utc": "2026-09-07T10:08:16.582000+00:00",
+      "sha256": "51ae2e5c8e311d9fb19e95d42ea7f8c6873524d3e32a2034eabbb1e834be45dd"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\HEFAME VTO 6.9.26 PIO.pdf",
+      "size": 28152,
+      "mtime_utc": "2026-09-07T09:41:22+00:00",
+      "sha256": "d719b6d9f5e5463741c561b0059bbd60a0a2637ab6ca23cbd30b0fe6e2d00543"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\KENVUE VTO 27.10.26 PIO.pdf",
+      "size": 34855,
+      "mtime_utc": "2026-09-03T16:41:35+00:00",
+      "sha256": "98354ae227dcdc15d066ccd5ffe8db85575f8147c50b55a9de817a57ab1516bb"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\MORETTI VTO 30.9.26 PIO.pdf",
+      "size": 103953,
+      "mtime_utc": "2026-09-01T09:00:20+00:00",
+      "sha256": "640a800e7e1a5e13a1c7cc526859b520bc9f3282fe2805d3b2a51c522ace712c"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\NEO VTO 26.11.26 PIO.pdf",
+      "size": 203118,
+      "mtime_utc": "2026-08-31T09:28:24+00:00",
+      "sha256": "4b8ac551fe48301793b9d60b163af636ed82972e15ffb49e69c32b2b6dec5d4a"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\NEO VTO 28.11.26 PIO.pdf",
+      "size": 2781966,
+      "mtime_utc": "2026-09-10T07:34:38+00:00",
+      "sha256": "6b2d5519c25c0a2c46d4a284b477dd982db0c0e6669bcdefcf7bca0d7aaedbf6"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\PIERE FABRE ABONO VTO 7.9.26 PIO.pdf",
+      "size": 189063,
+      "mtime_utc": "2026-09-07T09:28:37+00:00",
+      "sha256": "b5bd15253ae919ecd8badb60deefdc0efc5f157e73fa0d535bb1d5550722b79b"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\PIERRE FABRE VTO 5.12.26 PIO.pdf",
+      "size": 189806,
+      "mtime_utc": "2026-09-07T09:28:02+00:00",
+      "sha256": "4970656ea2b32b4bbc6ab3077e2766d7ff28edaf07cdfe7d393bb62263b3673a"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\PIERRE FABRE VTO 6.9.26 PIO.pdf",
+      "size": 193875,
+      "mtime_utc": "2026-09-07T09:27:19+00:00",
+      "sha256": "8a1318365d53de6876f8f4a77de717d03974b42bb05ac66ab843c466c6f15410"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\PIERRE FABRE VTO 7.10.26 PIO.pdf",
+      "size": 188928,
+      "mtime_utc": "2026-09-07T09:26:29+00:00",
+      "sha256": "ef0ed54bac8402cd3a4d583b4713ba1a48fee018748cc7ab30089793a6d8ee5c"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\PIERRE FABRE VTO 7.12.26 PIO.pdf",
+      "size": 192731,
+      "mtime_utc": "2026-09-07T09:25:05+00:00",
+      "sha256": "2e4f68d3d4ae241fd3e50fdf584b1b1f71c9f72a42e1e3990d573c953da49143"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\PIERRE FABRE VTO 7.9.26 PIO.pdf",
+      "size": 197822,
+      "mtime_utc": "2026-09-07T09:29:15+00:00",
+      "sha256": "147143a155c258c54ec0eb0d53709d88af0bd83baed3131f62d06fce7416dfea"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\1A DESENA\\TOTALCARE VTO 27.8.26 PIO.pdf",
+      "size": 57950,
+      "mtime_utc": "2026-08-27T09:30:49+00:00",
+      "sha256": "0dba035a98997f231cb284010c35bee6f893ba46402af5cc78794be7708e3297"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\2A DESENA\\ALLIANCE VTO 10.11-6.12-10.12-6.1.27 PIO.pdf",
+      "size": 244461,
+      "mtime_utc": "2026-09-14T07:53:37+00:00",
+      "sha256": "2b91969c6f4c0b65fd5bc50727bea7be74096ab5d51c44d8a04a1f4a1096d82b"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\2A DESENA\\BAYER VTO 15.9.26 PIO.pdf",
+      "size": 21913,
+      "mtime_utc": "2026-09-16T09:57:55+00:00",
+      "sha256": "d80b966e1b589aa3a3118e63c2b6247ba2ce1fcfa31cd5fd1088b719fd2c526f"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\2A DESENA\\FEDE VTO 25.9.26 PIO.pdf",
+      "size": 186265,
+      "mtime_utc": "2026-09-14T07:51:11+00:00",
+      "sha256": "67321698be35b61904a5baeaaa92ba11972f8fc3d598156c38ab9b20bcdfe8dc"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\2A DESENA\\HEFAME VTO 15.9-10-12-26 PIO.pdf",
+      "size": 74443,
+      "mtime_utc": "2026-09-14T07:49:28+00:00",
+      "sha256": "01e122e0f852a392c6db19f710790416d17caf1a4b708acc8bab57d508d1a9ca"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\2A DESENA\\PEROXFARMA VTO 13.8.26 PIO.PDF",
+      "size": 126236,
+      "mtime_utc": "2026-09-17T09:30:24+00:00",
+      "sha256": "afb460092098f07d33972c9da71dc1c5cb4a0e306d681201d600fb1bbad110a0"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\2A DESENA\\taemsa vto 14.11.26 pio.pdf",
+      "size": 202939,
+      "mtime_utc": "2026-09-16T09:38:10+00:00",
+      "sha256": "c49a13988484e2bcc078b821dc3d692c7f4f88bb9aa2372f28a195b04a9ba486"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\3A DESENA\\ALLIANCE VTO 20.11-6.12-6.1.27 PIO.pdf",
+      "size": 182336,
+      "mtime_utc": "2026-09-21T15:04:11.637000+00:00",
+      "sha256": "62352594b77dca1928befa7c9fa197c110a5b6e2beeabfa8df73a3de169d8943"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\3A DESENA\\HEFAME VTO 25.9.26 PIO.pdf",
+      "size": 68174,
+      "mtime_utc": "2026-09-21T11:08:07.110000+00:00",
+      "sha256": "5681e6117b85ef24524323a6dedbaca8d425d7a1453098d573ee635f1c3a960b"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\3A DESENA\\SUAVINEX ABONO VTO 18.11.26 PIO.PDF",
+      "size": 601200,
+      "mtime_utc": "2026-09-21T15:27:50.997000+00:00",
+      "sha256": "4b67744d396f685379d8836cf649a5a64505e62028c7b66b1f99e75c88eb5c74"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\3A DESENA\\SUAVINEX VTO 18.11.26 PIO.PDF",
+      "size": 632830,
+      "mtime_utc": "2026-09-21T15:28:08.795000+00:00",
+      "sha256": "0eed4478ca0d8fd945871eef946a21cf56847ad65f7f7a29d0604c12b8216424"
+    },
+    {
+      "relative_path": "SETEMBRE 26\\3A DESENA\\THUASNE VTO 18.10.26 PIO.pdf",
+      "size": 203993,
+      "mtime_utc": "2026-09-21T07:05:03.992000+00:00",
+      "sha256": "bbe1382352dd167b6e8f19b700808970caab08178510de68d20e48c0a55f5641"
+    }
+  ],
+  "database": {
+    "documents_pio": 138,
+    "unique_hashes_pio": 138,
+    "pending_pio": 133,
+    "claimable_pending_pio": 133,
+    "storage_objects_pio": 138,
+    "invoices": [
+      7,
+      6,
+      1
+    ],
+    "invoice_fingerprints": {
+      "0563834757": "c97bb4454e9d6057da3b81903b32a51f",
+      "08009277": "0f4c1dd88704531f8f44fb4e7662049f",
+      "08009278": "7a03cb3ad8f59988922382ff01add834",
+      "08009279": "4a00e56d3982545466805a8ad302a8e9",
+      "1132029554": "34e2fd32a335173201f7a2f3d3d1260e",
+      "5011640669": "b25bc2cb6ec395a8c1e766b0c9bbb442",
+      "5460017198": "debcec63605f3a96c90daf1d047b98b6"
+    },
+    "normalizations": 7,
+    "conciliations": 12,
+    "document_locks": 0,
+    "invoice_locks": 0,
+    "flags": [
+      false,
+      false,
+      false,
+      [
+        "PIO"
+      ]
+    ],
+    "workers": 0
+  }
+}

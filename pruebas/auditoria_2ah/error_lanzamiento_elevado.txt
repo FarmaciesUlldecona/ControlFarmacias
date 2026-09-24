@@ -1,0 +1,6 @@
+FAILED_AT=2026-09-22T17:53:09.6022881+02:00
+ERROR=El sistema no puede encontrar el archivo especificado. (Excepción de HRESULT: 0x80070002)
+HRESULT=0x80070002
+POSITION=En C:\ControlFarmacias\Programa\pruebas\auditoria_2ah\ejecutar_tarea_una_vez_elevado.ps1: 40 Carácter: 1
++ $task = $folder.GetTask("\$taskName")
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

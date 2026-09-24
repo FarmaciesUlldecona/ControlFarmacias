@@ -1,0 +1,42 @@
+{
+  "project_ref": "vklaiuytvegkelgyspxc",
+  "migracion_16_ausente_antes": true,
+  "precondiciones_correctas": true,
+  "dry_run_postgresql_17": true,
+  "ciclos_locales": 2,
+  "migracion_sha256": "3c543bf7beed1b1051ef1ff9ddd23ba49a1e4e35aaac54c08f3d7e45fc7c47a4",
+  "despliegue_inicio_utc": "2026-09-24T08:18:05.584336+00:00",
+  "cierre_auditoria_utc": "2026-09-24T08:25:54.6003737Z",
+  "migracion_16_desplegada": true,
+  "objetos_modificados": [
+    "normalizacion_ejecuciones_disparador_check",
+    "cf_reclamar_documento_normalizacion_nucleo(text,integer,text)",
+    "cf_reclamar_documento_normalizacion(text,integer)",
+    "cf_reclamar_documento_normalizacion_manual_one_shot(text,integer)",
+    "cf_persistir_documento_multifactura(uuid,text,text,text,jsonb,text[],text)",
+    "grants de las firmas afectadas"
+  ],
+  "rpc_manual_disponible": true,
+  "ruta_automatica_intacta": true,
+  "ruta_manual_disponible": true,
+  "grants_correctos": true,
+  "conteos_antes": {"documentos_pio": 140, "facturas": 7, "normalizaciones": 7, "conciliaciones": 12},
+  "conteos_despues": {"documentos_pio": 140, "facturas": 7, "normalizaciones": 7, "conciliaciones": 12},
+  "huellas_productivas_sin_cambios": true,
+  "workers_finales": 0,
+  "locks_finales": 0,
+  "flags_finales": {
+    "normalizacion_automatica": false,
+    "conciliacion_automatica": false,
+    "luna_habilitada": false,
+    "farmacias_habilitadas": ["PIO"]
+  },
+  "documento_reclamado": false,
+  "produccion_economica_modificada": false,
+  "tests_focales": 263,
+  "tests_suite_completa": 1051,
+  "fallos": 0,
+  "regresiones": 0,
+  "secreto_exportado": false,
+  "estado": "MIGRACION_16_PRODUCTIVA_DESPLEGADA"
+}

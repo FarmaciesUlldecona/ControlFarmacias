@@ -393,6 +393,20 @@ class AdaptadorLogista(AdaptadorGoldPequenoBase):
     layout, constructor = "LOGISTA_PHARMA_FACTURA_V1", "_construir"
     senales = ("LOGISTA PHARMA S.A.U", "Nº Factura", "RESUMEN B.I", "Rec.Equ")
 
+    @staticmethod
+    def _filas_albaranes(documento, segmento):
+        for pagina in documento.paginas:
+            if not segmento.paginas or not segmento.paginas[0] <= pagina.numero <= segmento.paginas[-1]:
+                continue
+            for linea in pagina.lineas:
+                if "ALBAR" not in normalizar_texto(linea.texto):
+                    continue
+                numeros = [w for w in linea.palabras if re.fullmatch(r"\d{10}", w.texto)]
+                fechas = [w for w in linea.palabras if _fecha(w.texto)]
+                importes = [w for w in linea.palabras if _importe_token(w.texto) is not None]
+                if len(numeros) == 1 and len(fechas) == 1 and importes:
+                    yield linea, numeros[0], fechas[0], importes[-1]
+
     def _construir(self, documento, segmento):
         p = documento.paginas[0]; nline = self._linea(p, "Factura."); numero = next(w for w in nline.palabras if w.texto.isdigit())
         dates = self._linea(p, "31.07"); date_words = [w for w in dates.palabras if _fecha(w.texto)]
@@ -416,10 +430,12 @@ class AdaptadorLogista(AdaptadorGoldPequenoBase):
         tipo_re_words = [w for w in producto_fiscal.palabras if w.texto.rstrip("%") == "0,50"]
         tax = {"orden": 1, "origen": "FACTURA", "base": self._dinero(documento, taxline, tvals[0], "base", tabla="fiscalidad"), "tipo_iva": self._campo(documento, taxline, taxline.palabras[:2], 4.0, "tipo_iva", "IVA_LITERAL", "fiscalidad"), "cuota_iva": self._dinero(documento, taxline, tvals[1], "cuota_iva", tabla="fiscalidad"), "tipo_recargo_equivalencia": self._campo(documento, producto_fiscal, tipo_re_words, 0.5, "tipo_recargo", "TIPO_RE_IMPRESO_EN_DETALLE", "fiscalidad"), "cuota_recargo_equivalencia": self._dinero(documento, taxline, tvals[2], "cuota_recargo", tabla="fiscalidad")}
         v = {"orden": 1, "fecha": self._fecha_campo(documento, dates, date_words[1]), "importe": cabecera["importe_total"], "forma_pago": cabecera["forma_pago"]}
-        albline = self._linea(p, "Albar"); albnum = next(w for w in albline.palabras if re.fullmatch(r"\d{10}", w.texto)); albfecha = next(w for w in albline.palabras if _fecha(w.texto)); albtotal = [w for w in albline.palabras if _importe_token(w.texto) is not None][-1]
-        alb = self._albaran(documento, albline, albnum, albfecha, albtotal, atributos={"numero_pedido": self._linea(p, "Pedido:").texto})
+        filas = list(self._filas_albaranes(documento, segmento))
+        albaranes = [self._albaran(documento, linea, numero, fecha, importe, orden=orden,
+                     atributos={"numero_pedido": self._linea(p, "Pedido:").texto} if len(filas) == 1 else None)
+                     for orden, (linea, numero, fecha, importe) in enumerate(filas, 1)]
         detail = [l for l in p.lineas if 28 <= l.orden <= 46]
-        return self._factura(documento, segmento, cabecera, albaranes=[alb], impuestos=[tax], vencimientos=[v], otros=[self._literal_lineas(documento, detail, "DETALLE_PRODUCTOS")])
+        return self._factura(documento, segmento, cabecera, albaranes=albaranes, impuestos=[tax], vencimientos=[v], otros=[self._literal_lineas(documento, detail, "DETALLE_PRODUCTOS")])
 
 
 class AdaptadorMoretti(AdaptadorGoldPequenoBase):

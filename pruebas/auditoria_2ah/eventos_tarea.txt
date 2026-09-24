@@ -1,0 +1,35 @@
+HITO 2AH - INSTANCIA UNICA
+
+Instancia: {349FA34D-C37C-4E04-9954-63FC02B8945C}
+Inicio: 2026-09-22 17:56:24 +02:00
+Fin: 2026-09-22 17:57:07 +02:00
+Duracion Task Scheduler: 43 segundos
+Principal Windows: MOSTRADOR\ControlFarmaciasRO
+Accion iniciada por Task Scheduler: C:\WINDOWS\SYSTEM32\cmd.exe
+Codigo devuelto: 0
+LastTaskResult: 0
+Eventos: 325, 129, 100, 200, 110, 201, 102
+Numero de eventos 100 en la ventana controlada: 1
+
+Log aplicativo:
+- Principal Windows efectivo: ControlFarmaciasRO
+- Identidad SQL: MOSTRADOR\ControlFarmaciasRO
+- Identidad SQL original: MOSTRADOR\ControlFarmaciasRO
+- Base: Farmatic
+- Guard READ_ONLY: superado
+- SELECT: si
+- INSERT/UPDATE/DELETE/ALTER/EXECUTE/CONTROL en Farmatic: no
+- sysadmin/db_owner/db_datawriter/db_ddladmin: no
+- filas leidas posteriores a 291694: 43
+- maximo leido: 291852
+- nuevos: 43
+- existentes: 0
+- codigo wrapper: 0
+
+Estado final de la tarea verificado a las 18:19:04:
+- Enabled: false
+- State: Ready
+- instancias activas: 0
+- LastRunTime: 2026-09-22 17:56:24
+- LastTaskResult: 0
+- ACL MOSTRADOR\Usuari: 0x001200A9

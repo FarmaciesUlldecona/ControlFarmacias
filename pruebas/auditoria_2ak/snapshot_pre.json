@@ -1,0 +1,21 @@
+{
+  "documentos_pio": 138,
+  "pendientes_pio": 133,
+  "facturas": {"total": 7, "conciliadas": 6, "pendientes_conciliar": 1},
+  "normalizaciones": 7,
+  "conciliaciones": 12,
+  "locks": {"documentos": 0, "facturas": 0},
+  "workers": 0,
+  "flags": {"normalizacion_automatica": false, "conciliacion_automatica": false, "luna_habilitada": false, "farmacias_habilitadas": ["PIO"], "tolerancia": "0.0500"},
+  "siguiente_reclamable_oficial": [],
+  "facturas_huellas": {
+    "5460017198": "debcec63605f3a96c90daf1d047b98b6",
+    "5011640669": "b25bc2cb6ec395a8c1e766b0c9bbb442",
+    "0563834757": "c97bb4454e9d6057da3b81903b32a51f",
+    "08009279": "4a00e56d3982545466805a8ad302a8e9",
+    "08009278": "7a03cb3ad8f59988922382ff01add834",
+    "08009277": "0f4c1dd88704531f8f44fb4e7662049f",
+    "1132029554": "34e2fd32a335173201f7a2f3d3d1260e"
+  },
+  "rita": {"documentos": 0, "facturas": 0}
+}

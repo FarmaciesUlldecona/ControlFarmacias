@@ -161,7 +161,7 @@ def test_registro_nuevo_preserva_orden_y_alias_legacy():
     nuevos = [(adaptador.id, adaptador.version) for adaptador in adaptadores_locales()]
     legacy = [(adaptador.id, adaptador.version) for adaptador in adaptadores_productivos()]
     assert nuevos == legacy
-    assert len(nuevos) == 16
+    assert len(nuevos) == 17
 
 
 def test_configuracion_shadow_general_prevalece_y_legacy_sigue_admitida(monkeypatch):

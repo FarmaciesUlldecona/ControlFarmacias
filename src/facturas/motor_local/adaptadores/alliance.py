@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from src.facturas.normalizador_v2.reglas import clasificacion_conceptual_documental
@@ -15,6 +16,145 @@ from .base import AdaptadorBase, Reconocimiento
 FACTURA_RE = re.compile(r"^\d{8}$")
 REFERENCIA_FILA_RE = re.compile(r"^\d{2}[A-Z]\d{5}$", re.I)
 NIF_RE = re.compile(r"^(?:[A-Z]\d{8}|\d{8}[A-Z])$", re.I)
+
+
+TIPOS_PEDIDO_MERCANCIA_ALLIANCE = frozenset({
+    "NORMAL ACUSTICO",
+    "NETOS PLUS",
+    "PLATAFORMA 360",
+    "COSTO LABORAT.",
+    "ECOCEUTICS",
+})
+
+
+def clasificar_fila_economica_alliance(
+    candidato: dict[str, Any],
+    relacion: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Clasifica por estructura y concepto; nunca por prefijo o columna sola."""
+    sentido = (candidato.get("sentido") or {}).get("valor")
+    tipo = normalizar_texto(str((candidato.get("tipo_pedido") or {}).get("valor") or ""))
+    total = (candidato.get("total") or {}).get("valor")
+    try:
+        total_decimal = Decimal(str(total)) if total is not None else None
+    except InvalidOperation:
+        total_decimal = None
+    signo = (
+        "POSITIVO" if total_decimal is not None and total_decimal > 0
+        else "NEGATIVO" if total_decimal is not None and total_decimal < 0
+        else "CERO" if total_decimal == 0
+        else None
+    )
+    evidencias = [
+        *((candidato.get("sentido") or {}).get("evidencias") or []),
+        *((candidato.get("tipo_pedido") or {}).get("evidencias") or []),
+        *((candidato.get("total") or {}).get("evidencias") or []),
+    ]
+    resultado = {
+        "concepto": "NO_DEMOSTRABLE",
+        "categoria_movimiento": None,
+        "sentido": sentido,
+        "signo": signo,
+        "regla": "ESTRUCTURA_Y_CONCEPTO_INSUFICIENTES",
+        "evidencias": evidencias,
+        "mismo_hecho_economico_resumen": False,
+        "relacion_documental": None,
+    }
+    if not (
+        (sentido == "ABONO" and signo == "NEGATIVO")
+        or (sentido == "CARGO" and signo == "POSITIVO")
+    ):
+        return {**resultado, "regla": "SENTIDO_Y_SIGNO_NO_COHERENTES_O_NO_DOCUMENTADOS"}
+    if relacion and relacion.get("inequivoca") is True:
+        categoria = relacion["movimiento"].get("categoria")
+        conceptos = {
+            "SERVICIO": "SERVICIO",
+            "RAPPEL": "AJUSTE",
+            "ABONO_COMERCIAL": "ABONO",
+            "DEVOLUCION_MERCANCIA": "DEVOLUCION_MERCANCIA",
+            "DESCUENTO": "ABONO",
+            "BONIFICACION": "ABONO",
+            "CONDICION_COMERCIAL": "AJUSTE",
+            "CONDICION_COOPERATIVA": "AJUSTE",
+        }
+        concepto = conceptos.get(categoria)
+        if concepto:
+            return {
+                **resultado,
+                "concepto": concepto,
+                "categoria_movimiento": categoria,
+                "regla": "RELACION_ECONOMICA_EXACTA_UNICA_CON_RESUMEN_CLASIFICADO",
+                "evidencias": [*evidencias, *(relacion.get("evidencias") or [])],
+                "mismo_hecho_economico_resumen": True,
+                "relacion_documental": relacion["orden"],
+            }
+    if sentido == "ABONO" and tipo == "ABONOS AGRUPADOS":
+        return {
+            **resultado,
+            "concepto": "ABONO",
+            "categoria_movimiento": "ABONO_COMERCIAL",
+            "regla": "BLOQUE_ABONOS_Y_LITERAL_ABONOS_AGRUPADOS",
+        }
+    if sentido == "CARGO" and tipo in TIPOS_PEDIDO_MERCANCIA_ALLIANCE:
+        return {
+            **resultado,
+            "concepto": "ALBARAN_MERCANCIA",
+            "regla": "BLOQUE_CARGOS_Y_TIPO_PEDIDO_MERCANCIA_CERTIFICADO",
+        }
+    return resultado
+
+
+def promover_albaran_alliance(
+    candidato: dict[str, Any], *, factura_documental: str,
+    paginas_factura: list[int], segmentacion_inequivoca: bool,
+) -> dict[str, Any] | None:
+    """Promueve solo una fila situada bajo columnas ALBARAN inequívocas.
+
+    El patrón de referencia, el nombre del fichero y la posición aislada no
+    conceden rol. Fecha e importe son opcionales, pero, si existen, conservan
+    evidencia documental propia.
+    """
+    rol = candidato.get("rol_documentacion") or {}
+    numero = candidato.get("numero_referencia")
+    pagina = (candidato.get("provenance") or {}).get("pagina")
+    if (
+        not segmentacion_inequivoca
+        or not factura_documental
+        or type(pagina) is not int
+        or pagina not in paginas_factura
+        or not numero
+        or not numero.get("valor")
+        or not numero.get("evidencias")
+        or rol.get("valor") != "ALBARAN"
+        or rol.get("regla") != "COLUMNAS_NUMERO_ALBARAN_EXPLICITAS"
+        or not rol.get("evidencias")
+        or (candidato.get("clasificacion_economica") or {}).get("concepto")
+            != "ALBARAN_MERCANCIA"
+    ):
+        return None
+    for optional in ("fecha", "base", "total", "tipo_pedido", "sentido"):
+        value = candidato.get(optional)
+        if value is not None and (value.get("valor") is None or not value.get("evidencias")):
+            return None
+    return {
+        "orden": candidato.get("orden"),
+        "numero_albaran": numero,
+        "fecha": candidato.get("fecha"),
+        "tipo_pedido": candidato.get("tipo_pedido"),
+        "base": candidato.get("base"),
+        "total": candidato.get("total"),
+        "sentido": candidato.get("sentido"),
+        "rol_fila": "ALBARAN_DEMOSTRADO",
+        "rol_documentacion": rol,
+        "provenance": {
+            **(candidato.get("provenance") or {}),
+            "factura_documental": factura_documental,
+            "paginas_factura": list(paginas_factura),
+            "regla_promocion": "COLUMNAS_NUMERO_ALBARAN_EXPLICITAS_EN_SEGMENTO_FACTURA",
+            "regla_clasificacion": candidato["clasificacion_economica"]["regla"],
+            "origen": "PDF",
+        },
+    }
 
 
 def sentido_desde_seccion_documental(
@@ -115,20 +255,19 @@ def documentar_sentido_decision_funcional_pio(literal: str) -> dict[str, Any] | 
 class AdaptadorAlliance(AdaptadorBase):
     """Extractor local del layout tabular Alliance/Cencora auditado.
 
-    Las filas de las tablas CARGOS/ABONOS se conservan como candidatos. El
-    layout demuestra sus columnas y su seccion, pero no demuestra que cada
-    fila sea DETALLE_ALBARAN en vez de una operacion o agregado. Por ello el
-    rol permanece INDETERMINADO y esas filas no participan en conciliaciones
-    de albaranes.
+    Todas las filas se conservan como candidatos. Solo se publica además un
+    albarán cuando la página contiene las columnas explícitas NUMERO ALBARAN,
+    la fila tiene número con evidencia y la página pertenece inequívocamente
+    al segmento de una factura. El candidato original nunca se destruye.
     """
 
     id = "alliance-local"
-    version = "1.0.0"
+    version = "1.2.0"
     capacidades = {
         "segmentacion": "SOPORTADO_MULTIFACTURA_DETERMINISTA",
         "cabecera": "SOPORTADO_MONEDA_NULL_NO_DOCUMENTADA",
-        "candidatos_fila": "SOPORTADO_ROL_INDETERMINADO_SIN_INVENCION",
-        "albaranes": "SOPORTADO_SOLO_CON_ROL_DEMOSTRADO",
+        "candidatos_fila": "SOPORTADO_CON_PROMOCION_DOCUMENTAL_FAIL_CLOSED",
+        "albaranes": "SOPORTADO_ESTRUCTURA_Y_CONCEPTO_MERCANCIA",
         "movimientos": "SOPORTADO_SENTIDO_DOCUMENTAL_O_NULL",
         "impuestos": "SOPORTADO_TIPOS_IMPRESOS",
         "vencimientos": "SOPORTADO_OCURRENCIAS_DOCUMENTALES",
@@ -156,8 +295,8 @@ class AdaptadorAlliance(AdaptadorBase):
         )
 
     def extraer_albaranes(self, documento: DocumentoLocal, segmentos: list[SegmentoLocal]):
-        # La publicacion se realiza por factura segmentada. Solo una futura
-        # evidencia positiva de rol podria poblar la coleccion albaranes.
+        # La colección autoritativa vive en cada factura para no perder la
+        # pertenencia multifactura. No se publica un agregado sin factura.
         return []
 
     def extraer_facturas(self, documento: DocumentoLocal, segmentos: list[SegmentoLocal]) -> list[dict[str, Any]]:
@@ -175,15 +314,33 @@ class AdaptadorAlliance(AdaptadorBase):
         movimientos = self._movimientos(documento, paginas[0], fiscal_aux["filas_concepto"])
         candidatos = self._candidatos_fila(documento, paginas)
         relaciones = self._relaciones_documentales(candidatos, movimientos)
+        relaciones_por_candidato = {
+            r["candidato"]["orden"]: r for r in relaciones if r.get("inequivoca") is True
+        }
+        for candidato in candidatos:
+            candidato["clasificacion_economica"] = clasificar_fila_economica_alliance(
+                candidato, relaciones_por_candidato.get(candidato["orden"])
+            )
+        paginas_factura = list(range(segmento.paginas[0], segmento.paginas[1] + 1))
+        albaranes = [a for c in candidatos if (a := promover_albaran_alliance(
+            c, factura_documental=cabecera["numero_factura"]["valor"],
+            paginas_factura=paginas_factura,
+            segmentacion_inequivoca=segmento.estado == "DETERMINISTA",
+        )) is not None]
+        operaciones_economicas = self._operaciones_economicas(candidatos, relaciones_por_candidato)
         vencimientos = self._vencimientos(documento, paginas)
         otros = self._otros(documento, paginas[0], fiscal_aux)
         controles = self._controles(cabecera, impuestos, fiscal_aux, vencimientos)
-        incidencias = [{
-            "codigo": "ROL_FILA_INDETERMINADO",
-            "cantidad": len(candidatos),
+        no_promovidos = sum(
+            c["clasificacion_economica"]["concepto"] == "NO_DEMOSTRABLE"
+            for c in candidatos
+        )
+        incidencias = ([{
+            "codigo": "CANDIDATO_ALBARAN_NO_PROMOVIDO",
+            "cantidad": no_promovidos,
             "bloqueante": False,
-            "motivo": "EL_LAYOUT_NO_DEMUESTRA_DETALLE_ALBARAN_FRENTE_A_OPERACION_O_AGREGADO",
-        }]
+            "motivo": "FALTA_EVIDENCIA_POSITIVA_DE_ROL_O_SEGMENTACION",
+        }] if no_promovidos else [])
         movimientos_sin_sentido = [m for m in movimientos if m["sentido"] is None]
         if movimientos_sin_sentido:
             incidencias.append({
@@ -207,7 +364,8 @@ class AdaptadorAlliance(AdaptadorBase):
             "layout": "ALLIANCE_FACTURA_DENSO_V1",
             "cabecera": cabecera,
             "candidatos_fila": candidatos,
-            "albaranes": [],
+            "albaranes": albaranes,
+            "operaciones_economicas": operaciones_economicas,
             "movimientos": movimientos,
             "relaciones_documentales": relaciones,
             "impuestos": impuestos,
@@ -477,6 +635,8 @@ class AdaptadorAlliance(AdaptadorBase):
                     "tipo_objeto": "MOVIMIENTO_COMERCIAL",
                     "orden": movimiento["orden"],
                     "identidad": movimiento["descripcion_literal"],
+                    "categoria": movimiento["categoria"],
+                    "sentido": movimiento.get("sentido"),
                     "pagina": movimiento["provenance"]["pagina"],
                 },
                 "valores_conciliados": {"base": clave[0], "total": clave[1]},
@@ -495,11 +655,42 @@ class AdaptadorAlliance(AdaptadorBase):
                     "transferencia_rol": False,
                     "transferencia_categoria": False,
                     "fusion_entidades": False,
+                    "mismo_hecho_economico": True,
                 },
             }
             relaciones.append(relacion)
             self._aplicar_sentido_documental(candidato, movimiento, relacion)
         return relaciones
+
+    def _operaciones_economicas(self, candidatos, relaciones_por_candidato):
+        salida = []
+        for candidato in candidatos:
+            clasificacion = candidato["clasificacion_economica"]
+            if clasificacion["concepto"] in {"ALBARAN_MERCANCIA", "NO_DEMOSTRABLE"}:
+                continue
+            relacion = relaciones_por_candidato.get(candidato["orden"])
+            salida.append({
+                "orden": len(salida) + 1,
+                "referencia": candidato["numero_referencia"],
+                "descripcion_literal": candidato["tipo_pedido"],
+                "concepto": clasificacion["concepto"],
+                "categoria": clasificacion["categoria_movimiento"] or "OTRO",
+                "sentido": clasificacion["sentido"],
+                "base": candidato["base"],
+                "iva": None,
+                "recargo": None,
+                "importe": candidato["total"],
+                "clasificacion_economica": clasificacion,
+                "relacion_documental": relacion,
+                "provenance": {
+                    **candidato["provenance"],
+                    "regla_clasificacion": clasificacion["regla"],
+                    "referencia": candidato["numero_referencia"]["valor"],
+                    "mismo_hecho_economico_resumen":
+                        clasificacion["mismo_hecho_economico_resumen"],
+                },
+            })
+        return salida
 
     def _aplicar_sentido_documental(self, candidato, movimiento, relacion):
         if movimiento["sentido"] is not None:
@@ -525,6 +716,8 @@ class AdaptadorAlliance(AdaptadorBase):
                 continue
             cargos = next(p for p in encabezado.palabras if normalizar_texto(p.texto) == "CARGOS")
             abonos = next(p for p in encabezado.palabras if normalizar_texto(p.texto) == "ABONOS")
+            cabecera_albaran = next((l for l in pagina.lineas
+                if sum(normalizar_texto(p.texto) == "ALBARAN" for p in l.palabras) >= 2), None)
             for linea in pagina.lineas:
                 for lado, palabras, sentido, titulo in (
                     ("IZQUIERDA", [p for p in linea.palabras if 25 <= p.bbox.x0 and p.bbox.x1 < pagina.ancho / 2], "CARGO", cargos),
@@ -532,6 +725,18 @@ class AdaptadorAlliance(AdaptadorBase):
                 ):
                     item = self._candidato_lado(documento, linea, palabras, sentido, titulo, lado)
                     if item:
+                        if cabecera_albaran is not None:
+                            item["rol_documentacion"] = {
+                                "valor": "ALBARAN",
+                                "literal": cabecera_albaran.texto,
+                                "regla": "COLUMNAS_NUMERO_ALBARAN_EXPLICITAS",
+                                "evidencias": [self.evidencia(
+                                    documento, pagina.numero, cabecera_albaran.texto,
+                                    cabecera_albaran.bbox, cabecera_albaran.texto,
+                                    cabecera_albaran.bbox, "candidatos_fila", "rol_fila",
+                                    "COLUMNAS_NUMERO_ALBARAN_EXPLICITAS", "LITERAL_LOCAL",
+                                )],
+                            }
                         item["orden"] = len(salida) + 1
                         salida.append(item)
         return salida

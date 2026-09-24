@@ -2,7 +2,7 @@ from datetime import date
 
 from config.config import NOMBRE_FARMACIA
 from src.database.leer_albaranes import obtener_albaranes_desde_fecha
-from src.models.albaran import Albaran
+from src.models.albaran import Albaran, conservar_id_proveedor
 from src.supabase_client.guardar_albaranes import guardar_albaran
 from src.utils.logger import obtener_logger
 
@@ -23,7 +23,7 @@ def convertir_albaran_para_supabase(
     return {
         "farmacia": NOMBRE_FARMACIA,
         "id_contador": int(albaran.id_contador),
-        "id_proveedor": int(albaran.id_proveedor),
+        "id_proveedor": conservar_id_proveedor(albaran.id_proveedor),
         "proveedor": albaran.proveedor.strip(),
         "numero_albaran": albaran.id_albaran.strip(),
         "fecha": albaran.fecha.date().isoformat(),

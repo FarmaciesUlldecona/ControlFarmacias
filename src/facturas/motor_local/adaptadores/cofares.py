@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from ...clasificacion_documental import clasificar_factura_por_contenido
 from ..conciliacion import ComponenteConciliacion, EspecificacionConciliacion, evaluar_conciliaciones
 from ..geometria.campos import fecha_iso, palabras_fecha, palabras_importe
 from ..geometria.lineas import DATE_RE, normalizar_texto, parsear_importe
@@ -25,8 +26,14 @@ def documentar_sentido_decision_funcional_pio_cofares(
     la regla general de servicios no se comparte con otros proveedores.
     """
     literal = normalizar_texto(descripcion_literal)
-    if categoria == "SERVICIO":
-        sentido, regla = "CARGO", "SERVICIOS_COFARES_SON_CARGO_DECISION_PIO"
+    cargos_servicio = {
+        "SERVICIO LOGISTICO": "SERVICIO_LOGISTICO_COFARES_DECISION_PIO",
+        "SERVICIO COFARES DIRECTO": "SERVICIO_COFARES_DIRECTO_DECISION_PIO",
+        "SERV INTEGRAL DISTRIBUCION": "SERV_INTEGRAL_DISTRIBUCION_DECISION_PIO",
+        "DOMICILIACION BANCARIA": "DOMICILIACION_BANCARIA_DECISION_PIO",
+    }
+    if literal in cargos_servicio:
+        sentido, regla = "CARGO", cargos_servicio[literal]
     elif literal == "TOTAL DEVOLUCIONES":
         sentido, regla = "ABONO", "TOTAL_DEVOLUCIONES_COFARES_DECISION_PIO"
     elif literal == "CARGO PARAFARMACIA":
@@ -157,12 +164,20 @@ class AdaptadorCofares(AdaptadorBase):
         sin_importe = sum(m["importe"] is None for m in movimientos)
         if sin_importe:
             incidencias.append({"codigo": "IMPORTE_MOVIMIENTO_NO_DOCUMENTADO", "cantidad": sin_importe, "bloqueante": False})
+        clasificacion = clasificar_factura_por_contenido(albaranes, movimientos)
         return {
             "segmento": {"sha_documento": documento.sha_documento, "paginas": segmento.paginas,
                          "identidad": cabecera["numero_factura"]["valor"], "estado": segmento.estado,
                          "regla": segmento.regla, "evidencias": segmento.evidencias},
             "layout": layout, "cabecera": cabecera, "albaranes": albaranes,
             "movimientos": movimientos, "impuestos": impuestos, "vencimientos": vencimientos,
+            "clasificacion_documental": {
+                "tipo": clasificacion.tipo.value,
+                "mercancia_demostrada": clasificacion.mercancia_demostrada,
+                "gasto_servicio_demostrado": clasificacion.gasto_servicio_demostrado,
+                "requiere_revision": clasificacion.requiere_revision,
+                "regla": clasificacion.regla,
+            },
             "otros": otros, "controles_conciliacion": self._controles(cabecera, impuestos, vencimientos),
             "incidencias": incidencias,
         }
@@ -298,8 +313,6 @@ class AdaptadorCofares(AdaptadorBase):
             desglose_bases = {k: v for k, v in campos_columnas.items() if k in categorias_fiscales}
             base = campos_columnas.get("T_BASES") or self._campo_derivado_suma_bases(desglose_bases)
             decision = documentar_sentido_decision_funcional_pio_cofares(literal, categoria)
-            if decision is None:
-                raise ValueError(f"Movimiento COFARES sin decision funcional Pio: {literal}")
             salida.append({"orden": len(salida) + 1,
                 "descripcion_literal": self.campo_documentado(documento, literal, concepto, linea, "movimientos", "descripcion", "CONCEPTO_VISIBLE"),
                 "concepto_normalizado": normalizar_texto(literal).replace(".", "_").replace(" ", "_"),
@@ -314,14 +327,15 @@ class AdaptadorCofares(AdaptadorBase):
                     "regla": "CABECERAS_Y_GEOMETRIA_VISIBLES_COFARES",
                 },
                 "iva": None, "recargo": None, "fecha": None,
-                "sentido": decision["valor"],
-                "sentido_fuente": "DECISION_FUNCIONAL_PIO",
+                "sentido": decision["valor"] if decision else None,
+                "sentido_fuente": "DECISION_FUNCIONAL_PIO" if decision else None,
                 "sentido_documentacion": decision,
                 "valores_documentales": [self._importe(documento, linea, x, f"valor_{i}", "VALOR_VISIBLE_SIN_SEMANTICA_INDIVIDUAL") for i, x in enumerate(cantidades, 1)],
                 "provenance": {"pagina": pagina.numero, "adaptador": self.id, "version_adaptador": self.version,
-                               "autoridad_sentido": "PIO", "fuente_sentido": "DECISION_FUNCIONAL_PIO",
-                               "evidencia_documental_directa_sentido": False,
-                               "regla_sentido": decision["regla"],
+                               "autoridad_sentido": "PIO" if decision else None,
+                               "fuente_sentido": "DECISION_FUNCIONAL_PIO" if decision else None,
+                               "evidencia_documental_directa_sentido": False if decision else None,
+                               "regla_sentido": decision["regla"] if decision else None,
                                "inferencia_por_descripcion": False, "inferencia_por_signo": False},
                 "incidencias": [] if campos_columnas.get("TOTAL") else [{"codigo": "IMPORTE_MOVIMIENTO_NO_DOCUMENTADO"}]})
         return salida
@@ -489,4 +503,4 @@ class AdaptadorCofares(AdaptadorBase):
 
     @staticmethod
     def _desconocido(documento, segmento):
-        return {"segmento": {"sha_documento": documento.sha_documento, "paginas": segmento.paginas}, "layout": None, "cabecera": {}, "albaranes": [], "movimientos": [], "impuestos": [], "vencimientos": [], "otros": [], "controles_conciliacion": [], "incidencias": [{"codigo": "LAYOUT_DESCONOCIDO", "estado": "NO_APLICABLE", "bloqueante": True}]}
+        return {"segmento": {"sha_documento": documento.sha_documento, "paginas": segmento.paginas}, "layout": None, "cabecera": {}, "albaranes": [], "movimientos": [], "impuestos": [], "vencimientos": [], "otros": [], "clasificacion_documental": {"tipo": "TIPO_NO_DEMOSTRADO", "mercancia_demostrada": False, "gasto_servicio_demostrado": False, "requiere_revision": True, "regla": "CONTENIDO_DOCUMENTAL_ALBARANES_Y_MOVIMIENTOS_V1"}, "controles_conciliacion": [], "incidencias": [{"codigo": "LAYOUT_DESCONOCIDO", "estado": "NO_APLICABLE", "bloqueante": True}]}

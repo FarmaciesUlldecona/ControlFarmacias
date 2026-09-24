@@ -1,0 +1,43 @@
+{
+  "capturado_utc": "2026-09-24T08:16:26.9278410Z",
+  "project_ref": "vklaiuytvegkelgyspxc",
+  "destino": "SUPABASE_PRODUCTIVO_CONTROLFARMACIAS_PIO",
+  "conexion": ["postgres", "postgres", "public", "read_only=on", "PostgreSQL 17.6"],
+  "flags": [false, false, false, ["PIO"]],
+  "conteos": {"documentos_pio": 140, "facturas": 7, "normalizaciones": 7, "conciliaciones": 12},
+  "locks": [0, 0],
+  "workers": [],
+  "marcadores_migraciones_07_15": [true, true, true, true, true, true, true, true, true],
+  "migracion_16_ausente": true,
+  "constraint_disparador": "CHECK disparador IN (AUTOMATICO, MANUAL, REPROCESADO, TEST)",
+  "funciones": [
+    {
+      "nombre": "cf_persistir_documento_multifactura",
+      "firma": "uuid,text,text,text,jsonb,text[]",
+      "owner": "postgres",
+      "security_definer": true,
+      "search_path": "public",
+      "grants": {"anon": false, "authenticated": false, "service_role": true},
+      "definition_sha256": "81c5c447b8942e5aa64c67e8fb1f314f389d01c0fe8997713178a8b557fb438c",
+      "fuente_restauracion_verificada": "sql/migrations/15_cf_multifactura.sql"
+    },
+    {
+      "nombre": "cf_reclamar_documento_normalizacion",
+      "firma": "text,integer",
+      "owner": "postgres",
+      "security_definer": true,
+      "search_path": "public",
+      "grants": {"anon": false, "authenticated": false, "service_role": true},
+      "definition_sha256": "3c80c347dc2504a804bc6fe46794365e4cb9ffc0501cf4b44a001dd304e80c32",
+      "fuente_restauracion_verificada": "sql/migrations/09_cf_normalizacion_runtime.sql"
+    }
+  ],
+  "huellas": {
+    "documentos_facturas": [140, "03d2fafebb9dbd72247c628e6fa612b0"],
+    "facturas": [7, "9b551263557e8b85aa26dc0f4b79a63c"],
+    "normalizacion_ejecuciones": [7, "995b74f76f084d969d99e79e6f3981c8"],
+    "conciliaciones": [12, "f60004f054f67eddc3504de00fd5cce6"],
+    "cf_configuracion": [1, "4cd62152f47b39bad46156b0225fdc8d"]
+  },
+  "secretos_exportados": false
+}

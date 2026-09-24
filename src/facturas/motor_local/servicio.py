@@ -10,6 +10,7 @@ from .backend.base import BackendPdf
 from .conciliacion import evaluar_conciliaciones
 from .modelos import DocumentoExtraidoLocal
 from .segmentacion.segmentador import segmentar
+from src.facturas.completitud_documental import evaluar_completitud_local, MARCA_COMPLETITUD
 
 
 class MotorDocumentoLocal:
@@ -76,6 +77,13 @@ class MotorDocumentoLocal:
         capacidades = adaptador.capacidades if adaptador else {
             k: "NO_SOPORTADO" for k in ["segmentacion", "cabecera", "albaranes", "movimientos", "impuestos", "vencimientos"]
         }
+        completo = evaluar_completitud_local(
+            adaptador.id if adaptador else None,
+            documento,
+            segmentos,
+            facturas,
+            incidencias,
+        )
         return DocumentoExtraidoLocal(
             documento={
                 "sha256": documento.sha_documento,
@@ -94,6 +102,7 @@ class MotorDocumentoLocal:
                     }
                     for adapter, reconocimiento in reconocimientos
                 ],
+                MARCA_COMPLETITUD: completo,
                 **({
                     "ocr": documento.ocr,
                     "ocr_paginas": [
@@ -129,6 +138,7 @@ class MotorDocumentoLocal:
             evidencias=evidencias,
             capacidades=capacidades,
             motor={"id": self.id, "version": self.version, "backend": self.backend.id, "backend_version": self.backend.version},
+            documento_completo_demostrado=completo,
         )
 
 

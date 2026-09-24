@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
@@ -168,6 +169,17 @@ def certificar_conexion_solo_lectura(conexion: Any) -> None:
             "Conexión Farmatic rechazada por seguridad: "
             f"{detalle}. Identidad detectada: {identidad!r}."
         )
+
+
+    logging.getLogger("sincronizar_albaranes").info(
+        "Certificacion Farmatic READ_ONLY superada | "
+        "Identidad SQL: %s | Identidad original: %s | Base: %s | "
+        "SELECT: si | INSERT/UPDATE/DELETE/ALTER/EXECUTE/CONTROL: no | "
+        "sysadmin/db_owner/db_datawriter/db_ddladmin: no",
+        identidad,
+        identidad_original,
+        base_datos,
+    )
 
 
 def obtener_conexion() -> ConexionSoloLectura:

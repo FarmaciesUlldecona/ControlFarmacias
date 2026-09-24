@@ -79,7 +79,19 @@ def test_tramo_fiscal_incorrecto_genera_incidencia_sin_reconstruir():
 
 
 def test_duplicado_por_proveedor_numero_y_precedencia():
-    facturas = [fac(), fac(factura_id="f2")]
+    contexto = dict(destinatario=Tercero(nif=vd("40901058C")), tipo_documento=vd("FACTURA"))
+    facturas = [fac(**contexto), fac(factura_id="f2", **contexto)]
     assert detectar_duplicados(facturas) == {1: 0}
     assert validar_factura(facturas[1], duplicada=True).estado == EstadoValidacion.REQUIERE_REVISION
     assert validar_factura(fac(), ContextoValidacion(fallo_tecnico_global=True, senal_estructural_incompleta=True, identificadores_albaran_visibles=2)).estado == EstadoValidacion.ERROR_TECNICO
+
+
+def test_sin_destinatario_o_tipo_no_demuestra_duplicado():
+    assert detectar_duplicados([fac(), fac(factura_id="f2")]) == {}
+
+
+def test_destinatarios_distintos_no_son_duplicado():
+    assert detectar_duplicados([
+        fac(destinatario=Tercero(nif=vd(nif)), tipo_documento=vd("FACTURA"))
+        for nif in ("PIO-FISCAL", "RITA-FISCAL")
+    ]) == {}

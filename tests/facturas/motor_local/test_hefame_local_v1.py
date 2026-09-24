@@ -56,30 +56,31 @@ def test_replay_hefame_completo_ciego():
     assert resultado.cabecera["moneda"] is None
     assert len(resultado.albaranes) == 12
     assert all(item.sentido is None and item.rol_fila == "DETALLE_ALBARAN" for item in resultado.albaranes)
-    assert len(resultado.movimientos) == 3
-    assert all(item["sentido"] is None for item in resultado.movimientos)
+    assert len(resultado.movimientos) == 4
     movimientos = {item["concepto_normalizado"]: item for item in resultado.movimientos}
-    assert movimientos["ABONO_DEVOLUCION"]["categoria"] == "DEVOLUCION_MERCANCIA"
-    assert movimientos["ABONO_DEVOLUCION"]["sentido"] is None
-    assert movimientos["APROAFA"]["categoria"] == "CONDICION_COMERCIAL"
-    assert movimientos["APROAFA"]["sentido"] is None
+    assert movimientos["ABONO_DEVOLUCION"]["categoria"] == "ABONO_O_DEVOLUCION_NO_DESAMBIGUADO"
+    assert movimientos["ABONO_DEVOLUCION"]["sentido"] == "ABONO"
+    assert movimientos["APROAFA"]["categoria"] == "OTRO_CONCEPTO_DEMOSTRADO"
+    assert movimientos["APROAFA"]["sentido"] == "CARGO"
+    assert movimientos["COMISION_HEFAME"]["importe"]["valor"] == 80.0
+    assert movimientos["COMISION_HEFAME"]["periodicidad"] == "NO_DEMOSTRADA"
     assert len(resultado.impuestos) == 4
     assert all(item["control_aritmetico"] == "OK" for item in resultado.impuestos)
     assert len(resultado.vencimientos) == 1
     assert resultado.vencimientos[0]["importe"]["valor"] == 677.99
     assert len(resultado.otros) == 4
     controles = {item["id"]: item for item in resultado.controles_conciliacion}
-    assert controles["PEDIDOS_DESDE_DETALLE"]["estado"] == "DIFERENCIA_DOCUMENTAL"
-    assert controles["PEDIDOS_DESDE_DETALLE"]["valor_reconstruido"] == 404.64
-    assert controles["PEDIDOS_DESDE_DETALLE"]["diferencia"] == 80.0
+    assert controles["PEDIDOS_DESDE_DETALLE"]["estado"] == "OK"
+    assert controles["PEDIDOS_DESDE_DETALLE"]["valor_reconstruido"] == 484.64
+    assert controles["PEDIDOS_DESDE_DETALLE"]["diferencia"] == 0.0
     assert controles["PEDIDOS_DESDE_DETALLE"]["concepto_origen"] is None
-    assert controles["PEDIDOS_DESDE_DETALLE"]["columnas"]["BASE_S_R"]["diferencia"] == 80.0
+    assert controles["PEDIDOS_DESDE_DETALLE"]["columnas"]["BASE_S_R"]["diferencia"] == 0.0
     assert controles["PEDIDOS_DESDE_DETALLE"]["columnas"]["BASE_RE"]["diferencia"] == 0.0
     assert controles["PEDIDOS_DESDE_DETALLE"]["columnas"]["BASE_NO"]["diferencia"] == 0.0
     assert controles["BASE_IMPONIBLE_DESDE_BLOQUES"]["estado"] == "OK"
     assert controles["TOTAL_FACTURA_DESDE_FISCALIDAD"]["estado"] == "OK"
     assert controles["VENCIMIENTO_DESDE_TOTAL_FACTURA"]["estado"] == "OK"
-    assert not any(item.get("importe", {}).get("valor") == 80.0 for item in resultado.movimientos)
+    assert sum(item.get("importe", {}).get("valor") == 80.0 for item in resultado.movimientos) == 1
     assert resultado.evidencias
 
 
@@ -113,6 +114,6 @@ def test_hefame_solo_observa_en_shadow_y_no_sustituye_salida_oficial():
     assert evento["autoridad_aplicada"] == "IA"
     assert evento["salida_local_aplicada"] is False
     assert evento["familias_locales"] == {
-        "cabecera": True, "albaranes": 12, "movimientos": 3,
-        "impuestos": 4, "vencimientos": 1, "otros": 4,
+        "cabecera": True, "albaranes": 12, "movimientos": 4,
+        "impuestos": 4, "vencimientos": 1, "otros": 4, "facturas": 1,
     }

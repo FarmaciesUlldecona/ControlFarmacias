@@ -1,6 +1,8 @@
+import getpass
+
 from config.config import NOMBRE_FARMACIA
 from src.database.leer_albaranes import obtener_nuevos_albaranes
-from src.models.albaran import Albaran
+from src.models.albaran import Albaran, conservar_id_proveedor
 from src.supabase_client.guardar_albaranes import (
     guardar_albaran,
     obtener_ultimo_id_contador,
@@ -22,7 +24,7 @@ def convertir_albaran_para_supabase(
     return {
         "farmacia": NOMBRE_FARMACIA,
         "id_contador": int(albaran.id_contador),
-        "id_proveedor": int(albaran.id_proveedor),
+        "id_proveedor": conservar_id_proveedor(albaran.id_proveedor),
         "proveedor": albaran.proveedor.strip(),
         "numero_albaran": albaran.id_albaran.strip(),
         "fecha": albaran.fecha.date().isoformat(),
@@ -47,6 +49,8 @@ def sincronizar_albaranes() -> None:
     )
     logger.info("Inicio de sincronización de albaranes")
 
+    logger.info("Principal Windows efectivo: %s", getpass.getuser())
+
     try:
         ultimo_id_contador = obtener_ultimo_id_contador(
             NOMBRE_FARMACIA
@@ -59,6 +63,13 @@ def sincronizar_albaranes() -> None:
 
         albaranes = obtener_nuevos_albaranes(
             ultimo_id_contador
+        )
+
+        logger.info(
+            "Lectura Farmatic READ_ONLY terminada | Filas posteriores: %s | "
+            "Maximo IdContador leido: %s",
+            len(albaranes),
+            max((item.id_contador for item in albaranes), default=ultimo_id_contador),
         )
 
         if not albaranes:

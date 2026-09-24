@@ -63,13 +63,12 @@ def test_dos_layouts_cofares_completos_y_shadow_off():
 
 
 def test_decision_servicios_es_explicita_y_exclusiva_de_cofares():
-    decision = documentar_sentido_decision_funcional_pio_cofares("Servicio COFARES futuro", "SERVICIO")
-    assert decision == {
-        "valor": "CARGO", "autoridad": "PIO", "fuente": "DECISION_FUNCIONAL_PIO",
-        "tipo_evidencia": "DECISION_FUNCIONAL_PIO", "evidencia_documental_directa": False,
-        "proveedor": "COFARES", "literal": "Servicio COFARES futuro",
-        "regla": "SERVICIOS_COFARES_SON_CARGO_DECISION_PIO", "alcance": "SOLO_COFARES",
-    }
+    decision = documentar_sentido_decision_funcional_pio_cofares("Servicio Logístico", "SERVICIO")
+    assert decision is not None
+    assert decision["valor"] == "CARGO"
+    assert decision["regla"] == "SERVICIO_LOGISTICO_COFARES_DECISION_PIO"
+    assert decision["alcance"] == "SOLO_COFARES"
+    assert documentar_sentido_decision_funcional_pio_cofares("Servicio COFARES futuro", "SERVICIO") is None
     assert documentar_sentido_decision_funcional_pio_cofares("Otro concepto", "OTRO") is None
 
 

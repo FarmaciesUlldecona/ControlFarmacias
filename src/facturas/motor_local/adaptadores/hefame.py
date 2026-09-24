@@ -1,7 +1,14 @@
 from __future__ import annotations
 
 import re
+from decimal import Decimal
 from typing import Any
+
+from src.facturas.grupos_funcionales import clasificar_grupo_hefame
+from src.facturas.hefame_economia import (
+    derivar_magnitud_comparable_hefame,
+    detectar_comision_hefame,
+)
 
 from ..conciliacion import ComponenteConciliacion, EspecificacionConciliacion
 from ..geometria.campos import fecha_iso, lineas_con_texto, palabras_fecha, palabras_importe
@@ -16,7 +23,7 @@ ALBARAN_RE = re.compile(r"^\d{10}$")
 
 class AdaptadorHefame(AdaptadorBase):
     id = "hefame-local"
-    version = "1.1.0"
+    version = "1.2.0"
     capacidades = {
         "segmentacion": "SOPORTADO_MULTIPAGINA_DETERMINISTA",
         "cabecera": "SOPORTADO_PARCIAL_MONEDA_NO_DOCUMENTADA",
@@ -81,6 +88,13 @@ class AdaptadorHefame(AdaptadorBase):
         pago_line = self._lineas_vencimiento(documento)[0]
         pago_fecha = palabras_fecha(pago_line)[0]
         pago_words = [p for p in pago_line.palabras if p.bbox.x1 < pago_fecha.bbox.x0]
+        identidad_funcional = clasificar_grupo_hefame(
+            proveedor_documental="HDAD.FMCTCA.MEDIT.,S.C.L.",
+            nif_documental=proveedor_nif.palabras[-1].texto,
+            layout=self.id,
+        )
+        if identidad_funcional is None:
+            raise ValueError("IDENTIDAD_FUNCIONAL_HEFAME_MERCANCIA_NO_DEMOSTRADA")
         return {
             "proveedor": {
                 "nombre": self._campo(documento, proveedor_nombre.texto, proveedor_nombre.palabras, proveedor_nombre, "cabecera", "proveedor_nombre", "LITERAL_RAZON_SOCIAL"),
@@ -103,6 +117,7 @@ class AdaptadorHefame(AdaptadorBase):
             "otros_total": self._total_fila(documento, fiscal_lines["otros_total"], "otros_total"),
             "forma_pago": self._campo(documento, " ".join(p.texto for p in pago_words), pago_words, pago_line, "vencimientos", "forma_pago", "LITERAL_VIA_PAGO"),
             "codigo_cliente": self._campo(documento, codigo_cliente.texto, [codigo_cliente], linea_tipo, "cabecera", "codigo_cliente", "TOKEN_BLOQUE_DESTINATARIO"),
+            "grupo_funcional": identidad_funcional.to_dict(),
         }
 
     def extraer_albaranes(self, documento: DocumentoLocal, segmentos):
@@ -131,11 +146,33 @@ class AdaptadorHefame(AdaptadorBase):
                         documento, pagina.numero, palabra.texto, palabra.bbox, linea.texto, linea.bbox,
                         "relacion_albaranes", etiqueta, f"VALOR_BAJO_COLUMNA_{etiqueta}", "LITERAL_LOCAL",
                     )
+                categorias_no_cero = [
+                    etiqueta for etiqueta in etiquetas[:3] if valores[etiqueta] != 0
+                ]
+                atributos = {
+                    "numero_documental": ids[0].texto,
+                    "fecha_documental": fecha_iso(fechas[0].texto),
+                    "importe_documental": valores["TOTAL_BASES"],
+                    "magnitud_documental": "BASE_NETA",
+                    "provenance": {
+                        "fuente": "RELACION_ALBARANES_DOC_ENTREGA",
+                        "pagina": pagina.numero,
+                        "fila_literal": linea.texto,
+                        "regla": "TOTAL_BASES_NO_ES_PUC_NI_PVP",
+                    },
+                }
+                if len(categorias_no_cero) == 1:
+                    atributos.update({
+                        clave: float(valor) if isinstance(valor, Decimal) else valor
+                        for clave, valor in derivar_magnitud_comparable_hefame(
+                            valores["TOTAL_BASES"], categorias_no_cero[0],
+                        ).items()
+                    })
                 salida.append(AlbaranLocal(
                     ids[0].texto, fecha_iso(fechas[0].texto), None,
                     [valores[x] for x in etiquetas[:3]], valores["TOTAL_BASES"], None,
                     "DETALLE_ALBARAN", pagina.numero, len(salida) + 1, evidencias,
-                    {x: valores[x] for x in etiquetas[:3]},
+                    {x: valores[x] for x in etiquetas[:3]}, atributos,
                 ))
         return salida
 
@@ -159,6 +196,9 @@ class AdaptadorHefame(AdaptadorBase):
             importes = palabras_importe(linea)
             palabras = [p for p in linea.palabras if p.bbox.x1 < importes[0][0].bbox.x0]
             salida.append(self._movimiento(documento, linea, palabras, importes, fecha_word=None, concepto="SERVICIOS_OPERATIVOS"))
+        comision = self._extraer_comision_hefame(documento, segmentos, salida)
+        if comision is not None:
+            salida.append(comision)
         for orden, item in enumerate(salida, 1):
             item["orden"] = orden
         return salida
@@ -232,6 +272,35 @@ class AdaptadorHefame(AdaptadorBase):
             })
         return salida
 
+    def extraer_facturas(self, documento: DocumentoLocal, segmentos):
+        if self.reconocer(documento).estado != "RECONOCIDO" or len(segmentos) != 1:
+            return []
+        cabecera = self.extraer_cabecera(documento, segmentos)
+        segmento = segmentos[0]
+        return [{
+            "layout": "HEFAME_MERCANCIA_FACTURA_V2",
+            "segmento": {
+                "sha_documento": documento.sha_documento,
+                "paginas": segmento.paginas,
+                "identidad": cabecera["numero_factura"]["valor"],
+                "estado": segmento.estado,
+                "regla": segmento.regla,
+                "evidencias": segmento.evidencias,
+            },
+            "clasificacion_documental": {
+                "tipo": "FACTURA_MERCANCIA",
+                "tipo_funcional": "HEFAME_MERCANCIA",
+                "grupo_funcional": "HEFAME",
+                "requiere_conciliacion_albaranes": True,
+            },
+            "albaranes": [],
+            "movimientos": [],
+            "impuestos": [],
+            "vencimientos": [],
+            "otros": [],
+            "incidencias": [],
+        }]
+
     def declarar_conciliaciones(
         self,
         documento,
@@ -252,6 +321,7 @@ class AdaptadorHefame(AdaptadorBase):
         servicios = self._resumen(otros, "RESUMEN SERVICIOS OPERATIVOS")
         abo_devo = self._movimiento_por_concepto(movimientos, "ABONO_DEVOLUCION")
         aproafa = self._movimiento_por_concepto(movimientos, "APROAFA")
+        comision = self._movimiento_por_concepto(movimientos, "COMISION_HEFAME")
         total_factura = self._componente_campo("TOTAL_FACTURA", cabecera.get("importe_total"), "cabecera.total_factura")
         base_imponible = self._componente_campo(
             "BASE_IMPONIBLE", cabecera.get("base_imponible_total"), "desglose_fiscal.base_imponible",
@@ -273,6 +343,7 @@ class AdaptadorHefame(AdaptadorBase):
                     self._componente_albaranes(albaranes),
                     self._componente_movimiento("ABO_DEVO", abo_devo),
                     self._componente_movimiento("APROAFA", aproafa),
+                    self._componente_movimiento("COMISION_HEFAME", comision),
                 ],
                 {"regla_relacion": "MISMO_BLOQUE_RELACION_ALBARANES_DOC_ENTREGA_Y_SUBTOTAL_PEDIDOS"},
             ),
@@ -309,6 +380,90 @@ class AdaptadorHefame(AdaptadorBase):
             {"codigo": "SENTIDO_NO_DOCUMENTADO", "bloqueante": False, "coleccion": "movimientos", "cantidad": len(movimientos)},
         ]
 
+    def _extraer_comision_hefame(self, documento, segmentos, movimientos):
+        """Materializa la diferencia Base S.R. autorizada sin fijar su importe."""
+        pedidos = lineas_con_texto(documento.paginas[0].lineas, "Desglose importes pedidos")
+        if len(pedidos) != 1:
+            return None
+        linea = pedidos[0]
+        importes = palabras_importe(linea)
+        if len(importes) != 4:
+            return None
+        categorias = ("BASE_S_R", "BASE_RE", "BASE_NO")
+        objetivo = {categoria: importes[i][1] for i, categoria in enumerate(categorias)}
+        albaranes = self.extraer_albaranes(documento, segmentos)
+        detalle = {
+            categoria: round(sum(a.bases_por_categoria.get(categoria, 0.0) for a in albaranes), 2)
+            for categoria in categorias
+        }
+        incluidos = [
+            m for m in movimientos
+            if m.get("concepto_normalizado") in {"ABONO_DEVOLUCION", "APROAFA"}
+        ]
+        for categoria in categorias:
+            detalle[categoria] = round(
+                detalle[categoria]
+                + sum(m["bases"][categoria]["valor"] for m in incluidos),
+                2,
+            )
+        comision = detectar_comision_hefame(objetivo, detalle)
+        if comision is None:
+            return None
+
+        base = float(comision["base_neta"])
+        evidencia_objetivo = self.evidencia(
+            documento, linea.pagina, importes[0][0].texto, importes[0][0].bbox,
+            linea.texto, linea.bbox, "resumen_economico", "BASE_S_R",
+            "DIFERENCIA_ENTRE_SUBTOTAL_PEDIDOS_Y_DETALLE", "LITERAL_LOCAL",
+        )
+        evidencias = [evidencia_objetivo]
+        campo_base = {
+            "valor": base,
+            "literal": "DIFERENCIA BASE_S_R DERIVADA DEL SUBTOTAL",
+            "evidencias": evidencias,
+        }
+        cero = {"valor": 0.0, "literal": "SIN DIFERENCIA", "evidencias": evidencias}
+        return {
+            "orden": 0,
+            "descripcion_literal": {
+                "valor": "COMISION_HEFAME",
+                "literal": "AUTORIZACION_FUNCIONAL_PIO_SOBRE_DIFERENCIA_BASE_S_R",
+                "evidencias": evidencias,
+            },
+            "concepto_normalizado": "COMISION_HEFAME",
+            "categoria": "CARGO",
+            "origen_categoria": "AUTORIZACION_FUNCIONAL_PIO_HITO_2Z",
+            "sentido": "CARGO",
+            "fecha": None,
+            "bases": {
+                "BASE_S_R": campo_base,
+                "BASE_RE": cero,
+                "BASE_NO": cero,
+                "TOTAL_BASES": campo_base,
+            },
+            "importe": campo_base,
+            "magnitud_documental": "BASE_NETA",
+            "categoria_fiscal": "BASE_S_R",
+            "iva_pct": float(comision["iva_pct"]),
+            "re_pct": float(comision["re_pct"]),
+            "importe_iva_derivado": float(comision["importe_iva_derivado"]),
+            "importe_re_derivado": float(comision["importe_re_derivado"]),
+            "importe_fiscal_total": float(comision["importe_comparable_operativo"]),
+            "no_albaran": True,
+            "requiere_match_operativo": False,
+            "periodicidad": "NO_DEMOSTRADA",
+            "provenance": {
+                "autoridad_funcional": "PIO_HITO_2Z",
+                "fuente_documental": "DESGLOSE_IMPORTES_PEDIDOS_BASE_S_R",
+                "calculo": {
+                    "subtotal_base_sr": objetivo["BASE_S_R"],
+                    "detalle_base_sr": detalle["BASE_S_R"],
+                    "diferencia": base,
+                },
+                "computar_una_sola_vez": True,
+            },
+        }
+
     def _lineas_vencimiento(self, documento: DocumentoLocal):
         if self.reconocer(documento).estado != "RECONOCIDO":
             return []
@@ -332,9 +487,16 @@ class AdaptadorHefame(AdaptadorBase):
 
     def _movimiento(self, documento, linea, concepto_words, importes, *, fecha_word, concepto):
         categorias = {
-            "ABONO_DEVOLUCION": "DEVOLUCION_MERCANCIA",
-            "APROAFA": "CONDICION_COMERCIAL",
+            "ABONO_DEVOLUCION": "ABONO_O_DEVOLUCION_NO_DESAMBIGUADO",
+            "APROAFA": "OTRO_CONCEPTO_DEMOSTRADO",
             "SERVICIOS_OPERATIVOS": "SERVICIO",
+            "COMISION_HEFAME": "CARGO",
+        }
+        sentidos = {
+            "ABONO_DEVOLUCION": "ABONO",
+            "APROAFA": "CARGO",
+            "SERVICIOS_OPERATIVOS": "CARGO",
+            "COMISION_HEFAME": "CARGO",
         }
         return {
             "orden": 0,
@@ -342,7 +504,7 @@ class AdaptadorHefame(AdaptadorBase):
             "concepto_normalizado": concepto,
             "categoria": categorias.get(concepto, "OTRO"),
             "origen_categoria": "NORMALIZACION_DE_DESCRIPCION_SIN_INFERIR_SENTIDO",
-            "sentido": None,
+            "sentido": sentidos.get(concepto),
             "fecha": self._campo(documento, fecha_iso(fecha_word.texto), [fecha_word], linea, "movimientos", "fecha", "FECHA_MISMA_FILA", literal=fecha_word.texto) if fecha_word else None,
             "bases": {
                 etiqueta: self._campo(documento, valor, [palabra], linea, "movimientos", etiqueta, f"COLUMNA_{etiqueta}")

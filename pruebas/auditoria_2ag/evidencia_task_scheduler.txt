@@ -1,0 +1,56 @@
+HITO 2AG - EVIDENCIA TASK SCHEDULER
+Fecha de auditoria: 2026-09-22
+
+Tarea: \Sincronización ControlFarmacias
+Principal: MOSTRADOR\ControlFarmaciasRO
+LogonType: Password
+RunLevel: Limited
+Accion: C:\ControlFarmacias\Programa\ejecutar_sincronizacion.bat
+StartIn: C:\ControlFarmacias\Programa
+Trigger diario: 21:30:30
+StartWhenAvailable: true (backup XML preservado en auditoria_2ae)
+
+Descriptor observado antes de cualquier correccion:
+O:BAG:S-1-5-21-1664616495-3062778491-3524446278-513D:(A;ID;0x1f019f;;;BA)(A;ID;0x1f019f;;;SY)(A;ID;FA;;;BA)(A;;FR;;;S-1-5-21-1664616495-3062778491-3524446278-1001)
+
+ACE del operador interactivo MOSTRADOR\Usuari:
+- SID: S-1-5-21-1664616495-3062778491-3524446278-1001
+- mascara: 0x00120089 (FR / lectura)
+- TASK_EXECUTE 0x20: ausente
+- mascara minima propuesta: 0x001200A9 (lectura existente + TASK_EXECUTE)
+
+Intento de deshabilitacion temporal:
+- resultado: 0x80070005 / acceso denegado
+- tarea observada despues del intento: Enabled=True, Ready
+- proximo trigger observado: 2026-09-22 21:30:30 +02:00
+- al rehabilitar tras perder una hora programada existe riesgo de arranque
+  inmediato porque StartWhenAvailable esta activo
+
+Ejecucion automatica historica (no iniciada por Hito 2AG):
+- 2026-09-21 21:30:01, evento 107: inicio por trigger de hora
+- evento 100: usuario MOSTRADOR\ControlFarmaciasRO
+- evento 200: accion C:\WINDOWS\SYSTEM32\cmd.exe
+- 2026-09-21 21:33:05, evento 201: codigo devuelto 0
+- evento 102: instancia completada correctamente
+
+Resultado productivo historico de esa ejecucion:
+- identidad Windows efectiva: ControlFarmaciasRO
+- identidad SQL: MOSTRADOR\ControlFarmaciasRO
+- base: Farmatic
+- SELECT: si
+- INSERT/UPDATE/DELETE/ALTER/EXECUTE/CONTROL en Farmatic: no
+- roles sysadmin/db_owner/db_datawriter/db_ddladmin: no
+- filas posteriores leidas: 217
+- albaranes nuevos insertados en destino: 217
+- codigo de salida: 0
+
+La ejecucion historica demuestra credencial almacenada valida y capacidad efectiva
+de inicio de sesion por lotes. El origen local/GPO exacto del derecho no pudo
+enumerarse desde el token sin elevar; gpresult /scope computer devolvio acceso
+denegado.
+
+Validacion local sin conexiones productivas:
+- sintaxis PowerShell de la reparacion: OK
+- tests focales: 219 passed
+- suite completa: 1031 passed
+- fallos/regresiones: 0

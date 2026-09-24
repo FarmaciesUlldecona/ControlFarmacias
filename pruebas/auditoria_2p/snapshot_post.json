@@ -1,0 +1,2728 @@
+{
+  "proyecto_sha256": "d146ec026bdb2d42b8e27fcb57dc81ae6d8dd5dd4f090a7f0754535275e77b80",
+  "destino": "SUPABASE_PRODUCTIVO_CONTROLFARMACIAS_PIO",
+  "conexion": [
+    [
+      "postgres",
+      "postgres",
+      "public",
+      "on"
+    ]
+  ],
+  "flags": [
+    [
+      false,
+      false,
+      false,
+      [
+        "PIO"
+      ]
+    ]
+  ],
+  "facturas": [
+    [
+      "0a9808ec-5c6a-4bde-bb0c-4513ca0961c9",
+      "GRUPO COFARES",
+      null,
+      "177.7400",
+      "NORMALIZADA",
+      "CONCILIADA",
+      "SERVICIOS",
+      "PIO",
+      "e9bb291f-aead-4626-9cbe-6d49b486f7c1",
+      "0.0000",
+      0
+    ],
+    [
+      "14f7808e-cb2b-41fd-94fb-6eb82703de21",
+      "LOGISTA PHARMA S.A.U.",
+      null,
+      "448.0000",
+      "NORMALIZADA",
+      "CONCILIADA",
+      "MERCANCIA",
+      "PIO",
+      "95f0cfb6-2ae3-4739-b697-9a8e5f2ff114",
+      "0.0000",
+      1
+    ]
+  ],
+  "conteos": {
+    "facturas": 2,
+    "normalizacion_ejecuciones": 3,
+    "conciliaciones": 3,
+    "conciliacion_detalles": 6,
+    "facturas_movimientos": 4,
+    "facturas_impuestos": 5,
+    "facturas_vencimientos": 2,
+    "facturas_incidencias": 3,
+    "historial_facturas": 8
+  },
+  "duplicadas": [
+    [
+      0
+    ]
+  ],
+  "funciones": [
+    [
+      "cf_evaluar_elegibilidad_conciliacion",
+      "p_factura_id uuid",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_evaluar_elegibilidad_conciliacion(p_factura_id uuid)\n RETURNS TABLE(estado text, razon text)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_factura public.facturas%rowtype;\n    v_resultado jsonb;\n    v_tipo text;\n    v_nif text;\n    v_nombre text;\n    v_tiene_identidad boolean;\n    v_albaranes integer;\n    v_albaranes_total numeric;\n    v_movimientos integer;\n    v_movimientos_incompletos integer;\n    v_movimientos_con_importe integer;\n    v_movimientos_con_base integer;\n    v_movimientos_importe numeric;\n    v_movimientos_base numeric;\n    v_fiscalidad_coherente boolean;\n    v_traza_servicio boolean;\n    v_total_explicado boolean;\n    v_tolerancia numeric := 0.0500;\nbegin\n    select f.*\n      into v_factura\n      from public.facturas f\n     where f.id = p_factura_id;\n\n    select n.resultado_json\n      into v_resultado\n      from public.normalizacion_ejecuciones n\n     where n.id = v_factura.normalizacion_ejecucion_id;\n\n    if v_factura.id is null then\n        return query select 'NO_APTA', 'NORMALIZACION_NO_VALIDA';\n        return;\n    end if;\n    if coalesce((v_resultado->>'documento_completo_demostrado')::boolean, false) is not true then\n        return query select 'NO_APTA', 'DOCUMENTO_INCOMPLETO';\n        return;\n    end if;\n\n    v_nif := regexp_replace(upper(coalesce(v_factura.datos_extraidos #>> '{destinatario,nif,valor}', '')), '[^A-Z0-9]', '', 'g');\n    v_nombre := translate(upper(coalesce(v_factura.datos_extraidos #>> '{destinatario,nombre,valor}', '')), 'ÁÉÍÓÚÜÑ', 'AEIOUUN');\n    v_tiene_identidad :=\n        jsonb_array_length(coalesce(v_factura.datos_extraidos #> '{destinatario,nif,evidencia}', '[]'::jsonb)) > 0\n        or jsonb_array_length(coalesce(v_factura.datos_extraidos #> '{destinatario,nombre,evidencia}', '[]'::jsonb)) > 0;\n    if not v_tiene_identidad then\n        return query select 'NO_APTA', 'FARMACIA_NO_DEMOSTRABLE';\n        return;\n    end if;\n    if not (\n        v_factura.farmacia = 'PIO'\n        and (v_nif = '40901058C' or (v_nif = '' and v_nombre like '%PUIG SALOM%PIO%'))\n    ) then\n        return query select 'NO_APTA', 'FARMACIA_NO_CONSISTENTE';\n        return;\n    end if;\n    if v_factura.estado_normalizacion <> 'NORMALIZADA' then\n        return query select 'NO_APTA', 'NORMALIZACION_NO_VALIDA';\n        return;\n    end if;\n    if exists (\n        select 1 from public.facturas_incidencias i\n         where i.factura_id = v_factura.id and i.estado = 'ABIERTA' and i.bloqueante\n    ) then\n        return query select 'NO_APTA', 'INCIDENCIA_BLOQUEANTE';\n        return;\n    end if;\n\n    v_tipo := case v_factura.datos_extraidos->>'naturaleza_principal'\n        when 'MERCANCIA' then 'FACTURA_MERCANCIA'\n        when 'SERVICIOS' then 'FACTURA_GASTO_SERVICIO'\n        when 'MIXTA' then 'FACTURA_MIXTA'\n        when 'FACTURA_MERCANCIA' then 'FACTURA_MERCANCIA'\n        when 'FACTURA_GASTO_SERVICIO' then 'FACTURA_GASTO_SERVICIO'\n        when 'FACTURA_MIXTA' then 'FACTURA_MIXTA'\n        else 'TIPO_NO_DEMOSTRADO'\n    end;\n    if v_tipo = 'TIPO_NO_DEMOSTRADO' then\n        return query select 'REQUIERE_REVISION', 'TIPO_DOCUMENTAL_NO_DEMOSTRADO';\n        return;\n    end if;\n    if v_factura.importe_total is null then\n        return query select 'NO_APTA', 'TOTAL_NO_DEMOSTRADO';\n        return;\n    end if;\n\n    select count(*), coalesce(sum(\n               case when a.tipo_movimiento = 'ABONO' then -abs(a.importe_total)\n                    else abs(a.importe_total) end\n           ), 0)\n      into v_albaranes, v_albaranes_total\n      from public.facturas_albaranes_extraidos a\n     where a.factura_id = v_factura.id and a.importe_total is not null;\n\n    select count(*),\n           count(*) filter (where nullif(btrim(m.descripcion_literal), '') is null\n                              or m.sentido is null\n                              or (m.importe is null and m.base is null)),\n           count(m.importe), count(m.base),\n           coalesce(sum(case when m.sentido = 'ABONO' then -abs(m.importe) else abs(m.importe) end), 0),\n           coalesce(sum(case when m.sentido = 'ABONO' then -abs(m.base) else abs(m.base) end), 0)\n      into v_movimientos, v_movimientos_incompletos,\n           v_movimientos_con_importe, v_movimientos_con_base,\n           v_movimientos_importe, v_movimientos_base\n      from public.facturas_movimientos m\n     where m.factura_id = v_factura.id;\n\n    v_fiscalidad_coherente :=\n        v_factura.base_imponible_total is not null\n        and abs(\n            v_factura.importe_total\n            - (v_factura.base_imponible_total\n               + coalesce(v_factura.iva_total, 0)\n               + coalesce(v_factura.recargo_equivalencia_total, 0)\n               + coalesce(nullif(v_factura.datos_extraidos #>> '{totales,otros,valor}', '')::numeric, 0))\n        ) <= v_tolerancia;\n\n    if v_tipo = 'FACTURA_MERCANCIA' then\n        if v_albaranes > 0 then\n            return query select 'APTA', 'APTA_MERCANCIA';\n        else\n            return query select 'NO_APTA', 'FALTAN_ALBARANES_MERCANCIA';\n        end if;\n        return;\n    end if;\n\n    v_traza_servicio := v_movimientos > 0 and v_movimientos_incompletos = 0;\n    if v_tipo = 'FACTURA_GASTO_SERVICIO' then\n        v_total_explicado :=\n            (v_movimientos_con_importe = v_movimientos\n             and abs(v_factura.importe_total - v_movimientos_importe) <= v_tolerancia)\n            or\n            (v_movimientos_con_importe = 0\n             and v_movimientos_con_base = v_movimientos\n             and v_factura.base_imponible_total is not null\n             and abs(v_factura.base_imponible_total - v_movimientos_base) <= v_tolerancia\n             and v_fiscalidad_coherente);\n        if not v_traza_servicio then\n            return query select 'NO_APTA', 'TRAZABILIDAD_SERVICIO_INSUFICIENTE';\n        elsif not v_fiscalidad_coherente then\n            return query select 'NO_APTA', 'FISCALIDAD_INCOHERENTE';\n        elsif not v_total_explicado then\n            return query select 'NO_APTA', 'TOTAL_NO_EXPLICADO';\n        else\n            return query select 'APTA', 'APTA_GASTO_SERVICIO';\n        end if;\n        return;\n    end if;\n\n    if v_albaranes = 0 then\n        return query select 'NO_APTA', 'FALTAN_ALBARANES_MERCANCIA';\n    elsif not v_traza_servicio or v_movimientos_con_importe <> v_movimientos then\n        return query select 'NO_APTA', 'TRAZABILIDAD_SERVICIO_INSUFICIENTE';\n    elsif not v_fiscalidad_coherente then\n        return query select 'NO_APTA', 'FISCALIDAD_INCOHERENTE';\n    elsif abs(v_factura.importe_total - (v_albaranes_total + v_movimientos_importe)) > v_tolerancia then\n        return query select 'NO_APTA', 'TOTAL_NO_EXPLICADO';\n    else\n        return query select 'APTA', 'APTA_MIXTA';\n    end if;\nend;\n$function$\n"
+    ],
+    [
+      "cf_reclamar_factura_conciliacion",
+      "p_worker_id text, p_bloqueo_segundos integer",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_reclamar_factura_conciliacion(p_worker_id text, p_bloqueo_segundos integer DEFAULT 300)\n RETURNS SETOF facturas\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_id uuid;\nbegin\n    if p_worker_id is null or btrim(p_worker_id) = '' then\n        raise exception 'worker_id obligatorio';\n    end if;\n\n    select f.id\n      into v_id\n      from public.facturas f\n      cross join public.cf_configuracion c\n      cross join lateral public.cf_evaluar_elegibilidad_conciliacion(f.id) e\n     where c.id = true\n       and f.farmacia = any(c.farmacias_habilitadas)\n       and (c.conciliacion_automatica or f.conciliacion_reintento_solicitado_at is not null)\n       and f.estado_conciliacion_cf = 'PENDIENTE_CONCILIAR'\n       and e.estado = 'APTA'\n       and coalesce(f.conciliacion_proximo_at, '-infinity'::timestamptz) <= now()\n       and coalesce(f.conciliacion_bloqueado_hasta, '-infinity'::timestamptz) <= now()\n     order by\n       (f.conciliacion_reintento_solicitado_at is not null) desc,\n       f.fecha_factura nulls last,\n       f.id\n     for update of f skip locked\n     limit 1;\n\n    if v_id is null then\n        return;\n    end if;\n    return query\n    update public.facturas\n       set conciliacion_bloqueado_por = p_worker_id,\n           conciliacion_bloqueado_hasta = now() + make_interval(secs => greatest(p_bloqueo_segundos, 1)),\n           updated_at = now()\n     where id = v_id\n     returning *;\nend;\n$function$\n"
+    ]
+  ],
+  "restriccion": [
+    [
+      "conciliacion_detalles_origen_check",
+      "CHECK (((num_nonnulls(factura_albaran_extraido_id, factura_movimiento_id) >= 1) OR (tipo_relacion = 'SIN_COINCIDENCIA'::text) OR ((tipo_relacion = 'MOVIMIENTO_NO_FARMATIC'::text) AND ((provenance ->> 'fuente'::text) = 'FISCALIDAD_AJUSTE_DOCUMENTAL'::text))))"
+    ]
+  ],
+  "rls": [
+    [
+      "albaranes",
+      true
+    ],
+    [
+      "cf_configuracion",
+      true
+    ],
+    [
+      "conciliacion_detalles",
+      true
+    ],
+    [
+      "conciliaciones",
+      true
+    ],
+    [
+      "documentos_facturas",
+      true
+    ],
+    [
+      "facturas",
+      true
+    ],
+    [
+      "facturas_ajustes",
+      true
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      true
+    ],
+    [
+      "facturas_impuestos",
+      true
+    ],
+    [
+      "facturas_incidencias",
+      true
+    ],
+    [
+      "facturas_movimientos",
+      true
+    ],
+    [
+      "facturas_vencimientos",
+      true
+    ],
+    [
+      "historial_facturas",
+      true
+    ],
+    [
+      "normalizacion_ejecuciones",
+      true
+    ],
+    [
+      "proveedores",
+      true
+    ],
+    [
+      "proveedores_alias",
+      true
+    ]
+  ],
+  "policies": [
+    [
+      "cf_configuracion",
+      "cf_configuracion_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "true",
+      null
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM ((conciliaciones co\n     JOIN facturas f ON ((f.id = co.factura_id)))\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((co.id = conciliacion_detalles.conciliacion_id) AND (f.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM (facturas f\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((f.id = conciliaciones.factura_id) AND (f.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "documentos_facturas",
+      "documentos_facturas_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM cf_configuracion c\n  WHERE ((c.id = true) AND (documentos_facturas.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "facturas",
+      "facturas_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM cf_configuracion c\n  WHERE ((c.id = true) AND (facturas.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM (facturas f\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((f.id = facturas_ajustes.factura_id) AND (f.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM (facturas f\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((f.id = facturas_albaranes_extraidos.factura_id) AND (f.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "facturas_impuestos",
+      "facturas_impuestos_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM (facturas f\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((f.id = facturas_impuestos.factura_id) AND (f.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM cf_configuracion c\n  WHERE ((c.id = true) AND (((facturas_incidencias.documento_id IS NOT NULL) AND (EXISTS ( SELECT 1\n           FROM documentos_facturas d\n          WHERE ((d.id = facturas_incidencias.documento_id) AND (d.farmacia = ANY (c.farmacias_habilitadas)))))) OR ((facturas_incidencias.factura_id IS NOT NULL) AND (EXISTS ( SELECT 1\n           FROM facturas f\n          WHERE ((f.id = facturas_incidencias.factura_id) AND (f.farmacia = ANY (c.farmacias_habilitadas))))))))))",
+      null
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM (facturas f\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((f.id = facturas_movimientos.factura_id) AND (f.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM (facturas f\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((f.id = facturas_vencimientos.factura_id) AND (f.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "historial_facturas",
+      "historial_facturas_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM (documentos_facturas d\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((d.id = historial_facturas.documento_id) AND (d.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "(EXISTS ( SELECT 1\n   FROM (documentos_facturas d\n     JOIN cf_configuracion c ON ((c.id = true)))\n  WHERE ((d.id = normalizacion_ejecuciones.documento_id) AND (d.farmacia = ANY (c.farmacias_habilitadas)))))",
+      null
+    ],
+    [
+      "proveedores",
+      "proveedores_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "true",
+      null
+    ],
+    [
+      "proveedores_alias",
+      "proveedores_alias_authenticated_select",
+      [
+        "authenticated"
+      ],
+      "SELECT",
+      "true",
+      null
+    ]
+  ],
+  "locks": [
+    [
+      0,
+      0
+    ]
+  ],
+  "huellas": {
+    "facturas": [
+      [
+        2,
+        "7caa9402c7ab1eef368e30b6fdfb244f"
+      ]
+    ],
+    "normalizacion_ejecuciones": [
+      [
+        3,
+        "4a0139c852cbad1ab8f35a7c12e14e68"
+      ]
+    ],
+    "conciliaciones": [
+      [
+        3,
+        "d841049bafb492ba28d8c2e0796d0cb7"
+      ]
+    ],
+    "conciliacion_detalles": [
+      [
+        6,
+        "f26fea7678950cedb82f81822d39ad7f"
+      ]
+    ],
+    "facturas_movimientos": [
+      [
+        4,
+        "3be57642454adf83533af7bbbbefc123"
+      ]
+    ],
+    "facturas_impuestos": [
+      [
+        5,
+        "176ede5a03a9574750b4afcb2d71441e"
+      ]
+    ],
+    "facturas_vencimientos": [
+      [
+        2,
+        "4f4830fd1efbf5200c9d1b1ac79491ee"
+      ]
+    ],
+    "facturas_incidencias": [
+      [
+        3,
+        "00b5a62641542d4c6c7c734d65531bd2"
+      ]
+    ],
+    "historial_facturas": [
+      [
+        8,
+        "f46cfb8049265b47e178a1028ec2537b"
+      ]
+    ],
+    "documentos_facturas": [
+      [
+        130,
+        "bfee5ffbcc293e045dad68832e8dc769"
+      ]
+    ],
+    "facturas_albaranes_extraidos": [
+      [
+        1,
+        "83ca7ce3f0ba4960a11ac0f60c126469"
+      ]
+    ],
+    "facturas_ajustes": [
+      [
+        0,
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ]
+    ],
+    "cf_configuracion": [
+      [
+        1,
+        "4cd62152f47b39bad46156b0225fdc8d"
+      ]
+    ]
+  },
+  "grants_tablas": [
+    [
+      "albaranes",
+      "anon",
+      "DELETE"
+    ],
+    [
+      "albaranes",
+      "anon",
+      "INSERT"
+    ],
+    [
+      "albaranes",
+      "anon",
+      "REFERENCES"
+    ],
+    [
+      "albaranes",
+      "anon",
+      "SELECT"
+    ],
+    [
+      "albaranes",
+      "anon",
+      "TRIGGER"
+    ],
+    [
+      "albaranes",
+      "anon",
+      "TRUNCATE"
+    ],
+    [
+      "albaranes",
+      "anon",
+      "UPDATE"
+    ],
+    [
+      "albaranes",
+      "authenticated",
+      "DELETE"
+    ],
+    [
+      "albaranes",
+      "authenticated",
+      "INSERT"
+    ],
+    [
+      "albaranes",
+      "authenticated",
+      "REFERENCES"
+    ],
+    [
+      "albaranes",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "albaranes",
+      "authenticated",
+      "TRIGGER"
+    ],
+    [
+      "albaranes",
+      "authenticated",
+      "TRUNCATE"
+    ],
+    [
+      "albaranes",
+      "authenticated",
+      "UPDATE"
+    ],
+    [
+      "albaranes",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "albaranes",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "albaranes",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "albaranes",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "albaranes",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "albaranes",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "albaranes",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "cf_configuracion",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "cf_configuracion",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "cf_configuracion",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "cf_configuracion",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "cf_configuracion",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "cf_configuracion",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "cf_configuracion",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "cf_configuracion",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "conciliacion_detalles",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "conciliacion_detalles",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "conciliacion_detalles",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "conciliacion_detalles",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "conciliacion_detalles",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "conciliacion_detalles",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "conciliacion_detalles",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "conciliacion_detalles",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "conciliaciones",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "conciliaciones",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "conciliaciones",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "conciliaciones",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "conciliaciones",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "conciliaciones",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "conciliaciones",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "conciliaciones",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "documentos_facturas",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "documentos_facturas",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "documentos_facturas",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "documentos_facturas",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "documentos_facturas",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "documentos_facturas",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "documentos_facturas",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "documentos_facturas",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "facturas",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "facturas",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "facturas",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "facturas",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "facturas",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "facturas",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "facturas",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "facturas",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "facturas_ajustes",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "facturas_ajustes",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "facturas_ajustes",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "facturas_ajustes",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "facturas_ajustes",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "facturas_ajustes",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "facturas_ajustes",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "facturas_ajustes",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "facturas_impuestos",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "facturas_impuestos",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "facturas_impuestos",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "facturas_impuestos",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "facturas_impuestos",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "facturas_impuestos",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "facturas_impuestos",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "facturas_impuestos",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "facturas_incidencias",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "facturas_incidencias",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "facturas_incidencias",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "facturas_incidencias",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "facturas_incidencias",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "facturas_incidencias",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "facturas_incidencias",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "facturas_incidencias",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "facturas_movimientos",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "facturas_movimientos",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "facturas_movimientos",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "facturas_movimientos",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "facturas_movimientos",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "facturas_movimientos",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "facturas_movimientos",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "facturas_movimientos",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "facturas_vencimientos",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "facturas_vencimientos",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "facturas_vencimientos",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "facturas_vencimientos",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "facturas_vencimientos",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "facturas_vencimientos",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "facturas_vencimientos",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "facturas_vencimientos",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "historial_facturas",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "historial_facturas",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "historial_facturas",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "historial_facturas",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "historial_facturas",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "historial_facturas",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "historial_facturas",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "historial_facturas",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "proveedores",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "proveedores",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "proveedores",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "proveedores",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "proveedores",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "proveedores",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "proveedores",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "proveedores",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "proveedores_alias",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "proveedores_alias",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "proveedores_alias",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "proveedores_alias",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "proveedores_alias",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "proveedores_alias",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "proveedores_alias",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "proveedores_alias",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "v_dashboard_diario",
+      "anon",
+      "DELETE"
+    ],
+    [
+      "v_dashboard_diario",
+      "anon",
+      "INSERT"
+    ],
+    [
+      "v_dashboard_diario",
+      "anon",
+      "REFERENCES"
+    ],
+    [
+      "v_dashboard_diario",
+      "anon",
+      "SELECT"
+    ],
+    [
+      "v_dashboard_diario",
+      "anon",
+      "TRIGGER"
+    ],
+    [
+      "v_dashboard_diario",
+      "anon",
+      "TRUNCATE"
+    ],
+    [
+      "v_dashboard_diario",
+      "anon",
+      "UPDATE"
+    ],
+    [
+      "v_dashboard_diario",
+      "authenticated",
+      "DELETE"
+    ],
+    [
+      "v_dashboard_diario",
+      "authenticated",
+      "INSERT"
+    ],
+    [
+      "v_dashboard_diario",
+      "authenticated",
+      "REFERENCES"
+    ],
+    [
+      "v_dashboard_diario",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "v_dashboard_diario",
+      "authenticated",
+      "TRIGGER"
+    ],
+    [
+      "v_dashboard_diario",
+      "authenticated",
+      "TRUNCATE"
+    ],
+    [
+      "v_dashboard_diario",
+      "authenticated",
+      "UPDATE"
+    ],
+    [
+      "v_dashboard_diario",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "v_dashboard_diario",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "v_dashboard_diario",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "v_dashboard_diario",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "v_dashboard_diario",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "v_dashboard_diario",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "v_dashboard_diario",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "v_facturas_listado",
+      "anon",
+      "DELETE"
+    ],
+    [
+      "v_facturas_listado",
+      "anon",
+      "INSERT"
+    ],
+    [
+      "v_facturas_listado",
+      "anon",
+      "REFERENCES"
+    ],
+    [
+      "v_facturas_listado",
+      "anon",
+      "SELECT"
+    ],
+    [
+      "v_facturas_listado",
+      "anon",
+      "TRIGGER"
+    ],
+    [
+      "v_facturas_listado",
+      "anon",
+      "TRUNCATE"
+    ],
+    [
+      "v_facturas_listado",
+      "anon",
+      "UPDATE"
+    ],
+    [
+      "v_facturas_listado",
+      "authenticated",
+      "DELETE"
+    ],
+    [
+      "v_facturas_listado",
+      "authenticated",
+      "INSERT"
+    ],
+    [
+      "v_facturas_listado",
+      "authenticated",
+      "REFERENCES"
+    ],
+    [
+      "v_facturas_listado",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "v_facturas_listado",
+      "authenticated",
+      "TRIGGER"
+    ],
+    [
+      "v_facturas_listado",
+      "authenticated",
+      "TRUNCATE"
+    ],
+    [
+      "v_facturas_listado",
+      "authenticated",
+      "UPDATE"
+    ],
+    [
+      "v_facturas_listado",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "v_facturas_listado",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "v_facturas_listado",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "v_facturas_listado",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "v_facturas_listado",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "v_facturas_listado",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "v_facturas_listado",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "v_proveedores_estado",
+      "anon",
+      "DELETE"
+    ],
+    [
+      "v_proveedores_estado",
+      "anon",
+      "INSERT"
+    ],
+    [
+      "v_proveedores_estado",
+      "anon",
+      "REFERENCES"
+    ],
+    [
+      "v_proveedores_estado",
+      "anon",
+      "SELECT"
+    ],
+    [
+      "v_proveedores_estado",
+      "anon",
+      "TRIGGER"
+    ],
+    [
+      "v_proveedores_estado",
+      "anon",
+      "TRUNCATE"
+    ],
+    [
+      "v_proveedores_estado",
+      "anon",
+      "UPDATE"
+    ],
+    [
+      "v_proveedores_estado",
+      "authenticated",
+      "DELETE"
+    ],
+    [
+      "v_proveedores_estado",
+      "authenticated",
+      "INSERT"
+    ],
+    [
+      "v_proveedores_estado",
+      "authenticated",
+      "REFERENCES"
+    ],
+    [
+      "v_proveedores_estado",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "v_proveedores_estado",
+      "authenticated",
+      "TRIGGER"
+    ],
+    [
+      "v_proveedores_estado",
+      "authenticated",
+      "TRUNCATE"
+    ],
+    [
+      "v_proveedores_estado",
+      "authenticated",
+      "UPDATE"
+    ],
+    [
+      "v_proveedores_estado",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "v_proveedores_estado",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "v_proveedores_estado",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "v_proveedores_estado",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "v_proveedores_estado",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "v_proveedores_estado",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "v_proveedores_estado",
+      "service_role",
+      "UPDATE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "anon",
+      "DELETE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "anon",
+      "INSERT"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "anon",
+      "REFERENCES"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "anon",
+      "SELECT"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "anon",
+      "TRIGGER"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "anon",
+      "TRUNCATE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "anon",
+      "UPDATE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "authenticated",
+      "DELETE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "authenticated",
+      "INSERT"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "authenticated",
+      "REFERENCES"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "authenticated",
+      "SELECT"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "authenticated",
+      "TRIGGER"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "authenticated",
+      "TRUNCATE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "authenticated",
+      "UPDATE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "service_role",
+      "DELETE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "service_role",
+      "INSERT"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "service_role",
+      "REFERENCES"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "service_role",
+      "SELECT"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "service_role",
+      "TRIGGER"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "service_role",
+      "TRUNCATE"
+    ],
+    [
+      "v_vencimientos_calendario",
+      "service_role",
+      "UPDATE"
+    ]
+  ],
+  "columnas": [
+    [
+      "id",
+      "uuid",
+      "NO",
+      "gen_random_uuid()"
+    ],
+    [
+      "farmacia",
+      "text",
+      "NO",
+      "'PIO'::text"
+    ],
+    [
+      "archivo_nombre",
+      "text",
+      "NO",
+      null
+    ],
+    [
+      "archivo_ruta",
+      "text",
+      "NO",
+      null
+    ],
+    [
+      "archivo_hash",
+      "text",
+      "YES",
+      null
+    ],
+    [
+      "estado_lectura",
+      "text",
+      "NO",
+      "'PENDIENTE'::text"
+    ],
+    [
+      "requiere_revision",
+      "boolean",
+      "NO",
+      "false"
+    ],
+    [
+      "observaciones",
+      "text",
+      "YES",
+      null
+    ],
+    [
+      "datos_extraidos",
+      "jsonb",
+      "NO",
+      "'{}'::jsonb"
+    ],
+    [
+      "fecha_importacion",
+      "timestamp with time zone",
+      "NO",
+      "now()"
+    ],
+    [
+      "fecha_actualizacion",
+      "timestamp with time zone",
+      "NO",
+      "now()"
+    ],
+    [
+      "numero_paginas",
+      "integer",
+      "YES",
+      null
+    ],
+    [
+      "cantidad_documentos_detectados",
+      "integer",
+      "YES",
+      null
+    ],
+    [
+      "tipo_contenido",
+      "text",
+      "YES",
+      null
+    ],
+    [
+      "texto_extraido",
+      "text",
+      "YES",
+      null
+    ],
+    [
+      "necesita_lectura_visual",
+      "boolean",
+      "NO",
+      "false"
+    ],
+    [
+      "intentos_lectura",
+      "integer",
+      "NO",
+      "0"
+    ],
+    [
+      "ultimo_error_lectura",
+      "text",
+      "YES",
+      null
+    ],
+    [
+      "fecha_inicio_lectura",
+      "timestamp with time zone",
+      "YES",
+      null
+    ],
+    [
+      "fecha_fin_lectura",
+      "timestamp with time zone",
+      "YES",
+      null
+    ],
+    [
+      "proximo_reintento_at",
+      "timestamp with time zone",
+      "YES",
+      null
+    ],
+    [
+      "bloqueado_hasta",
+      "timestamp with time zone",
+      "YES",
+      null
+    ],
+    [
+      "bloqueado_por",
+      "text",
+      "YES",
+      null
+    ],
+    [
+      "ultimo_error_codigo",
+      "text",
+      "YES",
+      null
+    ],
+    [
+      "reprocesar_solicitado_at",
+      "timestamp with time zone",
+      "YES",
+      null
+    ],
+    [
+      "procesamiento_version",
+      "text",
+      "YES",
+      null
+    ],
+    [
+      "inventario_facturas",
+      "jsonb",
+      "NO",
+      "'[]'::jsonb"
+    ],
+    [
+      "estado_persistencia",
+      "text",
+      "NO",
+      "'PENDIENTE'::text"
+    ]
+  ],
+  "constraints": [
+    [
+      "albaranes",
+      "albaranes_contador_unico",
+      "UNIQUE (farmacia, id_contador)"
+    ],
+    [
+      "albaranes",
+      "albaranes_numero_unico",
+      "UNIQUE (farmacia, id_proveedor, numero_albaran)"
+    ],
+    [
+      "albaranes",
+      "albaranes_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_farmacias_habilitadas_check",
+      "CHECK (((cardinality(farmacias_habilitadas) > 0) AND (farmacias_habilitadas <@ ARRAY['PIO'::text, 'RITA'::text])))"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_id_check",
+      "CHECK (id)"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_preflight_pio_hashes_sqlite_check",
+      "CHECK (((preflight_pio_hashes_sqlite IS NULL) OR (preflight_pio_hashes_sqlite >= 0)))"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_preflight_pio_hashes_supabase_check",
+      "CHECK (((preflight_pio_hashes_supabase IS NULL) OR (preflight_pio_hashes_supabase >= 0)))"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_preflight_pio_manifest_sqlite_sha256_check",
+      "CHECK (((preflight_pio_manifest_sqlite_sha256 IS NULL) OR (preflight_pio_manifest_sqlite_sha256 ~ '^[0-9a-f]{64}$'::text)))"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_preflight_pio_manifest_supabase_sha256_check",
+      "CHECK (((preflight_pio_manifest_supabase_sha256 IS NULL) OR (preflight_pio_manifest_supabase_sha256 ~ '^[0-9a-f]{64}$'::text)))"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_tolerancia_conciliacion_check",
+      "CHECK ((tolerancia_conciliacion >= (0)::numeric))"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_albaran_operacional_check",
+      "CHECK ((num_nonnulls(albaran_farmacia, albaran_id_contador) = ANY (ARRAY[0, 2])))"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_conciliacion_id_fkey",
+      "FOREIGN KEY (conciliacion_id) REFERENCES conciliaciones(id) ON DELETE CASCADE"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_estado_check",
+      "CHECK ((estado = ANY (ARRAY['COINCIDE'::text, 'DIFERENCIA'::text, 'NO_EVALUABLE'::text])))"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_factura_albaran_extraido_id_fkey",
+      "FOREIGN KEY (factura_albaran_extraido_id) REFERENCES facturas_albaranes_extraidos(id) ON DELETE SET NULL"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_factura_movimiento_id_fkey",
+      "FOREIGN KEY (factura_movimiento_id) REFERENCES facturas_movimientos(id) ON DELETE SET NULL"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_orden_check",
+      "CHECK ((orden > 0))"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_orden_unico",
+      "UNIQUE (conciliacion_id, orden)"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_origen_check",
+      "CHECK (((num_nonnulls(factura_albaran_extraido_id, factura_movimiento_id) >= 1) OR (tipo_relacion = 'SIN_COINCIDENCIA'::text) OR ((tipo_relacion = 'MOVIMIENTO_NO_FARMATIC'::text) AND ((provenance ->> 'fuente'::text) = 'FISCALIDAD_AJUSTE_DOCUMENTAL'::text))))"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_tipo_relacion_check",
+      "CHECK ((tipo_relacion = ANY (ARRAY['UNO_A_UNO'::text, 'UNO_A_VARIOS'::text, 'VARIOS_A_UNO'::text, 'MOVIMIENTO_NO_FARMATIC'::text, 'SIN_COINCIDENCIA'::text])))"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_disparador_check",
+      "CHECK ((disparador = ANY (ARRAY['AUTOMATICO'::text, 'MANUAL'::text, 'REINTENTO'::text, 'TEST'::text])))"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_estado_check",
+      "CHECK ((estado = ANY (ARRAY['EJECUTANDO'::text, 'COMPLETADA'::text, 'ERROR'::text])))"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_factura_id_fkey",
+      "FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_factura_intento_unico",
+      "UNIQUE (factura_id, intento)"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_intento_check",
+      "CHECK ((intento > 0))"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_resultado_check",
+      "CHECK (((resultado IS NULL) OR (resultado = ANY (ARRAY['CONCILIADA'::text, 'DIFERENCIA'::text, 'SIN_CANDIDATOS'::text, 'NO_EVALUABLE'::text]))))"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_tolerancia_check",
+      "CHECK ((tolerancia >= (0)::numeric))"
+    ],
+    [
+      "documentos_facturas",
+      "cf_documentos_estado_lectura_check",
+      "CHECK ((estado_lectura = ANY (ARRAY['PENDIENTE'::text, 'PROCESANDO'::text, 'EXTRAIDA'::text, 'REVISION'::text, 'ERROR'::text, 'NORMALIZANDO'::text, 'NORMALIZADA'::text])))"
+    ],
+    [
+      "documentos_facturas",
+      "documentos_facturas_archivo_hash_unico",
+      "UNIQUE (farmacia, archivo_hash)"
+    ],
+    [
+      "documentos_facturas",
+      "documentos_facturas_estado_persistencia_check",
+      "CHECK ((estado_persistencia = ANY (ARRAY['PENDIENTE'::text, 'PARCIAL'::text, 'COMPLETA'::text, 'REQUIERE_REVISION'::text])))"
+    ],
+    [
+      "documentos_facturas",
+      "documentos_facturas_tipo_contenido_check",
+      "CHECK (((tipo_contenido IS NULL) OR (tipo_contenido = ANY (ARRAY['FACTURA_UNICA'::text, 'LOTE_FACTURAS'::text, 'DOCUMENTO_NO_FISCAL'::text, 'DESCONOCIDO'::text]))))"
+    ],
+    [
+      "documentos_facturas",
+      "facturas_farmacia_check",
+      "CHECK ((farmacia = ANY (ARRAY['PIO'::text, 'RITA'::text])))"
+    ],
+    [
+      "documentos_facturas",
+      "facturas_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "facturas",
+      "facturas_categoria_check",
+      "CHECK ((categoria = ANY (ARRAY['MERCANCIA'::text, 'CUOTA_SERVICIO'::text, 'SUMINISTRO'::text, 'OTRO'::text])))"
+    ],
+    [
+      "facturas",
+      "facturas_conciliacion_intentos_check",
+      "CHECK ((conciliacion_intentos >= 0))"
+    ],
+    [
+      "facturas",
+      "facturas_confianza_extraccion_check",
+      "CHECK (((confianza_extraccion IS NULL) OR ((confianza_extraccion >= (0)::numeric) AND (confianza_extraccion <= (1)::numeric))))"
+    ],
+    [
+      "facturas",
+      "facturas_documento_id_fkey",
+      "FOREIGN KEY (documento_id) REFERENCES documentos_facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "facturas",
+      "facturas_documento_numero_pagina_unico",
+      "UNIQUE (documento_id, numero_factura, pagina_inicio)"
+    ],
+    [
+      "facturas",
+      "facturas_estado_conciliacion_cf_check",
+      "CHECK ((estado_conciliacion_cf = ANY (ARRAY['PENDIENTE_CONCILIAR'::text, 'CONCILIADA'::text])))"
+    ],
+    [
+      "facturas",
+      "facturas_estado_conciliacion_check",
+      "CHECK ((estado_conciliacion = ANY (ARRAY['PENDIENTE'::text, 'SIN_ALBARAN'::text, 'DISCREPANCIA'::text, 'CONCILIADA'::text, 'NO_APLICA'::text])))"
+    ],
+    [
+      "facturas",
+      "facturas_estado_normalizacion_check",
+      "CHECK ((estado_normalizacion = ANY (ARRAY['PENDIENTE'::text, 'NORMALIZANDO'::text, 'NORMALIZADA'::text, 'REQUIERE_REVISION'::text])))"
+    ],
+    [
+      "facturas",
+      "facturas_estado_pago_check",
+      "CHECK ((estado_pago = ANY (ARRAY['SIN_PAGAR'::text, 'PAGO_PARCIAL'::text, 'PAGADA'::text])))"
+    ],
+    [
+      "facturas",
+      "facturas_estado_revision_check",
+      "CHECK ((estado_revision = ANY (ARRAY['NO_REQUERIDA'::text, 'PENDIENTE_REVISION_PIO'::text, 'VALIDADA_PIO'::text])))"
+    ],
+    [
+      "facturas",
+      "facturas_farmacia_check1",
+      "CHECK ((farmacia = ANY (ARRAY['PIO'::text, 'RITA'::text])))"
+    ],
+    [
+      "facturas",
+      "facturas_normalizacion_ejecucion_fk",
+      "FOREIGN KEY (normalizacion_ejecucion_id) REFERENCES normalizacion_ejecuciones(id) ON DELETE SET NULL"
+    ],
+    [
+      "facturas",
+      "facturas_pkey1",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "facturas",
+      "facturas_proveedor_id_fkey",
+      "FOREIGN KEY (proveedor_id) REFERENCES proveedores(id)"
+    ],
+    [
+      "facturas",
+      "facturas_tipo_documento_check",
+      "CHECK ((tipo_documento = ANY (ARRAY['FACTURA'::text, 'ABONO'::text, 'FACTURA_RECTIFICATIVA'::text, 'OTRO'::text])))"
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_confianza_extraccion_check",
+      "CHECK (((confianza_extraccion IS NULL) OR ((confianza_extraccion >= (0)::numeric) AND (confianza_extraccion <= (1)::numeric))))"
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_factura_id_fkey",
+      "FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_orden_unico",
+      "UNIQUE (factura_id, orden)"
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_tipo_ajuste_check",
+      "CHECK ((tipo_ajuste = ANY (ARRAY['DESCUENTO'::text, 'BONIFICACION'::text, 'CONDICION_OPERATIVA'::text, 'GASTO'::text, 'DEDUCCION'::text, 'OTRO'::text])))"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_confianza_extraccion_check",
+      "CHECK (((confianza_extraccion IS NULL) OR ((confianza_extraccion >= (0)::numeric) AND (confianza_extraccion <= (1)::numeric))))"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_factura_id_fkey",
+      "FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_orden_unico",
+      "UNIQUE (factura_id, orden)"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_tipo_movimiento_check",
+      "CHECK ((tipo_movimiento = ANY (ARRAY['CARGO'::text, 'ABONO'::text])))"
+    ],
+    [
+      "facturas_impuestos",
+      "facturas_impuestos_confianza_extraccion_check",
+      "CHECK (((confianza_extraccion IS NULL) OR ((confianza_extraccion >= (0)::numeric) AND (confianza_extraccion <= (1)::numeric))))"
+    ],
+    [
+      "facturas_impuestos",
+      "facturas_impuestos_factura_id_fkey",
+      "FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "facturas_impuestos",
+      "facturas_impuestos_orden_unico",
+      "UNIQUE (factura_id, orden)"
+    ],
+    [
+      "facturas_impuestos",
+      "facturas_impuestos_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_ambito_check",
+      "CHECK ((num_nonnulls(documento_id, factura_id) = 1))"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_documento_id_fkey",
+      "FOREIGN KEY (documento_id) REFERENCES documentos_facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_estado_check",
+      "CHECK ((estado = ANY (ARRAY['ABIERTA'::text, 'RESUELTA'::text, 'IGNORADA'::text])))"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_factura_id_fkey",
+      "FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_normalizacion_ejecucion_id_fkey",
+      "FOREIGN KEY (normalizacion_ejecucion_id) REFERENCES normalizacion_ejecuciones(id) ON DELETE SET NULL"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_severidad_check",
+      "CHECK ((severidad = ANY (ARRAY['INFO'::text, 'AVISO'::text, 'ERROR'::text])))"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_categoria_check",
+      "CHECK ((categoria = ANY (ARRAY['SERVICIO'::text, 'DESCUENTO'::text, 'DEVOLUCION'::text, 'CONDICION_COMERCIAL'::text, 'GASTO'::text, 'APORTACION'::text, 'AJUSTE'::text, 'OTRO'::text])))"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_factura_id_fkey",
+      "FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_normalizacion_ejecucion_id_fkey",
+      "FOREIGN KEY (normalizacion_ejecucion_id) REFERENCES normalizacion_ejecuciones(id) ON DELETE SET NULL"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_orden_check",
+      "CHECK ((orden > 0))"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_orden_unico",
+      "UNIQUE (factura_id, orden)"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_sentido_check",
+      "CHECK (((sentido IS NULL) OR (sentido = ANY (ARRAY['CARGO'::text, 'ABONO'::text]))))"
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_confianza_extraccion_check",
+      "CHECK (((confianza_extraccion IS NULL) OR ((confianza_extraccion >= (0)::numeric) AND (confianza_extraccion <= (1)::numeric))))"
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_factura_id_fkey",
+      "FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_orden_unico",
+      "UNIQUE (factura_id, orden)"
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "historial_facturas",
+      "historial_facturas_ambito_check",
+      "CHECK ((num_nonnulls(documento_id, factura_id) >= 1))"
+    ],
+    [
+      "historial_facturas",
+      "historial_facturas_documento_id_fkey",
+      "FOREIGN KEY (documento_id) REFERENCES documentos_facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "historial_facturas",
+      "historial_facturas_factura_id_fkey",
+      "FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "historial_facturas",
+      "historial_facturas_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_coste_luna_check",
+      "CHECK (((coste_luna IS NULL) OR (coste_luna >= (0)::numeric)))"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_disparador_check",
+      "CHECK ((disparador = ANY (ARRAY['AUTOMATICO'::text, 'MANUAL'::text, 'REPROCESADO'::text, 'TEST'::text])))"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_documento_id_fkey",
+      "FOREIGN KEY (documento_id) REFERENCES documentos_facturas(id) ON DELETE CASCADE"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_documento_idempotency_unico",
+      "UNIQUE (documento_id, idempotency_key)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_documento_intento_unico",
+      "UNIQUE (documento_id, intento)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_estado_check",
+      "CHECK ((estado = ANY (ARRAY['PENDIENTE'::text, 'EJECUTANDO'::text, 'COMPLETADA'::text, 'INCOMPLETA'::text, 'ERROR'::text])))"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_intento_check",
+      "CHECK ((intento > 0))"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_proveedor_id_fkey",
+      "FOREIGN KEY (proveedor_id) REFERENCES proveedores(id)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_tokens_entrada_check",
+      "CHECK (((tokens_entrada IS NULL) OR (tokens_entrada >= 0)))"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_tokens_salida_check",
+      "CHECK (((tokens_salida IS NULL) OR (tokens_salida >= 0)))"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_tokens_total_check",
+      "CHECK (((tokens_total IS NULL) OR (tokens_total >= 0)))"
+    ],
+    [
+      "proveedores",
+      "proveedores_codigo_key",
+      "UNIQUE (codigo)"
+    ],
+    [
+      "proveedores",
+      "proveedores_nivel_confianza_check",
+      "CHECK ((nivel_confianza = ANY (ARRAY['NO_VERIFICADO'::text, 'DOCUMENTAL'::text, 'PIO_VALIDADO'::text])))"
+    ],
+    [
+      "proveedores",
+      "proveedores_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "proveedores_alias",
+      "proveedores_alias_alias_check",
+      "CHECK ((btrim(alias) <> ''::text))"
+    ],
+    [
+      "proveedores_alias",
+      "proveedores_alias_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "proveedores_alias",
+      "proveedores_alias_proveedor_id_fkey",
+      "FOREIGN KEY (proveedor_id) REFERENCES proveedores(id) ON DELETE CASCADE"
+    ]
+  ],
+  "indices": [
+    [
+      "albaranes",
+      "albaranes_contador_unico",
+      "CREATE UNIQUE INDEX albaranes_contador_unico ON public.albaranes USING btree (farmacia, id_contador)"
+    ],
+    [
+      "albaranes",
+      "albaranes_fecha_idx",
+      "CREATE INDEX albaranes_fecha_idx ON public.albaranes USING btree (fecha)"
+    ],
+    [
+      "albaranes",
+      "albaranes_numero_unico",
+      "CREATE UNIQUE INDEX albaranes_numero_unico ON public.albaranes USING btree (farmacia, id_proveedor, numero_albaran)"
+    ],
+    [
+      "albaranes",
+      "albaranes_pkey",
+      "CREATE UNIQUE INDEX albaranes_pkey ON public.albaranes USING btree (id)"
+    ],
+    [
+      "albaranes",
+      "albaranes_proveedor_idx",
+      "CREATE INDEX albaranes_proveedor_idx ON public.albaranes USING btree (id_proveedor)"
+    ],
+    [
+      "cf_configuracion",
+      "cf_configuracion_pkey",
+      "CREATE UNIQUE INDEX cf_configuracion_pkey ON public.cf_configuracion USING btree (id)"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_albaran_idx",
+      "CREATE INDEX conciliacion_detalles_albaran_idx ON public.conciliacion_detalles USING btree (albaran_farmacia, albaran_id_contador) WHERE (albaran_id_contador IS NOT NULL)"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_conciliacion_idx",
+      "CREATE INDEX conciliacion_detalles_conciliacion_idx ON public.conciliacion_detalles USING btree (conciliacion_id)"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_orden_unico",
+      "CREATE UNIQUE INDEX conciliacion_detalles_orden_unico ON public.conciliacion_detalles USING btree (conciliacion_id, orden)"
+    ],
+    [
+      "conciliacion_detalles",
+      "conciliacion_detalles_pkey",
+      "CREATE UNIQUE INDEX conciliacion_detalles_pkey ON public.conciliacion_detalles USING btree (id)"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_actual_factura_unico",
+      "CREATE UNIQUE INDEX conciliaciones_actual_factura_unico ON public.conciliaciones USING btree (factura_id) WHERE es_actual"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_factura_idx",
+      "CREATE INDEX conciliaciones_factura_idx ON public.conciliaciones USING btree (factura_id, intento DESC)"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_factura_intento_unico",
+      "CREATE UNIQUE INDEX conciliaciones_factura_intento_unico ON public.conciliaciones USING btree (factura_id, intento)"
+    ],
+    [
+      "conciliaciones",
+      "conciliaciones_pkey",
+      "CREATE UNIQUE INDEX conciliaciones_pkey ON public.conciliaciones USING btree (id)"
+    ],
+    [
+      "documentos_facturas",
+      "documentos_facturas_archivo_hash_unico",
+      "CREATE UNIQUE INDEX documentos_facturas_archivo_hash_unico ON public.documentos_facturas USING btree (farmacia, archivo_hash)"
+    ],
+    [
+      "documentos_facturas",
+      "documentos_facturas_cola_normalizacion_idx",
+      "CREATE INDEX documentos_facturas_cola_normalizacion_idx ON public.documentos_facturas USING btree (estado_lectura, proximo_reintento_at, bloqueado_hasta, fecha_importacion)"
+    ],
+    [
+      "documentos_facturas",
+      "documentos_facturas_estado_lectura_idx",
+      "CREATE INDEX documentos_facturas_estado_lectura_idx ON public.documentos_facturas USING btree (farmacia, estado_lectura)"
+    ],
+    [
+      "documentos_facturas",
+      "documentos_facturas_fecha_importacion_idx",
+      "CREATE INDEX documentos_facturas_fecha_importacion_idx ON public.documentos_facturas USING btree (farmacia, fecha_importacion)"
+    ],
+    [
+      "documentos_facturas",
+      "facturas_pkey",
+      "CREATE UNIQUE INDEX facturas_pkey ON public.documentos_facturas USING btree (id)"
+    ],
+    [
+      "facturas",
+      "facturas_cola_conciliacion_idx",
+      "CREATE INDEX facturas_cola_conciliacion_idx ON public.facturas USING btree (estado_conciliacion_cf, conciliacion_proximo_at, conciliacion_bloqueado_hasta)"
+    ],
+    [
+      "facturas",
+      "facturas_conciliacion_idx",
+      "CREATE INDEX facturas_conciliacion_idx ON public.facturas USING btree (farmacia, estado_conciliacion)"
+    ],
+    [
+      "facturas",
+      "facturas_documento_idx",
+      "CREATE INDEX facturas_documento_idx ON public.facturas USING btree (documento_id)"
+    ],
+    [
+      "facturas",
+      "facturas_documento_numero_pagina_unico",
+      "CREATE UNIQUE INDEX facturas_documento_numero_pagina_unico ON public.facturas USING btree (documento_id, numero_factura, pagina_inicio)"
+    ],
+    [
+      "facturas",
+      "facturas_documento_proyeccion_clave_unico",
+      "CREATE UNIQUE INDEX facturas_documento_proyeccion_clave_unico ON public.facturas USING btree (documento_id, proyeccion_clave)"
+    ],
+    [
+      "facturas",
+      "facturas_estado_normalizacion_idx",
+      "CREATE INDEX facturas_estado_normalizacion_idx ON public.facturas USING btree (farmacia, estado_normalizacion)"
+    ],
+    [
+      "facturas",
+      "facturas_estado_revision_cf_idx",
+      "CREATE INDEX facturas_estado_revision_cf_idx ON public.facturas USING btree (farmacia, estado_revision)"
+    ],
+    [
+      "facturas",
+      "facturas_fecha_idx",
+      "CREATE INDEX facturas_fecha_idx ON public.facturas USING btree (farmacia, fecha_factura)"
+    ],
+    [
+      "facturas",
+      "facturas_numero_idx",
+      "CREATE INDEX facturas_numero_idx ON public.facturas USING btree (farmacia, numero_factura)"
+    ],
+    [
+      "facturas",
+      "facturas_pago_idx",
+      "CREATE INDEX facturas_pago_idx ON public.facturas USING btree (farmacia, estado_pago)"
+    ],
+    [
+      "facturas",
+      "facturas_pkey1",
+      "CREATE UNIQUE INDEX facturas_pkey1 ON public.facturas USING btree (id)"
+    ],
+    [
+      "facturas",
+      "facturas_proveedor_cf_idx",
+      "CREATE INDEX facturas_proveedor_cf_idx ON public.facturas USING btree (proveedor_id)"
+    ],
+    [
+      "facturas",
+      "facturas_proveedor_idx",
+      "CREATE INDEX facturas_proveedor_idx ON public.facturas USING btree (farmacia, id_proveedor_albaranes)"
+    ],
+    [
+      "facturas",
+      "facturas_revision_idx",
+      "CREATE INDEX facturas_revision_idx ON public.facturas USING btree (farmacia, requiere_revision)"
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_factura_idx",
+      "CREATE INDEX facturas_ajustes_factura_idx ON public.facturas_ajustes USING btree (factura_id)"
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_orden_unico",
+      "CREATE UNIQUE INDEX facturas_ajustes_orden_unico ON public.facturas_ajustes USING btree (factura_id, orden)"
+    ],
+    [
+      "facturas_ajustes",
+      "facturas_ajustes_pkey",
+      "CREATE UNIQUE INDEX facturas_ajustes_pkey ON public.facturas_ajustes USING btree (id)"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_factura_idx",
+      "CREATE INDEX facturas_albaranes_extraidos_factura_idx ON public.facturas_albaranes_extraidos USING btree (factura_id)"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_numero_idx",
+      "CREATE INDEX facturas_albaranes_extraidos_numero_idx ON public.facturas_albaranes_extraidos USING btree (numero_albaran)"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_orden_unico",
+      "CREATE UNIQUE INDEX facturas_albaranes_extraidos_orden_unico ON public.facturas_albaranes_extraidos USING btree (factura_id, orden)"
+    ],
+    [
+      "facturas_albaranes_extraidos",
+      "facturas_albaranes_extraidos_pkey",
+      "CREATE UNIQUE INDEX facturas_albaranes_extraidos_pkey ON public.facturas_albaranes_extraidos USING btree (id)"
+    ],
+    [
+      "facturas_impuestos",
+      "facturas_impuestos_factura_idx",
+      "CREATE INDEX facturas_impuestos_factura_idx ON public.facturas_impuestos USING btree (factura_id)"
+    ],
+    [
+      "facturas_impuestos",
+      "facturas_impuestos_orden_unico",
+      "CREATE UNIQUE INDEX facturas_impuestos_orden_unico ON public.facturas_impuestos USING btree (factura_id, orden)"
+    ],
+    [
+      "facturas_impuestos",
+      "facturas_impuestos_pkey",
+      "CREATE UNIQUE INDEX facturas_impuestos_pkey ON public.facturas_impuestos USING btree (id)"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_documento_idx",
+      "CREATE INDEX facturas_incidencias_documento_idx ON public.facturas_incidencias USING btree (documento_id, estado) WHERE (documento_id IS NOT NULL)"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_factura_idx",
+      "CREATE INDEX facturas_incidencias_factura_idx ON public.facturas_incidencias USING btree (factura_id, estado) WHERE (factura_id IS NOT NULL)"
+    ],
+    [
+      "facturas_incidencias",
+      "facturas_incidencias_pkey",
+      "CREATE UNIQUE INDEX facturas_incidencias_pkey ON public.facturas_incidencias USING btree (id)"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_factura_idx",
+      "CREATE INDEX facturas_movimientos_factura_idx ON public.facturas_movimientos USING btree (factura_id)"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_orden_unico",
+      "CREATE UNIQUE INDEX facturas_movimientos_orden_unico ON public.facturas_movimientos USING btree (factura_id, orden)"
+    ],
+    [
+      "facturas_movimientos",
+      "facturas_movimientos_pkey",
+      "CREATE UNIQUE INDEX facturas_movimientos_pkey ON public.facturas_movimientos USING btree (id)"
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_factura_idx",
+      "CREATE INDEX facturas_vencimientos_factura_idx ON public.facturas_vencimientos USING btree (factura_id)"
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_fecha_idx",
+      "CREATE INDEX facturas_vencimientos_fecha_idx ON public.facturas_vencimientos USING btree (fecha_vencimiento)"
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_orden_unico",
+      "CREATE UNIQUE INDEX facturas_vencimientos_orden_unico ON public.facturas_vencimientos USING btree (factura_id, orden)"
+    ],
+    [
+      "facturas_vencimientos",
+      "facturas_vencimientos_pkey",
+      "CREATE UNIQUE INDEX facturas_vencimientos_pkey ON public.facturas_vencimientos USING btree (id)"
+    ],
+    [
+      "historial_facturas",
+      "historial_facturas_documento_idx",
+      "CREATE INDEX historial_facturas_documento_idx ON public.historial_facturas USING btree (documento_id, created_at DESC)"
+    ],
+    [
+      "historial_facturas",
+      "historial_facturas_factura_idx",
+      "CREATE INDEX historial_facturas_factura_idx ON public.historial_facturas USING btree (factura_id, created_at DESC)"
+    ],
+    [
+      "historial_facturas",
+      "historial_facturas_pkey",
+      "CREATE UNIQUE INDEX historial_facturas_pkey ON public.historial_facturas USING btree (id)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_documento_idempotency_unico",
+      "CREATE UNIQUE INDEX normalizacion_ejecuciones_documento_idempotency_unico ON public.normalizacion_ejecuciones USING btree (documento_id, idempotency_key)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_documento_idx",
+      "CREATE INDEX normalizacion_ejecuciones_documento_idx ON public.normalizacion_ejecuciones USING btree (documento_id, intento DESC)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_documento_intento_unico",
+      "CREATE UNIQUE INDEX normalizacion_ejecuciones_documento_intento_unico ON public.normalizacion_ejecuciones USING btree (documento_id, intento)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_estado_idx",
+      "CREATE INDEX normalizacion_ejecuciones_estado_idx ON public.normalizacion_ejecuciones USING btree (estado, created_at)"
+    ],
+    [
+      "normalizacion_ejecuciones",
+      "normalizacion_ejecuciones_pkey",
+      "CREATE UNIQUE INDEX normalizacion_ejecuciones_pkey ON public.normalizacion_ejecuciones USING btree (id)"
+    ],
+    [
+      "proveedores",
+      "proveedores_codigo_ci_unico",
+      "CREATE UNIQUE INDEX proveedores_codigo_ci_unico ON public.proveedores USING btree (lower(codigo))"
+    ],
+    [
+      "proveedores",
+      "proveedores_codigo_key",
+      "CREATE UNIQUE INDEX proveedores_codigo_key ON public.proveedores USING btree (codigo)"
+    ],
+    [
+      "proveedores",
+      "proveedores_farmatic_id_unico",
+      "CREATE UNIQUE INDEX proveedores_farmatic_id_unico ON public.proveedores USING btree (farmatic_id_proveedor) WHERE (farmatic_id_proveedor IS NOT NULL)"
+    ],
+    [
+      "proveedores",
+      "proveedores_pkey",
+      "CREATE UNIQUE INDEX proveedores_pkey ON public.proveedores USING btree (id)"
+    ],
+    [
+      "proveedores_alias",
+      "proveedores_alias_ci_unico",
+      "CREATE UNIQUE INDEX proveedores_alias_ci_unico ON public.proveedores_alias USING btree (lower(btrim(alias)))"
+    ],
+    [
+      "proveedores_alias",
+      "proveedores_alias_pkey",
+      "CREATE UNIQUE INDEX proveedores_alias_pkey ON public.proveedores_alias USING btree (id)"
+    ],
+    [
+      "proveedores_alias",
+      "proveedores_alias_proveedor_idx",
+      "CREATE INDEX proveedores_alias_proveedor_idx ON public.proveedores_alias USING btree (proveedor_id)"
+    ]
+  ],
+  "funciones_publicas": [
+    [
+      "cf_clave_economica_factura",
+      "p jsonb",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_clave_economica_factura(p jsonb)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'public'\nAS $function$\n    select case when public.cf_componentes_identidad_factura(p) is not null then\n      encode(extensions.digest(array_to_string(public.cf_componentes_identidad_factura(p),chr(31)),'sha256'),'hex') end;\n$function$\n"
+    ],
+    [
+      "cf_componentes_identidad_factura",
+      "p jsonb",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_componentes_identidad_factura(p jsonb)\n RETURNS text[]\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'public'\nAS $function$\ndeclare\n    campo jsonb;\n    partes text[];\n    tipo text;\nbegin\n    foreach campo in array array[p#>'{proveedor,nif}',p->'numero_factura',\n        p->'tipo_documento',p#>'{destinatario,nif}',p->'fecha_factura',p#>'{totales,total}']\n    loop\n        if campo is null or campo->'valor' is null or campo->'valor'='null'::jsonb\n           or not exists (select 1 from jsonb_array_elements(coalesce(campo->'evidencia','[]')) e\n                           where (e->>'pagina')::integer>0 and length(btrim(e->>'literal'))>0) then\n            return null;\n        end if;\n    end loop;\n    tipo := upper(btrim(p#>>'{tipo_documento,valor}'));\n    if tipo='FACTURA_DUPLICADO' then tipo:='FACTURA'; end if;\n    if tipo not in ('FACTURA','ABONO','FACTURA_RECTIFICATIVA') then return null; end if;\n    if (p#>>'{totales,total,valor}')::numeric <> round((p#>>'{totales,total,valor}')::numeric,4)\n       or (p#>>'{totales,total,valor}') in ('NaN','Infinity','-Infinity') then return null; end if;\n    partes := array[\n        regexp_replace(upper(p#>>'{proveedor,nif,valor}'),'[^A-Z0-9]','','g'),\n        upper(btrim(p#>>'{numero_factura,valor}')),tipo,\n        regexp_replace(upper(p#>>'{destinatario,nif,valor}'),'[^A-Z0-9]','','g'),\n        to_char((p#>>'{fecha_factura,valor,iso}')::date,'YYYY-MM-DD'),\n        ((p#>>'{totales,total,valor}')::numeric(18,4))::text];\n    if exists(select 1 from unnest(partes) v where v is null or v='' or strpos(v,chr(31))>0) then return null; end if;\n    return partes;\nexception when invalid_text_representation or invalid_datetime_format or datetime_field_overflow or numeric_value_out_of_range then\n    return null;\nend;\n$function$\n"
+    ],
+    [
+      "cf_desvalidar_factura",
+      "p_factura_id uuid, p_actor text",
+      "postgres",
+      "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_desvalidar_factura(p_factura_id uuid, p_actor text DEFAULT NULL::text)\n RETURNS facturas\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_anterior jsonb;\n    v_factura public.facturas%rowtype;\n    v_actor text := coalesce(auth.uid()::text, nullif(btrim(p_actor), ''), 'SISTEMA');\nbegin\n    select jsonb_build_object(\n        'estado_revision', estado_revision,\n        'requiere_revision', requiere_revision,\n        'validada_manualmente', validada_manualmente\n    )\n      into v_anterior\n      from public.facturas\n     where id = p_factura_id\n       and exists (\n           select 1 from public.cf_configuracion c\n           where c.id = true and facturas.farmacia = any(c.farmacias_habilitadas)\n       )\n     for update;\n\n    if v_anterior is null then\n        raise exception 'factura no encontrada';\n    end if;\n\n    update public.facturas\n       set estado_revision = 'PENDIENTE_REVISION_PIO',\n           requiere_revision = true,\n           validada_manualmente = false,\n           validada_por = null,\n           fecha_validacion = null,\n           updated_at = now()\n     where id = p_factura_id\n     returning * into v_factura;\n\n    insert into public.historial_facturas (\n        documento_id, factura_id, evento, origen, actor,\n        estado_anterior, estado_nuevo\n    ) values (\n        v_factura.documento_id, v_factura.id, 'FACTURA_DESVALIDADA',\n        'RPC', v_actor, v_anterior,\n        jsonb_build_object(\n            'estado_revision', v_factura.estado_revision,\n            'requiere_revision', v_factura.requiere_revision,\n            'validada_manualmente', v_factura.validada_manualmente\n        )\n    );\n\n    return v_factura;\nend;\n$function$\n"
+    ],
+    [
+      "cf_evaluar_elegibilidad_conciliacion",
+      "p_factura_id uuid",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_evaluar_elegibilidad_conciliacion(p_factura_id uuid)\n RETURNS TABLE(estado text, razon text)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_factura public.facturas%rowtype;\n    v_resultado jsonb;\n    v_tipo text;\n    v_nif text;\n    v_nombre text;\n    v_tiene_identidad boolean;\n    v_albaranes integer;\n    v_albaranes_total numeric;\n    v_movimientos integer;\n    v_movimientos_incompletos integer;\n    v_movimientos_con_importe integer;\n    v_movimientos_con_base integer;\n    v_movimientos_importe numeric;\n    v_movimientos_base numeric;\n    v_fiscalidad_coherente boolean;\n    v_traza_servicio boolean;\n    v_total_explicado boolean;\n    v_tolerancia numeric := 0.0500;\nbegin\n    select f.*\n      into v_factura\n      from public.facturas f\n     where f.id = p_factura_id;\n\n    select n.resultado_json\n      into v_resultado\n      from public.normalizacion_ejecuciones n\n     where n.id = v_factura.normalizacion_ejecucion_id;\n\n    if v_factura.id is null then\n        return query select 'NO_APTA', 'NORMALIZACION_NO_VALIDA';\n        return;\n    end if;\n    if coalesce((v_resultado->>'documento_completo_demostrado')::boolean, false) is not true then\n        return query select 'NO_APTA', 'DOCUMENTO_INCOMPLETO';\n        return;\n    end if;\n\n    v_nif := regexp_replace(upper(coalesce(v_factura.datos_extraidos #>> '{destinatario,nif,valor}', '')), '[^A-Z0-9]', '', 'g');\n    v_nombre := translate(upper(coalesce(v_factura.datos_extraidos #>> '{destinatario,nombre,valor}', '')), 'ÁÉÍÓÚÜÑ', 'AEIOUUN');\n    v_tiene_identidad :=\n        jsonb_array_length(coalesce(v_factura.datos_extraidos #> '{destinatario,nif,evidencia}', '[]'::jsonb)) > 0\n        or jsonb_array_length(coalesce(v_factura.datos_extraidos #> '{destinatario,nombre,evidencia}', '[]'::jsonb)) > 0;\n    if not v_tiene_identidad then\n        return query select 'NO_APTA', 'FARMACIA_NO_DEMOSTRABLE';\n        return;\n    end if;\n    if not (\n        v_factura.farmacia = 'PIO'\n        and (v_nif = '40901058C' or (v_nif = '' and v_nombre like '%PUIG SALOM%PIO%'))\n    ) then\n        return query select 'NO_APTA', 'FARMACIA_NO_CONSISTENTE';\n        return;\n    end if;\n    if v_factura.estado_normalizacion <> 'NORMALIZADA' then\n        return query select 'NO_APTA', 'NORMALIZACION_NO_VALIDA';\n        return;\n    end if;\n    if exists (\n        select 1 from public.facturas_incidencias i\n         where i.factura_id = v_factura.id and i.estado = 'ABIERTA' and i.bloqueante\n    ) then\n        return query select 'NO_APTA', 'INCIDENCIA_BLOQUEANTE';\n        return;\n    end if;\n\n    v_tipo := case v_factura.datos_extraidos->>'naturaleza_principal'\n        when 'MERCANCIA' then 'FACTURA_MERCANCIA'\n        when 'SERVICIOS' then 'FACTURA_GASTO_SERVICIO'\n        when 'MIXTA' then 'FACTURA_MIXTA'\n        when 'FACTURA_MERCANCIA' then 'FACTURA_MERCANCIA'\n        when 'FACTURA_GASTO_SERVICIO' then 'FACTURA_GASTO_SERVICIO'\n        when 'FACTURA_MIXTA' then 'FACTURA_MIXTA'\n        else 'TIPO_NO_DEMOSTRADO'\n    end;\n    if v_tipo = 'TIPO_NO_DEMOSTRADO' then\n        return query select 'REQUIERE_REVISION', 'TIPO_DOCUMENTAL_NO_DEMOSTRADO';\n        return;\n    end if;\n    if v_factura.importe_total is null then\n        return query select 'NO_APTA', 'TOTAL_NO_DEMOSTRADO';\n        return;\n    end if;\n\n    select count(*), coalesce(sum(\n               case when a.tipo_movimiento = 'ABONO' then -abs(a.importe_total)\n                    else abs(a.importe_total) end\n           ), 0)\n      into v_albaranes, v_albaranes_total\n      from public.facturas_albaranes_extraidos a\n     where a.factura_id = v_factura.id and a.importe_total is not null;\n\n    select count(*),\n           count(*) filter (where nullif(btrim(m.descripcion_literal), '') is null\n                              or m.sentido is null\n                              or (m.importe is null and m.base is null)),\n           count(m.importe), count(m.base),\n           coalesce(sum(case when m.sentido = 'ABONO' then -abs(m.importe) else abs(m.importe) end), 0),\n           coalesce(sum(case when m.sentido = 'ABONO' then -abs(m.base) else abs(m.base) end), 0)\n      into v_movimientos, v_movimientos_incompletos,\n           v_movimientos_con_importe, v_movimientos_con_base,\n           v_movimientos_importe, v_movimientos_base\n      from public.facturas_movimientos m\n     where m.factura_id = v_factura.id;\n\n    v_fiscalidad_coherente :=\n        v_factura.base_imponible_total is not null\n        and abs(\n            v_factura.importe_total\n            - (v_factura.base_imponible_total\n               + coalesce(v_factura.iva_total, 0)\n               + coalesce(v_factura.recargo_equivalencia_total, 0)\n               + coalesce(nullif(v_factura.datos_extraidos #>> '{totales,otros,valor}', '')::numeric, 0))\n        ) <= v_tolerancia;\n\n    if v_tipo = 'FACTURA_MERCANCIA' then\n        if v_albaranes > 0 then\n            return query select 'APTA', 'APTA_MERCANCIA';\n        else\n            return query select 'NO_APTA', 'FALTAN_ALBARANES_MERCANCIA';\n        end if;\n        return;\n    end if;\n\n    v_traza_servicio := v_movimientos > 0 and v_movimientos_incompletos = 0;\n    if v_tipo = 'FACTURA_GASTO_SERVICIO' then\n        v_total_explicado :=\n            (v_movimientos_con_importe = v_movimientos\n             and abs(v_factura.importe_total - v_movimientos_importe) <= v_tolerancia)\n            or\n            (v_movimientos_con_importe = 0\n             and v_movimientos_con_base = v_movimientos\n             and v_factura.base_imponible_total is not null\n             and abs(v_factura.base_imponible_total - v_movimientos_base) <= v_tolerancia\n             and v_fiscalidad_coherente);\n        if not v_traza_servicio then\n            return query select 'NO_APTA', 'TRAZABILIDAD_SERVICIO_INSUFICIENTE';\n        elsif not v_fiscalidad_coherente then\n            return query select 'NO_APTA', 'FISCALIDAD_INCOHERENTE';\n        elsif not v_total_explicado then\n            return query select 'NO_APTA', 'TOTAL_NO_EXPLICADO';\n        else\n            return query select 'APTA', 'APTA_GASTO_SERVICIO';\n        end if;\n        return;\n    end if;\n\n    if v_albaranes = 0 then\n        return query select 'NO_APTA', 'FALTAN_ALBARANES_MERCANCIA';\n    elsif not v_traza_servicio or v_movimientos_con_importe <> v_movimientos then\n        return query select 'NO_APTA', 'TRAZABILIDAD_SERVICIO_INSUFICIENTE';\n    elsif not v_fiscalidad_coherente then\n        return query select 'NO_APTA', 'FISCALIDAD_INCOHERENTE';\n    elsif abs(v_factura.importe_total - (v_albaranes_total + v_movimientos_importe)) > v_tolerancia then\n        return query select 'NO_APTA', 'TOTAL_NO_EXPLICADO';\n    else\n        return query select 'APTA', 'APTA_MIXTA';\n    end if;\nend;\n$function$\n"
+    ],
+    [
+      "cf_historial_append_only",
+      "",
+      "postgres",
+      "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_historial_append_only()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\nbegin\n    raise exception 'historial_facturas es append-only';\nend;\n$function$\n"
+    ],
+    [
+      "cf_persistir_documento_multifactura",
+      "p_documento_id uuid, p_worker_id text, p_idempotency_key text, p_resultado_hash text, p_resultado jsonb, p_segmentos_autorizados text[]",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_persistir_documento_multifactura(p_documento_id uuid, p_worker_id text, p_idempotency_key text, p_resultado_hash text, p_resultado jsonb, p_segmentos_autorizados text[])\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    d public.documentos_facturas%rowtype;\n    f jsonb; anterior jsonb; item jsonb;\n    partes text[]; otras_partes text[];\n    clave text; segmento text; estado text;\n    existentes text[] := '{}'::text[];\n    segmentos text[] := '{}'::text[];\n    paginas integer[] := '{}'::integer[];\n    nuevas jsonb := '[]'::jsonb;\n    inventario jsonb := '[]'::jsonb;\n    factura_ref uuid; otra record;\n    ejecucion uuid; payload jsonb;\n    firma text; replay jsonb;\n    n integer; inicio integer; fin integer;\nbegin\n    if nullif(btrim(p_worker_id),'') is null or nullif(btrim(p_idempotency_key),'') is null\n       or p_segmentos_autorizados is null then raise exception 'MULTIFACTURA_ARGUMENTOS_INVALIDOS'; end if;\n    -- Serializa decisiones de identidad entre documentos, ademas del lock del PDF.\n    perform pg_advisory_xact_lock(2151501);\n    select * into d from public.documentos_facturas where id=p_documento_id for update;\n    if d.id is null or d.farmacia<>'PIO' then raise exception 'DOCUMENTO_FUERA_DE_AMBITO'; end if;\n    if not exists(select 1 from public.cf_configuracion where id and d.farmacia=any(farmacias_habilitadas)) then\n        raise exception 'FARMACIA_NO_HABILITADA'; end if;\n    firma:=encode(extensions.digest(jsonb_build_object('documento',p_resultado,'seleccion',to_jsonb(p_segmentos_autorizados))::text,'sha256'),'hex');\n    select id,resultado_json into ejecucion,replay from public.normalizacion_ejecuciones\n      where documento_id=d.id and idempotency_key=p_idempotency_key;\n    if ejecucion is not null then\n        if replay#>>'{multifactura,firma_solicitud}' is distinct from firma then raise exception 'IDEMPOTENCIA_PAYLOAD_DISTINTO'; end if;\n        return ejecucion;\n    end if;\n    if d.bloqueado_por is distinct from p_worker_id or d.bloqueado_hasta<=now() or d.bloqueado_hasta is null then\n        raise exception 'CLAIM_DOCUMENTAL_NO_VALIDO'; end if;\n    if p_resultado->'documento_completo_demostrado' is distinct from 'true'::jsonb\n       or jsonb_typeof(p_resultado->'facturas') is distinct from 'array'\n       or jsonb_array_length(p_resultado->'facturas')=0 then raise exception 'DOCUMENTO_INCOMPLETO'; end if;\n    n:=(p_resultado->>'numero_paginas')::integer;\n    if n is null or n<1 then raise exception 'PAGINAS_INVALIDAS'; end if;\n    if cardinality(p_segmentos_autorizados)<>(select count(distinct s) from unnest(p_segmentos_autorizados) s) then\n        raise exception 'SELECCION_DUPLICADA'; end if;\n    for f in select value from jsonb_array_elements(p_resultado->'facturas') loop\n        segmento:=f#>>'{provenance,segment_id}';\n        inicio:=(f->>'pagina_inicio')::integer; fin:=(f->>'pagina_fin')::integer;\n        if nullif(segmento,'') is null or segmento=any(segmentos) or inicio is null or fin is null\n           or inicio<1 or fin<inicio or fin>n then raise exception 'SEGMENTACION_INVALIDA'; end if;\n        if (f#>'{provenance,paginas}') is distinct from (select jsonb_agg(g) from generate_series(inicio,fin) g)\n           or exists(select 1 from generate_series(inicio,fin) g where g=any(paginas)) then\n            raise exception 'PROVENANCE_INVALIDA'; end if;\n        if exists(select 1 from jsonb_path_query(f,'$.**.evidencia[*].pagina') e\n            where jsonb_typeof(e)<>'number' or (e::text)::integer not between inicio and fin) then\n            raise exception 'EVIDENCIA_FUERA_DE_FACTURA'; end if;\n        segmentos:=array_append(segmentos,segmento);\n        paginas:=paginas || array(select g from generate_series(inicio,fin) g);\n        partes:=public.cf_componentes_identidad_factura(f);\n        clave:=public.cf_clave_economica_factura(f);\n        estado:='PENDIENTES'; factura_ref:=null;\n        if clave is null or f->'factura_completa_demostrada' is distinct from 'true'::jsonb\n           or partes[4]<>'40901058C' or f->>'estado_validacion' not in ('VALIDADA','VALIDADA_CON_INCIDENCIAS')\n           or f->>'estado_validacion' is null then estado:='REQUIERE_REVISION'; end if;\n        -- Compara todas las hermanas antes de decidir, independientemente del orden.\n        if exists(select 1 from jsonb_array_elements(p_resultado->'facturas') sibling\n            where (public.cf_componentes_identidad_factura(sibling))[1:4]=partes[1:4]\n              and public.cf_componentes_identidad_factura(sibling)<>partes) then\n            estado:='REQUIERE_REVISION'; end if;\n        -- Una version incompatible del mismo nucleo nunca se deduplica automaticamente.\n        for otra in select id,documento_id,datos_extraidos from public.facturas loop\n            otras_partes:=public.cf_componentes_identidad_factura(otra.datos_extraidos);\n            if otras_partes[1:4]=partes[1:4] then\n                if otras_partes<>partes then estado:='REQUIERE_REVISION'; factura_ref:=null; exit;\n                else\n                    factura_ref:=otra.id;\n                    if estado<>'REQUIERE_REVISION' then\n                        estado:=case when otra.documento_id=d.id then 'PERSISTIDAS' else 'DUPLICADAS' end;\n                    end if;\n                end if;\n            end if;\n        end loop;\n        for item in select value from jsonb_array_elements(inventario) loop\n            if (item->'componentes')=to_jsonb(partes) and estado='PENDIENTES'\n               and item->>'estado' in ('PERSISTIDAS','DUPLICADAS') then estado:='DUPLICADAS'; end if;\n            if (item->'componentes')->>0=partes[1] and (item->'componentes')->>1=partes[2]\n               and (item->'componentes')->>2=partes[3] and (item->'componentes')->>3=partes[4]\n               and (item->'componentes')<>to_jsonb(partes) then estado:='REQUIERE_REVISION'; end if;\n        end loop;\n        if estado='PENDIENTES' and segmento=any(p_segmentos_autorizados) then\n            nuevas:=nuevas || jsonb_build_array(f || jsonb_build_object('factura_id',clave,'identidad_economica_clave',clave));\n            estado:='PERSISTIDAS';\n        end if;\n        inventario:=inventario || jsonb_build_array(jsonb_build_object('segment_id',segmento,\n            'clave_economica',clave,'componentes',to_jsonb(partes),'estado',estado,\n            'factura_id',factura_ref,'provenance',f->'provenance'));\n    end loop;\n    if cardinality(paginas)<>n or not p_segmentos_autorizados<@segmentos then raise exception 'INVENTARIO_INCOMPLETO'; end if;\n    -- Relecturas deben conservar las identidades inventariadas; nunca desaparecen hermanas.\n    for anterior in select value from jsonb_array_elements(d.inventario_facturas) loop\n        if not exists(select 1 from jsonb_array_elements(inventario) x\n            where x->>'segment_id'=anterior->>'segment_id' and x->'clave_economica' is not distinct from anterior->'clave_economica') then\n            raise exception 'INVENTARIO_RELECTURA_INCOMPATIBLE'; end if;\n    end loop;\n    payload:=p_resultado || jsonb_build_object('facturas',nuevas);\n    ejecucion:=public.cf_persistir_normalizacion(d.id,p_worker_id,'MANUAL',p_idempotency_key,p_resultado_hash,\n        jsonb_build_object('resultado_json',payload,'uso_luna',false,'uso_ocr',false));\n    -- Guardar lectura completa e inventario, no solo el subconjunto economico elegido.\n    update public.normalizacion_ejecuciones set resultado_json=p_resultado || jsonb_build_object(\n        'multifactura',jsonb_build_object('firma_solicitud',firma,'segmentos_autorizados',to_jsonb(p_segmentos_autorizados)))\n      where id=ejecucion;\n    select jsonb_agg(x || jsonb_build_object('factura_id',coalesce(x->>'factura_id',\n          (select id::text from public.facturas where documento_id=d.id and proyeccion_clave=x->>'clave_economica')),\n          'estado',case when x->>'estado'='PENDIENTES' and exists(\n            select 1 from public.facturas where documento_id=d.id and proyeccion_clave=x->>'clave_economica')\n            then 'DUPLICADAS' else x->>'estado' end))\n      into inventario from jsonb_array_elements(inventario) x;\n    estado:=case\n      when not exists(select 1 from jsonb_array_elements(inventario) x where x->>'estado' not in ('PERSISTIDAS','DUPLICADAS')) then 'COMPLETA'\n      when exists(select 1 from jsonb_array_elements(inventario) x where x->>'estado'='PERSISTIDAS') then 'PARCIAL'\n      when exists(select 1 from jsonb_array_elements(inventario) x where x->>'estado'='REQUIERE_REVISION') then 'REQUIERE_REVISION'\n      else 'PENDIENTE' end;\n    update public.documentos_facturas set inventario_facturas=inventario,estado_persistencia=estado,\n      estado_lectura=case when estado='COMPLETA' then 'NORMALIZADA' else 'REVISION' end,\n      cantidad_documentos_detectados=jsonb_array_length(inventario),\n      tipo_contenido=case when jsonb_array_length(inventario)>1 then 'LOTE_FACTURAS' else 'FACTURA_UNICA' end\n      where id=d.id;\n    insert into public.historial_facturas(documento_id,evento,origen,actor,estado_nuevo,detalle)\n      values(d.id,'INVENTARIO_MULTIFACTURA','RPC',p_worker_id,jsonb_build_object('estado_persistencia',estado),\n             jsonb_build_object('ejecucion_id',ejecucion,'inventario',inventario));\n    return ejecucion;\nend;\n$function$\n"
+    ],
+    [
+      "cf_persistir_normalizacion",
+      "p_documento_id uuid, p_worker_id text, p_disparador text, p_idempotency_key text, p_resultado_hash text, p_resultado jsonb",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_persistir_normalizacion(p_documento_id uuid, p_worker_id text, p_disparador text, p_idempotency_key text, p_resultado_hash text, p_resultado jsonb)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_documento public.documentos_facturas%rowtype;\n    v_ejecucion_id uuid;\n    v_intento integer;\n    v_documento_normalizado jsonb := coalesce(p_resultado->'resultado_json', p_resultado);\n    v_factura jsonb;\n    v_factura_id uuid;\n    v_item jsonb;\n    v_estado_factura text;\nbegin\n    if nullif(btrim(p_worker_id), '') is null\n       or nullif(btrim(p_idempotency_key), '') is null then\n        raise exception 'worker_id e idempotency_key obligatorios';\n    end if;\n\n    select * into v_documento\n      from public.documentos_facturas\n     where id = p_documento_id\n     for update;\n\n    if v_documento.id is null then\n        raise exception 'documento no encontrado';\n    end if;\n    if not exists (\n        select 1 from public.cf_configuracion c\n        where c.id = true and v_documento.farmacia = any(c.farmacias_habilitadas)\n    ) then\n        raise exception 'farmacia fuera del despliegue habilitado';\n    end if;\n\n    select id into v_ejecucion_id\n      from public.normalizacion_ejecuciones\n     where documento_id = p_documento_id\n       and idempotency_key = p_idempotency_key;\n    if v_ejecucion_id is not null then\n        return v_ejecucion_id;\n    end if;\n    if v_documento.bloqueado_por is distinct from p_worker_id then\n        raise exception 'claim no pertenece al worker';\n    end if;\n\n    select coalesce(max(intento), 0) + 1 into v_intento\n      from public.normalizacion_ejecuciones\n     where documento_id = p_documento_id;\n\n    insert into public.normalizacion_ejecuciones (\n        documento_id, idempotency_key, intento, disparador, estado,\n        normalizador_version, resultado_hash, uso_ocr, uso_luna,\n        luna_modelo, luna_campos, tokens_entrada, tokens_salida,\n        tokens_total, coste_luna, pasos, resultado_json, worker_id,\n        iniciado_at, finalizado_at\n    ) values (\n        p_documento_id, p_idempotency_key, v_intento, p_disparador,\n        case when jsonb_array_length(coalesce(v_documento_normalizado->'facturas', '[]'::jsonb)) > 0\n             then 'COMPLETADA' else 'INCOMPLETA' end,\n        v_documento_normalizado #>> '{metadata_tecnica,version_normalizador}',\n        p_resultado_hash, coalesce((p_resultado->>'uso_ocr')::boolean, false),\n        coalesce((p_resultado->>'uso_luna')::boolean, false),\n        p_resultado->>'luna_modelo',\n        coalesce(array(select jsonb_array_elements_text(coalesce(p_resultado->'luna_campos', '[]'::jsonb))), '{}'::text[]),\n        nullif(p_resultado->>'tokens_entrada', '')::integer,\n        nullif(p_resultado->>'tokens_salida', '')::integer,\n        nullif(p_resultado->>'tokens_total', '')::integer,\n        nullif(p_resultado->>'coste_luna', '')::numeric,\n        coalesce(p_resultado->'pasos', '[]'::jsonb),\n        v_documento_normalizado, p_worker_id, now(), now()\n    ) returning id into v_ejecucion_id;\n\n    for v_factura in\n        select value from jsonb_array_elements(coalesce(v_documento_normalizado->'facturas', '[]'::jsonb))\n    loop\n        if nullif(v_factura->>'factura_id', '') is null then\n            raise exception 'factura_id estable obligatorio en DocumentoNormalizado';\n        end if;\n        v_estado_factura := case\n            when v_factura->>'estado_validacion' in ('VALIDADA', 'VALIDADA_CON_INCIDENCIAS')\n            then 'NORMALIZADA' else 'REQUIERE_REVISION' end;\n\n        insert into public.facturas (\n            documento_id, proyeccion_clave, farmacia, pagina_inicio, pagina_fin,\n            tipo_documento, categoria, requiere_conciliacion_albaranes,\n            proveedor_literal, numero_factura, fecha_factura, moneda,\n            base_imponible_total, iva_total, recargo_equivalencia_total,\n            importe_total, requiere_revision, estado_normalizacion,\n            estado_revision, normalizacion_ejecucion_id, provenance,\n            datos_extraidos, updated_at, fecha_actualizacion\n        ) values (\n            p_documento_id, v_factura->>'factura_id', v_documento.farmacia,\n            nullif(v_factura->>'pagina_inicio', '')::integer,\n            nullif(v_factura->>'pagina_fin', '')::integer,\n            case\n                when v_factura #>> '{tipo_documento,valor}' in\n                    ('FACTURA', 'ABONO', 'FACTURA_RECTIFICATIVA', 'OTRO')\n                then v_factura #>> '{tipo_documento,valor}'\n                when v_factura #>> '{tipo_documento,valor}' is null then 'FACTURA'\n                else 'OTRO'\n            end,\n            case v_factura->>'naturaleza_principal'\n                when 'MERCANCIA' then 'MERCANCIA'\n                when 'SERVICIOS' then 'CUOTA_SERVICIO'\n                else 'OTRO' end,\n            coalesce((v_factura->>'requiere_conciliacion_albaranes')::boolean, false),\n            v_factura #>> '{proveedor,nombre,valor}',\n            v_factura #>> '{numero_factura,valor}',\n            nullif(v_factura #>> '{fecha_factura,valor,iso}', '')::date,\n            coalesce(v_factura #>> '{totales,moneda,valor}', 'EUR'),\n            nullif(v_factura #>> '{totales,base_imponible,valor}', '')::numeric,\n            nullif(v_factura #>> '{totales,iva,valor}', '')::numeric,\n            nullif(v_factura #>> '{totales,recargo_equivalencia,valor}', '')::numeric,\n            nullif(v_factura #>> '{totales,total,valor}', '')::numeric,\n            v_estado_factura = 'REQUIERE_REVISION', v_estado_factura,\n            case when v_estado_factura = 'NORMALIZADA' then 'NO_REQUERIDA'\n                 else 'PENDIENTE_REVISION_PIO' end,\n            v_ejecucion_id,\n            jsonb_build_object('fuente', 'DOCUMENTO_NORMALIZADO', 'ejecucion_id', v_ejecucion_id),\n            v_factura, now(), now()\n        ) on conflict (documento_id, proyeccion_clave) do update set\n            pagina_inicio = excluded.pagina_inicio,\n            pagina_fin = excluded.pagina_fin,\n            tipo_documento = excluded.tipo_documento,\n            categoria = excluded.categoria,\n            requiere_conciliacion_albaranes = excluded.requiere_conciliacion_albaranes,\n            proveedor_literal = excluded.proveedor_literal,\n            numero_factura = excluded.numero_factura,\n            fecha_factura = excluded.fecha_factura,\n            moneda = excluded.moneda,\n            base_imponible_total = excluded.base_imponible_total,\n            iva_total = excluded.iva_total,\n            recargo_equivalencia_total = excluded.recargo_equivalencia_total,\n            importe_total = excluded.importe_total,\n            requiere_revision = excluded.requiere_revision,\n            estado_normalizacion = excluded.estado_normalizacion,\n            estado_revision = excluded.estado_revision,\n            normalizacion_ejecucion_id = excluded.normalizacion_ejecucion_id,\n            provenance = excluded.provenance,\n            datos_extraidos = excluded.datos_extraidos,\n            updated_at = now(),\n            fecha_actualizacion = now()\n        returning id into v_factura_id;\n\n        delete from public.facturas_vencimientos where factura_id = v_factura_id;\n        for v_item in select value from jsonb_array_elements(coalesce(v_factura->'vencimientos', '[]'::jsonb)) loop\n            insert into public.facturas_vencimientos\n                (factura_id, fecha_vencimiento, importe, orden, literal, provenance)\n            values (v_factura_id, nullif(v_item #>> '{fecha,valor,iso}', '')::date,\n                nullif(v_item #>> '{importe,valor}', '')::numeric,\n                (v_item->>'orden')::integer,\n                coalesce(v_item #>> '{fecha,literal}', v_item #>> '{importe,literal}'), v_item);\n        end loop;\n\n        delete from public.facturas_impuestos where factura_id = v_factura_id;\n        for v_item in select value from jsonb_array_elements(coalesce(v_factura->'impuestos', '[]'::jsonb)) loop\n            insert into public.facturas_impuestos\n                (factura_id, concepto, base_imponible, tipo_iva, cuota_iva,\n                 tipo_recargo_equivalencia, cuota_recargo_equivalencia, total_tramo,\n                 orden, literal, provenance)\n            values (v_factura_id, v_item #>> '{descripcion_literal,valor}',\n                nullif(v_item #>> '{base,valor}', '')::numeric,\n                nullif(v_item #>> '{tipo_iva,valor}', '')::numeric,\n                nullif(v_item #>> '{cuota_iva,valor}', '')::numeric,\n                nullif(v_item #>> '{tipo_recargo_equivalencia,valor}', '')::numeric,\n                nullif(v_item #>> '{cuota_recargo_equivalencia,valor}', '')::numeric,\n                nullif(v_item #>> '{total_tramo,valor}', '')::numeric,\n                (v_item->>'orden')::integer, v_item #>> '{descripcion_literal,literal}', v_item);\n        end loop;\n\n        delete from public.facturas_albaranes_extraidos where factura_id = v_factura_id;\n        for v_item in select value from jsonb_array_elements(coalesce(v_factura->'albaranes', '[]'::jsonb)) loop\n            insert into public.facturas_albaranes_extraidos\n                (factura_id, numero_albaran, fecha_albaran, tipo_movimiento,\n                 importe_base, importe_total, descripcion, orden, literal, provenance)\n            values (v_factura_id, v_item #>> '{numero,valor}',\n                nullif(v_item #>> '{fecha,valor,iso}', '')::date, v_item->>'sentido',\n                nullif(v_item #>> '{importe_base,valor}', '')::numeric,\n                nullif(v_item #>> '{importe_total,valor}', '')::numeric,\n                v_item #>> '{tipo_pedido,valor}', (v_item->>'orden')::integer,\n                v_item #>> '{numero,literal}', v_item);\n        end loop;\n\n        delete from public.facturas_movimientos where factura_id = v_factura_id;\n        for v_item in select value from jsonb_array_elements(coalesce(v_factura->'movimientos_comerciales', '[]'::jsonb)) loop\n            insert into public.facturas_movimientos\n                (factura_id, normalizacion_ejecucion_id, orden, categoria,\n                 descripcion_literal, sentido, base, iva, recargo_equivalencia,\n                 importe, provenance)\n            values (v_factura_id, v_ejecucion_id, (v_item->>'orden')::integer,\n                case v_item->>'tipo'\n                    when 'SERVICIO' then 'SERVICIO'\n                    when 'DESCUENTO' then 'DESCUENTO'\n                    when 'DEVOLUCION_MERCANCIA' then 'DEVOLUCION'\n                    when 'CONDICION_COMERCIAL' then 'CONDICION_COMERCIAL'\n                    else 'OTRO' end,\n                v_item #>> '{descripcion_literal,valor}', v_item->>'sentido',\n                nullif(v_item #>> '{base,valor}', '')::numeric,\n                nullif(v_item #>> '{iva,valor}', '')::numeric,\n                nullif(v_item #>> '{recargo_equivalencia,valor}', '')::numeric,\n                nullif(v_item #>> '{importe,valor}', '')::numeric, v_item);\n        end loop;\n\n        for v_item in select value from jsonb_array_elements(coalesce(v_factura->'incidencias', '[]'::jsonb)) loop\n            insert into public.facturas_incidencias\n                (factura_id, normalizacion_ejecucion_id, codigo, categoria,\n                 severidad, bloqueante, mensaje_usuario, detalle_tecnico, provenance)\n            values (v_factura_id, v_ejecucion_id, v_item->>'codigo', 'NORMALIZACION',\n                case when v_item->>'severidad' = 'ERROR' then 'ERROR' else 'AVISO' end,\n                coalesce((v_item->>'bloqueante')::boolean, false),\n                coalesce(v_item->>'descripcion', v_item->>'codigo'), v_item, v_item);\n        end loop;\n\n        insert into public.historial_facturas\n            (documento_id, factura_id, evento, origen, actor, estado_nuevo, detalle)\n        values (p_documento_id, v_factura_id, 'PROYECCION_NORMALIZACION_REEMPLAZADA',\n            'RPC', p_worker_id,\n            jsonb_build_object('estado_normalizacion', v_estado_factura),\n            jsonb_build_object('ejecucion_id', v_ejecucion_id,\n                               'proyeccion_clave', v_factura->>'factura_id'));\n    end loop;\n\n    for v_item in select value from jsonb_array_elements(coalesce(p_resultado->'incidencias_runtime', '[]'::jsonb)) loop\n        insert into public.facturas_incidencias\n            (documento_id, normalizacion_ejecucion_id, codigo, categoria,\n             severidad, bloqueante, mensaje_usuario, detalle_tecnico, provenance)\n        values (p_documento_id, v_ejecucion_id, v_item->>'codigo',\n            coalesce(v_item->>'categoria', 'NORMALIZACION'),\n            coalesce(v_item->>'severidad', 'AVISO'),\n            coalesce((v_item->>'bloqueante')::boolean, false),\n            v_item->>'mensaje_usuario', coalesce(v_item->'detalle_tecnico', '{}'::jsonb),\n            jsonb_build_object('fuente', 'RUNTIME_LOCAL'));\n    end loop;\n\n    update public.documentos_facturas\n       set estado_lectura = 'NORMALIZADA',\n           numero_paginas = coalesce(nullif(v_documento_normalizado->>'numero_paginas', '')::integer, numero_paginas),\n           cantidad_documentos_detectados = jsonb_array_length(coalesce(v_documento_normalizado->'facturas', '[]'::jsonb)),\n           tipo_contenido = case\n               when jsonb_array_length(coalesce(v_documento_normalizado->'facturas', '[]'::jsonb)) = 0\n                   then 'DESCONOCIDO'\n               when jsonb_array_length(coalesce(v_documento_normalizado->'facturas', '[]'::jsonb)) = 1\n                   then 'FACTURA_UNICA'\n               else 'LOTE_FACTURAS'\n           end,\n           bloqueado_hasta = null, bloqueado_por = null,\n           reprocesar_solicitado_at = null, ultimo_error_codigo = null,\n           fecha_fin_lectura = now(), fecha_actualizacion = now()\n     where id = p_documento_id;\n\n    insert into public.historial_facturas\n        (documento_id, evento, origen, actor, estado_nuevo, detalle)\n    values (p_documento_id, 'DOCUMENTO_NORMALIZADO_PERSISTIDO', 'RPC', p_worker_id,\n        jsonb_build_object('estado_lectura', 'NORMALIZADA'),\n        jsonb_build_object('ejecucion_id', v_ejecucion_id, 'facturas',\n            jsonb_array_length(coalesce(v_documento_normalizado->'facturas', '[]'::jsonb))));\n\n    return v_ejecucion_id;\nend;\n$function$\n"
+    ],
+    [
+      "cf_preflight_pio_valido",
+      "",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_preflight_pio_valido()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n    with hashes_pio as (\n        select lower(archivo_hash) as archivo_hash\n        from public.documentos_facturas\n        where farmacia = 'PIO'\n    ),\n    estado_vivo as (\n        select\n            count(*) filter (\n                where archivo_hash is null\n                   or archivo_hash !~ '^[0-9a-f]{64}$'\n            ) as hashes_invalidos,\n            count(distinct archivo_hash)::integer as hashes_unicos\n        from hashes_pio\n    ),\n    manifiesto_vivo as (\n        select encode(\n            extensions.digest(coalesce(string_agg(archivo_hash, E'\\n' order by archivo_hash), ''), 'sha256'),\n            'hex'\n        ) as sha256\n        from (select distinct archivo_hash from hashes_pio) unicos\n    )\n    select coalesce(\n        c.preflight_indice_pio_reconciliado\n        and e.hashes_invalidos = 0\n        and c.preflight_pio_hashes_sqlite = c.preflight_pio_hashes_supabase\n        and c.preflight_pio_hashes_supabase = e.hashes_unicos\n        and c.preflight_pio_manifest_sqlite_sha256\n            = c.preflight_pio_manifest_supabase_sha256\n        and c.preflight_pio_manifest_supabase_sha256 = m.sha256\n        and c.farmacias_habilitadas = array['PIO']::text[],\n        false\n    )\n    from public.cf_configuracion c\n    cross join estado_vivo e\n    cross join manifiesto_vivo m\n    where c.id = true;\n$function$\n"
+    ],
+    [
+      "cf_reclamar_documento_normalizacion",
+      "p_worker_id text, p_bloqueo_segundos integer",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_reclamar_documento_normalizacion(p_worker_id text, p_bloqueo_segundos integer DEFAULT 300)\n RETURNS SETOF documentos_facturas\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_id uuid;\nbegin\n    if p_worker_id is null or btrim(p_worker_id) = '' then\n        raise exception 'worker_id obligatorio';\n    end if;\n\n    select d.id\n      into v_id\n      from public.documentos_facturas d\n      cross join public.cf_configuracion c\n     where c.id = true\n       and d.farmacia = any(c.farmacias_habilitadas)\n       and (\n           c.normalizacion_automatica\n           or d.reprocesar_solicitado_at is not null\n       )\n       and d.estado_lectura in ('PENDIENTE', 'ERROR')\n       and coalesce(d.proximo_reintento_at, '-infinity'::timestamptz) <= now()\n       and coalesce(d.bloqueado_hasta, '-infinity'::timestamptz) <= now()\n     order by\n       (d.reprocesar_solicitado_at is not null) desc,\n       d.fecha_importacion,\n       d.id\n     for update of d skip locked\n     limit 1;\n\n    if v_id is null then\n        return;\n    end if;\n\n    return query\n    update public.documentos_facturas\n       set bloqueado_por = p_worker_id,\n           bloqueado_hasta = now() + make_interval(secs => greatest(p_bloqueo_segundos, 1)),\n           estado_lectura = 'NORMALIZANDO',\n           fecha_inicio_lectura = coalesce(fecha_inicio_lectura, now()),\n           fecha_actualizacion = now()\n     where id = v_id\n     returning *;\nend;\n$function$\n"
+    ],
+    [
+      "cf_reclamar_factura_conciliacion",
+      "p_worker_id text, p_bloqueo_segundos integer",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_reclamar_factura_conciliacion(p_worker_id text, p_bloqueo_segundos integer DEFAULT 300)\n RETURNS SETOF facturas\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_id uuid;\nbegin\n    if p_worker_id is null or btrim(p_worker_id) = '' then\n        raise exception 'worker_id obligatorio';\n    end if;\n\n    select f.id\n      into v_id\n      from public.facturas f\n      cross join public.cf_configuracion c\n      cross join lateral public.cf_evaluar_elegibilidad_conciliacion(f.id) e\n     where c.id = true\n       and f.farmacia = any(c.farmacias_habilitadas)\n       and (c.conciliacion_automatica or f.conciliacion_reintento_solicitado_at is not null)\n       and f.estado_conciliacion_cf = 'PENDIENTE_CONCILIAR'\n       and e.estado = 'APTA'\n       and coalesce(f.conciliacion_proximo_at, '-infinity'::timestamptz) <= now()\n       and coalesce(f.conciliacion_bloqueado_hasta, '-infinity'::timestamptz) <= now()\n     order by\n       (f.conciliacion_reintento_solicitado_at is not null) desc,\n       f.fecha_factura nulls last,\n       f.id\n     for update of f skip locked\n     limit 1;\n\n    if v_id is null then\n        return;\n    end if;\n    return query\n    update public.facturas\n       set conciliacion_bloqueado_por = p_worker_id,\n           conciliacion_bloqueado_hasta = now() + make_interval(secs => greatest(p_bloqueo_segundos, 1)),\n           updated_at = now()\n     where id = v_id\n     returning *;\nend;\n$function$\n"
+    ],
+    [
+      "cf_registrar_fallo_normalizacion",
+      "p_documento_id uuid, p_worker_id text, p_disparador text, p_idempotency_key text, p_error_codigo text, p_error_detalle text",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_registrar_fallo_normalizacion(p_documento_id uuid, p_worker_id text, p_disparador text, p_idempotency_key text, p_error_codigo text, p_error_detalle text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_ejecucion_id uuid;\n    v_intento integer;\nbegin\n    select id into v_ejecucion_id\n      from public.normalizacion_ejecuciones\n     where documento_id = p_documento_id and idempotency_key = p_idempotency_key;\n    if v_ejecucion_id is not null then return v_ejecucion_id; end if;\n\n    perform 1 from public.documentos_facturas d\n     where d.id = p_documento_id\n       and d.bloqueado_por = p_worker_id\n       and exists (\n           select 1 from public.cf_configuracion c\n           where c.id = true and d.farmacia = any(c.farmacias_habilitadas)\n       )\n     for update;\n    if not found then raise exception 'claim no pertenece al worker'; end if;\n\n    select coalesce(max(intento), 0) + 1 into v_intento\n      from public.normalizacion_ejecuciones where documento_id = p_documento_id;\n    insert into public.normalizacion_ejecuciones\n        (documento_id, idempotency_key, intento, disparador, estado, worker_id,\n         iniciado_at, finalizado_at, error_codigo, error_detalle)\n    values (p_documento_id, p_idempotency_key, v_intento, p_disparador, 'ERROR',\n        p_worker_id, now(), now(), p_error_codigo, p_error_detalle)\n    returning id into v_ejecucion_id;\n\n    update public.documentos_facturas\n       set estado_lectura = 'ERROR', ultimo_error_codigo = p_error_codigo,\n           bloqueado_hasta = null, bloqueado_por = null,\n           reprocesar_solicitado_at = null, fecha_actualizacion = now()\n     where id = p_documento_id;\n    insert into public.historial_facturas\n        (documento_id, evento, origen, actor, estado_nuevo, detalle)\n    values (p_documento_id, 'NORMALIZACION_ERROR', 'RPC', p_worker_id,\n        jsonb_build_object('estado_lectura', 'ERROR'),\n        jsonb_build_object('ejecucion_id', v_ejecucion_id, 'codigo', p_error_codigo));\n    return v_ejecucion_id;\nend;\n$function$\n"
+    ],
+    [
+      "cf_reintentar_todas_pendientes",
+      "p_actor text",
+      "postgres",
+      "{postgres=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_reintentar_todas_pendientes(p_actor text DEFAULT 'SERVICE_ROLE'::text)\n RETURNS integer\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_total integer;\nbegin\n    update public.facturas f\n       set conciliacion_reintento_solicitado_at = now(),\n           conciliacion_proximo_at = null,\n           conciliacion_bloqueado_hasta = null,\n           conciliacion_bloqueado_por = null,\n           updated_at = now()\n     where f.estado_conciliacion_cf = 'PENDIENTE_CONCILIAR'\n       and exists (\n           select 1 from public.cf_configuracion c\n           where c.id = true and f.farmacia = any(c.farmacias_habilitadas)\n       );\n\n    get diagnostics v_total = row_count;\n\n    insert into public.historial_facturas (\n        factura_id, documento_id, evento, origen, actor, estado_nuevo, detalle\n    )\n    select\n        f.id, f.documento_id, 'REINTENTO_CONCILIACION_MASIVO',\n        'RPC', p_actor,\n        jsonb_build_object('estado_conciliacion_cf', f.estado_conciliacion_cf),\n        jsonb_build_object('total_solicitado', v_total)\n    from public.facturas f\n    where f.estado_conciliacion_cf = 'PENDIENTE_CONCILIAR'\n      and f.conciliacion_reintento_solicitado_at is not null\n      and exists (\n          select 1 from public.cf_configuracion c\n          where c.id = true and f.farmacia = any(c.farmacias_habilitadas)\n      );\n\n    return v_total;\nend;\n$function$\n"
+    ],
+    [
+      "cf_resultado_conciliacion",
+      "p_diferencia numeric, p_tolerancia numeric",
+      "postgres",
+      "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_resultado_conciliacion(p_diferencia numeric, p_tolerancia numeric DEFAULT 0.0500)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE PARALLEL SAFE\nAS $function$\n    select case\n        when p_diferencia is null then 'NO_EVALUABLE'\n        when abs(p_diferencia) <= p_tolerancia then 'CONCILIADA'\n        else 'DIFERENCIA'\n    end;\n$function$\n"
+    ],
+    [
+      "cf_set_updated_at",
+      "",
+      "postgres",
+      "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\nbegin\n    new.updated_at = now();\n    return new;\nend;\n$function$\n"
+    ],
+    [
+      "cf_solicitar_reintento_conciliacion",
+      "p_factura_id uuid, p_actor text",
+      "postgres",
+      "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_solicitar_reintento_conciliacion(p_factura_id uuid, p_actor text DEFAULT NULL::text)\n RETURNS facturas\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_factura public.facturas%rowtype;\n    v_actor text := coalesce(auth.uid()::text, nullif(btrim(p_actor), ''), 'SISTEMA');\nbegin\n    update public.facturas f\n       set estado_conciliacion_cf = 'PENDIENTE_CONCILIAR',\n           conciliacion_reintento_solicitado_at = now(),\n           conciliacion_proximo_at = null,\n           conciliacion_bloqueado_hasta = null,\n           conciliacion_bloqueado_por = null,\n           conciliacion_ultimo_error = null,\n           updated_at = now()\n     where f.id = p_factura_id\n       and exists (\n           select 1 from public.cf_configuracion c\n           where c.id = true and f.farmacia = any(c.farmacias_habilitadas)\n       )\n     returning * into v_factura;\n\n    if v_factura.id is null then\n        raise exception 'factura no encontrada';\n    end if;\n\n    insert into public.historial_facturas (\n        documento_id, factura_id, evento, origen, actor, estado_nuevo\n    ) values (\n        v_factura.documento_id, v_factura.id,\n        'REINTENTO_CONCILIACION_SOLICITADO', 'RPC', v_actor,\n        jsonb_build_object('estado_conciliacion_cf', v_factura.estado_conciliacion_cf)\n    );\n\n    return v_factura;\nend;\n$function$\n"
+    ],
+    [
+      "cf_solicitar_reprocesado",
+      "p_documento_id uuid, p_actor text",
+      "postgres",
+      "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_solicitar_reprocesado(p_documento_id uuid, p_actor text DEFAULT NULL::text)\n RETURNS documentos_facturas\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_documento public.documentos_facturas%rowtype;\n    v_actor text := coalesce(auth.uid()::text, nullif(btrim(p_actor), ''), 'SISTEMA');\nbegin\n    update public.documentos_facturas d\n       set reprocesar_solicitado_at = now(),\n           proximo_reintento_at = null,\n           bloqueado_hasta = null,\n           bloqueado_por = null,\n           ultimo_error_codigo = null,\n           estado_lectura = 'PENDIENTE',\n           fecha_actualizacion = now()\n     where d.id = p_documento_id\n       and exists (\n           select 1 from public.cf_configuracion c\n           where c.id = true and d.farmacia = any(c.farmacias_habilitadas)\n       )\n     returning * into v_documento;\n\n    if v_documento.id is null then\n        raise exception 'documento no encontrado';\n    end if;\n\n    insert into public.historial_facturas (\n        documento_id, evento, origen, actor, estado_nuevo\n    ) values (\n        v_documento.id, 'REPROCESADO_SOLICITADO', 'RPC', v_actor,\n        jsonb_build_object('estado_lectura', v_documento.estado_lectura)\n    );\n\n    return v_documento;\nend;\n$function$\n"
+    ],
+    [
+      "cf_validar_factura",
+      "p_factura_id uuid, p_actor text",
+      "postgres",
+      "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "CREATE OR REPLACE FUNCTION public.cf_validar_factura(p_factura_id uuid, p_actor text DEFAULT NULL::text)\n RETURNS facturas\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n    v_anterior jsonb;\n    v_factura public.facturas%rowtype;\n    v_actor text := coalesce(auth.uid()::text, nullif(btrim(p_actor), ''), 'SISTEMA');\nbegin\n    select jsonb_build_object(\n        'estado_revision', estado_revision,\n        'requiere_revision', requiere_revision,\n        'validada_manualmente', validada_manualmente\n    )\n      into v_anterior\n      from public.facturas\n     where id = p_factura_id\n       and exists (\n           select 1 from public.cf_configuracion c\n           where c.id = true and facturas.farmacia = any(c.farmacias_habilitadas)\n       )\n     for update;\n\n    if v_anterior is null then\n        raise exception 'factura no encontrada';\n    end if;\n\n    update public.facturas\n       set estado_revision = 'VALIDADA_PIO',\n           requiere_revision = false,\n           validada_manualmente = true,\n           validada_por = v_actor,\n           fecha_validacion = now(),\n           updated_at = now()\n     where id = p_factura_id\n     returning * into v_factura;\n\n    insert into public.historial_facturas (\n        documento_id, factura_id, evento, origen, actor,\n        estado_anterior, estado_nuevo\n    ) values (\n        v_factura.documento_id, v_factura.id, 'FACTURA_VALIDADA_PIO',\n        'RPC', v_actor, v_anterior,\n        jsonb_build_object(\n            'estado_revision', v_factura.estado_revision,\n            'requiere_revision', v_factura.requiere_revision,\n            'validada_manualmente', v_factura.validada_manualmente\n        )\n    );\n\n    return v_factura;\nend;\n$function$\n"
+    ]
+  ],
+  "permisos_multifactura": [
+    [
+      "cf_clave_economica_factura",
+      "p jsonb",
+      "text",
+      false,
+      "i",
+      [
+        "search_path=public"
+      ],
+      false,
+      false,
+      true
+    ],
+    [
+      "cf_componentes_identidad_factura",
+      "p jsonb",
+      "text[]",
+      false,
+      "i",
+      [
+        "search_path=public"
+      ],
+      false,
+      false,
+      true
+    ],
+    [
+      "cf_persistir_documento_multifactura",
+      "p_documento_id uuid, p_worker_id text, p_idempotency_key text, p_resultado_hash text, p_resultado jsonb, p_segmentos_autorizados text[]",
+      "uuid",
+      true,
+      "v",
+      [
+        "search_path=public"
+      ],
+      false,
+      false,
+      true
+    ]
+  ],
+  "huella_documentos_legacy": [
+    [
+      130,
+      "efb8439b65cfd525185c64b1b26db61d"
+    ]
+  ],
+  "sesiones_workers": [],
+  "inventario_defaults": [
+    [
+      0,
+      0
+    ]
+  ]
+}

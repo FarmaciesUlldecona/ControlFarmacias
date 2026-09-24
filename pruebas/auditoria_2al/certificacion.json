@@ -1,0 +1,14 @@
+{
+  "produccion_modificada": false,
+  "migracion_desplegada": false,
+  "flags_modificados": false,
+  "worker_productivo_ejecutado": false,
+  "documentos_pio_shadow": 140,
+  "candidatos_elegibles_shadow": 135,
+  "tests_nuevos": 20,
+  "tests_focales": 282,
+  "tests_suite_completa": 1051,
+  "fallos": 0,
+  "regresiones": 0,
+  "estado": "WORKER_MANUAL_ONE_SHOT_CERTIFICADO"
+}

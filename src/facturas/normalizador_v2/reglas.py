@@ -2,13 +2,40 @@ from __future__ import annotations
 
 import unicodedata
 
+from ..clasificacion_documental import TipoFacturaDocumental, clasificar_factura_por_contenido
 from .modelos import (
-    FacturaNormalizada, MovimientoComercial, ReferenciaDocumental,
+    EstadoValidacion, FacturaNormalizada, MovimientoComercial, NaturalezaPrincipal, ReferenciaDocumental,
     TipoMovimiento, TipoReferencia,
 )
 from .validadores import validar_factura
 
 VERSION_REGLAS = "normalizador-v2.reglas-pequenas.4"
+
+
+def aplicar_clasificacion_documental(factura: FacturaNormalizada) -> FacturaNormalizada:
+    """Adapta naturaleza y necesidad de albaranes desde el contenido ya normalizado."""
+    clasificacion = clasificar_factura_por_contenido(
+        factura.albaranes,
+        factura.movimientos_comerciales,
+    )
+    equivalencias = {
+        TipoFacturaDocumental.FACTURA_MERCANCIA: NaturalezaPrincipal.MERCANCIA,
+        TipoFacturaDocumental.FACTURA_GASTO_SERVICIO: NaturalezaPrincipal.SERVICIOS,
+        TipoFacturaDocumental.FACTURA_MIXTA: NaturalezaPrincipal.MIXTA,
+    }
+    if clasificacion.tipo == TipoFacturaDocumental.TIPO_NO_DEMOSTRADO:
+        return factura.model_copy(update={
+            "estado_validacion": EstadoValidacion.REQUIERE_REVISION,
+            "requiere_conciliacion_albaranes": False,
+        })
+    naturaleza = equivalencias[clasificacion.tipo]
+    return factura.model_copy(update={
+        "naturaleza_principal": naturaleza,
+        "requiere_conciliacion_albaranes": naturaleza in {
+            NaturalezaPrincipal.MERCANCIA,
+            NaturalezaPrincipal.MIXTA,
+        },
+    })
 
 
 _CLASIFICACIONES_CONCEPTUALES = (

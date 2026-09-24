@@ -98,12 +98,20 @@ def clave_funcional(factura: FacturaNormalizada) -> tuple[str, str] | None:
 
 
 def detectar_duplicados(facturas: Iterable[FacturaNormalizada]) -> dict[int, int]:
-    primera_posicion: dict[tuple[str, str], int] = {}
+    # Es una incidencia para revision, nunca una fusion automatica.
+    # Proveedor/numero solos no distinguen destinatarios ni factura/abono.
+    primera_posicion: dict[tuple, int] = {}
     duplicados: dict[int, int] = {}
     for posicion, factura in enumerate(facturas):
         clave = clave_funcional(factura)
         if clave is None:
             continue
+        destinatario = factura.destinatario
+        identidad_destino = (destinatario.nif or destinatario.nombre) if destinatario else None
+        if identidad_destino is None or factura.tipo_documento is None:
+            continue
+        clave = (*clave, identidad_destino.valor.strip().upper(),
+                 factura.tipo_documento.valor.strip().upper())
         if clave in primera_posicion:
             duplicados[posicion] = primera_posicion[clave]
         else:

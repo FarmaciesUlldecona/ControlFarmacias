@@ -1,0 +1,11 @@
+{
+  "llamadas_worker": 1,
+  "max_documentos_por_ejecucion": 1,
+  "automatismos_habilitados": false,
+  "documentos_reclamados": 0,
+  "facturas_conciliacion_reclamadas": 0,
+  "materializaciones": 0,
+  "extracciones": 0,
+  "persistencias": 0,
+  "resultado": "FAIL_CLOSED_CONFIGURACION_PRODUCTIVA"
+}

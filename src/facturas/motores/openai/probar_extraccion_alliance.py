@@ -338,7 +338,7 @@ def ejecutar_llamadas(clave: str, archivos: list[tuple[Division, Path]]) -> None
                             {"type": "input_text", "text": PROMPT_USUARIO},
                             {
                                 "type": "input_file",
-                                "filename": ruta_pdf.name,
+                                "filename": "documento.pdf",
                                 "file_data": archivo_como_data_url(ruta_pdf),
                                 "detail": "high",
                             },
