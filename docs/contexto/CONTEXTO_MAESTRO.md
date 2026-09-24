@@ -77,11 +77,63 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
 - `sql/migrations/16_cf_worker_manual_one_shot.sql`: migración más reciente
   versionada.
 
+## Arquitectura multirepositorio
+
+ControlFarmacias está formado por dos líneas Git independientes:
+
+```text
+ControlFarmacias
+|
++-- Programa
+|   +-- repositorio principal / main
+|
++-- Orquestador CLI cf
+    +-- repositorio independiente / v0.2-dev
+```
+
+### Programa principal
+
+- Repositorio: `C:\ControlFarmacias\Programa`.
+- Rama canónica: `main`.
+- `HEAD` canónico documentado:
+  `54dd951f6d661e9afd2206359f19517f90026a77`.
+- Responsabilidad: facturas, ingesta, normalización, motor local, Supabase,
+  albaranes, conciliación, workers, migraciones, tests y documentación
+  funcional/técnica.
+
+### Orquestador CLI `cf`
+
+- Repositorio separado:
+  `C:\ControlFarmacias\ControlFarmacias_Orquestador_V0_2_dev`.
+- Rama: `v0.2-dev`.
+- `HEAD` local conocido:
+  `869f1cc458444de914660e3e6b52e24ba5f10d40`, commit `Certifica resultados
+  funcionales y recuperacion read-only V0.2.12`.
+- `origin/v0.2-dev` conocido:
+  `fc77f62483566d496fb837db12e1fced07385408`.
+- Divergencia conocida: local `1 ahead / 0 behind` respecto del remoto.
+- Clasificación: `DESARROLLO ACTIVO` y `PENDIENTE DE RESPALDO REMOTO`. No hacer
+  `push` sin autorización expresa.
+- Responsabilidad: comando `cf`, interfaz CLI, lenguaje natural, supervisor,
+  motor persistente, control de recursos, presupuesto Codex, clasificación
+  `LOCAL_ONLY`/`CODEX_LIGHT`/`CODEX_STANDARD`/`CODEX_HEAVY`, estados operativos,
+  recuperación read-only y ejecución local.
+
+El CLI `cf` V0.2.12 no forma parte de la historia Git de `Programa/main`. No
+existe `merge-base` entre `Programa/main` y `Orquestador/v0.2-dev`; son
+componentes separados del mismo proyecto funcional. Por tanto, la ausencia de
+commits del Orquestador en `main` no implica pérdida, no se deben fusionar ambas
+ramas y `v0.2-dev` no se debe tratar como una rama auxiliar de Programa.
+
+Fuente: inspección Git local de solo lectura de ambos repositorios, 2026-09-24;
+`CONFIRMADO POR CÓDIGO` para las referencias locales y `PENDIENTE` de respaldo
+remoto para `869f1cc`.
+
 ## Dos orquestadores distintos
 
 ### CLI ControlFarmacias
 
-El CLI externo al repositorio principal reside en
+El CLI externo y con historia Git independiente del repositorio principal reside en
 `C:\ControlFarmacias\ControlFarmacias_Orquestador_V0_2_dev` y se invoca como `cf`.
 Su versión operativa conocida es `V0.2.12`. Clasifica trabajo como `LOCAL_ONLY`,
 `CODEX_LIGHT`, `CODEX_STANDARD` o `CODEX_HEAVY`, y usa los estados `PREPARADO`,

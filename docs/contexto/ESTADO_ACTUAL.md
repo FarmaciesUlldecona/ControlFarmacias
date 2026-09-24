@@ -4,8 +4,11 @@ Actualizado: 2026-09-24.
 
 ## Git y respaldo
 
-- Repositorio: `C:\ControlFarmacias\Programa`.
-- Rama operativa: `main`.
+- Programa principal: repositorio `C:\ControlFarmacias\Programa`, rama operativa
+  `main`, `HEAD` canónico
+  `54dd951f6d661e9afd2206359f19517f90026a77` y `0 ahead / 0 behind` respecto de
+  `origin/main`. Estado verificado con Git local de solo lectura el 2026-09-24;
+  `CONFIRMADO POR CÓDIGO`.
 - Estado base verificado al iniciar el Hito 0.1, antes de estos cambios
   documentales: `HEAD` y `origin/main` en
   `219cd9408b80f030efd18f99231498c5a2217f83`, `0 ahead / 0 behind`, y working
@@ -19,6 +22,44 @@ Actualizado: 2026-09-24.
 - Si otro entorno muestra cientos de `M` debidos solo a CRLF/LF y
   `git diff --ignore-cr-at-eol` no muestra diferencias reales, se clasifica como
   diferencia de entorno, no como working tree funcionalmente sucio.
+
+## Arquitectura multirepositorio
+
+```text
+ControlFarmacias
+|
++-- Programa
+|   +-- repositorio principal / main
+|
++-- Orquestador CLI cf
+    +-- repositorio independiente / v0.2-dev
+```
+
+- Programa concentra facturas, ingesta, normalización, motor local, Supabase,
+  albaranes, conciliación, workers, migraciones, tests y documentación
+  funcional/técnica.
+- El Orquestador CLI concentra el comando `cf`, interfaz CLI, lenguaje natural,
+  supervisor, motor persistente, control de recursos, presupuesto Codex,
+  clasificación `LOCAL_ONLY`/`CODEX_LIGHT`/`CODEX_STANDARD`/`CODEX_HEAVY`,
+  estados operativos, recuperación read-only y ejecución local.
+- Repositorio del Orquestador:
+  `C:\ControlFarmacias\ControlFarmacias_Orquestador_V0_2_dev`; rama
+  `v0.2-dev`; `HEAD` local conocido
+  `869f1cc458444de914660e3e6b52e24ba5f10d40`; último commit `Certifica
+  resultados funcionales y recuperacion read-only V0.2.12`.
+- `origin/v0.2-dev` conocido:
+  `fc77f62483566d496fb837db12e1fced07385408`. El local está `1 ahead / 0
+  behind`. Clasificación: `DESARROLLO ACTIVO` y `PENDIENTE DE RESPALDO REMOTO`;
+  no hacer `push` todavía.
+- El CLI `cf` V0.2.12 no forma parte de la historia Git de `Programa/main`. Las
+  historias son independientes y no existe `merge-base` entre ellas. No se debe
+  interpretar la ausencia de commits del Orquestador en `main` como pérdida,
+  fusionar ambas ramas ni tratar `v0.2-dev` como rama auxiliar de Programa.
+- `OrquestadorExtraccionProductiva` vive dentro de Programa y no es el CLI `cf`.
+
+Fuente: inspección Git local de solo lectura, 2026-09-24; `CONFIRMADO POR CÓDIGO`
+para las referencias locales. El commit local `869f1cc` permanece `PENDIENTE DE
+RESPALDO REMOTO`.
 
 ## Operación vigente
 
