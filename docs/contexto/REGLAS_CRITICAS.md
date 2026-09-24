@@ -23,7 +23,15 @@ Actualizado: 2026-09-24.
 ## Extractores locales
 
 - Todos los adaptadores registrados son habilitables para shadow, pero ninguno
-  tiene autoridad productiva.
+  tiene autoridad productiva en el registro global
+  `AUTORIDADES_EXTRACTORES_LOCALES`.
+- Excepción acotada (Hito 2AP, 2026-09-24, `CONFIRMADO POR CÓDIGO` y
+  `CONFIRMADO POR TEST`, sin ejecución productiva): el compositor manual
+  `runtime_supabase/compositor_manual.py` concede autoridad solo a Alliance
+  (`alliance-local`) mediante `AUTORIDAD_COMPOSITOR_MANUAL`, que exige puente
+  multifactura certificado. Solo se usa con `ejecutar_una_manual()`; ningún
+  scheduler ni la ruta automática lo referencian. Cualquier otro proveedor falla
+  cerrado.
 - Shadow conserva siempre la salida oficial; `adaptadores_productivos()` es un alias
   de compatibilidad y su nombre no concede autoridad.
 - Solo Guimerà declara backend con OCR local. El resto usa PDFium nativo salvo que

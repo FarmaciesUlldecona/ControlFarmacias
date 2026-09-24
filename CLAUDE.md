@@ -44,6 +44,14 @@ Ante cualquier duda de identidad, completitud, farmacia o permisos, falla cerrad
 Solo PIO está habilitada; RITA permanece bloqueada. La autoridad productiva de
 todos los extractores locales está desactivada.
 
+## Ejecución de pytest
+
+Ejecuta siempre `pytest tests/ --basetemp=<directorio temporal propio>` (por
+ejemplo, el scratchpad de la sesión). Motivo: en este equipo el directorio por
+defecto `%TEMP%\pytest-of-Usuari` devuelve `Acceso denegado`, y sin
+`--basetemp` fallan en setup todos los tests que usan `tmp_path` (46 errores
+observados el 2026-09-24, Hito 2AP). No es una regresión del código.
+
 Estos tres documentos son el contexto canónico compartido por Claude Code y
 Codex. Deben prevalecer sobre documentación histórica, según el orden de autoridad
 que ellos mismos establecen.

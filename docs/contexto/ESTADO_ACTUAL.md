@@ -68,7 +68,11 @@ RESPALDO REMOTO`.
   `conciliacion_automatica=false`, `luna_habilitada=false`.
 - Estos valores describen el contrato y la última certificación. El estado remoto
   vivo no se presume sin preflight productivo autorizado.
-- La autoridad productiva de todos los extractores locales es `false`.
+- La autoridad productiva de todos los extractores locales es `false` en el
+  registro global. El compositor manual del Hito 2AP concede autoridad acotada
+  solo a Alliance y únicamente para `ejecutar_una_manual()`; implementado y
+  certificado en local, **no ejecutado en producción**. Ver
+  `pruebas/auditoria_2ap/`.
 - El shadow local está apagado por defecto y, aun habilitado para observar, conserva
   la salida oficial y no aplica la salida local.
 - `MANUAL_ONE_SHOT` está limitado a un documento y no admite preselección.
