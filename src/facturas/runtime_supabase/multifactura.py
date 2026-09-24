@@ -125,13 +125,16 @@ def preparar_documento(documento, segmentos_autorizados):
 
 
 def persistir_multifactura(cliente, documento_id, documento, segmentos_autorizados,
-                          worker_id, idempotency_key, resultado_hash):
+                          worker_id, idempotency_key, resultado_hash, disparador):
+    if disparador not in {"AUTOMATICO", "REPROCESADO", "MANUAL_ONE_SHOT"}:
+        raise ValueError("DISPARADOR_MULTIFACTURA_NO_ADMITIDO")
     payload = preparar_documento(documento, segmentos_autorizados)
     return cliente.rpc("cf_persistir_documento_multifactura", {
         "p_documento_id": documento_id, "p_worker_id": worker_id,
         "p_idempotency_key": idempotency_key, "p_resultado_hash": resultado_hash,
         "p_resultado": payload["resultado_json"],
         "p_segmentos_autorizados": payload["segmentos_autorizados"],
+        "p_disparador": disparador,
     }).execute()
 
 

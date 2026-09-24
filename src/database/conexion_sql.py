@@ -46,6 +46,12 @@ SELECT
 class CursorSoloLectura:
     """Envuelve un cursor ODBC y valida todas sus consultas."""
 
+    _ATRIBUTOS_BLOQUEADOS = frozenset({
+        "commit",
+        "execute",
+        "executemany",
+    })
+
     def __init__(self, cursor: Any):
         self._cursor = cursor
 
@@ -69,11 +75,21 @@ class CursorSoloLectura:
         self.close()
 
     def __getattr__(self, nombre: str):
+        if nombre.casefold() in self._ATRIBUTOS_BLOQUEADOS:
+            raise ConsultaSQLNoPermitida(
+                f"{nombre} no se expone desde el cursor de solo lectura."
+            )
         return getattr(self._cursor, nombre)
 
 
 class ConexionSoloLectura:
     """Expone una conexión que no permite confirmar escrituras."""
+
+    _ATRIBUTOS_BLOQUEADOS = frozenset({
+        "commit",
+        "execute",
+        "executemany",
+    })
 
     def __init__(self, conexion: Any):
         self._conexion = conexion
@@ -101,6 +117,10 @@ class ConexionSoloLectura:
         self.close()
 
     def __getattr__(self, nombre: str):
+        if nombre.casefold() in self._ATRIBUTOS_BLOQUEADOS:
+            raise ConsultaSQLNoPermitida(
+                f"{nombre} no se expone desde la conexión de solo lectura."
+            )
         return getattr(self._conexion, nombre)
 
 

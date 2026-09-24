@@ -96,10 +96,37 @@ def test_wrapper_usa_un_rpc_con_inventario_completo():
         def rpc(self,name,payload):self.name=name;self.payload=payload;return self
         def execute(self):return 'OK'
     c=Client()
-    assert persistir_multifactura(c,'doc',documento(),['s2'],'local','idem','hash')=='OK'
+    assert persistir_multifactura(
+        c, 'doc', documento(), ['s2'], 'local', 'idem', 'hash', 'MANUAL_ONE_SHOT'
+    ) == 'OK'
     assert c.name=='cf_persistir_documento_multifactura'
     assert len(c.payload['p_resultado']['facturas'])==3
     assert c.payload['p_segmentos_autorizados']==['s2']
+    assert c.payload['p_disparador']=='MANUAL_ONE_SHOT'
+
+
+def test_wrapper_rechaza_disparador_no_admitido_antes_del_rpc():
+    class Client:
+        def rpc(self, _name, _payload):
+            raise AssertionError('No debe invocarse la RPC')
+
+    with pytest.raises(ValueError, match='DISPARADOR_MULTIFACTURA_NO_ADMITIDO'):
+        persistir_multifactura(
+            Client(), 'doc', documento(), ['s2'], 'local', 'idem', 'hash', 'OTRO'
+        )
+
+
+def test_wrapper_coincide_con_firma_y_permisos_de_migracion_16():
+    from pathlib import Path
+
+    sql = (Path(__file__).resolve().parents[3] / 'sql' / 'migrations' /
+           '16_cf_worker_manual_one_shot.sql').read_text(encoding='utf-8').casefold()
+    firma_6 = ('cf_persistir_documento_multifactura(uuid, text, text, text, '
+               'jsonb, text[])')
+    firma_7 = ('cf_persistir_documento_multifactura(uuid, text, text, text, '
+               'jsonb, text[], text)')
+    assert f'revoke all on function public.{firma_6}' in sql
+    assert f'grant execute on function public.{firma_7}' in sql
 
 
 def test_evidencia_no_puede_provenir_de_otra_hermana():

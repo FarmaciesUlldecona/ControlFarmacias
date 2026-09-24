@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 
@@ -10,7 +11,10 @@ def obtener_logger(nombre: str = "farmatic") -> logging.Logger:
     Cada proceso genera su propio archivo de log.
     """
 
-    carpeta_logs = Path("logs")
+    raiz_proyecto = Path(__file__).resolve().parents[2]
+    carpeta_logs = Path(
+        os.environ.get("CONTROLFARMACIAS_LOG_DIR", raiz_proyecto / "logs")
+    )
     carpeta_logs.mkdir(
         parents=True,
         exist_ok=True,

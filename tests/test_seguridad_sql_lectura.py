@@ -17,6 +17,7 @@ class CursorFalso:
         self.consultas = []
         self.closed = False
         self.description = []
+        self.commits = 0
 
     def execute(self, consulta, *parametros):
         self.consultas.append((consulta, parametros))
@@ -27,6 +28,9 @@ class CursorFalso:
 
     def close(self):
         self.closed = True
+
+    def commit(self):
+        self.commits += 1
 
 
 class ConexionFalsa:
@@ -41,6 +45,9 @@ class ConexionFalsa:
 
     def commit(self):
         self.commits += 1
+
+    def execute(self, *_args, **_kwargs):
+        raise AssertionError("No debe alcanzarse execute nativo")
 
     def rollback(self):
         self.rollbacks += 1
@@ -121,6 +128,23 @@ def test_conexion_no_permite_commit_ni_executemany():
             "SELECT * FROM Albaran WHERE IdContador = ?",
             [(1,), (2,)],
         )
+
+
+def test_getattr_no_expone_execute_nativo_de_conexion():
+    conexion = ConexionSoloLectura(ConexionFalsa())
+
+    with pytest.raises(ConsultaSQLNoPermitida, match="execute"):
+        conexion.execute("DELETE FROM Albaran")
+
+
+def test_getattr_no_expone_commit_nativo_de_cursor():
+    conexion_real = ConexionFalsa()
+    cursor = ConexionSoloLectura(conexion_real).cursor()
+
+    with pytest.raises(ConsultaSQLNoPermitida, match="commit"):
+        cursor.commit()
+
+    assert conexion_real.cursor_falso.commits == 0
 
 
 def test_certificacion_acepta_identidad_y_permisos_correctos():
