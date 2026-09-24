@@ -28,7 +28,8 @@ Actualizado: 2026-09-24.
   de compatibilidad y su nombre no concede autoridad.
 - Solo Guimerà declara backend con OCR local. El resto usa PDFium nativo salvo que
   el contrato cambie y se certifique.
-- SAFA y BEIERSDORF no están implementados.
+- SAFA no tiene extractor local propio y Beiersdorf está sin extractor
+  implementado. `CONFIRMADO POR CÓDIGO`, 2026-09-24.
 
 ## Reglas confirmadas por proveedor
 
@@ -54,6 +55,20 @@ Actualizado: 2026-09-24.
   categorías ni explicaciones.
 - Las relaciones con Farmatic conservan el identificador literal de proveedor; no
   se coacciona a número ni se normaliza destructivamente.
+- En conciliación, SAFA, Alliance y Cencora pueden canonicalizarse dentro del grupo
+  funcional autorizado. `CONFIRMADO POR CÓDIGO` y `CONFIRMADO POR TEST`,
+  2026-09-24. Esto no crea un extractor SAFA: **extracción ≠ conciliación**.
+
+## Capacidades no implementadas
+
+- Conciliación bancaria: **NO IMPLEMENTADA**.
+- Norma 43: **NO IMPLEMENTADA**.
+- Telegram: **NO IMPLEMENTADO**.
+- Interfaz web: **NO IMPLEMENTADA**.
+- Beiersdorf: **SIN EXTRACTOR IMPLEMENTADO**.
+
+Estado a 2026-09-24: `NO ENCONTRADO` en el código vigente. No se presentan como
+módulos parciales.
 
 ## Pruebas
 
