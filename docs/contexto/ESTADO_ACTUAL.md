@@ -71,8 +71,8 @@ RESPALDO REMOTO`.
 - La autoridad productiva de todos los extractores locales es `false` en el
   registro global. El compositor manual del Hito 2AP concede autoridad acotada
   solo a Alliance y únicamente para `ejecutar_una_manual()`; implementado y
-  certificado en local, **no ejecutado en producción**. Ver
-  `pruebas/auditoria_2ap/`.
+  certificado en local (ver `pruebas/auditoria_2ap/`) y **ejecutado una sola vez
+  en producción** en el Hito 2AO rev3 (ver "Primer MANUAL_ONE_SHOT productivo").
 - El shadow local está apagado por defecto y, aun habilitado para observar, conserva
   la salida oficial y no aplica la salida local.
 - `MANUAL_ONE_SHOT` está limitado a un documento y no admite preselección.
@@ -110,6 +110,30 @@ EN VIVO** durante esta consolidación documental.
   `luna_habilitada=false`, `farmacias_habilitadas=["PIO"]`.
 - Conciliación: 7 facturas, 6 conciliadas y 1 pendiente. La pendiente es HEFAME
   `0563834757`. Tolerancia: `0.0500`.
+
+### Primer MANUAL_ONE_SHOT productivo (Hito 2AO rev3)
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-09-25, con confirmación expresa de Pio. Una
+única llamada a `ejecutar_una_manual()` mediante
+`construir_worker_manual_productivo` (worker `cf-2ao-manual-one-shot`),
+14:54:48–14:54:56 UTC. Scripts: `pruebas/auditoria_2ao/`.
+
+- Documento reclamado = candidato n.º 1 del ordering oficial:
+  `ae53897a-355a-488f-bc3e-1783f39e0f13` (SHA `4faa899b…`), Alliance por
+  contenido, 13 páginas, 5 facturas. Resultado `NORMALIZADA/COMPLETA`, claim y
+  lock liberados, 1 ejecución `MANUAL_ONE_SHOT` `COMPLETADA`, sin Luna ni OCR.
+- Facturas creadas (5, todas autorizadas, `NORMALIZADA`,
+  `PENDIENTE_CONCILIAR`): 08007970 (2.356,64), 08007969 (12.807,17),
+  08007971 (364,47), 08007973 (22,49) y 08007972 (464,76).
+- Conteos tras el hito: `documentos_facturas` 143 (2 `NORMALIZADA/COMPLETA`,
+  4 `NORMALIZADA/PENDIENTE`, 137 `PENDIENTE`), `facturas` 12,
+  `normalizacion_ejecuciones` 8, `conciliaciones` 12 (sin cambios), workers 0,
+  locks 0/0, flags sin cambios.
+- Postcheck por huellas de fila sobre columnas explícitas: ninguna diferencia
+  fuera del documento reclamado y sus filas nuevas; HEFAME `0563834757` intacta.
+- 08007971 no tiene albaranes extraídos (incidencia no bloqueante
+  `CANDIDATO_ALBARAN_NO_PROMOVIDO`); en conciliación quedaría `NO_APTA`
+  (`FALTAN_ALBARANES_MERCANCIA`). No se corrige.
 
 ### Evolución histórica útil
 
@@ -182,6 +206,20 @@ mediante consulta remota posterior.
   (`cf_persistir_normalizacion`) antes de la migración 15: Logista `0387e00a`,
   COFARES `fcbd0d02` y HEFAME `1c37b4d1`/`ee494032`. No son reclamables
   (`NORMALIZADA`). Corrección en hito propio; no se modifican ahora.
+- Deuda registrada por Pio (Hito 2AO rev3, 2026-09-25; `CONFIRMADO EN
+  PRODUCCIÓN`), hito propio, **no implementada**:
+  - la persistencia (`cf_persistir_normalizacion`, migración 17) solo admite
+    `FACTURA`, `ABONO`, `FACTURA_RECTIFICATIVA` y `OTRO`; `FACTURA_DUPLICADO` se
+    guarda como `tipo_documento=OTRO` (el valor original queda en
+    `datos_extraidos.tipo_documento`). Pendiente: mapear `FACTURA_DUPLICADO` →
+    `FACTURA`;
+  - reclasificar las facturas afectadas: Alliance 08009277/08009278/08009279 y
+    08007969/08007970/08007971/08007972/08007973 (y revisar COFARES 5460017198,
+    `FACTURA_RECTIFICATIVA_CONDICIONES_COMERCIALES` → `OTRO`);
+  - `categoria` de 08009277 (y 08007969) es `OTRO` porque la persistencia solo
+    mapea `MERCANCIA`/`SERVICIOS` y la naturaleza es `MIXTA`. Ni la elegibilidad
+    ni el claim de conciliación usan `tipo_documento` ni `categoria` (usan
+    `datos_extraidos.naturaleza_principal`), por lo que no afecta a conciliar.
 
 - La extracción completa no está certificada para cualquier layout posible.
 - La barrera documental de identidad/farmacia no está demostrada como universal en
