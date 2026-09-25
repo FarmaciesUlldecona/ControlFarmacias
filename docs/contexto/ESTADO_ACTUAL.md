@@ -217,9 +217,62 @@ mediante consulta remota posterior.
     08007969/08007970/08007971/08007972/08007973 (y revisar COFARES 5460017198,
     `FACTURA_RECTIFICATIVA_CONDICIONES_COMERCIALES` → `OTRO`);
   - `categoria` de 08009277 (y 08007969) es `OTRO` porque la persistencia solo
-    mapea `MERCANCIA`/`SERVICIOS` y la naturaleza es `MIXTA`. Ni la elegibilidad
-    ni el claim de conciliación usan `tipo_documento` ni `categoria` (usan
-    `datos_extraidos.naturaleza_principal`), por lo que no afecta a conciliar.
+    mapea `MERCANCIA`/`SERVICIOS` y la naturaleza es `MIXTA`. La elegibilidad
+    (`cf_evaluar_elegibilidad_conciliacion`) y el claim de conciliación no usan
+    `tipo_documento` ni `categoria` (usan `datos_extraidos.naturaleza_principal`),
+    pero la búsqueda de albaranes sí usa `categoria`:
+    `runtime_supabase/repositorios.py:322-326` busca albaranes si
+    `categoria = MERCANCIA` o la naturaleza es `MIXTA`, y movimientos de servicio
+    si `categoria = CUOTA_SERVICIO` o `MIXTA`; en otro caso lanza
+    `TIPO_DOCUMENTAL_NO_DEMOSTRADO`. Hoy no afecta porque `OTRO` solo sale de
+    `MIXTA`, pero una categoría distinta de `MERCANCIA`/`CUOTA_SERVICIO` sin
+    naturaleza `MIXTA` quedaría fuera de conciliación.
+- Deuda para el **Hito 2AU** (diagnóstico de 08007971 en el Hito 2AO rev3,
+  2026-09-25; `CONFIRMADO POR CÓDIGO` y por extracción local READ_ONLY del
+  mirror). **No implementada**:
+  - **Tipos de pedido Alliance no certificados.** El adaptador
+    (`motor_local/adaptadores/alliance.py:21-27`,
+    `TIPOS_PEDIDO_MERCANCIA_ALLIANCE`) solo certifica `NORMAL ACUSTICO`,
+    `NETOS PLUS`, `PLATAFORMA 360`, `COSTO LABORAT.` y `ECOCEUTICS`; cualquier
+    otro tipo se clasifica `NO_DEMOSTRABLE` y no se promueve a albarán (falla
+    cerrado; el extractor lee bien número, fecha, base, total, sentido y rol).
+    Alcance medido: facturas Alliance persistidas 8, afectada 1 (08007971:
+    3 filas `DIRECTO`). Cola: 9 documentos Alliance reconocidos (35 facturas),
+    7 documentos / 9 facturas con 14 filas no promovidas: `ENCARGO VACUNAS` 4
+    (08008834, 08009716, 08010461, 08010885), `COSTO TELEVENTA` 3 (08006570,
+    08007501 ×2), `DIRECTO` 2 (08006570, 08010887), `MIS RESERVAS` 2
+    (08010085), `ABONO ECOCEUTICS` 2 (08006571) y `TELEVENTA 2` 1 (08006570).
+    Cota inferior: de 137 documentos en cola, 71 sin layout reconocido, 16 con
+    error de extracción local y 1 ausente del mirror.
+    Clasificación de Pio (registrada tal cual):
+    - `DIRECTO`, `ENCARGO VACUNAS`, `MIS RESERVAS`, `TELEVENTA 2`: MERCANCÍA.
+      Certificables solo con albarán coincidente en `Supabase.albaranes` por
+      fecha e importe.
+    - `COSTO TELEVENTA`: CARGO DE SERVICIO de Alliance, NO mercancía. No se
+      cruza con albaranes; es movimiento de servicio.
+    - `ABONO ECOCEUTICS`: ABONO, NO cargo. Tratamiento (devolución cruzable en
+      Farmatic o abono comercial sin albarán) a determinar en 2AU con evidencia.
+  - **Motivo engañoso de incidencia** en `alliance.py:337-342`:
+    `CANDIDATO_ALBARAN_NO_PROMOVIDO` declara
+    `FALTA_EVIDENCIA_POSITIVA_DE_ROL_O_SEGMENTACION` aunque rol y segmentación
+    son correctos. Sustituir por `TIPO_PEDIDO_NO_CERTIFICADO` con el tipo
+    encontrado.
+  - **08007971 persistida sin albaranes** (3 `DIRECTO`: 08C18299, 08M24229,
+    08M25574; en conciliación quedaría `NO_APTA` `FALTAN_ALBARANES_MERCANCIA`).
+    Requiere un camino de enriquecimiento, no reprocesado: la identidad
+    económica bloquearía las 5 facturas del documento como duplicadas o el
+    reprocesado sería un replay.
+  - Evidencia de conciliación: los 3 albaranes existen en `albaranes` (SAFA,
+    `PENDIENTE`); 08C18299 figura en Farmatic como `Q039904/2026` (numeración
+    distinta). La sincronización no filtra por estado de facturación
+    (`IdContador > último`). Simulado con `buscar_candidato_albaran`: los 3
+    darían `MATCH_UNICO` (08C18299 por proveedor + fecha + importe con número
+    `DIFERENTE`; los otros dos por número exacto).
+  - Pendiente de verificar en 2AU: si la conciliación actual descuenta
+    movimientos de servicio y abonos al calcular el importe explicado.
+  - Aplazado (no necesario ahora): relación en Farmatic entre `Q039904/2026` y
+    08C18299; requiere la identidad `ControlFarmaciasRO` (la sesión ordinaria
+    `MOSTRADOR\Usuari` es rechazada por la barrera de solo lectura).
 
 - La extracción completa no está certificada para cualquier layout posible.
 - La barrera documental de identidad/farmacia no está demostrada como universal en
