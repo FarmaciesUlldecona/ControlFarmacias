@@ -127,6 +127,19 @@ def normalizar_numero_albaran(valor: str | None) -> str | None:
     return normalizado or None
 
 
+def _id_proveedor_comparable(valor: str | None) -> str | None:
+    """R9 (2AV): solo para comparar; '2', '0002' y '0002 ' son el mismo proveedor.
+
+    El literal se conserva en datos y persistencia (``conservar_id_proveedor``).
+    """
+    if valor is None:
+        return None
+    texto = valor.strip()
+    if texto.isdigit():
+        return texto.lstrip("0") or "0"
+    return texto or None
+
+
 def comparar_numeros_albaran(documental: str | None, operacional: str | None) -> str:
     izquierda = normalizar_numero_albaran(documental)
     derecha = normalizar_numero_albaran(operacional)
@@ -173,7 +186,12 @@ def buscar_candidato_albaran(
     provider_key = canonicalizar_proveedor(proveedor_literal)
     provider_id = conservar_id_proveedor(farmatic_id_proveedor)
     if provider_id is not None:
-        by_provider = [row for row in rows if row.id_proveedor == provider_id]
+        provider_comparable = _id_proveedor_comparable(provider_id)
+        by_provider = [
+            row for row in rows
+            if provider_comparable is not None
+            and _id_proveedor_comparable(row.id_proveedor) == provider_comparable
+        ]
     elif provider_key is not None:
         by_provider = [row for row in rows if canonicalizar_proveedor(row.proveedor) == provider_key]
     else:

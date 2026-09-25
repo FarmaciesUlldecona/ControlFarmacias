@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import asdict
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Protocol
 from src.facturas.completitud_documental import validar_documento_antes_de_persistir
 
-from .clasificacion_fallos import clasificar_fallo
+from .clasificacion_fallos import clasificar_fallo, clasificar_fallo_conciliacion
 from .modelos import (
     DetalleConciliacion,
     conservar_id_proveedor,
@@ -65,6 +67,8 @@ class RepositorioNormalizacion(Protocol):
 class RepositorioConciliacion(Protocol):
     def reclamar_factura(self, worker_id: str) -> FacturaTrabajo | None: ...
 
+    def reclamar_factura_manual_one_shot(self, worker_id: str) -> FacturaTrabajo | None: ...
+
     def construir_detalles(
         self,
         factura: FacturaTrabajo,
@@ -84,6 +88,8 @@ class RepositorioConciliacion(Protocol):
         factura: FacturaTrabajo,
         codigo: str,
         detalle: str,
+        worker_id: str,
+        disparador: str = "AUTOMATICO",
     ) -> None: ...
 
 
@@ -273,8 +279,15 @@ class RepositorioRuntimeSupabase:
         }).execute()
 
     def reclamar_factura(self, worker_id: str) -> FacturaTrabajo | None:
+        return self._reclamar_factura("cf_reclamar_factura_conciliacion", worker_id)
+
+    def reclamar_factura_manual_one_shot(self, worker_id: str) -> FacturaTrabajo | None:
+        """Claim MANUAL_ONE_SHOT (R5, migracion 18): selector oficial, sin preseleccion."""
+        return self._reclamar_factura("cf_reclamar_factura_conciliacion_manual_one_shot", worker_id)
+
+    def _reclamar_factura(self, rpc: str, worker_id: str) -> FacturaTrabajo | None:
         respuesta = self._cliente.rpc(
-            "cf_reclamar_factura_conciliacion",
+            rpc,
             {"p_worker_id": worker_id, "p_bloqueo_segundos": 300},
         ).execute()
         filas = respuesta.data or []
@@ -422,9 +435,14 @@ class RepositorioRuntimeSupabase:
         *,
         disparador: str = "AUTOMATICO",
     ) -> str:
-        if disparador not in {"AUTOMATICO", "MANUAL", "REINTENTO", "TEST"}:
+        """Cierre atomico (R6, migracion 18) con clave idempotente y replay seguro.
+
+        Revalida la evidencia persistida antes de la unica escritura, que es la RPC
+        transaccional ``cf_persistir_conciliacion``.
+        """
+        if disparador not in DISPARADORES_CONCILIACION:
             raise ValueError("disparador de conciliacion no admitido")
-        # Revalidar evidencia persistida antes del primer UPDATE/INSERT.
+        # Revalidar evidencia persistida antes de la primera escritura.
         fila = (self._cliente.table("facturas")
                 .select("normalizacion_ejecucion_id,farmacia")
                 .eq("id", factura.factura_id).single().execute()).data
@@ -435,83 +453,68 @@ class RepositorioRuntimeSupabase:
                      .eq("id", fila.get("normalizacion_ejecucion_id"))
                      .single().execute()).data
         validar_documento_antes_de_persistir(factura.farmacia, ejecucion.get("resultado_json"))
-        anteriores = (
-            self._cliente.table("conciliaciones")
-            .select("intento")
-            .eq("factura_id", factura.factura_id)
-            .order("intento", desc=True)
-            .limit(1)
-            .execute()
-        )
-        intento = int(anteriores.data[0]["intento"]) + 1 if anteriores.data else 1
-        (
-            self._cliente.table("conciliaciones")
-            .update({"es_actual": False})
-            .eq("factura_id", factura.factura_id)
-            .eq("es_actual", True)
-            .execute()
-        )
-        cabecera = self._cliente.table("conciliaciones").insert({
-            "factura_id": factura.factura_id,
-            "intento": intento,
-            "disparador": disparador,
-            "estado": "COMPLETADA",
-            "es_actual": True,
-            "tolerancia": str(resultado.tolerancia),
-            "importe_factura": str(resultado.importe_factura),
-            "importe_explicado": str(resultado.importe_explicado),
-            "diferencia": str(resultado.diferencia),
-            "resultado": resultado.resultado,
-            "worker_id": worker_id,
-            "finalizado_at": _ahora_iso(),
+        payload = payload_conciliacion(resultado)
+        respuesta = self._cliente.rpc("cf_persistir_conciliacion", {
+            "p_factura_id": factura.factura_id,
+            "p_worker_id": worker_id,
+            "p_disparador": disparador,
+            "p_idempotency_key": clave_idempotente_conciliacion(
+                factura.factura_id, disparador, payload),
+            "p_resultado": payload,
         }).execute()
-        conciliacion_id = str(cabecera.data[0]["id"])
-        if resultado.detalles:
-            self._cliente.table("conciliacion_detalles").insert([
-                {
-                    "conciliacion_id": conciliacion_id,
-                    "orden": orden,
-                    "factura_albaran_extraido_id": detalle.factura_albaran_extraido_id,
-                    "factura_movimiento_id": detalle.factura_movimiento_id,
-                    "albaran_farmacia": detalle.albaran_farmacia,
-                    "albaran_id_contador": detalle.albaran_id_contador,
-                    "coincidencia_numero_literal": detalle.coincidencia_numero_literal,
-                    "tipo_relacion": detalle.tipo_relacion.value,
-                    "importe_aplicado": str(detalle.importe_aplicado),
-                    "estado": "COINCIDE" if resultado.resultado == "CONCILIADA" else "DIFERENCIA",
-                    "provenance": dict(detalle.provenance),
-                }
-                for orden, detalle in enumerate(resultado.detalles, start=1)
-            ]).execute()
-        estado_cf = "CONCILIADA" if resultado.resultado == "CONCILIADA" else "PENDIENTE_CONCILIAR"
-        (
-            self._cliente.table("facturas")
-            .update({
-                "estado_conciliacion_cf": estado_cf,
-                "diferencia_albaranes": str(resultado.diferencia),
-                "conciliacion_intentos": intento,
-                "conciliacion_bloqueado_hasta": None,
-                "conciliacion_bloqueado_por": None,
-                "conciliacion_reintento_solicitado_at": None,
-            })
-            .eq("id", factura.factura_id)
-            .execute()
-        )
-        return conciliacion_id
+        return str(respuesta.data)
 
     def fallar_conciliacion(
         self,
         factura: FacturaTrabajo,
         codigo: str,
         detalle: str,
+        worker_id: str,
+        disparador: str = "AUTOMATICO",
     ) -> None:
-        (
-            self._cliente.table("facturas")
-            .update({
-                "conciliacion_ultimo_error": f"{codigo}: {detalle}",
-                "conciliacion_bloqueado_hasta": None,
-                "conciliacion_bloqueado_por": None,
-            })
-            .eq("id", factura.factura_id)
-            .execute()
-        )
+        """Fallo con backoff (R7, migracion 18); sin claim del worker no cambia nada."""
+        self._cliente.rpc("cf_registrar_fallo_conciliacion", {
+            "p_factura_id": factura.factura_id,
+            "p_worker_id": worker_id,
+            "p_disparador": disparador,
+            "p_error_codigo": codigo,
+            "p_error_detalle": detalle,
+            "p_clase_fallo": clasificar_fallo_conciliacion(codigo, detalle),
+        }).execute()
+
+
+DISPARADORES_CONCILIACION = frozenset({"AUTOMATICO", "MANUAL_ONE_SHOT"})
+
+
+def payload_conciliacion(resultado: ResultadoConciliacion) -> dict[str, Any]:
+    """Resultado serializable para ``cf_persistir_conciliacion`` (importes como texto)."""
+    estado_detalle = "COINCIDE" if resultado.resultado == "CONCILIADA" else "DIFERENCIA"
+    payload = {
+        "importe_factura": str(resultado.importe_factura),
+        "importe_explicado": str(resultado.importe_explicado),
+        "diferencia": str(resultado.diferencia),
+        "tolerancia": str(resultado.tolerancia),
+        "resultado": resultado.resultado,
+        "detalles": [
+            {
+                "orden": orden,
+                "factura_albaran_extraido_id": detalle.factura_albaran_extraido_id,
+                "factura_movimiento_id": detalle.factura_movimiento_id,
+                "albaran_farmacia": detalle.albaran_farmacia,
+                "albaran_id_contador": detalle.albaran_id_contador,
+                "coincidencia_numero_literal": detalle.coincidencia_numero_literal,
+                "tipo_relacion": detalle.tipo_relacion.value,
+                "importe_aplicado": str(detalle.importe_aplicado),
+                "estado": estado_detalle,
+                "provenance": dict(detalle.provenance),
+            }
+            for orden, detalle in enumerate(resultado.detalles, start=1)
+        ],
+    }
+    return json.loads(json.dumps(payload, ensure_ascii=False, default=str))
+
+
+def clave_idempotente_conciliacion(factura_id: str, disparador: str, payload: dict[str, Any]) -> str:
+    """Misma evidencia -> misma clave (replay); evidencia distinta -> intento nuevo."""
+    canonico = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return f"conciliacion:{factura_id}:{disparador}:{hashlib.sha256(canonico.encode()).hexdigest()}"

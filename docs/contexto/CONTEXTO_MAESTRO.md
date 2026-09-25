@@ -75,8 +75,10 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
   Farmatic.
 - `src/supabase_client`: integración histórica de albaranes y documentos.
 - `sql/migrations/17_cf_replay_y_fallos_no_bloqueantes.sql` (+ `.rollback.sql`):
-  migración más reciente, versionada y desplegada en producción (Hito 2AS,
-  2026-09-25).
+  migración más reciente desplegada en producción (Hito 2AS, 2026-09-25).
+- `sql/migrations/18_cf_conciliacion_manual_atomica.sql` (+ `.rollback.sql`):
+  versionada y certificada en PostgreSQL 17 local, **no desplegada** (Hito 2AV,
+  2026-09-25). El Python vigente de conciliación la exige.
 
 ## Arquitectura multirepositorio
 

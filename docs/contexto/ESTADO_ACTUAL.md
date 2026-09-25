@@ -164,6 +164,16 @@ EN VIVO** durante esta consolidación documental.
 - El Python de 2AR (envío de `p_clase_fallo`) exige la migración 17; para
   revertir, primero el código y después el rollback SQL (requiere confirmación
   de Pio).
+- Migración `18_cf_conciliacion_manual_atomica.sql` (+ `.rollback.sql`), reglas
+  R5–R9 (ver `REGLAS_CRITICAS.md`): **certificada en PostgreSQL 17 local, NO
+  DESPLEGADA** (Hito 2AV, 2026-09-25; `CONFIRMADO POR TEST`). Diseño en
+  `pruebas/auditoria_2av/DISENO.md`. Añade la ruta manual one-shot de
+  conciliación, el cierre atómico `cf_persistir_conciliacion`, fallos con
+  backoff y `REVISION_CONCILIACION`, y columnas nuevas en `facturas`,
+  `conciliaciones` y `cf_configuracion` sin DML sobre datos existentes.
+  **El Python de 2AV exige la migración 18** (usa sus RPC para guardar y fallar
+  conciliaciones): no ejecutar conciliación productiva con este código hasta
+  desplegarla (Hito 2AW). Revertir: primero el código, después el rollback SQL.
 - Normalizador V2 declarado por el pipeline: `2.2.0`.
 - Motor documental local declarado por el servicio: `0.5.0`.
 - `OrquestadorExtraccionProductiva` no declara versión propia. V0.1.3 identifica
@@ -273,6 +283,20 @@ mediante consulta remota posterior.
   - Aplazado (no necesario ahora): relación en Farmatic entre `Q039904/2026` y
     08C18299; requiere la identidad `ControlFarmaciasRO` (la sesión ordinaria
     `MOSTRADOR\Usuari` es rechazada por la barrera de solo lectura).
+
+- Hallazgos del Hito 2AV (2026-09-25; `CONFIRMADO POR TEST` en PostgreSQL 17
+  local con el PDF real del 2AO, sin producción), **no corregidos**:
+  - 08007969 (MIXTA) sale `NO_APTA` `TOTAL_NO_EXPLICADO`: albaranes extraídos
+    13.020,88 + movimientos −213,78 = 12.807,10 frente a un total de 12.807,17
+    (0,07 > tolerancia 0,05). Con 08007971 (sin albaranes, deuda 2AU), 2 de las
+    5 facturas del 2AO no son conciliables hoy; aptas: 08007970, 08007972 y
+    08007973.
+  - 08007970 con albaranes operacionales sintéticos (número, fecha y PUC del
+    PDF): `CONCILIADA`, explicado 2.356,68, diferencia −0,04, 71 albaranes 1:1.
+    El resultado productivo dependerá de los importes reales de Farmatic.
+  - Un resultado `DIFERENCIA` deja la factura en `PENDIENTE_CONCILIAR` sin
+    backoff (comportamiento previo conservado); con el automático activo se
+    volvería a reclamar, aunque sin duplicar (replay por clave idempotente).
 
 - La extracción completa no está certificada para cualquier layout posible.
 - La barrera documental de identidad/farmacia no está demostrada como universal en

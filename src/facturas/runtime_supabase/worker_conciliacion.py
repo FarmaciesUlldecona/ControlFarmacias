@@ -23,11 +23,27 @@ class WorkerConciliacion:
         factura = self.repositorio.reclamar_factura(self.worker_id)
         if factura is None:
             return False
+        return self._procesar(factura, "AUTOMATICO")
+
+    def ejecutar_una_manual(self) -> bool:
+        """Concilia como maximo una factura (R5/R8, migracion 18).
+
+        Usa el selector y el ordering oficiales mediante el claim MANUAL_ONE_SHOT;
+        no admite preseleccion ni activa ``conciliacion_automatica``.
+        """
+        factura = self.repositorio.reclamar_factura_manual_one_shot(self.worker_id)
+        if factura is None:
+            return False
+        return self._procesar(factura, "MANUAL_ONE_SHOT")
+
+    def _procesar(self, factura: FacturaTrabajo, disparador: str) -> bool:
         if factura.importe_total is None:
             self.repositorio.fallar_conciliacion(
                 factura,
                 "IMPORTE_FACTURA_AUSENTE",
                 "La factura no tiene total documental comparable",
+                self.worker_id,
+                disparador,
             )
             return False
         try:
@@ -36,17 +52,20 @@ class WorkerConciliacion:
                 self.construir_detalles(factura),
                 tolerancia=self.tolerancia,
             )
-            self.repositorio.guardar_conciliacion(
-                factura,
-                self.worker_id,
-                resultado,
-            )
+            if disparador == "AUTOMATICO":
+                self.repositorio.guardar_conciliacion(factura, self.worker_id, resultado)
+            else:
+                self.repositorio.guardar_conciliacion(
+                    factura, self.worker_id, resultado, disparador=disparador,
+                )
             return True
         except Exception as exc:
             self.repositorio.fallar_conciliacion(
                 factura,
                 type(exc).__name__,
                 str(exc),
+                self.worker_id,
+                disparador,
             )
             return False
 

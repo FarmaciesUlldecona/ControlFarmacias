@@ -62,6 +62,19 @@ class WorkerAutomatico:
             modo_ejecucion="MANUAL_ONE_SHOT",
         )
 
+    def ejecutar_una_manual_conciliacion(self) -> ResultadoEjecucionAutomatica:
+        """Concilia como maximo una factura sin habilitar automatismos (migracion 18).
+
+        No normaliza: autoriza exclusivamente el claim de conciliacion MANUAL_ONE_SHOT.
+        """
+        facturas = int(self.conciliacion.ejecutar_una_manual())
+        return ResultadoEjecucionAutomatica(
+            documentos_reclamados=0,
+            facturas_conciliacion_reclamadas=facturas,
+            automatismos_habilitados=False,
+            modo_ejecucion="MANUAL_ONE_SHOT",
+        )
+
 
 def construir_worker_automatico(
     normalizacion: WorkerNormalizacion,

@@ -158,7 +158,8 @@ def test_entrypoints_productivos_sin_barrera_farmacia_es_cero():
             raiz / "src/facturas/runtime_supabase/repositorios.py",
             "def guardar_conciliacion(\n        self,",
             "def fallar_conciliacion(",
-            '.update({"es_actual": False})',
+            # Migracion 18 (2AV): la unica escritura es la RPC transaccional.
+            'self._cliente.rpc("cf_persistir_conciliacion"',
         ),
         (
             raiz / "pruebas/piloto_productivo_2i.py",

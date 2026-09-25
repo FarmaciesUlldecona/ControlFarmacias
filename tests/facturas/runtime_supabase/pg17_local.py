@@ -84,6 +84,8 @@ class _Pg:
 
 MIGRACION_17 = MIG / "17_cf_replay_y_fallos_no_bloqueantes.sql"
 ROLLBACK_17 = MIG / "17_cf_replay_y_fallos_no_bloqueantes.rollback.sql"
+MIGRACION_18 = MIG / "18_cf_conciliacion_manual_atomica.sql"
+ROLLBACK_18 = MIG / "18_cf_conciliacion_manual_atomica.rollback.sql"
 
 
 def esquema(pg: "_Pg") -> str:
@@ -121,8 +123,11 @@ class _Diferida:
 
 
 class _Tabla:
+    """Solo lectura: select/eq/gte/lte/order/limit/single (sin update ni insert)."""
+
     def __init__(self, pg: _Pg, tabla: str):
         self.pg, self.tabla, self.columnas, self.filtros, self.limite = pg, tabla, "*", [], None
+        self.orden, self.unica = [], False
 
     def select(self, columnas):
         self.columnas = columnas
@@ -132,15 +137,36 @@ class _Tabla:
         self.filtros.append(f"{columna}::text = {_lit(valor)}")
         return self
 
+    def gte(self, columna, valor):
+        self.filtros.append(f"{columna} >= {_lit(valor)}")
+        return self
+
+    def lte(self, columna, valor):
+        self.filtros.append(f"{columna} <= {_lit(valor)}")
+        return self
+
+    def order(self, columna, desc=False):
+        self.orden.append(f"{columna}{' desc' if desc else ''}")
+        return self
+
     def limit(self, n):
         self.limite = int(n)
         return self
 
+    def single(self):
+        self.unica = True
+        return self
+
     def execute(self):
         where = " where " + " and ".join(self.filtros) if self.filtros else ""
+        orden = " order by " + ", ".join(self.orden) if self.orden else ""
         limite = f" limit {self.limite}" if self.limite else ""
-        return _Respuesta(self.pg.json(
-            f"select {self.columnas} from public.{self.tabla}{where}{limite}"))
+        filas = self.pg.json(f"select {self.columnas} from public.{self.tabla}{where}{orden}{limite}")
+        if self.unica:
+            if len(filas) != 1:
+                raise RuntimeError(f"single(): {len(filas)} filas")
+            return _Respuesta(filas[0])
+        return _Respuesta(filas)
 
 
 class _Bucket:
@@ -299,20 +325,29 @@ def _ejecuciones(pg: _Pg, documento_id: str):
 # Plantillas por variante de esquema
 # --------------------------------------------------------------------------
 
-VARIANTES = ("16", "17", "16_rollback")
+VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback")
 
 
 def construir_plantilla(contenedor: str, variante: str) -> str:
-    """16: cadena 2AN; 17: 16 + migracion 17 aplicada dos veces; 16_rollback: 16 + 17 + rollback."""
+    """16: cadena 2AN; 17: 16 + migracion 17 aplicada dos veces; 16_rollback: 16 + 17 + rollback.
+
+    18: 17 + migracion 18 aplicada dos veces; 17_rollback: 17 + 18 + rollback de la 18.
+    """
     assert variante in VARIANTES
     nombre = f"cf_plantilla_{variante}"
     _docker("exec", contenedor, "createdb", "-U", "postgres", nombre)
     pg = _Pg(contenedor, nombre)
     for path in CADENA:
         pg.sql(_expandir(path))
-    if variante == "17":
+    if variante in ("17", "18", "17_rollback"):
         pg.sql(MIGRACION_17.read_text(encoding="utf-8"))
         pg.sql(MIGRACION_17.read_text(encoding="utf-8"))
+    if variante == "18":
+        pg.sql(MIGRACION_18.read_text(encoding="utf-8"))
+        pg.sql(MIGRACION_18.read_text(encoding="utf-8"))
+    elif variante == "17_rollback":
+        pg.sql(MIGRACION_18.read_text(encoding="utf-8"))
+        pg.sql(ROLLBACK_18.read_text(encoding="utf-8"))
     elif variante == "16_rollback":
         pg.sql(MIGRACION_17.read_text(encoding="utf-8"))
         pg.sql(ROLLBACK_17.read_text(encoding="utf-8"))

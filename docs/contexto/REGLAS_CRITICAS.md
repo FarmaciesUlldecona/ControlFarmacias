@@ -92,6 +92,29 @@ Actualizado: 2026-09-24.
     `PENDIENTE`/`ERROR` y los backoff futuros; la migración 17 no redefine el claim.
   - Clasificación de motivos: `runtime_supabase/clasificacion_fallos.py`; un motivo
     desconocido es `TRANSITORIO`, nunca `NO_SOPORTADO`.
+- Reglas aprobadas por Pio para la migración 18 (Hito 2AV, 2026-09-25;
+  `CONFIRMADO POR TEST` en PostgreSQL 17 local; **NO DESPLEGADA**, requiere el
+  hito 2AW con preflight y confirmación de Pio):
+  - **R5 claim manual de conciliación:** `p_modo_ejecucion` `AUTOMATICO` o
+    `MANUAL_ONE_SHOT`. `MANUAL_ONE_SHOT` solo omite `conciliacion_automatica`;
+    selector y ordering idénticos a la migración 14; como máximo 1 factura; sin
+    preselección. Envoltorio `cf_reclamar_factura_conciliacion_manual_one_shot`.
+  - **R6 cierre atómico:** `cf_persistir_conciliacion` escribe cabecera, detalles,
+    `es_actual`, estado de factura, liberación del lock e historial en una
+    transacción, con clave idempotente
+    `conciliacion:{factura}:{disparador}:{sha256 del resultado}`. Replay: no
+    duplica, libera el claim del llamante, restaura el estado y registra
+    `CONCILIACION_REPLAY_IDEMPOTENTE`.
+  - **R7 fallos con backoff:** `cf_registrar_fallo_conciliacion`; 4 intentos con
+    1 h / 6 h / 24 h (`cf_configuracion.conciliacion_max_intentos`,
+    `conciliacion_backoff`); el 4.º pasa a `REVISION_CONCILIACION`, no
+    reclamable. Solo vuelve con `cf_solicitar_reintento_conciliacion`, que
+    reinicia el presupuesto; un éxito lo pone a 0.
+  - **R8 provenance:** disparador `MANUAL_ONE_SHOT` en la ruta manual y
+    `AUTOMATICO` en la automática, validado contra el modo del claim.
+  - **R9 `id_proveedor` tolerante:** solo en la comparación de
+    `buscar_candidato_albaran` (trim y ceros a la izquierda: `'2' == '0002' == '0002 '`);
+    los literales se conservan.
 - La RPC multifactura autorizada tiene siete parámetros, incluido
   `p_disparador`. La firma antigua de seis no está autorizada para `service_role`.
 - Los disparadores permitidos son `AUTOMATICO`, `REPROCESADO` y

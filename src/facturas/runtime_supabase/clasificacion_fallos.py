@@ -67,3 +67,28 @@ def clasificar_fallo(codigo: str | None, detalle: str | None) -> str:
     if codigo in CODIGOS_DEFECTO_DOCUMENTO:
         return DEFECTO_DOCUMENTO
     return TRANSITORIO
+
+
+# Conciliacion (Hito 2AV, regla R7): solo reintentos acotados con backoff. No
+# existe "no soportado": un defecto documental o un motivo desconocido cuenta
+# como intento y al maximo la factura pasa a REVISION_CONCILIACION.
+CLASES_FALLO_CONCILIACION = frozenset({DEFECTO_DOCUMENTO, TRANSITORIO})
+
+MOTIVOS_DEFECTO_CONCILIACION = frozenset({
+    "IMPORTE_FACTURA_AUSENTE",
+    "TIPO_DOCUMENTAL_NO_DEMOSTRADO",
+    "TRAZABILIDAD_SERVICIO_INSUFICIENTE",
+    "FARMACIA_DOCUMENTO_CONTRADICTORIA",
+    "FARMACIA_DOCUMENTO_NO_DEMOSTRABLE",
+    "EXTRACCION_INCOMPLETA_REQUIERE_REVISION",
+})
+
+
+def clasificar_fallo_conciliacion(codigo: str | None, detalle: str | None) -> str:
+    """Clasifica un fallo de conciliacion; ante duda devuelve TRANSITORIO."""
+    motivo = str(detalle or "").strip().split(":", 1)[0].strip()
+    if codigo in MOTIVOS_DEFECTO_CONCILIACION or motivo in MOTIVOS_DEFECTO_CONCILIACION:
+        return DEFECTO_DOCUMENTO
+    if codigo in CODIGOS_DEFECTO_DOCUMENTO:
+        return DEFECTO_DOCUMENTO
+    return TRANSITORIO

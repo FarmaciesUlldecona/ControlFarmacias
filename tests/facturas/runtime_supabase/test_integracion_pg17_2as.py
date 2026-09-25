@@ -22,8 +22,11 @@ FUNCIONES_17 = (
 )
 
 
-@pytest.fixture
-def base(pg17_nueva_base):
+@pytest.fixture(params=["16+17", "17_rollback"])
+def base(request, pg17_nueva_base):
+    """16+17: despliegue 2AS. 17_rollback: 17 + 18 + rollback de la 18 (Hito 2AV, 4.13)."""
+    if request.param == "17_rollback":
+        return pg17_nueva_base("17_rollback")
     pg = pg17_nueva_base("16")
     pg.sql("alter default privileges for role postgres in schema public "
            "grant execute on functions to anon, authenticated, service_role;")
