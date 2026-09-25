@@ -70,7 +70,8 @@ Actualizado: 2026-09-24.
 ## Persistencia y conciliación
 
 - Reglas aprobadas por Pio para la migración 17 (Hito 2AR, 2026-09-25;
-  `CONFIRMADO POR TEST` en PostgreSQL 17 local, **NO desplegada**):
+  `CONFIRMADO POR TEST` en PostgreSQL 17 local y `CONFIRMADO EN PRODUCCIÓN`,
+  desplegada en el Hito 2AS el 2026-09-25):
   - **R1 replay idempotente:** nunca deja claim, lock ni estado intermedio. Libera
     el claim del llamante, restaura `estado_lectura`/`estado_persistencia` al
     estado final de la ejecución original, registra

@@ -122,15 +122,24 @@ EN VIVO** durante esta consolidación documental.
 
 ## Versiones y certificación
 
-- Migración más reciente desplegada: `16_cf_worker_manual_one_shot.sql`
-  (`CONFIRMADO EN PRODUCCIÓN` en 2AN, 2026-09-24).
-- Migración 17 `17_cf_replay_y_fallos_no_bloqueantes.sql`: reglas R1–R4 (ver
-  `REGLAS_CRITICAS.md`). `CONFIRMADO POR TEST` en PostgreSQL 17 local (Hito 2AR,
-  2026-09-25): aplicación doble idempotente, rollback al esquema 16 idéntico y
-  regresión 2AQ sobre 16, 17 y 16+rollback. **NO desplegada en producción.**
-  El Python de 2AR (envío de `p_clase_fallo`) exige la migración 17: desplegar
-  primero la base y después el código; para revertir, primero el código y después
-  el rollback SQL.
+- Migración más reciente desplegada: `17_cf_replay_y_fallos_no_bloqueantes.sql`,
+  reglas R1–R4 (ver `REGLAS_CRITICAS.md`). `CONFIRMADO EN PRODUCCIÓN` (Hito 2AS,
+  aplicada 2026-09-25 14:08:29–14:08:30 UTC, una transacción, project ref
+  `vklaiuytvegkelgyspxc`, SQL normalizado a LF con SHA-256
+  `6e7e8f78bd3f45df727392e7601dff6007e19cca2384525c80330efc37698b63`, con
+  confirmación expresa de Pio). Backup previo READ_ONLY fuera del repo con SHA-256
+  `c91e893a01888fd6845603ae5c411b61fa28d1e609cccf92f38a02198da77cdf`.
+  Parámetros R3 en `cf_configuracion`: `normalizacion_max_intentos=4`,
+  `normalizacion_backoff={1 h, 6 h, 24 h}`. Postcheck: definiciones iguales a la
+  referencia local 17 (LF), selector idéntico, anon/authenticated sin EXECUTE en
+  las funciones de la 17 (se retiró el EXECUTE de `authenticated` sobre
+  `cf_solicitar_reprocesado`), conteos, estados y huellas de facturas idénticos;
+  la huella de `normalizacion_ejecuciones` solo cambia por la columna nueva
+  `clase_fallo` (nula en las 7 filas). Anterior: `16_cf_worker_manual_one_shot.sql`
+  (2AN, 2026-09-24).
+- El Python de 2AR (envío de `p_clase_fallo`) exige la migración 17; para
+  revertir, primero el código y después el rollback SQL (requiere confirmación
+  de Pio).
 - Normalizador V2 declarado por el pipeline: `2.2.0`.
 - Motor documental local declarado por el servicio: `0.5.0`.
 - `OrquestadorExtraccionProductiva` no declara versión propia. V0.1.3 identifica
@@ -168,6 +177,11 @@ mediante consulta remota posterior.
   observada: `service_role` tiene EXECUTE sobre `cf_solicitar_reprocesado` en
   producción y no en local. `PENDIENTE`: alinear el baseline local con el
   esquema y privilegios de Supabase en un hito propio.
+- Deuda registrada por Pio (Hito 2AS, 2026-09-25): `estado_persistencia=PENDIENTE`
+  desfasado en los 4 documentos `NORMALIZADA` persistidos por la vía directa
+  (`cf_persistir_normalizacion`) antes de la migración 15: Logista `0387e00a`,
+  COFARES `fcbd0d02` y HEFAME `1c37b4d1`/`ee494032`. No son reclamables
+  (`NORMALIZADA`). Corrección en hito propio; no se modifican ahora.
 
 - La extracción completa no está certificada para cualquier layout posible.
 - La barrera documental de identidad/farmacia no está demostrada como universal en
