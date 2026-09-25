@@ -634,6 +634,22 @@ grant execute on function public.cf_registrar_fallo_normalizacion(uuid, text, te
 grant execute on function public.cf_registrar_fallo_normalizacion(uuid, text, text, text, text, text)
     to service_role;
 
+-- 2AS: privilegios explicitos tambien en las funciones redefinidas. En Supabase
+-- las funciones nuevas de public reciben EXECUTE por defecto para anon,
+-- authenticated y service_role; ninguna funcion de la 17 depende de la ACL previa.
+revoke all on function public.cf_persistir_normalizacion(uuid, text, text, text, text, jsonb)
+    from public, anon, authenticated;
+grant execute on function public.cf_persistir_normalizacion(uuid, text, text, text, text, jsonb)
+    to service_role;
+revoke all on function public.cf_persistir_documento_multifactura(uuid, text, text, text, jsonb, text[], text)
+    from public, anon, authenticated;
+grant execute on function public.cf_persistir_documento_multifactura(uuid, text, text, text, jsonb, text[], text)
+    to service_role;
+-- Ningun rol del sistema invoca el reprocesado: solo accion explicita de Pio.
+-- Retira el EXECUTE de authenticated concedido por la migracion 12.
+revoke all on function public.cf_solicitar_reprocesado(uuid, text)
+    from public, anon, authenticated;
+
 comment on function public.cf_registrar_fallo_normalizacion(uuid, text, text, text, text, text, text) is
     'Fallo clasificado (R2/R3): NO_SOPORTADO -> PROVEEDOR_NO_SOPORTADO; resto -> ERROR con backoff o REVISION al maximo.';
 

@@ -160,6 +160,15 @@ mediante consulta remota posterior.
 
 ## Límites conocidos
 
+- Deuda aceptada por Pio (Hito 2AS, 2026-09-25; `CONFIRMADO EN PRODUCCIÓN` por
+  preflight READ_ONLY): el baseline local (`sql/staging/00`) no reproduce los
+  privilegios por defecto de Supabase (`pg_default_acl` concede EXECUTE a
+  `anon`, `authenticated` y `service_role` sobre funciones nuevas de `public`)
+  ni la columna productiva `documentos_facturas.observaciones`. Consecuencia
+  observada: `service_role` tiene EXECUTE sobre `cf_solicitar_reprocesado` en
+  producción y no en local. `PENDIENTE`: alinear el baseline local con el
+  esquema y privilegios de Supabase en un hito propio.
+
 - La extracción completa no está certificada para cualquier layout posible.
 - La barrera documental de identidad/farmacia no está demostrada como universal en
   todos los ensambladores históricos.

@@ -261,6 +261,46 @@ def test_migracion_17_idempotente(pg17_nueva_base):
     assert esquema(una_vez) != esquema(pg17_nueva_base("16"))
 
 
+FUNCIONES_17 = (
+    "cf_cerrar_replay_normalizacion(uuid,text,uuid,text)",
+    "cf_persistir_normalizacion(uuid,text,text,text,text,jsonb)",
+    "cf_persistir_documento_multifactura(uuid,text,text,text,jsonb,text[],text)",
+    "cf_registrar_fallo_normalizacion(uuid,text,text,text,text,text,text)",
+    "cf_registrar_fallo_normalizacion(uuid,text,text,text,text,text)",
+    "cf_solicitar_reprocesado(uuid,text)",
+)
+
+
+def _matriz(pg):
+    filas = pg.json(
+        "select p.oid::regprocedure::text as f, "
+        "p.proacl is null or exists(select 1 from aclexplode(p.proacl) a "
+        "  where a.grantee=0 and a.privilege_type='EXECUTE') as public, "
+        "has_function_privilege('anon',p.oid,'EXECUTE') as anon, "
+        "has_function_privilege('authenticated',p.oid,'EXECUTE') as authenticated, "
+        "has_function_privilege('service_role',p.oid,'EXECUTE') as service_role "
+        "from pg_proc p where p.pronamespace='public'::regnamespace")
+    return {f["f"].replace(" ", ""): f for f in filas}
+
+
+def test_2as_privilegios_con_default_acl_de_supabase(pg17_nueva_base):
+    """Emula pg_default_acl productivo (EXECUTE por defecto a anon/authenticated/
+    service_role) y exige que ninguna funcion de la 17 quede ejecutable por
+    PUBLIC, anon ni authenticated."""
+    pg = pg17_nueva_base("16")
+    pg.sql("alter default privileges for role postgres in schema public "
+           "grant execute on functions to anon, authenticated, service_role;")
+    assert _matriz(pg)["cf_solicitar_reprocesado(uuid,text)"]["authenticated"] is True
+    pg.sql(MIGRACION_17.read_text(encoding="utf-8"))
+    matriz = _matriz(pg)
+    for firma in FUNCIONES_17:
+        fila = matriz[firma]
+        assert (fila["public"], fila["anon"], fila["authenticated"]) == (False, False, False), firma
+    assert matriz["cf_cerrar_replay_normalizacion(uuid,text,uuid,text)"]["service_role"] is False
+    for firma in FUNCIONES_17[1:5]:
+        assert matriz[firma]["service_role"] is True, firma
+
+
 def test_permisos_migracion_17(base):
     assert base.sql(
         "select has_function_privilege('service_role','public.cf_registrar_fallo_normalizacion(uuid,text,text,text,text,text,text)','execute'),"

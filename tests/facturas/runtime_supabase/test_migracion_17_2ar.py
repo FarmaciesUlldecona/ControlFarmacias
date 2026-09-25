@@ -116,3 +116,30 @@ def test_migracion_17_generada_reproducible():
     generador = runpy.run_path(str(ROOT / "pruebas/auditoria_2ar/generar_migracion_17.py"))
     assert generador["MIGRACION"] == MIGRACION.read_text(encoding="utf-8")
     assert generador["ROLLBACK_SQL"] == ROLLBACK.read_text(encoding="utf-8")
+
+
+def _firmas_creadas(sql: str) -> set[str]:
+    firmas = set()
+    for nombre, parametros in re.findall(
+            r"create or replace function public\.(\w+)\((.*?)\)\s*returns", sql, re.S | re.I):
+        tipos = []
+        for declaracion in filter(None, (d.strip() for d in parametros.split(","))):
+            tipo = re.split(r"\s+default\s+", declaracion.split(None, 1)[1], flags=re.I)[0]
+            tipos.append(re.sub(r"\s+", "", tipo.lower()))
+        firmas.add(f"{nombre}({','.join(tipos)})")
+    return firmas
+
+
+def test_migracion_17_revoca_execute_en_cada_funcion_creada_o_redefinida():
+    """2AS: en Supabase las funciones nuevas reciben EXECUTE por defecto para anon,
+    authenticated y service_role. Falla si alguna funcion de la 17 carece del REVOKE."""
+    sql = MIGRACION.read_text(encoding="utf-8")
+    revocadas = {}
+    for nombre, tipos, roles in re.findall(
+            r"revoke all on function public\.(\w+)\((.*?)\)\s+from\s+([\w ,]+);", sql, re.S | re.I):
+        firma = f"{nombre}({re.sub(r'\s+', '', tipos.lower())})"
+        revocadas.setdefault(firma, set()).update(r.strip() for r in roles.split(","))
+    creadas = _firmas_creadas(sql)
+    assert len(creadas) == 6
+    for firma in creadas:
+        assert {"public", "anon", "authenticated"} <= revocadas.get(firma, set()), firma

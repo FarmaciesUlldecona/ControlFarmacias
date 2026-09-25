@@ -448,5 +448,7 @@ revoke all on function public.cf_registrar_fallo_normalizacion(uuid, text, text,
     from public, anon, authenticated;
 grant execute on function public.cf_registrar_fallo_normalizacion(uuid, text, text, text, text, text)
     to service_role;
+-- Restaura el grant de la migracion 12 retirado por la 17.
+grant execute on function public.cf_solicitar_reprocesado(uuid, text) to authenticated;
 
 commit;
