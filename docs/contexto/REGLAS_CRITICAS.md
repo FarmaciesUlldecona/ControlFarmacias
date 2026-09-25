@@ -69,6 +69,27 @@ Actualizado: 2026-09-24.
 
 ## Persistencia y conciliación
 
+- Reglas aprobadas por Pio para la migración 17 (Hito 2AR, 2026-09-25;
+  `CONFIRMADO POR TEST` en PostgreSQL 17 local, **NO desplegada**):
+  - **R1 replay idempotente:** nunca deja claim, lock ni estado intermedio. Libera
+    el claim del llamante, restaura `estado_lectura`/`estado_persistencia` al
+    estado final de la ejecución original, registra
+    `NORMALIZACION_REPLAY_IDEMPOTENTE` y no crea ni modifica facturas. Aplica a la
+    RPC multifactura y a `cf_persistir_normalizacion`. Un fallo repetido con la
+    misma clave y claim vigente cuenta como intento nuevo (clave derivada
+    `:intento:<n>`); sin claim es retransmisión y no cambia nada.
+  - **R2 proveedor no soportado:** clase `NO_SOPORTADO` → estado
+    `PROVEEDOR_NO_SOPORTADO`, no reclamable, no cuenta como `ERROR` ni consume
+    intentos. Solo vuelve a la cola con `cf_solicitar_reprocesado`.
+  - **R3 errores persistentes:** `DEFECTO_DOCUMENTO`/`TRANSITORIO` incrementan
+    `intentos_fallo_normalizacion`; por debajo del máximo → `ERROR` con
+    `proximo_reintento_at` (1 h, 6 h); al alcanzar el máximo (3) → `REVISION`.
+    Parámetros en `cf_configuracion` (`normalizacion_max_intentos`,
+    `normalizacion_backoff`). El reprocesado explícito reinicia el contador.
+  - **R4 ordering:** sin cambios. El selector ya excluye todo estado distinto de
+    `PENDIENTE`/`ERROR` y los backoff futuros; la migración 17 no redefine el claim.
+  - Clasificación de motivos: `runtime_supabase/clasificacion_fallos.py`; un motivo
+    desconocido es `TRANSITORIO`, nunca `NO_SOPORTADO`.
 - La RPC multifactura autorizada tiene siete parámetros, incluido
   `p_disparador`. La firma antigua de seis no está autorizada para `service_role`.
 - Los disparadores permitidos son `AUTOMATICO`, `REPROCESADO` y

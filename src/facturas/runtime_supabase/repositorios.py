@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Any, Protocol
 from src.facturas.completitud_documental import validar_documento_antes_de_persistir
 
+from .clasificacion_fallos import clasificar_fallo
 from .modelos import (
     DetalleConciliacion,
     conservar_id_proveedor,
@@ -268,6 +269,7 @@ class RepositorioRuntimeSupabase:
             "p_idempotency_key": idempotency_key,
             "p_error_codigo": codigo,
             "p_error_detalle": detalle,
+            "p_clase_fallo": clasificar_fallo(codigo, detalle),
         }).execute()
 
     def reclamar_factura(self, worker_id: str) -> FacturaTrabajo | None:

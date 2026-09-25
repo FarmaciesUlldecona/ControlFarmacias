@@ -118,7 +118,13 @@ class _Storage:
 
 
 class _SupabaseMemoria:
-    """Simula claim manual FOR UPDATE SKIP LOCKED, persistencia y fallo."""
+    """Simula claim manual, persistencia y fallo alineados con la migracion 17.
+
+    R1: el replay libera el claim y restaura el estado final. R2/R3: el fallo se
+    clasifica (PROVEEDOR_NO_SOPORTADO, ERROR con backoff o REVISION al maximo).
+    """
+
+    MAX_INTENTOS = 3
 
     def __init__(self):
         self.documentos = []
@@ -142,6 +148,8 @@ class _SupabaseMemoria:
             "archivo_hash": hash_registrado or _sha(contenido),
             "farmacia": "PIO",
             "estado": "PENDIENTE",
+            "intentos_fallo": 0,
+            "backoff_futuro": False,
         })
         if subir:
             self.objetos[("facturas-pdf", ruta)] = contenido
@@ -156,7 +164,8 @@ class _SupabaseMemoria:
 
     def _cf_reclamar_documento_normalizacion_manual_one_shot(self, payload):
         for doc in self.documentos:
-            if doc["estado"] == "PENDIENTE" and doc["id"] not in self.locks:
+            if (doc["estado"] in {"PENDIENTE", "ERROR"} and not doc.get("backoff_futuro")
+                    and doc["id"] not in self.locks):
                 self.locks[doc["id"]] = payload["p_worker_id"]
                 doc["estado"] = "NORMALIZANDO"
                 return [dict(doc)]
@@ -169,8 +178,11 @@ class _SupabaseMemoria:
         documento_id = payload["p_documento_id"]
         assert self.locks.get(documento_id) == payload["p_worker_id"]
         clave = payload["p_idempotency_key"]
+        documento = next(d for d in self.documentos if d["id"] == documento_id)
         if clave in self.idempotencia:
-            # Igual que la RPC real (2AQ): el replay retorna sin liberar el claim.
+            # R1 (migracion 17): el replay libera el claim y restaura el estado final.
+            del self.locks[documento_id]
+            documento["estado"] = self.idempotencia[clave]["estado"]
             return self.idempotencia[clave]
         creadas = []
         for factura in payload["p_resultado"]["facturas"]:
@@ -184,9 +196,15 @@ class _SupabaseMemoria:
                     "disparador": payload["p_disparador"],
                 }
                 creadas.append(identidad)
-        self.idempotencia[clave] = {"creadas": creadas}
+        completa = all(
+            f["provenance"]["segment_id"] in payload["p_segmentos_autorizados"]
+            for f in payload["p_resultado"]["facturas"]
+        )
+        estado = "NORMALIZADA" if completa else "REVISION"
+        self.idempotencia[clave] = {"creadas": creadas, "estado": estado}
         del self.locks[documento_id]
-        next(d for d in self.documentos if d["id"] == documento_id)["estado"] = "NORMALIZADA"
+        documento["estado"] = estado
+        documento["intentos_fallo"] = 0
         return {"creadas": creadas}
 
     def _cf_registrar_fallo_normalizacion(self, payload):
@@ -194,11 +212,20 @@ class _SupabaseMemoria:
         assert self.locks.get(documento_id) == payload["p_worker_id"]
         self.fallos.append(payload)
         del self.locks[documento_id]
-        next(d for d in self.documentos if d["id"] == documento_id)["estado"] = "ERROR"
+        documento = next(d for d in self.documentos if d["id"] == documento_id)
+        if payload["p_clase_fallo"] == "NO_SOPORTADO":
+            documento["estado"] = "PROVEEDOR_NO_SOPORTADO"
+        else:
+            documento["intentos_fallo"] += 1
+            maximo = documento["intentos_fallo"] >= self.MAX_INTENTOS
+            documento["estado"] = "REVISION" if maximo else "ERROR"
+            documento["backoff_futuro"] = not maximo
         return None
 
     def reabrir(self, documento_id):
-        next(d for d in self.documentos if d["id"] == documento_id)["estado"] = "PENDIENTE"
+        """Equivale a cf_solicitar_reprocesado: vuelve a PENDIENTE y reinicia intentos."""
+        documento = next(d for d in self.documentos if d["id"] == documento_id)
+        documento.update(estado="PENDIENTE", intentos_fallo=0, backoff_futuro=False)
 
     def nombres_rpc(self):
         return [nombre for nombre, _ in self.rpcs]
@@ -530,10 +557,11 @@ def test_extremo_a_extremo_fail_closed_no_salta_al_segundo(tmp_path):
     assert fallo["p_disparador"] == "MANUAL_ONE_SHOT"
     assert fallo["p_error_codigo"] == "DocumentoNoAptoManual"
     assert fallo["p_error_detalle"] == "PROVEEDOR_NO_SOPORTADO_MANUAL"
+    assert fallo["p_clase_fallo"] == "NO_SOPORTADO"
     assert supabase.facturas == {}
     assert supabase.locks == {}
     assert supabase.descargas == [("facturas-pdf", "PIO/2026/doc-hefame.pdf")]
-    assert [d["estado"] for d in supabase.documentos] == ["ERROR", "PENDIENTE"]
+    assert [d["estado"] for d in supabase.documentos] == ["PROVEEDOR_NO_SOPORTADO", "PENDIENTE"]
 
 
 def test_extremo_a_extremo_sha_incorrecto_libera_lock(tmp_path):
@@ -542,6 +570,8 @@ def test_extremo_a_extremo_sha_incorrecto_libera_lock(tmp_path):
     supabase.registrar("doc-2", _pdf(ALLIANCE))
     _worker(supabase, tmp_path).ejecutar_una_manual()
     assert supabase.fallos[0]["p_error_detalle"] == "SHA256_NO_COINCIDE"
+    assert supabase.fallos[0]["p_clase_fallo"] == "DEFECTO_DOCUMENTO"
+    assert (supabase.documentos[0]["estado"], supabase.documentos[0]["intentos_fallo"]) == ("ERROR", 1)
     assert supabase.facturas == {} and supabase.locks == {}
     assert supabase.documentos[1]["estado"] == "PENDIENTE"
 
@@ -563,7 +593,8 @@ def test_idempotencia_sobre_cadena_compuesta(tmp_path):
         [f["identidad_economica_clave"] for f in segunda["p_resultado"]["facturas"]]
     assert len(supabase.facturas) == 3
     assert str(tmp_path) not in json.dumps(primera["p_resultado"])
-    assert supabase.locks == {"doc-alliance": "manual-2ap-dos"}
+    assert supabase.locks == {}
+    assert supabase.documentos[0]["estado"] == "NORMALIZADA"
 
 
 def test_aislamiento_compositor_sin_scheduler_ni_ruta_automatica():

@@ -75,7 +75,10 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
   Farmatic.
 - `src/supabase_client`: integración histórica de albaranes y documentos.
 - `sql/migrations/16_cf_worker_manual_one_shot.sql`: migración más reciente
-  versionada.
+  desplegada en producción.
+- `sql/migrations/17_cf_replay_y_fallos_no_bloqueantes.sql` (+ `.rollback.sql`):
+  migración más reciente versionada; certificada en PostgreSQL 17 local
+  (Hito 2AR, 2026-09-25), **NO desplegada**.
 
 ## Arquitectura multirepositorio
 

@@ -122,7 +122,15 @@ EN VIVO** durante esta consolidación documental.
 
 ## Versiones y certificación
 
-- Migración más reciente: `16_cf_worker_manual_one_shot.sql`.
+- Migración más reciente desplegada: `16_cf_worker_manual_one_shot.sql`
+  (`CONFIRMADO EN PRODUCCIÓN` en 2AN, 2026-09-24).
+- Migración 17 `17_cf_replay_y_fallos_no_bloqueantes.sql`: reglas R1–R4 (ver
+  `REGLAS_CRITICAS.md`). `CONFIRMADO POR TEST` en PostgreSQL 17 local (Hito 2AR,
+  2026-09-25): aplicación doble idempotente, rollback al esquema 16 idéntico y
+  regresión 2AQ sobre 16, 17 y 16+rollback. **NO desplegada en producción.**
+  El Python de 2AR (envío de `p_clase_fallo`) exige la migración 17: desplegar
+  primero la base y después el código; para revertir, primero el código y después
+  el rollback SQL.
 - Normalizador V2 declarado por el pipeline: `2.2.0`.
 - Motor documental local declarado por el servicio: `0.5.0`.
 - `OrquestadorExtraccionProductiva` no declara versión propia. V0.1.3 identifica

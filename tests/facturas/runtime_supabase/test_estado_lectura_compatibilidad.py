@@ -27,15 +27,46 @@ def test_baseline_reproduce_el_check_productivo_y_unique_real():
     assert 'unique (farmacia, archivo_hash)' in sql
 
 
+# Migracion 17 (Hito 2AR, R2): amplia el check con el estado no reclamable.
+FINAL_17 = FINAL | {'PROVEEDOR_NO_SOPORTADO'}
+MIGRACION_17 = '17_cf_replay_y_fallos_no_bloqueantes.sql'
+ROLLBACK_17 = '17_cf_replay_y_fallos_no_bloqueantes.rollback.sql'
+
+
+def _check_estado_lectura(sql):
+    check = re.search(r'check \(estado_lectura in \((.*?)\)\)', sql, re.S).group(1)
+    return set(re.findall(r"'([A-Z_]+)'", check))
+
+
 def test_todos_los_writers_sql_documentales_cubiertos_por_check():
     encontrados = set()
     for path in (ROOT / 'sql/migrations').glob('*.sql'):
         sql = re.sub(r'--[^\n]*', '', path.read_text(encoding='utf-8'))
+        permitidos = FINAL_17 if path.name == MIGRACION_17 else FINAL
         for update in re.findall(r'update\s+public\.documentos_facturas\s+.*?;', sql, re.I | re.S):
-            states = re.findall(r"estado_lectura\s*=\s*'([A-Z_]+)'", update)
-            assert set(states) <= FINAL, path.name
+            # Solo la clausula SET escribe; un WHERE sobre estado_lectura es lectura.
+            asignacion = re.split(r'\bwhere\b', update, maxsplit=1, flags=re.I)[0]
+            states = re.findall(r"estado_lectura\s*=\s*'([A-Z_]+)'", asignacion)
+            assert set(states) <= permitidos, path.name
             encontrados.update(states)
     assert encontrados == V1
+
+
+def test_migracion_17_check_y_writers_dinamicos_cubiertos():
+    sql17 = (ROOT / 'sql/migrations' / MIGRACION_17).read_text(encoding='utf-8')
+    rollback = (ROOT / 'sql/migrations' / ROLLBACK_17).read_text(encoding='utf-8')
+    assert _check_estado_lectura(sql17) == FINAL_17
+    assert _check_estado_lectura(rollback) == FINAL
+    # Los writers de la 17 asignan estado_lectura mediante variables: se auditan
+    # todos los literales que pueden tomar.
+    asignados = set()
+    for linea in sql17.splitlines():
+        if re.search(r'\bv_(estado|lectura)\s*:=', linea):
+            asignados.update(re.findall(r"(?::=|\bthen|\belse)\s*'([A-Z_]+)'", linea))
+    assert asignados == {'PROVEEDOR_NO_SOPORTADO', 'REVISION', 'ERROR', 'NORMALIZADA'}
+    assert asignados <= FINAL_17
+    assert re.search(r"estado_lectura\s*=\s*v_estado", sql17)
+    assert re.search(r"estado_lectura\s*=\s*v_lectura", sql17)
 
 
 def test_writers_python_documentales_no_introducen_estados_ajenos():
