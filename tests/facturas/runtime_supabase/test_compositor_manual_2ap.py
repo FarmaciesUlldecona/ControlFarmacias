@@ -170,7 +170,7 @@ class _SupabaseMemoria:
         assert self.locks.get(documento_id) == payload["p_worker_id"]
         clave = payload["p_idempotency_key"]
         if clave in self.idempotencia:
-            del self.locks[documento_id]
+            # Igual que la RPC real (2AQ): el replay retorna sin liberar el claim.
             return self.idempotencia[clave]
         creadas = []
         for factura in payload["p_resultado"]["facturas"]:
@@ -563,6 +563,7 @@ def test_idempotencia_sobre_cadena_compuesta(tmp_path):
         [f["identidad_economica_clave"] for f in segunda["p_resultado"]["facturas"]]
     assert len(supabase.facturas) == 3
     assert str(tmp_path) not in json.dumps(primera["p_resultado"])
+    assert supabase.locks == {"doc-alliance": "manual-2ap-dos"}
 
 
 def test_aislamiento_compositor_sin_scheduler_ni_ruta_automatica():
@@ -580,3 +581,30 @@ def test_aislamiento_compositor_sin_scheduler_ni_ruta_automatica():
     fuente = inspect.getsource(cm)
     assert "obtener_cliente_supabase" not in fuente and "create_client" not in fuente
     assert "__main__" not in fuente
+
+
+def test_limite_conocido_factura_alliance_entera_omitida(tmp_path):
+    """LIMITE CONOCIDO (2AQ, decision de Pio): documenta, no corrige.
+
+    Alliance solo pagina por factura; retirar las paginas 8-9 (factura 08011305
+    entera) no es detectable por contenido. Las facturas presentes se autorizan y
+    la omitida no aparece en el inventario.
+    """
+    pdf = _truncar(_pdf(ALLIANCE), tmp_path / "sin_08011305.pdf", list(range(7)))
+    resultado = ExtractorDocumentalAutorizado().extraer(pdf, CAMPOS_REQUERIDOS_MANUAL)
+    assert resultado.provenance["motivo"] == "AUTORIZADO"
+    documento = resultado.valores[CAMPO_DOCUMENTO]
+    assert documento["documento_completo_demostrado"] is True
+    assert documento["numero_paginas"] == 7
+    facturas = {f["numero_factura"]["valor"]: f for f in documento["facturas"]}
+    assert set(facturas) == {"08011304", "08011303"}
+    assert all(f["factura_completa_demostrada"] is True for f in facturas.values())
+    cliente = _SupabaseMemoria()
+    cliente.documentos.append({"id": "doc-1"})
+    cliente.locks["doc-1"] = "w"
+    RepositorioRuntimeSupabase(cliente).persistir_documento_automatico(
+        _doc(), _resultado(documento), "h", "w", "MANUAL_ONE_SHOT", "k",
+    )
+    payload = cliente.rpcs[-1][1]
+    assert len(payload["p_segmentos_autorizados"]) == 2
+    assert "08011305" not in json.dumps(payload["p_resultado"])

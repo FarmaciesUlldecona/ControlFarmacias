@@ -78,3 +78,29 @@ Persistencia, farmacia documental PIO, completitud, identidad económica,
 duplicados y selección de segmentos siguen exclusivamente en las barreras
 certificadas (`validar_documento_antes_de_persistir`, `preparar_documento`,
 `persistir_documento_automatico` y la RPC multifactura).
+
+## Límite conocido: factura Alliance entera omitida (Hito 2AQ, decisión de Pio)
+
+- **Caso.** Un PDF Alliance multifactura al que le falta una factura completa
+  (todas sus páginas). Alliance declara paginación solo por factura
+  (`PAGINA 01 DE 02`); no existe paginación de documento (`Hoja Z 6041` es el dato
+  registral del proveedor). Sin referencia documental del total, la ausencia no es
+  demostrable por contenido.
+- **Evidencia.** Fixture real `alliance_apto_multifactura.pdf` (9 páginas, facturas
+  08011304 p.1-3, 08011303 p.4-7, 08011305 p.8-9). Retirando las páginas 8 y 9 el
+  extractor autoriza 08011304 y 08011303 y 08011305 no aparece en el inventario.
+- **Por qué no genera datos falsos.** Solo se persisten facturas presentes, completas
+  por su propia paginación, con identidad económica y farmacia PIO demostradas. La
+  factura ausente no se inventa ni se deduce: el efecto es una omisión, no un dato
+  erróneo.
+- **Contraste que sí existe.** Página faltante dentro de una factura →
+  `factura_completa_demostrada=false` → RPC multifactura: inventario
+  `REQUIERE_REVISION`, documento `estado_persistencia=PARCIAL`,
+  `estado_lectura=REVISION` (no final, no reclamable) e historial
+  `INVENTARIO_MULTIFACTURA`.
+- **Control compensatorio requerido** (`PENDIENTE`, hito propio, NO implementado):
+  detección en el sistema de conciliación de albaranes Alliance sin factura asociada
+  por periodo.
+- **Sin cambios de reglas.** No se modifica `evaluar_completitud_local` ni se crea
+  regla funcional nueva. Test que fija el comportamiento:
+  `test_limite_conocido_factura_alliance_entera_omitida`.

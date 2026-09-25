@@ -32,6 +32,20 @@ Actualizado: 2026-09-24.
   multifactura certificado. Solo se usa con `ejecutar_una_manual()`; ningún
   scheduler ni la ruta automática lo referencian. Cualquier otro proveedor falla
   cerrado.
+- LÍMITE CONOCIDO aceptado por Pio (Hito 2AQ, 2026-09-25): la omisión de una
+  factura Alliance **entera** dentro de un PDF multifactura no es detectable por
+  contenido. Alliance solo pagina por factura (`PAGINA 01 DE 03`) y no declara
+  paginación de documento; `Hoja Z 6041` es el dato del Registro Mercantil.
+  Evidencia: PDF real de 9 páginas con las páginas 8 y 9 retiradas (factura
+  08011305 completa): las facturas 08011304 y 08011303 se autorizan y la omitida no
+  deja rastro. No genera datos falsos: nada se inventa ni se persiste de la factura
+  ausente; el efecto es una omisión. Una página faltante **dentro** de una factura sí
+  se detecta (`factura_completa_demostrada=false` → inventario `REQUIERE_REVISION`,
+  documento `PARCIAL`/`REVISION`). No se crea regla nueva ni se modifica
+  `evaluar_completitud_local`. Control compensatorio requerido, `PENDIENTE` de hito
+  propio y no implementado: detectar en conciliación albaranes Alliance sin factura
+  asociada por periodo. Fijado por
+  `test_limite_conocido_factura_alliance_entera_omitida`.
 - Shadow conserva siempre la salida oficial; `adaptadores_productivos()` es un alias
   de compatibilidad y su nombre no concede autoridad.
 - Solo Guimerà declara backend con OCR local. El resto usa PDFium nativo salvo que
