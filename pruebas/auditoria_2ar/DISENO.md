@@ -78,10 +78,10 @@ oculta como no soportado).
 - `DEFECTO_DOCUMENTO`/`TRANSITORIO` → `intentos_fallo_normalizacion += 1`;
   si `< max` → `ERROR` con `proximo_reintento_at = now() + backoff[n]`;
   si `>= max` → `REVISION`, `proximo_reintento_at = null`.
-- Parámetros en `cf_configuracion`: `normalizacion_max_intentos = 3`,
-  `normalizacion_backoff = {1 h, 6 h, 24 h}`. Con máximo 3 se aplican 1 h (tras el
-  1.er fallo) y 6 h (tras el 2.º); el 3.er fallo pasa a `REVISION`. El valor de 24 h
-  queda configurado para un máximo mayor (**decisión a confirmar por Pio**).
+- Parámetros en `cf_configuracion`: `normalizacion_max_intentos = 4`,
+  `normalizacion_backoff = {1 h, 6 h, 24 h}` (decisión de Pio, Hito 2AS): tras el
+  1.er fallo +1 h, tras el 2.º +6 h, tras el 3.º +24 h; el 4.º fallo pasa a
+  `REVISION`.
 - Fallo repetido con la misma clave: si el llamante **tiene** el claim es un nuevo
   intento y se registra con clave derivada `<clave>:intento:<n>` (única por
   documento); si no lo tiene es una retransmisión y se devuelve la ejecución

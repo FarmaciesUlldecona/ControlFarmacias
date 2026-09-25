@@ -83,7 +83,8 @@ Actualizado: 2026-09-24.
     intentos. Solo vuelve a la cola con `cf_solicitar_reprocesado`.
   - **R3 errores persistentes:** `DEFECTO_DOCUMENTO`/`TRANSITORIO` incrementan
     `intentos_fallo_normalizacion`; por debajo del máximo → `ERROR` con
-    `proximo_reintento_at` (1 h, 6 h); al alcanzar el máximo (3) → `REVISION`.
+    `proximo_reintento_at` (1 h, 6 h, 24 h); al alcanzar el máximo (4, decisión
+    de Pio en 2AS) → `REVISION`.
     Parámetros en `cf_configuracion` (`normalizacion_max_intentos`,
     `normalizacion_backoff`). El reprocesado explícito reinicia el contador.
   - **R4 ordering:** sin cambios. El selector ya excluye todo estado distinto de

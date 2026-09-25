@@ -164,16 +164,21 @@ def test_4_4_error_persistente_backoff_y_revision(base, tmp_path):
 
     _avanzar_tiempo(base, defectuoso)
     _worker(cliente, tmp_path, "i3").ejecutar_una_manual()
+    assert _estado(base, defectuoso)["estado_lectura"] == "ERROR"
+    assert 24 * 3600 - 100 < _segundos_hasta_reintento(base, defectuoso) <= 24 * 3600
+
+    _avanzar_tiempo(base, defectuoso)
+    _worker(cliente, tmp_path, "i4").ejecutar_una_manual()
     estado = _estado(base, defectuoso)
     assert estado["estado_lectura"] == "REVISION"
     assert estado["proximo_reintento_at"] is None and estado["bloqueado_por"] is None
     assert base.sql(f"select intentos_fallo_normalizacion, ultima_clase_fallo from public.documentos_facturas "
-                    f"where id={_lit(defectuoso)}") == "3|DEFECTO_DOCUMENTO"
+                    f"where id={_lit(defectuoso)}") == "4|DEFECTO_DOCUMENTO"
     ejecuciones = _ejecuciones(base, defectuoso)
-    assert [(e["estado"], e["error_detalle"]) for e in ejecuciones] == [("ERROR", "SHA256_NO_COINCIDE")] * 3
+    assert [(e["estado"], e["error_detalle"]) for e in ejecuciones] == [("ERROR", "SHA256_NO_COINCIDE")] * 4
     claves = [e["idempotency_key"] for e in ejecuciones]
     base_clave = f"normalizacion:{defectuoso}:MANUAL_ONE_SHOT:fallo"
-    assert claves[0] == base_clave and len(set(claves)) == 3
+    assert claves[0] == base_clave and len(set(claves)) == 4
     assert all(c.startswith(base_clave + ":intento:") for c in claves[1:])
     assert _siguiente_candidato(base) != defectuoso
     assert _facturas_de(base, defectuoso) == []
@@ -188,7 +193,7 @@ def test_4_4_error_persistente_backoff_y_revision(base, tmp_path):
 
 def test_4_4b_parametros_configurables(base, tmp_path):
     assert base.sql("select normalizacion_max_intentos, normalizacion_backoff from public.cf_configuracion") == (
-        "3|{01:00:00,06:00:00,24:00:00}")
+        "4|{01:00:00,06:00:00,24:00:00}")
     base.sql("update public.cf_configuracion set normalizacion_max_intentos = 1;")
     cliente = ClientePg17(base)
     defectuoso = _registrar(base, cliente, ALLIANCE.read_bytes(), 1, hash_registrado="f" * 64)

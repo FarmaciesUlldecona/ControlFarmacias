@@ -104,7 +104,7 @@ alter table public.normalizacion_ejecuciones
             ('NO_SOPORTADO', 'DEFECTO_DOCUMENTO', 'TRANSITORIO'));
 
 alter table public.cf_configuracion
-    add column if not exists normalizacion_max_intentos integer not null default 3,
+    add column if not exists normalizacion_max_intentos integer not null default 4,
     add column if not exists normalizacion_backoff interval[] not null
         default array[interval '1 hour', interval '6 hours', interval '24 hours'];
 alter table public.cf_configuracion

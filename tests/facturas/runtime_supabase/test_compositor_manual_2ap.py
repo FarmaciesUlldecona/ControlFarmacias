@@ -124,7 +124,7 @@ class _SupabaseMemoria:
     clasifica (PROVEEDOR_NO_SOPORTADO, ERROR con backoff o REVISION al maximo).
     """
 
-    MAX_INTENTOS = 3
+    MAX_INTENTOS = 4
 
     def __init__(self):
         self.documentos = []
@@ -639,3 +639,18 @@ def test_limite_conocido_factura_alliance_entera_omitida(tmp_path):
     payload = cliente.rpcs[-1][1]
     assert len(payload["p_segmentos_autorizados"]) == 2
     assert "08011305" not in json.dumps(payload["p_resultado"])
+
+
+def test_simulador_r3_cuatro_intentos_y_revision(tmp_path):
+    """Alineado con la migracion 17 (2AS): 3 fallos con backoff, el 4.o a REVISION."""
+    supabase = _SupabaseMemoria()
+    supabase.registrar("doc-1", _pdf(ALLIANCE), hash_registrado="f" * 64)
+    documento = supabase.documentos[0]
+    for intento in range(1, 5):
+        documento["backoff_futuro"] = False  # simula el vencimiento del backoff
+        _worker(supabase, tmp_path, f"i{intento}").ejecutar_una_manual()
+        esperado = "REVISION" if intento == 4 else "ERROR"
+        assert (documento["estado"], documento["intentos_fallo"]) == (esperado, intento)
+    documento["backoff_futuro"] = False
+    assert _worker(supabase, tmp_path, "i5").ejecutar_una_manual().documentos_reclamados == 0
+    assert len(supabase.fallos) == 4 and supabase.locks == {}
