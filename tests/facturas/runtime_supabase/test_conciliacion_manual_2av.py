@@ -287,6 +287,27 @@ def test_simulador_disparador_debe_coincidir_con_el_claim():
         _persistir(sim, "a", "w", "AUTOMATICO")
 
 
+def test_simulador_diferencia_consume_intento_y_reintento_reinicia():
+    sim = _sim("a", "b")
+    diferencia = {"resultado": "DIFERENCIA", "detalles": []}
+    horas = []
+    for _ in range(4):
+        assert sim.rpc("cf_reclamar_factura_conciliacion_manual_one_shot", {"p_worker_id": "w"}).data[0]["id"] == "a"
+        sim.rpc("cf_persistir_conciliacion", {
+            "p_factura_id": "a", "p_worker_id": "w", "p_disparador": "MANUAL_ONE_SHOT",
+            "p_idempotency_key": "k", "p_resultado": diferencia})
+        horas.append(sim.estado("a")["backoff_horas"])
+        # Sin bloqueo de cola: el siguiente claim manual toma el n.o 2.
+        assert sim.rpc("cf_reclamar_factura_conciliacion_manual_one_shot", {"p_worker_id": "x"}).data[0]["id"] == "b"
+        sim.expirar_lock("b")
+        sim.avanzar_tiempo("a")
+    assert horas == [1, 6, 24, None]
+    assert sim.estado("a")["estado"] == "REVISION_CONCILIACION" and sim.estado("a")["conciliaciones"] == 1
+    sim.solicitar_reintento("a")
+    assert sim.estado("a")["intentos_fallo"] == 0
+    assert sim.rpc("cf_reclamar_factura_conciliacion_manual_one_shot", {"p_worker_id": "w"}).data[0]["id"] == "a"
+
+
 def test_simulador_backoff_y_revision():
     sim = _sim("a")
     horas = []
@@ -329,7 +350,7 @@ def test_18_toda_funcion_revoca_public_anon_authenticated_y_es_security_definer(
         patron = rf"revoke all on function {re.escape(firma)}\s+from public, anon, authenticated"
         assert re.search(patron, SQL_18), firma
     cuerpos = re.split(r"create or replace function ", SQL_18)[1:]
-    assert len(cuerpos) == 5
+    assert len(cuerpos) == 6
     assert all("security definer" in c.split("as $$")[0] for c in cuerpos)
 
 
@@ -369,10 +390,33 @@ def test_rollback_18_solo_mapea_valores_nuevos():
     assert "where disparador = 'MANUAL_ONE_SHOT'" in fuera
 
 
-def test_18_no_redefine_funciones_de_conciliacion_existentes_salvo_el_claim():
+def test_18_solo_redefine_el_claim_y_el_reintento_de_conciliacion():
     nombres = {n for n, _ in _funciones(SQL_18)}
     assert nombres == {
         "cf_reclamar_factura_conciliacion_nucleo", "cf_reclamar_factura_conciliacion",
         "cf_reclamar_factura_conciliacion_manual_one_shot", "cf_persistir_conciliacion",
-        "cf_registrar_fallo_conciliacion",
+        "cf_registrar_fallo_conciliacion", "cf_solicitar_reintento_conciliacion",
     }
+
+
+def test_d_b_reintento_solo_service_role_y_rollback_restaura_authenticated():
+    assert re.search(r"revoke all on function public\.cf_solicitar_reintento_conciliacion\(uuid, text\)"
+                     r"\s+from public, anon, authenticated;", SQL_18)
+    assert re.search(r"grant execute on function public\.cf_solicitar_reintento_conciliacion\(uuid, text\)"
+                     r"\s+to service_role;", SQL_18)
+    assert re.search(r"grant execute on function public\.cf_solicitar_reintento_conciliacion\(uuid, text\)"
+                     r"\s+to authenticated;", ROLLBACK_18)
+
+
+def test_d_b_reintento_de_la_18_conserva_el_cuerpo_de_la_12_mas_el_reinicio():
+    sql_12 = (MIG / "12_cf_views_rls_rpc.sql").read_text(encoding="utf-8")
+
+    def cuerpo(sql):
+        inicio = sql.index("create or replace function public.cf_solicitar_reintento_conciliacion(")
+        return sql[inicio:sql.index("$$;", inicio)].replace("\r\n", "\n")
+
+    reinicio = ("           conciliacion_intentos_fallo = 0,\n"
+                "           conciliacion_ultima_clase_fallo = null,\n")
+    assert reinicio in cuerpo(SQL_18)
+    assert cuerpo(SQL_18).replace(reinicio, "") == cuerpo(sql_12)
+    assert cuerpo(ROLLBACK_18) == cuerpo(sql_12)

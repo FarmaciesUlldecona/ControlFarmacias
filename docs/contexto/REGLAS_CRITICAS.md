@@ -110,6 +110,13 @@ Actualizado: 2026-09-24.
     `conciliacion_backoff`); el 4.º pasa a `REVISION_CONCILIACION`, no
     reclamable. Solo vuelve con `cf_solicitar_reintento_conciliacion`, que
     reinicia el presupuesto; un éxito lo pone a 0.
+  - **D-A (2AW) DIFERENCIA con backoff:** un resultado distinto de
+    `CONCILIADA` consume intento con el mismo contador y backoff que los fallos
+    (clase `DIFERENCIA`); al 4.º, `REVISION_CONCILIACION`. La cola no se
+    bloquea: el siguiente claim toma el n.º 2.
+  - **D-B (2AW):** `cf_solicitar_reintento_conciliacion` solo con EXECUTE para
+    `service_role` (retirado a authenticated, como `cf_solicitar_reprocesado`).
+  - **D-C (2AW):** tolerancia sin cambios (0,05).
   - **R8 provenance:** disparador `MANUAL_ONE_SHOT` en la ruta manual y
     `AUTOMATICO` en la automática, validado contra el modo del claim.
   - **R9 `id_proveedor` tolerante:** solo en la comparación de

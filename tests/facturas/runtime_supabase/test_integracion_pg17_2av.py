@@ -32,6 +32,7 @@ FUNCIONES_18 = {
     "cf_reclamar_factura_conciliacion_manual_one_shot(text,integer)": True,
     "cf_persistir_conciliacion(uuid,text,text,text,jsonb)": True,
     "cf_registrar_fallo_conciliacion(uuid,text,text,text,text,text)": True,
+    "cf_solicitar_reintento_conciliacion(uuid,text)": True,  # D-B (2AW)
 }
 EMULAR_DEFAULT_ACL = ("alter default privileges for role postgres in schema public "
                       "grant execute on functions to anon, authenticated, service_role;")
@@ -472,7 +473,7 @@ def test_4_11_matriz_de_grants_y_security_definer(base):
         "from pg_proc p where p.pronamespace = 'public'::regnamespace and p.proname in ("
         "'cf_reclamar_factura_conciliacion_nucleo','cf_reclamar_factura_conciliacion',"
         "'cf_reclamar_factura_conciliacion_manual_one_shot','cf_persistir_conciliacion',"
-        "'cf_registrar_fallo_conciliacion')")
+        "'cf_registrar_fallo_conciliacion','cf_solicitar_reintento_conciliacion')")
     matriz = {f["f"].replace(" ", "").replace("public.", ""): f for f in filas}
     assert set(matriz) == set(FUNCIONES_18)
     for firma, service_role in FUNCIONES_18.items():
@@ -480,9 +481,12 @@ def test_4_11_matriz_de_grants_y_security_definer(base):
         assert (f["definer"], f["owner"]) == (True, "postgres"), firma
         assert (f["public"], f["anon"], f["authenticated"]) == (False, False, False), firma
         assert f["service_role"] is service_role, firma
-    # Funciones de conciliacion no redefinidas: privilegios de la migracion 12/14 sin cambios.
-    assert base.sql("select has_function_privilege('authenticated', "
-                    "'public.cf_solicitar_reintento_conciliacion(uuid,text)', 'EXECUTE')") == "t"
+    # D-B: el reintento funciona como service_role y ya no como authenticated.
+    factura = base.sql("select id from public.facturas where farmacia = 'PIO' order by id limit 1")
+    assert _sr(base, f"select (public.cf_solicitar_reintento_conciliacion({_lit(factura)}::uuid, 'sr')).id;") == factura
+    with pytest.raises(RuntimeError, match="permission denied"):
+        base.sql("set role authenticated; "
+                 f"select public.cf_solicitar_reintento_conciliacion({_lit(factura)}::uuid, 'x');")
     with pytest.raises(RuntimeError, match="permission denied"):
         _sr(base, "select * from public.cf_reclamar_factura_conciliacion_nucleo('x', 300, 'MANUAL_ONE_SHOT');")
 
@@ -618,6 +622,102 @@ def test_simulador_y_postgresql_coinciden(base, tmp_path):
         if intento < 4:  # tras el 4.o queda en REVISION_CONCILIACION, sin backoff
             sim.avanzar_tiempo(b)
             _vencer_backoff(base, b)
-    assert claim("w") == (orden[2], orden[2])
-    assert fallo(orden[2], "otro") == (False, False)
+    c = orden[2]
+    assert claim("w") == (c, c)
+    assert fallo(c, "otro") == (False, False)
     comparar()
+    # D-A: DIFERENCIA consume intento; el replay con claim tambien.
+    resultado = {**resultado, "resultado": "DIFERENCIA", "importe_explicado": "0", "diferencia": "1"}
+    assert persistir(c, "w", "k3") == (True, True)
+    comparar()
+    sim.avanzar_tiempo(c)
+    _vencer_backoff(base, c)
+    assert claim("w") == (c, c)
+    assert persistir(c, "w", "k3") == (True, True)
+    comparar()
+    sim.solicitar_reintento(b)
+    base.sql(f"select public.cf_solicitar_reintento_conciliacion({_lit(b)}::uuid, 'test-2aw');")
+    comparar()
+
+
+# --------------------------------------------------------------------------
+# Hito 2AW: D-A (DIFERENCIA con backoff) y D-B (reintento solo service_role)
+# --------------------------------------------------------------------------
+
+def _diferencias_hasta_revision(pg, cliente, factura_id: str, siguiente: str) -> None:
+    """Sin albaranes operacionales: cada evaluacion da DIFERENCIA (misma evidencia)."""
+    for intento, horas in ((1, 1), (2, 6), (3, 24), (4, None)):
+        assert _orden_oficial(pg)[0] == factura_id
+        assert _conc(cliente, f"dif-{intento}").ejecutar_una_manual() is True
+        f = _factura(pg, factura_id)
+        esperado = "REVISION_CONCILIACION" if intento == 4 else "PENDIENTE_CONCILIAR"
+        assert (f["estado_conciliacion_cf"], f["conciliacion_intentos_fallo"], f["backoff_horas"]) == (
+            esperado, intento, horas)
+        assert f["conciliacion_ultima_clase_fallo"] == "DIFERENCIA"
+        assert f["conciliacion_bloqueado_por"] is None
+        assert _orden_oficial(pg)[0] == siguiente  # sin bloqueo de cola
+        if intento < 4:
+            _vencer_backoff(pg, factura_id)
+
+
+def test_2aw_diferencia_x4_revision_con_backoff_y_cola_libre(base, tmp_path):
+    cliente = _normalizar(base, tmp_path)
+    orden = _orden_oficial(base)
+    _diferencias_hasta_revision(base, cliente, orden[0], orden[1])
+
+    [c] = _conciliaciones(base, orden[0])  # una fila; las reevaluaciones son replay
+    assert (c["resultado"], c["disparador"]) == ("DIFERENCIA", "MANUAL_ONE_SHOT")
+    [persistida] = _eventos(base, "CONCILIACION_PERSISTIDA", orden[0])
+    assert persistida["detalle"]["diferencia"] == c["diferencia"]
+    assert persistida["detalle"]["tolerancia"] == "0.0500"
+    replays = _eventos(base, "CONCILIACION_REPLAY_IDEMPOTENTE", orden[0])
+    assert [(e["detalle"]["claim_liberado"], e["detalle"]["intentos_fallo"]) for e in replays] == [
+        (True, 2), (True, 3), (True, 4)]
+
+    # La ruta automatica tampoco la reclama.
+    base.sql("update public.cf_configuracion set conciliacion_automatica = true where id;")
+    assert _conc(cliente, "auto").ejecutar_una() is True
+    base.sql("update public.cf_configuracion set conciliacion_automatica = false where id;")
+    assert _conciliaciones(base)[-1]["factura_id"] == orden[1]
+    assert len(_conciliaciones(base, orden[0])) == 1
+    assert base.sql(FLAGS_SQL) == FLAGS_ESPERADOS and _locks(base) == "0|0"
+
+
+def test_2aw_albaran_nuevo_y_espera_cumplida_reevaluan_con_clave_distinta(base, tmp_path):
+    cliente = _normalizar(base, tmp_path)
+    objetivo = _orden_oficial(base)[0]
+    numero = base.sql(f"select numero_factura from public.facturas where id = {_lit(objetivo)}")
+    assert _conc(cliente, "antes").ejecutar_una_manual() is True
+    [primera] = _conciliaciones(base, objetivo)
+    assert primera["resultado"] == "DIFERENCIA"
+
+    _albaranes(base, numeros=[numero])  # albaranes sincronizados despues
+    assert objetivo not in _orden_oficial(base)  # espera no cumplida
+    _vencer_backoff(base, objetivo)
+    assert _conc(cliente, "despues").ejecutar_una_manual() is True
+
+    primera_actual, segunda = _conciliaciones(base, objetivo)
+    assert segunda["idempotency_key"] != primera["idempotency_key"]
+    assert (segunda["intento"], segunda["resultado"], segunda["es_actual"]) == (2, "CONCILIADA", True)
+    assert primera_actual["es_actual"] is False
+    f = _factura(base, objetivo)
+    assert (f["estado_conciliacion_cf"], f["conciliacion_intentos_fallo"]) == ("CONCILIADA", 0)
+    assert f["conciliacion_ultima_clase_fallo"] is None and f["conciliacion_proximo_at"] is None
+
+
+def test_2aw_reintento_sobre_revision_vuelve_a_ser_elegible(base, tmp_path):
+    cliente = _normalizar(base, tmp_path)
+    orden = _orden_oficial(base)
+    _diferencias_hasta_revision(base, cliente, orden[0], orden[1])
+    assert orden[0] not in _orden_oficial(base)
+
+    assert _sr(base, f"select (public.cf_solicitar_reintento_conciliacion({_lit(orden[0])}::uuid, 'sr')).id;") == orden[0]
+
+    f = _factura(base, orden[0])
+    assert (f["estado_conciliacion_cf"], f["conciliacion_intentos_fallo"]) == ("PENDIENTE_CONCILIAR", 0)
+    assert f["conciliacion_reintento_solicitado_at"] is not None
+    assert _orden_oficial(base)[0] == orden[0]
+    assert _conc(cliente, "tras-reintento").ejecutar_una_manual() is True
+    f = _factura(base, orden[0])
+    assert (f["estado_conciliacion_cf"], f["conciliacion_intentos_fallo"], f["backoff_horas"]) == (
+        "PENDIENTE_CONCILIAR", 1, 1)

@@ -294,9 +294,8 @@ mediante consulta remota posterior.
   - 08007970 con albaranes operacionales sintéticos (número, fecha y PUC del
     PDF): `CONCILIADA`, explicado 2.356,68, diferencia −0,04, 71 albaranes 1:1.
     El resultado productivo dependerá de los importes reales de Farmatic.
-  - Un resultado `DIFERENCIA` deja la factura en `PENDIENTE_CONCILIAR` sin
-    backoff (comportamiento previo conservado); con el automático activo se
-    volvería a reclamar, aunque sin duplicar (replay por clave idempotente).
+  - Resuelto en el Hito 2AW (D-A): un resultado `DIFERENCIA` consume intento con
+    backoff y al 4.º pasa a `REVISION_CONCILIACION`.
 
 - La extracción completa no está certificada para cualquier layout posible.
 - La barrera documental de identidad/farmacia no está demostrada como universal en

@@ -192,3 +192,25 @@ Un resultado `DIFERENCIA` deja la factura en `PENDIENTE_CONCILIAR` sin backoff, 
 que antes. Con el automático activado se volvería a reclamar, aunque sin duplicar
 filas: la misma evidencia da la misma clave y se trata como replay. Queda registrado
 como observación para el despliegue.
+
+## Ajustes del Hito 2AW (decisiones de Pio)
+
+- **D-A. DIFERENCIA con backoff.** En `cf_persistir_conciliacion`, un resultado
+  distinto de `CONCILIADA` consume un intento con el mismo contador que los
+  fallos (`conciliacion_intentos_fallo`, clase `DIFERENCIA`). Aplica el backoff de
+  R7 (1 h, 6 h y 24 h) y al 4.º intento la factura pasa a `REVISION_CONCILIACION`.
+  - `CONCILIADA` pone el contador a 0.
+  - Una reevaluación con la misma evidencia es un replay con claim: libera el
+    lock y también consume intento, así que la cola no se atasca en bucle.
+  - Si la evidencia cambia (por ejemplo, llega un albarán nuevo), la clave es
+    distinta y se registra un intento nuevo en `conciliaciones`.
+  - La reemplaza la observación anterior ("DIFERENCIA sin backoff").
+- **D-B. Reintento solo para service_role.**
+  - La 18 redefine `cf_solicitar_reintento_conciliacion` con el cuerpo de la
+    migración 12, más el reinicio explícito del contador y de la clase.
+  - Privilegios: REVOKE a public, anon y authenticated; EXECUTE solo para
+    `service_role`. Es el mismo criterio que `cf_solicitar_reprocesado` en 2AS.
+  - En el repositorio no hay llamadas con sesión `authenticated`: solo scripts
+    históricos que usan el DSN de `postgres`.
+  - El rollback restaura el cuerpo y el ACL de la 12 (EXECUTE para authenticated).
+- **D-C.** La tolerancia no cambia (0,05). 08007969 queda como deuda 2AU.

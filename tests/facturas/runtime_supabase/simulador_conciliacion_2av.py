@@ -3,7 +3,9 @@
 Reproduce R5 (claim AUTOMATICO / MANUAL_ONE_SHOT con el mismo ordering), R6
 (cierre atomico con clave idempotente y replay que libera el claim), R7 (fallo
 con backoff 1h/6h/24h y REVISION_CONCILIACION al 4.o) y R8 (disparador validado
-contra el modo del claim). La elegibilidad se declara por factura (``apta``).
+contra el modo del claim). Hito 2AW: D-A (un resultado distinto de CONCILIADA
+consume intento con el mismo contador, tambien en replay con claim) y D-B (el
+reintento pone el contador a 0). La elegibilidad se declara por factura (``apta``).
 No simula tiempo real: ``backoff_futuro`` indica un ``conciliacion_proximo_at``
 posterior a ahora y ``avanzar_tiempo`` lo vence.
 """
@@ -89,9 +91,7 @@ class SupabaseConciliacionMemoria:
         if existente is not None:
             liberado = f.bloqueado_por == worker
             if liberado:
-                f.estado = "CONCILIADA" if existente["resultado"] == "CONCILIADA" else "PENDIENTE_CONCILIAR"
-                f.bloqueado_por = None
-                f.reintento = False
+                self._aplicar_resultado(f, existente["resultado"])
             self.historial.append(("CONCILIACION_REPLAY_IDEMPOTENTE", f.id, {"claim_liberado": liberado}))
             return existente["id"]
         if f.bloqueado_por != worker:
@@ -107,10 +107,25 @@ class SupabaseConciliacionMemoria:
                  "resultado": payload["p_resultado"]["resultado"],
                  "detalles": len(payload["p_resultado"]["detalles"])}
         f.conciliaciones.append(nueva)
-        f.estado = "CONCILIADA" if nueva["resultado"] == "CONCILIADA" else "PENDIENTE_CONCILIAR"
-        f.bloqueado_por, f.reintento, f.intentos_fallo, f.backoff_futuro = None, False, 0, False
+        self._aplicar_resultado(f, nueva["resultado"])
         self.historial.append(("CONCILIACION_PERSISTIDA", f.id, {"intento": nueva["intento"]}))
         return nueva["id"]
+
+    def _aplicar_resultado(self, f, resultado):
+        """D-A (2AW): CONCILIADA reinicia; cualquier otro resultado consume intento (R7)."""
+        if resultado == "CONCILIADA":
+            f.estado, f.intentos_fallo, f.backoff_futuro, f.ultimo_backoff_horas = "CONCILIADA", 0, False, None
+        else:
+            self._consumir_intento(f)
+        f.bloqueado_por, f.reintento = None, False
+
+    def _consumir_intento(self, f):
+        f.intentos_fallo = 1 if f.reintento else f.intentos_fallo + 1
+        if f.intentos_fallo >= MAX_INTENTOS:
+            f.estado, f.backoff_futuro, f.ultimo_backoff_horas = "REVISION_CONCILIACION", False, None
+        else:
+            f.estado, f.backoff_futuro = "PENDIENTE_CONCILIAR", True
+            f.ultimo_backoff_horas = BACKOFF_HORAS[min(f.intentos_fallo, len(BACKOFF_HORAS)) - 1]
 
     # R7 ---------------------------------------------------------------
     def _cf_registrar_fallo_conciliacion(self, payload):
@@ -119,12 +134,7 @@ class SupabaseConciliacionMemoria:
             raise RuntimeError("CLASE_FALLO_NO_ADMITIDA")
         if f.bloqueado_por != payload["p_worker_id"]:
             return False
-        f.intentos_fallo = 1 if f.reintento else f.intentos_fallo + 1
-        if f.intentos_fallo >= MAX_INTENTOS:
-            f.estado, f.backoff_futuro, f.ultimo_backoff_horas = "REVISION_CONCILIACION", False, None
-        else:
-            f.estado, f.backoff_futuro = "PENDIENTE_CONCILIAR", True
-            f.ultimo_backoff_horas = BACKOFF_HORAS[min(f.intentos_fallo, len(BACKOFF_HORAS)) - 1]
+        self._consumir_intento(f)
         f.bloqueado_por, f.reintento = None, False
         self.historial.append(("CONCILIACION_ERROR", f.id, {"intentos_fallo": f.intentos_fallo}))
         return True
@@ -133,9 +143,10 @@ class SupabaseConciliacionMemoria:
         self.facturas[factura_id].backoff_futuro = False
 
     def solicitar_reintento(self, factura_id):
-        """Equivale a cf_solicitar_reintento_conciliacion (no redefinida por la 18)."""
+        """Equivale a cf_solicitar_reintento_conciliacion (redefinida en la 18, D-B)."""
         f = self.facturas[factura_id]
         f.estado, f.reintento, f.backoff_futuro, f.bloqueado_por = "PENDIENTE_CONCILIAR", True, False, None
+        f.intentos_fallo, f.ultimo_backoff_horas = 0, None
 
     def estado(self, factura_id):
         f = self.facturas[factura_id]

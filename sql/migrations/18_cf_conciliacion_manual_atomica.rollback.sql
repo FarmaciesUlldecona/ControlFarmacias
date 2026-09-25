@@ -64,6 +64,57 @@ grant execute on function public.cf_reclamar_factura_conciliacion(text, integer)
 
 drop function if exists public.cf_reclamar_factura_conciliacion_nucleo(text, integer, text);
 
+-- Reintento de conciliacion de la migracion 12, literal, con sus privilegios
+-- (EXECUTE para authenticated; sin service_role en el esquema versionado).
+create or replace function public.cf_solicitar_reintento_conciliacion(
+    p_factura_id uuid,
+    p_actor text default null
+)
+returns public.facturas
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    v_factura public.facturas%rowtype;
+    v_actor text := coalesce(auth.uid()::text, nullif(btrim(p_actor), ''), 'SISTEMA');
+begin
+    update public.facturas f
+       set estado_conciliacion_cf = 'PENDIENTE_CONCILIAR',
+           conciliacion_reintento_solicitado_at = now(),
+           conciliacion_proximo_at = null,
+           conciliacion_bloqueado_hasta = null,
+           conciliacion_bloqueado_por = null,
+           conciliacion_ultimo_error = null,
+           updated_at = now()
+     where f.id = p_factura_id
+       and exists (
+           select 1 from public.cf_configuracion c
+           where c.id = true and f.farmacia = any(c.farmacias_habilitadas)
+       )
+     returning * into v_factura;
+
+    if v_factura.id is null then
+        raise exception 'factura no encontrada';
+    end if;
+
+    insert into public.historial_facturas (
+        documento_id, factura_id, evento, origen, actor, estado_nuevo
+    ) values (
+        v_factura.documento_id, v_factura.id,
+        'REINTENTO_CONCILIACION_SOLICITADO', 'RPC', v_actor,
+        jsonb_build_object('estado_conciliacion_cf', v_factura.estado_conciliacion_cf)
+    );
+
+    return v_factura;
+end;
+$$;
+
+revoke all on function public.cf_solicitar_reintento_conciliacion(uuid, text)
+    from public, anon, authenticated, service_role;
+grant execute on function public.cf_solicitar_reintento_conciliacion(uuid, text)
+    to authenticated;
+
 update public.facturas
    set estado_conciliacion_cf = 'PENDIENTE_CONCILIAR'
  where estado_conciliacion_cf = 'REVISION_CONCILIACION';

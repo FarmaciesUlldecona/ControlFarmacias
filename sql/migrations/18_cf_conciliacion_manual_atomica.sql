@@ -3,6 +3,9 @@
 -- (R7) y provenance MANUAL_ONE_SHOT/AUTOMATICO (R8). R9 es solo Python.
 -- Selector y ordering de conciliacion IDENTICOS a la migracion 14; el unico
 -- cambio es que MANUAL_ONE_SHOT omite el interruptor conciliacion_automatica.
+-- Hito 2AW (decisiones de Pio): D-A un resultado distinto de CONCILIADA consume
+-- intento con el backoff de R7 (mismo contador que los fallos); D-B
+-- cf_solicitar_reintento_conciliacion pasa a EXECUTE solo para service_role.
 -- Idempotente. Sin DML sobre datos existentes salvo defaults de columnas nuevas.
 begin;
 
@@ -28,7 +31,7 @@ alter table public.facturas
         check (conciliacion_intentos_fallo >= 0),
     add constraint facturas_conciliacion_ultima_clase_fallo_check
         check (conciliacion_ultima_clase_fallo is null or conciliacion_ultima_clase_fallo in
-            ('DEFECTO_DOCUMENTO', 'TRANSITORIO'));
+            ('DEFECTO_DOCUMENTO', 'TRANSITORIO', 'DIFERENCIA'));
 
 alter table public.cf_configuracion
     add column if not exists conciliacion_max_intentos integer not null default 4,
@@ -179,6 +182,12 @@ declare
     v_estado text;
     v_resultado text := p_resultado->>'resultado';
     v_liberado boolean := false;
+    v_resultado_efectivo text;
+    v_max integer;
+    v_backoff interval[];
+    v_fallos integer;
+    v_proximo timestamptz;
+    v_clase text;
 begin
     if p_disparador is null or p_disparador not in ('AUTOMATICO', 'MANUAL_ONE_SHOT') then
         raise exception 'DISPARADOR_CONCILIACION_NO_ADMITIDO';
@@ -202,28 +211,61 @@ begin
       from public.conciliaciones
      where factura_id = p_factura_id and idempotency_key = p_idempotency_key;
 
+    -- D-A: CONCILIADA reinicia el contador; cualquier otro resultado consume un
+    -- intento con el backoff de R7 y al maximo pasa a REVISION_CONCILIACION.
+    v_resultado_efectivo := coalesce(v_existente.resultado, v_resultado);
+    select conciliacion_max_intentos, conciliacion_backoff
+      into v_max, v_backoff
+      from public.cf_configuracion where id = true;
+    if v_resultado_efectivo = 'CONCILIADA' then
+        v_estado := 'CONCILIADA';
+        v_fallos := 0;
+        v_proximo := null;
+        v_clase := null;
+    else
+        -- Un reintento solicitado reinicia el presupuesto de intentos.
+        v_fallos := case when f.conciliacion_reintento_solicitado_at is not null
+                         then 1 else f.conciliacion_intentos_fallo + 1 end;
+        v_clase := 'DIFERENCIA';
+        if v_fallos >= v_max then
+            v_estado := 'REVISION_CONCILIACION';
+            v_proximo := null;
+        else
+            v_estado := 'PENDIENTE_CONCILIAR';
+            v_proximo := now() + v_backoff[least(v_fallos, cardinality(v_backoff))];
+        end if;
+    end if;
+
     if v_existente.id is not null then
-        -- Replay: nunca duplica; libera el claim del llamante y restaura el estado.
-        v_estado := f.estado_conciliacion_cf;
+        -- Replay: nunca duplica. Con el claim del llamante (nueva evaluacion con la
+        -- misma evidencia) libera el lock y aplica el estado del resultado original.
         if f.conciliacion_bloqueado_por is not null and f.conciliacion_bloqueado_por = p_worker_id then
-            v_estado := case when v_existente.resultado = 'CONCILIADA'
-                             then 'CONCILIADA' else 'PENDIENTE_CONCILIAR' end;
             update public.facturas
                set estado_conciliacion_cf = v_estado,
+                   conciliacion_intentos_fallo = v_fallos,
+                   conciliacion_ultima_clase_fallo = v_clase,
+                   conciliacion_proximo_at = v_proximo,
                    conciliacion_bloqueado_por = null,
                    conciliacion_bloqueado_hasta = null,
                    conciliacion_reintento_solicitado_at = null,
                    updated_at = now()
              where id = f.id;
             v_liberado := true;
+        else
+            -- Retransmision sin claim: sin cambios.
+            v_estado := f.estado_conciliacion_cf;
+            v_fallos := f.conciliacion_intentos_fallo;
+            v_proximo := f.conciliacion_proximo_at;
         end if;
         insert into public.historial_facturas
             (documento_id, factura_id, evento, origen, actor, estado_nuevo, detalle)
         values (
             f.documento_id, f.id, 'CONCILIACION_REPLAY_IDEMPOTENTE', 'RPC', p_worker_id,
-            jsonb_build_object('estado_conciliacion_cf', v_estado),
+            jsonb_build_object('estado_conciliacion_cf', v_estado,
+                               'conciliacion_proximo_at', v_proximo),
             jsonb_build_object('conciliacion_id', v_existente.id, 'claim_liberado', v_liberado,
-                               'disparador', p_disparador)
+                               'disparador', p_disparador, 'resultado', v_existente.resultado,
+                               'intentos_fallo', v_fallos, 'max_intentos', v_max)
         );
         return v_existente.id;
     end if;
@@ -287,14 +329,13 @@ begin
            coalesce(d->'provenance', '{}'::jsonb)
       from jsonb_array_elements(coalesce(p_resultado->'detalles', '[]'::jsonb)) d;
 
-    v_estado := case when v_resultado = 'CONCILIADA' then 'CONCILIADA' else 'PENDIENTE_CONCILIAR' end;
     update public.facturas
        set estado_conciliacion_cf = v_estado,
            diferencia_albaranes = (p_resultado->>'diferencia')::numeric,
            conciliacion_intentos = v_intento,
-           conciliacion_intentos_fallo = 0,
-           conciliacion_ultima_clase_fallo = null,
-           conciliacion_proximo_at = null,
+           conciliacion_intentos_fallo = v_fallos,
+           conciliacion_ultima_clase_fallo = v_clase,
+           conciliacion_proximo_at = v_proximo,
            conciliacion_ultimo_error = null,
            conciliacion_bloqueado_hasta = null,
            conciliacion_bloqueado_por = null,
@@ -307,10 +348,13 @@ begin
     values (
         f.documento_id, f.id, 'CONCILIACION_PERSISTIDA', 'RPC', p_worker_id,
         jsonb_build_object('estado_conciliacion_cf', f.estado_conciliacion_cf),
-        jsonb_build_object('estado_conciliacion_cf', v_estado),
+        jsonb_build_object('estado_conciliacion_cf', v_estado,
+                           'conciliacion_proximo_at', v_proximo),
         jsonb_build_object('conciliacion_id', v_id, 'intento', v_intento,
                            'disparador', p_disparador, 'resultado', v_resultado,
-                           'diferencia', p_resultado->>'diferencia')
+                           'diferencia', p_resultado->>'diferencia',
+                           'tolerancia', p_resultado->>'tolerancia',
+                           'intentos_fallo', v_fallos, 'max_intentos', v_max)
     );
     return v_id;
 end;
@@ -395,6 +439,54 @@ begin
 end;
 $$;
 
+-- D-B (2AW): cuerpo de la migracion 12 mas el reinicio explicito del presupuesto
+-- de intentos (R7/D-A). Unica via de salida de REVISION_CONCILIACION.
+create or replace function public.cf_solicitar_reintento_conciliacion(
+    p_factura_id uuid,
+    p_actor text default null
+)
+returns public.facturas
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    v_factura public.facturas%rowtype;
+    v_actor text := coalesce(auth.uid()::text, nullif(btrim(p_actor), ''), 'SISTEMA');
+begin
+    update public.facturas f
+       set estado_conciliacion_cf = 'PENDIENTE_CONCILIAR',
+           conciliacion_reintento_solicitado_at = now(),
+           conciliacion_proximo_at = null,
+           conciliacion_bloqueado_hasta = null,
+           conciliacion_bloqueado_por = null,
+           conciliacion_ultimo_error = null,
+           conciliacion_intentos_fallo = 0,
+           conciliacion_ultima_clase_fallo = null,
+           updated_at = now()
+     where f.id = p_factura_id
+       and exists (
+           select 1 from public.cf_configuracion c
+           where c.id = true and f.farmacia = any(c.farmacias_habilitadas)
+       )
+     returning * into v_factura;
+
+    if v_factura.id is null then
+        raise exception 'factura no encontrada';
+    end if;
+
+    insert into public.historial_facturas (
+        documento_id, factura_id, evento, origen, actor, estado_nuevo
+    ) values (
+        v_factura.documento_id, v_factura.id,
+        'REINTENTO_CONCILIACION_SOLICITADO', 'RPC', v_actor,
+        jsonb_build_object('estado_conciliacion_cf', v_factura.estado_conciliacion_cf)
+    );
+
+    return v_factura;
+end;
+$$;
+
 -- Privilegios explicitos: el default ACL de Supabase concede EXECUTE a anon,
 -- authenticated y service_role sobre funciones nuevas de public.
 revoke all on function public.cf_reclamar_factura_conciliacion_nucleo(text, integer, text)
@@ -407,6 +499,8 @@ revoke all on function public.cf_persistir_conciliacion(uuid, text, text, text, 
     from public, anon, authenticated;
 revoke all on function public.cf_registrar_fallo_conciliacion(uuid, text, text, text, text, text)
     from public, anon, authenticated;
+revoke all on function public.cf_solicitar_reintento_conciliacion(uuid, text)
+    from public, anon, authenticated;
 
 grant execute on function public.cf_reclamar_factura_conciliacion(text, integer)
     to service_role;
@@ -415,6 +509,8 @@ grant execute on function public.cf_reclamar_factura_conciliacion_manual_one_sho
 grant execute on function public.cf_persistir_conciliacion(uuid, text, text, text, jsonb)
     to service_role;
 grant execute on function public.cf_registrar_fallo_conciliacion(uuid, text, text, text, text, text)
+    to service_role;
+grant execute on function public.cf_solicitar_reintento_conciliacion(uuid, text)
     to service_role;
 
 comment on function public.cf_reclamar_factura_conciliacion_manual_one_shot(text, integer) is
