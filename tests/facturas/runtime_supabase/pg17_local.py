@@ -123,11 +123,15 @@ class _Diferida:
 
 
 class _Tabla:
-    """Solo lectura: select/eq/gte/lte/order/limit/single (sin update ni insert)."""
+    """select/eq/gte/lte/order/limit/range/single e insert (sin update ni delete).
 
-    def __init__(self, pg: _Pg, tabla: str):
+    ``rol``: si se indica (p. ej. ``service_role``), cada sentencia se ejecuta con
+    ``set role`` como haria PostgREST con esa clave (Hito 2AX).
+    """
+
+    def __init__(self, pg: _Pg, tabla: str, rol: str | None = None):
         self.pg, self.tabla, self.columnas, self.filtros, self.limite = pg, tabla, "*", [], None
-        self.orden, self.unica = [], False
+        self.orden, self.unica, self.rol, self.desde, self.fila = [], False, rol, None, None
 
     def select(self, columnas):
         self.columnas = columnas
@@ -157,11 +161,40 @@ class _Tabla:
         self.unica = True
         return self
 
+    def range(self, inicio, fin):
+        self.desde, self.limite = int(inicio), int(fin) - int(inicio) + 1
+        return self
+
+    def insert(self, fila: dict):
+        self.fila = fila
+        return self
+
+    def _consulta(self, consulta: str):
+        if self.rol is None:
+            return self.pg.json(consulta)
+        salida = self.pg.sql(
+            f"set role {self.rol}; select coalesce(json_agg(t),'[]'::json)::text from ({consulta}) t;")
+        return json.loads(salida)
+
+    def _insertar(self):
+        columnas = ", ".join(self.fila)
+        valores = ", ".join(
+            _lit(json.dumps(v, ensure_ascii=False)) if isinstance(v, (dict, list)) else _lit(v)
+            for v in self.fila.values())
+        sentencia = (f"insert into public.{self.tabla} ({columnas}) values ({valores}) returning *")
+        prefijo = f"set role {self.rol}; " if self.rol else ""
+        salida = self.pg.sql(
+            f"{prefijo}with t as ({sentencia}) select coalesce(json_agg(t),'[]'::json)::text from t;")
+        return _Respuesta(json.loads(salida))
+
     def execute(self):
+        if self.fila is not None:
+            return self._insertar()
         where = " where " + " and ".join(self.filtros) if self.filtros else ""
         orden = " order by " + ", ".join(self.orden) if self.orden else ""
         limite = f" limit {self.limite}" if self.limite else ""
-        filas = self.pg.json(f"select {self.columnas} from public.{self.tabla}{where}{orden}{limite}")
+        desde = f" offset {self.desde}" if self.desde else ""
+        filas = self._consulta(f"select {self.columnas} from public.{self.tabla}{where}{orden}{limite}{desde}")
         if self.unica:
             if len(filas) != 1:
                 raise RuntimeError(f"single(): {len(filas)} filas")
@@ -189,8 +222,11 @@ class _Storage:
 
 
 class ClientePg17:
-    def __init__(self, pg: _Pg, *, vigilar_flags: bool = False, compat_16: bool = False):
+    def __init__(self, pg: _Pg, *, vigilar_flags: bool = False, compat_16: bool = False,
+                 rol_tablas: str | None = None):
         self.pg = pg
+        # rol_tablas (2AX): lecturas/inserciones REST con ese rol (p. ej. service_role).
+        self.rol_tablas = rol_tablas
         self.vigilar_flags = vigilar_flags
         # compat_16: reproduce el cliente anterior a 2AR (sin p_clase_fallo), unico
         # compatible con el esquema 16. El Python 2AR exige la migracion 17.
@@ -202,7 +238,7 @@ class ClientePg17:
         self.storage = _Storage(self)
 
     def table(self, tabla):
-        return _Tabla(self.pg, tabla)
+        return _Tabla(self.pg, tabla, self.rol_tablas)
 
     def rpc(self, nombre, payload):
         self.rpcs.append((nombre, payload))
