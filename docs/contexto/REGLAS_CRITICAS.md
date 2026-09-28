@@ -93,8 +93,8 @@ Actualizado: 2026-09-24.
   - Clasificación de motivos: `runtime_supabase/clasificacion_fallos.py`; un motivo
     desconocido es `TRANSITORIO`, nunca `NO_SOPORTADO`.
 - Reglas aprobadas por Pio para la migración 18 (Hito 2AV, 2026-09-25;
-  `CONFIRMADO POR TEST` en PostgreSQL 17 local; **NO DESPLEGADA**, requiere el
-  hito 2AW con preflight y confirmación de Pio):
+  `CONFIRMADO POR TEST` en PostgreSQL 17 local y `CONFIRMADO EN PRODUCCIÓN`,
+  desplegada en el Hito 2AW el 2026-09-28; ninguna conciliación ejecutada aún):
   - **R5 claim manual de conciliación:** `p_modo_ejecucion` `AUTOMATICO` o
     `MANUAL_ONE_SHOT`. `MANUAL_ONE_SHOT` solo omite `conciliacion_automatica`;
     selector y ordering idénticos a la migración 14; como máximo 1 factura; sin

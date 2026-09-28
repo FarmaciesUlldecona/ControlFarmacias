@@ -74,11 +74,9 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
 - `src/database` y `src/sql_explorer`: acceso y barreras de solo lectura a
   Farmatic.
 - `src/supabase_client`: integración histórica de albaranes y documentos.
-- `sql/migrations/17_cf_replay_y_fallos_no_bloqueantes.sql` (+ `.rollback.sql`):
-  migración más reciente desplegada en producción (Hito 2AS, 2026-09-25).
 - `sql/migrations/18_cf_conciliacion_manual_atomica.sql` (+ `.rollback.sql`):
-  versionada y certificada en PostgreSQL 17 local, **no desplegada** (Hito 2AV,
-  2026-09-25). El Python vigente de conciliación la exige.
+  migración más reciente, desplegada en producción (Hito 2AW, 2026-09-28).
+  El Python vigente de conciliación la exige. Anterior: la 17 (Hito 2AS).
 
 ## Arquitectura multirepositorio
 

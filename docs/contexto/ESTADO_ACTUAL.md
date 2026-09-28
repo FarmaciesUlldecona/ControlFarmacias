@@ -146,7 +146,7 @@ EN VIVO** durante esta consolidación documental.
 
 ## Versiones y certificación
 
-- Migración más reciente desplegada: `17_cf_replay_y_fallos_no_bloqueantes.sql`,
+- Migración anterior desplegada: `17_cf_replay_y_fallos_no_bloqueantes.sql`,
   reglas R1–R4 (ver `REGLAS_CRITICAS.md`). `CONFIRMADO EN PRODUCCIÓN` (Hito 2AS,
   aplicada 2026-09-25 14:08:29–14:08:30 UTC, una transacción, project ref
   `vklaiuytvegkelgyspxc`, SQL normalizado a LF con SHA-256
@@ -164,16 +164,34 @@ EN VIVO** durante esta consolidación documental.
 - El Python de 2AR (envío de `p_clase_fallo`) exige la migración 17; para
   revertir, primero el código y después el rollback SQL (requiere confirmación
   de Pio).
-- Migración `18_cf_conciliacion_manual_atomica.sql` (+ `.rollback.sql`), reglas
-  R5–R9 (ver `REGLAS_CRITICAS.md`): **certificada en PostgreSQL 17 local, NO
-  DESPLEGADA** (Hito 2AV, 2026-09-25; `CONFIRMADO POR TEST`). Diseño en
-  `pruebas/auditoria_2av/DISENO.md`. Añade la ruta manual one-shot de
-  conciliación, el cierre atómico `cf_persistir_conciliacion`, fallos con
-  backoff y `REVISION_CONCILIACION`, y columnas nuevas en `facturas`,
-  `conciliaciones` y `cf_configuracion` sin DML sobre datos existentes.
-  **El Python de 2AV exige la migración 18** (usa sus RPC para guardar y fallar
-  conciliaciones): no ejecutar conciliación productiva con este código hasta
-  desplegarla (Hito 2AW). Revertir: primero el código, después el rollback SQL.
+- Migración más reciente desplegada: `18_cf_conciliacion_manual_atomica.sql`
+  (+ `.rollback.sql`), reglas R5–R9 y D-A/D-B (ver `REGLAS_CRITICAS.md`).
+  `CONFIRMADO EN PRODUCCIÓN` (Hito 2AW, aplicada 2026-09-28
+  16:09:28–16:09:29 UTC, una transacción con 8 precondiciones, project ref
+  `vklaiuytvegkelgyspxc`, SQL de `e546e6b` normalizado a LF con SHA-256
+  `d4832f42b756f6b89fc8fd8b2f0a4409bc4ccd044730e9cf69f90baccc44878f`, con
+  confirmación expresa de Pio). Backup previo READ_ONLY fuera del repo
+  (`backup_pre_2aw.json`) con SHA-256
+  `a900abffd19af98c0973d647b903b4035775cb9d6e42091ee2e96df410eaca15`.
+  Parámetros en `cf_configuracion`: `conciliacion_max_intentos=4`,
+  `conciliacion_backoff={1 h, 6 h, 24 h}`; tolerancia sin cambios (0,05).
+  Postcheck: definiciones, propiedades, checks, índices, columnas y vistas
+  iguales a la referencia local 18 (LF); selector idéntico al de la 14 salvo el
+  interruptor; anon/authenticated/PUBLIC sin EXECUTE en ninguna función de la 18
+  (se retiró el EXECUTE de `authenticated` sobre
+  `cf_solicitar_reintento_conciliacion`); núcleo sin `service_role`; huellas de
+  las 12 facturas, 12 conciliaciones, 749 detalles, configuración e historial
+  idénticas; flags, workers, locks y claims sin cambios. Diseño en
+  `pruebas/auditoria_2av/DISENO.md`. El Python de conciliación exige la 18.
+  **No se ha ejecutado ninguna conciliación con la 18** (ni worker ni flags).
+- **Rollback productivo de la 18** (solo con confirmación de Pio; primero el
+  código, después el SQL): el rollback versionado deja
+  `cf_solicitar_reintento_conciliacion` con EXECUTE solo para `authenticated`
+  (estado del esquema versionado). En producción, antes de la 18, también tenía
+  `service_role` (privilegios por defecto de Supabase). Tras el rollback hay que
+  ejecutar además
+  `grant execute on function public.cf_solicitar_reintento_conciliacion(uuid, text) to service_role;`
+  para restaurar el ACL previo, guardado en `backup_pre_2aw.json`.
 - Normalizador V2 declarado por el pipeline: `2.2.0`.
 - Motor documental local declarado por el servicio: `0.5.0`.
 - `OrquestadorExtraccionProductiva` no declara versión propia. V0.1.3 identifica
@@ -286,7 +304,9 @@ mediante consulta remota posterior.
 
 - Hallazgos del Hito 2AV (2026-09-25; `CONFIRMADO POR TEST` en PostgreSQL 17
   local con el PDF real del 2AO, sin producción), **no corregidos**:
-  - 08007969 (MIXTA) sale `NO_APTA` `TOTAL_NO_EXPLICADO`: albaranes extraídos
+  - Deuda de tolerancia (decisión de Pio D-C en 2AW: NO tocar; se trata con la
+    deuda 2AU):
+    08007969 (MIXTA) sale `NO_APTA` `TOTAL_NO_EXPLICADO`: albaranes extraídos
     13.020,88 + movimientos −213,78 = 12.807,10 frente a un total de 12.807,17
     (0,07 > tolerancia 0,05). Con 08007971 (sin albaranes, deuda 2AU), 2 de las
     5 facturas del 2AO no son conciliables hoy; aptas: 08007970, 08007972 y
