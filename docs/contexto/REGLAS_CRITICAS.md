@@ -147,6 +147,16 @@ módulos parciales.
 
 ## Pruebas
 
+- **Norma de Pio (Hito 2AX, 2026-09-28):** todo script de despliegue productivo
+  se ensaya COMPLETO en local antes de usarlo en producción: de principio a fin
+  (verificación de SHA contra el commit, precondiciones, aplicación, commit y
+  registro) contra un PostgreSQL 17 local que reproduzca la matriz y los
+  privilegios de producción, más un segundo ensayo que debe fallar en
+  precondiciones y revertir sin cambios. Además, su consulta de precondiciones
+  se ejecuta antes en producción en una transacción READ_ONLY. Motivo: el primer
+  intento de desplegar la 19 falló por un `select` omitido en las precondiciones
+  (sin cambios en producción). Referencia:
+  `tests/facturas/runtime_supabase/test_ensayo_despliegue_19_2ax.py`.
 - Pytest debe usar directorios temporales mediante `CONTROLFARMACIAS_LOG_DIR` y
   `CONTROLFARMACIAS_DATA_DIR`.
 - Los tests no pueden conectarse a Farmatic/Supabase reales ni escribir en

@@ -73,7 +73,7 @@ def main(commit: str, esperado: str, salida: Path) -> None:
             cur.execute("set local lock_timeout='5s'; set local statement_timeout='120s'")
             cur.execute(
                 # 19 no aplicada aun: anon conserva los grants heredados sobre albaranes y las vistas.
-                "has_table_privilege('anon', 'public.albaranes', 'SELECT'),"
+                "select has_table_privilege('anon', 'public.albaranes', 'SELECT'),"
                 "has_table_privilege('authenticated', 'public.facturas', 'SELECT'),"
                 # 18 presente.
                 "to_regprocedure('public.cf_persistir_conciliacion(uuid,text,text,text,jsonb)') is not null,"
