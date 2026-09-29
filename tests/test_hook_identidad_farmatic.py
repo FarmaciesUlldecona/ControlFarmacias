@@ -342,7 +342,8 @@ def test_configuracion_del_hook():
 def test_configuracion_de_permisos():
     permisos = _settings()["permissions"]
 
-    assert "PowerShell(.\\.venv\\Scripts\\python.exe -B -m src.sql_explorer.*)" in permisos["allow"]
+    assert "PowerShell(.\\.venv\\Scripts\\python.exe -B -m src.sql_explorer.buscar_objetos)" in permisos["allow"]
+    assert not any("src.sql_explorer.*" in regla for regla in permisos["allow"])
 
     for herramienta in ("PowerShell", "Bash"):
         for regla in (
