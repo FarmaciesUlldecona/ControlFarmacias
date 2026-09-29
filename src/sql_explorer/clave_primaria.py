@@ -1,4 +1,5 @@
 from src.database.conexion_sql import obtener_conexion
+from src.sql_explorer.entrada import leer_texto
 from src.sql_explorer.seguridad_sql import validar_consulta_lectura
 
 
@@ -88,7 +89,7 @@ def mostrar_clave_primaria(nombre_tabla: str) -> None:
 
 
 def ejecutar() -> None:
-    nombre_tabla = input("Nombre de la tabla: ").strip()
+    nombre_tabla = leer_texto("Nombre de la tabla: ")
 
     if not nombre_tabla:
         print("Debes introducir un nombre de tabla.")

@@ -33,12 +33,29 @@ Farmatic es estrictamente de solo lectura. Solo se ejecutan consultas
 
 ## Herramientas
 
-Todas usan `input()`. Desde Claude Code, pasa la entrada por tubería o llama a
-la función con `-c`. Ejemplo en PowerShell:
+**Forma principal de invocación:** llama a la función con `-c` y pasa el
+término como argumento directo, sin tubería ni `input()`:
 
 ```powershell
-"Familia" | .\.venv\Scripts\python.exe -B -m src.sql_explorer.buscar_objetos
+.\.venv\Scripts\python.exe -B -c "from src.sql_explorer.buscar_objetos import buscar_objetos; print(len(buscar_objetos('Familia')))"
 ```
+
+Funciones de metadatos invocables así: `buscar_objetos.buscar_objetos(texto)`,
+`buscar_columnas.buscar_columnas(texto)`,
+`describir_tabla.obtener_columnas(nombre_tabla)` y
+`clave_primaria.obtener_clave_primaria(nombre_tabla)`.
+
+**Advertencia sobre la tubería en Windows PowerShell 5.1:** al canalizar texto
+hacia un ejecutable nativo (`"Familia" | python ...`), PowerShell 5.1 antepone
+el BOM UTF-8 (U+FEFF). Las lecturas interactivas pasan por
+`src/sql_explorer/entrada.py`, que lo elimina. Aun así, la tubería queda solo
+como alternativa: con otra versión o codificación podría volver a producir
+búsquedas vacías sin error.
+
+Entrada interactiva (leen con `leer_texto` de `entrada.py`): `buscar_objetos`,
+`buscar_columnas`, `describir_tabla`, `clave_primaria`, `valores_columna`,
+`ver_tabla`, `buscar_registros` y `analizar_tabla`. No leen entrada:
+`listar_objetos`, `exportar_diccionario`, `mapa_relaciones` y `seguridad_sql`.
 
 Timeouts del wrapper: 5 s de conexión y 30 s de consulta.
 

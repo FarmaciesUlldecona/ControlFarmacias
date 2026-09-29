@@ -21,6 +21,7 @@ La herramienta:
 from typing import Any
 
 from src.database.conexion_sql import obtener_conexion
+from src.sql_explorer.entrada import leer_texto
 from src.sql_explorer.seguridad_sql import validar_consulta_lectura
 
 
@@ -162,10 +163,10 @@ def seleccionar_columna(
     """
 
     while True:
-        seleccion = input(
+        seleccion = leer_texto(
             "\nColumna que quieres analizar "
             "(número, nombre o parte del nombre): "
-        ).strip()
+        )
 
         if not seleccion:
             print("No se ha indicado ninguna columna.")
@@ -240,11 +241,11 @@ def solicitar_limite() -> int:
     Solicita el número máximo de valores distintos que se mostrarán.
     """
 
-    texto = input(
+    texto = leer_texto(
         f"\nNúmero máximo de valores distintos "
         f"(Enter = {LIMITE_PREDETERMINADO}, "
         f"máximo = {LIMITE_MAXIMO}): "
-    ).strip()
+    )
 
     if not texto:
         return LIMITE_PREDETERMINADO
@@ -443,9 +444,9 @@ def valores_columna() -> None:
     print("HERRAMIENTA 7 - VALORES DISTINTOS DE UNA COLUMNA")
     print("=" * 70)
 
-    nombre_objeto = input(
+    nombre_objeto = leer_texto(
         "Nombre de la tabla o vista: "
-    ).strip()
+    )
 
     if not nombre_objeto:
         print("No se ha indicado ninguna tabla o vista.")

@@ -18,6 +18,7 @@ Características:
 from typing import Any
 
 from src.database.conexion_sql import obtener_conexion
+from src.sql_explorer.entrada import leer_texto
 from src.sql_explorer.seguridad_sql import validar_consulta_lectura
 
 
@@ -220,11 +221,11 @@ def solicitar_limite() -> int:
         100 registros.
     """
 
-    texto = input(
+    texto = leer_texto(
         f"Límite de registros "
         f"(Enter = {LIMITE_PREDETERMINADO}, "
         f"máximo = {LIMITE_MAXIMO}): "
-    ).strip()
+    )
 
     if not texto:
         return LIMITE_PREDETERMINADO
@@ -274,9 +275,9 @@ def solicitar_exclusion_eco(
     if columna_nombre is None:
         return False
 
-    respuesta = input(
+    respuesta = leer_texto(
         "¿Excluir proveedores ECO? (S/N, Enter = S): "
-    ).strip().lower()
+    ).lower()
 
     if respuesta in {"", "s", "si", "sí"}:
         return True
@@ -441,9 +442,9 @@ def ver_tabla() -> None:
     print("HERRAMIENTA 6 - VER TABLA O VISTA")
     print("=" * 70)
 
-    nombre_buscado = input(
+    nombre_buscado = leer_texto(
         "Nombre de la tabla o vista: "
-    ).strip()
+    )
 
     if not nombre_buscado:
         print("No se ha indicado ningún objeto.")

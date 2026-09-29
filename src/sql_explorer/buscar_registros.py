@@ -21,6 +21,7 @@ Esta herramienta nunca modifica datos en SQL Server.
 from typing import Any
 
 from src.database.conexion_sql import obtener_conexion
+from src.sql_explorer.entrada import leer_texto
 from src.sql_explorer.seguridad_sql import validar_consulta_lectura
 
 
@@ -295,7 +296,7 @@ def seleccionar_una_columna(
     """
 
     while True:
-        seleccion = input(mensaje).strip()
+        seleccion = leer_texto(mensaje)
 
         if not seleccion:
             print("No se ha indicado ninguna columna.")
@@ -367,9 +368,9 @@ def seleccionar_operador() -> dict[str, Any]:
         )
 
     while True:
-        seleccion = input(
+        seleccion = leer_texto(
             "\nSelecciona un operador: "
-        ).strip()
+        )
 
         operador = OPERADORES.get(seleccion)
 
@@ -400,8 +401,9 @@ def solicitar_valor_filtro(
         return None
 
     while True:
-        valor = input(
-            "Valor que quieres buscar: "
+        valor = leer_texto(
+            "Valor que quieres buscar: ",
+            recortar_espacios=False,
         )
 
         if valor != "":
@@ -418,11 +420,11 @@ def solicitar_limite() -> int:
     Solicita el máximo de registros que se mostrarán.
     """
 
-    texto = input(
+    texto = leer_texto(
         f"\nNúmero máximo de registros "
         f"(Enter = {LIMITE_PREDETERMINADO}, "
         f"máximo = {LIMITE_MAXIMO}): "
-    ).strip()
+    )
 
     if not texto:
         return LIMITE_PREDETERMINADO
@@ -469,10 +471,10 @@ def seleccionar_columnas_resultado(
         1, 3, Fecha, ImportePUC
     """
 
-    respuesta = input(
+    respuesta = leer_texto(
         "\n¿Mostrar todas las columnas? "
         "(S/N, Enter = S): "
-    ).strip().lower()
+    ).lower()
 
     if respuesta in {"", "s", "si", "sí"}:
         return [
@@ -486,9 +488,9 @@ def seleccionar_columnas_resultado(
     )
 
     while True:
-        texto = input(
+        texto = leer_texto(
             "\nEscribe las columnas separadas por comas: "
-        ).strip()
+        )
 
         if not texto:
             print(
@@ -648,10 +650,10 @@ def seleccionar_ordenacion(
     print("3. Elegir una columna")
 
     while True:
-        seleccion = input(
+        seleccion = leer_texto(
             "\nSelecciona una opción "
             "(Enter = automática): "
-        ).strip()
+        )
 
         if seleccion in {"", "1"}:
             if columna_automatica:
@@ -688,12 +690,12 @@ def seleccionar_ordenacion(
             nombre_columna, _ = columna
 
             while True:
-                direccion = input(
+                direccion = leer_texto(
                     "Dirección "
                     "(A = ascendente, "
                     "D = descendente, "
                     "Enter = D): "
-                ).strip().lower()
+                ).lower()
 
                 if direccion in {"a", "asc", "ascendente"}:
                     return (
@@ -1058,9 +1060,9 @@ def buscar_registros() -> None:
     print("HERRAMIENTA 8 - BUSCAR REGISTROS POR VALOR")
     print("=" * 70)
 
-    nombre_buscado = input(
+    nombre_buscado = leer_texto(
         "Nombre de la tabla o vista: "
-    ).strip()
+    )
 
     if not nombre_buscado:
         print(

@@ -1,3 +1,4 @@
+from src.sql_explorer.entrada import leer_texto, limpiar_texto
 from src.sql_explorer.listar_objetos import obtener_tablas_y_vistas
 
 
@@ -9,7 +10,7 @@ def buscar_objetos(texto_busqueda: str) -> list[dict]:
     No modifica ningún dato.
     """
 
-    texto = texto_busqueda.strip().lower()
+    texto = limpiar_texto(texto_busqueda).lower()
 
     if not texto:
         raise ValueError("Debes indicar un texto de búsqueda.")
@@ -55,7 +56,7 @@ def mostrar_resultados(texto_busqueda: str) -> None:
 
 
 def ejecutar_programa() -> None:
-    texto_busqueda = input(
+    texto_busqueda = leer_texto(
         "Texto que quieres buscar en tablas y vistas: "
     )
 

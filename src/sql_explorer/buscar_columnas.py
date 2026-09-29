@@ -1,4 +1,5 @@
 from src.database.conexion_sql import obtener_conexion
+from src.sql_explorer.entrada import leer_texto
 from src.sql_explorer.seguridad_sql import validar_consulta_lectura
 
 
@@ -80,7 +81,7 @@ def mostrar_resultados(texto):
 
 def ejecutar():
 
-    texto = input("Texto a buscar: ").strip()
+    texto = leer_texto("Texto a buscar: ")
 
     mostrar_resultados(texto)
 

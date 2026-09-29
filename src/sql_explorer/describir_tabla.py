@@ -1,4 +1,5 @@
 from src.database.conexion_sql import obtener_conexion
+from src.sql_explorer.entrada import leer_texto
 from src.sql_explorer.seguridad_sql import validar_consulta_lectura
 
 
@@ -84,7 +85,7 @@ def mostrar_tabla(nombre_tabla: str):
 
 def ejecutar():
 
-    tabla = input("Nombre de la tabla: ").strip()
+    tabla = leer_texto("Nombre de la tabla: ")
 
     mostrar_tabla(tabla)
 

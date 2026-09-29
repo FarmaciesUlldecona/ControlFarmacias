@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from src.database.conexion_sql import obtener_conexion
+from src.sql_explorer.entrada import leer_texto
 from src.sql_explorer.seguridad_sql import validar_consulta_lectura
 
 
@@ -201,9 +202,9 @@ def resolver_tabla(
         )
 
     print()
-    seleccion = input(
+    seleccion = leer_texto(
         "Selecciona el número de la tabla: "
-    ).strip()
+    )
 
     try:
         indice = int(seleccion) - 1
@@ -1150,9 +1151,9 @@ def analizar_tabla() -> None:
         "Ejemplos: Albaran, Proveedor, Pedido o dbo.Albaran"
     )
 
-    texto_tabla = input(
+    texto_tabla = leer_texto(
         "Tabla que quieres analizar: "
-    ).strip()
+    )
 
     if not texto_tabla:
         print("No se ha indicado ninguna tabla.")
