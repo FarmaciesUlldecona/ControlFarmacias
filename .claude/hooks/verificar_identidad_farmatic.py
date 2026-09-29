@@ -14,14 +14,23 @@ aceptada por Pio: según la semántica de Claude Code, un fallo de arranque del
 intérprete (exit distinto de 2), un error de sintaxis de este archivo (exit 1)
 o el timeout del hook no bloquean el comando.
 
+Trazabilidad: cada decisión sobre un comando con patrón sensible, y cada
+error interno, se añade como una línea JSON a
+``%LOCALAPPDATA%\\ControlFarmacias\\hooks\\identidad_farmatic.jsonl``, fuera
+del repositorio y de los logs productivos. Nunca se registra el texto del
+comando ni el mensaje de las excepciones. Un fallo al escribir el registro no
+cambia la decisión.
+
 Solo usa la biblioteca estándar. Se lanza con ``-I -S -B`` desde el Python
 del ``.venv``.
 """
 
+import datetime
 import json
 import os
 import subprocess
 import sys
+from typing import NamedTuple
 
 
 IDENTIDAD_ESPERADA = "mostrador\\controlfarmaciasro"
@@ -48,6 +57,17 @@ PATRONES = (
 )
 
 TIMEOUT_WHOAMI_SEGUNDOS = 10
+
+NOMBRE_REGISTRO = "identidad_farmatic.jsonl"
+TAMANO_MAXIMO_REGISTRO = 5 * 1024 * 1024
+
+
+class Evaluacion(NamedTuple):
+    codigo: int
+    mensaje: str
+    patron: str | None = None
+    identidad: str | None = None
+    motivo: str | None = None
 
 
 def extraer_comando(entrada: dict) -> str | None:
@@ -97,51 +117,134 @@ def obtener_identidad() -> str:
     return resultado.stdout.strip()
 
 
-def decidir(entrada: dict, obtener_identidad=obtener_identidad) -> tuple[int, str]:
+def evaluar(entrada: dict, obtener_identidad=obtener_identidad) -> Evaluacion:
     comando = extraer_comando(entrada)
 
     if comando is None:
-        return 0, ""
+        return Evaluacion(0, "")
 
     patron = patron_sensible(comando)
 
     if patron is None:
-        return 0, ""
+        return Evaluacion(0, "")
 
-    identidad = obtener_identidad()
+    try:
+        identidad = obtener_identidad()
+    except BaseException as error:
+        # Se relanza la misma excepción; el patrón solo sirve al registro.
+        try:
+            error.patron_hook = patron
+        except BaseException:
+            pass
+        raise
 
     if identidad != IDENTIDAD_ESPERADA:
-        return 2, (
-            "BLOQUEADO por el hook de identidad Farmatic: el comando contiene "
-            f"{patron!r} y whoami devolvió {identidad!r}; se exige "
-            f"{IDENTIDAD_ESPERADA!r}. Abre Visual Studio Code como "
-            "ControlFarmaciasRO."
+        return Evaluacion(
+            2,
+            (
+                "BLOQUEADO por el hook de identidad Farmatic: el comando "
+                f"contiene {patron!r} y whoami devolvió {identidad!r}; se "
+                f"exige {IDENTIDAD_ESPERADA!r}. Abre Visual Studio Code como "
+                "ControlFarmaciasRO."
+            ),
+            patron,
+            identidad,
+            "identidad_distinta",
         )
 
-    return 0, ""
+    return Evaluacion(0, "", patron, identidad)
+
+
+def decidir(entrada: dict, obtener_identidad=obtener_identidad) -> tuple[int, str]:
+    evaluacion = evaluar(entrada, obtener_identidad)
+    return evaluacion.codigo, evaluacion.mensaje
+
+
+def ruta_registro() -> str:
+    return os.path.join(
+        os.environ["LOCALAPPDATA"],
+        "ControlFarmacias",
+        "hooks",
+        NOMBRE_REGISTRO,
+    )
+
+
+def ahora() -> datetime.datetime:
+    return datetime.datetime.now().astimezone()
+
+
+def registrar_evento(
+    herramienta,
+    evaluacion: Evaluacion,
+    ruta: str | None = None,
+    reloj=ahora,
+) -> None:
+    """Añade una línea JSON al registro. Nunca propaga errores."""
+
+    try:
+        if evaluacion.patron is None and evaluacion.motivo is None:
+            return
+
+        if ruta is None:
+            ruta = ruta_registro()
+
+        evento = {
+            "ts": reloj().isoformat(timespec="milliseconds"),
+            "herramienta": herramienta if isinstance(herramienta, str) else None,
+            "patron": evaluacion.patron,
+            "identidad": evaluacion.identidad,
+            "decision": "permitido" if evaluacion.codigo == 0 else "bloqueado",
+            "motivo": evaluacion.motivo,
+        }
+        linea = json.dumps(evento, ensure_ascii=False) + "\n"
+
+        os.makedirs(os.path.dirname(ruta), exist_ok=True)
+
+        try:
+            if os.path.getsize(ruta) >= TAMANO_MAXIMO_REGISTRO:
+                os.replace(ruta, ruta + ".1")
+        except FileNotFoundError:
+            pass
+
+        with open(ruta, "a", encoding="utf-8", newline="\n") as archivo:
+            archivo.write(linea)
+    except BaseException:
+        pass
 
 
 def main() -> int:
+    herramienta = None
+
     try:
         entrada = json.loads(sys.stdin.buffer.read())
 
         if not isinstance(entrada, dict):
             raise ValueError("la entrada del hook no es un objeto")
 
-        codigo, mensaje = decidir(entrada, obtener_identidad)
+        herramienta = entrada.get("tool_name")
+        evaluacion = evaluar(entrada, obtener_identidad)
     except BaseException as error:
-        codigo, mensaje = 2, (
-            "BLOQUEADO: error interno del hook de identidad Farmatic "
-            f"({type(error).__name__}: {error})."
+        patron = getattr(error, "patron_hook", None)
+        evaluacion = Evaluacion(
+            2,
+            (
+                "BLOQUEADO: error interno del hook de identidad Farmatic "
+                f"({type(error).__name__}: {error})."
+            ),
+            patron if isinstance(patron, str) else None,
+            None,
+            f"error_interno:{type(error).__name__}",
         )
 
-    if mensaje:
+    registrar_evento(herramienta, evaluacion)
+
+    if evaluacion.mensaje:
         try:
-            sys.stderr.write(mensaje + "\n")
+            sys.stderr.write(evaluacion.mensaje + "\n")
         except BaseException:
             pass
 
-    return codigo
+    return evaluacion.codigo
 
 
 if __name__ == "__main__":

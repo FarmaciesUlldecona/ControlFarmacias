@@ -5,9 +5,11 @@ variable de entorno que la sustituya. Ningún test conecta con Farmatic ni con
 Supabase.
 """
 
+import datetime
 import importlib.util
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -39,6 +41,53 @@ def _cargar_hook():
 
 
 hook = _cargar_hook()
+
+# Valor anterior a cualquier redirección de los fixtures.
+LOCALAPPDATA_REAL = os.environ.get("LOCALAPPDATA")
+
+
+def _estado_registro_real():
+    """Tamaño y fecha del registro real, o None si no existe."""
+
+    if not LOCALAPPDATA_REAL:
+        return None
+
+    ruta = Path(LOCALAPPDATA_REAL) / "ControlFarmacias" / "hooks" / hook.NOMBRE_REGISTRO
+
+    try:
+        estado = ruta.stat()
+    except FileNotFoundError:
+        return None
+
+    return estado.st_size, estado.st_mtime_ns
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _registro_real_intacto():
+    antes = _estado_registro_real()
+    yield
+    assert _estado_registro_real() == antes, "un test escribió en el registro real"
+
+
+@pytest.fixture(autouse=True)
+def localappdata_temporal(monkeypatch, tmp_path):
+    """Ningún test, ni sus subprocesos, escribe en el registro real."""
+
+    directorio = tmp_path / "localappdata"
+    directorio.mkdir()
+    monkeypatch.setenv("LOCALAPPDATA", str(directorio))
+    return directorio
+
+
+def _ruta_registro_temporal(localappdata: Path) -> Path:
+    return localappdata / "ControlFarmacias" / "hooks" / hook.NOMBRE_REGISTRO
+
+
+def _eventos(ruta: Path) -> list[dict]:
+    return [
+        json.loads(linea)
+        for linea in ruta.read_text(encoding="utf-8").splitlines()
+    ]
 
 
 def _entrada(comando, herramienta="PowerShell"):
@@ -352,3 +401,279 @@ def test_deriva_patrones_cubren_modulos_con_acceso_a_farmatic():
     ]
 
     assert sin_cubrir == []
+
+
+# Trazabilidad: registro JSONL de decisiones
+
+
+CAMPOS_EVENTO = {"ts", "herramienta", "patron", "identidad", "decision", "motivo"}
+
+CENTINELA = "CENTINELA_NO_REGISTRAR_7f3a"
+
+
+def _main_con_registro(monkeypatch, comando, identidad, herramienta="PowerShell"):
+    datos = json.dumps(_entrada(comando, herramienta)).encode()
+    return _ejecutar_main(monkeypatch, datos, identidad)
+
+
+def test_registro_permitido_escribe_linea_completa(monkeypatch, localappdata_temporal):
+    codigo = _main_con_registro(
+        monkeypatch,
+        "python -m src.sql_explorer.buscar_objetos",
+        _identidad_fija(IDENTIDAD_CORRECTA),
+    )
+
+    (evento,) = _eventos(_ruta_registro_temporal(localappdata_temporal))
+
+    assert codigo == 0
+    assert set(evento) == CAMPOS_EVENTO
+    assert evento["herramienta"] == "PowerShell"
+    assert evento["patron"] == "sql_explorer"
+    assert evento["identidad"] == IDENTIDAD_CORRECTA
+    assert evento["decision"] == "permitido"
+    assert evento["motivo"] is None
+
+
+def test_registro_bloqueo_por_identidad(monkeypatch, localappdata_temporal):
+    codigo = _main_con_registro(
+        monkeypatch,
+        "sqlcmd -Q \"SELECT 1\"",
+        _identidad_fija("mostrador\\usuari"),
+        herramienta="Bash",
+    )
+
+    (evento,) = _eventos(_ruta_registro_temporal(localappdata_temporal))
+
+    assert codigo == 2
+    assert evento["herramienta"] == "Bash"
+    assert evento["patron"] == "sqlcmd"
+    assert evento["identidad"] == "mostrador\\usuari"
+    assert evento["decision"] == "bloqueado"
+    assert evento["motivo"] == "identidad_distinta"
+
+
+def test_registro_comando_sin_patron_no_escribe(monkeypatch, localappdata_temporal):
+    codigo = _main_con_registro(monkeypatch, "git status --short", _identidad_prohibida)
+
+    assert codigo == 0
+    assert not _ruta_registro_temporal(localappdata_temporal).exists()
+
+
+@pytest.mark.parametrize(
+    "identidad",
+    [IDENTIDAD_CORRECTA, "mostrador\\usuari"],
+)
+def test_registro_nunca_contiene_el_comando(monkeypatch, localappdata_temporal, identidad):
+    _main_con_registro(
+        monkeypatch,
+        f"python -m src.sql_explorer.ver_tabla --nota {CENTINELA}",
+        _identidad_fija(identidad),
+    )
+
+    contenido = _ruta_registro_temporal(localappdata_temporal).read_text(encoding="utf-8")
+
+    assert CENTINELA not in contenido
+    assert "ver_tabla" not in contenido
+
+
+@pytest.mark.parametrize(
+    ("identidad", "codigo_esperado"),
+    [(IDENTIDAD_CORRECTA, 0), ("mostrador\\usuari", 2)],
+)
+def test_fallo_de_escritura_no_cambia_la_decision(
+    monkeypatch,
+    capsys,
+    localappdata_temporal,
+    identidad,
+    codigo_esperado,
+):
+    # La ruta del registro es un directorio: open() falla.
+    _ruta_registro_temporal(localappdata_temporal).mkdir(parents=True)
+
+    codigo = _main_con_registro(
+        monkeypatch,
+        "python -m src.sql_explorer.buscar_objetos",
+        _identidad_fija(identidad),
+    )
+
+    assert codigo == codigo_esperado
+    assert ("BLOQUEADO" in capsys.readouterr().err) == (codigo_esperado == 2)
+
+
+def test_fallo_de_open_no_cambia_la_decision(monkeypatch, capsys):
+    def open_roto(*args, **kwargs):
+        raise PermissionError("sin permiso")
+
+    monkeypatch.setattr(hook, "open", open_roto, raising=False)
+
+    codigo = _main_con_registro(
+        monkeypatch,
+        "python -m src.sql_explorer.buscar_objetos",
+        _identidad_fija("mostrador\\usuari"),
+    )
+
+    assert codigo == 2
+    assert "BLOQUEADO por el hook" in capsys.readouterr().err
+
+
+def test_sin_localappdata_no_cambia_la_decision(monkeypatch):
+    monkeypatch.delenv("LOCALAPPDATA")
+
+    codigo = _main_con_registro(
+        monkeypatch,
+        "python -m src.sql_explorer.buscar_objetos",
+        _identidad_fija(IDENTIDAD_CORRECTA),
+    )
+
+    assert codigo == 0
+
+
+def test_error_interno_registra_solo_el_tipo(monkeypatch, localappdata_temporal):
+    def fallar():
+        raise OSError(f"detalle privado {CENTINELA}")
+
+    codigo = _main_con_registro(
+        monkeypatch,
+        "python -m src.sql_explorer.ver_tabla",
+        fallar,
+    )
+
+    ruta = _ruta_registro_temporal(localappdata_temporal)
+    (evento,) = _eventos(ruta)
+
+    assert codigo == 2
+    assert evento["decision"] == "bloqueado"
+    assert evento["patron"] == "sql_explorer"
+    assert evento["identidad"] is None
+    assert evento["motivo"] == "error_interno:OSError"
+    assert CENTINELA not in ruta.read_text(encoding="utf-8")
+
+
+def test_error_interno_json_invalido_se_registra(monkeypatch, localappdata_temporal):
+    assert _ejecutar_main(monkeypatch, b"{no es json", _identidad_prohibida) == 2
+
+    (evento,) = _eventos(_ruta_registro_temporal(localappdata_temporal))
+
+    assert evento["herramienta"] is None
+    assert evento["patron"] is None
+    assert evento["motivo"] == "error_interno:JSONDecodeError"
+
+
+def test_decidir_conserva_la_excepcion_original():
+    def fallar():
+        raise subprocess.TimeoutExpired(cmd="whoami", timeout=10)
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        hook.decidir(_entrada("python -m src.sql_explorer.ver_tabla"), fallar)
+
+
+def test_registro_anade_una_linea_por_evento(monkeypatch, localappdata_temporal):
+    for identidad in (IDENTIDAD_CORRECTA, "mostrador\\usuari", IDENTIDAD_CORRECTA):
+        _main_con_registro(
+            monkeypatch,
+            "python -m src.sql_explorer.buscar_objetos",
+            _identidad_fija(identidad),
+        )
+
+    ruta = _ruta_registro_temporal(localappdata_temporal)
+    lineas = ruta.read_bytes().split(b"\n")
+
+    assert lineas[-1] == b""
+    assert b"\r" not in ruta.read_bytes()
+    assert [evento["decision"] for evento in _eventos(ruta)] == [
+        "permitido",
+        "bloqueado",
+        "permitido",
+    ]
+
+
+def test_rotacion_al_alcanzar_el_limite(monkeypatch, tmp_path):
+    ruta = tmp_path / "registro.jsonl"
+    monkeypatch.setattr(hook, "TAMANO_MAXIMO_REGISTRO", 100)
+
+    ruta.write_text("x" * 100, encoding="utf-8")
+    (tmp_path / "registro.jsonl.1").write_text("copia anterior", encoding="utf-8")
+
+    evaluacion = hook.Evaluacion(0, "", "sql_explorer", IDENTIDAD_CORRECTA)
+    hook.registrar_evento("PowerShell", evaluacion, ruta=str(ruta))
+
+    assert (tmp_path / "registro.jsonl.1").read_text(encoding="utf-8") == "x" * 100
+    (evento,) = _eventos(ruta)
+    assert evento["decision"] == "permitido"
+
+
+def test_sin_rotacion_por_debajo_del_limite(monkeypatch, tmp_path):
+    ruta = tmp_path / "registro.jsonl"
+    monkeypatch.setattr(hook, "TAMANO_MAXIMO_REGISTRO", 10_000)
+
+    evaluacion = hook.Evaluacion(0, "", "sql_explorer", IDENTIDAD_CORRECTA)
+    hook.registrar_evento("PowerShell", evaluacion, ruta=str(ruta))
+    hook.registrar_evento("PowerShell", evaluacion, ruta=str(ruta))
+
+    assert len(_eventos(ruta)) == 2
+    assert not (tmp_path / "registro.jsonl.1").exists()
+
+
+def test_marca_de_tiempo_iso_con_zona(tmp_path):
+    ruta = tmp_path / "registro.jsonl"
+    fijo = datetime.datetime(
+        2026, 9, 29, 20, 15, 3, 123456,
+        tzinfo=datetime.timezone(datetime.timedelta(hours=2)),
+    )
+
+    evaluacion = hook.Evaluacion(0, "", "sql_explorer", IDENTIDAD_CORRECTA)
+    hook.registrar_evento("PowerShell", evaluacion, ruta=str(ruta), reloj=lambda: fijo)
+
+    (evento,) = _eventos(ruta)
+
+    assert evento["ts"] == "2026-09-29T20:15:03.123+02:00"
+
+
+def test_marca_de_tiempo_real_tiene_zona(monkeypatch, localappdata_temporal):
+    _main_con_registro(
+        monkeypatch,
+        "python -m src.sql_explorer.buscar_objetos",
+        _identidad_fija(IDENTIDAD_CORRECTA),
+    )
+
+    (evento,) = _eventos(_ruta_registro_temporal(localappdata_temporal))
+
+    assert datetime.datetime.fromisoformat(evento["ts"]).utcoffset() is not None
+
+
+def test_subproceso_real_escribe_en_localappdata_redirigido(localappdata_temporal):
+    """Hook completo en un proceso real: comando con patrón y JSON inválido.
+
+    La identidad real de este equipo no se simula; solo se comprueba que el
+    evento llega al registro redirigido y que coincide con el código de salida.
+    """
+
+    resultado = _ejecutar_script(
+        RUTA_HOOK,
+        json.dumps(_entrada(f"python -m src.sql_explorer.ver_tabla {CENTINELA}")).encode(),
+    )
+
+    ruta = _ruta_registro_temporal(localappdata_temporal)
+    (evento,) = _eventos(ruta)
+
+    assert resultado.returncode in (0, 2)
+    assert evento["decision"] == ("permitido" if resultado.returncode == 0 else "bloqueado")
+    assert evento["patron"] == "sql_explorer"
+    assert CENTINELA not in ruta.read_text(encoding="utf-8")
+
+
+def test_ruta_por_defecto_fuera_del_repositorio(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+
+    ruta = Path(hook.ruta_registro()).resolve()
+
+    assert ruta == (tmp_path / "ControlFarmacias" / "hooks" / "identidad_farmatic.jsonl").resolve()
+    assert RAIZ.resolve() not in ruta.parents
+    assert "logs" not in [parte.lower() for parte in ruta.relative_to(tmp_path.resolve()).parts]
+
+
+def test_localappdata_real_fuera_del_repositorio():
+    if not LOCALAPPDATA_REAL:
+        pytest.skip("LOCALAPPDATA no está definida en este equipo")
+
+    assert RAIZ.resolve() not in Path(LOCALAPPDATA_REAL).resolve().parents
