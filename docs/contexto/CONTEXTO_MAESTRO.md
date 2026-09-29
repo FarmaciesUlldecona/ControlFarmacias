@@ -74,9 +74,13 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
 - `src/database` y `src/sql_explorer`: acceso y barreras de solo lectura a
   Farmatic.
 - `src/supabase_client`: integración histórica de albaranes y documentos.
+- `sql/migrations/19_cf_privilegios_minimos.sql` (+ `.rollback.sql`): migración
+  más reciente, desplegada en producción (Hito 2AX, 2026-09-29): anon y
+  authenticated sin acceso a `public`; `service_role` solo con lo que usa el
+  código.
 - `sql/migrations/18_cf_conciliacion_manual_atomica.sql` (+ `.rollback.sql`):
-  migración más reciente, desplegada en producción (Hito 2AW, 2026-09-28).
-  El Python vigente de conciliación la exige. Anterior: la 17 (Hito 2AS).
+  desplegada en producción (Hito 2AW, 2026-09-28). El Python vigente de
+  conciliación la exige.
 
 ## Arquitectura multirepositorio
 

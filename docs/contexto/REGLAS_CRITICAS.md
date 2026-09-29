@@ -147,6 +147,15 @@ módulos parciales.
 
 ## Pruebas
 
+- **Criterio de postcheck de privilegios (Pio, Hito 2AX, 2026-09-29)** para todo
+  despliegue futuro: (1) producción antes vs después: solo cambian los objetos
+  del alcance de la migración; (2) los objetos del alcance quedan iguales a la
+  referencia local; (3) los objetos fuera de alcance quedan idénticos antes y
+  después. Cualquier otra diferencia → PARAR (sin rollback sin confirmación de
+  Pio). Las diferencias conocidas del baseline local fuera de alcance no son
+  motivo de parada si cumplen (3).
+- **Preflight de propietarios (2AX):** ningún objeto de `public` con propietario
+  distinto de `postgres`; si aparece → PARAR.
 - **Norma de Pio (Hito 2AX, 2026-09-28):** todo script de despliegue productivo
   se ensaya COMPLETO en local antes de usarlo en producción: de principio a fin
   (verificación de SHA contra el commit, precondiciones, aplicación, commit y

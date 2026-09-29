@@ -164,7 +164,7 @@ EN VIVO** durante esta consolidación documental.
 - El Python de 2AR (envío de `p_clase_fallo`) exige la migración 17; para
   revertir, primero el código y después el rollback SQL (requiere confirmación
   de Pio).
-- Migración más reciente desplegada: `18_cf_conciliacion_manual_atomica.sql`
+- Migración anterior desplegada: `18_cf_conciliacion_manual_atomica.sql`
   (+ `.rollback.sql`), reglas R5–R9 y D-A/D-B (ver `REGLAS_CRITICAS.md`).
   `CONFIRMADO EN PRODUCCIÓN` (Hito 2AW, aplicada 2026-09-28
   16:09:28–16:09:29 UTC, una transacción con 8 precondiciones, project ref
@@ -192,6 +192,47 @@ EN VIVO** durante esta consolidación documental.
   ejecutar además
   `grant execute on function public.cf_solicitar_reintento_conciliacion(uuid, text) to service_role;`
   para restaurar el ACL previo, guardado en `backup_pre_2aw.json`.
+- Migración más reciente desplegada: `19_cf_privilegios_minimos.sql`
+  (+ `.rollback.sql`), privilegios mínimos. `CONFIRMADO EN PRODUCCIÓN` (Hito 2AX,
+  aplicada 2026-09-29 07:07:45–07:07:46 UTC, una transacción con 8
+  precondiciones, project ref `vklaiuytvegkelgyspxc`, SQL de `f9ff625` en LF con
+  SHA-256 `3a923261419d3a85dbe786881f428c945833f9930c188266ece8d675b4a2cd93`,
+  script `pruebas/auditoria_2ax/desplegar_19.py` de `a66ff4a` ensayado completo
+  en local, con confirmación expresa de Pio). Backup previo READ_ONLY fuera del
+  repo (`backup_pre_2ax.json`) con SHA-256
+  `8f47c66bf98ee84e4938d1b8ce87788e840fea98ebe2c40bcb1164015cba4371`; foto previa
+  inmediata `inventario_predespliegue.json` (SHA-256 `4d12cd95…`). Un primer
+  intento el 2026-09-28 se revirtió sin cambios (defecto del script, corregido).
+  **Matriz resultante** (tablas, vistas y secuencias de `public`): PUBLIC, anon y
+  authenticated sin ningún privilegio; `service_role` solo `SELECT, INSERT` en
+  `documentos_facturas` y `albaranes`, y `SELECT` en `facturas`,
+  `cf_configuracion`, `proveedores`, `facturas_movimientos`,
+  `facturas_albaranes_extraidos` y `normalizacion_ejecuciones`; nada en el resto
+  (se escribe vía RPC SECURITY DEFINER). `cf_validar_factura` y
+  `cf_desvalidar_factura`: solo el propietario. RLS activado en las 16 tablas;
+  políticas y storage sin cambios (bucket `facturas-pdf` privado, sin políticas
+  en `storage.objects`). Privilegios por defecto de `postgres`: solo `postgres` y
+  `service_role` en tablas, secuencias y funciones de `public`, y sin EXECUTE
+  global a PUBLIC en funciones. Postcheck: solo cambiaron los 24 objetos del
+  alcance, iguales a la referencia local 19; huellas de facturas, conciliaciones,
+  `documentos_facturas` y albaranes idénticas; `service_role` lee y ejecuta
+  `cf_evaluar_elegibilidad_conciliacion`; anon recibe `permission denied`.
+- **Verificación de la primera ejecución nocturna con la 19** (2026-09-29, 21:00
+  importación y 21:30 sincronización; revisar el 2026-09-30 por la mañana):
+  1. Task Scheduler (solo lectura): "ControlFarmacias - Importar facturas" y
+     "Sincronización ControlFarmacias" con Last Run Time de la noche y Last Run
+     Result = 0.
+  2. `logs/automatizacion_facturas.log` y `logs/automatizacion_albaranes.log`:
+     la ejecución de la noche sin `permission denied`, `42501` ni errores de
+     Supabase; código de salida 0.
+  3. READ_ONLY en Supabase: `documentos_facturas` y `albaranes` con filas nuevas
+     (`fecha_importacion` de la noche) si hubo PDF o albaranes nuevos; el
+     `IdContador` máximo coherente con el log de sincronización.
+  4. Si falla por privilegios: con confirmación de Pio, aplicar
+     `sql/migrations/19_cf_privilegios_minimos.rollback.sql` (restaura
+     exactamente la matriz y los privilegios por defecto previos) y relanzar la
+     tarea afectada manualmente. No aplica el ajuste manual de la 18: el rollback
+     de la 19 no toca funciones de conciliación.
 - Normalizador V2 declarado por el pipeline: `2.2.0`.
 - Motor documental local declarado por el servicio: `0.5.0`.
 - `OrquestadorExtraccionProductiva` no declara versión propia. V0.1.3 identifica
@@ -220,6 +261,22 @@ ARCHIVADA` mediante el registro/certificación del Hito 0, 2026-09-24; no revali
 mediante consulta remota posterior.
 
 ## Límites conocidos
+
+- Riesgo residual aceptado por Pio (Hito 2AX, 2026-09-28): los privilegios por
+  defecto de `supabase_admin` sobre `public` (ALL en tablas, secuencias y
+  funciones para anon, authenticated y service_role) no se pueden alterar desde
+  `postgres` (no es miembro de `supabase_admin` ni superusuario). Un objeto que
+  cree `supabase_admin` en `public` nacería abierto. Hoy no hay ninguno.
+  **Comprobación obligatoria en todo preflight futuro:** ningún objeto de
+  `public` (tablas, vistas, secuencias, funciones) con propietario distinto de
+  `postgres`; si aparece alguno → PARAR.
+- Deuda del baseline (Hito 2AX, aceptada por Pio): 4 funciones fuera del alcance
+  de la 19 tienen en producción privilegios explícitos que el baseline local no
+  reproduce (privilegios por defecto de Supabase): `cf_historial_append_only()`,
+  `cf_set_updated_at()` y `cf_resultado_conciliacion(numeric,numeric)` con
+  EXECUTE explícito para PUBLIC, anon, authenticated y service_role; y
+  `cf_solicitar_reprocesado(uuid,text)` con EXECUTE para service_role.
+  Idénticas antes y después de la 19. Se suma a la deuda de baseline de 2AS.
 
 - Deuda aceptada por Pio (Hito 2AS, 2026-09-25; `CONFIRMADO EN PRODUCCIÓN` por
   preflight READ_ONLY): el baseline local (`sql/staging/00`) no reproduce los
