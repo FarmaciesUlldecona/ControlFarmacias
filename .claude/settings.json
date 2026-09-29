@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "LESSHISTFILE": "-"
+  },
+  "permissions": {
+    "allow": [
+      "PowerShell(.\\.venv\\Scripts\\python.exe -B -m src.sql_explorer.*)",
+      "Bash(./.venv/Scripts/python.exe -B -m src.sql_explorer.*)",
+      "PowerShell(whoami)",
+      "Bash(whoami)",
+      "PowerShell(git status *)",
+      "Bash(git status *)",
+      "PowerShell(git diff *)",
+      "Bash(git diff *)",
+      "PowerShell(git log *)",
+      "Bash(git log *)",
+      "PowerShell(git branch)",
+      "Bash(git branch)",
+      "PowerShell(git branch --show-current)",
+      "Bash(git branch --show-current)",
+      "PowerShell(git branch -a)",
+      "Bash(git branch -a)",
+      "PowerShell(git branch -v)",
+      "Bash(git branch -v)"
+    ],
+    "ask": [
+      "PowerShell(*sincronizar_albaranes*)",
+      "Bash(*sincronizar_albaranes*)",
+      "PowerShell(*importar_albaranes_historicos*)",
+      "Bash(*importar_albaranes_historicos*)",
+      "PowerShell(*probar_albaranes*)",
+      "Bash(*probar_albaranes*)",
+      "PowerShell(*explorar_base_datos*)",
+      "Bash(*explorar_base_datos*)",
+      "PowerShell(*importar_facturas_drive*)",
+      "Bash(*importar_facturas_drive*)",
+      "PowerShell(*ejecutar_sincronizacion*)",
+      "Bash(*ejecutar_sincronizacion*)",
+      "PowerShell(*ejecutar_importacion_facturas*)",
+      "Bash(*ejecutar_importacion_facturas*)",
+      "PowerShell(*schtasks*)",
+      "Bash(*schtasks*)"
+    ],
+    "deny": [
+      "PowerShell(git push *)",
+      "Bash(git push *)",
+      "PowerShell(git reset *)",
+      "Bash(git reset *)",
+      "PowerShell(git clean *)",
+      "Bash(git clean *)",
+      "PowerShell(git checkout -- *)",
+      "Bash(git checkout -- *)",
+      "PowerShell(git restore *)",
+      "Bash(git restore *)",
+      "PowerShell(git stash drop *)",
+      "Bash(git stash drop *)",
+      "PowerShell(git stash clear)",
+      "Bash(git stash clear)",
+      "PowerShell(pip install *)",
+      "Bash(pip install *)",
+      "PowerShell(pip3 install *)",
+      "Bash(pip3 install *)",
+      "PowerShell(* -m pip install *)",
+      "Bash(* -m pip install *)",
+      "PowerShell(winget *)",
+      "Bash(winget *)",
+      "PowerShell(*pyvenv.cfg*)",
+      "Bash(*pyvenv.cfg*)",
+      "Edit(**/pyvenv.cfg)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Monitor",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe",
+            "args": [
+              "-I",
+              "-S",
+              "-B",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/verificar_identidad_farmatic.py"
+            ],
+            "timeout": 30,
+            "statusMessage": "Verificando identidad antes de acceder a Farmatic"
+          }
+        ]
+      }
+    ]
+  }
+}

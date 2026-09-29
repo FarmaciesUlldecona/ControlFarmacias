@@ -47,3 +47,8 @@ pruebas/facturas/resultados/
 .DS_Store
 Thumbs.db
 pruebas/facturas/documentos/fixtures_2ap/
+
+# Configuración personal que no debe versionarse en la raíz
+/.gitconfig
+/.lesshst
+/.claude/settings.local.json

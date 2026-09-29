@@ -167,6 +167,7 @@ La conexión certificada usa `ApplicationIntent=ReadOnly`, el login dedicado
 wrappers validan `SELECT/WITH` y bloquean `execute` nativo, `executemany`, `commit`
 y accesos indirectos equivalentes. Los tests unitarios no necesitan conectarse a
 Farmatic.
+Claude Code añade en `.claude/` una capa previa (permisos, hook de identidad `whoami` y skill `farmatic-sql-explorer`) que no sustituye a `obtener_conexion()`.
 
 ## Persistencia multifactura
 
