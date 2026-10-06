@@ -135,6 +135,56 @@ EN VIVO** durante esta consolidación documental.
   `CANDIDATO_ALBARAN_NO_PROMOVIDO`); en conciliación quedaría `NO_APTA`
   (`FALTAN_ALBARANES_MERCANCIA`). No se corrige.
 
+### Primera conciliación manual one-shot productiva (Hito 2AT rev2)
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-06, con confirmación expresa de Pio. Una
+única llamada a `WorkerAutomatico.ejecutar_una_manual_conciliacion()` mediante
+`construir_worker_manual_productivo` (worker `cf-2at-manual-conciliacion`,
+cliente `service_role`), 07:26:30–07:26:32 UTC, desde el commit `522ad3e`.
+Scripts: `pruebas/auditoria_2at/` (`auditoria_readonly.py`, solo lectura;
+`ejecutar_una_vez.py`, con revalidación previa y guard de ejecución única),
+ensayados completos en PostgreSQL 17 local
+(`tests/facturas/runtime_supabase/test_ensayo_fase4_2at.py`). Evidencias fuera
+del repositorio en `C:\ControlFarmacias\evidencias_2at\` (datos de negocio, no
+versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
+
+- Preflight READ_ONLY (`PREFLIGHT_OK`), snapshot por fila sobre columnas
+  explícitas y revalidación del candidato (idéntico al de la víspera en id,
+  huella de fila, simulación y elegibles).
+- Elegibles en el ordering oficial: 08007973, 08007972 y 08007970 (Alliance,
+  2026-06-30; desempate por id). No elegibles: 08007971 (`FALTAN_ALBARANES_MERCANCIA`,
+  deuda 2AU), 08007969 y HEFAME 0563834757 (`TOTAL_NO_EXPLICADO`) y 6 ya
+  `CONCILIADA`.
+- Factura reclamada = candidato n.º 1 confirmado por Pio: 08007973
+  (`2a1a378e-d277-45d6-a910-d4860f4151d8`), 22,49 EUR.
+- Resultado: `CONCILIADA`, importe 22,4900, explicado 22,4900, diferencia
+  0,0000, tolerancia 0,0500; conciliación `e835b2d6-9390-48a2-ab1b-a6a864a5f12f`,
+  intento 1, disparador y provenance `MANUAL_ONE_SHOT`, `COMPLETADA`,
+  `es_actual`; clave idempotente idéntica a la simulada antes de ejecutar.
+  Intentos de conciliación 1, intentos fallidos 0, sin próximo reintento.
+- Albaranes casados 1:1 (`MATCH_UNICO`, número EXACTO, proveedor Farmatic
+  "1.- SAFA", id 2): 08M26924 (PDF 12,45, PUC 12,44, IdContador 280242) y
+  08C23236 (PDF 10,04, PUC 10,05, IdContador 280269). Sin movimientos ni abonos.
+- Postcheck por huellas (`POSTCHECK_OK`): solo cambió la fila de 08007973
+  (estado, intentos, diferencia_albaranes, updated_at); filas nuevas: 1
+  conciliación, 2 detalles y 2 eventos de historial (claim y persistida), todos
+  de esa factura. Conciliaciones previas, albaranes, extraídos y movimientos
+  intactos. Flags `f|f|f|{PIO}`, `cf_configuracion` idéntica, workers 0, locks
+  0, claims 0, NORMALIZANDO 0.
+- Conteos tras el hito: `facturas` 12 (7 `CONCILIADA`, 5 `PENDIENTE_CONCILIAR`),
+  `conciliaciones` 13, `conciliacion_detalles` 751, `historial_facturas` 35,
+  `albaranes` 3688, `documentos_facturas` 160.
+- Verificación previa de las noches del 29/09 y 30/09 con la 19: códigos de
+  salida 0 y sin `permission denied`/42501 en los logs; filas nuevas en
+  `documentos_facturas` (1) y `albaranes` (46 y 29) coherentes con los logs. El
+  historial del Programador de tareas ya no conserva esas noches.
+- Diferencias admitidas por Pio entre el selector reproducido READ_ONLY y el
+  núcleo de la migración 18: sin `for update of f skip locked`, sin `limit 1`,
+  `p_modo_ejecucion` sustituido por parámetro `'MANUAL_ONE_SHOT'` y sin
+  `into v_id` (fuera de PL/pgSQL sería DDL).
+- Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
+  mismo código).
+
 ### Evolución histórica útil
 
 - La certificación 2AJ del 2026-09-22 registró 141 PDF omitidos y 138 documentos
@@ -183,7 +233,8 @@ EN VIVO** durante esta consolidación documental.
   las 12 facturas, 12 conciliaciones, 749 detalles, configuración e historial
   idénticas; flags, workers, locks y claims sin cambios. Diseño en
   `pruebas/auditoria_2av/DISENO.md`. El Python de conciliación exige la 18.
-  **No se ha ejecutado ninguna conciliación con la 18** (ni worker ni flags).
+  Primera y única conciliación ejecutada con la 18: Hito 2AT rev2 (ver "Primera
+  conciliación manual one-shot productiva"); sin worker automático ni cambio de flags.
 - **Rollback productivo de la 18** (solo con confirmación de Pio; primero el
   código, después el SQL): el rollback versionado deja
   `cf_solicitar_reintento_conciliacion` con EXECUTE solo para `authenticated`

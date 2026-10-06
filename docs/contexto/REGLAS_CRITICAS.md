@@ -94,7 +94,8 @@ Actualizado: 2026-09-24.
     desconocido es `TRANSITORIO`, nunca `NO_SOPORTADO`.
 - Reglas aprobadas por Pio para la migración 18 (Hito 2AV, 2026-09-25;
   `CONFIRMADO POR TEST` en PostgreSQL 17 local y `CONFIRMADO EN PRODUCCIÓN`,
-  desplegada en el Hito 2AW el 2026-09-28; ninguna conciliación ejecutada aún):
+  desplegada en el Hito 2AW el 2026-09-28; primera conciliación manual one-shot
+  productiva en el Hito 2AT rev2, 2026-10-06, ver `ESTADO_ACTUAL.md`):
   - **R5 claim manual de conciliación:** `p_modo_ejecucion` `AUTOMATICO` o
     `MANUAL_ONE_SHOT`. `MANUAL_ONE_SHOT` solo omite `conciliacion_automatica`;
     selector y ordering idénticos a la migración 14; como máximo 1 factura; sin
