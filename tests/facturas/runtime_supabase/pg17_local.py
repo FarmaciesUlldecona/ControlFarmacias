@@ -86,6 +86,10 @@ MIGRACION_17 = MIG / "17_cf_replay_y_fallos_no_bloqueantes.sql"
 ROLLBACK_17 = MIG / "17_cf_replay_y_fallos_no_bloqueantes.rollback.sql"
 MIGRACION_18 = MIG / "18_cf_conciliacion_manual_atomica.sql"
 ROLLBACK_18 = MIG / "18_cf_conciliacion_manual_atomica.rollback.sql"
+MIGRACION_19 = MIG / "19_cf_privilegios_minimos.sql"
+ROLLBACK_19 = MIG / "19_cf_privilegios_minimos.rollback.sql"
+MIGRACION_20 = MIG / "20_cf_alliance_tolerancia_enriquecimiento.sql"
+ROLLBACK_20 = MIG / "20_cf_alliance_tolerancia_enriquecimiento.rollback.sql"
 
 
 def esquema(pg: "_Pg") -> str:
@@ -262,6 +266,8 @@ class ClientePg17:
                 texto = _lit(json.dumps(valor, ensure_ascii=False, default=str)) + "::jsonb"
             elif clave == "p_segmentos_autorizados":
                 texto = ("array[" + ",".join(_lit(v) for v in valor) + "]::text[]") if valor else "'{}'::text[]"
+            elif isinstance(valor, (dict, list)):  # 2AZ: p_enriquecimiento y otros jsonb
+                texto = _lit(json.dumps(valor, ensure_ascii=False, default=str)) + "::jsonb"
             else:
                 texto = _lit(valor)
             argumentos.append(f"{clave} => {texto}")
@@ -361,14 +367,36 @@ def _ejecuciones(pg: _Pg, documento_id: str):
 # Plantillas por variante de esquema
 # --------------------------------------------------------------------------
 
-VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback")
+VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback", "19", "20", "20_rollback")
 
 
 def construir_plantilla(contenedor: str, variante: str) -> str:
     """16: cadena 2AN; 17: 16 + migracion 17 aplicada dos veces; 16_rollback: 16 + 17 + rollback.
 
     18: 17 + migracion 18 aplicada dos veces; 17_rollback: 17 + 18 + rollback de la 18.
+    19 (2AZ): 18 + rollback de la 19 (matriz y privilegios por defecto productivos, 2AX) + 19.
+    20: 19 + migracion 20 aplicada dos veces; 20_rollback: 20 + rollback de la 20.
+    Idempotente: si la plantilla ya existe en el contenedor, se reutiliza.
     """
+    assert variante in VARIANTES
+    existente = _Pg(contenedor, "postgres").sql(
+        f"select count(*) from pg_database where datname = 'cf_plantilla_{variante}'")
+    if existente == "1":
+        return f"cf_plantilla_{variante}"
+    if variante in ("19", "20", "20_rollback"):
+        nombre = f"cf_plantilla_{variante}"
+        base = construir_plantilla(contenedor, "18" if variante == "19" else "19" if variante == "20" else "20")
+        _docker("exec", contenedor, "createdb", "-U", "postgres", "-T", base, nombre)
+        pg = _Pg(contenedor, nombre)
+        if variante == "19":
+            pg.sql(ROLLBACK_19.read_text(encoding="utf-8"))
+            pg.sql(MIGRACION_19.read_text(encoding="utf-8"))
+        elif variante == "20":
+            pg.sql(MIGRACION_20.read_text(encoding="utf-8"))
+            pg.sql(MIGRACION_20.read_text(encoding="utf-8"))
+        else:
+            pg.sql(ROLLBACK_20.read_text(encoding="utf-8"))
+        return nombre
     assert variante in VARIANTES
     nombre = f"cf_plantilla_{variante}"
     _docker("exec", contenedor, "createdb", "-U", "postgres", nombre)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -24,7 +25,22 @@ TIPOS_PEDIDO_MERCANCIA_ALLIANCE = frozenset({
     "PLATAFORMA 360",
     "COSTO LABORAT.",
     "ECOCEUTICS",
+    # R10 (Hito 2AZ, Pio): mercancia; la prueba de recepcion es el cruce con
+    # Supabase.albaranes en la conciliacion.
+    "DIRECTO",
+    "ENCARGO VACUNAS",
+    "MIS RESERVAS",
+    "TELEVENTA 2",
+    "COSTO TELEVENTA",
+    "SERVICIO COVID19",
 })
+# R10: tipo ECOCEUTICS dentro del bloque ABONOS -> abono (resta del total).
+TIPOS_PEDIDO_ABONO_ALLIANCE = frozenset({"ECOCEUTICS"})
+# D8: motivo veraz de cada fila no promovida.
+MOTIVO_NO_PROMOCION = {
+    "ESTRUCTURA_Y_CONCEPTO_INSUFICIENTES": "TIPO_PEDIDO_NO_CERTIFICADO",
+    "SENTIDO_Y_SIGNO_NO_COHERENTES_O_NO_DOCUMENTADOS": "SENTIDO_O_SIGNO_NO_COHERENTE",
+}
 
 
 def clasificar_fila_economica_alliance(
@@ -60,6 +76,10 @@ def clasificar_fila_economica_alliance(
         "mismo_hecho_economico_resumen": False,
         "relacion_documental": None,
     }
+    if signo == "CERO":
+        # R10 (2AZ): una fila de importe 0,00 se registra como informativa; no se
+        # promueve, no genera movimiento y no bloquea la factura.
+        return {**resultado, "concepto": "INFORMATIVA_IMPORTE_CERO", "regla": "IMPORTE_CERO_INFORMATIVO"}
     if not (
         (sentido == "ABONO" and signo == "NEGATIVO")
         or (sentido == "CARGO" and signo == "POSITIVO")
@@ -100,6 +120,13 @@ def clasificar_fila_economica_alliance(
             **resultado,
             "concepto": "ALBARAN_MERCANCIA",
             "regla": "BLOQUE_CARGOS_Y_TIPO_PEDIDO_MERCANCIA_CERTIFICADO",
+        }
+    if sentido == "ABONO" and tipo in TIPOS_PEDIDO_ABONO_ALLIANCE:
+        return {
+            **resultado,
+            "concepto": "ABONO",
+            "categoria_movimiento": "ABONO_COMERCIAL",
+            "regla": "BLOQUE_ABONOS_Y_TIPO_PEDIDO_ABONO_CERTIFICADO",
         }
     return resultado
 
@@ -262,7 +289,7 @@ class AdaptadorAlliance(AdaptadorBase):
     """
 
     id = "alliance-local"
-    version = "1.2.0"
+    version = "1.3.0"
     capacidades = {
         "segmentacion": "SOPORTADO_MULTIFACTURA_DETERMINISTA",
         "cabecera": "SOPORTADO_MONEDA_NULL_NO_DOCUMENTADA",
@@ -331,16 +358,31 @@ class AdaptadorAlliance(AdaptadorBase):
         vencimientos = self._vencimientos(documento, paginas)
         otros = self._otros(documento, paginas[0], fiscal_aux)
         controles = self._controles(cabecera, impuestos, fiscal_aux, vencimientos)
-        no_promovidos = sum(
-            c["clasificacion_economica"]["concepto"] == "NO_DEMOSTRABLE"
-            for c in candidatos
-        )
-        incidencias = ([{
+        # D8 (2AZ): un motivo veraz por causa, con los tipos literales afectados.
+        no_promovidos: dict[str, list[str]] = {}
+        informativas = []
+        for c in candidatos:
+            clasificacion = c["clasificacion_economica"]
+            if clasificacion["concepto"] == "NO_DEMOSTRABLE":
+                motivo = MOTIVO_NO_PROMOCION.get(clasificacion["regla"], clasificacion["regla"])
+                no_promovidos.setdefault(motivo, []).append(str((c.get("tipo_pedido") or {}).get("valor") or ""))
+            elif clasificacion["concepto"] == "INFORMATIVA_IMPORTE_CERO":
+                informativas.append(c["numero_referencia"]["valor"])
+        incidencias = [{
             "codigo": "CANDIDATO_ALBARAN_NO_PROMOVIDO",
-            "cantidad": no_promovidos,
+            "cantidad": len(tipos),
             "bloqueante": False,
-            "motivo": "FALTA_EVIDENCIA_POSITIVA_DE_ROL_O_SEGMENTACION",
-        }] if no_promovidos else [])
+            "motivo": motivo,
+            "tipos_pedido": sorted(set(tipos)),
+        } for motivo, tipos in sorted(no_promovidos.items())]
+        if informativas:
+            incidencias.append({
+                "codigo": "FILA_IMPORTE_CERO_INFORMATIVA",
+                "cantidad": len(informativas),
+                "bloqueante": False,
+                "motivo": "IMPORTE_CERO_REGISTRADO_SIN_PROMOCION",
+                "referencias": informativas,
+            })
         movimientos_sin_sentido = [m for m in movimientos if m["sentido"] is None]
         if movimientos_sin_sentido:
             incidencias.append({
@@ -348,9 +390,15 @@ class AdaptadorAlliance(AdaptadorBase):
                 "cantidad": len(movimientos_sin_sentido),
                 "bloqueante": False,
             })
+        # Una fecha queda sin importe solo si ninguna de sus ocurrencias lo trae (R14).
+        con_importe = {v["fecha"]["valor"] for v in vencimientos if v["importe"] is not None}
+        sin_importe = sorted({v["fecha"]["valor"] for v in vencimientos} - con_importe)
+        if any(v.get("contradictorio") for v in vencimientos):
+            incidencias.append({"codigo": "VENCIMIENTO_CONTRADICTORIO_ENTRE_HOJAS", "bloqueante": False})
         incidencias.extend([
             {"codigo": "MONEDA_NO_DOCUMENTADA", "bloqueante": False},
-            {"codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO", "cantidad": len(vencimientos), "bloqueante": False},
+            *([{"codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO", "cantidad": len(sin_importe), "bloqueante": False}]
+              if sin_importe else []),
         ])
         return {
             "segmento": {
@@ -666,7 +714,7 @@ class AdaptadorAlliance(AdaptadorBase):
         salida = []
         for candidato in candidatos:
             clasificacion = candidato["clasificacion_economica"]
-            if clasificacion["concepto"] in {"ALBARAN_MERCANCIA", "NO_DEMOSTRABLE"}:
+            if clasificacion["concepto"] in {"ALBARAN_MERCANCIA", "NO_DEMOSTRABLE", "INFORMATIVA_IMPORTE_CERO"}:
                 continue
             relacion = relaciones_por_candidato.get(candidato["orden"])
             salida.append({
@@ -768,19 +816,51 @@ class AdaptadorAlliance(AdaptadorBase):
         }
 
     def _vencimientos(self, documento: DocumentoLocal, paginas) -> list[dict[str, Any]]:
-        salida = []
-        for pagina in paginas:
+        """R14 (2AZ): en la hoja de totales (primera de la factura), con exactamente una
+        fecha de vencimiento y el TOTAL FACTURA legible en esa misma hoja, el importe
+        del vencimiento es ese total. Las repeticiones de la misma fecha en otras hojas
+        son evidencia del mismo vencimiento; una fecha distinta lo deja sin importe.
+        Nunca se usa el nombre del archivo (R13)."""
+        salida: list[dict[str, Any]] = []
+        for indice, pagina in enumerate(paginas):
             linea = self._linea_identidad(pagina)
-            fechas = palabras_fecha(linea)
-            fecha = fechas[1]
-            salida.append({
-                "orden": len(salida) + 1,
-                "fecha": self.campo_documentado(documento, fecha_iso(fecha.texto), [fecha], linea, "vencimientos", "fecha", "OCURRENCIA_CABECERA_PAGINA", literal=fecha.texto),
-                "importe": None,
-                "medio_pago": None,
-                "provenance": {"pagina": pagina.numero, "ocurrencia_documental": True},
-            })
+            fechas = palabras_fecha(linea)[1:]
+            for fecha in fechas:
+                importe = None
+                regla = "IMPORTE_NO_DEMOSTRADO_EN_ESTA_HOJA"
+                if indice == 0:
+                    regla = "IMPORTE_NO_DEMOSTRADO_EN_HOJA_DE_TOTALES"
+                    if len(fechas) == 1:
+                        importe = self._total_factura_legible(documento, pagina)
+                        if importe is not None:
+                            regla = "R14_TOTAL_MISMA_HOJA_VENCIMIENTO_UNICO"
+                # Cada ocurrencia se conserva; el puente multifactura une las de la misma fecha.
+                salida.append({
+                    "orden": len(salida) + 1,
+                    "fecha": self.campo_documentado(documento, fecha_iso(fecha.texto), [fecha], linea, "vencimientos", "fecha", "OCURRENCIA_CABECERA_PAGINA", literal=fecha.texto),
+                    "importe": importe,
+                    "medio_pago": None,
+                    "regla_importe": regla,
+                    "provenance": {"pagina": pagina.numero, "ocurrencia_documental": True},
+                })
+        if len({v["fecha"]["valor"] for v in salida}) > 1:
+            # Fechas distintas entre hojas: ningun vencimiento conserva importe (falla cerrado).
+            for vencimiento in salida:
+                vencimiento["importe"] = None
+                vencimiento["regla_importe"] = "VENCIMIENTO_CONTRADICTORIO_ENTRE_HOJAS"
+                vencimiento["contradictorio"] = True
         return salida
+
+    def _total_factura_legible(self, documento, pagina):
+        try:
+            campo = self._campo_total_etiquetado(documento, pagina, "TOTAL FACTURA", "importe_vencimiento")
+        except StopIteration:
+            return None
+        if campo is None or campo.get("valor") is None:
+            return None
+        return {**campo, "evidencias": [
+            replace(e, tabla="vencimientos", regla="R14_TOTAL_MISMA_HOJA_VENCIMIENTO_UNICO")
+            for e in campo["evidencias"]]}
 
     def _otros(self, documento, pagina, aux):
         compras = []

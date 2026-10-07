@@ -182,6 +182,8 @@ def test_migraciones_06b_y_07_a_13_existen_en_orden() -> None:
         "18_cf_conciliacion_manual_atomica.sql",
         "19_cf_privilegios_minimos.rollback.sql",
         "19_cf_privilegios_minimos.sql",
+        "20_cf_alliance_tolerancia_enriquecimiento.rollback.sql",
+        "20_cf_alliance_tolerancia_enriquecimiento.sql",
     ]
     assert [ruta.name for ruta in sorted(MIGRACIONES.glob("*_cf_*.sql"))] == esperadas
 

@@ -46,6 +46,7 @@ pytestmark = pytest.mark.pg17_local
 ALLIANCE_2AO = FIXTURES / "alliance_2ao_cinco_facturas.pdf"
 ROLLBACK_19 = MIG / "19_cf_privilegios_minimos.rollback.sql"
 MIGRACION_19 = MIG / "19_cf_privilegios_minimos.sql"
+MIGRACION_20 = MIG / "20_cf_alliance_tolerancia_enriquecimiento.sql"
 PUC_PRODUCTIVO = {"08M26924": ("12.44", "17.95", 280242), "08C23236": ("10.05", "14.30", 280269)}
 
 
@@ -140,6 +141,8 @@ def escenario(pg17_nueva_base, tmp_path, monkeypatch):
     pg.sql(ROLLBACK_19.read_text(encoding="utf-8"))
     pg.sql(MIGRACION_19.read_text(encoding="utf-8"))
     pg.sql(MIGRACION_19.read_text(encoding="utf-8"))
+    # 2AZ: el codigo vigente exige la migracion 20 (parametros R11 en cf_configuracion).
+    pg.sql(MIGRACION_20.read_text(encoding="utf-8"))
 
     preparacion = _ClienteServiceRole(pg)
     _registrar(pg, preparacion, ALLIANCE_2AO.read_bytes(), 1)
@@ -148,8 +151,9 @@ def escenario(pg17_nueva_base, tmp_path, monkeypatch):
         "select id::text, numero_factura from public.facturas where proveedor_literal ilike 'ALLIANCE%'")}
     objetivo = facturas["08007973"]
     # Orden de produccion: 08007973 es el n.o 1 (alli por id, aqui se fija por fecha de las otras aptas).
+    # 2AZ: con R10, 08007971 (3 DIRECTO) tambien es apta; se desplaza igual que las otras.
     pg.sql("update public.facturas set fecha_factura = date '2026-07-01' where numero_factura in "
-           "('08007970', '08007972');")
+           "('08007970', '08007972', '08007971');")
     for numero, (puc, pvp, contador) in PUC_PRODUCTIVO.items():
         pg.sql(
             "insert into public.albaranes (farmacia,id_contador,id_proveedor,proveedor,numero_albaran,fecha,"

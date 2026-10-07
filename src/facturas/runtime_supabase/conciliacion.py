@@ -156,10 +156,12 @@ def _importe_compatible(
     tolerancia: Decimal,
     *,
     comparar_magnitud: bool = False,
+    solo_puc: bool = False,
 ) -> Decimal | None:
     esperado = abs(dinero(documental)) if comparar_magnitud else dinero(documental)
     compatibles = []
-    for valor in (candidato.importe_puc, candidato.importe_pvp):
+    valores = (candidato.importe_puc,) if solo_puc else (candidato.importe_puc, candidato.importe_pvp)
+    for valor in valores:
         if valor is None:
             continue
         candidato_normalizado = dinero(valor)
@@ -209,14 +211,17 @@ def buscar_candidato_albaran(
     if importe_para_matching is not None:
         expected = dinero(importe_para_matching)
         for row in by_date:
+            number_match = comparar_numeros_albaran(documental.numero, row.numero_albaran)
+            # D11 (2AZ): sin numero exacto solo se admite el PUC; casar por PVP queda prohibido.
             compatible = _importe_compatible(
                 expected,
                 row,
                 tolerancia_decimal,
                 comparar_magnitud=documental.sentido == "ABONO",
+                solo_puc=number_match != "EXACTA",
             )
             if compatible is not None:
-                amounts.append((row, compatible, comparar_numeros_albaran(documental.numero, row.numero_albaran)))
+                amounts.append((row, compatible, number_match))
     if provider_key == PROVEEDOR_CANONICO_HEFAME_MERCANCIA:
         exact_number = [
             row for row in by_provider
@@ -440,16 +445,45 @@ def conciliar_factura_documental(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class ReglaTolerancia:
+    """R11 (2AZ): tolerancia = max(suelo; min(por_albaran x n; tope)), n = albaranes casados."""
+
+    suelo: Decimal = TOLERANCIA_POR_DEFECTO
+    por_albaran: Decimal = Decimal("0.0100")
+    tope: Decimal = Decimal("0.5000")
+
+    def __post_init__(self) -> None:
+        for nombre in ("suelo", "por_albaran", "tope"):
+            object.__setattr__(self, nombre, dinero(getattr(self, nombre)))
+        if not (Decimal(0) < self.suelo <= self.tope <= Decimal("1.0000")) or not (
+                Decimal(0) <= self.por_albaran <= Decimal("0.0500")):
+            raise ValueError("REGLA_TOLERANCIA_FUERA_DE_RANGO")
+
+    def para(self, albaranes_casados: int) -> Decimal:
+        if albaranes_casados < 0:
+            raise ValueError("albaranes_casados no puede ser negativo")
+        return max(self.suelo, min(self.por_albaran * albaranes_casados, self.tope)).quantize(CUATRO_DECIMALES)
+
+    def como_dict(self, albaranes_casados: int) -> dict[str, str | int]:
+        return {"suelo": str(self.suelo), "por_albaran": str(self.por_albaran), "tope": str(self.tope),
+                "albaranes_casados": albaranes_casados, "tolerancia": str(self.para(albaranes_casados))}
+
+
 def conciliar_importes(
     importe_factura: Decimal | int | float | str,
     detalles: Iterable[DetalleConciliacion],
     *,
     tolerancia: Decimal | int | float | str = TOLERANCIA_POR_DEFECTO,
+    regla: ReglaTolerancia | None = None,
 ) -> ResultadoConciliacion:
+    detalles_tuple = tuple(detalles)
+    casados = sum(1 for d in detalles_tuple if d.tipo_relacion == TipoRelacionConciliacion.UNO_A_UNO)
+    if regla is not None:
+        tolerancia = regla.para(casados)
     tolerancia_decimal = dinero(tolerancia)
     if tolerancia_decimal < 0:
         raise ValueError("La tolerancia no puede ser negativa")
-    detalles_tuple = tuple(detalles)
     factura = dinero(importe_factura)
     explicado = sum(
         (dinero(detalle.importe_aplicado) for detalle in detalles_tuple),
@@ -468,4 +502,6 @@ def conciliar_importes(
         tolerancia=tolerancia_decimal,
         resultado=resultado,
         detalles=detalles_tuple,
+        albaranes_casados=casados,
+        regla_tolerancia=regla.como_dict(casados) if regla is not None else None,
     )

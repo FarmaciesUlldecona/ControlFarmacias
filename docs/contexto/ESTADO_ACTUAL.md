@@ -185,6 +185,81 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
+### Hito 2AZ: Alliance completa, tolerancia proporcional y enriquecimiento (certificado en local, NO desplegado)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-06/07. **Producción no tocada:** solo lecturas
+READ_ONLY para diagnósticos. Reglas R10–R14 y D11 en `REGLAS_CRITICAS.md`; diseño en
+`pruebas/auditoria_2az/DISENO.md`; evidencias fuera del repositorio en
+`C:\ControlFarmacias\evidencias_2az\`.
+
+- **Código:**
+  - adaptador Alliance 1.3.0 (R10, D8 y R14);
+  - puente `multifactura-local-2`;
+  - `buscar_candidato_albaran` con D11;
+  - `ReglaTolerancia` (R11) en `conciliar_importes` y `WorkerConciliacion`;
+  - `runtime_supabase/enriquecimiento.py` (R12) y `construir_worker_enriquecimiento_manual`.
+- **Migración 20** `20_cf_alliance_tolerancia_enriquecimiento.sql` (+ rollback; generada por
+  `pruebas/auditoria_2az/generar_migracion_20.py` desde el texto exacto de la 18):
+  - parámetros R11 con check;
+  - `cf_persistir_conciliacion` con validación y registro de R11;
+  - nueva RPC `cf_enriquecer_factura` (SECURITY DEFINER, owner postgres, solo service_role).
+  - **Certificada en local, NO desplegada.**
+  - Rollback igual al esquema 19 (`pg_dump -s`).
+  - Scripts ensayados completos en local: `desplegar_20.py` y `enriquecer_una_vez.py`.
+- **Orden de despliegue (2AZ-D):** primero la 20 y después el código, sin conciliaciones entre medias.
+- **Primer error operativo real detectado por la conciliación (08007501, Alliance, 6,51 €):**
+  - el albarán 08B96275 (SAFA, 6,51 €; tipo COSTO TELEVENTA) faltaba en Farmatic por un error humano
+    de entrada;
+  - Pio lo registró en Farmatic el 2026-10-06 y llegará a Supabase con la sincronización nocturna;
+  - el volcado READ_ONLY del 2026-10-06 18:05 UTC no lo contiene, así que el banco da 08007501 APTA
+    pero no conciliada (DIFERENCIA, albarán sin casar);
+  - **sin D11 el error habría quedado oculto**: la regla anterior casaba 08B96275 con 08B96475 (PUC
+    2,09) por su PVP de 6,49.
+  - **Pendiente para el próximo preflight con lectura de producción:** verificar READ_ONLY que
+    08B96275 (o el número con que se registrara) existe en `Supabase.albaranes` con PUC 6,51 y
+    proveedor SAFA. Solo informar.
+- **Diagnósticos de la Fase 1** (READ_ONLY, 2026-10-06):
+  - 1.1/1.2: filas COSTO TELEVENTA del corpus: 08B96275 (6,51) es mercancía; 08B79008 y 08B96274
+    tienen importe 0,00 y son informativas. Ninguna está en Supabase.
+  - 1.3: los 18,07 € de 08011733 se componen de 15,91 de `SERVICIO COVID19` 08D32860 (existe en
+    Supabase con PUC 15,91), 2,11 de 08D28707 (ambiguo entre Q040658/2026 y 08M82343; sigue sin casar)
+    y 0,05 de redondeos de 42 albaranes. Con R10 la diferencia baja a 2,16.
+  - 1.4: Alliance imprime una única FECHA VENCIMIENTO por factura y ningún importe de vencimiento.
+    Base de R14.
+- **Banco 2AY con el código 2AZ** (comparación en `evidencias_2az\banco\comparacion_2ay_2az.json`):
+  - facturas Alliance aptas: 35 → 42 (las 5 previstas por 2AU, más 08007501 y 08011733 por la R10
+    ampliada);
+  - conciliadas con R11: 26 de 47; 08010887 sigue CONCILIADA por el suelo.
+  - **D11 cambia el emparejamiento de 11 facturas.** Antes, muchas líneas casaban por PVP con número
+    distinto, casi siempre con albaranes ajenos (p. ej. 08008835 / 08C40230 ↔ 08M35806). D11 las
+    elimina, y 08008835 pasa de CONCILIADA a DIFERENCIA de 18,76.
+- **Defecto previo registrado (D12, NO corregido):** `buscar_candidato_albaran` no tiene exclusividad,
+  y un mismo albarán de Farmatic puede casarse con varias líneas o facturas. D11 lo hace más visible
+  (p. ej. Q039707/2026 en 08006568; 08M39484 entre 08008427 y 08008430). Hito propio.
+- **Hitos futuros registrados (NO implementados):**
+  - a) cierre manual de conciliación con justificación de Pio para facturas en
+    `REVISION_CONCILIACION`, sin alterar albaranes ni importes, con provenance e historial;
+  - b) informe periódico de «albaranes facturados no encontrados en Farmatic» por proveedor y
+    periodo;
+  - c) hito COFARES con la clasificación de Pio (en `REGLAS_CRITICAS.md`).
+- **Suites (2AZ, `--basetemp`, MOSTRADOR\Usuari):**
+  - 1612 passed sin `pg17_local` (incluye 36 tests nuevos del 2AZ);
+  - banco 2AY: 13 passed;
+  - `pg17_local` antes del commit: 104 passed, más el ensayo del despliegue de la 20, que exige verificar
+    el SHA contra el commit y por eso se ejecuta sobre el commit del hito (resultado en el informe
+    del 2AZ).
+  - Tests existentes actualizados por cambio de contrato, cada uno con su justificación:
+    - versión Alliance 1.3.0;
+    - vencimientos con importe por R14;
+    - 08007971 apta por R10;
+    - lista de migraciones;
+    - payloads del simulador con tolerancia R11;
+    - ensayo 2AT con la 20 aplicada;
+    - expectativas del parche 2AU.
+- **Incidente de permisos del 2AZ interrumpido** (2026-10-06): una orden que figuraba como rechazada
+  llegó a ejecutarse (cambio sin commit en `multifactura.py`; guardado y revertido). Documentado en
+  `evidencias_2az\incidente_permisos.md`. Sin efecto en producción.
+
 ### Evolución histórica útil
 
 - La certificación 2AJ del 2026-09-22 registró 141 PDF omitidos y 138 documentos

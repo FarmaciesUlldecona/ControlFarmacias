@@ -123,6 +123,48 @@ Actualizado: 2026-09-24.
   - **R9 `id_proveedor` tolerante:** solo en la comparación de
     `buscar_candidato_albaran` (trim y ceros a la izquierda: `'2' == '0002' == '0002 '`);
     los literales se conservan.
+- Reglas aprobadas por Pio en el Hito 2AZ (2026-10-06/07; `CONFIRMADO POR TEST` en
+  PostgreSQL 17 local; **migración 20 NO desplegada**; diseño en
+  `pruebas/auditoria_2az/DISENO.md`):
+  - **R10 tipos de pedido Alliance** (adaptador 1.3.0):
+    - Mercancía (se promueve; la prueba de recepción es el cruce con
+      `Supabase.albaranes`): `DIRECTO`, `ENCARGO VACUNAS`, `MIS RESERVAS`,
+      `TELEVENTA 2`, `COSTO TELEVENTA` y `SERVICIO COVID19`, además de los ya
+      certificados.
+    - `ECOCEUTICS` en el bloque ABONOS → ABONO (resta).
+    - Filas de importe 0,00 → informativas: se registran, no se promueven y no
+      bloquean.
+    - Cualquier otro tipo falla cerrado con motivo `TIPO_PEDIDO_NO_CERTIFICADO` y el
+      literal (D8).
+  - **R11 tolerancia de conciliación:** `máx(suelo; mín(por_albarán × n; tope))`,
+    con suelo 0,05, por_albarán 0,01, tope 0,50 y n = albaranes casados.
+    - Parámetros en `cf_configuracion`, con check.
+    - Misma regla en la ruta manual y en la automática.
+    - `cf_persistir_conciliacion` la valida y la registra en
+      `conciliaciones.provenance.tolerancia_regla`.
+    - La elegibilidad (control documental, 0,05) no cambia.
+  - **R12 enriquecimiento** (`cf_enriquecer_factura`): camino propio, NO
+    reprocesado.
+    - Solo facturas `PENDIENTE_CONCILIAR`, mismo documento y SHA e identidad
+      económica idéntica.
+    - Solo añade albaranes y movimientos (movimientos solo en MIXTA) y rellena
+      importes de vencimiento NULL; nunca sobrescribe.
+    - Idempotente por clave (replay sin escrituras), con provenance e historial
+      `FACTURA_ENRIQUECIDA`.
+  - **R13:** el nombre del archivo nunca es fuente ni control de ningún dato
+    (tampoco vencimientos).
+  - **R14 vencimientos Alliance:** en la hoja de totales de cada factura, con
+    exactamente una fecha de vencimiento y el TOTAL FACTURA legible en esa hoja, el
+    importe del vencimiento es ese total. Si hay más de una fecha o el total no es
+    legible, queda sin importe e incidencia.
+  - **D11 emparejamiento:** sin número de albarán exacto solo se admite casar por
+    PUC (tolerancia de importe actual y candidato único). Casar por PVP sin número
+    exacto queda prohibido.
+- Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
+  - total de devoluciones = abono;
+  - servicio integral de distribución = cargo sin albarán;
+  - domiciliación bancaria = cargo sin albarán;
+  - desglose del recargo de equivalencia obligatorio.
 - La RPC multifactura autorizada tiene siete parámetros, incluido
   `p_disparador`. La firma antigua de seis no está autorizada para `service_role`.
 - Los disparadores permitidos son `AUTOMATICO`, `REPROCESADO` y

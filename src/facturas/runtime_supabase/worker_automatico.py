@@ -88,6 +88,14 @@ def construir_worker_automatico(
         or conciliacion.tolerancia > configuracion.tolerancia_conciliacion
     ):
         raise ValueError("TOLERANCIA_RUNTIME_SUPERIOR_A_LA_CERTIFICADA")
+    regla = getattr(conciliacion, "regla", None)
+    if regla is not None and (
+        regla.suelo > Decimal("0.0500")
+        or regla.por_albaran > Decimal("0.0100")
+        or regla.tope > Decimal("0.5000")
+    ):
+        # R11 (2AZ): valores certificados de la tolerancia proporcional.
+        raise ValueError("REGLA_TOLERANCIA_SUPERIOR_A_LA_CERTIFICADA")
     if configuracion.luna_habilitada:
         raise ValueError("LUNA_NO_AUTORIZADA_EN_WORKER_AUTOMATICO")
     if configuracion.farmacias_habilitadas != ("PIO",):

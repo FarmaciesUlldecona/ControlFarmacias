@@ -209,19 +209,23 @@ def adaptar_resultado_local(local):
             "movimientos_comerciales":movements,
             "validaciones":[{"codigo":"ADAPTACION_MULTIFACTURA_LOCAL", "resultado":"OK",
                 "descripcion":"Adaptacion mecanica conservando extraccion y provenance",
-                "regla_version":"multifactura-local-1"}],
+                "regla_version":"multifactura-local-2"}],
             "incidencias":[{"codigo":i["codigo"],"severidad":"ERROR" if i.get("bloqueante") else "AVISO",
                 "descripcion":i.get("motivo",i["codigo"]),"bloqueante":bool(i.get("bloqueante")),"paginas":list(range(start,end+1))} for i in raw.get("incidencias",[])],
         }
         # Cabeceras repetidas prueban el mismo vencimiento, no varios cobros.
         # Se conservan todas las evidencias y todas las filas crudas.
+        # R14 (2AZ): solo la ocurrencia de la hoja de totales puede traer importe; se
+        # conserva al unir. Dos importes para la misma fecha no se unen nunca.
         vencimientos = []
         for v in f["vencimientos"]:
             prior = next((x for x in vencimientos if x["fecha"] and v["fecha"]
                 and x["fecha"]["valor"] == v["fecha"]["valor"]
-                and x["importe"] is None and v["importe"] is None), None)
+                and (x["importe"] is None or v["importe"] is None)), None)
             if prior:
                 prior["fecha"]["evidencia"].extend(v["fecha"]["evidencia"])
+                if prior["importe"] is None and v["importe"] is not None:
+                    prior["importe"] = v["importe"]
             else:
                 v["orden"] = len(vencimientos) + 1
                 vencimientos.append(v)
@@ -238,5 +242,5 @@ def adaptar_resultado_local(local):
         facturas.append(f)
     doc={"documento_completo_demostrado":local.documento_completo_demostrado,
          "numero_paginas":local.documento["pages"],"facturas":facturas,
-         "metadata_tecnica":{"version_normalizador":"multifactura-local-1", "documento":serializar(local.documento)}}
+         "metadata_tecnica":{"version_normalizador":"multifactura-local-2", "documento":serializar(local.documento)}}
     return preparar_documento(doc,[])['resultado_json']

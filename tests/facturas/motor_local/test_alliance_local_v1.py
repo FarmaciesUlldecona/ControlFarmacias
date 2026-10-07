@@ -285,7 +285,10 @@ def test_vencimientos_repetidos_se_preservan_por_ocurrencia(resultados):
     factura = _factura(resultados, "08008429")
     assert len(factura["vencimientos"]) == 2
     assert [v["fecha"]["valor"] for v in factura["vencimientos"]] == ["2026-10-10", "2026-10-10"]
-    assert all(v["importe"] is None for v in factura["vencimientos"])
+    # R14 (2AZ): solo la hoja de totales (pagina 8) aporta importe = TOTAL FACTURA de esa hoja.
+    assert [v["importe"]["valor"] if v["importe"] else None for v in factura["vencimientos"]] == [
+        factura["cabecera"]["importe_total"]["valor"], None]
+    assert [v["importe"]["evidencias"][0].pagina for v in factura["vencimientos"] if v["importe"]] == [8]
     assert [v["provenance"]["pagina"] for v in factura["vencimientos"]] == [8, 9]
 
 

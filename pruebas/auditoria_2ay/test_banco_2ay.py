@@ -38,8 +38,10 @@ def test_cuadre_fiscal():
 
 
 def test_tolerancias_candidatas():
-    assert an.tolerancias(3) == {"T1": Decimal("0.05"), "T2": Decimal("0.03"), "T3": Decimal("0.03")}
-    assert an.tolerancias(80) == {"T1": Decimal("0.05"), "T2": Decimal("0.80"), "T3": Decimal("0.50")}
+    assert an.tolerancias(3) == {"T1": Decimal("0.05"), "T2": Decimal("0.03"), "T3": Decimal("0.03"),
+                                 "R11": Decimal("0.05")}
+    assert an.tolerancias(80) == {"T1": Decimal("0.05"), "T2": Decimal("0.80"), "T3": Decimal("0.50"),
+                                  "R11": Decimal("0.50")}
     assert an.tolerancias(150)["T2"] == Decimal("1.00")
 
 
@@ -99,11 +101,14 @@ def test_parche_2au_solo_en_memoria_y_se_restaura():
         "total": {"valor": total, "evidencias": []}}
     with be.parche_2au():
         assert al.clasificar_fila_economica_alliance(fila("DIRECTO", "CARGO", 10.0))["concepto"] == "ALBARAN_MERCANCIA"
-        assert al.clasificar_fila_economica_alliance(fila("COSTO TELEVENTA", "CARGO", 6.51))["concepto"] == "SERVICIO"
+        # 2AZ: la R10 final (COSTO TELEVENTA y SERVICIO COVID19 mercancia) ya esta en el adaptador.
+        assert al.clasificar_fila_economica_alliance(fila("COSTO TELEVENTA", "CARGO", 6.51))["concepto"] == (
+            "ALBARAN_MERCANCIA")
         assert al.clasificar_fila_economica_alliance(fila("ECOCEUTICS", "ABONO", -38.0))["concepto"] == "ABONO"
-        assert al.clasificar_fila_economica_alliance(fila("SERVICIO COVID19", "CARGO", 15.91))["concepto"] == "NO_DEMOSTRABLE"
+        assert al.clasificar_fila_economica_alliance(fila("SERVICIO COVID19", "CARGO", 15.91))["concepto"] == (
+            "ALBARAN_MERCANCIA")
     assert al.TIPOS_PEDIDO_MERCANCIA_ALLIANCE is tipos and al.clasificar_fila_economica_alliance is clasificar
-    assert clasificar(fila("DIRECTO", "CARGO", 10.0))["concepto"] == "NO_DEMOSTRABLE"
+    assert clasificar(fila("TIPO NO CERTIFICADO", "CARGO", 10.0))["concepto"] == "NO_DEMOSTRABLE"
 
 
 def test_salida_dentro_del_repositorio_rechazada():

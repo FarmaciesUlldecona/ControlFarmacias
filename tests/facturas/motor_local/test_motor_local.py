@@ -70,7 +70,7 @@ def test_registro_local_contiene_cofares_hefame_fedefarma_y_alliance():
         ("hefame-local", "1.2.0"),
         ("hplus-consumo-local", "1.0.0"),
         ("fedefarma-local", "1.2.0"),
-        ("alliance-local", "1.2.0"),
+        ("alliance-local", "1.3.0"),  # 2AZ: R10, D8 y R14
         ("ecoceutics-local", "1.1.0"),
         ("eports-local", "1.1.0"),
         ("logista-pharma-local", "1.0.0"),

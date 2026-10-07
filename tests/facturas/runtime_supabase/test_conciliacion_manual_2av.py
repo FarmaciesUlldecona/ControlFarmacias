@@ -260,7 +260,9 @@ def _sim(*ids, automatica=False):
 def _persistir(sim, factura, worker, disparador, clave="k1"):
     return sim.rpc("cf_persistir_conciliacion", {
         "p_factura_id": factura, "p_worker_id": worker, "p_disparador": disparador,
-        "p_idempotency_key": clave, "p_resultado": {"resultado": "CONCILIADA", "detalles": [{}]}}).data
+        # R11 (2AZ): el simulador valida la tolerancia proporcional como la migracion 20.
+        "p_idempotency_key": clave, "p_resultado": {"resultado": "CONCILIADA", "detalles": [{}],
+                                                    "tolerancia": "0.0500", "diferencia": "0"}}).data
 
 
 def test_simulador_manual_flag_apagado_y_ordering():
@@ -289,7 +291,7 @@ def test_simulador_disparador_debe_coincidir_con_el_claim():
 
 def test_simulador_diferencia_consume_intento_y_reintento_reinicia():
     sim = _sim("a", "b")
-    diferencia = {"resultado": "DIFERENCIA", "detalles": []}
+    diferencia = {"resultado": "DIFERENCIA", "detalles": [], "tolerancia": "0.0500", "diferencia": "1"}
     horas = []
     for _ in range(4):
         assert sim.rpc("cf_reclamar_factura_conciliacion_manual_one_shot", {"p_worker_id": "w"}).data[0]["id"] == "a"

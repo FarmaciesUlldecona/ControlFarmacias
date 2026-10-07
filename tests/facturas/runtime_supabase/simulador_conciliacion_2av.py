@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 
 MAX_INTENTOS = 4
@@ -44,6 +45,10 @@ class FacturaSimulada:
 class SupabaseConciliacionMemoria:
     def __init__(self, *, conciliacion_automatica: bool = False):
         self.conciliacion_automatica = conciliacion_automatica
+        # R11 (2AZ): parametros por defecto de cf_configuracion (migracion 20).
+        self.tolerancia_suelo = Decimal("0.0500")
+        self.tolerancia_por_albaran = Decimal("0.0100")
+        self.tolerancia_tope = Decimal("0.5000")
         self.facturas: dict[str, FacturaSimulada] = {}
         self.historial: list[tuple[str, str, dict]] = []
         self.rpcs: list[tuple[str, dict]] = []
@@ -100,6 +105,7 @@ class SupabaseConciliacionMemoria:
                      if e == "CONCILIACION_CLAIM" and i == f.id and d["actor"] == worker), None)
         if modo != disparador:
             raise RuntimeError("DISPARADOR_NO_COINCIDE_CON_CLAIM")
+        self._validar_r11(payload["p_resultado"])
         for c in f.conciliaciones:
             c["es_actual"] = False
         nueva = {"id": f"c-{f.id}-{len(f.conciliaciones) + 1}", "intento": len(f.conciliaciones) + 1,
@@ -110,6 +116,17 @@ class SupabaseConciliacionMemoria:
         self._aplicar_resultado(f, nueva["resultado"])
         self.historial.append(("CONCILIACION_PERSISTIDA", f.id, {"intento": nueva["intento"]}))
         return nueva["id"]
+
+    def _validar_r11(self, resultado):
+        """R11 (2AZ, migracion 20): misma validacion que cf_persistir_conciliacion."""
+        casados = sum(1 for d in resultado.get("detalles", []) if d.get("tipo_relacion") == "UNO_A_UNO")
+        tolerancia = max(self.tolerancia_suelo, min(self.tolerancia_por_albaran * casados, self.tolerancia_tope))
+        if resultado.get("tolerancia") is None or Decimal(str(resultado["tolerancia"])) != tolerancia:
+            raise RuntimeError("TOLERANCIA_NO_COINCIDE_CON_R11")
+        diferencia = abs(Decimal(str(resultado.get("diferencia", 0))))
+        if (resultado["resultado"] == "CONCILIADA" and diferencia > tolerancia) or (
+                resultado["resultado"] == "DIFERENCIA" and diferencia <= tolerancia):
+            raise RuntimeError("RESULTADO_INCOHERENTE_CON_TOLERANCIA")
 
     def _aplicar_resultado(self, f, resultado):
         """D-A (2AW): CONCILIADA reinicia; cualquier otro resultado consume intento (R7)."""

@@ -531,10 +531,11 @@ def test_4_14_caso_real_08007970(base, tmp_path):
         "where f.proveedor_literal ilike 'ALLIANCE%'")}
     assert {n: f["total"] for n, f in facturas.items()} == TOTALES_2AO
     assert (facturas["08007970"]["estado"], facturas["08007970"]["razon"]) == ("APTA", "APTA_MERCANCIA")
-    assert (facturas["08007971"]["estado"], facturas["08007971"]["razon"]) == ("NO_APTA", "FALTAN_ALBARANES_MERCANCIA")
+    # 2AZ (R10): los 3 DIRECTO de 08007971 se promueven; deja de ser FALTAN_ALBARANES_MERCANCIA.
+    assert (facturas["08007971"]["estado"], facturas["08007971"]["razon"]) == ("APTA", "APTA_MERCANCIA")
     # MIXTA: albaranes 13020.88 + movimientos -213.78 = 12807.10 frente a 12807.17 (0.07 > 0.05).
     assert (facturas["08007969"]["estado"], facturas["08007969"]["razon"]) == ("NO_APTA", "TOTAL_NO_EXPLICADO")
-    assert {n for n, f in facturas.items() if f["estado"] == "APTA"} == {"08007970", "08007972", "08007973"}
+    assert {n for n, f in facturas.items() if f["estado"] == "APTA"} == {"08007970", "08007971", "08007972", "08007973"}
     _albaranes(base, numeros=["08007970"])
 
     # Simulacion READ_ONLY (sin claim) con la construccion de detalles oficial.
@@ -550,7 +551,7 @@ def test_4_14_caso_real_08007970(base, tmp_path):
 
     # Ruta manual oficial: reclama el n.o 1 del ordering, sea cual sea.
     orden = _orden_oficial(base)
-    assert len(orden) == 3
+    assert len(orden) == 4  # 2AZ: 08007971 tambien es apta (R10)
     assert _conc(cliente, "real").ejecutar_una_manual() is True
     [c] = _conciliaciones(base)
     assert (c["factura_id"], c["disparador"]) == (orden[0], "MANUAL_ONE_SHOT")

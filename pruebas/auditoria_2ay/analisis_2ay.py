@@ -44,9 +44,12 @@ def _d(valor) -> Decimal | None:
 
 
 def tolerancias(casados: int) -> dict[str, Decimal]:
-    """T1 fija 0,05; T2/T3: 0,01 EUR por albaran casado con tope 1,00 / 0,50."""
+    """T1 fija 0,05; T2/T3: 0,01 EUR por albaran casado con tope 1,00 / 0,50; R11 (2AZ): regla oficial."""
+    from src.facturas.runtime_supabase.conciliacion import ReglaTolerancia
+
     return {"T1": T1, "T2": min(Decimal("0.01") * casados, Decimal("1.00")),
-            "T3": min(Decimal("0.01") * casados, Decimal("0.50"))}
+            "T3": min(Decimal("0.01") * casados, Decimal("0.50")),
+            "R11": ReglaTolerancia().para(casados)}
 
 
 # --------------------------------------------------------------------------- elegibilidad (replica migracion 14)
@@ -408,7 +411,7 @@ def main(supabase_ruta: Path, inventario_ruta: Path, motor_ruta: Path, salida: P
                     puntos.append((casados, float(dif), f'{f["numero"]} ({origen})'))
                 simulaciones.append(fila)
     resumen_t = {}
-    for t in ("T1", "T2", "T3"):
+    for t in ("T1", "T2", "T3", "R11"):
         for variante in ("estado_por_tolerancia", "estado_por_tolerancia_ampliada"):
             estados = Counter(s[variante][t].split(":")[0] for s in simulaciones if variante in s)
             cambian = [s["numero"] + f' ({s["origen"]})' for s in simulaciones if variante in s

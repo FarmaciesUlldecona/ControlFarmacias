@@ -108,7 +108,9 @@ class RepositorioRuntimeSupabase:
             self._cliente.table("cf_configuracion")
             .select(
                 "normalizacion_automatica,conciliacion_automatica,"
-                "luna_habilitada,farmacias_habilitadas,tolerancia_conciliacion"
+                "luna_habilitada,farmacias_habilitadas,tolerancia_conciliacion,"
+                "conciliacion_tolerancia_suelo,conciliacion_tolerancia_por_albaran,"
+                "conciliacion_tolerancia_tope"
             )
             .eq("id", True)
             .single()
@@ -121,6 +123,10 @@ class RepositorioRuntimeSupabase:
             luna_habilitada=bool(fila["luna_habilitada"]),
             farmacias_habilitadas=tuple(fila["farmacias_habilitadas"]),
             tolerancia_conciliacion=Decimal(str(fila["tolerancia_conciliacion"])),
+            # R11 (2AZ, migracion 20): sin estas columnas falla antes de cualquier claim.
+            tolerancia_suelo=Decimal(str(fila["conciliacion_tolerancia_suelo"])),
+            tolerancia_por_albaran=Decimal(str(fila["conciliacion_tolerancia_por_albaran"])),
+            tolerancia_tope=Decimal(str(fila["conciliacion_tolerancia_tope"])),
         )
 
     def crear_signed_url_pdf(
@@ -464,6 +470,31 @@ class RepositorioRuntimeSupabase:
         }).execute()
         return str(respuesta.data)
 
+    def datos_para_enriquecer(self, factura_id: str) -> dict[str, Any]:
+        """R12 (2AZ): lectura service_role de la factura, su documento y sus filas actuales."""
+        factura = (self._cliente.table("facturas")
+                   .select("id,documento_id,farmacia,numero_factura,fecha_factura,importe_total,proveedor_cif,"
+                           "estado_conciliacion_cf,conciliacion_bloqueado_por,datos_extraidos")
+                   .eq("id", factura_id).single().execute()).data
+        documento = (self._cliente.table("documentos_facturas")
+                     .select("id,farmacia,archivo_ruta,archivo_nombre,archivo_hash")
+                     .eq("id", factura["documento_id"]).single().execute()).data
+        albaranes = (self._cliente.table("facturas_albaranes_extraidos")
+                     .select("numero_albaran").eq("factura_id", factura_id).execute()).data or []
+        movimientos = (self._cliente.table("facturas_movimientos")
+                       .select("descripcion_literal,sentido,importe").eq("factura_id", factura_id).execute()).data or []
+        return {"factura": factura, "documento": documento, "albaranes": albaranes, "movimientos": movimientos}
+
+    def enriquecer_factura(self, factura_id: str, worker_id: str, idempotency_key: str,
+                           enriquecimiento: dict[str, Any]) -> Any:
+        """R12 (2AZ, migracion 20): unica escritura, transaccional e idempotente."""
+        return self._cliente.rpc("cf_enriquecer_factura", {
+            "p_factura_id": factura_id,
+            "p_worker_id": worker_id,
+            "p_idempotency_key": idempotency_key,
+            "p_enriquecimiento": enriquecimiento,
+        }).execute().data
+
     def fallar_conciliacion(
         self,
         factura: FacturaTrabajo,
@@ -511,6 +542,9 @@ def payload_conciliacion(resultado: ResultadoConciliacion) -> dict[str, Any]:
             for orden, detalle in enumerate(resultado.detalles, start=1)
         ],
     }
+    if resultado.regla_tolerancia is not None:
+        # R11 (2AZ): la BD recalcula y valida la tolerancia; se registra en provenance.
+        payload["tolerancia_regla"] = dict(resultado.regla_tolerancia)
     return json.loads(json.dumps(payload, ensure_ascii=False, default=str))
 
 

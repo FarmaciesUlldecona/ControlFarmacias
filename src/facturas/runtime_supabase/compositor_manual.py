@@ -27,6 +27,7 @@ from .modelos import (
     ResultadoEtapa,
     ResultadoExtraccionProductiva,
 )
+from .conciliacion import ReglaTolerancia
 from .multifactura import adaptar_resultado_local
 from .repositorios import RepositorioRuntimeSupabase
 from .worker_automatico import WorkerAutomatico, construir_worker_automatico
@@ -246,5 +247,35 @@ def construir_worker_manual_productivo(
         repositorio,
         worker_id,
         tolerancia=configuracion.tolerancia_conciliacion,
+        regla_tolerancia=ReglaTolerancia(
+            suelo=configuracion.tolerancia_suelo,
+            por_albaran=configuracion.tolerancia_por_albaran,
+            tope=configuracion.tolerancia_tope,
+        ),
     )
     return construir_worker_automatico(normalizacion, conciliacion, configuracion)
+
+
+def construir_worker_enriquecimiento_manual(
+    cliente: Any,
+    configuracion: ConfiguracionRuntime,
+    worker_id: str,
+    directorio_trabajo: Path,
+) -> "WorkerEnriquecimiento":
+    """R12 (2AZ): enriquecimiento de UNA factura persistida con el extractor autorizado vigente."""
+    from .enriquecimiento import WorkerEnriquecimiento
+
+    if configuracion.luna_habilitada:
+        raise ValueError("LUNA_NO_AUTORIZADA_EN_COMPOSITOR_MANUAL")
+    if configuracion.farmacias_habilitadas != ("PIO",):
+        raise ValueError("SOLO_PIO_AUTORIZADA_EN_COMPOSITOR_MANUAL")
+    if not worker_id.strip():
+        raise ValueError("WORKER_ID_OBLIGATORIO")
+    return WorkerEnriquecimiento(
+        repositorio=RepositorioRuntimeSupabase(cliente),
+        materializar_pdf=MaterializadorStoragePrivado(cliente, Path(directorio_trabajo)),
+        extractor=ExtractorDocumentalAutorizado(),
+        worker_id=worker_id,
+        campos_requeridos=CAMPOS_REQUERIDOS_MANUAL,
+        campo_documento=CAMPO_DOCUMENTO,
+    )

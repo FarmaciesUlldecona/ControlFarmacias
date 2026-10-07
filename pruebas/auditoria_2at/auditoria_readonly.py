@@ -587,9 +587,17 @@ def _simular(lector: _Lector, factura_id: str) -> dict:
         out["fallo"] = {"codigo": "IMPORTE_FACTURA_AUSENTE",
                         "clase": clasificar_fallo_conciliacion("IMPORTE_FACTURA_AUSENTE", "")}
         return out
+    # 2AZ (R11): la misma regla proporcional que aplica el worker; parametros de
+    # cf_configuracion (migracion 20) o, si aun no existen, los valores certificados.
+    from src.facturas.runtime_supabase.conciliacion import ReglaTolerancia
+    cfg = lector.json("select to_jsonb(c)::text from public.cf_configuracion c where id")
+    regla = ReglaTolerancia(
+        suelo=Decimal(str(cfg.get("conciliacion_tolerancia_suelo", TOLERANCIA_CERTIFICADA))),
+        por_albaran=Decimal(str(cfg.get("conciliacion_tolerancia_por_albaran", "0.0100"))),
+        tope=Decimal(str(cfg.get("conciliacion_tolerancia_tope", "0.5000"))))
     try:
         detalles = repositorio.construir_detalles(factura)
-        resultado = conciliar_importes(factura.importe_total, detalles, tolerancia=TOLERANCIA_CERTIFICADA)
+        resultado = conciliar_importes(factura.importe_total, detalles, regla=regla)
         # Replica literal de la revalidacion previa a la RPC en guardar_conciliacion.
         rev = cliente.table("facturas").select("normalizacion_ejecucion_id,farmacia") \
             .eq("id", factura.factura_id).single().execute().data

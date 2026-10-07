@@ -57,9 +57,14 @@ class ConfiguracionRuntime:
     luna_habilitada: bool = False
     farmacias_habilitadas: tuple[str, ...] = ("PIO",)
     tolerancia_conciliacion: Decimal = Decimal("0.0500")
+    # R11 (2AZ): parametros de la tolerancia proporcional (cf_configuracion).
+    tolerancia_suelo: Decimal = Decimal("0.0500")
+    tolerancia_por_albaran: Decimal = Decimal("0.0100")
+    tolerancia_tope: Decimal = Decimal("0.5000")
 
     def __post_init__(self) -> None:
-        if self.tolerancia_conciliacion < 0:
+        if min(self.tolerancia_conciliacion, self.tolerancia_suelo, self.tolerancia_por_albaran,
+               self.tolerancia_tope) < 0:
             raise ValueError("La tolerancia no puede ser negativa")
         if not self.farmacias_habilitadas:
             raise ValueError("Debe existir al menos una farmacia habilitada")
@@ -205,3 +210,6 @@ class ResultadoConciliacion:
     tolerancia: Decimal
     resultado: str
     detalles: tuple[DetalleConciliacion, ...]
+    # R11 (2AZ): albaranes casados 1:1 y desglose de la tolerancia aplicada.
+    albaranes_casados: int | None = None
+    regla_tolerancia: Mapping[str, Any] | None = None

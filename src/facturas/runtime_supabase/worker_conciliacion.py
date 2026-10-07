@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Callable, Iterable
 
-from .conciliacion import conciliar_importes
+from .conciliacion import ReglaTolerancia, conciliar_importes
 from .modelos import DetalleConciliacion, FacturaTrabajo
 from .repositorios import RepositorioConciliacion
 
@@ -18,6 +18,13 @@ class WorkerConciliacion:
     construir_detalles: ConstructorDetalles
     worker_id: str
     tolerancia: Decimal = Decimal("0.0500")
+    # R11 (2AZ): misma regla en la ruta automatica y en la manual. Sin regla
+    # explicita se usa R11 con ``tolerancia`` como suelo.
+    regla_tolerancia: ReglaTolerancia | None = None
+
+    @property
+    def regla(self) -> ReglaTolerancia:
+        return self.regla_tolerancia or ReglaTolerancia(suelo=self.tolerancia)
 
     def ejecutar_una(self) -> bool:
         factura = self.repositorio.reclamar_factura(self.worker_id)
@@ -50,7 +57,7 @@ class WorkerConciliacion:
             resultado = conciliar_importes(
                 factura.importe_total,
                 self.construir_detalles(factura),
-                tolerancia=self.tolerancia,
+                regla=self.regla,
             )
             if disparador == "AUTOMATICO":
                 self.repositorio.guardar_conciliacion(factura, self.worker_id, resultado)
@@ -76,7 +83,8 @@ def construir_worker_conciliacion(
     *,
     construir_detalles: ConstructorDetalles | None = None,
     tolerancia: Decimal = Decimal("0.0500"),
+    regla_tolerancia: ReglaTolerancia | None = None,
 ) -> WorkerConciliacion:
     """Compone el runtime Supabase sin acceso directo a Farmatic."""
     constructor = construir_detalles or repositorio.construir_detalles
-    return WorkerConciliacion(repositorio, constructor, worker_id, tolerancia)
+    return WorkerConciliacion(repositorio, constructor, worker_id, tolerancia, regla_tolerancia)
