@@ -185,7 +185,71 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
-### Hito 2AZ: Alliance completa, tolerancia proporcional y enriquecimiento (certificado en local, NO desplegado)
+### Hito 2AZ-D: migración 20 desplegada en producción
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-08, con confirmación expresa de Pio.
+
+- **Despliegue:**
+  - `pruebas/auditoria_2az/desplegar_20.py 8e6bace aa8f1d55…56a1f`, aplicado de 09:07:02 a 09:07:03
+    UTC;
+  - SQL normalizado a LF e idéntico al del commit `8e6bace` (SHA-256
+    `aa8f1d555f5b61c82c6aaa1df8468f453fca9cef741566d0de2c23baf6d56a1f`);
+  - una sola transacción, con las 9 precondiciones en verde y sin reintentos.
+  - Scripts READ_ONLY del hito en `pruebas/auditoria_2az_d/preflight_readonly.py`; evidencias en
+    `C:\ControlFarmacias\evidencias_2az-d\`.
+- **Backup y snapshot previos (READ_ONLY):**
+  - `preflight_pre.json` (2026-10-07, SHA-256
+    `2908b8e016cb7345cdca9662f9f71b19876f094a0759e13d2dc13d671194c8d3`);
+  - base del postcheck: `preflight_predespliegue.json` (2026-10-08 07:15 UTC, SHA-256
+    `da8bd03c5e8d1ed7fcc8996f5c666b394062b40d257de2489d63b208ca5ad900`), con definiciones, ACL,
+    privilegios por defecto, `cf_configuracion` completa y huellas por fila de 9 tablas sobre columnas
+    declaradas antes de ejecutar.
+  - Antes del despliegue, los objetos del alcance eran idénticos a la referencia local 19.
+- **Postcheck** (`comparacion_postcheck.json`, POSTCHECK_OK):
+  - (1) solo cambiaron `cf_configuracion`, `cf_persistir_conciliacion` y la nueva
+    `cf_enriquecer_factura`;
+  - (2) los tres son iguales a la referencia local 20;
+  - (3) todo lo demás, idéntico.
+  - Privilegios por defecto sin cambios.
+  - `cf_configuracion`: suelo 0,05, por_albarán 0,01, tope 0,50; el resto sin cambios.
+  - Huellas de las 9 tablas idénticas.
+  - Flags `f|f|f|{PIO}`; workers, locks y claims a 0.
+- **Prueba funcional READ_ONLY** (`SET LOCAL ROLE`):
+  - `service_role` lee la configuración con los parámetros R11;
+  - `anon` recibe «permission denied» al ejecutar `cf_enriquecer_factura`;
+  - ambas funciones tienen EXECUTE solo para `service_role`.
+- **Nada se concilió ni se enriqueció.** 08007971 sigue pendiente de un hito posterior.
+- **Auditoría READ_ONLY de las 13 conciliaciones** (informativa):
+  - ningún detalle casa por PVP con número distinto, así que D11 no afecta a ninguna conciliación
+    existente;
+  - las conciliaciones vigentes no comparten ningún albarán (D12: 0);
+  - las 7 vigentes CONCILIADA siguen CONCILIADA al simularlas con D11 y R11.
+  - La métrica automática marcó 08009277 como afectada por D12, pero es un falso positivo: cuenta su
+    intento previo, no vigente. **Corrección de la métrica: hito posterior.**
+- **08B96275:**
+  - ya está en `Supabase.albaranes`: IdContador 293646, SAFA (`id_proveedor` `0002 `), PUC 6,51,
+    PVP 0,00, importado en la sincronización del 2026-10-06;
+  - su fecha es **05/06/2026**, frente al 11/06 que figura en el PDF; queda dentro de la ventana de
+    ±15 días.
+- **Deuda conocida aceptada por Pio:** `rls_auto_enable()`.
+  - Función de plataforma Supabase: *event trigger* `ensure_rls` que activa automáticamente RLS en
+    tablas nuevas de `public`.
+  - SECURITY DEFINER, propietario `postgres`, EXECUTE para PUBLIC, `anon` y `authenticated`.
+  - Figuraba en el inventario del 2AW y quedó fuera del alcance del 2AX.
+  - También hay dos índices extra en `albaranes` (por `fecha` y por `id_proveedor`): deriva del
+    baseline.
+- **Logs de las noches con el código `8e6bace` en disco:**
+  - 06/10 y 07/10: código de salida 0;
+  - sin `permission denied` ni 42501;
+  - albaranes nuevos: 38 y 43.
+  - Las tareas nocturnas no importan ningún módulo cambiado en el 2AZ.
+- **PENDIENTE:** verificar la primera ejecución nocturna con la 20 en producción (2026-10-08, 21:00
+  importación y 21:30 sincronización), revisándola el 2026-10-09:
+  - código de salida 0;
+  - sin `permission denied` ni 42501;
+  - filas nuevas coherentes en `documentos_facturas` y `albaranes`.
+
+### Hito 2AZ: Alliance completa, tolerancia proporcional y enriquecimiento (certificado en local; desplegado en el 2AZ-D)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-06/07. **Producción no tocada:** solo lecturas
 READ_ONLY para diagnósticos. Reglas R10–R14 y D11 en `REGLAS_CRITICAS.md`; diseño en
@@ -203,7 +267,7 @@ READ_ONLY para diagnósticos. Reglas R10–R14 y D11 en `REGLAS_CRITICAS.md`; di
   - parámetros R11 con check;
   - `cf_persistir_conciliacion` con validación y registro de R11;
   - nueva RPC `cf_enriquecer_factura` (SECURITY DEFINER, owner postgres, solo service_role).
-  - **Certificada en local, NO desplegada.**
+  - Certificada en local; **desplegada en producción en el 2AZ-D (2026-10-08)**.
   - Rollback igual al esquema 19 (`pg_dump -s`).
   - Scripts ensayados completos en local: `desplegar_20.py` y `enriquecer_una_vez.py`.
 - **Orden de despliegue (2AZ-D):** primero la 20 y después el código, sin conciliaciones entre medias.
@@ -318,7 +382,15 @@ READ_ONLY para diagnósticos. Reglas R10–R14 y D11 en `REGLAS_CRITICAS.md`; di
   ejecutar además
   `grant execute on function public.cf_solicitar_reintento_conciliacion(uuid, text) to service_role;`
   para restaurar el ACL previo, guardado en `backup_pre_2aw.json`.
-- Migración más reciente desplegada: `19_cf_privilegios_minimos.sql`
+- **Migración más reciente desplegada: `20_cf_alliance_tolerancia_enriquecimiento.sql`**
+  (+ rollback). `CONFIRMADO EN PRODUCCIÓN` (Hito 2AZ-D, 2026-10-08 09:07:02–09:07:03 UTC):
+  - SHA-256 LF `aa8f1d55…56a1f`;
+  - backup previo `preflight_predespliegue.json` (SHA-256 `da8bd03c…5ad900`);
+  - POSTCHECK_OK.
+  - Detalle en «Hito 2AZ-D».
+  - **Rollback** (solo con confirmación de Pio): primero el código y después
+    `20_cf_alliance_tolerancia_enriquecimiento.rollback.sql`, que devuelve el esquema 19.
+- Migración anterior desplegada: `19_cf_privilegios_minimos.sql`
   (+ `.rollback.sql`), privilegios mínimos. `CONFIRMADO EN PRODUCCIÓN` (Hito 2AX,
   aplicada 2026-09-29 07:07:45–07:07:46 UTC, una transacción con 8
   precondiciones, project ref `vklaiuytvegkelgyspxc`, SQL de `f9ff625` en LF con

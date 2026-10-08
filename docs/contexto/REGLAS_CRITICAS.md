@@ -124,7 +124,8 @@ Actualizado: 2026-09-24.
     `buscar_candidato_albaran` (trim y ceros a la izquierda: `'2' == '0002' == '0002 '`);
     los literales se conservan.
 - Reglas aprobadas por Pio en el Hito 2AZ (2026-10-06/07; `CONFIRMADO POR TEST` en
-  PostgreSQL 17 local; **migración 20 NO desplegada**; diseño en
+  PostgreSQL 17 local; migración 20 `CONFIRMADO EN PRODUCCIÓN`, desplegada en el
+  Hito 2AZ-D el 2026-10-08; diseño en
   `pruebas/auditoria_2az/DISENO.md`):
   - **R10 tipos de pedido Alliance** (adaptador 1.3.0):
     - Mercancía (se promueve; la prueba de recepción es el cruce con
