@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-09-24.
+Actualizado: 2026-10-09 (Hito 2BA: R15, R15b, R15c, R16 y reglas de numeración).
 
 ## Seguridad y operación
 
@@ -161,6 +161,59 @@ Actualizado: 2026-09-24.
   - **D11 emparejamiento:** sin número de albarán exacto solo se admite casar por
     PUC (tolerancia de importe actual y candidato único). Casar por PVP sin número
     exacto queda prohibido.
+- Reglas aprobadas por Pio en el Hito 2BA (2026-10-08/09; `CONFIRMADO POR TEST` en
+  PostgreSQL 17 local; migración 21 **no desplegada**). Código en
+  `runtime_supabase/conciliacion.py` (`clasificar_numero_albaran`,
+  `buscar_candidato_albaran`, `buscar_albaranes_factura`) y
+  `sql/migrations/21_cf_exclusividad_albaranes.sql`:
+  - **R15 exclusividad de albaranes** (corrige D12):
+    - un albarán de Farmatic (farmacia, IdContador) justifica como máximo una línea de
+      una conciliación vigente;
+    - BD: tabla `conciliacion_albaranes_reservados` (clave primaria farmacia +
+      IdContador), escrita solo por `cf_persistir_conciliacion`; `service_role` solo
+      `SELECT`. Rechazo `ALBARAN_YA_CONCILIADO:<farmacia>:<IdContador>` si dos líneas
+      del resultado comparten albarán o si está reservado por otra factura. Un nuevo
+      intento de la misma factura reutiliza sus albaranes y las reservas pasan a la
+      conciliación vigente. La carga inicial toma las conciliaciones vigentes; si dos
+      comparten albarán, la migración aborta (falla cerrado);
+    - Python: salta los albaranes reservados por otras facturas; dentro de una factura
+      un albarán solo justifica una línea y se resuelven primero las líneas con
+      coincidencia de número; si la línea solo encuentra un albarán ocupado, estado
+      `ALBARAN_YA_CONCILIADO`;
+    - opción 2: nunca se toma por importe un albarán cuyo número es exactamente el de
+      una línea documental de otra factura (sin filtro de fecha ni de farmacia: más
+      números = más conservador). Por número sí.
+  - **R15b Alliance sin coincidencia de número:** solo casa por importe (PUC) con
+    numeración interna de Farmatic (letra + 6 dígitos + `/` + año, p. ej.
+    `Q039904/2026`). Cualquier otro número (formato Alliance distinto, SAFA de 12
+    dígitos…) falla cerrado con estado `NUMERO_PROVEEDOR_DISTINTO`.
+  - **R15c ventanas de fecha:** ±15 días con coincidencia de número; ±3 días sin ella
+    (solo PUC, D11 se mantiene).
+  - **R16 elegibilidad con tolerancia proporcional:**
+    `cf_evaluar_elegibilidad_conciliacion` usa la regla de R11 con n = líneas sumadas
+    (albaranes con importe + movimientos) en todas sus comparaciones. Sustituye a la
+    tolerancia fija 0,05 de la elegibilidad.
+  - **Reglas de numeración** (decisiones de Pio; `clase_numero` en la provenance de
+    cada detalle):
+    - `EXACTA`: mismo número normalizado;
+    - `LETRA_FINAL` (solo Alliance): `08` + letra + 5 dígitos con una letra final
+      sobre el número documental (`08C52171A` = `08C52171`);
+    - `FINAL_DOCUMENTAL` (cualquier proveedor): número de Farmatic de 8 o más dígitos
+      que es el final del documental (Logista `9319977575` ↔ `19977575`);
+    - estas tres cuentan como coincidencia de número: ventana ±15, PUC o PVP y
+      preferencia sobre las coincidencias solo por importe;
+    - el número exacto se impone a la letra final y al final del documental;
+    - varias coincidencias por letra final o final del documental que el importe no
+      separa → no casa (la fecha no desempata);
+    - `INTERNO`: numeración interna de Farmatic (ver R15b), casa por PUC a ±3 días;
+    - `PROVEEDOR` (solo Alliance): otro número; nunca casa por importe;
+    - `SIN_PATRON` (resto de proveedores): casa por PUC a ±3 días;
+    - HEFAME conserva su ruta propia (número exacto e importe operativo).
+  - **Lectura paginada:** las lecturas de albaranes, reservas y líneas extraídas usan
+    `leer_paginado` (`range` hasta página vacía), porque PostgREST corta cada respuesta
+    (1.000 filas por defecto).
+  - **Orden de despliegue:** primero la 21 y después el código. El código 2BA sin la
+    21 falla cerrado (no existe la tabla de reservas).
 - Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
   - total de devoluciones = abono;
   - servicio integral de distribución = cargo sin albarán;

@@ -1,9 +1,12 @@
 # Estado actual
 
-Actualizado: 2026-09-24.
+Actualizado: 2026-10-09 (Hito 2BA). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
 
+- 2026-10-09 (Hito 2BA): `origin/main` en `d7bd6773d182f9e9d24bc33e8dbace4b6d8ca767` (2AZ-D). La rama
+  local `main` lo adelanta con los commits del 2BA (el primero, `a91ca22`), **sin push**: `PENDIENTE DE
+  RESPALDO REMOTO`. `CONFIRMADO POR CÓDIGO` (Git local).
 - Programa principal: repositorio `C:\ControlFarmacias\Programa`, rama operativa
   `main`, `HEAD` canónico
   `54dd951f6d661e9afd2206359f19517f90026a77` y `0 ahead / 0 behind` respecto de
@@ -185,6 +188,67 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
+### Hito 2BA: exclusividad de albaranes y elegibilidad proporcional (certificado en local; 21 NO desplegada)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-09, commit local `a91ca22` (sin push).
+**Producción no tocada:** solo lecturas READ_ONLY de medición (2026-10-08). Reglas R15, R15b, R15c, R16
+y de numeración en `REGLAS_CRITICAS.md`; evidencias fuera del repositorio en
+`C:\ControlFarmacias\evidencias_2ba\`.
+
+- **Código:**
+  - `conciliacion.py`: `clasificar_numero_albaran`, R15b/R15c, exacto sobre letra final,
+    `buscar_albaranes_factura` (exclusividad dentro de la factura y frente a otras facturas) y
+    `clase_numero` en la provenance;
+  - `repositorios.py`: `leer_paginado` y contexto de exclusividad (reservas vigentes de otras facturas);
+  - corrige D12 (registrado en el 2AZ) y la métrica D12 del preflight 2AZ-D (solo conciliaciones
+    vigentes).
+- **Migración 21** `21_cf_exclusividad_albaranes.sql` (+ rollback; generada por
+  `pruebas/auditoria_2ba/generar_migracion_21.py` desde el texto exacto de la 20 y de la 14):
+  - tabla `conciliacion_albaranes_reservados`, cargada desde las conciliaciones vigentes (aborta si dos
+    comparten albarán);
+  - R15 en `cf_persistir_conciliacion` y R16 en `cf_evaluar_elegibilidad_conciliacion`;
+  - rollback igual al esquema 20 (test).
+  - **Orden de despliegue:** primero la 21 y después el código. El código 2BA no concilia sobre el
+    esquema 20 (falla cerrado: no existe la tabla de reservas).
+  - `desplegar_21.py` (patrón 2AZ) **ensayado completo en local** sobre `a91ca22`: primer intento
+    aplicado (9 precondiciones, 4 reservas cargadas, esquema igual a la referencia, huellas intactas);
+    segundo intento falla en precondiciones y revierte sin cambios.
+- **Scripts READ_ONLY del 2AT** (`pruebas/auditoria_2at/auditoria_readonly.py`): `_ConsultaLectura`
+  pagina con `range` (falla cerrado sin `order`), lee la tabla de reservas y el preflight compara la
+  elegibilidad productiva con la **21**. Desde este commit, esos scripts solo sirven con la 21
+  desplegada.
+- **Banco 2AY con el código 2BA** (`verificacion_src_2ba.json`): 47 facturas Alliance, 47 aptas (antes
+  42), 27 conciliadas; **0 diferencias** con la medición aprobada por Pio
+  (`medicion_r15b_exacta_sobre_sufijo.json`). Cambios frente al código 2AZ: 08007969, 08008834,
+  08010085, 08010461 y 08010885 pasan a aptas por R16 (08008834 y 08010885 concilian); 08007970 pasa
+  de CONCILIADA (−0,08) a DIFERENCIA de 38,98 y 08009716 de CONCILIADA a DIFERENCIA de 113,73 (un
+  albarán sin casar en cada una; causa por línea no analizada en este hito).
+- **Riesgo de las tareas nocturnas con el código 2BA en disco:** en el alcance revisado
+  (`src/supabase_client`, `src/facturas/importar_*`) ningún módulo importa `runtime_supabase`
+  (`CONFIRMADO POR CÓDIGO`, 2026-10-09); no se verificaron los puntos de entrada de las tareas.
+- **Pendientes:**
+  - **despliegue de la 21** en producción: preflight, alcance y confirmación de Pio;
+  - **08007969** (MIXTA, 12.807,17): con R16 pasa a APTA, pero en el banco concilia como DIFERENCIA de
+    504,09 (127 albaranes casados, 1 sin coincidencia). Revisar antes de conciliarla;
+  - **duplicados en Farmatic 08C66676 / 08C66676A** (08009718, línea de 31,59): misma fecha y PUC 31,58
+    (caso fijado en `test_exacto_se_impone_a_la_letra_final_08009718`). El número exacto se impone y
+    deja libre el `A`; posible doble registro en Farmatic. Revisión de Pio en Farmatic (solo lectura);
+  - **`tests/test_sql_explorer_entrada.py::test_valor_filtro_por_tuberia_sin_bom_ni_fin_de_linea`**
+    falla en la suite sin `pg17_local`. Ajeno al hito (ningún archivo del módulo cambió); no
+    investigado porque el hook de identidad Farmatic bloquea los comandos sobre ese módulo con
+    `MOSTRADOR\Usuari`. Lo ejecuta Pio.
+- **Suites (2BA, `--basetemp`, MOSTRADOR\Usuari):**
+  - 1662 passed sin `pg17_local`, 1 failed (el test anterior);
+  - `pg17_local`: 119 passed y 1 skipped antes del commit (el ensayo de la 21, que exige el commit);
+    tras el commit, el ensayo y la prueba de solo lectura de sus precondiciones: 2 passed.
+  - Tests existentes actualizados por cambio de contrato, cada uno con su justificación:
+    - 2AV, ensayo 2AT, 2AX y 2AZ concilian con la 21 aplicada; 4.2 y 4.11 siguen sobre la 18 (certifican
+      la propia 18); 4.13 crea los datos de la 18 con sus RPC;
+    - 08007969 APTA por R16 (4.14 y escenario del ensayo 2AT, que además la desplaza en el ordering);
+    - 08D28707 casa con el interno Q040658/2026 (R15b) y 08011733 queda con diferencia 26,27;
+    - sin número, ventana de ±3 días (R15c); lista de migraciones; datos de reservas en los tests de la
+      21 (08007971 en estado 2AO no tiene extraídos).
+
 ### Hito 2AZ-D: migración 20 desplegada en producción
 
 `CONFIRMADO EN PRODUCCIÓN`, 2026-10-08, con confirmación expresa de Pio.
@@ -243,11 +307,10 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   - sin `permission denied` ni 42501;
   - albaranes nuevos: 38 y 43.
   - Las tareas nocturnas no importan ningún módulo cambiado en el 2AZ.
-- **PENDIENTE:** verificar la primera ejecución nocturna con la 20 en producción (2026-10-08, 21:00
-  importación y 21:30 sincronización), revisándola el 2026-10-09:
-  - código de salida 0;
-  - sin `permission denied` ni 42501;
-  - filas nuevas coherentes en `documentos_facturas` y `albaranes`.
+- **Primera ejecución nocturna con la 20 en producción** (2026-10-08, 21:00 importación y 21:30
+  sincronización): revisada por Pio el 2026-10-09, **OK** (código de salida 0, sin `permission
+  denied` ni 42501, filas nuevas coherentes). Fuente: confirmación de Pio en el Hito 2BA; no
+  revalidado por Claude.
 
 ### Hito 2AZ: Alliance completa, tolerancia proporcional y enriquecimiento (certificado en local; desplegado en el 2AZ-D)
 
@@ -297,7 +360,7 @@ READ_ONLY para diagnósticos. Reglas R10–R14 y D11 en `REGLAS_CRITICAS.md`; di
   - **D11 cambia el emparejamiento de 11 facturas.** Antes, muchas líneas casaban por PVP con número
     distinto, casi siempre con albaranes ajenos (p. ej. 08008835 / 08C40230 ↔ 08M35806). D11 las
     elimina, y 08008835 pasa de CONCILIADA a DIFERENCIA de 18,76.
-- **Defecto previo registrado (D12, NO corregido):** `buscar_candidato_albaran` no tiene exclusividad,
+- **Defecto previo registrado (D12; corregido en local en el Hito 2BA con R15, 21 no desplegada):** `buscar_candidato_albaran` no tiene exclusividad,
   y un mismo albarán de Farmatic puede casarse con varias líneas o facturas. D11 lo hace más visible
   (p. ej. Q039707/2026 en 08006568; 08M39484 entre 08008427 y 08008430). Hito propio.
 - **Hitos futuros registrados (NO implementados):**
@@ -382,6 +445,10 @@ READ_ONLY para diagnósticos. Reglas R10–R14 y D11 en `REGLAS_CRITICAS.md`; di
   ejecutar además
   `grant execute on function public.cf_solicitar_reintento_conciliacion(uuid, text) to service_role;`
   para restaurar el ACL previo, guardado en `backup_pre_2aw.json`.
+- **Migración 21 `21_cf_exclusividad_albaranes.sql`** (+ rollback): certificada en local (Hito 2BA,
+  2026-10-09, commit `a91ca22`), **NO desplegada**. Detalle en «Hito 2BA». Orden: primero la 21,
+  después el código; rollback (solo con confirmación de Pio): primero el código y después
+  `21_cf_exclusividad_albaranes.rollback.sql`, que devuelve el esquema 20.
 - **Migración más reciente desplegada: `20_cf_alliance_tolerancia_enriquecimiento.sql`**
   (+ rollback). `CONFIRMADO EN PRODUCCIÓN` (Hito 2AZ-D, 2026-10-08 09:07:02–09:07:03 UTC):
   - SHA-256 LF `aa8f1d55…56a1f`;
