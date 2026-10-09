@@ -471,10 +471,16 @@ class _ConsultaLectura:
     """Subconjunto de solo lectura del query builder de supabase-py usado por
     ``RepositorioRuntimeSupabase.construir_detalles`` y la revalidacion de
     ``guardar_conciliacion``. Devuelve JSON como PostgREST (fechas en ISO,
-    numericos como numero JSON)."""
+    numericos como numero JSON).
+
+    2BA: ``range`` pagina como PostgREST (``limit``/``offset``) para ``leer_paginado``,
+    que pide paginas hasta recibir una vacia. Solo con ``order`` (sin orden la
+    paginacion no es determinista: falla cerrado)."""
 
     TABLAS = frozenset({"facturas", "proveedores", "facturas_movimientos", "facturas_albaranes_extraidos",
-                        "albaranes", "normalizacion_ejecuciones"})
+                        "albaranes", "normalizacion_ejecuciones",
+                        # 2BA (R15): reservas de albaranes por conciliacion vigente (migracion 21).
+                        "conciliacion_albaranes_reservados"})
 
     def __init__(self, lector: _Lector, tabla: str) -> None:
         if tabla not in self.TABLAS:
@@ -485,6 +491,7 @@ class _ConsultaLectura:
         self._params: list = []
         self._orden: str | None = None
         self._single = False
+        self._rango: tuple[int, int] | None = None
 
     @staticmethod
     def _ident(nombre: str) -> str:
@@ -518,13 +525,27 @@ class _ConsultaLectura:
         self._single = True
         return self
 
+    def range(self, inicio: int, fin: int):
+        """Filas ``inicio``..``fin`` (ambas incluidas), como ``range`` de supabase-py."""
+        if type(inicio) is not int or type(fin) is not int or inicio < 0 or fin < inicio:
+            raise PermissionError(f"RANGO_NO_VALIDO: {inicio!r}..{fin!r}")
+        self._rango = (inicio, fin)
+        return self
+
     def execute(self) -> _Respuesta:
         lista = ", ".join(f"t.{c}" for c in self._columnas)
         where = " and ".join(self._filtros) or "true"
         orden = f" order by t.{self._orden}" if self._orden else ""
+        params = list(self._params)
+        pagina = ""
+        if self._rango is not None:
+            if self._orden is None or self._single:
+                raise PermissionError(f"RANGO_SIN_ORDEN_O_CON_SINGLE: {self._tabla}")
+            pagina = " limit %s offset %s"
+            params += [self._rango[1] - self._rango[0] + 1, self._rango[0]]
         sql = (f"select to_jsonb(r)::text from public.{self._tabla} t "
-               f"cross join lateral (select {lista}) r where {where}{orden}")
-        filas = [json.loads(f[0]) for f in self._lector.filas(sql, tuple(self._params))]
+               f"cross join lateral (select {lista}) r where {where}{orden}{pagina}")
+        filas = [json.loads(f[0]) for f in self._lector.filas(sql, tuple(params))]
         if self._single:
             if len(filas) != 1:
                 raise RuntimeError(f"SINGLE_SIN_FILA_UNICA: {self._tabla} {len(filas)}")
@@ -697,9 +718,10 @@ def candidato(salida: Path, previo: Path | None) -> int:
                 lector, "public.cf_reclamar_factura_conciliacion_manual_one_shot(text,integer)") == _cuerpo_local(
                 ROOT / "sql/migrations/18_cf_conciliacion_manual_atomica.sql",
                 "cf_reclamar_factura_conciliacion_manual_one_shot"),
-            "elegibilidad_igual_a_migracion_14": _cuerpo_remoto(
+            # 2BA: la 21 redefine la elegibilidad (R16); el codigo 2BA exige la 21.
+            "elegibilidad_igual_a_migracion_21": _cuerpo_remoto(
                 lector, "public.cf_evaluar_elegibilidad_conciliacion(uuid)") == _cuerpo_local(
-                ROOT / "sql/migrations/14_cf_claim_conciliacion_v2.sql", "cf_evaluar_elegibilidad_conciliacion"),
+                ROOT / "sql/migrations/21_cf_exclusividad_albaranes.sql", "cf_evaluar_elegibilidad_conciliacion"),
         }
         out["cuerpos_productivos"] = cuerpos
         todas = [json.loads(r[0]) for r in lector.filas(SQL_TODAS_CON_FILTROS)]

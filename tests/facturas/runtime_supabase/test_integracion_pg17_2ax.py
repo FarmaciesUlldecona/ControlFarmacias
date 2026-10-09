@@ -27,6 +27,8 @@ pytestmark = pytest.mark.pg17_local
 
 MIGRACION_19 = MIG / "19_cf_privilegios_minimos.sql"
 ROLLBACK_19 = MIG / "19_cf_privilegios_minimos.rollback.sql"
+MIGRACION_20 = MIG / "20_cf_alliance_tolerancia_enriquecimiento.sql"
+MIGRACION_21 = MIG / "21_cf_exclusividad_albaranes.sql"
 USO_SERVICE_ROLE = {
     "documentos_facturas": ["INSERT", "SELECT"], "albaranes": ["INSERT", "SELECT"],
     "facturas": ["SELECT"], "cf_configuracion": ["SELECT"], "proveedores": ["SELECT"],
@@ -150,6 +152,9 @@ def test_objetos_nuevos_de_postgres_sin_privilegios_publicos(base):
 # --------------------------------------------------------------------------
 
 def test_service_role_normalizacion_y_conciliacion_manual(base, tmp_path):
+    # 2BA: el codigo de conciliacion exige la 20 (R11) y la 21 (reservas R15, elegibilidad R16).
+    base.sql(MIGRACION_20.read_text(encoding="utf-8"))
+    base.sql(MIGRACION_21.read_text(encoding="utf-8"))
     cliente = ClientePg17(base, rol_tablas="service_role")
     _registrar(base, cliente, ALLIANCE.read_bytes(), 1)
     resultado = _worker(cliente, tmp_path, "sr").ejecutar_una_manual()

@@ -40,6 +40,7 @@ pytestmark = pytest.mark.pg17_local
 
 PDF_2AO = FIXTURES / "alliance_2ao_cinco_facturas.pdf"
 MIGRACION_20 = MIG / "20_cf_alliance_tolerancia_enriquecimiento.sql"
+MIGRACION_21 = MIG / "21_cf_exclusividad_albaranes.sql"
 ROLLBACK_20 = MIG / "20_cf_alliance_tolerancia_enriquecimiento.rollback.sql"
 TIPOS_PREVIOS_R10 = frozenset({"NORMAL ACUSTICO", "NETOS PLUS", "PLATAFORMA 360", "COSTO LABORAT.", "ECOCEUTICS"})
 # Valores reales de Supabase.albaranes para 08007971 (READ_ONLY, 2026-10-06).
@@ -111,6 +112,7 @@ def base20(pg17_nueva_base):
 
 def test_08007971_enriquecimiento_conciliacion_y_replay(base20, tmp_path):
     pg = base20
+    pg.sql(MIGRACION_21.read_text(encoding="utf-8"))  # 2BA: el codigo de conciliacion exige la 21
     cliente, ids = _preparar_2ao(pg, tmp_path)
     objetivo = ids["08007971"]
     antes = _estado(pg, objetivo)
@@ -257,6 +259,7 @@ def _operacionales_sinteticos(pg, factura_id, desplazados: int, base_contador: i
 
 def test_r11_ruta_manual_y_automatica_registran_la_tolerancia(base20, tmp_path):
     pg = base20
+    pg.sql(MIGRACION_21.read_text(encoding="utf-8"))  # 2BA: el codigo de conciliacion exige la 21
     cliente, ids = _preparar_2ao(pg, tmp_path, estado_2ao=False)
     _operacionales_sinteticos(pg, ids["08007970"], 4, 950000)  # 71 albaranes, diferencia -0,08
     _operacionales_sinteticos(pg, ids["08007972"], 0, 960000)

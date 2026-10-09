@@ -25,14 +25,33 @@ from .conciliacion import (
     CandidatoAlbaranSupabase,
     MovimientoDocumentalTrabajo,
     VENTANA_FECHA_DIAS,
-    buscar_candidato_albaran,
+    buscar_albaranes_factura,
     construir_detalles_movimientos_documentales,
     detalle_desde_busqueda,
 )
 
+PAGINA_LECTURA = 1000
+
 
 def _ahora_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def leer_paginado(consulta, pagina: int = PAGINA_LECTURA) -> list[dict[str, Any]]:
+    """2BA: lee todas las filas de una consulta PostgREST ordenada, por paginas con ``range``.
+
+    Se detiene solo cuando una pagina llega vacia y avanza por las filas recibidas: si el
+    servidor corta por debajo de ``pagina`` (``max-rows``), el corte no se confunde con el
+    final de los datos.
+    """
+    filas: list[dict[str, Any]] = []
+    desde = 0
+    while True:
+        lote = consulta().range(desde, desde + pagina - 1).execute().data or []
+        if not lote:
+            return filas
+        filas.extend(lote)
+        desde += len(lote)
 
 
 class RepositorioNormalizacion(Protocol):
@@ -390,18 +409,21 @@ class RepositorioRuntimeSupabase:
             extracted_rows = extracted_response.data or []
         dates = [date.fromisoformat(row["fecha_albaran"]) for row in extracted_rows if row.get("fecha_albaran")]
         operational_rows = []
+        ocupados: set[tuple[str, int]] = set()
+        numeros_otras_facturas: set[str] = set()
         if dates:
             start = min(dates) - timedelta(days=VENTANA_FECHA_DIAS)
             end = max(dates) + timedelta(days=VENTANA_FECHA_DIAS)
-            response = (
+            # 2BA: paginado; PostgREST corta cada respuesta (1.000 filas por defecto).
+            operational_rows = leer_paginado(lambda: (
                 self._cliente.table("albaranes")
                 .select("id_contador,farmacia,id_proveedor,proveedor,numero_albaran,fecha,importe_puc,importe_pvp,estado")
                 .eq("farmacia", factura.farmacia)
                 .gte("fecha", start.isoformat())
                 .lte("fecha", end.isoformat())
-                .execute()
-            )
-            operational_rows = response.data or []
+                .order("id_contador")
+            ))
+            ocupados, numeros_otras_facturas = self._contexto_exclusividad(factura, operational_rows)
         candidates = tuple(
             CandidatoAlbaranSupabase(
                 id_contador=int(row["id_contador"]),
@@ -416,22 +438,61 @@ class RepositorioRuntimeSupabase:
             )
             for row in operational_rows
         )
-        for row in extracted_rows:
-            documentary = AlbaranDocumentalTrabajo(
+        documentaries = tuple(
+            AlbaranDocumentalTrabajo(
                 id=str(row["id"]),
                 numero=str(row["numero_albaran"]) if row.get("numero_albaran") else None,
                 fecha=date.fromisoformat(row["fecha_albaran"]) if row.get("fecha_albaran") else None,
                 importe=Decimal(str(row["importe_total"])) if row.get("importe_total") is not None else None,
                 sentido=str(row["tipo_movimiento"]) if row.get("tipo_movimiento") else None,
             )
-            match = buscar_candidato_albaran(
-                documentary,
-                candidates,
-                proveedor_literal=provider_literal,
-                farmatic_id_proveedor=farmatic_provider_id,
-            )
-            details.append(detalle_desde_busqueda(documentary, match))
+            for row in extracted_rows
+        )
+        # R15 (2BA): exclusividad entre facturas (reservas vigentes, numeros de otras facturas)
+        # y entre lineas de la misma factura. La base de datos lo vuelve a exigir al persistir.
+        matches = buscar_albaranes_factura(
+            documentaries,
+            candidates,
+            proveedor_literal=provider_literal,
+            farmatic_id_proveedor=farmatic_provider_id,
+            ocupados=ocupados,
+            numeros_otras_facturas=numeros_otras_facturas,
+        )
+        details.extend(detalle_desde_busqueda(d, m) for d, m in zip(documentaries, matches))
         return tuple(details)
+
+    def _contexto_exclusividad(
+        self,
+        factura: FacturaTrabajo,
+        operational_rows: list[dict[str, Any]],
+    ) -> tuple[set[tuple[str, int]], set[str]]:
+        """R15 (2BA, migracion 21): albaranes reservados por OTRAS facturas y numeros documentales ajenos."""
+        ids = [int(row["id_contador"]) for row in operational_rows]
+        ocupados: set[tuple[str, int]] = set()
+        if ids:
+            reservas = leer_paginado(lambda: (
+                self._cliente.table("conciliacion_albaranes_reservados")
+                .select("albaran_farmacia,albaran_id_contador,factura_id")
+                .eq("albaran_farmacia", factura.farmacia)
+                .gte("albaran_id_contador", min(ids))
+                .lte("albaran_id_contador", max(ids))
+                .order("albaran_id_contador")
+            ))
+            ocupados = {
+                (str(r["albaran_farmacia"]), int(r["albaran_id_contador"]))
+                for r in reservas if str(r["factura_id"]) != factura.factura_id
+            }
+        # Opcion 2 de R15: sin filtro de fecha ni de farmacia (mas numeros = mas conservador).
+        lineas = leer_paginado(lambda: (
+            self._cliente.table("facturas_albaranes_extraidos")
+            .select("id,factura_id,numero_albaran")
+            .order("id")
+        ))
+        numeros = {
+            str(r["numero_albaran"]) for r in lineas
+            if r.get("numero_albaran") and str(r["factura_id"]) != factura.factura_id
+        }
+        return ocupados, numeros
 
     def guardar_conciliacion(
         self,

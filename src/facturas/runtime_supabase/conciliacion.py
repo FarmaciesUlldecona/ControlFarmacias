@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Iterable, Mapping
@@ -20,6 +20,15 @@ from .modelos import (
 CUATRO_DECIMALES = Decimal("0.0001")
 TOLERANCIA_POR_DEFECTO = Decimal("0.0500")
 VENTANA_FECHA_DIAS = 15
+# R15c (2BA): sin coincidencia de numero (solo PUC) la ventana es de +-3 dias.
+VENTANA_SIN_NUMERO_DIAS = 3
+# Clases de numero que cuentan como coincidencia (ventana +-15, PUC o PVP, preferentes).
+COINCIDENCIAS_NUMERO = frozenset({"EXACTA", "LETRA_FINAL", "FINAL_DOCUMENTAL"})
+# R15b (2BA): numeracion interna de Farmatic (p. ej. Q039904/2026).
+_NUMERO_INTERNO_FARMATIC = re.compile(r"^[A-Z]\d{6}/\d{4}$")
+# Decision Pio (2BA): numero Alliance + una letra final = mismo numero (08C52171A = 08C52171).
+_ALLIANCE_LETRA_FINAL = re.compile(r"^(08[A-Z]\d{5})[A-Z]$")
+_FINAL_DOCUMENTAL_MIN_DIGITOS = 8
 PROVEEDOR_CANONICO_ALLIANCE = "ALLIANCEHEALTHCARECENCORA"
 PROVEEDOR_CANONICO_HEFAME_MERCANCIA = "HEFAMEMERCANCIA"
 _ALIASES_ALLIANCE_AUTORIZADOS = frozenset({
@@ -98,6 +107,8 @@ class ResultadoBusquedaAlbaran:
     candidatos_fecha: int
     candidatos_importe: int
     candidatos_finales: int
+    # 2BA: EXACTA | LETRA_FINAL | FINAL_DOCUMENTAL | INTERNO | PROVEEDOR | SIN_PATRON | NO_DISPONIBLE
+    clase_numero: str | None = None
 
 
 def canonicalizar_proveedor(valor: str | None) -> str | None:
@@ -150,6 +161,36 @@ def comparar_numeros_albaran(documental: str | None, operacional: str | None) ->
     return "DIFERENTE"
 
 
+def clasificar_numero_albaran(documental: str | None, operacional: str | None, *, alliance: bool) -> str:
+    """R15b (2BA) y decisiones de Pio sobre la comparacion de numeros de albaran.
+
+    - EXACTA: mismo numero normalizado.
+    - LETRA_FINAL (solo Alliance): 08+letra+5 digitos y una letra final sobre el numero documental.
+    - FINAL_DOCUMENTAL: numero Farmatic de >= 8 digitos que es el final del documental.
+    - INTERNO: numeracion interna de Farmatic; puede casar por PUC con numero distinto.
+    - PROVEEDOR (solo Alliance): cualquier otro numero (formato Alliance distinto, SAFA de
+      12 digitos...): nunca casa por importe (falla cerrado).
+    - SIN_PATRON: proveedor sin patron de numeracion: puede casar por PUC (+-3 dias).
+    """
+    base = comparar_numeros_albaran(documental, operacional)
+    if base == "EXACTA":
+        return base
+    op_literal = (operacional or "").strip().upper()
+    doc = normalizar_numero_albaran(documental)
+    op = normalizar_numero_albaran(operacional)
+    if doc is not None and op is not None:
+        letra = _ALLIANCE_LETRA_FINAL.match(op)
+        if alliance and letra and letra.group(1) == doc:
+            return "LETRA_FINAL"
+        if op.isdigit() and len(op) >= _FINAL_DOCUMENTAL_MIN_DIGITOS and len(doc) > len(op) and doc.endswith(op):
+            return "FINAL_DOCUMENTAL"
+    if op is None:
+        return "NO_DISPONIBLE"
+    if _NUMERO_INTERNO_FARMATIC.match(op_literal):
+        return "INTERNO"
+    return "PROVEEDOR" if alliance else "SIN_PATRON"
+
+
 def _importe_compatible(
     documental: Decimal,
     candidato: CandidatoAlbaranSupabase,
@@ -171,61 +212,106 @@ def _importe_compatible(
     return min(compatibles, key=lambda value: abs(value - esperado)) if compatibles else None
 
 
-def buscar_candidato_albaran(
-    documental: AlbaranDocumentalTrabajo,
-    candidatos: Iterable[CandidatoAlbaranSupabase],
-    *,
+def _filas_del_proveedor(
+    rows: tuple[CandidatoAlbaranSupabase, ...],
     proveedor_literal: str | None,
-    farmatic_id_proveedor: str | None = None,
-    tolerancia: Decimal | int | float | str = TOLERANCIA_POR_DEFECTO,
-    ventana_dias: int = VENTANA_FECHA_DIAS,
-) -> ResultadoBusquedaAlbaran:
-    """Selecciona solo una coincidencia demostrable; nunca resuelve ambiguedad por orden."""
-    tolerancia_decimal = dinero(tolerancia)
-    if tolerancia_decimal < 0 or ventana_dias < 0:
-        raise ValueError("tolerancia y ventana deben ser no negativas")
-    rows = tuple(candidatos)
+    farmatic_id_proveedor: str | None,
+) -> tuple[str | None, list[CandidatoAlbaranSupabase]]:
     provider_key = canonicalizar_proveedor(proveedor_literal)
     provider_id = conservar_id_proveedor(farmatic_id_proveedor)
     if provider_id is not None:
         provider_comparable = _id_proveedor_comparable(provider_id)
-        by_provider = [
+        return provider_key, [
             row for row in rows
             if provider_comparable is not None
             and _id_proveedor_comparable(row.id_proveedor) == provider_comparable
         ]
-    elif provider_key is not None:
-        by_provider = [row for row in rows if canonicalizar_proveedor(row.proveedor) == provider_key]
+    if provider_key is not None:
+        return provider_key, [row for row in rows if canonicalizar_proveedor(row.proveedor) == provider_key]
+    return provider_key, []
+
+
+def _clave_albaran(row: CandidatoAlbaranSupabase) -> tuple[str, int]:
+    return (row.farmacia, row.id_contador)
+
+
+def _admisible(
+    documental: AlbaranDocumentalTrabajo,
+    row: CandidatoAlbaranSupabase,
+    clase: str,
+    *,
+    ventana_dias: int,
+    ventana_sin_numero_dias: int,
+    numeros_otras_facturas: frozenset[str],
+) -> bool:
+    """R15c y opcion 2 de R15: ventana segun la clase y numeros reservados a otras facturas."""
+    if documental.fecha is None:
+        return False
+    dias = abs((row.fecha - documental.fecha).days)
+    if clase in COINCIDENCIAS_NUMERO:
+        return dias <= ventana_dias
+    if dias > ventana_sin_numero_dias:
+        return False
+    return normalizar_numero_albaran(row.numero_albaran) not in numeros_otras_facturas
+
+
+def _seleccionar(
+    documental: AlbaranDocumentalTrabajo,
+    by_provider: list[CandidatoAlbaranSupabase],
+    provider_key: str | None,
+    tolerancia_decimal: Decimal,
+    *,
+    ventana_dias: int,
+    ventana_sin_numero_dias: int,
+    ocupados: frozenset[tuple[str, int]],
+    numeros_otras_facturas: frozenset[str],
+    aplicar_r15b: bool = True,
+) -> ResultadoBusquedaAlbaran:
+    alliance = provider_key == PROVEEDOR_CANONICO_ALLIANCE
+    hefame = provider_key == PROVEEDOR_CANONICO_HEFAME_MERCANCIA
+    libres = [row for row in by_provider if _clave_albaran(row) not in ocupados]
+    if hefame:
+        clases = {row.id_contador: comparar_numeros_albaran(documental.numero, row.numero_albaran) for row in libres}
+        by_date = [
+            row for row in libres
+            if documental.fecha is not None and abs((row.fecha - documental.fecha).days) <= ventana_dias
+        ]
     else:
-        by_provider = []
-    by_date = [
-        row for row in by_provider
-        if documental.fecha is not None and abs((row.fecha - documental.fecha).days) <= ventana_dias
-    ]
+        clases = {
+            row.id_contador: clasificar_numero_albaran(documental.numero, row.numero_albaran, alliance=alliance)
+            for row in libres
+        }
+        by_date = [
+            row for row in libres
+            if _admisible(documental, row, clases[row.id_contador], ventana_dias=ventana_dias,
+                          ventana_sin_numero_dias=ventana_sin_numero_dias,
+                          numeros_otras_facturas=numeros_otras_facturas)
+        ]
+        # Decision Pio (2BA): el numero exacto se impone a la letra final y al final del documental.
+        if any(clases[row.id_contador] == "EXACTA" for row in by_date):
+            by_date = [row for row in by_date if clases[row.id_contador] not in ("LETRA_FINAL", "FINAL_DOCUMENTAL")]
+        if aplicar_r15b:
+            by_date = [row for row in by_date if clases[row.id_contador] != "PROVEEDOR"]
     amounts = []
-    importe_para_matching = (
-        documental.importe_comparable_operativo
-        if provider_key == PROVEEDOR_CANONICO_HEFAME_MERCANCIA
-        else documental.importe
-    )
+    importe_para_matching = documental.importe_comparable_operativo if hefame else documental.importe
     if importe_para_matching is not None:
         expected = dinero(importe_para_matching)
         for row in by_date:
-            number_match = comparar_numeros_albaran(documental.numero, row.numero_albaran)
-            # D11 (2AZ): sin numero exacto solo se admite el PUC; casar por PVP queda prohibido.
+            clase = clases[row.id_contador]
+            # D11 (2AZ): sin coincidencia de numero solo se admite el PUC; casar por PVP queda prohibido.
             compatible = _importe_compatible(
                 expected,
                 row,
                 tolerancia_decimal,
                 comparar_magnitud=documental.sentido == "ABONO",
-                solo_puc=number_match != "EXACTA",
+                solo_puc=clase not in COINCIDENCIAS_NUMERO,
             )
             if compatible is not None:
-                amounts.append((row, compatible, number_match))
-    if provider_key == PROVEEDOR_CANONICO_HEFAME_MERCANCIA:
+                amounts.append((row, compatible, clase))
+    if hefame:
         exact_number = [
-            row for row in by_provider
-            if comparar_numeros_albaran(documental.numero, row.numero_albaran) == "EXACTA"
+            row for row in libres
+            if clases[row.id_contador] == "EXACTA"
         ]
         if not exact_number:
             return ResultadoBusquedaAlbaran(
@@ -246,7 +332,7 @@ def buscar_candidato_albaran(
                 None, "EXACTA", len(by_provider), len(by_date), len(amounts), 0,
             )
     else:
-        with_number = [item for item in amounts if item[2] == "EXACTA"]
+        with_number = [item for item in amounts if item[2] in COINCIDENCIAS_NUMERO]
         finalists = with_number if with_number else amounts
     if finalists:
         expected_comparable = abs(expected) if documental.sentido == "ABONO" else expected
@@ -256,15 +342,18 @@ def buscar_candidato_albaran(
             if abs(item[1] - expected_comparable) == diferencia_minima
         ]
         finalists = closest_amount
+    # Decision Pio (2BA): varias coincidencias por letra final o final del documental que el
+    # importe no separa -> no casa (la fecha no desempata).
+    sin_desempate = len(finalists) > 1 and any(item[2] in ("LETRA_FINAL", "FINAL_DOCUMENTAL") for item in finalists)
     with_exact_date = [item for item in finalists if documental.fecha == item[0].fecha]
-    if len(with_exact_date) == 1:
+    if len(with_exact_date) == 1 and not sin_desempate:
         finalists = with_exact_date
     if len(finalists) == 1:
-        row, amount, number_match = finalists[0]
+        row, amount, clase = finalists[0]
         return ResultadoBusquedaAlbaran(
-            "EXACTO_ECONOMICO" if provider_key == PROVEEDOR_CANONICO_HEFAME_MERCANCIA else "MATCH_UNICO",
-            row, amount, number_match,
-            len(by_provider), len(by_date), len(amounts), 1,
+            "EXACTO_ECONOMICO" if hefame else "MATCH_UNICO",
+            row, amount, comparar_numeros_albaran(documental.numero, row.numero_albaran),
+            len(by_provider), len(by_date), len(amounts), 1, clase,
         )
     return ResultadoBusquedaAlbaran(
         "AMBIGUO" if len(finalists) > 1 else "SIN_COINCIDENCIA",
@@ -276,6 +365,102 @@ def buscar_candidato_albaran(
         len(amounts),
         len(finalists),
     )
+
+
+def buscar_candidato_albaran(
+    documental: AlbaranDocumentalTrabajo,
+    candidatos: Iterable[CandidatoAlbaranSupabase],
+    *,
+    proveedor_literal: str | None,
+    farmatic_id_proveedor: str | None = None,
+    tolerancia: Decimal | int | float | str = TOLERANCIA_POR_DEFECTO,
+    ventana_dias: int = VENTANA_FECHA_DIAS,
+    ventana_sin_numero_dias: int = VENTANA_SIN_NUMERO_DIAS,
+    ocupados: Iterable[tuple[str, int]] = (),
+    numeros_otras_facturas: Iterable[str] = (),
+) -> ResultadoBusquedaAlbaran:
+    """Selecciona solo una coincidencia demostrable; nunca resuelve ambiguedad por orden.
+
+    R15 (2BA): se salta los albaranes ``ocupados`` (otra conciliacion vigente u otra linea
+    de esta factura) y no toma por importe un numero que es exactamente el de una linea
+    documental de otra factura (``numeros_otras_facturas``, normalizados). R15b/R15c y las
+    decisiones de Pio sobre la letra final y el final del documental: ``clasificar_numero_albaran``.
+    Si la linea solo encuentra un albaran ocupado: ``ALBARAN_YA_CONCILIADO``; si solo un
+    numero de proveedor distinto: ``NUMERO_PROVEEDOR_DISTINTO``.
+    """
+    tolerancia_decimal = dinero(tolerancia)
+    if tolerancia_decimal < 0 or ventana_dias < 0 or ventana_sin_numero_dias < 0:
+        raise ValueError("tolerancia y ventana deben ser no negativas")
+    rows = tuple(candidatos)
+    provider_key, by_provider = _filas_del_proveedor(rows, proveedor_literal, farmatic_id_proveedor)
+    ocupados_set = frozenset(ocupados)
+    numeros_set = frozenset(n for n in (normalizar_numero_albaran(x) for x in numeros_otras_facturas) if n)
+    parametros = dict(ventana_dias=ventana_dias, ventana_sin_numero_dias=ventana_sin_numero_dias,
+                      numeros_otras_facturas=numeros_set)
+    resultado = _seleccionar(documental, by_provider, provider_key, tolerancia_decimal,
+                             ocupados=ocupados_set, **parametros)
+    if resultado.candidato is not None or resultado.estado not in ("SIN_COINCIDENCIA", "NUMERO_AUSENTE",
+                                                                   "NO_DEMOSTRABLE"):
+        return resultado
+    if ocupados_set:
+        sin_ocupacion = _seleccionar(documental, by_provider, provider_key, tolerancia_decimal,
+                                     ocupados=frozenset(), **parametros)
+        if sin_ocupacion.candidato is not None and _clave_albaran(sin_ocupacion.candidato) in ocupados_set:
+            return replace(resultado, estado="ALBARAN_YA_CONCILIADO")
+    if provider_key == PROVEEDOR_CANONICO_ALLIANCE:
+        sin_r15b = _seleccionar(documental, by_provider, provider_key, tolerancia_decimal,
+                                ocupados=ocupados_set, aplicar_r15b=False, **parametros)
+        if sin_r15b.candidato is not None:
+            return replace(resultado, estado="NUMERO_PROVEEDOR_DISTINTO")
+    return resultado
+
+
+def buscar_albaranes_factura(
+    documentales: Iterable[AlbaranDocumentalTrabajo],
+    candidatos: Iterable[CandidatoAlbaranSupabase],
+    *,
+    proveedor_literal: str | None,
+    farmatic_id_proveedor: str | None = None,
+    ocupados: Iterable[tuple[str, int]] = (),
+    numeros_otras_facturas: Iterable[str] = (),
+    tolerancia: Decimal | int | float | str = TOLERANCIA_POR_DEFECTO,
+    ventana_dias: int = VENTANA_FECHA_DIAS,
+    ventana_sin_numero_dias: int = VENTANA_SIN_NUMERO_DIAS,
+) -> tuple[ResultadoBusquedaAlbaran, ...]:
+    """R15 (2BA) para todas las lineas de una factura; resultados en el orden documental.
+
+    Un albaran solo justifica una linea: lo elegido por una linea queda ocupado para las
+    demas. Primero se buscan las lineas con algun candidato con coincidencia de numero,
+    para que una linea por importe no se lleve el albaran que otra tiene por numero.
+    """
+    docs = tuple(documentales)
+    rows = tuple(candidatos)
+    provider_key, by_provider = _filas_del_proveedor(rows, proveedor_literal, farmatic_id_proveedor)
+    alliance = provider_key == PROVEEDOR_CANONICO_ALLIANCE
+
+    def con_numero(documental: AlbaranDocumentalTrabajo) -> bool:
+        return documental.fecha is not None and any(
+            clasificar_numero_albaran(documental.numero, row.numero_albaran, alliance=alliance)
+            in COINCIDENCIAS_NUMERO
+            and abs((row.fecha - documental.fecha).days) <= ventana_dias
+            for row in by_provider
+        )
+
+    orden = sorted(range(len(docs)), key=lambda i: (not con_numero(docs[i]), i))
+    externos = frozenset(ocupados)
+    numeros = tuple(numeros_otras_facturas)
+    propios: set[tuple[str, int]] = set()
+    resultados: list[ResultadoBusquedaAlbaran | None] = [None] * len(docs)
+    for i in orden:
+        resultado = buscar_candidato_albaran(
+            docs[i], rows, proveedor_literal=proveedor_literal, farmatic_id_proveedor=farmatic_id_proveedor,
+            tolerancia=tolerancia, ventana_dias=ventana_dias, ventana_sin_numero_dias=ventana_sin_numero_dias,
+            ocupados=externos | propios, numeros_otras_facturas=numeros,
+        )
+        if resultado.candidato is not None and resultado.importe_compatible is not None:
+            propios.add(_clave_albaran(resultado.candidato))
+        resultados[i] = resultado
+    return tuple(r for r in resultados if r is not None)
 
 
 def detalle_desde_busqueda(
@@ -310,6 +495,7 @@ def detalle_desde_busqueda(
             "fuente": "ALBARANES_SUPABASE",
             "estado_matching": resultado.estado,
             "coincidencia_numero": resultado.coincidencia_numero,
+            "clase_numero": resultado.clase_numero,
             "numero_documental": documental.numero,
             "numero_operacional": candidate.numero_albaran,
             "id_proveedor": candidate.id_proveedor,

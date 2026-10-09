@@ -46,8 +46,19 @@ def _aplicar_18(pg):
 
 
 @pytest.fixture
-def base(pg17_nueva_base):
+def base18(pg17_nueva_base):
+    """Esquema 18 tal cual: casos que certifican la propia migracion 18 (ordering literal, grants)."""
     return _aplicar_18(pg17_nueva_base("17"))
+
+
+@pytest.fixture
+def base(pg17_nueva_base):
+    """2BA: el codigo de conciliacion exige la 21 (tabla de reservas R15, elegibilidad R16).
+
+    Plantilla ``21`` = 17 + 18 + (rollback 19 + 19) + 20 + 21: el selector, el claim y el cierre
+    atomico de la 18 llegan intactos salvo lo que redefinen la 20 (R11) y la 21 (R15/R16).
+    """
+    return pg17_nueva_base("21")
 
 
 def _normalizar(pg, tmp_path, pdf: Path = ALLIANCE, nombre="n") -> ClientePg17:
@@ -162,7 +173,8 @@ def _claims(pg, n: int, rpc: str) -> list[str]:
     return [_sr(pg, f"select id from public.{rpc}('orden-{i}', 300);") for i in range(n)]
 
 
-def test_4_2_ordering_identico_manual_automatico_y_previo(base, tmp_path, pg17_contenedor):
+def test_4_2_ordering_identico_manual_automatico_y_previo(base18, tmp_path, pg17_contenedor):
+    base = base18
     _normalizar(base, tmp_path)
     _albaranes(base)
     esperado = _orden_oficial(base)
@@ -463,7 +475,8 @@ def test_4_10_y_4_12_conciliaciones_existentes_y_flags_intactos(pg17_nueva_base,
     assert flags == pg.sql(FLAGS_SQL) == FLAGS_ESPERADOS
 
 
-def test_4_11_matriz_de_grants_y_security_definer(base):
+def test_4_11_matriz_de_grants_y_security_definer(base18):
+    base = base18
     filas = base.json(
         "select p.oid::regprocedure::text as f, p.prosecdef as definer, pg_get_userbyid(p.proowner) as owner, "
         "p.proacl is null or exists(select 1 from aclexplode(p.proacl) a where a.grantee = 0) as public, "
@@ -496,10 +509,16 @@ def test_4_13_rollback_devuelve_el_esquema_17_con_datos_de_la_18(pg17_nueva_base
     assert esquema(pg17_nueva_base("17_rollback")) == referencia
 
     usada = _aplicar_18(pg17_nueva_base("17"))
-    cliente = _normalizar(usada, tmp_path)
+    _normalizar(usada, tmp_path)
     _albaranes(usada)
     orden = _orden_oficial(usada)
-    assert _conc(cliente, "a").ejecutar_una_manual() is True
+    # 2BA: el codigo de conciliacion exige la 21; los datos de la 18 se crean con sus propias RPC
+    # (claim manual + cierre atomico), que es lo que el rollback debe conservar.
+    assert _claim_manual(usada, "a") == orden[0]
+    _sr(usada, (f"select public.cf_persistir_conciliacion({_lit(orden[0])}::uuid, 'a', 'MANUAL_ONE_SHOT', "
+                "'clave-4-13', '{\"resultado\":\"CONCILIADA\",\"importe_factura\":\"1\","
+                "\"importe_explicado\":\"1\",\"diferencia\":\"0\",\"tolerancia\":\"0.0500\","
+                "\"detalles\":[]}'::jsonb);"))
     usada.sql("update public.facturas set estado_conciliacion_cf = 'REVISION_CONCILIACION' "
               f"where id = {_lit(orden[1])};")
     usada.sql(ROLLBACK_18.read_text(encoding="utf-8"))
@@ -533,9 +552,11 @@ def test_4_14_caso_real_08007970(base, tmp_path):
     assert (facturas["08007970"]["estado"], facturas["08007970"]["razon"]) == ("APTA", "APTA_MERCANCIA")
     # 2AZ (R10): los 3 DIRECTO de 08007971 se promueven; deja de ser FALTAN_ALBARANES_MERCANCIA.
     assert (facturas["08007971"]["estado"], facturas["08007971"]["razon"]) == ("APTA", "APTA_MERCANCIA")
-    # MIXTA: albaranes 13020.88 + movimientos -213.78 = 12807.10 frente a 12807.17 (0.07 > 0.05).
-    assert (facturas["08007969"]["estado"], facturas["08007969"]["razon"]) == ("NO_APTA", "TOTAL_NO_EXPLICADO")
-    assert {n for n, f in facturas.items() if f["estado"] == "APTA"} == {"08007970", "08007971", "08007972", "08007973"}
+    # MIXTA: albaranes 13020.88 + movimientos -213.78 = 12807.10 frente a 12807.17. Hasta la 20 era
+    # NO_APTA (0.07 > 0.05); 2BA (R16): la tolerancia de elegibilidad es proporcional a las lineas sumadas
+    # y 0.07 queda dentro -> APTA_MIXTA.
+    assert (facturas["08007969"]["estado"], facturas["08007969"]["razon"]) == ("APTA", "APTA_MIXTA")
+    assert {n for n, f in facturas.items() if f["estado"] == "APTA"} == set(TOTALES_2AO)
     _albaranes(base, numeros=["08007970"])
 
     # Simulacion READ_ONLY (sin claim) con la construccion de detalles oficial.
@@ -551,7 +572,7 @@ def test_4_14_caso_real_08007970(base, tmp_path):
 
     # Ruta manual oficial: reclama el n.o 1 del ordering, sea cual sea.
     orden = _orden_oficial(base)
-    assert len(orden) == 4  # 2AZ: 08007971 tambien es apta (R10)
+    assert len(orden) == 5  # 2AZ: 08007971 tambien es apta (R10); 2BA: y 08007969 (R16)
     assert _conc(cliente, "real").ejecutar_una_manual() is True
     [c] = _conciliaciones(base)
     assert (c["factura_id"], c["disparador"]) == (orden[0], "MANUAL_ONE_SHOT")

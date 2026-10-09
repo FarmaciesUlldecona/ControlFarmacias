@@ -8,6 +8,8 @@ consume intento con el mismo contador, tambien en replay con claim) y D-B (el
 reintento pone el contador a 0). La elegibilidad se declara por factura (``apta``).
 No simula tiempo real: ``backoff_futuro`` indica un ``conciliacion_proximo_at``
 posterior a ahora y ``avanzar_tiempo`` lo vence.
+Hito 2BA (migracion 21): R15, reservas de albaranes por conciliacion vigente con el
+mismo rechazo ``ALBARAN_YA_CONCILIADO`` que la RPC; R16, ``tolerancia_elegibilidad``.
 """
 from __future__ import annotations
 
@@ -50,6 +52,8 @@ class SupabaseConciliacionMemoria:
         self.tolerancia_por_albaran = Decimal("0.0100")
         self.tolerancia_tope = Decimal("0.5000")
         self.facturas: dict[str, FacturaSimulada] = {}
+        # R15 (2BA): (farmacia, IdContador) -> factura con la conciliacion vigente que lo usa.
+        self.reservas: dict[tuple[str, int], str] = {}
         self.historial: list[tuple[str, str, dict]] = []
         self.rpcs: list[tuple[str, dict]] = []
 
@@ -106,8 +110,11 @@ class SupabaseConciliacionMemoria:
         if modo != disparador:
             raise RuntimeError("DISPARADOR_NO_COINCIDE_CON_CLAIM")
         self._validar_r11(payload["p_resultado"])
+        claves = self._validar_r15(f.id, payload["p_resultado"])
         for c in f.conciliaciones:
             c["es_actual"] = False
+        self.reservas = {k: v for k, v in self.reservas.items() if v != f.id}
+        self.reservas.update({k: f.id for k in claves})
         nueva = {"id": f"c-{f.id}-{len(f.conciliaciones) + 1}", "intento": len(f.conciliaciones) + 1,
                  "idempotency_key": clave, "disparador": disparador, "es_actual": True,
                  "resultado": payload["p_resultado"]["resultado"],
@@ -127,6 +134,18 @@ class SupabaseConciliacionMemoria:
         if (resultado["resultado"] == "CONCILIADA" and diferencia > tolerancia) or (
                 resultado["resultado"] == "DIFERENCIA" and diferencia <= tolerancia):
             raise RuntimeError("RESULTADO_INCOHERENTE_CON_TOLERANCIA")
+
+    def _validar_r15(self, factura_id, resultado) -> list[tuple[str, int]]:
+        """R15 (2BA, migracion 21): ni dos lineas con el mismo albaran ni uno reservado por otra factura."""
+        claves = [(d["albaran_farmacia"], int(d["albaran_id_contador"])) for d in resultado.get("detalles", [])
+                  if d.get("albaran_id_contador") not in (None, "")]
+        if len(set(claves)) != len(claves) or any(self.reservas.get(k, factura_id) != factura_id for k in claves):
+            raise RuntimeError("ALBARAN_YA_CONCILIADO")
+        return claves
+
+    def tolerancia_elegibilidad(self, lineas: int) -> Decimal:
+        """R16 (2BA): misma tolerancia proporcional que R11 con n = lineas sumadas."""
+        return max(self.tolerancia_suelo, min(self.tolerancia_por_albaran * lineas, self.tolerancia_tope))
 
     def _aplicar_resultado(self, f, resultado):
         """D-A (2AW): CONCILIADA reinicia; cualquier otro resultado consume intento (R7)."""

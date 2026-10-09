@@ -76,12 +76,14 @@ def test_abono_compara_magnitud_y_aplica_signo_documental() -> None:
     )
     resultado = buscar_candidato_albaran(
         documental,
-        [_candidato(3, "OTRO-NUMERO", date(2026, 7, 21), "414.75")],
+        # 2BA: Alliance solo casa por importe con numero interno de Farmatic y a +-3 dias.
+        [_candidato(3, "Q041000/2026", date(2026, 7, 29), "414.75")],
         proveedor_literal="CENCORA",
     )
     detalle = detalle_desde_busqueda(documental, resultado)
     assert resultado.estado == "MATCH_UNICO"
     assert resultado.coincidencia_numero == "DIFERENTE"
+    assert resultado.clase_numero == "INTERNO"
     assert detalle.importe_aplicado == Decimal("-414.7500")
 
 

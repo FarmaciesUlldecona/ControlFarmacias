@@ -140,11 +140,13 @@ def _auditoria(lector: _Lector) -> dict:
         "order by f.numero_factura, c.intento, d.orden")]
     from src.facturas.runtime_supabase.conciliacion import normalizar_numero_albaran
 
+    # D12 (corregido en 2BA): solo cuentan los usos en conciliaciones VIGENTES. Un intento anterior
+    # (es_actual = false) de la misma factura no es un uso doble del albaran.
     usos = defaultdict(set)
     for d in detalles:
-        if d["albaran_id_contador"] is not None:
+        d["usos_mismo_albaran"] = None
+        if d["albaran_id_contador"] is not None and d["es_actual"]:
             usos[(d["albaran_farmacia"], d["albaran_id_contador"])].add((d["conciliacion_id"], d["orden"]))
-            d["usos_mismo_albaran"] = None
     for d in detalles:
         clave = (d["albaran_farmacia"], d["albaran_id_contador"])
         if d["movimiento"]:
@@ -158,7 +160,7 @@ def _auditoria(lector: _Lector) -> dict:
             casa = lambda v: v is not None and abs(abs(Decimal(v)) - aplicado) == 0  # noqa: E731
             d["clase"] = ("NUMERO_EXACTO" if exacto else "PUC_NUMERO_DISTINTO" if casa(d["puc"])
                           else "PVP_NUMERO_DISTINTO" if casa(d["pvp"]) else "OTRA")
-            d["usos_mismo_albaran"] = len(usos[clave])
+            d["usos_mismo_albaran"] = len(usos[clave]) if d["es_actual"] else None
     por_conciliacion: dict = {}
     for d in detalles:
         c = por_conciliacion.setdefault(d["conciliacion_id"], {

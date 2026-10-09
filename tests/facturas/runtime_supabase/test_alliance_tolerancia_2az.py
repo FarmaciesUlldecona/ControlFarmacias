@@ -139,8 +139,11 @@ def test_r10_08011733_servicio_covid19_promovido_y_diferencia_2_16():
     f = _resumen_normalizada(_norm(doc, "08011733"))
     assert elegibilidad(f) == ("APTA", "APTA_MIXTA")  # el hueco documental de 15,91 desaparece
     sim = simular_conciliacion(f, _operacionales())
-    assert Decimal(sim["diferencia"]) == Decimal("2.1600")  # 2,11 (08D28707 ambiguo) + 0,05 redondeos
-    assert sim["matching"].get("AMBIGUO") == 1 and sim["albaranes_sin_coincidencia"] == 1
+    # 2BA (R15b/R15c): 08D28707 ya no es ambiguo (08M82343 tiene formato Alliance distinto) y casa
+    # con el interno Q040658/2026. Quedan sin casar 08M84579 (14,44) y 08D33181/08D33182 (8,84 y
+    # 2,94: en Farmatic 08D33182 vale 8,84 y 08D33182A 2,94; el exacto se impone a la letra) + 0,05.
+    assert Decimal(sim["diferencia"]) == Decimal("26.2700")
+    assert "AMBIGUO" not in sim["matching"] and sim["matching"].get("NUMERO_PROVEEDOR_DISTINTO") == 2
 
 
 # ----------------------------------------------------------------- R14
@@ -213,11 +216,12 @@ def test_d11_casos_de_control_siguen_igual():
         r = buscar_candidato_albaran(_doc(numero, fecha, importe), [_cand(numero, fecha, puc, "1.00", contador)],
                                      proveedor_literal=ALLIANCE)
         assert (r.estado, r.coincidencia_numero, r.candidato.id_contador) == ("MATCH_UNICO", "EXACTA", contador)
-    # 08D28707: dos candidatos con PUC 2,11 y numero distinto -> sigue AMBIGUO.
+    # 08D28707: dos candidatos con PUC 2,11 y numero distinto. Hasta 2AZ era AMBIGUO; con R15b
+    # (2BA) 08M82343 (formato Alliance distinto) no puede casar y queda el interno Q040658/2026.
     r = buscar_candidato_albaran(_doc("08D28707", "2026-09-22", "2.11"),
                                  [_cand("Q040658/2026", "2026-09-22", "2.11", "3.12", 1),
                                   _cand("08M82343", "2026-09-22", "2.11", "6.57", 2)], proveedor_literal=ALLIANCE)
-    assert r.estado == "AMBIGUO" and r.candidato is None
+    assert (r.estado, r.clase_numero, r.candidato.id_contador) == ("MATCH_UNICO", "INTERNO", 1)
 
 
 def test_d11_con_instantanea_real_08007501_queda_sin_casar():

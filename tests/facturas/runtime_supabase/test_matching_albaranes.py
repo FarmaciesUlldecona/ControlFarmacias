@@ -141,9 +141,16 @@ def test_caso_sintetico_equivalente_logista_448() -> None:
 
 
 def test_numero_no_exacto_no_bloquea_evidencia_economica_unica() -> None:
-    result = buscar(rows=[candidato(numero="OTRO-IDENTIFICADOR")])
+    # R15c (2BA): sin coincidencia de numero, solo dentro de +-3 dias (proveedor sin patron).
+    result = buscar(rows=[candidato(numero="OTRO-IDENTIFICADOR", fecha=date(2026, 8, 1))])
     assert result.estado == "MATCH_UNICO"
     assert result.coincidencia_numero == "DIFERENTE"
+    assert result.clase_numero == "SIN_PATRON"
+
+
+def test_numero_no_exacto_fuera_de_3_dias_no_casa() -> None:
+    result = buscar(rows=[candidato(numero="OTRO-IDENTIFICADOR", fecha=date(2026, 8, 4))])
+    assert result.estado == "SIN_COINCIDENCIA" and result.candidato is None
 
 
 def test_farmatic_id_proveedor_tiene_prioridad_y_es_literal() -> None:
