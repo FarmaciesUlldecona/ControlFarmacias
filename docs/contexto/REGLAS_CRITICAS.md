@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-10-09 (Hito 2BA: R15, R15b, R15c, R16 y reglas de numeración).
+Actualizado: 2026-10-19 (Hito 2BA-D: migración 21 desplegada; reglas del Hito 2BA).
 
 ## Seguridad y operación
 
@@ -162,7 +162,8 @@ Actualizado: 2026-10-09 (Hito 2BA: R15, R15b, R15c, R16 y reglas de numeración)
     PUC (tolerancia de importe actual y candidato único). Casar por PVP sin número
     exacto queda prohibido.
 - Reglas aprobadas por Pio en el Hito 2BA (2026-10-08/09; `CONFIRMADO POR TEST` en
-  PostgreSQL 17 local; migración 21 **no desplegada**). Código en
+  PostgreSQL 17 local; migración 21 `CONFIRMADO EN PRODUCCIÓN`, desplegada en el Hito 2BA-D el
+  2026-10-19). Código en
   `runtime_supabase/conciliacion.py` (`clasificar_numero_albaran`,
   `buscar_candidato_albaran`, `buscar_albaranes_factura`) y
   `sql/migrations/21_cf_exclusividad_albaranes.sql`:

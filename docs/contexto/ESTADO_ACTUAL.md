@@ -1,11 +1,11 @@
 # Estado actual
 
-Actualizado: 2026-10-09 (Hito 2BA). Las secciones sin fecha propia conservan la de su hito.
+Actualizado: 2026-10-19 (Hito 2BA-D). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
 
-- 2026-10-09 (Hito 2BA): `origin/main` en `d7bd6773d182f9e9d24bc33e8dbace4b6d8ca767` (2AZ-D). La rama
-  local `main` lo adelanta con los commits del 2BA (el primero, `a91ca22`), **sin push**: `PENDIENTE DE
+- 2026-10-19 (Hito 2BA-D): `origin/main` en `675cff323393a56d3741a24b4da78d1e27c1584d`, que incluye los
+  commits del 2BA (`a91ca22`, `0a229cf`). Los commits locales del 2BA-D no tienen push: `PENDIENTE DE
   RESPALDO REMOTO`. `CONFIRMADO POR CÓDIGO` (Git local).
 - Programa principal: repositorio `C:\ControlFarmacias\Programa`, rama operativa
   `main`, `HEAD` canónico
@@ -188,7 +188,49 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
-### Hito 2BA: exclusividad de albaranes y elegibilidad proporcional (certificado en local; 21 NO desplegada)
+### Hito 2BA-D: migración 21 desplegada en producción
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-19, con confirmación expresa de Pio. Sin conciliar, sin enriquecer,
+sin workers y sin flags. Scripts READ_ONLY del hito en `pruebas/auditoria_2ba_d/preflight_readonly.py`;
+evidencias en `C:\ControlFarmacias\evidencias_2ba-d\` (SHA en `SHA256SUMS.txt`).
+
+- **Puerta:** `HEAD` = `origin/main` = `675cff3` (incluye `a91ca22` y `0a229cf`); suites 1664 passed sin
+  `pg17_local` y 120 passed `pg17_local` (incluido el ensayo de `desplegar_21.py`).
+- **Preflight READ_ONLY** (`preflight_pre.json`, 15:44 UTC, SHA-256
+  `922660849dcd7334c9100af5193ec0e341f9c1b09186ef8f044c27e9258ab173`; es también el backup: definiciones,
+  ACL, privilegios por defecto, `cf_configuracion`, elegibilidad y huellas y volcado por fila de 9 tablas
+  sobre columnas declaradas antes de ejecutar): `PREFLIGHT_OK`.
+  - Esquema 20: alcance igual a la referencia local 20 y esquema completo y privilegios por defecto
+    idénticos al postcheck del 2AZ-D (`comparacion_pre.json`); 21 ausente; 50 objetos, todos de `postgres`.
+  - Operación: flags `f|f|f|{PIO}`, tolerancia 0,05, locks/claims/NORMALIZANDO/workers 0; 12 facturas
+    (7 CONCILIADA, 5 PENDIENTE_CONCILIAR), 13 conciliaciones; tareas Ready, próximas a las 19:00 y
+    19:30 UTC.
+  - Tareas nocturnas: `ejecutar_importacion_facturas.bat:10` (`-m src.facturas.importar_facturas_drive`)
+    y `ejecutar_sincronizacion.bat:10` (`-m src.sincronizar_albaranes`); el grafo estático de imports
+    transitivos de ambas no alcanza `runtime_supabase` ni usa imports dinámicos (`CONFIRMADO POR CÓDIGO`).
+  - Noche del 18/10: importación código 0 (164 PDF, 0 nuevos, 0 errores); sincronización código 0
+    (17 albaranes nuevos, `IdContador` máximo 295057); sin `permission denied` ni 42501 en ningún log.
+  - 279 líneas vigentes con albarán y 0 albaranes duplicados entre ellas.
+  - Precondiciones de `desplegar_21.py` ejecutadas antes en producción en transacción READ_ONLY: 9/9.
+- **Despliegue:** `desplegar_21.py a91ca22 f0a99416…bfcaca`, 15:50:22–15:50:23 UTC, una transacción,
+  9 precondiciones en verde, sin reintentos; SQL normalizado a LF idéntico al de `a91ca22` (SHA-256
+  `f0a99416d2739a81a762f5b788fac402cf8277454897848346aa2e45e1bfcaca`); 279 reservas cargadas = 279
+  líneas vigentes con albarán.
+- **Postcheck** (`comparacion_postcheck.json`, `POSTCHECK_OK`): solo cambiaron
+  `cf_persistir_conciliacion`, `cf_evaluar_elegibilidad_conciliacion` y la nueva
+  `conciliacion_albaranes_reservados`, iguales a la referencia local 21; todo lo demás, privilegios por
+  defecto y `cf_configuracion` idénticos; huellas de las 9 tablas idénticas; operación como antes;
+  reservas = líneas vigentes con albarán (279).
+- **Prueba funcional READ_ONLY** (`funcional.json`, `FUNCIONAL_OK`): `service_role` lee las reservas
+  (279) y ejecuta la elegibilidad; sin INSERT/UPDATE/DELETE/TRUNCATE en la tabla; `anon` y
+  `authenticated` reciben «permission denied» en la tabla y en la elegibilidad; ambas funciones
+  SECURITY DEFINER, propietario `postgres`, EXECUTE solo `service_role`; tabla de `postgres` con RLS.
+- **Elegibilidad cambiada por R16** (informativa): solo **08007969**
+  (`9a1bf74a-0d85-4017-9e33-a8f5e0a9e36e`), de `NO_APTA:TOTAL_NO_EXPLICADO` a `APTA:APTA_MIXTA`. Es
+  ahora conciliable; en el banco concilia como DIFERENCIA de 504,09 (pendiente de revisión, ver 2BA).
+- **Nada se concilió ni se enriqueció.**
+
+### Hito 2BA: exclusividad de albaranes y elegibilidad proporcional (certificado en local; 21 desplegada en el 2BA-D)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-09, commit local `a91ca22` (sin push).
 **Producción no tocada:** solo lecturas READ_ONLY de medición (2026-10-08). Reglas R15, R15b, R15c, R16
@@ -223,20 +265,18 @@ y de numeración en `REGLAS_CRITICAS.md`; evidencias fuera del repositorio en
   08010085, 08010461 y 08010885 pasan a aptas por R16 (08008834 y 08010885 concilian); 08007970 pasa
   de CONCILIADA (−0,08) a DIFERENCIA de 38,98 y 08009716 de CONCILIADA a DIFERENCIA de 113,73 (un
   albarán sin casar en cada una; causa por línea no analizada en este hito).
-- **Riesgo de las tareas nocturnas con el código 2BA en disco:** en el alcance revisado
-  (`src/supabase_client`, `src/facturas/importar_*`) ningún módulo importa `runtime_supabase`
-  (`CONFIRMADO POR CÓDIGO`, 2026-10-09); no se verificaron los puntos de entrada de las tareas.
+- **Riesgo de las tareas nocturnas con el código 2BA en disco:** ninguno de sus puntos de entrada
+  importa `runtime_supabase` (verificado en el 2BA-D, ver arriba).
 - **Pendientes:**
-  - **despliegue de la 21** en producción: preflight, alcance y confirmación de Pio;
+  - ~~despliegue de la 21~~: hecho en el Hito 2BA-D (2026-10-19);
   - **08007969** (MIXTA, 12.807,17): con R16 pasa a APTA, pero en el banco concilia como DIFERENCIA de
     504,09 (127 albaranes casados, 1 sin coincidencia). Revisar antes de conciliarla;
   - **duplicados en Farmatic 08C66676 / 08C66676A** (08009718, línea de 31,59): misma fecha y PUC 31,58
     (caso fijado en `test_exacto_se_impone_a_la_letra_final_08009718`). El número exacto se impone y
     deja libre el `A`; posible doble registro en Farmatic. Revisión de Pio en Farmatic (solo lectura);
-  - **`tests/test_sql_explorer_entrada.py::test_valor_filtro_por_tuberia_sin_bom_ni_fin_de_linea`**
-    falla en la suite sin `pg17_local`. Ajeno al hito (ningún archivo del módulo cambió); no
-    investigado porque el hook de identidad Farmatic bloquea los comandos sobre ese módulo con
-    `MOSTRADOR\Usuari`. Lo ejecuta Pio.
+  - ~~`tests/test_sql_explorer_entrada.py::test_valor_filtro_por_tuberia_sin_bom_ni_fin_de_linea`~~:
+    corregido por Pio en `675cff3` (lectura de stdin por tubería como UTF-8); suite sin `pg17_local`
+    en verde desde entonces (1664 passed).
 - **Suites (2BA, `--basetemp`, MOSTRADOR\Usuari):**
   - 1662 passed sin `pg17_local`, 1 failed (el test anterior);
   - `pg17_local`: 119 passed y 1 skipped antes del commit (el ensayo de la 21, que exige el commit);
@@ -360,7 +400,7 @@ READ_ONLY para diagnósticos. Reglas R10–R14 y D11 en `REGLAS_CRITICAS.md`; di
   - **D11 cambia el emparejamiento de 11 facturas.** Antes, muchas líneas casaban por PVP con número
     distinto, casi siempre con albaranes ajenos (p. ej. 08008835 / 08C40230 ↔ 08M35806). D11 las
     elimina, y 08008835 pasa de CONCILIADA a DIFERENCIA de 18,76.
-- **Defecto previo registrado (D12; corregido en local en el Hito 2BA con R15, 21 no desplegada):** `buscar_candidato_albaran` no tiene exclusividad,
+- **Defecto previo registrado (D12; corregido en el Hito 2BA con R15; 21 desplegada en el 2BA-D):** `buscar_candidato_albaran` no tiene exclusividad,
   y un mismo albarán de Farmatic puede casarse con varias líneas o facturas. D11 lo hace más visible
   (p. ej. Q039707/2026 en 08006568; 08M39484 entre 08008427 y 08008430). Hito propio.
 - **Hitos futuros registrados (NO implementados):**
@@ -445,11 +485,15 @@ READ_ONLY para diagnósticos. Reglas R10–R14 y D11 en `REGLAS_CRITICAS.md`; di
   ejecutar además
   `grant execute on function public.cf_solicitar_reintento_conciliacion(uuid, text) to service_role;`
   para restaurar el ACL previo, guardado en `backup_pre_2aw.json`.
-- **Migración 21 `21_cf_exclusividad_albaranes.sql`** (+ rollback): certificada en local (Hito 2BA,
-  2026-10-09, commit `a91ca22`), **NO desplegada**. Detalle en «Hito 2BA». Orden: primero la 21,
-  después el código; rollback (solo con confirmación de Pio): primero el código y después
-  `21_cf_exclusividad_albaranes.rollback.sql`, que devuelve el esquema 20.
-- **Migración más reciente desplegada: `20_cf_alliance_tolerancia_enriquecimiento.sql`**
+- **Migración más reciente desplegada: `21_cf_exclusividad_albaranes.sql`** (+ rollback).
+  `CONFIRMADO EN PRODUCCIÓN` (Hito 2BA-D, 2026-10-19 15:50:22–15:50:23 UTC):
+  - SHA-256 LF `f0a99416…bfcaca` (commit `a91ca22`);
+  - backup previo `preflight_pre.json` (SHA-256 `92266084…8ab173`);
+  - POSTCHECK_OK y FUNCIONAL_OK.
+  - Detalle en «Hito 2BA-D»; reglas en «Hito 2BA».
+  - **Rollback** (solo con confirmación de Pio): primero el código y después
+    `21_cf_exclusividad_albaranes.rollback.sql`, que devuelve el esquema 20 (y elimina las reservas).
+- Migración anterior desplegada: `20_cf_alliance_tolerancia_enriquecimiento.sql`
   (+ rollback). `CONFIRMADO EN PRODUCCIÓN` (Hito 2AZ-D, 2026-10-08 09:07:02–09:07:03 UTC):
   - SHA-256 LF `aa8f1d55…56a1f`;
   - backup previo `preflight_predespliegue.json` (SHA-256 `da8bd03c…5ad900`);

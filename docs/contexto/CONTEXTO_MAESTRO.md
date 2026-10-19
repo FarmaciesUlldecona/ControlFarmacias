@@ -1,6 +1,6 @@
 # Contexto maestro de ControlFarmacias
 
-Actualizado: 2026-10-09 (Hito 2BA). Repositorio operativo:
+Actualizado: 2026-10-19 (Hito 2BA-D). Repositorio operativo:
 `C:\ControlFarmacias\Programa`.
 
 ControlFarmacias ingiere y trata documentos de compra de farmacia. Su flujo
@@ -75,13 +75,12 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
   Farmatic.
 - `src/supabase_client`: integración histórica de albaranes y documentos.
 - `sql/migrations/21_cf_exclusividad_albaranes.sql` (+ `.rollback.sql`): migración
-  más reciente del repositorio, **certificada en local y NO desplegada** (Hito
-  2BA, 2026-10-09): reservas de albaranes por conciliación vigente (R15) y
-  elegibilidad con tolerancia proporcional (R16). El Python de conciliación del
-  2BA la exige: primero la 21, después el código.
+  más reciente, **desplegada en producción** (Hito 2BA-D, 2026-10-19): reservas
+  de albaranes por conciliación vigente (R15) y elegibilidad con tolerancia
+  proporcional (R16). El Python de conciliación vigente la exige.
 - `sql/migrations/20_cf_alliance_tolerancia_enriquecimiento.sql` (+ `.rollback.sql`):
-  migración más reciente **desplegada en producción** (Hito 2AZ-D, 2026-10-08):
-  tolerancia R11 y enriquecimiento R12.
+  desplegada en producción (Hito 2AZ-D, 2026-10-08): tolerancia R11 y
+  enriquecimiento R12.
 - `sql/migrations/19_cf_privilegios_minimos.sql` (Hito 2AX, 2026-09-29) y
   `18_cf_conciliacion_manual_atomica.sql` (Hito 2AW, 2026-09-28): desplegadas en
   producción.
@@ -104,9 +103,9 @@ ControlFarmacias
 
 - Repositorio: `C:\ControlFarmacias\Programa`.
 - Rama canónica: `main`.
-- `origin/main` a 2026-10-09: `d7bd6773d182f9e9d24bc33e8dbace4b6d8ca767` (2AZ-D).
-  La rama local lo adelanta con los commits del Hito 2BA (el primero, `a91ca22`),
-  **sin push** (`PENDIENTE DE RESPALDO REMOTO`). `HEAD` canónico anterior
+- `origin/main` a 2026-10-19: `675cff323393a56d3741a24b4da78d1e27c1584d` (incluye
+  el Hito 2BA). Los commits locales del Hito 2BA-D no tienen push
+  (`PENDIENTE DE RESPALDO REMOTO`). `HEAD` canónico anterior
   (2026-09-24): `54dd951`, `HISTÓRICO`.
 - Responsabilidad: facturas, ingesta, normalización, motor local, Supabase,
   albaranes, conciliación, workers, migraciones, tests y documentación
