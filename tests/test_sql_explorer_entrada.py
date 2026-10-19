@@ -7,6 +7,7 @@ que accedería a SQL Server.
 
 import ast
 import builtins
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -100,13 +101,30 @@ def test_leer_texto_sin_recortar_conserva_espacios(monkeypatch) -> None:
     assert leer_texto("Valor: ", recortar_espacios=False) == " a "
 
 
-def test_valor_filtro_por_tuberia_sin_bom_ni_fin_de_linea() -> None:
+@pytest.mark.parametrize(
+    "pythonutf8",
+    [None, "1"],
+    ids=["sin_PYTHONUTF8", "con_PYTHONUTF8"],
+)
+def test_valor_filtro_por_tuberia_sin_bom_ni_fin_de_linea(
+    pythonutf8: str | None,
+) -> None:
     """buscar_registros.py: el valor del filtro conserva los espacios.
 
     Se ejecuta en un proceso real con los bytes que canaliza Windows
     PowerShell 5.1 (BOM UTF-8 + texto + CRLF), para comprobar que no quedan
-    ni U+FEFF ni \\r ni \\n residuales. No conecta con Farmatic.
+    ni U+FEFF ni \\r ni \\n residuales. Debe funcionar con y sin
+    ``PYTHONUTF8`` y sin ``PYTHONIOENCODING``. No conecta con Farmatic.
     """
+
+    entorno = {
+        clave: valor
+        for clave, valor in os.environ.items()
+        if clave not in ("PYTHONUTF8", "PYTHONIOENCODING")
+    }
+
+    if pythonutf8 is not None:
+        entorno["PYTHONUTF8"] = pythonutf8
 
     codigo = (
         "from src.sql_explorer.buscar_registros import solicitar_valor_filtro; "
@@ -118,6 +136,7 @@ def test_valor_filtro_por_tuberia_sin_bom_ni_fin_de_linea() -> None:
         input=b"\xef\xbb\xbf valor con espacios \r\n",
         capture_output=True,
         cwd=Path(__file__).resolve().parents[1],
+        env=entorno,
         timeout=60,
     )
 
