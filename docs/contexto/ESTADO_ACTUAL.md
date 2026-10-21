@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-10-19 (Hito 2BA-D). Las secciones sin fecha propia conservan la de su hito.
+Actualizado: 2026-10-21 (Hito 2BB). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
 
@@ -188,6 +188,62 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
+### Hito 2BB: diagnóstico de 08007969 y enriquecimiento de 08007971
+
+2026-10-21. Producción: lecturas READ_ONLY y una única escritura, el enriquecimiento de 08007971. Scripts en `pruebas/auditoria_2bb/`
+(`diagnostico_readonly.py`, `enriquecimiento_readonly.py`); evidencias en
+`C:\ControlFarmacias\evidencias_2bb\` (SHA en `SHA256SUMS.txt`).
+
+- **08007969: causa de la DIFERENCIA de 504,09 localizada** (`CONFIRMADO EN PRODUCCIÓN` por simulación
+  READ_ONLY del worker, 2026-10-21; `diagnostico_08007969.json`):
+  - 504,09 = **504,02** del albarán **08C20268** sin casar + **0,07** de residuo documental (total del PDF
+    12.807,17 frente a líneas 13.020,88 − 213,78 = 12.807,10). Las otras 127 líneas casan (117 número
+    exacto, 8 interno, 2 letra final; 32 con ±0,01 que se compensan, neto 0,00) y los 6 movimientos
+    casan exactos. Sin filas no promovidas (solo avisos no bloqueantes de moneda y vencimiento).
+  - 08C20268 (PDF página 6, `NORMAL ACUSTICO`, base 479,97, total 504,02) existe en Farmatic con el mismo
+    número y fecha (IdContador 280005, SAFA, sin reserva) pero con PUC 500,86: diferencia 3,16 > tolerancia
+    de importe por línea.
+  - **Causa resuelta en Farmatic por Pio (2026-10-21):** al albarán le faltaba la línea VIDESIL 50000UI
+    (3,03 de base); PUC en Farmatic ahora 504,02.
+  - **Pendiente:** que Supabase refleje el cambio. Verificado READ_ONLY el 2026-10-21 15:55 UTC
+    (`albaran_280005.json`): `Supabase.albaranes` 280005 sigue con PUC 500,86 (`fecha_actualizacion`
+    2026-07-25, la de su importación). Con el PUC corregido, la diferencia prevista de 08007969 sería 0,07
+    (dentro de la tolerancia R11 de 0,50), sin haberse simulado todavía.
+- **Hueco detectado: la sincronización de albaranes no detecta albaranes modificados en Farmatic.**
+  `CONFIRMADO POR CÓDIGO` (2026-10-21): `src/database/leer_albaranes.py:61` solo lee
+  `WHERE a.IdContador > ?` desde el último `IdContador` de Supabase (`src/sincronizar_albaranes.py:55`); un
+  albarán ya existente solo se registra en el log (`src/sincronizar_albaranes.py:106`) y nunca se
+  actualiza. Toda corrección posterior en Farmatic (líneas añadidas, importes) queda invisible para la
+  conciliación.
+  - **Hito futuro registrado (NO implementado):** resincronización de albaranes modificados:
+    - ventana reciente de albaranes ya sincronizados (a definir);
+    - detección de cambios de importe (PUC/PVP) y de otros campos frente a Supabase;
+    - historial de cada cambio (valor anterior, nuevo, fecha y origen);
+    - albarán con reserva de una conciliación vigente (R15) → **revisión, no actualizar**.
+    - Farmatic sigue siendo de solo lectura; el cambio afecta solo a `Supabase.albaranes`.
+- **08007971: enriquecida en producción (R12).** `CONFIRMADO EN PRODUCCIÓN`, 2026-10-21, con confirmación
+  expresa de Pio. Sin conciliar, sin workers y sin flags.
+  - Preflight READ_ONLY `PREFLIGHT_OK` (15:04 UTC, `preflight_08007971.json`) y snapshot con huellas
+    (`snapshot_pre.json`): PENDIENTE_CONCILIAR, sin claim, PDF del espejo local con el SHA registrado
+    (`4faa899b…d9f1`), extracción autorizada local con identidad idéntica, payload calculado con
+    `construir_enriquecimiento`; los 3 albaranes operacionales sin reserva de otra factura.
+  - Repetidos a las 15:58 UTC (`preflight_08007971_b.json`, `snapshot_pre_b.json`, SHA-256
+    `f1a44dce99044f41f9a55643be7163b0fa12cf3c0ebc9ef475f430694a2caea2`): idénticos, sin ningún cambio en
+    las 9 tablas (`comparacion_repeticion.json`).
+  - **Ejecución:** `pruebas/auditoria_2az/enriquecer_una_vez.py`, una invocación, 15:59:33–15:59:36 UTC,
+    worker `cf-2az-enriquecimiento`, clave `enriquecimiento:24b94a6c…:16c8c22c…e1e4cc` (la prevista),
+    `RETORNO`, sin replay; guard de ejecución única en las evidencias (`enriquecimiento.json`).
+  - **Postcheck** (`comparacion_postcheck.json`, `POSTCHECK_OK`): solo cambiaron filas de 08007971:
+    +3 `facturas_albaranes_extraidos` (08C18299 183,58/191,84; 08M24229 119,64/150,98; 08M25574
+    20,72/21,65; DIRECTO, CARGO), el vencimiento 30-09-2026 (importe NULL → 364,47, con la provenance R14)
+    y 1 evento `FACTURA_ENRIQUECIDA`. Esquema, `cf_configuracion`, operación y las 279 reservas idénticos;
+    ninguna fila ajena.
+  - Elegibilidad: `NO_APTA:FALTAN_ALBARANES_MERCANCIA` → `APTA:APTA_MERCANCIA` (única factura cambiada).
+    En Farmatic sus albaranes son Q039904/2026 (279694, PUC 191,84), 279774 (150,99) y 280053 (21,65):
+    en el test local del 2BA (`test_08007971_enriquecida_y_conciliada_con_la_21`) concilia con diferencia
+    −0,01; no simulado sobre producción ni ejecutado.
+  - **Pendiente:** su conciliación, en un hito propio con confirmación de Pio.
+
 ### Hito 2BA-D: migración 21 desplegada en producción
 
 `CONFIRMADO EN PRODUCCIÓN`, 2026-10-19, con confirmación expresa de Pio. Sin conciliar, sin enriquecer,
@@ -270,7 +326,8 @@ y de numeración en `REGLAS_CRITICAS.md`; evidencias fuera del repositorio en
 - **Pendientes:**
   - ~~despliegue de la 21~~: hecho en el Hito 2BA-D (2026-10-19);
   - **08007969** (MIXTA, 12.807,17): con R16 pasa a APTA, pero en el banco concilia como DIFERENCIA de
-    504,09 (127 albaranes casados, 1 sin coincidencia). Revisar antes de conciliarla;
+    504,09 (127 albaranes casados, 1 sin coincidencia). Revisar antes de conciliarla. Causa localizada y
+    corregida en Farmatic en el Hito 2BB (08C20268); pendiente de que Supabase refleje el cambio;
   - **duplicados en Farmatic 08C66676 / 08C66676A** (08009718, línea de 31,59): misma fecha y PUC 31,58
     (caso fijado en `test_exacto_se_impone_a_la_letra_final_08009718`). El número exacto se impone y
     deja libre el `A`; posible doble registro en Farmatic. Revisión de Pio en Farmatic (solo lectura);
