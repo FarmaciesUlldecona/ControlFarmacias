@@ -214,7 +214,13 @@ están en `C:\ControlFarmacias\evidencias_2bd\`). Diseño e implementación en
   resincronización no deshace los nuevos, código de salida 2); **modo informe sin escritura**
   (`--informe <salida.json>`, también sin la 22); la conciliación excluye los ausentes.
 - **Scripts:** `pruebas/auditoria_2bd/carga_historica.py` (`[2026-04-01, 2026-06-01)`, `informe` /
-  `ejecutar` con guard de ejecución única) y `desplegar_22.py` (patrón 21; ensayo completo en local).
+  `ejecutar` con guard de ejecución única) y `desplegar_22.py` (patrón 21). **Ensayo completo en local**
+  sobre el commit `1c44d1a`: primer intento aplicado (9 precondiciones; postcondiciones: historial vacío,
+  ninguna recepción cargada, RPC presentes, persistir con el rechazo de ausentes; esquema igual a la
+  referencia y huellas intactas); segundo intento falla en precondiciones y revierte sin cambios.
+- **Suites (2BD, `--basetemp`):** 1694 passed sin `pg17_local`; `pg17_local` 136 passed y 1 skipped antes
+  del commit (el ensayo); tras el commit, el ensayo y la prueba de solo lectura de sus precondiciones:
+  2 passed.
 - **Efecto del código ya en disco (antes de desplegar la 22):** la tarea nocturna no cambia (v2 apagada;
   sus consultas anteriores intactas). La **conciliación** (y los scripts READ_ONLY del 2AT, que ahora
   declaran `albaranes.id_recepcion` y leen `albaranes_cambios`) **exige la 22**: no conciliar en
