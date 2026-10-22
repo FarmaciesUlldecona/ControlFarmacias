@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-10-22 (conciliación de 08007971). Las secciones sin fecha propia conservan la de su hito.
+Actualizado: 2026-10-22 (Hito 2BD, local). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
 
@@ -188,6 +188,46 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
+### Hito 2BD: resincronización de albaranes (certificado en local; 22 NO desplegada)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local, Farmatic **simulado**), 2026-10-22, commit local (sin push).
+**Producción y Farmatic no tocados** en la implementación (las mediciones READ_ONLY previas del 2BD
+están en `C:\ControlFarmacias\evidencias_2bd\`). Diseño e implementación en
+`pruebas/auditoria_2bd/DISENO.md` (apartado 6).
+
+- **Decisiones de Pio:** albarán `AUSENTE_EN_FARMATIC` → revisión y **fuera del casado**; la sincronización
+  trae también la recepción (`AlbaranRecep`, proveedor **del albarán**); patrón «número exacto + `Q…` de la
+  misma recepción» → hito **2BE (R17)**, no ahora; Pio revertirá 08C20268 a 500,86 en Farmatic (el test de
+  modificación usa el albarán sintético `08Z90001`, 500,86 → 504,02).
+- **Migración 22** `22_cf_resincronizacion_albaranes.sql` (+ rollback = esquema 21 exacto; generada por
+  `pruebas/auditoria_2bd/generar_migracion_22.py` desde la 21): `albaranes.id_recepcion`; historial
+  append-only `albaranes_cambios` (solo `SELECT` para `service_role`); RPC `cf_resincronizar_albaran`
+  (identidad distinta → revisión; reservado R15, releído en la transacción → revisión; si no →
+  actualiza + historial; idempotente) y `cf_registrar_albaran_ausente` (nunca borra);
+  `cf_persistir_conciliacion` = 21 + rechazo `ALBARAN_AUSENTE_EN_FARMATIC`. `service_role` sigue sin
+  `UPDATE` sobre `albaranes`.
+- **Código:** lecturas de Farmatic nuevas (nuevos con recepción, rango de fechas, confirmación por
+  `IdContador`; solo SELECT); núcleo `src/supabase_client/resincronizacion_albaranes.py` (ventana de 180 días
+  ampliada a ±15 días de las facturas no conciliadas; `id_proveedor` normalizado R9; no importa
+  `runtime_supabase`); tarea nocturna con la v2 **desactivada por defecto**
+  (`CONTROLFARMACIAS_ALBARANES_V2=1` la activa: nuevos con recepción + modificados; un fallo de la
+  resincronización no deshace los nuevos, código de salida 2); **modo informe sin escritura**
+  (`--informe <salida.json>`, también sin la 22); la conciliación excluye los ausentes.
+- **Scripts:** `pruebas/auditoria_2bd/carga_historica.py` (`[2026-04-01, 2026-06-01)`, `informe` /
+  `ejecutar` con guard de ejecución única) y `desplegar_22.py` (patrón 21; ensayo completo en local).
+- **Efecto del código ya en disco (antes de desplegar la 22):** la tarea nocturna no cambia (v2 apagada;
+  sus consultas anteriores intactas). La **conciliación** (y los scripts READ_ONLY del 2AT, que ahora
+  declaran `albaranes.id_recepcion` y leen `albaranes_cambios`) **exige la 22**: no conciliar en
+  producción antes de desplegarla. Los scripts del 2BA-D/2BB que usan `columnas_declaradas.json` deberán
+  declarar `id_recepcion` tras la 22.
+- **Orden de despliegue propuesto** (todo con confirmación de Pio): informe sin escritura → migración 22
+  → carga histórica (informe → ejecutar) → activar la v2 en la tarea nocturna y vigilar la primera noche
+  (primera pasada: ~5.100 eventos `id_recepcion` de metadato).
+- **Tests existentes actualizados por cambio de contrato:** las bases que concilian con el código pasan
+  de la plantilla 21 a la 22 (2AV, 2BA) o aplican la 22 (ensayo 2AT, 2AX, 2AZ); escenarios falsos del 2BA
+  con `albaranes_cambios`; recuento de consultas de Farmatic 2 → 5 (más la subconsulta de recepción,
+  todas SELECT) en dos tests; lista de migraciones; columnas declaradas del 2AT con `id_recepcion`.
+
 ### Conciliación manual one-shot de 08007971 (2026-10-22)
 
 `CONFIRMADO EN PRODUCCIÓN`, 2026-10-22, con confirmación expresa de Pio. Procedimiento del 2AT
@@ -243,7 +283,8 @@ reintentos. Evidencias en `C:\ControlFarmacias\evidencias_2bc\` (SHA en `SHA256S
   albarán ya existente solo se registra en el log (`src/sincronizar_albaranes.py:106`) y nunca se
   actualiza. Toda corrección posterior en Farmatic (líneas añadidas, importes) queda invisible para la
   conciliación.
-  - **Hito futuro registrado (NO implementado):** resincronización de albaranes modificados:
+  - **Implementado en local en el Hito 2BD (22 NO desplegada; ver esa sección).** Diseño original:
+    resincronización de albaranes modificados:
     - ventana reciente de albaranes ya sincronizados (a definir);
     - detección de cambios de importe (PUC/PVP) y de otros campos frente a Supabase;
     - historial de cada cambio (valor anterior, nuevo, fecha y origen);

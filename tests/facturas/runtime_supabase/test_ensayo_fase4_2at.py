@@ -48,6 +48,7 @@ ROLLBACK_19 = MIG / "19_cf_privilegios_minimos.rollback.sql"
 MIGRACION_19 = MIG / "19_cf_privilegios_minimos.sql"
 MIGRACION_20 = MIG / "20_cf_alliance_tolerancia_enriquecimiento.sql"
 MIGRACION_21 = MIG / "21_cf_exclusividad_albaranes.sql"
+MIGRACION_22 = MIG / "22_cf_resincronizacion_albaranes.sql"
 PUC_PRODUCTIVO = {"08M26924": ("12.44", "17.95", 280242), "08C23236": ("10.05", "14.30", 280269)}
 
 
@@ -146,6 +147,8 @@ def escenario(pg17_nueva_base, tmp_path, monkeypatch):
     pg.sql(MIGRACION_20.read_text(encoding="utf-8"))
     # 2BA: y la 21 (tabla de reservas R15 y elegibilidad R16; el preflight compara la elegibilidad con la 21).
     pg.sql(MIGRACION_21.read_text(encoding="utf-8"))
+    # 2BD: y la 22 (albaranes ausentes en Farmatic fuera del casado; la simulacion lee albaranes_cambios).
+    pg.sql(MIGRACION_22.read_text(encoding="utf-8"))
 
     preparacion = _ClienteServiceRole(pg)
     _registrar(pg, preparacion, ALLIANCE_2AO.read_bytes(), 1)

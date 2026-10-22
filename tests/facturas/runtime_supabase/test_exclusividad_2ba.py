@@ -281,6 +281,8 @@ def _escenario(n_albaranes=1500, objetivo=1400):
                                           "tipo_movimiento": "CARGO"}],
         "albaranes": albaranes,
         "conciliacion_albaranes_reservados": [],
+        # 2BD (migracion 22): la conciliacion lee las revisiones AUSENTE_EN_FARMATIC.
+        "albaranes_cambios": [],
     }
 
 
@@ -311,6 +313,20 @@ def test_reservas_de_otra_factura_bloquean_y_las_propias_no():
     assert detalle.albaran_id_contador is None
     assert detalle.provenance["estado_matching"] == "ALBARAN_YA_CONCILIADO"
     filas["conciliacion_albaranes_reservados"][0]["factura_id"] = "f1"  # nuevo intento de la misma factura
+    [detalle] = RepositorioRuntimeSupabase(_Cliente(filas, 1000)).construir_detalles(
+        FacturaTrabajo("f1", "d1", "PIO", Decimal("10")))
+    assert detalle.albaran_id_contador == 1400
+
+
+def test_2bd_albaran_ausente_en_farmatic_queda_fuera_del_casado():
+    filas = _escenario(n_albaranes=1500)
+    ausente = {"id": 1, "farmacia": "PIO", "id_contador": 1400, "campo": "presencia", "valor_nuevo": "AUSENTE"}
+    filas["albaranes_cambios"] = [ausente]
+    [detalle] = RepositorioRuntimeSupabase(_Cliente(filas, 1000)).construir_detalles(
+        FacturaTrabajo("f1", "d1", "PIO", Decimal("10")))
+    assert detalle.albaran_id_contador is None
+    # Reaparece en Farmatic: la revision se cierra y vuelve a casar.
+    filas["albaranes_cambios"].append({**ausente, "id": 2, "valor_nuevo": "PRESENTE"})
     [detalle] = RepositorioRuntimeSupabase(_Cliente(filas, 1000)).construir_detalles(
         FacturaTrabajo("f1", "d1", "PIO", Decimal("10")))
     assert detalle.albaran_id_contador == 1400

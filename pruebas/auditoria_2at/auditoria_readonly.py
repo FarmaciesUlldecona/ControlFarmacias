@@ -94,6 +94,8 @@ COLUMNAS_HUELLA: dict[str, tuple[str, ...]] = {
         "id", "farmacia", "id_contador", "id_proveedor", "proveedor", "numero_albaran", "fecha",
         "importe_pvp", "importe_puc", "descuento", "estado", "observaciones", "fecha_importacion",
         "fecha_actualizacion",
+        # 2BD (migracion 22): recepcion de Farmatic (metadato). Desde 2BD estos scripts exigen la 22.
+        "id_recepcion",
     ),
     "historial_facturas": (
         "id", "documento_id", "factura_id", "evento", "origen", "actor", "estado_anterior", "estado_nuevo",
@@ -480,7 +482,9 @@ class _ConsultaLectura:
     TABLAS = frozenset({"facturas", "proveedores", "facturas_movimientos", "facturas_albaranes_extraidos",
                         "albaranes", "normalizacion_ejecuciones",
                         # 2BA (R15): reservas de albaranes por conciliacion vigente (migracion 21).
-                        "conciliacion_albaranes_reservados"})
+                        "conciliacion_albaranes_reservados",
+                        # 2BD: albaranes ausentes en Farmatic, fuera del casado (migracion 22).
+                        "albaranes_cambios"})
 
     def __init__(self, lector: _Lector, tabla: str) -> None:
         if tabla not in self.TABLAS:

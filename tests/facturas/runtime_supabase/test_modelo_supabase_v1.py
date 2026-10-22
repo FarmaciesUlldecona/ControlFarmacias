@@ -186,6 +186,8 @@ def test_migraciones_06b_y_07_a_13_existen_en_orden() -> None:
         "20_cf_alliance_tolerancia_enriquecimiento.sql",
         "21_cf_exclusividad_albaranes.rollback.sql",
         "21_cf_exclusividad_albaranes.sql",
+        "22_cf_resincronizacion_albaranes.rollback.sql",
+        "22_cf_resincronizacion_albaranes.sql",
     ]
     assert [ruta.name for ruta in sorted(MIGRACIONES.glob("*_cf_*.sql"))] == esperadas
 
@@ -514,9 +516,13 @@ def test_vistas_security_invoker(vista: str) -> None:
 def test_consultas_farmatic_siguen_siendo_solo_select() -> None:
     codigo = (RAIZ / "src" / "database" / "leer_albaranes.py").read_text(encoding="utf-8")
     consultas = re.findall(r'consulta\s*=\s*"""(.*?)"""', codigo, flags=re.DOTALL)
-    assert len(consultas) == 2
+    # 2BD: + nuevos con recepcion, rango de fechas y confirmacion por IdContador; la subconsulta
+    # de la recepcion (_RECEPCION) tambien es solo lectura.
+    assert len(consultas) == 5
+    consultas += re.findall(r'_RECEPCION\s*=\s*"""(.*?)"""', codigo, flags=re.DOTALL)
+    assert len(consultas) == 6
     for consulta in consultas:
-        limpia = consulta.strip().casefold()
+        limpia = consulta.strip().lstrip("(").strip().casefold()
         assert limpia.startswith("select")
         assert not re.search(
             r"\b(insert|update|delete|merge|create|alter|drop|truncate|exec|execute)\b",

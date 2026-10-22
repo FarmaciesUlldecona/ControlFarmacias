@@ -32,7 +32,26 @@ def convertir_fila_en_albaran(fila) -> Albaran:
         importe_pvp=float(fila.ImportePVP),
         importe_puc=float(fila.ImportePUC),
         dto=float(fila.Dto),
+        id_recepcion=_id_recepcion(fila),
     )
+
+
+def _id_recepcion(fila) -> int | None:
+    """2BD: solo las consultas con recepcion devuelven la columna IdRecepcion."""
+    valor = getattr(fila, "IdRecepcion", None)
+    return None if valor is None else int(valor)
+
+
+# 2BD: la recepcion se enlaza por el proveedor y el numero DEL ALBARAN (AlbaranRecep),
+# nunca por el proveedor de la recepcion (Recep.XProv_IdProveedor). MIN garantiza una
+# fila por albaran (medido: ningun albaran tiene mas de una recepcion).
+_RECEPCION = """
+            (
+                SELECT MIN(ar.IdRecepcion)
+                FROM dbo.AlbaranRecep AS ar
+                WHERE ar.IdProveedor = a.IdProveedor
+                  AND ar.IdAlbaran = a.IdAlbaran
+            ) AS IdRecepcion"""
 
 
 def obtener_nuevos_albaranes(
@@ -135,6 +154,117 @@ def obtener_albaranes_desde_fecha(
     finally:
         if conexion is not None:
             conexion.close()
+
+
+def _leer(consulta: str, *parametros) -> list[Albaran]:
+    conexion = None
+    try:
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+        cursor.execute(consulta, *parametros)
+        return [convertir_fila_en_albaran(fila) for fila in cursor.fetchall()]
+    finally:
+        if conexion is not None:
+            conexion.close()
+
+
+def obtener_nuevos_albaranes_con_recepcion(
+    ultimo_id_contador: int,
+) -> list[Albaran]:
+    """
+    2BD: como ``obtener_nuevos_albaranes`` y además la recepción de cada albarán.
+
+    SQL Server se utiliza exclusivamente en modo lectura.
+    """
+
+    consulta = """
+        SELECT
+            a.IdContador,
+            a.IdProveedor,
+            p.FIS_NOMBRE AS Proveedor,
+            a.IdAlbaran,
+            a.Fecha,
+            a.ImportePVP,
+            a.ImportePUC,
+            a.Dto,""" + _RECEPCION + """
+        FROM dbo.Albaran AS a
+        LEFT JOIN dbo.Proveedor AS p
+            ON a.IdProveedor = p.IDPROVEEDOR
+        WHERE a.IdContador > ?
+        ORDER BY a.IdContador ASC;
+    """
+
+    return _leer(consulta, ultimo_id_contador)
+
+
+def obtener_albaranes_entre_fechas(
+    fecha_desde: date,
+    fecha_hasta: date,
+) -> list[Albaran]:
+    """
+    2BD: albaranes con ``fecha_desde <= Fecha < fecha_hasta`` y su recepción, para la
+    resincronización de modificados y la carga histórica.
+
+    SQL Server se utiliza exclusivamente en modo lectura.
+    """
+
+    consulta = """
+        SELECT
+            a.IdContador,
+            a.IdProveedor,
+            p.FIS_NOMBRE AS Proveedor,
+            a.IdAlbaran,
+            a.Fecha,
+            a.ImportePVP,
+            a.ImportePUC,
+            a.Dto,""" + _RECEPCION + """
+        FROM dbo.Albaran AS a
+        LEFT JOIN dbo.Proveedor AS p
+            ON a.IdProveedor = p.IDPROVEEDOR
+        WHERE a.Fecha >= ?
+          AND a.Fecha < ?
+        ORDER BY a.IdContador ASC;
+    """
+
+    return _leer(consulta, fecha_desde, fecha_hasta)
+
+
+LOTE_CONTADORES = 500
+
+
+def obtener_albaranes_por_contadores(
+    contadores: list[int],
+) -> list[Albaran]:
+    """
+    2BD: confirma por IdContador los albaranes que faltan en la ventana antes de darlos
+    por ausentes (p. ej. si se corrigió su fecha y salió de la ventana).
+
+    SQL Server se utiliza exclusivamente en modo lectura.
+    """
+
+    resultado: list[Albaran] = []
+    contadores = [int(c) for c in contadores]
+    for inicio in range(0, len(contadores), LOTE_CONTADORES):
+        lote = contadores[inicio:inicio + LOTE_CONTADORES]
+        marcas = ", ".join("?" for _ in lote)
+        consulta = """
+            SELECT
+                a.IdContador,
+                a.IdProveedor,
+                p.FIS_NOMBRE AS Proveedor,
+                a.IdAlbaran,
+                a.Fecha,
+                a.ImportePVP,
+                a.ImportePUC,
+                a.Dto,""" + _RECEPCION + """
+            FROM dbo.Albaran AS a
+            LEFT JOIN dbo.Proveedor AS p
+                ON a.IdProveedor = p.IDPROVEEDOR
+            WHERE a.IdContador IN (""" + marcas + """)
+            ORDER BY a.IdContador ASC;
+        """
+        resultado.extend(_leer(consulta, *lote))
+    return resultado
 
 
 def probar_albaranes_desde_fecha() -> None:

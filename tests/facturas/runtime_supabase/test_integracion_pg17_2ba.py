@@ -38,7 +38,9 @@ RESERVAS = "public.conciliacion_albaranes_reservados"
 
 @pytest.fixture
 def base21(pg17_nueva_base):
-    return pg17_nueva_base("21")
+    """Esquema con la 21. 2BD: plantilla ``22`` (la 22 no cambia nada de la 21 salvo el rechazo de
+    albaranes ausentes al persistir, y la conciliacion la exige)."""
+    return pg17_nueva_base("22")
 
 
 def _orden(pg, ids, primeras: list[str]) -> None:

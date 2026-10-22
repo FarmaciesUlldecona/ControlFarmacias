@@ -165,9 +165,13 @@ def test_sql_farmatic_continua_estrictamente_read_only() -> None:
     raiz = Path(__file__).resolve().parents[1]
     codigo = (raiz / "src" / "database" / "leer_albaranes.py").read_text(encoding="utf-8")
     consultas = re.findall(r'consulta\s*=\s*"""(.*?)"""', codigo, flags=re.DOTALL)
-    assert len(consultas) == 2
-    for consulta in consultas:
-        limpia = consulta.strip().casefold()
+    # 2BD: + nuevos con recepción, rango de fechas y confirmación por IdContador (validadas
+    # además con validar_consulta_lectura en tests/facturas/test_resincronizacion_2bd.py).
+    assert len(consultas) == 5
+    recepcion = re.findall(r'_RECEPCION\s*=\s*"""(.*?)"""', codigo, flags=re.DOTALL)
+    assert len(recepcion) == 1 and "SELECT MIN(ar.IdRecepcion)" in recepcion[0]
+    for consulta in consultas + recepcion:
+        limpia = consulta.strip().lstrip("(").strip().casefold()  # la recepcion es una subconsulta
         assert limpia.startswith("select")
         assert not re.search(
             r"\b(insert|update|delete|merge|create|alter|drop|truncate|exec|execute)\b",

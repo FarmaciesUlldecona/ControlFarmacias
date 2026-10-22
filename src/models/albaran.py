@@ -22,3 +22,5 @@ class Albaran:
     importe_pvp: float
     importe_puc: float
     dto: float
+    # 2BD: IdRecepcion de Farmatic (AlbaranRecep por proveedor y numero del albaran); metadato.
+    id_recepcion: int | None = None

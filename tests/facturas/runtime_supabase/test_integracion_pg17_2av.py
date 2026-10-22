@@ -57,8 +57,9 @@ def base(pg17_nueva_base):
 
     Plantilla ``21`` = 17 + 18 + (rollback 19 + 19) + 20 + 21: el selector, el claim y el cierre
     atomico de la 18 llegan intactos salvo lo que redefinen la 20 (R11) y la 21 (R15/R16).
+    2BD: y la 22 (la conciliacion lee las revisiones AUSENTE_EN_FARMATIC de albaranes_cambios).
     """
-    return pg17_nueva_base("21")
+    return pg17_nueva_base("22")
 
 
 def _normalizar(pg, tmp_path, pdf: Path = ALLIANCE, nombre="n") -> ClientePg17:

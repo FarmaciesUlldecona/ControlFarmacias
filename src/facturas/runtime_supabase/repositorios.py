@@ -424,6 +424,10 @@ class RepositorioRuntimeSupabase:
                 .order("id_contador")
             ))
             ocupados, numeros_otras_facturas = self._contexto_exclusividad(factura, operational_rows)
+            # 2BD (migracion 22): un albaran con revision AUSENTE_EN_FARMATIC abierta queda fuera
+            # del casado. La base de datos lo vuelve a exigir al persistir.
+            ausentes = self._albaranes_ausentes_en_farmatic(factura.farmacia)
+            operational_rows = [row for row in operational_rows if int(row["id_contador"]) not in ausentes]
         candidates = tuple(
             CandidatoAlbaranSupabase(
                 id_contador=int(row["id_contador"]),
@@ -460,6 +464,20 @@ class RepositorioRuntimeSupabase:
         )
         details.extend(detalle_desde_busqueda(d, m) for d, m in zip(documentaries, matches))
         return tuple(details)
+
+    def _albaranes_ausentes_en_farmatic(self, farmacia: str) -> set[int]:
+        """2BD: IdContador cuyo ultimo evento de presencia en ``albaranes_cambios`` es AUSENTE."""
+        filas = leer_paginado(lambda: (
+            self._cliente.table("albaranes_cambios")
+            .select("id,id_contador,valor_nuevo")
+            .eq("farmacia", farmacia)
+            .eq("campo", "presencia")
+            .order("id")
+        ))
+        ultimo: dict[int, str] = {}
+        for fila in filas:
+            ultimo[int(fila["id_contador"])] = fila["valor_nuevo"]
+        return {contador for contador, valor in ultimo.items() if valor == "AUSENTE"}
 
     def _contexto_exclusividad(
         self,
