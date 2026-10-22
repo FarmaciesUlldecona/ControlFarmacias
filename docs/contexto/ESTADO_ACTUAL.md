@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-10-21 (Hito 2BB). Las secciones sin fecha propia conservan la de su hito.
+Actualizado: 2026-10-22 (conciliación de 08007971). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
 
@@ -188,6 +188,34 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
+### Conciliación manual one-shot de 08007971 (2026-10-22)
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-22, con confirmación expresa de Pio. Procedimiento del 2AT
+(`pruebas/auditoria_2at/auditoria_readonly.py` y `ejecutar_una_vez.py`); sin workers, sin flags y sin
+reintentos. Evidencias en `C:\ControlFarmacias\evidencias_2bc\` (SHA en `SHA256SUMS.txt`).
+
+- **Preflight** `PREFLIGHT_OK` (16:09 UTC) y snapshot por fila (`snapshot_pre.json`, SHA-256
+  `1bb82492c72517bacae72027fe3d97fdf152cce43aa745851890ae2bb411dd33`).
+- **Selector oficial** (reproducido READ_ONLY, igual al oficial; cuerpos productivos = 18 y 21): aptas
+  1) 08007971, 2) 08007972, 3) 08007969, 4) 08007970 (las cuatro de 2026-06-30, desempate por id). No
+  aptas: 7 ya CONCILIADA y HEFAME 0563834757 (`TOTAL_NO_EXPLICADO`).
+- **Revalidación** (16:10 y 16:14 UTC, `revalidacion_b.json`): candidato, huella, simulación y elegibles
+  idénticos; `CANDIDATO_OK`.
+- **Ejecución:** una invocación, 16:14:24–16:14:27 UTC, worker `cf-2at-manual-conciliacion`, cliente
+  `service_role`, `RETORNO`; guard de ejecución única en las evidencias (`ejecucion.json`).
+- **Resultado:** 08007971 `CONCILIADA`, importe 364,47, explicado 364,48, diferencia −0,01, tolerancia
+  0,05 (R11 con 3 albaranes); conciliación `fa1d6675-42f1-48fe-a7bb-d6b71a746956`, intento 1,
+  `MANUAL_ONE_SHOT`, clave idempotente igual a la simulada. Albaranes casados 1:1: 08C18299 ↔
+  Q039904/2026 (279694, interno, 191,84), 08M24229 ↔ 279774 (exacto, PUC 150,99) y 08M25574 ↔ 280053
+  (exacto, 21,65).
+- **Postcheck** (`comparacion_stdout.txt`, `POSTCHECK_OK`): solo cambió la fila de 08007971 (estado,
+  intentos, `diferencia_albaranes`, `updated_at`); filas nuevas: 1 conciliación, 3 detalles y 2 eventos
+  de historial, todos de esa factura. Reservas: 279 → 282 (las 3 nuevas de 08007971 = sus líneas
+  vigentes; ninguna borrada). Esquema y `cf_configuracion` idénticos a los del 21/10; flags
+  `f|f|f|{PIO}`; workers, locks y claims 0.
+- Conteos tras la conciliación: `facturas` 12 (8 CONCILIADA, 4 PENDIENTE_CONCILIAR), `conciliaciones` 14,
+  `conciliacion_detalles` 754, `historial_facturas` 38.
+
 ### Hito 2BB: diagnóstico de 08007969 y enriquecimiento de 08007971
 
 2026-10-21. Producción: lecturas READ_ONLY y una única escritura, el enriquecimiento de 08007971. Scripts en `pruebas/auditoria_2bb/`
@@ -242,7 +270,7 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
     En Farmatic sus albaranes son Q039904/2026 (279694, PUC 191,84), 279774 (150,99) y 280053 (21,65):
     en el test local del 2BA (`test_08007971_enriquecida_y_conciliada_con_la_21`) concilia con diferencia
     −0,01; no simulado sobre producción ni ejecutado.
-  - **Pendiente:** su conciliación, en un hito propio con confirmación de Pio.
+  - ~~Pendiente: su conciliación~~: CONCILIADA el 2026-10-22 (ver la sección correspondiente).
 
 ### Hito 2BA-D: migración 21 desplegada en producción
 
