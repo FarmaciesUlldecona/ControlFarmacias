@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-10-22 (Hito 2BD, local). Las secciones sin fecha propia conservan la de su hito.
+Actualizado: 2026-10-23 (Hito 2BD-D: migración 22 desplegada, V2 apagada). Las secciones sin fecha propia
+conservan la de su hito.
 
 ## Git y respaldo
 
@@ -188,7 +189,48 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
-### Hito 2BD: resincronización de albaranes (certificado en local; 22 NO desplegada)
+### Hito 2BD-D: migración 22 desplegada en producción (tanda Usuari; V2 APAGADA)
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-23, con confirmación expresa de Pio. Evidencias (fuera del
+repositorio, con `SHA256SUMS.txt`): `C:\ControlFarmacias\evidencias_2bd-d\`. Scripts:
+`pruebas/auditoria_2bd_d/` (`preflight_readonly.py`, `conciliacion_2at.py`). Sin push.
+
+- **Puerta** (decisión de Pio): `origin/main` = `5012ee3` más los 4 commits locales del piloto de agentes
+  (`0962ed7`..`8b41e45`; push el martes). Suites: 1991 passed sin `pg17_local`; 137 passed `pg17_local`
+  (incluido el ensayo de `desplegar_22.py`). Autorizado por Pio que los scripts productivos lean `.env` y
+  `CONTROLFARMACIAS_SUPABASE_DB_URL` por dentro, sin mostrarlos. Tareas consultadas solo con
+  `Get-ScheduledTaskInfo`.
+- **Preflight READ_ONLY** (13:46 UTC): las 9 precondiciones de `desplegar_22.py` en verde; marcas 19/20/21
+  presentes y 22 ausente; operación a cero; 282 reservas = líneas vigentes con albarán; 0 duplicados
+  `(farmacia, IdContador)`; propietarios `postgres`; tareas a más de 5 h; esquema idéntico al postcheck del
+  2BA-D. Alcance de la 22 derivado de las referencias locales 21/22: 9 objetos. Backup: volcado completo de
+  las 9 tablas de huella (`preflight_pre.json`).
+- **Diferencia de baseline hallada:** `albaranes` tiene en producción dos índices que la referencia local no
+  crea (`albaranes_fecha_idx`, `albaranes_proveedor_idx`; presentes al menos desde el 2P). **Excepción
+  aprobada por Pio** para el postcheck: único cambio pre→post en `albaranes` = columna `id_recepcion` (igual
+  a la referencia 22) y esos dos índices idénticos pre/post. `PENDIENTE`: alinear el baseline local.
+- **Despliegue:** `desplegar_22.py 1c44d1a ff6c6747…` → **APLICADA** (13:52 UTC), una transacción, sin
+  reintento; postcondiciones: historial vacío, 0 recepciones, RPC presentes, persistir rechaza ausentes.
+- **Postcheck:** `POSTCHECK_OK` (solo cambian los 9 objetos del alcance, iguales a la referencia 22 con la
+  excepción aprobada; fuera de alcance idénticos; huellas de las 9 tablas idénticas; operación, flags y
+  reservas sin cambios). **Privilegios:** `FUNCIONAL_OK` (`albaranes_cambios` solo `SELECT` para
+  `service_role`, `anon`/`authenticated` denegados, RLS y triggers append-only; las dos RPC nuevas y
+  `cf_persistir_conciliacion` solo `service_role`, SECURITY DEFINER, owner `postgres`; auxiliares solo
+  propietario; `service_role` sigue sin `UPDATE` en `albaranes`).
+- **V2 sigue APAGADA** (`CONTROLFARMACIAS_ALBARANES_V2` no activada). Pendiente para la tanda RO (martes):
+  informe V2 sin escritura, carga histórica y resincronización.
+- **Conciliación one-shot de 08007972: NO ejecutada (decisión de Pio), aplazada.** Preflight y snapshot OK;
+  candidato n.º 1 = 08007972, como se esperaba. Simulación sin claim: `DIFERENCIA` (explicado 41,89 de
+  464,76). 08C16913→08C16913A y 08M23197 casan 1:1; **08C16912 (422,88) no casa: en Supabase existe
+  (IdContador 279410, PUC 422,86, 2026-06-22) con proveedor 52 CINFA** en Farmatic (único albarán de CINFA
+  en Supabase), y la factura es SAFA (proveedor 2). Probable registro con proveedor erróneo en Farmatic
+  (`INFERIDO`). `PENDIENTE`: revisión de Pio en Farmatic.
+- **Hito futuro registrado (NO implementado): resolución de revisiones con aprobación de Pio.** La 22 trata
+  un cambio de proveedor o número como cambio de identidad (`REVISION CAMBIO_IDENTIDAD`) y no actualiza el
+  albarán; corregir 08C16912 en Farmatic no se propagará solo. Hace falta un camino para aplicar esas
+  revisiones con aprobación explícita de Pio.
+
+### Hito 2BD: resincronización de albaranes (certificado en local; 22 desplegada en el 2BD-D)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local, Farmatic **simulado**), 2026-10-22, commit local (sin push).
 **Producción y Farmatic no tocados** en la implementación (las mediciones READ_ONLY previas del 2BD
