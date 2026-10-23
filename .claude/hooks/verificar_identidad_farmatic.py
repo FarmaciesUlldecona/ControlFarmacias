@@ -240,7 +240,11 @@ def main() -> int:
 
     if evaluacion.mensaje:
         try:
-            sys.stderr.write(evaluacion.mensaje + "\n")
+            # Claude Code lee stderr como UTF-8; en Windows el valor por
+            # defecto (cp1252) corrompe los acentos.
+            sys.stderr.flush()
+            sys.stderr.buffer.write((evaluacion.mensaje + "\n").encode("utf-8"))
+            sys.stderr.flush()
         except BaseException:
             pass
 

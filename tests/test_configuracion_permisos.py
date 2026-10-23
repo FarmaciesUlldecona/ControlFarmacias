@@ -334,6 +334,9 @@ CASOS_COMANDOS = [
     (("Bash",), "cat .claude/settings.json", "ask"),
     (("Bash",), "echo x > .claude/settings.local.json", "ask"),
     (AMBAS, "python -c \"open('.claude/settings.json', 'w')\"", "ask"),
+    # Piloto de subagentes (2026-10-23): schtasks pasa de ask a deny.
+    (AMBAS, "schtasks /query /tn ControlFarmacias", "deny"),
+    (AMBAS, "echo $SUPABASE_SERVICE_ROLE_KEY", "deny"),
 ]
 
 
@@ -359,6 +362,9 @@ def test_tabla_de_decisiones_comandos(herramienta, comando, esperado):
         ("src/sql_explorer/entrada.py", None),
         ("tests/test_configuracion_permisos.py", None),
         (".venv/pyvenv.cfg", "deny"),
+        (".env", "deny"),
+        ("config/.env.produccion", "deny"),
+        ("logs/agentes/uso.jsonl", "deny"),
     ],
 )
 def test_tabla_de_decisiones_ediciones(ruta, esperado):
@@ -474,9 +480,12 @@ def test_deny_original_conservado():
 
 
 def test_hook_de_identidad_conservado():
+    """El hook de identidad sigue siendo el primer grupo; el segundo (piloto de
+    subagentes, 2026-10-23) es barreras_agentes.py para todas las herramientas."""
+
     grupos = _settings()["hooks"]["PreToolUse"]
 
-    assert len(grupos) == 1
+    assert len(grupos) == 2
     assert grupos[0]["matcher"] == "Bash|PowerShell|Monitor"
     (entrada,) = grupos[0]["hooks"]
     assert entrada["args"][-1] == (

@@ -269,6 +269,20 @@ def test_subproceso_real_json_invalido_bloquea():
     assert b"BLOQUEADO" in resultado.stderr
 
 
+def test_subproceso_real_mensaje_en_utf8():
+    """El mensaje de bloqueo sale en UTF-8: Claude Code lo lee así (2026-10-23)."""
+
+    resultado = _ejecutar_script(
+        RUTA_HOOK,
+        json.dumps(_entrada("python -m src.sql_explorer.buscar_objetos")).encode(),
+    )
+
+    if resultado.returncode == 0:
+        pytest.skip("la sesión corre como ControlFarmaciasRO: no hay mensaje de bloqueo")
+    assert resultado.returncode == 2
+    assert "whoami devolvió" in resultado.stderr.decode("utf-8")
+
+
 def test_script_ausente_bloquea(tmp_path):
     """Python devuelve 2 si no encuentra el script: Claude Code lo trata como bloqueo."""
 
@@ -323,7 +337,8 @@ def _settings():
 def test_configuracion_del_hook():
     grupos = _settings()["hooks"]["PreToolUse"]
 
-    assert len(grupos) == 1
+    # El segundo grupo es barreras_agentes.py (piloto de subagentes, 2026-10-23).
+    assert len(grupos) == 2
     assert grupos[0]["matcher"] == "Bash|PowerShell|Monitor"
 
     (entrada,) = grupos[0]["hooks"]
@@ -367,9 +382,12 @@ def test_configuracion_de_permisos():
             "probar_albaranes",
             "explorar_base_datos",
             "importar_facturas_drive",
-            "schtasks",
         ):
             assert f"{herramienta}(*{modulo}*)" in permisos["ask"]
+
+        # Piloto de subagentes (2026-10-23): schtasks pasa de ask a deny.
+        assert f"{herramienta}(*schtasks*)" in permisos["deny"]
+        assert f"{herramienta}(*schtasks*)" not in permisos["ask"]
 
     assert "Edit(**/pyvenv.cfg)" in permisos["deny"]
 

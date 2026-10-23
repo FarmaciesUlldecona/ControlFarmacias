@@ -1,0 +1,92 @@
+{
+  "_descripcion": "Política de los subagentes del piloto (2026-10-23). La aplica .claude/hooks/barreras_agentes.py. Cambiar acceso_farmatic, la lista solo_estructura o columnas_restringidas: REQUIERE_OK_PIO.",
+  "explorador-farmatic": {
+    "acceso_farmatic": true,
+    "_acceso": "Activado por Pio el 2026-10-23. Además, el hook de identidad exige una sesión que corra como MOSTRADOR\\ControlFarmaciasRO.",
+    "top_maximo": 50,
+    "solo_estructura": {
+      "_estado": "Tablas con datos personales: estructura y recuento total, nunca filas ni valores. El resto de Farmatic admite estructura y datos. Se compara con el nombre de la tabla del constructor, sin distinguir mayúsculas.",
+      "patrones": [
+        "client",
+        "pacient",
+        "patient",
+        "recet",
+        "tarjet",
+        "fidel",
+        "vendedor",
+        "medico",
+        "agenda",
+        "lopd",
+        "rgpd",
+        "e_?mail",
+        "sms",
+        "estup",
+        "encargo",
+        "ticket",
+        "(?<!in)venta",
+        "vtalote",
+        "^caja",
+        "cash",
+        "^v?saldo",
+        "vale(s|estu|estupef)?$",
+        "^promovale|ofertavale",
+        "profsanitario",
+        "mutua",
+        "factura",
+        "^v?historico"
+      ],
+      "exactas": [
+        "TIPOCLIENTE"
+      ],
+      "excepciones": [
+        "LineaFacturaCompra",
+        "Fedicom_Factura",
+        "Fedicom_AlbaranFactura",
+        "Fedicom_CargoFactura",
+        "vFedicom_Factura"
+      ]
+    },
+    "columnas_restringidas": {
+      "Factura": {
+        "activa": true,
+        "_activada": "OK de Pio, 2026-10-23.",
+        "excluidas": [
+          "CliPro",
+          "Nif",
+          "Titular"
+        ],
+        "_motivo": "Tabla mixta (spec_compras D14): IdTipo R = compra a proveedor (417), IdTipo S = factura emitida a cliente (4 908). Lectura completa salvo las columnas que identifican al titular. Sin SELECT * (columnas explícitas)."
+      }
+    }
+  },
+  "metricas": {
+    "_descripcion": "Coste por tarea en registrar_uso_agente.py, petición a petición. USD por millón de tokens, tarifa estándar (routing global, sin Batch ni inference_geo US). Un modelo con 'verificado' tiene la tarifa comprobada contra la fuente en esa fecha; sin esa clave, el registro la marca ESTIMADA. eur_por_usd: parámetro configurable (Pio, 2026-10-23).",
+    "eur_por_usd": 0.86,
+    "fuente_precios": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "precios_usd_por_mtok": {
+      "claude-opus-5-5": {"verificado": "2026-10-23", "entrada": 4.0, "salida": 20.0, "cache_lectura": 0.2, "cache_escritura_5m": 5.0, "cache_escritura_1h": 8.0},
+      "claude-sonnet-5-5": {"verificado": "2026-10-23", "entrada": 2.0, "salida": 10.0, "cache_lectura": 0.1, "cache_escritura_5m": 2.5, "cache_escritura_1h": 4.0},
+      "claude-haiku-5-5": {"verificado": "2026-10-23", "entrada": 0.1, "salida": 0.5, "cache_lectura": 0.01, "cache_escritura_5m": 0.125, "cache_escritura_1h": 0.2,
+        "tramo_largo": {"umbral_prompt": 100000, "entrada": 0.5, "salida": 2.5, "cache_lectura": 0.05, "cache_escritura_5m": 0.625, "cache_escritura_1h": 1.0}}
+    }
+  },
+  "adaptador-facturas": {
+    "rutas_escritura": [
+      "src/facturas/motor_local/adaptadores",
+      "tests/facturas/motor_local"
+    ],
+    "rutas_protegidas": [
+      "src/facturas/motor_local/adaptadores/registro.py",
+      "src/facturas/motor_local/adaptadores/__init__.py",
+      "src/facturas/motor_local/adaptadores/base.py"
+    ]
+  },
+  "documentador": {
+    "rutas_escritura": [
+      "docs"
+    ],
+    "rutas_protegidas": [
+      "docs/contexto"
+    ]
+  }
+}

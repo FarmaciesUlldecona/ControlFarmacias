@@ -57,8 +57,6 @@
       "Bash(*ejecutar_sincronizacion*)",
       "PowerShell(*ejecutar_importacion_facturas*)",
       "Bash(*ejecutar_importacion_facturas*)",
-      "PowerShell(*schtasks*)",
-      "Bash(*schtasks*)",
       "PowerShell(git commit)",
       "Bash(git commit)",
       "PowerShell(git commit *)",
@@ -192,7 +190,18 @@
       "Bash(winget *)",
       "PowerShell(*pyvenv.cfg*)",
       "Bash(*pyvenv.cfg*)",
-      "Edit(**/pyvenv.cfg)"
+      "Edit(**/pyvenv.cfg)",
+      "Read(**/.env*)",
+      "Edit(**/.env*)",
+      "Read(**/*service_role*)",
+      "Edit(**/*service_role*)",
+      "PowerShell(*service_role*)",
+      "Bash(*service_role*)",
+      "PowerShell(*SERVICE_ROLE*)",
+      "Bash(*SERVICE_ROLE*)",
+      "PowerShell(*schtasks*)",
+      "Bash(*schtasks*)",
+      "Edit(/logs/agentes/**)"
     ]
   },
   "hooks": {
@@ -211,6 +220,41 @@
             ],
             "timeout": 30,
             "statusMessage": "Verificando identidad antes de acceder a Farmatic"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe",
+            "args": [
+              "-I",
+              "-S",
+              "-B",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/barreras_agentes.py"
+            ],
+            "timeout": 30,
+            "statusMessage": "Aplicando barreras de agentes"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe",
+            "args": [
+              "-I",
+              "-S",
+              "-B",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/registrar_uso_agente.py"
+            ],
+            "timeout": 60,
+            "statusMessage": "Registrando uso del subagente"
           }
         ]
       }
