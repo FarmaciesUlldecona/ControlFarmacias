@@ -81,16 +81,22 @@ error y, por tanto, bloquea (`:271-272`).
 5. El veredicto queda ligado al repositorio que revisó el subagente, que puede ser un
    worktree temporal: la raíz sale del `cwd` del subagente, no del proyecto por defecto
    (`registrar_uso_agente.py:221-225`; clave normalizada en `estado_git.py:111-112`).
-6. Al ver `git commit`, `barrera_commit` calcula la huella actual del proyecto y toma el
-   último registro de `revisor-reglas` del proyecto. Los registros de otros repositorios se
-   ignoran; uno sin campo `repositorio` cuenta como del proyecto
-   (`barreras_agentes.py:289-290`, `estado_git.py:115-128`).
+6. Al ver `git commit`, `barrera_commit` calcula la huella actual del proyecto y toma la
+   revisión agrupada de esa huella (`estado_git.revision_de_huella`). `uso.jsonl` es
+   append-only y se agrupa **al leer** por (repositorio, huella): un grupo es una revisión y
+   es PASS solo si **todas** sus líneas son PASS (decisión de Pio, 2026-10-27). Los
+   registros de otros repositorios se ignoran; uno sin campo `repositorio` cuenta como del
+   proyecto (`estado_git.agrupar_revisiones`).
 
-| Motivo | Condición | Referencia |
-|---|---|---|
-| `commit_sin_revisor` | No hay registro del revisor para el proyecto | `barreras_agentes.py:291-295` |
-| `commit_revision_desfasada` | La huella registrada difiere de la actual | `:296-300` |
-| `commit_revisor_fail` | El veredicto no es PASS | `:301-305` |
+| Motivo | Condición |
+|---|---|
+| `commit_sin_revisor` | No hay registro del revisor para el proyecto |
+| `commit_revision_desfasada` | Ninguna revisión registrada tiene la huella actual |
+| `commit_revisor_fail` | Alguna línea del revisor sobre la huella actual no es PASS |
+
+Desde el 2026-10-27 (OK de Pio), `politica_revisor` permite además `SubagentHandback`, la
+devolución de la respuesta, solo a `revisor-reglas`. Bloquearla hacía que el revisor
+reintentara y parase varias veces (16 líneas en la revisión de bbee3e2).
 
 Cualquier edición posterior a la revisión cambia la huella y obliga a revisar de nuevo.
 `logs/` está ignorado por Git, de modo que escribir registros no altera la huella
@@ -238,6 +244,13 @@ Cambiar `acceso_farmatic`, `solo_estructura` o `columnas_restringidas` requiere 
 | `herramientas_bloqueadas` | Resultados con error que contienen `BLOQUEADO` (`:115-120`) |
 | `resultado` | Primeros 300 caracteres de la respuesta (`:213`) |
 | `veredicto`, `repositorio`, `huella_cambios` | Solo `revisor-reglas` (`:216-225`) |
+
+El fichero nunca se reescribe (auditoría). Un subagente puede parar varias veces y cada
+línea lleva el uso acumulado de su transcript, así que sumar líneas infla las métricas. Para
+métricas se usa `estado_git.resumen_uso` (o `python .claude/hooks/estado_git.py`): las líneas
+del revisor se agrupan por (repositorio, huella); dentro, una ejecución por `agent_id` con su
+última línea; tokens, coste y contadores suman las ejecuciones. Ejemplo: las 16 líneas de la
+revisión de bbee3e2 se leen como 1 revisión, 2 ejecuciones (12 + 4 paradas), 1,31 €.
 
 ### Tokens y desglose de caché
 

@@ -156,6 +156,26 @@ def test_commit_con_ultimo_fail_bloqueado(tmp_path):
     assert barreras.barrera_commit("h1", ruta).motivo == "commit_revisor_fail"
 
 
+def test_commit_con_fail_anterior_de_la_misma_huella_bloqueado(tmp_path):
+    """PASS solo si todas las revisiones de la huella son PASS (Pio, 2026-10-27)."""
+    ruta = _uso(
+        tmp_path,
+        {"agent_type": "revisor-reglas", "agent_id": "a", "veredicto": "FAIL", "huella_cambios": "h1"},
+        {"agent_type": "revisor-reglas", "agent_id": "b", "veredicto": "PASS", "huella_cambios": "h1"},
+    )
+    assert barreras.barrera_commit("h1", ruta).motivo == "commit_revisor_fail"
+
+
+def test_commit_con_pass_de_la_huella_aunque_haya_otra_despues(tmp_path):
+    ruta = _uso(
+        tmp_path,
+        {"agent_type": "revisor-reglas", "veredicto": "PASS", "huella_cambios": "h1"},
+        {"agent_type": "revisor-reglas", "veredicto": "FAIL", "huella_cambios": "h2"},
+    )
+    assert barreras.barrera_commit("h1", ruta).codigo == 0
+    assert barreras.barrera_commit("h2", ruta).motivo == "commit_revisor_fail"
+
+
 def test_comando_commit_pasa_por_la_barrera(monkeypatch):
     llamadas = []
     monkeypatch.setattr(barreras, "barrera_commit", lambda: llamadas.append(1) or barreras.PERMITIR)
@@ -203,6 +223,17 @@ def test_hook_no_emite_aprobaciones():
 @pytest.mark.parametrize("herramienta", ["Write", "Edit"])
 def test_revisor_no_escribe(herramienta):
     decision = _decidir(herramienta, {"file_path": str(RAIZ / "docs" / "x.md")}, "revisor-reglas")
+    assert decision.motivo == "herramienta_no_permitida"
+
+
+def test_revisor_puede_devolver_su_respuesta():
+    decision = _decidir("SubagentHandback", {"report": "VEREDICTO: PASS"}, "revisor-reglas")
+    assert decision.codigo == 0
+
+
+@pytest.mark.parametrize("agente", ["explorador-farmatic", "adaptador-facturas", "documentador"])
+def test_devolucion_solo_habilitada_para_el_revisor(agente):
+    decision = _decidir("SubagentHandback", {"report": "x"}, agente)
     assert decision.motivo == "herramienta_no_permitida"
 
 
@@ -682,6 +713,59 @@ def test_otros_agentes_sin_veredicto(tmp_path):
 def test_transcript_ausente(tmp_path):
     registro = registro_uso.construir_registro({"agent_type": "documentador", "agent_transcript_path": str(tmp_path / "x")})
     assert registro["error"] == "transcript_no_disponible"
+
+
+# 8b. Agrupación de revisiones por huella al leer (uso.jsonl append-only)
+
+
+def _parada(agent_id, n, huella="h1", veredicto="PASS", **extra):
+    # Una línea de SubagentStop: el uso es el acumulado del transcript.
+    return {"agent_type": "revisor-reglas", "agent_id": agent_id, "ts": f"t{agent_id}{n:02d}",
+            "veredicto": veredicto, "huella_cambios": huella,
+            "tokens": {"input_tokens": n, "output_tokens": 10 * n},
+            "coste": {"usd": 0.1 * n, "eur": 0.05 * n},
+            "peticiones_api": n, "llamadas_herramientas": n, "herramientas_bloqueadas": 1, **extra}
+
+
+def test_revision_de_bbee3e2_se_lee_como_una():
+    # Forma real de la revisión de bbee3e2: 16 líneas, 2 ejecuciones (12 + 4).
+    registros = [_parada("a", n) for n in range(1, 13)] + [_parada("b", n) for n in range(1, 5)]
+    registros.insert(5, {"agent_type": "documentador", "agent_id": "d", "tokens": {"input_tokens": 7}})
+    (revision,) = estado_git.agrupar_revisiones(registros)
+    assert (revision["lineas"], revision["ejecuciones"]) == (16, 2)
+    assert revision["paradas_por_ejecucion"] == {"a": 12, "b": 4}
+    # Último acumulado de cada ejecución, sin sumar repetidos: 12 + 4.
+    assert revision["tokens"] == {"input_tokens": 16, "output_tokens": 160}
+    assert revision["coste"] == {"usd": 1.6, "eur": 0.8, "parcial": False}
+    assert revision["peticiones_api"] == 16
+    assert revision["herramientas_bloqueadas"] == 2
+    assert revision["veredicto"] == "PASS"
+    resumen = estado_git.resumen_uso(registros)
+    assert [r["agent_type"] for r in resumen] == ["documentador", "revisor-reglas"]
+
+
+def test_agrupacion_separa_huellas_y_repositorios():
+    otro = estado_git.clave_repositorio("C:/otro_worktree")
+    registros = [_parada("a", 1), _parada("b", 1, huella="h2"), _parada("c", 1, repositorio=otro),
+                 _parada("d", 2, veredicto="FAIL"),
+                 {"agent_type": "revisor-reglas", "agent_id": "e", "error": "transcript_no_disponible"}]
+    revisiones = estado_git.agrupar_revisiones(registros)
+    assert [(r["huella_cambios"], r["ejecuciones"], r["veredicto"]) for r in revisiones] == [
+        ("h2", 1, "PASS"), ("h1", 1, "PASS"), ("h1", 2, "FAIL")]
+    assert revisiones[1]["repositorio"] == otro
+
+
+def test_registro_de_uso_sigue_siendo_append_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTROLFARMACIAS_LOG_DIR", str(tmp_path))
+    ruta = tmp_path / "agentes" / "uso.jsonl"
+    ruta.parent.mkdir()
+    ruta.write_text(json.dumps(_parada("a", 1)) + "\n", encoding="utf-8")
+    antes = ruta.read_bytes()
+    monkeypatch.setattr(sys, "stdin", io.TextIOWrapper(io.BytesIO(json.dumps(
+        {"agent_type": "revisor-reglas", "agent_id": "a", "agent_transcript_path": str(tmp_path / "x")}).encode())))
+    assert registro_uso.main() == 0
+    assert ruta.read_bytes().startswith(antes)
+    assert len(ruta.read_text(encoding="utf-8").splitlines()) == 2
 
 
 # 9. Huella de cambios

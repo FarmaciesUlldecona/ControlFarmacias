@@ -46,6 +46,7 @@ NOMBRE_REGISTRO = "barreras.jsonl"
 
 HERRAMIENTAS_ESCRITURA = frozenset({"Write", "Edit", "NotebookEdit"})
 HERRAMIENTAS_SHELL = frozenset({"Bash", "PowerShell"})
+HERRAMIENTA_DEVOLUCION = "SubagentHandback"
 CLAVES_RUTA = ("file_path", "path", "notebook_path", "glob")
 
 # Metacaracteres de shell que permitirían encadenar, redirigir o sustituir.
@@ -286,22 +287,24 @@ def barrera_global(tool_name: str, tool_input: dict, cwd: str) -> Decision:
 
 
 def barrera_commit(huella_actual=None, ruta_uso=None) -> Decision:
+    # Revisiones agrupadas por huella al leer (uso.jsonl es append-only): PASS
+    # solo si todas las líneas de la huella actual son PASS.
     huella = huella_actual if huella_actual is not None else estado_git.huella_cambios()
-    ultimo = estado_git.ultimo_veredicto_revisor(ruta_uso)
-    if ultimo is None:
+    if not estado_git.hay_revisiones(ruta_uso):
         return bloquear(
             "commit_sin_revisor",
             "no hay revisión de revisor-reglas registrada; lanza revisor-reglas antes de proponer el commit.",
         )
-    if ultimo.get("huella_cambios") != huella:
+    revision = estado_git.revision_de_huella(huella, ruta_uso)
+    if revision is None:
         return bloquear(
             "commit_revision_desfasada",
             "los cambios difieren de los revisados por revisor-reglas; vuelve a revisarlos.",
         )
-    if ultimo.get("veredicto") != "PASS":
+    if revision["veredicto"] != "PASS":
         return bloquear(
             "commit_revisor_fail",
-            "la última revisión de revisor-reglas no es PASS.",
+            "alguna revisión de revisor-reglas sobre estos cambios no es PASS.",
         )
     return PERMITIR
 
@@ -325,6 +328,11 @@ def lecturas_revisor(cwd: str) -> set[str]:
 
 
 def politica_revisor(tool_name: str, tool_input: dict, cwd: str, politica: dict) -> Decision:
+    # Devolución de la respuesta al llamante. Bloquearla hacía que el revisor
+    # reintentara y disparase SubagentStop una vez por intento (16 entradas en
+    # la revisión de bbee3e2, 2026-10-23). OK de Pio, 2026-10-27.
+    if tool_name == HERRAMIENTA_DEVOLUCION:
+        return PERMITIR
     if tool_name in ("Read", "Grep"):
         ruta = tool_input.get("file_path") if tool_name == "Read" else tool_input.get("path")
         if not isinstance(ruta, str) or not ruta:

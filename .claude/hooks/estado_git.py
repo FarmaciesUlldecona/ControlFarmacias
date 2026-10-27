@@ -112,17 +112,121 @@ def clave_repositorio(raiz: str) -> str:
     return os.path.normcase(os.path.realpath(raiz))
 
 
-def ultimo_veredicto_revisor(ruta: str | None = None, repositorio: str = DIRECTORIO_PROYECTO) -> dict | None:
-    """Último veredicto de revisor-reglas sobre ``repositorio``.
+CONTADORES = ("peticiones_api", "llamadas_herramientas", "herramientas_bloqueadas")
+
+
+def _sumar_tokens(ejecuciones: list[dict]) -> dict:
+    total: dict[str, int] = {}
+    for ejecucion in ejecuciones:
+        for clave, valor in (ejecucion.get("tokens") or {}).items():
+            if isinstance(valor, int):
+                total[clave] = total.get(clave, 0) + valor
+    return total
+
+
+def _sumar_coste(ejecuciones: list[dict]) -> dict | None:
+    costes = [e["coste"] for e in ejecuciones if isinstance(e.get("coste"), dict)]
+    if not costes:
+        return None
+    return {
+        "usd": round(sum(c.get("usd", 0) for c in costes), 4),
+        "eur": round(sum(c.get("eur", 0) for c in costes), 4),
+        "parcial": len(costes) < len(ejecuciones),
+    }
+
+
+def agrupar_revisiones(registros: list[dict], repositorio_por_defecto: str = DIRECTORIO_PROYECTO) -> list[dict]:
+    """Revisiones de revisor-reglas agrupadas por (repositorio, huella) al leer.
+
+    ``uso.jsonl`` es append-only: cada SubagentStop añade una línea, y un mismo
+    subagente puede parar varias veces con el uso acumulado de su transcript
+    (16 líneas en la revisión de bbee3e2, 2026-10-23). Un grupo es una
+    revisión; dentro, una ejecución por ``agent_id`` con su última línea, que
+    ya es el acumulado. Tokens, coste y contadores suman las ejecuciones, nunca
+    las líneas repetidas. Veredicto PASS solo si todas las líneas del grupo son
+    PASS (decisión de Pio, 2026-10-27).
+
+    Las líneas sin huella (p. ej. transcript no disponible) no forman grupo.
+    Orden: por la última línea de cada grupo.
+    """
+
+    defecto = clave_repositorio(repositorio_por_defecto)
+    grupos: dict[tuple[str, str], dict] = {}
+    for indice, registro in enumerate(registros):
+        if registro.get("agent_type") != AGENTE_REVISOR or not registro.get("huella_cambios"):
+            continue
+        clave = (registro.get("repositorio", defecto), registro["huella_cambios"])
+        grupo = grupos.setdefault(clave, {"lineas": [], "ejecuciones": {}})
+        grupo["lineas"].append(registro)
+        grupo["ultima"] = indice
+        ejecucion = registro.get("agent_id") or f"sin_agent_id:{indice}"
+        anterior = grupo["ejecuciones"].get(ejecucion)
+        grupo["ejecuciones"][ejecucion] = {
+            "registro": registro,
+            "paradas": (anterior["paradas"] if anterior else 0) + 1,
+        }
+
+    revisiones = []
+    for (repositorio, huella), grupo in sorted(grupos.items(), key=lambda item: item[1]["ultima"]):
+        lineas = grupo["lineas"]
+        ultimas = [e["registro"] for e in grupo["ejecuciones"].values()]
+        revision = {
+            "agent_type": AGENTE_REVISOR,
+            "repositorio": repositorio,
+            "huella_cambios": huella,
+            "ts_inicio": lineas[0].get("ts"),
+            "ts": lineas[-1].get("ts"),
+            "veredicto": "PASS" if all(r.get("veredicto") == "PASS" for r in lineas) else "FAIL",
+            "ejecuciones": len(ultimas),
+            "lineas": len(lineas),
+            "paradas_por_ejecucion": {k: e["paradas"] for k, e in grupo["ejecuciones"].items()},
+            "modelo": lineas[-1].get("modelo"),
+            "tarea": lineas[-1].get("tarea"),
+            "resultado": lineas[-1].get("resultado"),
+            "tokens": _sumar_tokens(ultimas),
+            "coste": _sumar_coste(ultimas),
+        }
+        for contador in CONTADORES:
+            revision[contador] = sum(r.get(contador) or 0 for r in ultimas)
+        revisiones.append(revision)
+    return revisiones
+
+
+def resumen_uso(registros: list[dict]) -> list[dict]:
+    """Registros para métricas: revisiones agrupadas y el resto tal cual."""
+
+    otros = [
+        r for r in registros
+        if r.get("agent_type") != AGENTE_REVISOR or not r.get("huella_cambios")
+    ]
+    return otros + agrupar_revisiones(registros)
+
+
+def revision_de_huella(huella: str, ruta: str | None = None, repositorio: str = DIRECTORIO_PROYECTO) -> dict | None:
+    """Revisión agrupada de ``huella`` sobre ``repositorio``, o None.
 
     Los veredictos de otros repositorios (worktrees temporales) se ignoran; un
     registro sin repositorio cuenta como del proyecto.
     """
 
     clave = clave_repositorio(repositorio)
-    for registro in reversed(leer_uso(ruta)):
-        if registro.get("agent_type") != AGENTE_REVISOR:
-            continue
-        if registro.get("repositorio", clave) == clave:
-            return registro
+    for revision in agrupar_revisiones(leer_uso(ruta), repositorio):
+        if revision["repositorio"] == clave and revision["huella_cambios"] == huella:
+            return revision
     return None
+
+
+def hay_revisiones(ruta: str | None = None, repositorio: str = DIRECTORIO_PROYECTO) -> bool:
+    clave = clave_repositorio(repositorio)
+    return any(
+        r.get("agent_type") == AGENTE_REVISOR and r.get("repositorio", clave) == clave
+        for r in leer_uso(ruta)
+    )
+
+
+if __name__ == "__main__":
+    # Resumen de métricas: python estado_git.py [ruta de uso.jsonl]
+    import sys
+
+    for registro in resumen_uso(leer_uso(sys.argv[1] if len(sys.argv) > 1 else None)):
+        print(json.dumps(registro, ensure_ascii=False))
