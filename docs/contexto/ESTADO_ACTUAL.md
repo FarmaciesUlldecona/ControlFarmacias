@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-10-23 (Hito 2BD-D: migración 22 desplegada, V2 apagada). Las secciones sin fecha propia
+Actualizado: 2026-10-28 (Hito 2BD-D tanda RO: carga histórica y resincronización V2 manual). Las secciones sin fecha propia
 conservan la de su hito.
 
 ## Git y respaldo
@@ -189,6 +189,33 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
+### Hito 2BD-D, tanda RO: carga histórica y resincronización V2 manual en producción
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-27/28, ejecutado por Pio en terminal como
+`MOSTRADOR\ControlFarmaciasRO` (Farmatic certificado READ_ONLY). Evidencias (fuera del repositorio):
+`C:\ControlFarmacias\evidencias_2bd_ro\`. Script: `pruebas/auditoria_2bd_ro/postcheck_readonly.py`
+(captura y comparación READ_ONLY). Sin push.
+
+- **Carga histórica** `[2026-04-01, 2026-06-01)`: `COMPLETADA`, 1.635 insertados, 0 errores (guard de
+  ejecución única creado).
+- **Resincronización V2 manual** (`CONTROLFARMACIAS_ALBARANES_V2=1` solo en esa sesión; 2026-10-28,
+  ventana desde 2026-05-01): 24 nuevos; resincronización con 4.270 cambios = 4.269 actualizados (relleno de
+  `id_recepcion` NULL → valor) + 1 revisión `CAMBIO_IDENTIDAD` (IdContador 279410); 0 ausentes; 0 errores.
+- **Postcheck:** la primera comparación dio `POSTCHECK_REVISAR` solo por `OPERACION_DISTINTA`
+  (`conteos.albaranes` 5.906 → 5.930). Corregido: `conteos.albaranes` no es operación; se compara aparte y
+  solo se admite un incremento igual a los albaranes nuevos (test `test_postcheck_2bd_ro.py`). Recomparación
+  sobre las mismas capturas: `POSTCHECK_OK` (reservas idénticas, 282; historial: 4.269 `ACTUALIZADO`
+  `id_recepcion` + 2 filas de revisión de 279410; ninguna huella de `albaranes` cambiada fuera de
+  `id_recepcion`; 0 recepciones sobrescritas; resto de la operación idéntico).
+- **Informe V2 sin escritura posterior** (`informe_v2_postcheck.json`): 0 nuevos, 0 ausentes, 1 cambio
+  (279410, `REVISION:CAMBIO_IDENTIDAD`), 5.093 iguales.
+- **Explorador SQL** probado como `ControlFarmaciasRO` (metadatos de `AlbaranRecep`) y suites del explorador
+  en verde.
+- **279410 (08C16912): aprobación previa ampliada de Pio** para cuando exista el camino de resolución de
+  revisiones (hito futuro, NO implementado): `id_proveedor` 52 → `0002` (CINFA → SAFA) y `numero_albaran`
+  08C16912 → 08C16912A. Hasta entonces el albarán sigue en Supabase con los valores antiguos y en revisión.
+- **V2 en la tarea nocturna:** la activa Pio a mano. `PENDIENTE`: vigilar la primera noche.
+
 ### Hito 2BD-D: migración 22 desplegada en producción (tanda Usuari; V2 APAGADA)
 
 `CONFIRMADO EN PRODUCCIÓN`, 2026-10-23, con confirmación expresa de Pio. Evidencias (fuera del
@@ -217,8 +244,8 @@ repositorio, con `SHA256SUMS.txt`): `C:\ControlFarmacias\evidencias_2bd-d\`. Scr
   `service_role`, `anon`/`authenticated` denegados, RLS y triggers append-only; las dos RPC nuevas y
   `cf_persistir_conciliacion` solo `service_role`, SECURITY DEFINER, owner `postgres`; auxiliares solo
   propietario; `service_role` sigue sin `UPDATE` en `albaranes`).
-- **V2 sigue APAGADA** (`CONTROLFARMACIAS_ALBARANES_V2` no activada). Pendiente para la tanda RO (martes):
-  informe V2 sin escritura, carga histórica y resincronización.
+- **V2 sigue APAGADA** (`CONTROLFARMACIAS_ALBARANES_V2` no activada). Tanda RO hecha el 2026-10-27/28
+  (ver "Hito 2BD-D, tanda RO").
 - **Conciliación one-shot de 08007972: NO ejecutada (decisión de Pio), aplazada.** Preflight y snapshot OK;
   candidato n.º 1 = 08007972, como se esperaba. Simulación sin claim: `DIFERENCIA` (explicado 41,89 de
   464,76). 08C16913→08C16913A y 08M23197 casan 1:1; **08C16912 (422,88) no casa: en Supabase existe
