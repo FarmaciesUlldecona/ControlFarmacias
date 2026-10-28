@@ -7,16 +7,22 @@ informe V2 de la tanda RO) e importes sinteticos salvo el PUC (422,86).
 """
 from __future__ import annotations
 
+import ast
+import hashlib
 import importlib
 import importlib.util
 import json
+import subprocess
+import sys
 import uuid
 from datetime import datetime
 
 import pytest
 
-from pg17_local import FLAGS_ESPERADOS, FLAGS_SQL, MIG, ROOT, ClientePg17, _locks, esquema
-from test_integracion_pg17_2az import _datos_previos, _huella, _preparar_2ao
+import pg17_local as pgl
+from pg17_local import FLAGS_ESPERADOS, FLAGS_SQL, MIG, ROOT, ClientePg17, _locks, base_desde, esquema
+from test_integracion_pg17_2az import (  # noqa: F401 (fixture)
+    DSN_FICTICIO, _datos_previos, _huella, _preparar_2ao, contenedor_tcp)
 from test_integracion_pg17_2ba import _persistir_directo
 from test_integracion_pg17_2bd import RECIENTE, _albaran, _ausente, _cambios, _espejo, _resync
 from src.models.albaran import Albaran
@@ -443,3 +449,91 @@ def test_script_sin_la_23_no_escribe(pg17_nueva_base, monkeypatch, tmp_path):
         script.main("aplicar", "1", tmp_path / "a.json")
     assert not (tmp_path / "aplicar_aprobacion_1.guard").exists()
     assert {k: _huella(pg, q) for k, q in HUELLAS.items()} == antes
+
+
+# --------------------------------------------------------------------------- ensayo del script de despliegue de la 23
+
+SCRIPT_23 = ROOT / "pruebas/auditoria_2bf/desplegar_23.py"
+
+
+def _commit_de_la_23() -> tuple[str, str]:
+    commit = subprocess.run(["git", "-C", str(ROOT), "log", "-n", "1", "--format=%H", "--",
+                             "sql/migrations/23_cf_aprobaciones_albaranes.sql"],
+                            capture_output=True, text=True).stdout.strip()
+    if not commit:
+        pytest.skip("migracion 23 sin commit: el ensayo del despliegue exige verificar el SHA contra un commit")
+    local = MIGRACION_23.read_bytes().decode("utf-8").replace("\r\n", "\n")
+    return commit, hashlib.sha256(local.encode("utf-8")).hexdigest()
+
+
+def _cargar_despliegue():
+    spec = importlib.util.spec_from_file_location(f"desplegar_23_{uuid.uuid4().hex[:6]}", SCRIPT_23)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+def _sql_precondiciones() -> str:
+    arbol = ast.parse(SCRIPT_23.read_text(encoding="utf-8"))
+    [consulta] = [n for n in ast.walk(arbol) if isinstance(n, ast.Call) and getattr(n.func, "attr", "") == "execute"
+                  and n.args and "has_table_privilege" in ast.unparse(n.args[0])
+                  and "to_regclass('public.albaranes_aprobaciones') is null" in ast.unparse(n.args[0])]
+    return eval(compile(ast.Expression(consulta.args[0]), str(SCRIPT_23), "eval"), vars(_cargar_despliegue()))
+
+
+def test_ensayo_completo_despliegue_23_y_segundo_intento_revierte(contenedor_tcp, tmp_path, monkeypatch):
+    commit, sha = _commit_de_la_23()
+    nombre, puerto, _plantilla_19 = contenedor_tcp
+    pg = base_desde(nombre, pgl.construir_plantilla(nombre, "22"))
+    _datos_previos(pg, tmp_path)
+    _albaran_279410(pg)
+    _resync(pg, 279410, _farmatic_279410())  # revision real pendiente en el historial de la 22
+    referencia = base_desde(nombre, pg.db)
+    referencia.sql(MIGRACION_23.read_text(encoding="utf-8"))
+    assert pg.sql("begin read only; " + _sql_precondiciones() + "; rollback;") == "|".join(["t"] * 9)
+
+    sys.path.insert(0, str(ROOT / "tmp_pg_probe_deps"))
+    import psycopg2
+
+    real = getattr(psycopg2, "_connect_original_2az", psycopg2.connect)
+    psycopg2._connect_original_2az = real
+    dsns = []
+
+    def conectar_local(dsn, **_kwargs):
+        dsns.append(dsn)
+        return real(host="127.0.0.1", port=puerto, dbname=pg.db, user="postgres", password="local-only",
+                    connect_timeout=10)
+
+    monkeypatch.setattr(psycopg2, "connect", conectar_local)
+    monkeypatch.setenv("CONTROLFARMACIAS_SUPABASE_DB_URL", DSN_FICTICIO)
+
+    def ejecutar(salida):
+        try:
+            _cargar_despliegue().main(commit, sha, salida)
+        except SystemExit:
+            pass
+        return json.loads(salida.read_text(encoding="utf-8"))
+
+    antes = {k: _huella(pg, q) for k, q in HUELLAS.items()}
+    registro = ejecutar(tmp_path / "primero.json")
+    assert dsns == [DSN_FICTICIO]
+    assert (registro["resultado"], registro["sha256_lf"], registro["commit"]) == ("APLICADA", sha, commit)
+    assert registro["precondiciones"] == [True] * 9
+    assert registro["postcondiciones"] == {
+        "albaranes_aprobaciones": 0, "albaranes_aprobaciones_aplicadas": 0, "historial_sin_cambios": True,
+        "rpcs": True, "resync_solo_pendientes": True, "privilegios": True}
+    assert esquema(pg) == esquema(referencia)
+    assert {k: _huella(pg, q) for k, q in HUELLAS.items()} == antes
+
+    registro = ejecutar(tmp_path / "segundo.json")
+    assert registro["resultado"] == "REVERTIDA" and "PRECONDICIONES_NO_CUMPLIDAS" in registro["error"]
+    assert registro["precondiciones"][0] is False and all(registro["precondiciones"][1:])
+    assert esquema(pg) == esquema(referencia)
+    assert {k: _huella(pg, q) for k, q in HUELLAS.items()} == antes
+
+
+def test_sql_de_precondiciones_23_es_de_solo_lectura():
+    sql = _sql_precondiciones()
+    assert sql.lstrip().lower().startswith("select ")
+    assert not any(p in sql.lower() for p in ("insert ", "update ", "delete ", "grant ", "revoke ", "alter ",
+                                              "create ", "drop "))

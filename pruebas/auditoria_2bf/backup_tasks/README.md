@@ -1,14 +1,18 @@
 # Tarea «Sincronización ControlFarmacias» — copias del repositorio (Hito 2BF, 2026-10-28)
 
-| Fichero | Contenido | Certeza |
-|---|---|---|
-| `Sincronizacion_ControlFarmacias_antes_v2.xml` | Copia byte a byte de la exportación real previa a activar la V2 (`C:\ControlFarmacias\evidencias_2bd_ro\tarea_sincronizacion_antes.xml`, 2026-10-28 17:33). SHA-256 `3a880abeecbcff5ea521d37efc6c8b58429423acf39778b1c2a8749d2343713e`. | `CONFIRMADO POR CERTIFICACIÓN ARCHIVADA` |
-| `Sincronizacion_ControlFarmacias.xml` | **Vigente**: la exportación anterior con la acción que Pio dejó configurada al activar la V2. Solo cambia `Actions/Exec` (`Command` + `Arguments`). | Acción declarada por Pio el 2026-10-28; **no es una exportación nueva**. `PENDIENTE`: sustituirla por una exportación real en la próxima consulta autorizada de Task Scheduler. |
+Las dos copias son exportaciones reales, copiadas byte a byte de `C:\ControlFarmacias\evidencias_2bd_ro\`
+(`CONFIRMADO POR CERTIFICACIÓN ARCHIVADA`, 2026-10-28):
 
-Acción vigente:
+| Fichero | Origen | SHA-256 |
+|---|---|---|
+| `Sincronizacion_ControlFarmacias_antes_v2.xml` | `tarea_sincronizacion_antes.xml` (17:33, antes de activar la V2) | `3a880abeecbcff5ea521d37efc6c8b58429423acf39778b1c2a8749d2343713e` |
+| `Sincronizacion_ControlFarmacias.xml` | `tarea_sincronizacion_v2.xml` (20:05, **vigente**, V2 activada por Pio) | `b3e327db53fba6753c43f9433e5c4fd9ad3bc6674a244ed857fdc547c9010a31` |
+
+Acción vigente (`Actions/Exec`; es lo único que cambia entre las dos exportaciones):
 
 ```text
-cmd.exe /c "set CONTROLFARMACIAS_ALBARANES_V2=1&& C:\ControlFarmacias\Programa\ejecutar_sincronizacion.bat"
+Command:   C:\Windows\System32\cmd.exe
+Arguments: /c "set CONTROLFARMACIAS_ALBARANES_V2=1&&C:\ControlFarmacias\Programa\ejecutar_sincronizacion.bat"
 ```
 
 - Sin espacio antes de `&&`: `cmd` deja la variable exactamente en `1`, que es lo que exige
@@ -26,4 +30,4 @@ cmd.exe /c "set CONTROLFARMACIAS_ALBARANES_V2=1&& C:\ControlFarmacias\Programa\e
 localizan la tarea por `Command = …\ejecutar_sincronizacion.bat`; con la acción vigente no la encuentran y
 fallan cerrado. Son históricos.
 
-Comprobado por `tests/test_tarea_nocturna_v2_2bf.py`.
+Comprobado por `tests/test_tarea_nocturna_v2_2bf.py` (SHA, acción y que solo cambia la acción).

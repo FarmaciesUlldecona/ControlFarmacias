@@ -98,27 +98,53 @@ Supabase con `service_role`, salidas fuera del repositorio, sin reintentos.
 
 ## 5. Tarea nocturna (copias del repositorio)
 
-La V2 está activada en la tarea por Pio. Acción real: `cmd.exe /c "set
-CONTROLFARMACIAS_ALBARANES_V2=1&& C:\ControlFarmacias\Programa\ejecutar_sincronizacion.bat"` (sin espacio
-antes de `&&`: el valor es exactamente `1`, que es lo que exige `resincronizacion_albaranes.activada()`).
-Copias en `pruebas/auditoria_2bf/backup_tasks/` (ver su `README.md`). `pruebas/auditoria_2ae/backup_tasks/`
-sigue siendo el inventario **original** del 2AE (base de `rollback_tasks.ps1`) y no se modifica. Los
-scripts de 2AH/2AI identifican la tarea por `Command = ejecutar_sincronizacion.bat`: con la acción
-actual no la encuentran y fallan cerrado (`Tarea no identificada de forma unica`). Son históricos; no se
-reutilizan sin adaptarlos.
+La V2 está activada en la tarea por Pio. Acción real (exportación del 2026-10-28 20:05):
+`C:\Windows\System32\cmd.exe /c "set CONTROLFARMACIAS_ALBARANES_V2=1&&C:\ControlFarmacias\Programa\ejecutar_sincronizacion.bat"`
+(sin espacio antes de `&&`: el valor es exactamente `1`, que es lo que exige
+`resincronizacion_albaranes.activada()`). Copias byte a byte de las exportaciones reales en
+`pruebas/auditoria_2bf/backup_tasks/` (ver su `README.md`). `pruebas/auditoria_2ae/backup_tasks/` sigue
+siendo el inventario **original** del 2AE (base de `rollback_tasks.ps1`) y no se modifica. Los scripts de
+2AH/2AI identifican la tarea por `Command = ejecutar_sincronizacion.bat`: con la acción actual no la
+encuentran y fallan cerrado (`Tarea no identificada de forma unica`). Son históricos; no se reutilizan sin
+adaptarlos.
 
-## 6. Orden de despliegue propuesto (todo con confirmación de Pio)
+## 6. Plan 2BF-D (producción; cada paso con confirmación de Pio)
 
-1. Preflight READ_ONLY (22 presente, 23 ausente, operación a cero, reservas, propietarios).
-2. Migración 23 (script de despliegue a preparar con el patrón `desplegar_22.py`, ensayado completo en
-   local según la norma 2AX). **No incluido en este hito.**
-3. `informe 279410` → revisar que la previsión es `APLICABLE`.
-4. `registrar aprobacion_279410.json` → `aplicar <id>`.
-5. La noche siguiente (V2): `proveedor` y `id_recepcion` de 279410 se actualizan con historial. Después,
-   simulación de 08007972 (08C16912 debería casar por número exacto).
+**Despliegue:** `pruebas/auditoria_2bf/desplegar_23.py <commit> <sha256_lf> <salida.json>` (patrón
+`desplegar_22.py`): SHA de la 23 contra el commit; 9 precondiciones en la misma transacción (23 ausente y
+`cf_resincronizar_albaran` con el texto de la 22; 22 presente e intacta; privilegios 19; flags `f|f|f|{PIO}`;
+sin locks; reservas = líneas vigentes; propietarios `postgres`); aplicación; postcondiciones (0 aprobaciones,
+0 aplicadas, `albaranes_cambios` sin cambios, RPC presentes, resync con la comprobación de pendientes,
+`service_role` sin `UPDATE` en `albaranes` ni escritura en aprobaciones). Ensayado completo en local
+(`test_ensayo_completo_despliegue_23_y_segundo_intento_revierte`: aplica; el segundo intento falla solo en
+la precondición 1 y revierte sin cambios). SQL de precondiciones comprobado de solo lectura.
+
+Identidades: **Usuari** = sesión Windows `MOSTRADOR\Usuari`, sin Farmatic, con conexión directa a la base
+(`CONTROLFARMACIAS_SUPABASE_DB_URL`, propietario `postgres`). **RO** = sesión `MOSTRADOR\ControlFarmaciasRO`
+(Farmatic certificado READ_ONLY; el hook de Claude Code exige esta identidad para Farmatic) con el
+`service_role` del `.env`. **Las escrituras las ejecuta Pio en terminal.**
+
+| Paso | Qué | Identidad | Escribe | Ejecuta |
+|---|---|---|---|---|
+| 0 | Puerta: commit local, suites en verde, `sha256_lf` de la 23 | Usuari | no | Claude |
+| 1 | Preflight READ_ONLY: SQL de precondiciones de `desplegar_23.py` en `begin read only … rollback` (9 × `t`); captura pre de esquema, privilegios y huellas | Usuari (DB URL, READ ONLY) | no | Claude, con autorización de Pio |
+| 2 | `desplegar_23.py <commit> <sha> <salida.json>` | Usuari (DB URL) | **sí** (DDL, una transacción) | **Pio** |
+| 3 | Postcheck READ_ONLY con el criterio 2AX: solo cambian los objetos de la 23, iguales a la referencia local; fuera de alcance idénticos; huellas de datos idénticas | Usuari (DB URL, READ ONLY) | no | Claude |
+| 4 | `aplicar_aprobacion.py informe 279410 <salida>`: pendientes `08C16912→08C16912A` y `52→0002 `, sin reserva | RO | no | Pio, o Claude en VS Code abierto como RO |
+| 5 | `aplicar_aprobacion.py registrar pruebas/auditoria_2bf/aprobacion_279410.json <salida>` | RO (`registrado_por` = usuario Windows de la sesión) | **sí** (1 fila en `albaranes_aprobaciones`) | **Pio** |
+| 6 | `informe 279410`: previsión `APLICABLE` para esa aprobación | RO | no | Pio, o Claude (RO) |
+| 7 | `aplicar_aprobacion.py aplicar <aprobacion_id> <salida>` (una vez; guard propio) | RO (relee Farmatic) | **sí** (279410 + 1 fila en aplicadas) | **Pio** |
+| 8 | `informe 279410` (`YA_APLICADA`, sin pendientes) y postcheck READ_ONLY: solo cambian `numero_albaran`, `id_proveedor` y `fecha_actualizacion` de 279410; 1 aprobación y 1 aplicación; reservas, historial y resto idénticos | RO / Usuari | no | Claude |
+| 9 | Noche V2 (tarea programada, principal RO): `proveedor` e `id_recepcion` de 279410 con historial `ACTUALIZADO`, sin revisiones nuevas; revisar log y código de salida | tarea (RO) | sí (automática) | Task Scheduler |
+| 10 | Simulación sin claim de 08007972 (08C16912A debería casar por número) | Usuari (READ_ONLY) | no | Claude |
+
+`PENDIENTE` antes del paso 1: herramientas READ_ONLY del 2BF-D para la captura y el postcheck de los pasos
+1, 3 y 8 (adaptar `pruebas/auditoria_2bd_d/preflight_readonly.py` con alcance local 22 ↔ 23, y
+`pruebas/auditoria_2bd_ro/postcheck_readonly.py`). Rollback de la 23: solo con confirmación de Pio (Usuari,
+`23_cf_aprobaciones_albaranes.rollback.sql`); conserva los valores ya aplicados en `albaranes`.
 
 La tarea nocturna funciona igual con la 22 o con la 23 (el código Python no cambia).
 
 ## 7. Fuera de alcance
 
-Desplegar la 23; aprobar otros motivos; anular aprobaciones; conciliar; tocar Farmatic, flags o tareas.
+Desplegar la 23 (es el 2BF-D); aprobar otros motivos; anular aprobaciones; conciliar; tocar Farmatic, flags o tareas.

@@ -212,8 +212,12 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   resuelta que reapareciera. La 23 lo limita a pendientes.
 - **Script one-shot** `pruebas/auditoria_2bf/aplicar_aprobacion.py`: `informe` (sin escritura), `registrar`
   (`aprobacion_279410.json`) y `aplicar <id>` (una aprobación, guard propio, configuración `f|f|f|{PIO}`, sin
-  reintentos). **Sin script de despliegue de la 23 todavía** (hito siguiente, patrón `desplegar_22.py` y
-  norma 2AX).
+  reintentos).
+- **Despliegue preparado (2BF, cierre previo al 2BF-D):** `pruebas/auditoria_2bf/desplegar_23.py` (patrón 22:
+  SHA contra el commit, 9 precondiciones, una transacción, postcondiciones). Ensayo completo en local
+  (`test_ensayo_completo_despliegue_23_y_segundo_intento_revierte`): aplica; el segundo intento falla en
+  precondiciones y revierte sin cambios. Precondiciones comprobadas de solo lectura. Suite completa
+  (`--basetemp`, con `pg17_local`): **2167 passed**, 0 failed, 0 skipped (2026-10-28, antes del commit).
 - **Caso 279410 en local:** revisión → aprobación (52 → `0002`, 08C16912 → 08C16912A) → `APLICADA` con el
   literal `0002 `; la noche siguiente `proveedor` CINFA → `1.- SAFA` e `id_recepcion` 50781 con historial.
   Variantes que no aplican: otro número o proveedor, un solo campo, sin revisión registrada, Farmatic
@@ -222,13 +226,16 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   `tests/test_tarea_nocturna_v2_2bf.py` (3); plantillas `23`/`23_rollback` en `pg17_local.py`; lista de
   migraciones en `test_modelo_supabase_v1.py`. Suite completa (`--basetemp`, con `pg17_local`):
   **2165 passed**, 0 failed, 0 skipped (2026-10-28, antes del commit).
-- **Tarea nocturna (copias del repositorio):** V2 activada por Pio; acción vigente `cmd.exe /c "set
-  CONTROLFARMACIAS_ALBARANES_V2=1&& C:\ControlFarmacias\Programa\ejecutar_sincronizacion.bat"`. Copias en
-  `pruebas/auditoria_2bf/backup_tasks/` (exportación real previa + vigente derivada; `PENDIENTE` exportación
-  real de la vigente). `pruebas/auditoria_2ae/backup_tasks/` sigue siendo el inventario original. El código
-  Python de la tarea no cambia en este hito: funciona igual con la 22 o con la 23.
-- **Orden de despliegue propuesto** (todo con confirmación de Pio): preflight → migración 23 → `informe 279410`
-  (`APLICABLE`) → `registrar` → `aplicar` → noche V2 → simulación de 08007972.
+- **Tarea nocturna (copias del repositorio):** V2 activada por Pio; acción vigente
+  `C:\Windows\System32\cmd.exe /c "set CONTROLFARMACIAS_ALBARANES_V2=1&&C:\ControlFarmacias\Programa\ejecutar_sincronizacion.bat"`
+  (`CONFIRMADO POR CERTIFICACIÓN ARCHIVADA`: exportación real del 2026-10-28 20:05). Copias byte a byte de las
+  exportaciones reales previa y vigente en `pruebas/auditoria_2bf/backup_tasks/`.
+  `pruebas/auditoria_2ae/backup_tasks/` sigue siendo el inventario original. El código Python de la tarea no
+  cambia en este hito: funciona igual con la 22 o con la 23.
+- **Plan 2BF-D** por pasos e identidad (Usuari para preflight, despliegue y postcheck de la 23; ControlFarmaciasRO
+  para `informe`, `registrar` y `aplicar`; las escrituras las ejecuta Pio en terminal) en
+  `pruebas/auditoria_2bf/DISENO.md` apartado 6. `PENDIENTE` antes del preflight: herramientas READ_ONLY de
+  captura y postcheck del 2BF-D.
 
 ### Hito 2BD-D, tanda RO: carga histórica y resincronización V2 manual en producción
 
