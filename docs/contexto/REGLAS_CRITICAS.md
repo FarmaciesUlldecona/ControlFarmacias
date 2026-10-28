@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-10-19 (Hito 2BA-D: migración 21 desplegada; reglas del Hito 2BA).
+Actualizado: 2026-10-28 (Hito 2BF: reglas R18 de resolución de revisiones, migración 23 solo local).
 
 ## Seguridad y operación
 
@@ -215,6 +215,15 @@ Actualizado: 2026-10-19 (Hito 2BA-D: migración 21 desplegada; reglas del Hito 2
     (1.000 filas por defecto).
   - **Orden de despliegue:** primero la 21 y después el código. El código 2BA sin la
     21 falla cerrado (no existe la tabla de reservas).
+- Reglas de Pio del Hito 2BF (2026-10-28; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 23
+  **NO desplegada**; diseño en `pruebas/auditoria_2bf/DISENO.md`):
+  - **R18 resolución de revisiones de albaranes:** solo `CAMBIO_IDENTIDAD`, con aprobación de Pio registrada
+    en BD (`albaranes_aprobaciones`: quién, cuándo, `IdContador`, cambio exacto). Se aplica solo si el
+    cambio que Farmatic muestra ahora coincide exactamente con lo aprobado (equivalencia de identidad de la
+    22: `btrim` y R9) y está registrado como revisión pendiente; si no, sigue en revisión sin escrituras.
+    Nunca si el albarán está reservado (R15) o ausente. Solo los campos aprobados, con el literal de
+    Farmatic, y con historial (`albaranes_aprobaciones_aplicadas`). Una aprobación se aplica una vez.
+  - **R18b resincronización:** no registra de nuevo una revisión idéntica pendiente.
 - Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
   - total de devoluciones = abono;
   - servicio integral de distribución = cargo sin albarán;

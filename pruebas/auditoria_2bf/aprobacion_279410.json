@@ -1,0 +1,11 @@
+{
+ "farmacia": "PIO",
+ "id_contador": 279410,
+ "cambio": [
+  {"campo": "id_proveedor", "anterior": "52", "nuevo": "0002"},
+  {"campo": "numero_albaran", "anterior": "08C16912", "nuevo": "08C16912A"}
+ ],
+ "aprobado_por": "Pio",
+ "aprobado_at": "2026-10-28",
+ "referencia": "Aprobacion previa ampliada de Pio registrada en docs/contexto/ESTADO_ACTUAL.md (Hito 2BD-D, tanda RO, 2026-10-28): 279410 id_proveedor 52 -> 0002 (CINFA -> SAFA) y numero_albaran 08C16912 -> 08C16912A"
+}

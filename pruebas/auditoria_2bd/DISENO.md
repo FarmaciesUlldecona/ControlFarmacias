@@ -11,7 +11,9 @@ ventana de 180 días, carga inicial desde 2026-04-01 y albarán desaparecido →
 ### 1.1 Sincronización actual (`CONFIRMADO POR CÓDIGO`, HEAD `e9bab76`)
 
 - Entrada nocturna: `ejecutar_sincronizacion.bat:10` → `python -m src.sincronizar_albaranes`
-  (tarea «Sincronización ControlFarmacias», 21:30). El log registra
+  (tarea «Sincronización ControlFarmacias», 21:30; desde el 2026-10-28 con la V2 activada en la acción:
+  `cmd.exe /c "set CONTROLFARMACIAS_ALBARANES_V2=1&& …\ejecutar_sincronizacion.bat"`, ver
+  `pruebas/auditoria_2bf/backup_tasks/`). El log registra
   `Principal Windows efectivo: ControlFarmaciasRO` y `Certificacion Farmatic READ_ONLY superada |
   Identidad SQL: MOSTRADOR\ControlFarmaciasRO` (p. ej. `logs/automatizacion_albaranes.log`, noche del
   18/10). Supabase se escribe con la clave del `.env` (`service_role`).

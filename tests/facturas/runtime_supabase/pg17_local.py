@@ -94,6 +94,8 @@ MIGRACION_21 = MIG / "21_cf_exclusividad_albaranes.sql"
 ROLLBACK_21 = MIG / "21_cf_exclusividad_albaranes.rollback.sql"
 MIGRACION_22 = MIG / "22_cf_resincronizacion_albaranes.sql"
 ROLLBACK_22 = MIG / "22_cf_resincronizacion_albaranes.rollback.sql"
+MIGRACION_23 = MIG / "23_cf_aprobaciones_albaranes.sql"
+ROLLBACK_23 = MIG / "23_cf_aprobaciones_albaranes.rollback.sql"
 
 
 def esquema(pg: "_Pg") -> str:
@@ -371,7 +373,8 @@ def _ejecuciones(pg: _Pg, documento_id: str):
 # Plantillas por variante de esquema
 # --------------------------------------------------------------------------
 
-VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback", "19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback")
+VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback", "19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback",
+             "23", "23_rollback")
 
 
 def construir_plantilla(contenedor: str, variante: str) -> str:
@@ -382,6 +385,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     20: 19 + migracion 20 aplicada dos veces; 20_rollback: 20 + rollback de la 20.
     21 (2BA): 20 + migracion 21 aplicada dos veces; 21_rollback: 21 + rollback de la 21.
     22 (2BD): 21 + migracion 22 aplicada dos veces; 22_rollback: 22 + rollback de la 22.
+    23 (2BF): 22 + migracion 23 aplicada dos veces; 23_rollback: 23 + rollback de la 23.
     Idempotente: si la plantilla ya existe en el contenedor, se reutiliza.
     """
     assert variante in VARIANTES
@@ -389,11 +393,12 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         f"select count(*) from pg_database where datname = 'cf_plantilla_{variante}'")
     if existente == "1":
         return f"cf_plantilla_{variante}"
-    if variante in ("19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback"):
+    if variante in ("19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback", "23", "23_rollback"):
         nombre = f"cf_plantilla_{variante}"
         base = construir_plantilla(contenedor, {"19": "18", "20": "19", "20_rollback": "20",
                                                  "21": "20", "21_rollback": "21",
-                                                 "22": "21", "22_rollback": "22"}[variante])
+                                                 "22": "21", "22_rollback": "22",
+                                                 "23": "22", "23_rollback": "23"}[variante])
         _docker("exec", contenedor, "createdb", "-U", "postgres", "-T", base, nombre)
         pg = _Pg(contenedor, nombre)
         if variante == "19":
@@ -412,8 +417,13 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         elif variante == "22":
             pg.sql(MIGRACION_22.read_text(encoding="utf-8"))
             pg.sql(MIGRACION_22.read_text(encoding="utf-8"))
-        else:
+        elif variante == "22_rollback":
             pg.sql(ROLLBACK_22.read_text(encoding="utf-8"))
+        elif variante == "23":
+            pg.sql(MIGRACION_23.read_text(encoding="utf-8"))
+            pg.sql(MIGRACION_23.read_text(encoding="utf-8"))
+        else:
+            pg.sql(ROLLBACK_23.read_text(encoding="utf-8"))
         return nombre
     assert variante in VARIANTES
     nombre = f"cf_plantilla_{variante}"

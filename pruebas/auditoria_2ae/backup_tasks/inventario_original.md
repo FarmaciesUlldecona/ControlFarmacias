@@ -27,3 +27,8 @@ Capturado antes de modificar las tareas.
 - MultipleInstances: `IgnoreNew`; StartWhenAvailable: `true`.
 - Reintentos: 3, intervalo 5 minutos; timeout efectivo: `PT72H`.
 - Última ejecución: 17/09/2026 21:30:30; LastTaskResult: `1`.
+
+## Estado posterior
+
+Este inventario es el estado **original** previo al 2AE y no se actualiza. Copias vigentes de la tarea
+(V2 activada, 2026-10-28): `pruebas/auditoria_2bf/backup_tasks/`.

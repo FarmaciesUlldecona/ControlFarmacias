@@ -1,7 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-10-28 (Hito 2BD-D tanda RO: carga histórica y resincronización V2 manual). Las secciones sin fecha propia
-conservan la de su hito.
+Actualizado: 2026-10-28 (Hito 2BF: resolución de revisiones con aprobación de Pio, solo local; V2 activada en la
+tarea nocturna). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
 
@@ -189,6 +189,47 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
+### Hito 2BF: resolución de revisiones de albaranes con aprobación de Pio (certificado en local; 23 NO desplegada)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local, Farmatic **simulado**), 2026-10-28, commit local (sin push).
+**Producción, Farmatic y Task Scheduler no tocados.** Diseño en `pruebas/auditoria_2bf/DISENO.md`.
+
+- **Migración 23** `23_cf_aprobaciones_albaranes.sql` (+ rollback = esquema 22 exacto; generada por
+  `pruebas/auditoria_2bf/generar_migracion_23.py` desde la 22): `albaranes_aprobaciones` (quién —solo `Pio`—,
+  cuándo, `IdContador`, cambio exacto, referencia, quién registra) y `albaranes_aprobaciones_aplicadas`
+  (valores anteriores/nuevos, revisiones resueltas), ambas append-only con solo `SELECT` para `service_role`;
+  RPC `cf_registrar_aprobacion_albaran` y `cf_aplicar_aprobacion_albaran` (SECURITY DEFINER, solo
+  `service_role`); `cf_resincronizar_albaran` = 22 sin repetir una revisión idéntica **pendiente**.
+  `service_role` sigue sin `UPDATE` sobre `albaranes`.
+- **Reglas (encargo de Pio):** solo motivo `CAMBIO_IDENTIDAD`; se aplica solo si el cambio que Farmatic
+  muestra ahora es exactamente el aprobado (equivalencia de identidad de la 22: `btrim` y R9) y está
+  registrado como revisión pendiente; si no, `NO_APLICADA` sin escrituras y el albarán sigue en revisión.
+  Nunca si está reservado (R15, reservas bloqueadas en modo `SHARE`) o ausente. Solo cambia los campos
+  aprobados, con el literal de Farmatic; nombre de proveedor, importes y recepción los actualiza la
+  siguiente resincronización. Una aprobación se aplica una vez.
+- **Duplicados nocturnos:** la 22 ya no repetía una revisión idéntica (comprobado: tres noches → dos filas
+  para 279410), pero lo comprobaba contra todo el historial, lo que silenciaría para siempre una revisión
+  resuelta que reapareciera. La 23 lo limita a pendientes.
+- **Script one-shot** `pruebas/auditoria_2bf/aplicar_aprobacion.py`: `informe` (sin escritura), `registrar`
+  (`aprobacion_279410.json`) y `aplicar <id>` (una aprobación, guard propio, configuración `f|f|f|{PIO}`, sin
+  reintentos). **Sin script de despliegue de la 23 todavía** (hito siguiente, patrón `desplegar_22.py` y
+  norma 2AX).
+- **Caso 279410 en local:** revisión → aprobación (52 → `0002`, 08C16912 → 08C16912A) → `APLICADA` con el
+  literal `0002 `; la noche siguiente `proveedor` CINFA → `1.- SAFA` e `id_recepcion` 50781 con historial.
+  Variantes que no aplican: otro número o proveedor, un solo campo, sin revisión registrada, Farmatic
+  cambiado después, reservado, ausente, identidad ocupada por otro albarán.
+- **Tests:** `tests/facturas/runtime_supabase/test_integracion_pg17_2bf.py` (21, `pg17_local`) y
+  `tests/test_tarea_nocturna_v2_2bf.py` (3); plantillas `23`/`23_rollback` en `pg17_local.py`; lista de
+  migraciones en `test_modelo_supabase_v1.py`. Suite completa (`--basetemp`, con `pg17_local`):
+  **2165 passed**, 0 failed, 0 skipped (2026-10-28, antes del commit).
+- **Tarea nocturna (copias del repositorio):** V2 activada por Pio; acción vigente `cmd.exe /c "set
+  CONTROLFARMACIAS_ALBARANES_V2=1&& C:\ControlFarmacias\Programa\ejecutar_sincronizacion.bat"`. Copias en
+  `pruebas/auditoria_2bf/backup_tasks/` (exportación real previa + vigente derivada; `PENDIENTE` exportación
+  real de la vigente). `pruebas/auditoria_2ae/backup_tasks/` sigue siendo el inventario original. El código
+  Python de la tarea no cambia en este hito: funciona igual con la 22 o con la 23.
+- **Orden de despliegue propuesto** (todo con confirmación de Pio): preflight → migración 23 → `informe 279410`
+  (`APLICABLE`) → `registrar` → `aplicar` → noche V2 → simulación de 08007972.
+
 ### Hito 2BD-D, tanda RO: carga histórica y resincronización V2 manual en producción
 
 `CONFIRMADO EN PRODUCCIÓN`, 2026-10-27/28, ejecutado por Pio en terminal como
@@ -212,9 +253,11 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - **Explorador SQL** probado como `ControlFarmaciasRO` (metadatos de `AlbaranRecep`) y suites del explorador
   en verde.
 - **279410 (08C16912): aprobación previa ampliada de Pio** para cuando exista el camino de resolución de
-  revisiones (hito futuro, NO implementado): `id_proveedor` 52 → `0002` (CINFA → SAFA) y `numero_albaran`
-  08C16912 → 08C16912A. Hasta entonces el albarán sigue en Supabase con los valores antiguos y en revisión.
-- **V2 en la tarea nocturna:** la activa Pio a mano. `PENDIENTE`: vigilar la primera noche.
+  revisiones (implementado en local en el **2BF**, migración 23 sin desplegar): `id_proveedor` 52 → `0002`
+  (CINFA → SAFA) y `numero_albaran` 08C16912 → 08C16912A. Hasta aplicarla el albarán sigue en Supabase con
+  los valores antiguos y en revisión.
+- **V2 en la tarea nocturna:** activada por Pio a mano el 2026-10-28 (acción en el 2BF). `PENDIENTE`: vigilar
+  la primera noche.
 
 ### Hito 2BD-D: migración 22 desplegada en producción (tanda Usuari; V2 APAGADA)
 
@@ -252,7 +295,7 @@ repositorio, con `SHA256SUMS.txt`): `C:\ControlFarmacias\evidencias_2bd-d\`. Scr
   (IdContador 279410, PUC 422,86, 2026-06-22) con proveedor 52 CINFA** en Farmatic (único albarán de CINFA
   en Supabase), y la factura es SAFA (proveedor 2). Probable registro con proveedor erróneo en Farmatic
   (`INFERIDO`). `PENDIENTE`: revisión de Pio en Farmatic.
-- **Hito futuro registrado (NO implementado): resolución de revisiones con aprobación de Pio.** La 22 trata
+- **Hito futuro registrado (implementado en local en el 2BF): resolución de revisiones con aprobación de Pio.** La 22 trata
   un cambio de proveedor o número como cambio de identidad (`REVISION CAMBIO_IDENTIDAD`) y no actualiza el
   albarán; corregir 08C16912 en Farmatic no se propagará solo. Hace falta un camino para aplicar esas
   revisiones con aprobación explícita de Pio.
