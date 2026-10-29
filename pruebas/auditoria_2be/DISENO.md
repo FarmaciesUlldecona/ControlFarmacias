@@ -19,7 +19,9 @@ Condiciones:
 - ambos quedan reservados;
 - solo 1+1 y solo cargos.
 
-Decisiones de implementación (no cambian la regla; tomadas por Claude, a confirmar por Pio):
+Decisiones de implementación (no cambian la regla; tomadas por Claude; en el 2BE-D Pio confirmó R11 con la
+línea R17 como un albarán y aceptó como deuda menor que la BD no revalide la ventana de ±15 días ni el número de
+otra factura):
 - R17 solo se intenta en las líneas que quedan `SIN_COINCIDENCIA` tras el casado 1:1: el 1:1 tiene prioridad y
   sus albaranes ya no están libres.
 - Falla cerrado sin depender del orden:
@@ -122,6 +124,7 @@ Decisiones de implementación (no cambian la regla; tomadas por Claude, a confir
 
 ## 5. Fuera de alcance
 
-- Desplegar la 24 y conciliar 08007969 en producción: hito 2BE-D, con confirmación de Pio.
+- Desplegar la 24 y conciliar 08007969 en producción: hito 2BE-D, con confirmación de Pio (hecho el
+  2026-10-29; ver `docs/contexto/ESTADO_ACTUAL.md`).
 - Parejas 1+N o N+1, y abonos.
 - Modificar Farmatic.

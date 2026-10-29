@@ -1,8 +1,8 @@
 # Estado actual
 
-Actualizado: 2026-10-29 (Hito 2BE: R17, migración 24 solo local; antes, 2BF-D: migración 23 desplegada,
-aprobación de 279410 aplicada y conciliación one-shot de 08007972). Las secciones sin fecha propia conservan
-la de su hito.
+Actualizado: 2026-10-29 (Hito 2BE-D: migración 24 desplegada en producción y conciliación one-shot de
+08007969 con R17; antes, 2BE: R17 en local; 2BF-D: migración 23, aprobación de 279410 y conciliación de
+08007972). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
 
@@ -190,7 +190,63 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
-### Hito 2BE: R17, línea = albarán de su número + 1 interno de la misma recepción (certificado en local; 24 NO desplegada)
+### Hito 2BE-D: migración 24 en producción y conciliación de 08007969 con R17
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-29, con confirmación expresa de Pio (despliegue y conciliación, cada uno por
+separado). Lecturas READ_ONLY y las dos escrituras ejecutadas por Claude como Usuari a petición de Pio, una vez
+cada una, sin reintentos. Farmatic no tocado. Evidencias (fuera del repositorio, con `SHA256SUMS.txt`):
+`C:\ControlFarmacias\evidencias_2be_d\`. Sin push.
+
+- **Decisiones de Pio:** R17 cuenta como **un** albarán en R11 (confirmada la decisión de implementación del
+  2BE). Aceptada como **deuda menor**: `cf_linea_r17_valida` no revalida en BD la ventana de ±15 días ni que el
+  interno no sea el número de una línea de otra factura (opción 2 de R15); ambas comprobaciones solo están en
+  Python.
+- **Herramienta nueva** `pruebas/auditoria_2be_d/preflight_readonly.py` (patrón 2BF-D, READ_ONLY):
+  precondiciones extraídas de `desplegar_24.py`, referencias locales 23/24 y alcance, capturas `pre`/`post` con
+  la puerta de 08007969 y la recepción 50898, y `comparar_despliegue` con el criterio 2AX. Ensayada en
+  PostgreSQL 17 local: `tests/facturas/runtime_supabase/test_preflight_2be_d.py` (9 passed), con casos que deben
+  parar (privilegio de más, datos cambiados, 24 ya presente, otra recepción, tercer albarán, PUC corregido,
+  factura ya conciliada).
+- **Puerta:** commit de la 24 `403e6a5` y SHA (LF) `73c30f4a…4a704`; alcance 23 ↔ 24 = 2 objetos
+  (`cf_linea_r17_valida`, nueva, y `cf_persistir_conciliacion`).
+- **Preflight:** la primera captura `pre` (19:00 UTC) **paró** por la puerta horaria (importación a las
+  20:00 UTC, a menos de 60 min). Tras las tareas de la noche (21:00 y 21:30 hora local, código 0) se repitió
+  (22:11 UTC): `PRECONDICIONES_OK` (9/9, `transaction_read_only: on`), `CAPTURA_OK`, `ESQUEMA_23_CONFIRMADO`.
+  La noche trajo 25 albaranes nuevos (5.995) y 0 cambios en `albaranes_cambios` (4.273).
+- **Despliegue:** `desplegar_24.py 403e6a5… 73c30f4a…` → **APLICADA** (22:32:50–22:32:51 UTC), 9 precondiciones
+  en verde; postcondiciones datos sin cambios, RPC R17 y privilegios en verde.
+- **Postcheck 2AX** (`despliegue_postcheck.json`): `POSTCHECK_OK`; cambian exactamente los 2 objetos del
+  alcance, iguales a la referencia local 24; fuera de alcance, privilegios por defecto y `cf_configuracion`
+  idénticos; huellas por fila idénticas en las 10 tablas; reservas (285), aprobaciones, aplicaciones,
+  operación y objetivo sin cambios.
+- **Conciliación de 08007969** (procedimiento del 2AT con el envoltorio del 2BD-D):
+  - preflight `PREFLIGHT_OK`, snapshot y revalidación (22:37 UTC; dos simulaciones, `CANDIDATO_OK`, idénticas
+    en candidato, huella, simulación y elegibles). Elegibles: 1) 08007969, 2) 08007970;
+  - ejecución: una invocación, 22:40:15–22:40:21 UTC, worker `cf-2at-manual-conciliacion`, cliente
+    `service_role`, `RETORNO`; guard `ejecucion_unica_2at.guard`; directorio temporal borrado;
+  - resultado: 08007969 (`9a1bf74a-0d85-4017-9e33-a8f5e0a9e36e`) **`CONCILIADA`**, importe 12.807,17,
+    explicado 12.807,10, diferencia 0,07, tolerancia 0,50 (R11 con `albaranes_casados` 128 = 127 + la línea
+    R17); conciliación `41b85eac-ff45-4edf-a82d-5b7c275a76df`, intento 1, `MANUAL_ONE_SHOT`, `COMPLETADA`,
+    `es_actual`; clave idempotente igual a la simulada;
+  - línea R17: 08C20268 (504,02 en el PDF) = 280005 (500,86, `NUMERO`, `EXACTA`) + 280004 Q039921/2026 (3,16,
+    `INTERNO`), recepción 50898, dos detalles `UNO_A_VARIOS` con el mismo origen documental.
+- **Postcheck de la conciliación** (`conc_comparacion_stdout.txt`, `POSTCHECK_OK`): solo cambió la fila de
+  08007969 (estado, intentos, `diferencia_albaranes`, `updated_at`); filas nuevas: 1 conciliación,
+  135 detalles (127 `UNO_A_UNO`, 2 `UNO_A_VARIOS`, 6 `MOVIMIENTO_NO_FARMATIC`) y 2 eventos de historial
+  (`CONCILIACION_CLAIM`, `CONCILIACION_PERSISTIDA`), todos de esa factura. Reservas **285 → 414** (129 nuevas,
+  todas de esa conciliación, incluidas 280004 y 280005; ninguna borrada ni alterada; = líneas vigentes).
+  Albaranes, `albaranes_cambios`, extraídos, movimientos, vencimientos, documentos, aprobaciones, aplicaciones,
+  esquema y `cf_configuracion` idénticos a la captura posterior al despliegue. Flags `f|f|f|{PIO}`; workers,
+  locks y claims 0. (En el plan se anunció 285 → 413 por error de cálculo; lo correcto es 127 + 2 = 129.)
+- Conteos tras la conciliación: `facturas` 12 (10 `CONCILIADA`, 2 `PENDIENTE_CONCILIAR`: 08007970 y HEFAME
+  0563834757), `conciliaciones` 16, `conciliacion_detalles` 892, `historial_facturas` 42, `albaranes` 5.995,
+  `albaranes_cambios` 4.273.
+- Nota operativa: con el horario de invierno, las tareas son a las 21:00 (importación) y 21:30
+  (sincronización) hora local; la puerta de 60 min impide empezar entre las 20:00 y el final de la
+  sincronización. El hook de identidad Farmatic bloquea también la lectura de
+  `logs\sincronizar_albaranes.log` desde Usuari (coincidencia por texto); no se esquivó.
+
+### Hito 2BE: R17, línea = albarán de su número + 1 interno de la misma recepción (certificado en local; 24 desplegada en el 2BE-D)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-29, commit local (sin push). **Producción: solo una
 lectura READ_ONLY de medición; Farmatic no tocado.** Regla R17 aprobada por Pio (en `REGLAS_CRITICAS.md`);
@@ -237,7 +293,7 @@ diseño en `pruebas/auditoria_2be/DISENO.md`; evidencias en `C:\ControlFarmacias
   el commit). Tras el commit `403e6a5`, el ensayo y la prueba de solo lectura de sus precondiciones: 2 passed.
   Datos para el 2BE-D: commit de la 24 `403e6a552207c320fe3fb5e57abd71b100e4d9a5` y SHA-256 (LF)
   `73c30f4a510e46c36d63695abbea8ea751217d71e592c7bd37a92f5feee4a704`.
-- `PENDIENTE` (hito 2BE-D, con confirmación de Pio): desplegar la 24 y conciliar 08007969.
+- ~~`PENDIENTE` (hito 2BE-D): desplegar la 24 y conciliar 08007969~~: hecho en el 2BE-D (2026-10-29).
 
 ### Hito 2BF-D: migración 23 en producción, aprobación de 279410 y conciliación de 08007972
 
