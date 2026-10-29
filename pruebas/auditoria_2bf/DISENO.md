@@ -131,17 +131,21 @@ Identidades: **Usuari** = sesión Windows `MOSTRADOR\Usuari`, sin Farmatic, con 
 | 2 | `desplegar_23.py <commit> <sha> <salida.json>` | Usuari (DB URL) | **sí** (DDL, una transacción) | **Pio** |
 | 3 | Postcheck READ_ONLY con el criterio 2AX: solo cambian los objetos de la 23, iguales a la referencia local; fuera de alcance idénticos; huellas de datos idénticas | Usuari (DB URL, READ ONLY) | no | Claude |
 | 4 | `aplicar_aprobacion.py informe 279410 <salida>`: pendientes `08C16912→08C16912A` y `52→0002 `, sin reserva | RO | no | Pio, o Claude en VS Code abierto como RO |
-| 5 | `aplicar_aprobacion.py registrar pruebas/auditoria_2bf/aprobacion_279410.json <salida>` | RO (`registrado_por` = usuario Windows de la sesión) | **sí** (1 fila en `albaranes_aprobaciones`) | **Pio** |
+| 5 | `aplicar_aprobacion.py registrar pruebas/auditoria_2bf/aprobacion_279410.json <salida>` | Usuari: `registrar` no lee ni importa Farmatic, así que `registrado_por` = Usuari, quien registra | **sí** (1 fila en `albaranes_aprobaciones`) | **Pio** |
 | 6 | `informe 279410`: previsión `APLICABLE` para esa aprobación | RO | no | Pio, o Claude (RO) |
 | 7 | `aplicar_aprobacion.py aplicar <aprobacion_id> <salida>` (una vez; guard propio) | RO (relee Farmatic) | **sí** (279410 + 1 fila en aplicadas) | **Pio** |
 | 8 | `informe 279410` (`YA_APLICADA`, sin pendientes) y postcheck READ_ONLY: solo cambian `numero_albaran`, `id_proveedor` y `fecha_actualizacion` de 279410; 1 aprobación y 1 aplicación; reservas, historial y resto idénticos | RO / Usuari | no | Claude |
 | 9 | Noche V2 (tarea programada, principal RO): `proveedor` e `id_recepcion` de 279410 con historial `ACTUALIZADO`, sin revisiones nuevas; revisar log y código de salida | tarea (RO) | sí (automática) | Task Scheduler |
 | 10 | Simulación sin claim de 08007972 (08C16912A debería casar por número) | Usuari (READ_ONLY) | no | Claude |
 
-`PENDIENTE` antes del paso 1: herramientas READ_ONLY del 2BF-D para la captura y el postcheck de los pasos
-1, 3 y 8 (adaptar `pruebas/auditoria_2bd_d/preflight_readonly.py` con alcance local 22 ↔ 23, y
-`pruebas/auditoria_2bd_ro/postcheck_readonly.py`). Rollback de la 23: solo con confirmación de Pio (Usuari,
-`23_cf_aprobaciones_albaranes.rollback.sql`); conserva los valores ya aplicados en `albaranes`.
+Herramientas READ_ONLY de los pasos 1, 3 y 8: `pruebas/auditoria_2bf_d/preflight_readonly.py`. Hace
+precondiciones, referencias locales y alcance 22 ↔ 23, capturas `pre`/`post`/`post_aplicar` y
+comparaciones con el criterio 2AX y de la aplicación. Ensayada en PostgreSQL 17 local
+(`tests/facturas/runtime_supabase/test_preflight_2bf_d.py`). Los comandos exactos, la identidad, la salida
+esperada y el fichero de cada paso están en `pruebas/auditoria_2bf_d/PLAN_2BF_D.md`. El paso 4 añade una
+captura justo antes de registrar, que es la base de la comparación del paso 8. Rollback de la 23: solo con
+confirmación de Pio (Usuari, `23_cf_aprobaciones_albaranes.rollback.sql`); conserva los valores ya aplicados
+en `albaranes`.
 
 La tarea nocturna funciona igual con la 22 o con la 23 (el código Python no cambia).
 

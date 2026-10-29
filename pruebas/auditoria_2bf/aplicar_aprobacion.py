@@ -1,6 +1,8 @@
 """Hito 2BF: registrar y aplicar UNA aprobación de Pio de un cambio de identidad de albarán.
 
-Uso (Farmatic SOLO con la identidad ControlFarmaciasRO; Supabase con service_role del .env):
+Uso (Supabase con service_role del .env). ``informe`` y ``aplicar`` leen Farmatic: SOLO con la identidad
+ControlFarmaciasRO. ``registrar`` no lee ni importa Farmatic: se ejecuta con Usuari, para que
+``registrado_por`` sea quien registra.
   python -B pruebas/auditoria_2bf/aplicar_aprobacion.py informe <id_contador> <salida.json>
   python -B pruebas/auditoria_2bf/aplicar_aprobacion.py registrar <aprobacion.json> <salida.json>
   python -B pruebas/auditoria_2bf/aplicar_aprobacion.py aplicar <aprobacion_id> <salida.json>
@@ -26,11 +28,16 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from config.config import NOMBRE_FARMACIA  # noqa: E402
-from src.database.leer_albaranes import obtener_albaranes_por_contadores  # noqa: E402
 from src.supabase_client import resincronizacion_albaranes as resync  # noqa: E402
 from src.supabase_client.conexion_supabase import obtener_cliente_supabase  # noqa: E402
 
 CLAVES_APROBACION = {"farmacia", "id_contador", "cambio", "aprobado_por", "aprobado_at", "referencia"}
+
+
+def obtener_albaranes_por_contadores(contadores: list[int]):
+    """Lectura de Farmatic (solo ControlFarmaciasRO). Import diferido: ``registrar`` no carga Farmatic."""
+    from src.database.leer_albaranes import obtener_albaranes_por_contadores as leer
+    return leer(contadores)
 
 
 def _configuracion_segura(cliente) -> bool:

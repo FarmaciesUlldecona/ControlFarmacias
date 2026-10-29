@@ -232,10 +232,23 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   exportaciones reales previa y vigente en `pruebas/auditoria_2bf/backup_tasks/`.
   `pruebas/auditoria_2ae/backup_tasks/` sigue siendo el inventario original. El código Python de la tarea no
   cambia en este hito: funciona igual con la 22 o con la 23.
-- **Plan 2BF-D** por pasos e identidad (Usuari para preflight, despliegue y postcheck de la 23; ControlFarmaciasRO
-  para `informe`, `registrar` y `aplicar`; las escrituras las ejecuta Pio en terminal) en
-  `pruebas/auditoria_2bf/DISENO.md` apartado 6. `PENDIENTE` antes del preflight: herramientas READ_ONLY de
-  captura y postcheck del 2BF-D.
+- **Plan 2BF-D** por pasos e identidad (`pruebas/auditoria_2bf/DISENO.md` apartado 6; las escrituras las
+  ejecuta Pio en terminal):
+  - **Usuari:** preflight, despliegue y postchecks de la 23, `registrar` y simulación final. `registrar` no
+    lee ni importa Farmatic (import diferido; test `test_registrar_no_carga_farmatic`), así que
+    `registrado_por` es fiel.
+  - **ControlFarmaciasRO:** `informe` y `aplicar`, que leen Farmatic.
+- **Herramientas preparadas:** `pruebas/auditoria_2bf_d/preflight_readonly.py`, READ_ONLY, con la puerta del 2AT:
+  - precondiciones de `desplegar_23.py`, referencias locales y alcance 22 ↔ 23;
+  - capturas `pre`/`post`/`post_aplicar` con esquema, operación, huella por fila de las tablas e historial,
+    reservas, aprobaciones, aplicaciones y 279410;
+  - `comparar_despliegue` con el criterio 2AX y `comparar_aplicacion`.
+
+  Ensayadas en PostgreSQL 17 local: 8 tests en `test_preflight_2bf_d.py`, con casos que deben fallar
+  (privilegio de más, datos cambiados, 23 ya presente, otra aprobación, otro albarán, sin aplicar). Comandos
+  exactos, identidad, salida esperada y fichero por paso en `pruebas/auditoria_2bf_d/PLAN_2BF_D.md`; las
+  evidencias van a `C:\ControlFarmacias\evidencias_2bf_d\`. Suite completa (`--basetemp`, con `pg17_local`):
+  **2175 passed**, 0 failed, 0 skipped (2026-10-28, antes del commit).
 
 ### Hito 2BD-D, tanda RO: carga histórica y resincronización V2 manual en producción
 
