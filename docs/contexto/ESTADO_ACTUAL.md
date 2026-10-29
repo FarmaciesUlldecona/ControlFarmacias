@@ -1,7 +1,8 @@
 # Estado actual
 
-Actualizado: 2026-10-29 (Hito 2BF-D: migración 23 desplegada, aprobación de 279410 aplicada y conciliación
-one-shot de 08007972). Las secciones sin fecha propia conservan la de su hito.
+Actualizado: 2026-10-29 (Hito 2BE: R17, migración 24 solo local; antes, 2BF-D: migración 23 desplegada,
+aprobación de 279410 aplicada y conciliación one-shot de 08007972). Las secciones sin fecha propia conservan
+la de su hito.
 
 ## Git y respaldo
 
@@ -188,6 +189,51 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   `into v_id` (fuera de PL/pgSQL sería DDL).
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
+
+### Hito 2BE: R17, línea = albarán de su número + 1 interno de la misma recepción (certificado en local; 24 NO desplegada)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-29, commit local (sin push). **Producción: solo una
+lectura READ_ONLY de medición; Farmatic no tocado.** Regla R17 aprobada por Pio (en `REGLAS_CRITICAS.md`);
+diseño en `pruebas/auditoria_2be/DISENO.md`; evidencias en `C:\ControlFarmacias\evidencias_2be\`
+(`SHA256SUMS.txt`).
+
+- **Medición** (`pruebas/auditoria_2be/medicion_readonly.py`):
+  - volcado READ_ONLY de Supabase (Usuari, 16:45 UTC): 5.970 albaranes, 5.969 con `id_recepcion`;
+  - banco Alliance del 2AZ, con las reservas vigentes;
+  - **14 líneas R17, todas con una única pareja**: las 12 del 2BD, 08007969 / 08C20268 (500,86 +
+    Q039921/2026 3,16, recepción 50898) y 08010085 / 08C73435 (685,43 + Q040394/2026 8,79, recepción 52272;
+    **aceptada por Pio**; el banco del 2BD la daba no apta);
+  - solo **08007969 cambia de resultado**: DIFERENCIA 504,09 → CONCILIADA 0,07. Otras 8 facturas, fuera de
+    producción, reducen la diferencia;
+  - riesgo: 0 ambiguas; 0 parejas con internos de otra recepción; 3 internos con el importe de otra línea, que
+    tiene su propio albarán exacto (sin conflicto real).
+- **Código:**
+  - `conciliacion.py`: `id_recepcion` en el candidato; segunda pasada R17 tras el 1:1, que falla cerrado ante
+    ambigüedad o conflicto; `detalles_desde_busqueda` da dos `UNO_A_VARIOS` por línea R17; R11 cuenta la línea
+    como una;
+  - `repositorios.py`: lee `id_recepcion`;
+  - simulador 2AT: `lineas_r17`.
+  - `verificar`: el código de `src` reproduce las 14 líneas y los resultados de las 47 facturas
+    (`verificacion_src_2be.json`).
+- **Migración 24** `24_cf_r17_recepcion.sql` (+ rollback = esquema 23 exacto), generada por
+  `pruebas/auditoria_2be/generar_migracion_24.py` desde la 22:
+  - `cf_persistir_conciliacion`: R11 con R17 y revalidación de cada línea `UNO_A_VARIOS` con la auxiliar
+    `cf_linea_r17_valida` (solo propietario);
+  - sin tablas nuevas: las reservas R15 cubren los dos albaranes;
+  - privilegios del patrón 22.
+  - `pruebas/auditoria_2be/desplegar_24.py` con 9 precondiciones de solo lectura; ensayo en
+    `test_ensayo_completo_despliegue_24_y_segundo_intento_revierte`, que exige el commit.
+- **Orden de despliegue: primero la 24 y después conciliar.** El código 2BE con la 23 no persiste una línea R17:
+  la factura falla (`TOLERANCIA_REGLA_NO_COINCIDE`) y consume un intento; el simulador 2AT no lo detecta. **No
+  conciliar en producción con este código antes de desplegar la 24.** Las facturas sin líneas R17 no cambian, y
+  las tareas nocturnas no importan `runtime_supabase`.
+- **Tests:**
+  - `tests/facturas/runtime_supabase/test_r17_2be.py` (19, sin BD);
+  - `tests/facturas/runtime_supabase/test_integracion_pg17_2be.py` (`pg17_local`): **08007969 real** (PDF del
+    2AO + recepción 50898) CONCILIADA 0,07 con 127 + 1 casados y las dos reservas; sin recepción común,
+    DIFERENCIA 504,09; sin la 24 no persiste; simulador; la BD rechaza 13 parejas falsas; privilegios; rollback;
+  - plantillas `24`/`24_rollback` en `pg17_local.py`; lista de migraciones.
+- `PENDIENTE` (hito 2BE-D, con confirmación de Pio): desplegar la 24 y conciliar 08007969.
 
 ### Hito 2BF-D: migración 23 en producción, aprobación de 279410 y conciliación de 08007972
 
@@ -386,7 +432,7 @@ están en `C:\ControlFarmacias\evidencias_2bd\`). Diseño e implementación en
 
 - **Decisiones de Pio:** albarán `AUSENTE_EN_FARMATIC` → revisión y **fuera del casado**; la sincronización
   trae también la recepción (`AlbaranRecep`, proveedor **del albarán**); patrón «número exacto + `Q…` de la
-  misma recepción» → hito **2BE (R17)**, no ahora; Pio revertirá 08C20268 a 500,86 en Farmatic (el test de
+  misma recepción» → hito **2BE (R17)**, no ahora (implementado en local en el 2BE, 2026-10-29); Pio revertirá 08C20268 a 500,86 en Farmatic (el test de
   modificación usa el albarán sintético `08Z90001`, 500,86 → 504,02).
 - **Migración 22** `22_cf_resincronizacion_albaranes.sql` (+ rollback = esquema 21 exacto; generada por
   `pruebas/auditoria_2bd/generar_migracion_22.py` desde la 21): `albaranes.id_recepcion`; historial

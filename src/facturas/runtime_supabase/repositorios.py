@@ -27,7 +27,7 @@ from .conciliacion import (
     VENTANA_FECHA_DIAS,
     buscar_albaranes_factura,
     construir_detalles_movimientos_documentales,
-    detalle_desde_busqueda,
+    detalles_desde_busqueda,
 )
 
 PAGINA_LECTURA = 1000
@@ -417,7 +417,8 @@ class RepositorioRuntimeSupabase:
             # 2BA: paginado; PostgREST corta cada respuesta (1.000 filas por defecto).
             operational_rows = leer_paginado(lambda: (
                 self._cliente.table("albaranes")
-                .select("id_contador,farmacia,id_proveedor,proveedor,numero_albaran,fecha,importe_puc,importe_pvp,estado")
+                .select("id_contador,farmacia,id_proveedor,proveedor,numero_albaran,fecha,importe_puc,importe_pvp,estado,"
+                        "id_recepcion")
                 .eq("farmacia", factura.farmacia)
                 .gte("fecha", start.isoformat())
                 .lte("fecha", end.isoformat())
@@ -439,6 +440,7 @@ class RepositorioRuntimeSupabase:
                 importe_puc=Decimal(str(row["importe_puc"])) if row.get("importe_puc") is not None else None,
                 importe_pvp=Decimal(str(row["importe_pvp"])) if row.get("importe_pvp") is not None else None,
                 estado=str(row["estado"]) if row.get("estado") is not None else None,
+                id_recepcion=int(row["id_recepcion"]) if row.get("id_recepcion") is not None else None,
             )
             for row in operational_rows
         )
@@ -462,7 +464,8 @@ class RepositorioRuntimeSupabase:
             ocupados=ocupados,
             numeros_otras_facturas=numeros_otras_facturas,
         )
-        details.extend(detalle_desde_busqueda(d, m) for d, m in zip(documentaries, matches))
+        # R17 (2BE, migracion 24): una linea puede dar dos detalles UNO_A_VARIOS.
+        details.extend(x for d, m in zip(documentaries, matches) for x in detalles_desde_busqueda(d, m))
         return tuple(details)
 
     def _albaranes_ausentes_en_farmatic(self, farmacia: str) -> set[int]:

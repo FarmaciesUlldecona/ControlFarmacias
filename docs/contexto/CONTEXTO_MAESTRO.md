@@ -1,6 +1,6 @@
 # Contexto maestro de ControlFarmacias
 
-Actualizado: 2026-10-29 (Hito 2BF-D). Repositorio operativo:
+Actualizado: 2026-10-29 (Hito 2BE). Repositorio operativo:
 `C:\ControlFarmacias\Programa`.
 
 ControlFarmacias ingiere y trata documentos de compra de farmacia. Su flujo
@@ -74,8 +74,10 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
 - `src/database` y `src/sql_explorer`: acceso y barreras de solo lectura a
   Farmatic.
 - `src/supabase_client`: integración histórica de albaranes y documentos.
-- `sql/migrations/23_cf_aprobaciones_albaranes.sql` (+ `.rollback.sql`): migración más
-  reciente, **desplegada en producción** (Hito 2BF-D, 2026-10-29; implementada en el 2BF):
+- `sql/migrations/24_cf_r17_recepcion.sql` (+ `.rollback.sql`): migración más reciente, **solo local, NO
+  desplegada** (Hito 2BE, 2026-10-29): R17, línea = albarán de su número + 1 interno de la misma recepción.
+- `sql/migrations/23_cf_aprobaciones_albaranes.sql` (+ `.rollback.sql`):
+  **desplegada en producción** (Hito 2BF-D, 2026-10-29; implementada en el 2BF):
   aprobaciones de Pio de cambios de identidad de albaranes y su aplicación.
 - `sql/migrations/22_cf_resincronizacion_albaranes.sql` (+ `.rollback.sql`): **desplegada en
   producción** (Hito 2BD-D, 2026-10-23): resincronización de albaranes modificados.

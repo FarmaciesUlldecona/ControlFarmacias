@@ -654,7 +654,7 @@ def _simular(lector: _Lector, factura_id: str) -> dict:
     movimientos = {r["id"]: r for r in cliente.table("facturas_movimientos")
                    .select("id,categoria,descripcion_literal,sentido,importe,base")
                    .eq("factura_id", factura.factura_id).order("orden").execute().data}
-    lineas, casados, sin_coincidencia = [], 0, 0
+    lineas, casados, sin_coincidencia, lineas_r17 = [], 0, 0, set()
     suma_albaranes = suma_movimientos = Decimal("0")
     for orden, d in enumerate(resultado.detalles, start=1):
         linea = {"orden": orden, "tipo_relacion": d.tipo_relacion.value, "importe_aplicado": str(d.importe_aplicado),
@@ -669,14 +669,16 @@ def _simular(lector: _Lector, factura_id: str) -> dict:
             linea["albaran_operacional"] = lector.json(
                 "select to_jsonb(r)::text from public.albaranes t cross join lateral (select t.id_contador, "
                 "t.farmacia, t.id_proveedor, t.proveedor, t.numero_albaran, t.fecha, t.importe_puc, t.importe_pvp, "
-                "t.estado) r where t.farmacia = %s and t.id_contador = %s",
+                "t.estado, t.id_recepcion) r where t.farmacia = %s and t.id_contador = %s",
                 (d.albaran_farmacia, d.albaran_id_contador))
         casados += d.tipo_relacion.value == "UNO_A_UNO"
         sin_coincidencia += d.tipo_relacion.value == "SIN_COINCIDENCIA"
+        if d.tipo_relacion.value == "UNO_A_VARIOS":  # 2BE (R17): dos detalles por linea documental
+            lineas_r17.add(d.factura_albaran_extraido_id)
         lineas.append(linea)
     out["resumen_detalles"] = {
         "detalles": len(lineas), "albaranes_documentales": len(extraidos), "albaranes_casados_1a1": casados,
-        "albaranes_sin_coincidencia": sin_coincidencia, "movimientos": len(movimientos),
+        "albaranes_sin_coincidencia": sin_coincidencia, "lineas_r17": len(lineas_r17), "movimientos": len(movimientos),
         "importe_albaranes_aplicado": str(suma_albaranes), "importe_movimientos_aplicado": str(suma_movimientos)}
     out["detalles"] = lineas
     return out

@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-10-29 (Hito 2BF-D: migración 23 desplegada en producción; reglas R18 sin cambios).
+Actualizado: 2026-10-29 (Hito 2BE: regla R17, migración 24 solo local; 2BF-D: migración 23 desplegada).
 
 ## Seguridad y operación
 
@@ -225,6 +225,23 @@ Actualizado: 2026-10-29 (Hito 2BF-D: migración 23 desplegada en producción; re
     Nunca si el albarán está reservado (R15) o ausente. Solo los campos aprobados, con el literal de
     Farmatic, y con historial (`albaranes_aprobaciones_aplicadas`). Una aprobación se aplica una vez.
   - **R18b resincronización:** no registra de nuevo una revisión idéntica pendiente.
+- Regla de Pio del Hito 2BE (2026-10-29; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 24
+  **NO desplegada**; diseño en `pruebas/auditoria_2be/DISENO.md`):
+  - **R17 línea = albarán de su número + 1 interno de la misma recepción:** una línea documental (cargo) que
+    no casa 1:1 puede casar con la suma de **dos** albaranes de la misma recepción de Farmatic
+    (`albaranes.id_recepcion`):
+    - el de su número, exacto o letra final (el exacto se impone), con ventana de ±15;
+    - uno con numeración interna de Farmatic (`[A-Z]\d{6}/\d{4}`).
+
+    Condiciones: ninguno reservado (R15) ni casado por otra línea; mismo proveedor (R9); PUC + PUC dentro de
+    la tolerancia por línea (0,05). Solo 1+1. Ambos quedan reservados.
+    - Falla cerrado: más de una pareja → `AMBIGUO_R17`; la misma pareja para dos líneas → `CONFLICTO_R17`.
+    - Se persiste como dos detalles `UNO_A_VARIOS` con el mismo origen documental, y la BD los revalida
+      (`cf_linea_r17_valida`, rechazo `LINEA_R17_NO_VALIDA`).
+    - R11 cuenta la línea R17 como un albarán casado.
+    - No aplica a HEFAME ni a abonos.
+  - **Orden de despliegue:** primero la 24 y después conciliar con el código 2BE. Con la 23, una línea R17 se
+    rechaza (`TOLERANCIA_REGLA_NO_COINCIDE`) y consume un intento.
 - Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
   - total de devoluciones = abono;
   - servicio integral de distribución = cargo sin albarán;
