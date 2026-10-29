@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-10-28 (Hito 2BF: reglas R18 de resolución de revisiones, migración 23 solo local).
+Actualizado: 2026-10-29 (Hito 2BF-D: migración 23 desplegada en producción; reglas R18 sin cambios).
 
 ## Seguridad y operación
 
@@ -216,7 +216,8 @@ Actualizado: 2026-10-28 (Hito 2BF: reglas R18 de resolución de revisiones, migr
   - **Orden de despliegue:** primero la 21 y después el código. El código 2BA sin la
     21 falla cerrado (no existe la tabla de reservas).
 - Reglas de Pio del Hito 2BF (2026-10-28; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 23
-  **NO desplegada**; diseño en `pruebas/auditoria_2bf/DISENO.md`):
+  **desplegada en producción** en el 2BF-D, 2026-10-29, y aplicada a 279410; diseño en
+  `pruebas/auditoria_2bf/DISENO.md`):
   - **R18 resolución de revisiones de albaranes:** solo `CAMBIO_IDENTIDAD`, con aprobación de Pio registrada
     en BD (`albaranes_aprobaciones`: quién, cuándo, `IdContador`, cambio exacto). Se aplica solo si el
     cambio que Farmatic muestra ahora coincide exactamente con lo aprobado (equivalencia de identidad de la

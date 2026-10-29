@@ -1,7 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-10-28 (Hito 2BF: resolución de revisiones con aprobación de Pio, solo local; V2 activada en la
-tarea nocturna). Las secciones sin fecha propia conservan la de su hito.
+Actualizado: 2026-10-29 (Hito 2BF-D: migración 23 desplegada, aprobación de 279410 aplicada y conciliación
+one-shot de 08007972). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
 
@@ -189,7 +189,64 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
-### Hito 2BF: resolución de revisiones de albaranes con aprobación de Pio (certificado en local; 23 NO desplegada)
+### Hito 2BF-D: migración 23 en producción, aprobación de 279410 y conciliación de 08007972
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-29, con confirmación expresa de Pio. Plan y comandos:
+`pruebas/auditoria_2bf_d/PLAN_2BF_D.md`. Evidencias (fuera del repositorio, con `SHA256SUMS.txt`):
+`C:\ControlFarmacias\evidencias_2bf_d\`. Lecturas READ_ONLY ejecutadas por Claude como Usuari; las escrituras
+las ejecutó Pio en terminal. Tareas consultadas solo con `Get-ScheduledTaskInfo`. Sin push.
+
+- **Puerta:** primera noche de la V2 comprobada por Pio (OK); `albaranes_cambios` seguía en 4.271 filas (sin
+  revisiones repetidas de 279410). HEAD `da77b40`, árbol limpio; commit de la 23 `a457093` y SHA (LF)
+  `fce98379…21f4e`; alcance 22 ↔ 23 = 10 objetos (2 tablas, 1 secuencia, 6 funciones nuevas y
+  `cf_resincronizar_albaran`), sin `albaranes` ni `albaranes_cambios`.
+- **Preflight READ_ONLY** (08:09–08:11 UTC): 9 precondiciones en verde; captura `pre` sin fallos (22 sí, 23 no,
+  `f|f|f|{PIO}`, 282 reservas = líneas vigentes); alcance igual a la referencia local 22.
+- **Despliegue** (Pio, Usuari): `desplegar_23.py` → **APLICADA** (10:27:48–10:27:49 UTC); postcondiciones
+  0 aprobaciones, 0 aplicaciones, historial sin cambios, RPC, resync solo pendientes y privilegios en verde.
+- **Postcheck 2AX** (10:30 UTC): `POSTCHECK_OK`; cambian exactamente los 10 objetos del alcance, iguales a la
+  referencia local 23; fuera de alcance idéntico; huellas por fila idénticas en todas las tablas (también
+  `albaranes_cambios`); reservas, operación, configuración y permisos por defecto sin cambios.
+- **Aprobación de 279410:** `informe` (Pio, RO) con las dos revisiones pendientes (621 `numero_albaran`,
+  622 `id_proveedor`) iguales a lo detectado ahora; `registrar` (Pio, Usuari) → `REGISTRADA`, **aprobación 1**
+  (`registrado_por` Usuari); previsión `APLICABLE`; `aplicar 1` (Pio, RO) → **APLICADA** (11:21:27 UTC),
+  revisiones resueltas `[621, 622]`, literal de Farmatic `0002 `; guard `aplicar_aprobacion_1.guard`.
+- **Comprobación** (`APLICACION_OK`): en 279410 solo cambian `numero_albaran` (08C16912A), `id_proveedor`
+  (`0002 `) y `fecha_actualizacion`; 1 aprobación y 1 aplicación; el resto idéntico.
+- **Resincronización tras aplicar** (Pio lanzó a mano la tarea «Sincronización ControlFarmacias», 12:27 hora
+  local, `LastTaskResult` 0): 19 nuevos; 1 actualizado, 0 revisiones, 0 errores. Las dos únicas filas nuevas
+  de `albaranes_cambios` (4272, 4273) son de 279410, `ACTUALIZADO`: `proveedor` CINFA → `1.- SAFA` e
+  `id_recepcion` null → 50781. `informe` de 279410: `YA_APLICADA`, sin pendientes.
+- **Simulación de 08007972:** antes de la resincronización, `DIFERENCIA` (la factura no tiene `proveedor_id`:
+  el casado filtra por nombre de proveedor y 279410 seguía como CINFA); después, `CONCILIADA`.
+
+### Conciliación manual one-shot de 08007972 (2026-10-29)
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-29, con confirmación expresa de Pio. Procedimiento del 2AT con el envoltorio
+del 2BD-D (`pruebas/auditoria_2bd_d/conciliacion_2at.py`); sin workers, sin flags y sin reintentos. Evidencias
+`conc_*.json` en `C:\ControlFarmacias\evidencias_2bf_d\`.
+
+- **Preflight** `PREFLIGHT_OK` (11:44:46 UTC), snapshot por fila (`conc_snapshot_pre.json`) y revalidación
+  (`CANDIDATO_OK`, 11:44:53 UTC) idéntica a la simulación anterior en candidato, huella, simulación y elegibles.
+  Elegibles: 1) 08007972, 2) 08007969, 3) 08007970.
+- **Ejecución** (Pio, Usuari): una invocación, 11:46:19–11:46:21 UTC, worker `cf-2at-manual-conciliacion`,
+  cliente `service_role`, `RETORNO`; guard `ejecucion_unica_2at.guard`; directorio temporal borrado.
+- **Resultado:** 08007972 (`7e558ccc-74ec-4764-8830-15b0de4a8d8f`) `CONCILIADA`, importe 464,76, explicado
+  464,75, diferencia 0,01, tolerancia 0,05; conciliación `4e72fddf-0bad-4682-9365-534350380f75`, intento 1,
+  `MANUAL_ONE_SHOT`, `COMPLETADA`, `es_actual`; clave idempotente igual a la simulada. Albaranes casados 1:1:
+  08C16912 ↔ 08C16912A (279410, letra final, PUC 422,86), 08C16913 ↔ 08C16913A (279341, letra final, 28,87) y
+  08M23197 ↔ 279545 (exacto, 13,02).
+- **Postcheck** (`conc_postcheck.json`, `POSTCHECK_OK`): solo cambió la fila de 08007972 (estado, intentos,
+  `diferencia_albaranes`, `updated_at`); filas nuevas: 1 conciliación, 3 detalles y 2 eventos de historial,
+  todos de esa factura. Reservas 282 → 285 (las 3 nuevas = sus líneas, ninguna borrada). Albaranes,
+  `albaranes_cambios`, aprobaciones, aplicaciones y esquema idénticos (captura `conc_captura_post.json`).
+  Flags `f|f|f|{PIO}`; workers, locks y claims 0.
+- Conteos tras la conciliación: `facturas` 12 (9 `CONCILIADA`, 3 `PENDIENTE_CONCILIAR`: 08007969, 08007970 y
+  HEFAME 0563834757), `conciliaciones` 15, `conciliacion_detalles` 757, `historial_facturas` 40, `albaranes`
+  5.970, `albaranes_cambios` 4.273.
+- `PENDIENTE`: vigilar la primera noche programada con la 23 (código 0 y sin revisiones nuevas de 279410).
+
+### Hito 2BF: resolución de revisiones de albaranes con aprobación de Pio (certificado en local; 23 desplegada en el 2BF-D)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local, Farmatic **simulado**), 2026-10-28, commit local (sin push).
 **Producción, Farmatic y Task Scheduler no tocados.** Diseño en `pruebas/auditoria_2bf/DISENO.md`.
@@ -274,10 +331,9 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   en verde.
 - **279410 (08C16912): aprobación previa ampliada de Pio** para cuando exista el camino de resolución de
   revisiones (implementado en local en el **2BF**, migración 23 sin desplegar): `id_proveedor` 52 → `0002`
-  (CINFA → SAFA) y `numero_albaran` 08C16912 → 08C16912A. Hasta aplicarla el albarán sigue en Supabase con
-  los valores antiguos y en revisión.
-- **V2 en la tarea nocturna:** activada por Pio a mano el 2026-10-28 (acción en el 2BF). `PENDIENTE`: vigilar
-  la primera noche.
+  (CINFA → SAFA) y `numero_albaran` 08C16912 → 08C16912A. **Aplicada en el 2BF-D** (2026-10-29, aprobación 1).
+- **V2 en la tarea nocturna:** activada por Pio a mano el 2026-10-28 (acción en el 2BF). Primera noche
+  comprobada por Pio: OK (2BF-D).
 
 ### Hito 2BD-D: migración 22 desplegada en producción (tanda Usuari; V2 APAGADA)
 
@@ -309,7 +365,8 @@ repositorio, con `SHA256SUMS.txt`): `C:\ControlFarmacias\evidencias_2bd-d\`. Scr
   propietario; `service_role` sigue sin `UPDATE` en `albaranes`).
 - **V2 sigue APAGADA** (`CONTROLFARMACIAS_ALBARANES_V2` no activada). Tanda RO hecha el 2026-10-27/28
   (ver "Hito 2BD-D, tanda RO").
-- **Conciliación one-shot de 08007972: NO ejecutada (decisión de Pio), aplazada.** Preflight y snapshot OK;
+- **Conciliación one-shot de 08007972: NO ejecutada (decisión de Pio), aplazada** (conciliada el 2026-10-29,
+  ver "Conciliación manual one-shot de 08007972"). Preflight y snapshot OK;
   candidato n.º 1 = 08007972, como se esperaba. Simulación sin claim: `DIFERENCIA` (explicado 41,89 de
   464,76). 08C16913→08C16913A y 08M23197 casan 1:1; **08C16912 (422,88) no casa: en Supabase existe
   (IdContador 279410, PUC 422,86, 2026-06-22) con proveedor 52 CINFA** en Farmatic (único albarán de CINFA

@@ -1,6 +1,7 @@
 # Hito 2BF-D — comandos exactos (producción; cada paso con confirmación de Pio)
 
-Preparado el 2026-10-28 (solo local, nada ejecutado en producción). Diseño y reglas en
+Preparado el 2026-10-28. **Ejecutado en producción el 2026-10-29** (pasos 0–8 y 10; el paso 9 se adelantó con
+una ejecución manual de la tarea de sincronización): ver `docs/contexto/ESTADO_ACTUAL.md`. Diseño y reglas en
 `pruebas/auditoria_2bf/DISENO.md`. **Las escrituras (pasos 2, 5 y 7) las ejecuta Pio en terminal.**
 
 ## Convenciones
