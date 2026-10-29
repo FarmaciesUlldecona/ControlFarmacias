@@ -233,6 +233,10 @@ diseño en `pruebas/auditoria_2be/DISENO.md`; evidencias en `C:\ControlFarmacias
     2AO + recepción 50898) CONCILIADA 0,07 con 127 + 1 casados y las dos reservas; sin recepción común,
     DIFERENCIA 504,09; sin la 24 no persiste; simulador; la BD rechaza 13 parejas falsas; privilegios; rollback;
   - plantillas `24`/`24_rollback` en `pg17_local.py`; lista de migraciones.
+- **Suites (`--basetemp`, con `pg17_local`):** 2219 passed y 1 skipped antes del commit (el ensayo, que exige
+  el commit). Tras el commit `403e6a5`, el ensayo y la prueba de solo lectura de sus precondiciones: 2 passed.
+  Datos para el 2BE-D: commit de la 24 `403e6a552207c320fe3fb5e57abd71b100e4d9a5` y SHA-256 (LF)
+  `73c30f4a510e46c36d63695abbea8ea751217d71e592c7bd37a92f5feee4a704`.
 - `PENDIENTE` (hito 2BE-D, con confirmación de Pio): desplegar la 24 y conciliar 08007969.
 
 ### Hito 2BF-D: migración 23 en producción, aprobación de 279410 y conciliación de 08007972
