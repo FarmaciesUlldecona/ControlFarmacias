@@ -40,9 +40,9 @@ posterior, con la decisión 3.
 
 ## 1. Tanda, plan y quién ejecuta
 
-- **Ejecuta Pio en terminal**, con un script nuevo (`pruebas/auditoria_2bj/serie_normalizacion.py`, con el
-  patrón del 2AT y el 2BI). Claude prepara el plan y los postchecks READ_ONLY, y Pio confirma cada tanda en el
-  chat.
+- **Ejecuta Claude con confirmación expresa de Pio por tanda** (decisión 4), con el script
+  `pruebas/auditoria_2bj/serie_normalizacion.py` (patrón del 2AT y el 2BI). Claude prepara antes el plan y
+  los postchecks READ_ONLY.
 - **Una ejecución sigue siendo un `ejecutar_una_manual()`** (1 documento, `MANUAL_ONE_SHOT`, sin
   preselección, sin flags): no se activa ninguna automatización. La tanda solo encadena N llamadas, cada una
   con sus puertas. **Esto cambia la práctica de «una por hito»: requiere el OK de Pio.**
@@ -59,8 +59,8 @@ posterior, con la decisión 3.
     a N. Ese documento crea facturas y tiene postcheck propio.
 
   Un `NO_SOPORTADO` solo cambia la fila del documento y una ejecución; agruparlos es seguro y barato.
-- **Guard por tanda** (`tanda_<n>.guard`, exclusivo y que no se borra) y registro JSON por ejecución. Sin
-  reintentos.
+- **Guard por tanda** (`tanda.guard` dentro del directorio de cada tanda, exclusivo y que no se borra) y
+  registro JSON por ejecución. Sin reintentos.
 
 ## 2. Puertas y PARADA
 
@@ -69,11 +69,14 @@ posterior, con la decisión 3.
 - 0 documentos en `NORMALIZANDO`, `cf_huerfanos_normalizacion('30 minutes')` vacío, 0 locks y claims, 0
   workers;
 - tareas programadas a 60 min o más y ninguna en ejecución (`Get-ScheduledTaskInfo`);
-- n.º 1 del selector = siguiente documento del plan, con la huella de su fila igual a la del plan;
+- n.º 1 del selector incluido en el plan, con el mismo SHA de archivo y con predicción. Se compara el SHA y
+  no la huella de la fila, porque un defecto reintentado cambia su fila (intentos, backoff) sin dejar de ser
+  el mismo documento;
 - sin la 25 o con esquema distinto del preflight → PARADA.
 
 **PARADA inmediata** (no se ejecuta nada más en la tanda; Claude diagnostica y Pio decide):
-- excepción del proceso, `RETORNO` distinto de 1 documento reclamado, o interrupción;
+- excepción del proceso, interrupción, o un retorno distinto del previsto (`documentos_reclamados` es 1 si
+  persiste un Alliance y 0 si el fallo queda registrado);
 - **huérfano:** documento en `NORMALIZANDO` tras la llamada (ver apartado 5);
 - **resultado inesperado** respecto del plan:
   - un Alliance que no queda `NORMALIZADA`, o con un número de facturas, números o totales distintos del plan;
@@ -82,7 +85,8 @@ posterior, con la decisión 3.
   - un `DEFECTO` no previsto;
 - **diferencia de huellas:** alguna fila cambiada fuera del documento reclamado y de sus filas nuevas
   (ejecución, facturas, extraídos, movimientos, vencimientos e historial de ese documento);
-- `REVISION` de un documento, por R3 o por persistencia `PARCIAL`/`REQUIERE_REVISION`.
+- persistencia `PARCIAL`/`REQUIERE_REVISION` o un Alliance con facturas no autorizables. Un defecto
+  previsto que llega a `REVISION` por R3 **no** es parada (decisión 2).
 
 ## 3. Postcheck entre tandas (criterio 2AX por fila)
 
