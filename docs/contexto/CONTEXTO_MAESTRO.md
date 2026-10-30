@@ -1,6 +1,6 @@
 # Contexto maestro de ControlFarmacias
 
-Actualizado: 2026-10-30 (Hito 2BI: migración 25 solo local; 2BG: regla R19 en conciliación, sin migración). Repositorio operativo:
+Actualizado: 2026-10-30 (Hito 2BI-D: migración 25 desplegada; 2BG: regla R19 en conciliación, sin migración). Repositorio operativo:
 `C:\ControlFarmacias\Programa`.
 
 ControlFarmacias ingiere y trata documentos de compra de farmacia. Su flujo
@@ -75,7 +75,8 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
   Farmatic.
 - `src/supabase_client`: integración histórica de albaranes y documentos.
 - `sql/migrations/25_cf_claims_huerfanos_normalizacion.sql` (+ `.rollback.sql`): migración más reciente,
-  **solo local, NO desplegada** (Hito 2BI, 2026-10-30): recuperación de claims huérfanos de normalización.
+  **desplegada en producción** (Hito 2BI-D, 2026-10-30; implementada en el 2BI): recuperación de claims
+  huérfanos de normalización.
 - `sql/migrations/24_cf_r17_recepcion.sql` (+ `.rollback.sql`): **desplegada en
   producción** (Hito 2BE-D, 2026-10-29; implementada en el 2BE): R17, línea = albarán de su número + 1 interno
   de la misma recepción.

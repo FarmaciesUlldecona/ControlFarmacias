@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-10-30 (Hito 2BI: claims huérfanos de normalización, 25 solo local; 2BH: evidencia mecánica
+Actualizado: 2026-10-30 (Hito 2BI-D: migración 25 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
 de la suite; 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
 de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 
@@ -256,8 +256,8 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
       por importe con número de proveedor distinto).
     - R17 sigue exigiendo el mismo id con R9 (la BD lo revalida): ECO360 + interno SAFA no es pareja.
     - Solo conciliación: la resincronización de albaranes y la extracción no cambian.
-- Reglas de Pio del Hito 2BI (2026-10-30; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 25 **NO
-  desplegada**; diseño en `pruebas/auditoria_2bi/DISENO.md`):
+- Reglas de Pio del Hito 2BI (2026-10-30; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 25
+  **desplegada en producción** en el 2BI-D, 2026-10-30; diseño en `pruebas/auditoria_2bi/DISENO.md`):
   - **Claims huérfanos de normalización:** un documento en `NORMALIZANDO` cuyo lock caducó hace más de la
     gracia (30 min; mínimo 15) se recupera solo con el script one-shot `recuperar_huerfanos.py`, con
     confirmación de Pio y guard por documento (RPC `cf_recuperar_claim_huerfano_normalizacion`).

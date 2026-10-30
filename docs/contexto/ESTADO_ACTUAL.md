@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-10-30 (Hito 2BI: claims huérfanos de normalización, 25 solo local; 2BH: infraestructura de
+Actualizado: 2026-10-30 (Hito 2BI-D: migración 25 desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
 tests; 2BG: R19 ECO360 y conciliación one-shot de
 08007970; 2BE-D: migración 24 desplegada en producción y
 conciliación one-shot de 08007969 con R17; antes, 2BE: R17 en local; 2BF-D: migración 23, aprobación de 279410 y conciliación de
@@ -192,7 +192,36 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
 
-### Hito 2BI: claims huérfanos de normalización (certificado en local; 25 NO desplegada)
+### Hito 2BI-D: migración 25 en producción
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-30, con confirmación expresa de Pio. Lecturas READ_ONLY y el despliegue
+ejecutados por Claude como Usuari a petición de Pio, una vez, sin reintento. Farmatic y Task Scheduler no
+tocados (tareas solo con `Get-ScheduledTaskInfo`). Evidencias en `C:\ControlFarmacias\evidencias_2bi_d\`
+(`SHA256SUMS.txt`). Sin push.
+
+- **Herramienta READ_ONLY nueva** `pruebas/auditoria_2bi_d/preflight_readonly.py`: es la del 2BE-D adaptada a
+  la 25, con una puerta que para si algún documento está en `NORMALIZANDO`. Ensayada en PostgreSQL 17 local
+  (`test_preflight_2bi_d.py`, 6 passed, con casos que deben parar).
+- **Puerta:**
+  - commit de la 25 `a045a32` y SHA (LF) `2f455612…925ec9`, iguales en disco y en la versión (comprobado
+    con Python: una tubería de PowerShell 5.1 recodifica la salida de `git show` y daba otro SHA);
+  - alcance 24 ↔ 25 = 3 funciones nuevas, sin eliminados.
+- **Preflight** (18:23 UTC):
+  - `PRECONDICIONES_OK` (9/9, `transaction_read_only: on`);
+  - `CAPTURA_OK`: 0 documentos en `NORMALIZANDO`, `f|f|f|{PIO}`, 485 reservas = líneas vigentes;
+  - `ESQUEMA_24_CONFIRMADO`.
+- **Despliegue:** `desplegar_25.py a045a32… 2f455612…` → **APLICADA** (18:40:16–18:40:17 UTC); 9
+  precondiciones en verde; postcondiciones datos sin cambios, RPC 25 y privilegios en verde.
+- **Postcheck 2AX** (`despliegue_postcheck.json`): `POSTCHECK_OK`.
+  - Cambian exactamente las 3 funciones del alcance, iguales a la referencia local 25.
+  - Fuera de alcance, privilegios por defecto y `cf_configuracion` idénticos.
+  - Huellas por fila idénticas en las 10 tablas.
+  - Reservas (485), aprobaciones, aplicaciones, operación y `NORMALIZANDO` (0) sin cambios.
+- Ya se puede usar `pruebas/auditoria_2bi/recuperar_huerfanos.py`: `informe` sin escritura; `recuperar`
+  solo con confirmación de Pio.
+- `PENDIENTE`: revisar la noche del 30/10 (tareas, albaranes, cambios y documentos).
+
+### Hito 2BI: claims huérfanos de normalización (certificado en local; 25 desplegada en el 2BI-D)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-30, commit local (sin push). Producción, Farmatic y Task
 Scheduler no tocados. Diseño, decisiones e implementación en `pruebas/auditoria_2bi/DISENO.md`.
@@ -217,8 +246,7 @@ Scheduler no tocados. Diseño, decisiones e implementación en `pruebas/auditori
   Tests `test_integracion_pg17_2bi.py` y `test_worker_normalizacion_2bi.py`.
 - **Conciliación:** sin hito. Ya diagnosticada en el 2AT: el claim no cambia de estado, el lock caduca y el
   guardado es atómico desde la 18.
-- `PENDIENTE` (con confirmación de Pio): desplegar la 25. Las ejecuciones manuales de normalización con el
-  código nuevo no la necesitan; el script `recuperar_huerfanos.py` sí.
+- ~~`PENDIENTE`: desplegar la 25~~: desplegada en el 2BI-D (2026-10-30).
 
 ### Hito 2BH: infraestructura de tests (solo local)
 
