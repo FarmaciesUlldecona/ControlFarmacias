@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-10-29 (Hito 2BE-D: migración 24 desplegada; 2BE: regla R17; 2BF-D: migración 23 desplegada).
+Actualizado: 2026-10-30 (Hito 2BE-D: migración 24 desplegada y norma de tests antes de commit; 2BE: regla R17;
+2BF-D: migración 23 desplegada).
 
 ## Seguridad y operación
 
@@ -294,6 +295,16 @@ módulos parciales.
   intento de desplegar la 19 falló por un `select` omitido en las precondiciones
   (sin cambios en producción). Referencia:
   `tests/facturas/runtime_supabase/test_ensayo_despliegue_19_2ax.py`.
+- **Norma de Pio de tests antes de commit (Hito 2BE-D, 2026-10-29), sin excepciones:**
+  - **suite completa con `pg17_local`** (`pytest tests/ --basetemp=<propio>`, con Docker disponible: ningún
+    test `pg17_local` omitido) si el commit toca `src/`, `sql/`, scripts de despliegue o cualquier código que
+    acceda a Supabase o Farmatic, también las herramientas de `pruebas/`;
+  - si solo toca documentación: **suite rápida** (`pytest tests/ -m "not pg17_local" --basetemp=<propio>`);
+  - en la duda: suite completa.
+  - La suite exigida se ejecuta sobre el estado exacto que se commitea y debe quedar en verde (0 failed,
+    0 errors). El encargo a `revisor-reglas` declara la suite ejecutada (comando, passed/failed/skipped y
+    fecha); `revisor-reglas` comprueba con la lista de ficheros que es la exigida (regla T2) y da FAIL si falta,
+    es insuficiente o tiene fallos.
 - Pytest debe usar directorios temporales mediante `CONTROLFARMACIAS_LOG_DIR` y
   `CONTROLFARMACIAS_DATA_DIR`.
 - Los tests no pueden conectarse a Farmatic/Supabase reales ni escribir en

@@ -38,6 +38,7 @@ Si el encargo acota un grupo de ficheros, revisa solo ese grupo.
 | P1 | Persistencia y conciliación: reglas R9, R11, R15, R16 y las del apartado "Persistencia y conciliación" |
 | M1 | Migraciones: generador determinista, rollback = esquema anterior, SECURITY DEFINER, owner postgres, EXECUTE solo service_role, RLS; ensayo completo del script de despliegue |
 | T1 | Tests: sin Farmatic ni Supabase reales; `CONTROLFARMACIAS_LOG_DIR`/`DATA_DIR` temporales; sin escribir en `logs/` o `data/` |
+| T2 | Norma de tests antes de commit (2BE-D): según la lista de ficheros, suite completa con `pg17_local` si toca `src/`, `sql/`, scripts de despliegue o código que accede a Supabase/Farmatic (también `pruebas/`); suite rápida (`-m "not pg17_local"`) si solo toca documentación; en la duda, completa. La suite corre sobre el estado exacto que se commitea. FAIL si el encargo no declara la suite ejecutada (comando, passed/failed/skipped, fecha y que corrió sobre el árbol actual), si corrió sobre otro estado, si es menor que la exigida, si omite tests `pg17_local` cuando se exige la completa o si tiene failed/errors. Nunca `N/A` |
 | C1 | Secretos: ningún `.env`, clave o credencial en el diff |
 
 ## Salida (formato obligatorio)
