@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-10-30 (Hito 2BH: infraestructura de tests; 2BG: R19 ECO360 y conciliación one-shot de
+Actualizado: 2026-10-30 (Hito 2BI: claims huérfanos de normalización, 25 solo local; 2BH: infraestructura de
+tests; 2BG: R19 ECO360 y conciliación one-shot de
 08007970; 2BE-D: migración 24 desplegada en producción y
 conciliación one-shot de 08007969 con R17; antes, 2BE: R17 en local; 2BF-D: migración 23, aprobación de 279410 y conciliación de
 08007972). Las secciones sin fecha propia conservan la de su hito.
@@ -190,6 +191,34 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   `into v_id` (fuera de PL/pgSQL sería DDL).
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
+
+### Hito 2BI: claims huérfanos de normalización (certificado en local; 25 NO desplegada)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-30, commit local (sin push). Producción, Farmatic y Task
+Scheduler no tocados. Diseño, decisiones e implementación en `pruebas/auditoria_2bi/DISENO.md`.
+
+- **Pendiente acordado con Pio (no estaba registrado aquí):** recuperar los claims huérfanos de
+  normalización.
+  - Si el proceso muere tras el claim (Ctrl+C, cierre, suspensión o fallo al registrar el error), el
+    documento queda en `NORMALIZANDO` con el lock caducado y sin ejecución.
+  - No vuelve a ser reclamable y nadie más puede registrar su fallo.
+  - La única salida era `cf_solicitar_reprocesado`, que reinicia el contador de intentos (contra R3).
+  - Reproducido en PostgreSQL 17 local. En producción, «NORMALIZANDO 0» en todos los preflight, el último
+    el 2026-10-30 a las 09:22 UTC.
+- **Resolución (local):**
+  - migración 25 (RPC por documento; huérfano limpio → fallo `TRANSITORIO` `CLAIM_HUERFANO`, que cuenta como
+    intento; persistencia parcial → `REVISION`; idempotente; gracia de 30 min);
+  - script one-shot `pruebas/auditoria_2bi/recuperar_huerfanos.py` (`informe`/`recuperar`, guard,
+    confirmación de Pio);
+  - `pruebas/auditoria_2bi/desplegar_25.py`, ensayado;
+  - worker de normalización con `worker_id` único por ejecución y Ctrl+C/`SystemExit` que registran el
+    fallo.
+
+  Tests `test_integracion_pg17_2bi.py` y `test_worker_normalizacion_2bi.py`.
+- **Conciliación:** sin hito. Ya diagnosticada en el 2AT: el claim no cambia de estado, el lock caduca y el
+  guardado es atómico desde la 18.
+- `PENDIENTE` (con confirmación de Pio): desplegar la 25. Las ejecuciones manuales de normalización con el
+  código nuevo no la necesitan; el script `recuperar_huerfanos.py` sí.
 
 ### Hito 2BH: infraestructura de tests (solo local)
 

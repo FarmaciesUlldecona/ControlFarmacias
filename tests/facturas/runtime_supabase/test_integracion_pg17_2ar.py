@@ -73,9 +73,11 @@ def test_4_1_replay_restaura_completa_y_libera_claim(base, tmp_path):
     assert _huella_facturas(base) == facturas
     assert len(_facturas_de(base, alliance)) == 3
     assert len(_ejecuciones(base, alliance)) == 1
-    assert _replays(base, alliance) == [{
-        "actor": "manual-2aq-dos", "lectura": "NORMALIZADA", "persistencia": "COMPLETA",
-        "origen": "MULTIFACTURA", "liberado": True}]
+    [replay] = _replays(base, alliance)
+    # 2BI: el worker_id es unico por ejecucion (base + "#" + sufijo).
+    assert replay.pop("actor").startswith("manual-2aq-dos#")
+    assert replay == {"lectura": "NORMALIZADA", "persistencia": "COMPLETA", "origen": "MULTIFACTURA",
+                      "liberado": True}
     assert set(cliente.flags_observadas) == {FLAGS_ESPERADOS}
 
 

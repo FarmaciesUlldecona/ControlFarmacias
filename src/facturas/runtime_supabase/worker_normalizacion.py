@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
@@ -25,27 +26,33 @@ class WorkerNormalizacion:
     worker_id: str
     ensamblar_documento: EnsambladorDocumento | None = None
 
+    def _worker_de_ejecucion(self) -> str:
+        """2BI: id unico por ejecucion (base + sufijo). Un claim solo lo puede cerrar la ejecucion que lo
+        tomo; otra ejecucion con la misma base ya no persiste sobre un claim ajeno o recuperado."""
+        return f"{self.worker_id}#{uuid.uuid4().hex[:12]}"
+
     def ejecutar_una(self) -> bool:
         """Ruta automatica/reprocesado; conserva el claim historico."""
-        documento = self.repositorio.reclamar_documento(self.worker_id)
+        worker_id = self._worker_de_ejecucion()
+        documento = self.repositorio.reclamar_documento(worker_id)
         if documento is None:
             return False
         disparador = "REPROCESADO" if documento.reprocesado_manual else "AUTOMATICO"
-        return self._procesar_documento(documento, disparador)
+        return self._procesar_documento(documento, disparador, worker_id)
 
     def ejecutar_una_manual_one_shot(self) -> bool:
         """Autoriza un unico claim manual sin preseleccion ni cambio de flags."""
-        documento = self.repositorio.reclamar_documento_manual_one_shot(
-            self.worker_id
-        )
+        worker_id = self._worker_de_ejecucion()
+        documento = self.repositorio.reclamar_documento_manual_one_shot(worker_id)
         if documento is None:
             return False
-        return self._procesar_documento(documento, "MANUAL_ONE_SHOT")
+        return self._procesar_documento(documento, "MANUAL_ONE_SHOT", worker_id)
 
     def _procesar_documento(
         self,
         documento: DocumentoTrabajo,
         disparador: str,
+        worker_id: str,
     ) -> bool:
         idempotency_key = f"normalizacion:{documento.documento_id}:{disparador}:fallo"
         try:
@@ -85,7 +92,7 @@ class WorkerNormalizacion:
                 documento,
                 resultado,
                 resultado_hash,
-                self.worker_id,
+                worker_id,
                 disparador,
                 idempotency_key,
             )
@@ -95,11 +102,27 @@ class WorkerNormalizacion:
                 documento,
                 type(exc).__name__,
                 str(exc),
-                self.worker_id,
+                worker_id,
                 disparador,
                 idempotency_key,
             )
             return False
+        except (KeyboardInterrupt, SystemExit) as exc:
+            # 2BI: Ctrl+C o salida forzada tras el claim. Se registra el fallo (cuenta como intento, R3)
+            # para no dejar un claim huerfano y se relanza; si el registro tambien falla, el claim queda
+            # para la recuperacion (migracion 25), y la interrupcion original no se pierde.
+            try:
+                self.repositorio.fallar_ejecucion(
+                    documento,
+                    type(exc).__name__,
+                    str(exc) or type(exc).__name__,
+                    worker_id,
+                    disparador,
+                    idempotency_key,
+                )
+            except Exception:
+                pass
+            raise
 
 
 def construir_worker_productivo(*args, **kwargs) -> WorkerNormalizacion:

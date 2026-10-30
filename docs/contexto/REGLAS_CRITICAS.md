@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-10-30 (Hito 2BH: evidencia mecánica de la suite; 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
+Actualizado: 2026-10-30 (Hito 2BI: claims huérfanos de normalización, 25 solo local; 2BH: evidencia mecánica
+de la suite; 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
 de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 
 ## Seguridad y operación
@@ -255,6 +256,21 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
       por importe con número de proveedor distinto).
     - R17 sigue exigiendo el mismo id con R9 (la BD lo revalida): ECO360 + interno SAFA no es pareja.
     - Solo conciliación: la resincronización de albaranes y la extracción no cambian.
+- Reglas de Pio del Hito 2BI (2026-10-30; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 25 **NO
+  desplegada**; diseño en `pruebas/auditoria_2bi/DISENO.md`):
+  - **Claims huérfanos de normalización:** un documento en `NORMALIZANDO` cuyo lock caducó hace más de la
+    gracia (30 min; mínimo 15) se recupera solo con el script one-shot `recuperar_huerfanos.py`, con
+    confirmación de Pio y guard por documento (RPC `cf_recuperar_claim_huerfano_normalizacion`).
+    - Huérfano limpio: fallo `TRANSITORIO` `CLAIM_HUERFANO` mediante `cf_registrar_fallo_normalizacion`
+      (cuenta como intento, R3: backoff y `REVISION` al 4.º).
+    - Con cualquier señal de persistencia parcial (`estado_persistencia ≠ PENDIENTE`, facturas enlazadas,
+      ejecuciones o eventos posteriores al claim): `REVISION`, sin reencolar ni tocar nada más.
+    - Idempotente (`NO_APLICA`). Un worker que siga vivo ya no puede persistir: falla cerrado.
+    - Sin cambios en el claim, el selector ni la persistencia (R4).
+  - **Worker de normalización:** `worker_id` único por ejecución; Ctrl+C y `SystemExit` registran el fallo
+    antes de relanzarse.
+  - Conciliación: sin recuperación propia (2AT: el claim no cambia de estado, el lock caduca y el guardado
+    es atómico desde la 18).
 - Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
   - total de devoluciones = abono;
   - servicio integral de distribución = cargo sin albarán;

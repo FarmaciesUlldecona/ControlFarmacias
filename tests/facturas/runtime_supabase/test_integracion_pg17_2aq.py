@@ -187,7 +187,8 @@ def test_pg17_2_5_idempotencia(base, cliente, tmp_path, variante):
     # actualizar el documento. El claim del segundo worker queda retenido y el
     # documento en NORMALIZANDO; al expirar el lock no vuelve a ser reclamable.
     assert (estado["estado_lectura"], estado["estado_persistencia"]) == ("NORMALIZANDO", "COMPLETA")
-    assert estado["bloqueado_por"] == "manual-2aq-dos" and estado["bloqueado_hasta"] is not None
+    # 2BI: el worker_id es unico por ejecucion (base + "#" + sufijo).
+    assert estado["bloqueado_por"].startswith("manual-2aq-dos#") and estado["bloqueado_hasta"] is not None
     assert _locks(base) == "1|0"
     base.sql(f"update public.documentos_facturas set bloqueado_hasta=now()-interval '1 second' where id={_lit(alliance)};")
     assert _siguiente_candidato(base) != alliance

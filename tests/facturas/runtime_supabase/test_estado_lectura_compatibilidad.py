@@ -49,7 +49,9 @@ def test_todos_los_writers_sql_documentales_cubiertos_por_check():
             states = re.findall(r"estado_lectura\s*=\s*'([A-Z_]+)'", asignacion)
             assert set(states) <= permitidos, path.name
             encontrados.update(states)
-    assert encontrados == V1
+    # 2BI (migracion 25): un claim huerfano con senales de persistencia parcial pasa a REVISION (estado
+    # del check desde la 08b; la 17 ya lo escribia mediante variable).
+    assert encontrados == V1 | {'REVISION'}
 
 
 def test_migracion_17_check_y_writers_dinamicos_cubiertos():
