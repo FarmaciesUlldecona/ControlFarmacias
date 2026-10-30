@@ -47,4 +47,5 @@ con proveedor 154 «6- PLATAF. ECO360 AH», que no entraba en el grupo SAFA.
 
 ## 5. Fuera de alcance
 
-- Conciliar 08007970 en producción: requiere confirmación de Pio (procedimiento del 2AT).
+- Conciliar 08007970 en producción: requiere confirmación de Pio (procedimiento del 2AT). Hecho el 2026-10-30
+  (CONCILIADA −0,07; ver `docs/contexto/ESTADO_ACTUAL.md`).

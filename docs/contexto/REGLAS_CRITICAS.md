@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-10-30 (Hito 2BG: regla R19, solo local; 2BE-D: migración 24 desplegada y norma de tests antes
+Actualizado: 2026-10-30 (Hito 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
 de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 
 ## Seguridad y operación
@@ -246,8 +246,8 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
       número de una línea de otra factura; solo lo comprueba Python.
   - **Orden de despliegue:** primero la 24 y después conciliar con el código 2BE. Con la 23, una línea R17 se
     rechaza (`TOLERANCIA_REGLA_NO_COINCIDE`) y consume un intento.
-- Regla de Pio del Hito 2BG (2026-10-30; `CONFIRMADO POR TEST`, sin migración; **solo local**, no aplicada en
-  producción; diseño en `pruebas/auditoria_2bg/DISENO.md`):
+- Regla de Pio del Hito 2BG (2026-10-30; `CONFIRMADO POR TEST`, sin migración; aplicada en producción en la
+  conciliación de 08007970 el 2026-10-30; diseño en `pruebas/auditoria_2bg/DISENO.md`):
   - **R19 ECO360 = grupo Alliance/SAFA en conciliación:** el proveedor de Farmatic «6- PLATAF. ECO360 AH»
     (id 154, con R9) es siempre compra a Alliance/SAFA, sin excepciones, y pertenece al grupo
     Alliance/SAFA/Cencora: por nombre canónico y por id (154 ≡ 2). Ninguna otra plataforma se trata igual.

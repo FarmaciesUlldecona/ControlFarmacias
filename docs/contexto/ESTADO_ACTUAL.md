@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-10-30 (Hito 2BG: R19 ECO360, solo local; 2BE-D: migración 24 desplegada en producción y
+Actualizado: 2026-10-30 (Hito 2BG: R19 ECO360 y conciliación one-shot de 08007970; 2BE-D: migración 24 desplegada en producción y
 conciliación one-shot de 08007969 con R17; antes, 2BE: R17 en local; 2BF-D: migración 23, aprobación de 279410 y conciliación de
 08007972). Las secciones sin fecha propia conservan la de su hito.
 
@@ -207,8 +207,32 @@ tocado; sin migración.** Regla R19 aprobada por Pio (en `REGLAS_CRITICAS.md`); 
 - **Código:** `conciliacion.py` (alias por nombre y `_id_proveedor_grupo` por id, solo en
   `_filas_del_proveedor`; R17 sin cambios). Tests `test_r19_2bg.py` y `test_integracion_pg17_2bg.py`
   (08007970 real: CONCILIADA −0,07; sin R19, DIFERENCIA 38,98).
-- `PENDIENTE` (con confirmación de Pio): conciliar 08007970 en producción con este código. No necesita
-  migración; antes, preflight, snapshot y revalidación del 2AT (simulación esperada CONCILIADA −0,07).
+- ~~`PENDIENTE`: conciliar 08007970 en producción~~: hecho el 2026-10-30 (ver la sección siguiente).
+
+### Conciliación manual one-shot de 08007970 con R19 (2026-10-30)
+
+`CONFIRMADO EN PRODUCCIÓN`, 2026-10-30, con confirmación expresa de Pio, desde el commit `667d729` (R19, sin
+migración). Procedimiento del 2AT con el envoltorio del 2BD-D; ejecutado por Claude como Usuari a petición de
+Pio, una vez, sin reintento; sin workers ni flags. Evidencias en `C:\ControlFarmacias\evidencias_2bg_conc\`
+(`SHA256SUMS.txt`).
+
+- **Preflight** `PREFLIGHT_OK`, snapshot y revalidación (09:22 UTC; dos simulaciones `CANDIDATO_OK`, idénticas).
+  Única elegible: 08007970. Simulación CONCILIADA −0,07 con 71/71 casados; 08M26912 ↔ 280247 (ECO360, id 154,
+  EXACTA, 39,05).
+- **Ejecución:** 09:50:11–09:50:15 UTC, worker `cf-2at-manual-conciliacion`, cliente `service_role`, `RETORNO`;
+  guard `ejecucion_unica_2at.guard`; directorio temporal borrado.
+- **Resultado:** 08007970 (`a4224974-942e-4024-8f87-512cd5cb5e8e`) **`CONCILIADA`**, importe 2.356,64,
+  explicado 2.356,71, diferencia −0,07, tolerancia 0,50 (R11 con 71 albaranes); conciliación
+  `e0ed672c-290f-45d8-a421-6495a9b9154a`, intento 1, `MANUAL_ONE_SHOT`, `COMPLETADA`, `es_actual`; clave
+  idempotente igual a la simulada.
+- **Postcheck** (`conc_comparacion_stdout.txt`, `POSTCHECK_OK`): solo cambió la fila de 08007970 (estado,
+  intentos, `diferencia_albaranes`, `updated_at`); filas nuevas: 1 conciliación, 71 detalles `UNO_A_UNO` y
+  2 eventos (`CONCILIACION_CLAIM`, `CONCILIACION_PERSISTIDA`), todos de esa factura. Reservas **414 → 485** (71
+  nuevas de esa conciliación, 280247 incluida; ninguna borrada ni alterada; = líneas vigentes). Albaranes,
+  `albaranes_cambios`, extraídos, movimientos, vencimientos, documentos, aprobaciones, aplicaciones, esquema y
+  `cf_configuracion` idénticos a la captura de las 06:33 UTC. Flags `f|f|f|{PIO}`; workers, locks y claims 0.
+- Conteos: `facturas` 12 (11 `CONCILIADA`, 1 `PENDIENTE_CONCILIAR`: HEFAME 0563834757), `conciliaciones` 17,
+  `conciliacion_detalles` 963, `historial_facturas` 44, `albaranes` 5.995, reservas 485.
 
 ### Hito 2BE-D: migración 24 en producción y conciliación de 08007969 con R17
 
