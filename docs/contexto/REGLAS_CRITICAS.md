@@ -1,7 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-10-30 (Hito 2BE-D: migración 24 desplegada y norma de tests antes de commit; 2BE: regla R17;
-2BF-D: migración 23 desplegada).
+Actualizado: 2026-10-30 (Hito 2BG: regla R19, solo local; 2BE-D: migración 24 desplegada y norma de tests antes
+de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 
 ## Seguridad y operación
 
@@ -246,6 +246,15 @@ Actualizado: 2026-10-30 (Hito 2BE-D: migración 24 desplegada y norma de tests a
       número de una línea de otra factura; solo lo comprueba Python.
   - **Orden de despliegue:** primero la 24 y después conciliar con el código 2BE. Con la 23, una línea R17 se
     rechaza (`TOLERANCIA_REGLA_NO_COINCIDE`) y consume un intento.
+- Regla de Pio del Hito 2BG (2026-10-30; `CONFIRMADO POR TEST`, sin migración; **solo local**, no aplicada en
+  producción; diseño en `pruebas/auditoria_2bg/DISENO.md`):
+  - **R19 ECO360 = grupo Alliance/SAFA en conciliación:** el proveedor de Farmatic «6- PLATAF. ECO360 AH»
+    (id 154, con R9) es siempre compra a Alliance/SAFA, sin excepciones, y pertenece al grupo
+    Alliance/SAFA/Cencora: por nombre canónico y por id (154 ≡ 2). Ninguna otra plataforma se trata igual.
+    - Se conservan los literales; se mantienen todas las reglas de numeración, ventanas y R15/R15b (nunca casa
+      por importe con número de proveedor distinto).
+    - R17 sigue exigiendo el mismo id con R9 (la BD lo revalida): ECO360 + interno SAFA no es pareja.
+    - Solo conciliación: la resincronización de albaranes y la extracción no cambian.
 - Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
   - total de devoluciones = abono;
   - servicio integral de distribución = cargo sin albarán;
@@ -259,7 +268,7 @@ Actualizado: 2026-10-30 (Hito 2BE-D: migración 24 desplegada y norma de tests a
   categorías ni explicaciones.
 - Las relaciones con Farmatic conservan el identificador literal de proveedor; no
   se coacciona a número ni se normaliza destructivamente.
-- En conciliación, SAFA, Alliance y Cencora pueden canonicalizarse dentro del grupo
+- En conciliación, SAFA, Alliance y Cencora (y ECO360 por R19, 2BG) pueden canonicalizarse dentro del grupo
   funcional autorizado. `CONFIRMADO POR CÓDIGO` y `CONFIRMADO POR TEST`,
   2026-09-24. Esto no crea un extractor SAFA: **extracción ≠ conciliación**.
 

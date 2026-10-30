@@ -38,7 +38,12 @@ _ALIASES_ALLIANCE_AUTORIZADOS = frozenset({
     "ALLIANCEHEALTHCARE",
     "ALLIANCEHEALTHCAREESPANA",
     "CENCORA",
+    # R19 (Pio, 2BG): la plataforma ECO360 de Farmatic es siempre compra a Alliance/SAFA.
+    "6PLATAFECO360AH",
 })
+# R19 (Pio, 2BG): id de Farmatic de ECO360 (154) -> id de SAFA (2), solo para elegir candidatos por proveedor.
+# R17 sigue exigiendo el mismo id con R9 (la BD lo revalida en ``cf_linea_r17_valida``).
+_ID_PROVEEDOR_GRUPO_ALLIANCE = {"154": "2"}
 _ALIASES_HEFAME_MERCANCIA_AUTORIZADOS = frozenset({
     "3HEFAME",
     "HEFAME",
@@ -156,6 +161,12 @@ def _id_proveedor_comparable(valor: str | None) -> str | None:
     return texto or None
 
 
+def _id_proveedor_grupo(valor: str | None) -> str | None:
+    """R9 y R19: id comparable, con ECO360 (154) dentro del grupo SAFA (2)."""
+    comparable = _id_proveedor_comparable(valor)
+    return _ID_PROVEEDOR_GRUPO_ALLIANCE.get(comparable, comparable)
+
+
 def comparar_numeros_albaran(documental: str | None, operacional: str | None) -> str:
     izquierda = normalizar_numero_albaran(documental)
     derecha = normalizar_numero_albaran(operacional)
@@ -225,11 +236,11 @@ def _filas_del_proveedor(
     provider_key = canonicalizar_proveedor(proveedor_literal)
     provider_id = conservar_id_proveedor(farmatic_id_proveedor)
     if provider_id is not None:
-        provider_comparable = _id_proveedor_comparable(provider_id)
+        provider_comparable = _id_proveedor_grupo(provider_id)
         return provider_key, [
             row for row in rows
             if provider_comparable is not None
-            and _id_proveedor_comparable(row.id_proveedor) == provider_comparable
+            and _id_proveedor_grupo(row.id_proveedor) == provider_comparable
         ]
     if provider_key is not None:
         return provider_key, [row for row in rows if canonicalizar_proveedor(row.proveedor) == provider_key]

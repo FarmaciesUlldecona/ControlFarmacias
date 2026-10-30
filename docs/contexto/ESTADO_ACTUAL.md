@@ -1,7 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-10-29 (Hito 2BE-D: migración 24 desplegada en producción y conciliación one-shot de
-08007969 con R17; antes, 2BE: R17 en local; 2BF-D: migración 23, aprobación de 279410 y conciliación de
+Actualizado: 2026-10-30 (Hito 2BG: R19 ECO360, solo local; 2BE-D: migración 24 desplegada en producción y
+conciliación one-shot de 08007969 con R17; antes, 2BE: R17 en local; 2BF-D: migración 23, aprobación de 279410 y conciliación de
 08007972). Las secciones sin fecha propia conservan la de su hito.
 
 ## Git y respaldo
@@ -189,6 +189,26 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   `into v_id` (fuera de PL/pgSQL sería DDL).
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
+
+### Hito 2BG: R19, ECO360 = grupo Alliance/SAFA en conciliación (solo local)
+
+`CONFIRMADO POR TEST`, 2026-10-30, commit local (sin push). **Producción: solo lecturas READ_ONLY; Farmatic no
+tocado; sin migración.** Regla R19 aprobada por Pio (en `REGLAS_CRITICAS.md`); diseño en
+`pruebas/auditoria_2bg/DISENO.md`; evidencias en `C:\ControlFarmacias\evidencias_2bg\` y
+`C:\ControlFarmacias\evidencias_diag_08007970\`.
+
+- **Diagnóstico de 08007970** (READ_ONLY, 2026-10-30): DIFERENCIA 38,98 = 39,05 de 08M26912 sin casar − 0,03 de
+  redondeos − 0,04 de residuo documental. 08M26912 existe (280247, mismo número, fecha y PUC) con proveedor 154
+  «6- PLATAF. ECO360 AH»; la factura no tiene `proveedor_id` y el casado filtra por nombre canónico.
+- **Decisión de Pio:** ECO360 es siempre compra a Alliance/SAFA; regla determinista (R19) en lugar de cambiar
+  Farmatic. Ninguna otra plataforma.
+- **Medición:** 70 albaranes ECO360; en el banco del 2AZ, 9 facturas cambian con 15 casados nuevos, todos por
+  número exacto; 0 efectos colaterales; 0 parejas R17 mixtas.
+- **Código:** `conciliacion.py` (alias por nombre y `_id_proveedor_grupo` por id, solo en
+  `_filas_del_proveedor`; R17 sin cambios). Tests `test_r19_2bg.py` y `test_integracion_pg17_2bg.py`
+  (08007970 real: CONCILIADA −0,07; sin R19, DIFERENCIA 38,98).
+- `PENDIENTE` (con confirmación de Pio): conciliar 08007970 en producción con este código. No necesita
+  migración; antes, preflight, snapshot y revalidación del 2AT (simulación esperada CONCILIADA −0,07).
 
 ### Hito 2BE-D: migración 24 en producción y conciliación de 08007969 con R17
 

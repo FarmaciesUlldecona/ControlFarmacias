@@ -1,6 +1,6 @@
 # Contexto maestro de ControlFarmacias
 
-Actualizado: 2026-10-29 (Hito 2BE-D). Repositorio operativo:
+Actualizado: 2026-10-30 (Hito 2BG: regla R19 en conciliación, sin migración). Repositorio operativo:
 `C:\ControlFarmacias\Programa`.
 
 ControlFarmacias ingiere y trata documentos de compra de farmacia. Su flujo
