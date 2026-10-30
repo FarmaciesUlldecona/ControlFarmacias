@@ -6,7 +6,9 @@ llamada) cuando:
 - cualquier llamada (sesión principal o subagente) toca una ruta ``.env*``,
   nombra ``service_role`` en una ruta o comando, o ejecuta ``schtasks``;
 - se intenta ``git commit`` sin un PASS de ``revisor-reglas`` registrado para
-  el estado actual exacto de los cambios;
+  el estado actual exacto de los cambios, o sin una suite en verde registrada
+  por pytest sobre ese mismo estado con el alcance que exige la norma de tests
+  (2BH: ``logs/agentes/suites.jsonl``, ``tests/registro_suite.py``);
 - un subagente del piloto usa una herramienta, ruta o comando fuera de su
   política (``POLITICAS``); un subagente desconocido intenta escribir con
   Write, Edit o NotebookEdit.
@@ -286,7 +288,7 @@ def barrera_global(tool_name: str, tool_input: dict, cwd: str) -> Decision:
     return PERMITIR
 
 
-def barrera_commit(huella_actual=None, ruta_uso=None) -> Decision:
+def barrera_commit(huella_actual=None, ruta_uso=None, rutas_cambiadas=None, ruta_suites=None) -> Decision:
     # Revisiones agrupadas por huella al leer (uso.jsonl es append-only): PASS
     # solo si todas las líneas de la huella actual son PASS.
     huella = huella_actual if huella_actual is not None else estado_git.huella_cambios()
@@ -306,6 +308,23 @@ def barrera_commit(huella_actual=None, ruta_uso=None) -> Decision:
             "commit_revisor_fail",
             "alguna revisión de revisor-reglas sobre estos cambios no es PASS.",
         )
+    # 2BH: norma de tests antes de commit, con el registro que escribe pytest (logs/agentes/suites.jsonl).
+    rutas = rutas_cambiadas if rutas_cambiadas is not None else estado_git.rutas_cambiadas()
+    exigida = estado_git.suite_exigida(rutas)
+    suite = estado_git.suite_valida(huella, exigida, ruta_suites)
+    if suite is None:
+        return bloquear(
+            "commit_sin_suite",
+            f"no hay una suite {exigida} registrada sobre el estado exacto de los cambios; "
+            "ejecuta pytest tests/ con --basetemp propio" + (" (con Docker)" if exigida == "completa" else
+                                                              ' -m "not pg17_local"') + ".",
+        )
+    if not suite.get("verde"):
+        return bloquear(
+            "commit_suite_roja",
+            f"la última suite {suite.get('alcance')} sobre estos cambios no está en verde "
+            f"(failed {suite.get('failed')}, errors {suite.get('errors')}).",
+        )
     return PERMITIR
 
 
@@ -323,7 +342,9 @@ def lecturas_revisor(cwd: str) -> set[str]:
     """REGLAS_CRITICAS y los ficheros que toca el diff del repositorio revisado."""
 
     raiz = estado_git.raiz_repositorio(cwd)
-    rutas = [os.path.join("docs", "contexto", "REGLAS_CRITICAS.md"), *estado_git.rutas_cambiadas(raiz)]
+    # 2BH (T2): también el registro de suites que escribe pytest.
+    rutas = [os.path.join("docs", "contexto", "REGLAS_CRITICAS.md"), os.path.join("logs", "agentes", "suites.jsonl"),
+             *estado_git.rutas_cambiadas(raiz)]
     return {normalizar(os.path.join(raiz, r), raiz) for r in rutas}
 
 

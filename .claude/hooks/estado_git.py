@@ -76,7 +76,8 @@ def rutas_cambiadas(directorio: str = DIRECTORIO_PROYECTO) -> list[str]:
     return sorted(set(rutas))
 
 
-def huella_cambios(directorio: str = DIRECTORIO_PROYECTO) -> str:
+def detalle_cambios(directorio: str = DIRECTORIO_PROYECTO) -> dict:
+    """Commit base y ``[ruta, sha256 | BORRADO]`` de cada ruta cambiada: lo que resume la huella."""
     base = _git("rev-parse", "HEAD", directorio=directorio).decode("ascii").strip()
     elementos = []
     for ruta in rutas_cambiadas(directorio):
@@ -87,8 +88,56 @@ def huella_cambios(directorio: str = DIRECTORIO_PROYECTO) -> str:
         else:
             contenido = "BORRADO"
         elementos.append([ruta, contenido])
-    texto = json.dumps({"base": base, "rutas": elementos}, sort_keys=True)
+    return {"base": base, "rutas": elementos}
+
+
+def huella_de(detalle: dict) -> str:
+    texto = json.dumps({"base": detalle["base"], "rutas": detalle["rutas"]}, sort_keys=True)
     return hashlib.sha256(texto.encode("utf-8")).hexdigest()
+
+
+def huella_cambios(directorio: str = DIRECTORIO_PROYECTO) -> str:
+    return huella_de(detalle_cambios(directorio))
+
+
+# --- registro de suites (Hito 2BH) ------------------------------------------
+#
+# Norma de Pio de tests antes de commit (REGLAS_CRITICAS, «Pruebas»): suite completa con pg17_local si el
+# commit toca algo distinto de documentación; suite rápida si solo toca documentación. pytest añade una línea
+# por ejecución a ``logs/agentes/suites.jsonl`` (tests/registro_suite.py) con la huella exacta del árbol
+# probado; la barrera de commit la exige.
+
+NOMBRE_SUITES = "suites.jsonl"
+ALCANCES = ("parcial", "rapida", "completa")
+
+
+def ruta_suites() -> str:
+    return os.path.join(directorio_logs(), NOMBRE_SUITES)
+
+
+def solo_documentacion(rutas: list[str]) -> bool:
+    """Documentación = ficheros ``.md`` fuera de ``.claude/`` (las definiciones de agentes no cuentan)."""
+    return all(r.replace("\\", "/").lower().endswith(".md")
+               and not r.replace("\\", "/").startswith(".claude/") for r in rutas)
+
+
+def suite_exigida(rutas: list[str]) -> str:
+    return "rapida" if solo_documentacion(rutas) else "completa"
+
+
+def suite_valida(huella: str, exigida: str, ruta: str | None = None,
+                 repositorio: str = DIRECTORIO_PROYECTO) -> dict | None:
+    """Última ejecución registrada sobre ``huella`` con alcance suficiente, o None.
+
+    Una ejecución de menor alcance posterior no la invalida; una de alcance suficiente posterior sí (si
+    falla, la última manda).
+    """
+    clave = clave_repositorio(repositorio)
+    minimo = ALCANCES.index(exigida)
+    validas = [r for r in leer_uso(ruta or ruta_suites())
+               if r.get("repositorio") == clave and r.get("huella") == huella
+               and r.get("alcance") in ALCANCES and ALCANCES.index(r["alcance"]) >= minimo]
+    return validas[-1] if validas else None
 
 
 def leer_uso(ruta: str | None = None) -> list[dict]:

@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-10-30 (Hito 2BG: R19 ECO360 y conciliación one-shot de 08007970; 2BE-D: migración 24 desplegada en producción y
+Actualizado: 2026-10-30 (Hito 2BH: infraestructura de tests; 2BG: R19 ECO360 y conciliación one-shot de
+08007970; 2BE-D: migración 24 desplegada en producción y
 conciliación one-shot de 08007969 con R17; antes, 2BE: R17 en local; 2BF-D: migración 23, aprobación de 279410 y conciliación de
 08007972). Las secciones sin fecha propia conservan la de su hito.
 
@@ -189,6 +190,23 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   `into v_id` (fuera de PL/pgSQL sería DDL).
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
+
+### Hito 2BH: infraestructura de tests (solo local)
+
+`CONFIRMADO POR TEST`, 2026-10-30, commit local (sin push). Producción y Farmatic no tocados. Diseño y
+mediciones en `pruebas/auditoria_2bh/DISENO.md`.
+
+- **Velocidad:** la plantilla por variante y la copia por test ya existían; el coste era un `docker exec psql`
+  por sentencia (0,225 s frente a 0,003 s en sesión persistente). `pg17_local.py` usa ahora una sesión `psql`
+  persistente por base que conserva la semántica de un proceso por llamada (`ON_ERROR_STOP`, `rollback` +
+  `discard all`), cerrada al acabar cada test y antes de cada `createdb -T`. `pg17_local`: **35:57 → 12:21**;
+  completa ~37 → ~14 min. Los ~10 min exigen paralelizar (`pytest-xdist`, dependencia nueva): `PENDIENTE` de
+  decisión de Pio.
+- **Resultado verificable:** pytest añade a `logs/agentes/suites.jsonl` la huella exacta del árbol probado,
+  passed/failed/errors/skipped, fechas, alcance (`completa`/`rapida`/`parcial`) y `verde`
+  (`tests/registro_suite.py`). La barrera de commit lo exige (`commit_sin_suite`, `commit_suite_roja`) y
+  `revisor-reglas` (T2) lo lee.
+- **Tests:** `tests/test_registro_suite_2bh.py` y ampliación de `tests/test_hook_barreras_agentes.py`.
 
 ### Hito 2BG: R19, ECO360 = grupo Alliance/SAFA en conciliación (solo local)
 

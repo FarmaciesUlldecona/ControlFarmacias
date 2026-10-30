@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-10-30 (Hito 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
+Actualizado: 2026-10-30 (Hito 2BH: evidencia mecánica de la suite; 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
 de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 
 ## Seguridad y operación
@@ -311,12 +311,20 @@ módulos parciales.
   - si solo toca documentación: **suite rápida** (`pytest tests/ -m "not pg17_local" --basetemp=<propio>`);
   - en la duda: suite completa.
   - La suite exigida se ejecuta sobre el estado exacto que se commitea y debe quedar en verde (0 failed,
-    0 errors). El encargo a `revisor-reglas` declara la suite ejecutada (comando, passed/failed/skipped y
-    fecha); `revisor-reglas` comprueba con la lista de ficheros que es la exigida (regla T2) y da FAIL si falta,
-    es insuficiente o tiene fallos.
+    0 errors).
+  - **Evidencia mecánica (Hito 2BH, 2026-10-30):** cada ejecución de pytest añade una línea a
+    `logs/agentes/suites.jsonl` (`tests/registro_suite.py`) con la huella exacta del árbol probado (la de la
+    barrera de commit, calculada al empezar y al terminar), passed/failed/errors/skipped, fechas, alcance
+    (`completa`, `rapida` o `parcial`) y `verde`. «Documentación» = ficheros `.md` fuera de `.claude/`.
+    - La **barrera de commit** exige una línea con la huella actual, alcance suficiente y en verde
+      (`commit_sin_suite`, `commit_suite_roja`).
+    - `revisor-reglas` (T2) lee ese registro y comprueba una línea con `base` = HEAD, `rutas` = `git status`,
+      alcance suficiente y `verde`.
+    - Ya no basta con declarar la suite en el encargo.
 - Pytest debe usar directorios temporales mediante `CONTROLFARMACIAS_LOG_DIR` y
   `CONTROLFARMACIAS_DATA_DIR`.
 - Los tests no pueden conectarse a Farmatic/Supabase reales ni escribir en
-  `logs/` o `data/` productivos.
+  `logs/` o `data/` productivos. Única excepción (2BH): el ejecutor de pytest, no un test, añade la línea de
+  la ejecución a `logs/agentes/suites.jsonl`.
 - Una suite verde demuestra solo lo cubierto por sus tests; no amplía autoridad
   productiva ni resuelve reglas funcionales pendientes.

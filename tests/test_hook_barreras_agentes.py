@@ -114,6 +114,18 @@ def _uso(tmp_path, *registros):
     return str(ruta)
 
 
+def _suites(tmp_path, *registros):
+    """Registro de suites (2BH); por defecto del repositorio del proyecto."""
+    ruta = tmp_path / "suites.jsonl"
+    defecto = {"repositorio": estado_git.clave_repositorio(estado_git.DIRECTORIO_PROYECTO)}
+    ruta.write_text("".join(json.dumps({**defecto, **r}) + "\n" for r in registros), encoding="utf-8")
+    return str(ruta)
+
+
+def _suite_completa_verde(tmp_path, huella="h1"):
+    return _suites(tmp_path, {"huella": huella, "alcance": "completa", "verde": True})
+
+
 def test_commit_sin_revision_bloqueado(tmp_path):
     decision = barreras.barrera_commit("h1", _uso(tmp_path))
     assert decision.motivo == "commit_sin_revisor"
@@ -121,7 +133,7 @@ def test_commit_sin_revision_bloqueado(tmp_path):
 
 def test_commit_con_pass_de_la_misma_huella_permitido(tmp_path):
     ruta = _uso(tmp_path, {"agent_type": "revisor-reglas", "veredicto": "PASS", "huella_cambios": "h1"})
-    assert barreras.barrera_commit("h1", ruta).codigo == 0
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suite_completa_verde(tmp_path)).codigo == 0
 
 
 def test_commit_con_cambios_posteriores_bloqueado(tmp_path):
@@ -172,8 +184,74 @@ def test_commit_con_pass_de_la_huella_aunque_haya_otra_despues(tmp_path):
         {"agent_type": "revisor-reglas", "veredicto": "PASS", "huella_cambios": "h1"},
         {"agent_type": "revisor-reglas", "veredicto": "FAIL", "huella_cambios": "h2"},
     )
-    assert barreras.barrera_commit("h1", ruta).codigo == 0
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suite_completa_verde(tmp_path)).codigo == 0
     assert barreras.barrera_commit("h2", ruta).motivo == "commit_revisor_fail"
+
+
+# 2b. Commit condicionado a la suite registrada por pytest (2BH)
+
+
+def _pass(tmp_path, huella="h1"):
+    return _uso(tmp_path, {"agent_type": "revisor-reglas", "veredicto": "PASS", "huella_cambios": huella})
+
+
+def test_commit_sin_suite_registrada_bloqueado(tmp_path):
+    decision = barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], _suites(tmp_path))
+    assert decision.motivo == "commit_sin_suite"
+
+
+def test_commit_con_suite_de_otro_arbol_bloqueado(tmp_path):
+    suites = _suites(tmp_path, {"huella": "h0", "alcance": "completa", "verde": True})
+    assert barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], suites).motivo == "commit_sin_suite"
+
+
+def test_commit_de_codigo_exige_suite_completa(tmp_path):
+    suites = _suites(tmp_path, {"huella": "h1", "alcance": "rapida", "verde": True})
+    assert barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], suites).motivo == "commit_sin_suite"
+    # Las definiciones de agentes no son documentación (en la duda, completa).
+    assert barreras.barrera_commit("h1", _pass(tmp_path), [".claude/agents/r.md"], suites).motivo == \
+        "commit_sin_suite"
+
+
+def test_commit_solo_de_documentacion_admite_la_rapida(tmp_path):
+    suites = _suites(tmp_path, {"huella": "h1", "alcance": "rapida", "verde": True})
+    assert barreras.barrera_commit("h1", _pass(tmp_path), ["docs/contexto/ESTADO_ACTUAL.md"], suites).codigo == 0
+
+
+def test_commit_con_suite_parcial_bloqueado(tmp_path):
+    suites = _suites(tmp_path, {"huella": "h1", "alcance": "parcial", "verde": True})
+    assert barreras.barrera_commit("h1", _pass(tmp_path), ["docs/a.md"], suites).motivo == "commit_sin_suite"
+
+
+def test_commit_con_suite_roja_bloqueado(tmp_path):
+    suites = _suites(tmp_path, {"huella": "h1", "alcance": "completa", "verde": True},
+                     {"huella": "h1", "alcance": "completa", "verde": False, "failed": 1, "errors": 0})
+    assert barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], suites).motivo == "commit_suite_roja"
+
+
+def test_una_ejecucion_parcial_posterior_no_invalida_la_completa(tmp_path):
+    suites = _suites(tmp_path, {"huella": "h1", "alcance": "completa", "verde": True},
+                     {"huella": "h1", "alcance": "parcial", "verde": False, "failed": 3, "errors": 0})
+    assert barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], suites).codigo == 0
+
+
+def test_suite_de_otro_repositorio_no_vale(tmp_path):
+    suites = _suites(tmp_path, {"huella": "h1", "alcance": "completa", "verde": True,
+                                "repositorio": estado_git.clave_repositorio(str(tmp_path / "otro"))})
+    assert barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], suites).motivo == "commit_sin_suite"
+
+
+def test_revisor_puede_leer_el_registro_de_suites(monkeypatch):
+    monkeypatch.setattr(estado_git, "rutas_cambiadas", lambda raiz: [])
+    ruta = str(Path(estado_git.DIRECTORIO_PROYECTO) / "logs" / "agentes" / "suites.jsonl")
+    assert _decidir("Read", {"file_path": ruta}, agente="revisor-reglas").codigo == 0
+    otra = str(Path(estado_git.DIRECTORIO_PROYECTO) / "logs" / "agentes" / "uso.jsonl")
+    assert _decidir("Read", {"file_path": otra}, agente="revisor-reglas").motivo == "lectura_fuera_de_diff"
+
+
+def test_huella_igual_a_la_de_detalle(repo):
+    ruta, _git = repo
+    assert estado_git.huella_cambios(str(ruta)) == estado_git.huella_de(estado_git.detalle_cambios(str(ruta)))
 
 
 def test_comando_commit_pasa_por_la_barrera(monkeypatch):

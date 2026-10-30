@@ -35,7 +35,16 @@ def pg17_contenedor():
         assert not info["HostConfig"]["PortBindings"]
         yield nombre
     finally:
+        pgl.cerrar_sesiones(nombre)
         pgl._docker("rm", "-f", nombre, comprobar=False)
+
+
+@pytest.fixture(autouse=True)
+def _cerrar_sesiones_pg17():
+    """2BH: las sesiones psql persistentes no sobreviven al test (mismo aislamiento que un proceso por
+    sentencia; tampoco se acumulan conexiones en el contenedor)."""
+    yield
+    pgl.cerrar_sesiones()
 
 
 @pytest.fixture(scope="session")

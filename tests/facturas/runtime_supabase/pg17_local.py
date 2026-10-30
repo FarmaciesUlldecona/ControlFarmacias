@@ -66,17 +66,108 @@ def _expandir(path: Path) -> str:
     return "\n".join(lineas)
 
 
+class _Sesion:
+    """Sesion ``psql`` persistente sobre ``docker exec -i`` (Hito 2BH).
+
+    Cada ``docker exec`` cuesta ~0,22 s en Windows y la suite ``pg17_local`` hace ~9.500 llamadas; en una
+    sesion persistente cuesta ~3 ms. Por llamada se conserva lo que daba un proceso nuevo:
+    - ``ON_ERROR_STOP=1``: ante un error psql termina (lo anterior ya ejecutado queda, como antes) y se
+      devuelve su stderr; la siguiente llamada abre otra sesion;
+    - al terminar, ``rollback`` y ``discard all`` (rol, parametros, transaccion abierta, temporales, locks
+      de sesion y planes), como cuando el proceso se cerraba.
+    """
+
+    TIMEOUT_SEGUNDOS = 180
+
+    def __init__(self, contenedor: str, db: str):
+        import queue
+        import threading
+
+        self.proceso = subprocess.Popen(
+            ["docker", "exec", "-i", "-e", "PGAPPNAME=cf_pg17_test", contenedor, "psql", "-X", "-qAt",
+             "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", db],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, encoding="utf-8", bufsize=1)
+        self.salida: "queue.Queue[str | None]" = queue.Queue()
+        self.errores: list[str] = []
+        self._hilos = [threading.Thread(target=self._leer, args=(self.proceso.stdout, self.salida.put), daemon=True),
+                       threading.Thread(target=self._leer, args=(self.proceso.stderr, self.errores.append),
+                                        daemon=True)]
+        for hilo in self._hilos:
+            hilo.start()
+
+    @staticmethod
+    def _leer(flujo, destino) -> None:
+        for linea in flujo:
+            destino(linea)
+        destino(None)
+
+    def viva(self) -> bool:
+        return self.proceso.poll() is None
+
+    def ejecutar(self, sentencia: str) -> str:
+        import queue
+
+        marca = "__CF_FIN_" + uuid.uuid4().hex + "__"
+        del self.errores[:]
+        # ";" cierra una ultima sentencia sin punto y coma (psql la ejecutaba al llegar a EOF).
+        self.proceso.stdin.write(f"{sentencia}\n;\nrollback;\ndiscard all;\n\\echo {marca}\n")
+        self.proceso.stdin.flush()
+        lineas = []
+        while True:
+            try:
+                linea = self.salida.get(timeout=self.TIMEOUT_SEGUNDOS)
+            except queue.Empty:
+                self.cerrar()
+                raise RuntimeError("PSQL_TIMEOUT")
+            if linea is None:  # psql termino: error con ON_ERROR_STOP
+                self.cerrar()
+                return self._fallo()
+            if linea.rstrip("\r\n") == marca:
+                return "".join(lineas).strip()
+            lineas.append(linea)
+
+    def _fallo(self):
+        for hilo in self._hilos:
+            hilo.join(timeout=10)
+        raise RuntimeError("".join(e for e in self.errores if e is not None).strip())
+
+    def cerrar(self) -> None:
+        try:
+            self.proceso.stdin.close()
+        except OSError:
+            pass
+        try:
+            self.proceso.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            self.proceso.kill()
+            self.proceso.wait()
+
+
+_SESIONES: dict[tuple[str, str], _Sesion] = {}
+
+
+def cerrar_sesiones(contenedor: str | None = None, db: str | None = None) -> None:
+    """Cierra las sesiones persistentes (todas, las de un contenedor o las de una base)."""
+    for clave in [k for k in _SESIONES if contenedor in (None, k[0]) and db in (None, k[1])]:
+        _SESIONES.pop(clave).cerrar()
+
+
 class _Pg:
     def __init__(self, contenedor: str, db: str):
         self.contenedor = contenedor
         self.db = db
 
     def sql(self, sentencia: str) -> str:
-        r = _docker("exec", "-i", self.contenedor, "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1",
-                    "-U", "postgres", "-d", self.db, entrada=sentencia, comprobar=False)
-        if r.returncode:
-            raise RuntimeError(r.stderr.strip())
-        return r.stdout.strip()
+        clave = (self.contenedor, self.db)
+        sesion = _SESIONES.get(clave)
+        if sesion is None or not sesion.viva():
+            sesion = _SESIONES[clave] = _Sesion(self.contenedor, self.db)
+        try:
+            return sesion.ejecutar(sentencia)
+        except RuntimeError:
+            _SESIONES.pop(clave, None)
+            raise
 
     def json(self, consulta: str):
         return json.loads(self.sql(f"select coalesce(json_agg(t),'[]'::json)::text from ({consulta}) t;"))
@@ -404,6 +495,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
                                                  "22": "21", "22_rollback": "22",
                                                  "23": "22", "23_rollback": "23",
                                                  "24": "23", "24_rollback": "24"}[variante])
+        cerrar_sesiones(contenedor, base)  # createdb -T exige que nadie este conectado al origen
         _docker("exec", contenedor, "createdb", "-U", "postgres", "-T", base, nombre)
         pg = _Pg(contenedor, nombre)
         if variante == "19":
@@ -434,6 +526,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
             pg.sql(MIGRACION_24.read_text(encoding="utf-8"))
         else:
             pg.sql(ROLLBACK_24.read_text(encoding="utf-8"))
+        cerrar_sesiones(contenedor, nombre)
         return nombre
     assert variante in VARIANTES
     nombre = f"cf_plantilla_{variante}"
@@ -453,11 +546,13 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     elif variante == "16_rollback":
         pg.sql(MIGRACION_17.read_text(encoding="utf-8"))
         pg.sql(ROLLBACK_17.read_text(encoding="utf-8"))
+    cerrar_sesiones(contenedor, nombre)
     return nombre
 
 
 def base_desde(contenedor: str, plantilla: str) -> _Pg:
     db = "cf_caso_" + uuid.uuid4().hex[:12]
+    cerrar_sesiones(contenedor, plantilla)  # el origen puede ser otra base de test con sesion abierta
     _docker("exec", contenedor, "createdb", "-U", "postgres", "-T", plantilla, db)
     return _Pg(contenedor, db)
 
