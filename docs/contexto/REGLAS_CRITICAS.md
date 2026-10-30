@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-10-30 (Hito 2BI-D: migración 25 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
+Actualizado: 2026-10-30 (Hito 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
+desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
 de la suite; 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
 de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 
@@ -271,6 +272,20 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
     antes de relanzarse.
   - Conciliación: sin recuperación propia (2AT: el claim no cambia de estado, el lock caduca y el guardado
     es atómico desde la 18).
+- Reglas de Pio del Hito 2BJ (2026-10-30; `CONFIRMADO POR TEST` en PostgreSQL 17 local; diseño en
+  `pruebas/auditoria_2bj/DISENO.md`):
+  - **Serie supervisada de normalización** (`pruebas/auditoria_2bj/serie_normalizacion.py`):
+    - tandas de `ejecutar_una_manual()` (cada una, un documento `MANUAL_ONE_SHOT`, sin flags): 5 la primera y
+      luego hasta 20;
+    - corte al persistir cada Alliance;
+    - ejecuta Claude con confirmación expresa de Pio **por tanda**;
+    - plan READ_ONLY previo con la predicción de cada documento.
+  - **PARADA ante cualquier desviación del plan:** excepción, huérfano, resultado o facturas distintos, fila
+    ajena cambiada, n.º 1 fuera del plan o sin predicción, o puerta fallida. Se aplica el postcheck 2AX por
+    fila de cada tanda.
+  - Los defectos de extracción previstos por el plan consumen intentos (R3) y no son parada.
+  - Conciliación posterior: un n.º 1 que simula DIFERENCIA → PARADA y Pio decide caso a caso (serie de
+    conciliación **no implementada**).
 - Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
   - total de devoluciones = abono;
   - servicio integral de distribución = cargo sin albarán;

@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-10-30 (Hito 2BI-D: migración 25 desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
+Actualizado: 2026-10-30 (Hito 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
+desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
 tests; 2BG: R19 ECO360 y conciliación one-shot de
 08007970; 2BE-D: migración 24 desplegada en producción y
 conciliación one-shot de 08007969 con R17; antes, 2BE: R17 en local; 2BF-D: migración 23, aprobación de 279410 y conciliación de
@@ -191,6 +192,28 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   `into v_id` (fuera de PL/pgSQL sería DDL).
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
+
+### Hito 2BJ: serie supervisada de normalización (solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-10-30, commit local (sin push). Producción, Farmatic y Task
+Scheduler no tocados. Diseño, decisiones de Pio e implementación en `pruebas/auditoria_2bj/DISENO.md`.
+
+- **Decisiones de Pio:**
+  - tandas de 5 la primera y luego hasta 20, con corte en cada Alliance;
+  - defectos previstos: consumen intentos (R3) sin parada;
+  - conciliación con un n.º 1 en DIFERENCIA: PARADA y decisión de Pio;
+  - ejecuta Claude con confirmación por tanda.
+- **Script** `pruebas/auditoria_2bj/serie_normalizacion.py`: `plan` (READ_ONLY, con predicción por documento
+  mediante la cadena oficial en memoria sobre el mirror) y `tanda` (puertas, una llamada por ejecución,
+  comprobación con el plan, paradas, corte Alliance y postcheck 2AX por fila).
+
+  Tests en `test_serie_normalizacion_2bj.py` (20).
+- **Estimación** (`INFERIDO`, apartado 7 del diseño):
+  - ~172 documentos en cola, ~18 tandas y ~2–2,5 h de supervisión;
+  - 10 documentos Alliance con 39 facturas: 29 CONCILIADA y 10 DIFERENCIA simuladas.
+- `PENDIENTE` (con confirmación de Pio):
+  - `plan` sobre producción y primera tanda de 5;
+  - serie de conciliación (hito posterior).
 
 ### Hito 2BI-D: migración 25 en producción
 
