@@ -7,9 +7,10 @@ subagente), número de llamadas a herramientas, herramientas bloqueadas y
 resultado (inicio de la respuesta final).
 
 Para ``revisor-reglas`` registra además el veredicto (``PASS``/``FAIL``, leído
-de la línea ``VEREDICTO:`` de su respuesta) y la huella de los cambios en ese
-momento; ``barreras_agentes.py`` exige ese PASS con la misma huella antes de
-permitir ``git commit``.
+de la línea ``VEREDICTO:`` de su respuesta), las reglas con ``FAIL`` de su tabla
+(``reglas_fail``) y la huella de los cambios en ese momento;
+``barreras_agentes.py`` exige ese PASS con la misma huella antes de permitir
+``git commit``.
 
 Nunca bloquea: cualquier error se registra como ``error`` y devuelve 0.
 Solo usa la biblioteca estándar.
@@ -81,6 +82,33 @@ def cargar_metricas(ruta: str = RUTA_POLITICA) -> dict:
 
 
 RE_VEREDICTO = re.compile(r"^\s*\**\s*VEREDICTO\s*:?\s*\**\s*:?\s*(PASS|FAIL)\b", re.IGNORECASE | re.MULTILINE)
+# Fila de la tabla del revisor: ``| T2 | FAIL | ...`` (Id, Resultado). Primera celda: cualquier texto.
+RE_FILA_REGLA = re.compile(r"^\s*\|([^|\n]*)\|([^|\n]*)\|", re.MULTILINE)
+RE_ID_REGLA = re.compile(r"^[\s*`]*([A-Za-z]\d+)[\s*`]*$")
+RE_RESULTADO = re.compile(r"^[\s*`]*(PASS|FAIL|N/A)[\s*`]*$", re.IGNORECASE)
+# Reglas de la tabla obligatoria de .claude/agents/revisor-reglas.md.
+REGLAS_REVISOR = frozenset({"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "E1", "P1", "M1", "T1", "T2", "C1"})
+
+
+def reglas_fail(respuesta: str) -> list[str] | None:
+    """Ids de las reglas con resultado FAIL en la tabla del revisor.
+
+    Fallo cerrado: None (sin detalle) si alguna fila de regla no tiene un resultado reconocido, si una regla
+    aparece dos veces o si falta alguna de ``REGLAS_REVISOR``; así un FAIL mal escrito nunca se pierde.
+    """
+    resultados: dict[str, str] = {}
+    for celda_id, celda_resultado in RE_FILA_REGLA.findall(respuesta):
+        identificador = RE_ID_REGLA.match(celda_id)
+        if not identificador:
+            continue
+        regla = identificador.group(1).upper()
+        resultado = RE_RESULTADO.match(celda_resultado)
+        if not resultado or regla in resultados:
+            return None
+        resultados[regla] = resultado.group(1).upper()
+    if set(resultados) != REGLAS_REVISOR:
+        return None
+    return sorted(regla for regla, resultado in resultados.items() if resultado == "FAIL")
 
 
 def texto_de(contenido) -> str:
@@ -236,6 +264,9 @@ def construir_registro(entrada: dict, huella=estado_git.huella_cambios, coste=co
         # Una respuesta con varios veredictos, o sin ninguno, cuenta como FAIL.
         veredictos = {c.upper() for c in coincidencias}
         registro["veredicto"] = "PASS" if veredictos == {"PASS"} else "FAIL"
+        detalle = reglas_fail(respuesta)
+        if detalle is not None:
+            registro["reglas_fail"] = detalle
         # La huella es la del repositorio que revisó el subagente (puede ser un
         # worktree temporal), nunca la del proyecto por defecto.
         raiz = estado_git.raiz_repositorio(entrada.get("cwd") or estado_git.DIRECTORIO_PROYECTO)

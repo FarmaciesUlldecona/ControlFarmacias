@@ -358,6 +358,11 @@ módulos parciales.
     - `revisor-reglas` (T2) lee ese registro y comprueba una línea con `base` = HEAD, `rutas` = `git status`,
       alcance suficiente y `verde`.
     - Ya no basta con declarar la suite en el encargo.
+    - **Excepción de Pio (2026-11-02):** un FAIL de `revisor-reglas` cuya **única** regla fallida es T2 no
+      bloquea el commit si hay un PASS posterior de la misma huella (y la suite registrada sigue exigida).
+      Cualquier otro FAIL, o un FAIL sin el detalle de reglas registrado (solo se registra si la tabla trae
+      las 14 reglas, cada una una vez y con un resultado reconocido), sigue bloqueando. Hooks:
+      `registrar_uso_agente.py` (`reglas_fail`) y `estado_git.py` (`_veredicto_grupo`).
 - Pytest debe usar directorios temporales mediante `CONTROLFARMACIAS_LOG_DIR` y
   `CONTROLFARMACIAS_DATA_DIR`.
 - Los tests no pueden conectarse a Farmatic/Supabase reales ni escribir en

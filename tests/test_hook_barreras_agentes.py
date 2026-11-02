@@ -178,6 +178,48 @@ def test_commit_con_fail_anterior_de_la_misma_huella_bloqueado(tmp_path):
     assert barreras.barrera_commit("h1", ruta).motivo == "commit_revisor_fail"
 
 
+def _revision(agent_id, veredicto, reglas_fail=None, huella="h1"):
+    registro = {"agent_type": "revisor-reglas", "agent_id": agent_id, "veredicto": veredicto, "huella_cambios": huella}
+    if reglas_fail is not None:
+        registro["reglas_fail"] = reglas_fail
+    return registro
+
+
+def test_fail_solo_por_t2_con_pass_posterior_no_cuenta(tmp_path):
+    """Pio, 2026-11-02: un FAIL cuya única regla fallida es T2 no cuenta si hay un PASS posterior."""
+    ruta = _uso(tmp_path, _revision("a", "FAIL", ["T2"]), _revision("b", "PASS", []))
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suite_completa_verde(tmp_path)).codigo == 0
+
+
+def test_fail_solo_por_t2_sigue_exigiendo_la_suite(tmp_path):
+    ruta = _uso(tmp_path, _revision("a", "FAIL", ["T2"]), _revision("b", "PASS", []))
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suites(tmp_path)).motivo == "commit_sin_suite"
+
+
+@pytest.mark.parametrize(
+    "registros",
+    [
+        # Sin PASS posterior.
+        [_revision("a", "FAIL", ["T2"])],
+        [_revision("b", "PASS", []), _revision("a", "FAIL", ["T2"])],
+        # Otra regla fallida, sola o junto a T2.
+        [_revision("a", "FAIL", ["S2"]), _revision("b", "PASS", [])],
+        [_revision("a", "FAIL", ["S2", "T2"]), _revision("b", "PASS", [])],
+        # FAIL sin tabla legible o registro anterior sin reglas_fail.
+        [_revision("a", "FAIL", []), _revision("b", "PASS", [])],
+        [_revision("a", "FAIL"), _revision("b", "PASS", [])],
+        # Un FAIL por T2 excusado no excusa otro FAIL distinto.
+        [_revision("a", "FAIL", ["T2"]), _revision("c", "FAIL", ["M1"]), _revision("b", "PASS", [])],
+        # El PASS posterior de otra huella no vale.
+        [_revision("a", "FAIL", ["T2"]), _revision("b", "PASS", [], huella="h2")],
+    ],
+)
+def test_otros_fail_siguen_bloqueando(tmp_path, registros):
+    ruta = _uso(tmp_path, *registros)
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suite_completa_verde(tmp_path)).motivo == \
+        "commit_revisor_fail"
+
+
 def test_commit_con_pass_de_la_huella_aunque_haya_otra_despues(tmp_path):
     ruta = _uso(
         tmp_path,
@@ -773,6 +815,51 @@ def test_veredicto_del_revisor(tmp_path, respuesta, veredicto):
     registro = registro_uso.construir_registro(entrada, huella=lambda raiz: "h1", coste=lambda m, t: None)
     assert registro["veredicto"] == veredicto
     assert registro["huella_cambios"] == "h1"
+
+
+def _tabla(**resultados):
+    """Tabla completa del revisor; cada regla PASS salvo las indicadas (valor = celda de resultado)."""
+    filas = [f"| {resultados.pop('_id_' + r, r)} | {resultados.get(r, 'PASS')} | evidencia |"
+             for r in sorted(registro_uso.REGLAS_REVISOR)]
+    return "| Id | Resultado | Evidencia |\n|---|---|---|\n" + "\n".join(filas)
+
+
+@pytest.mark.parametrize(
+    ("respuesta", "reglas"),
+    [
+        (_tabla(T2="FAIL") + "\nVEREDICTO: FAIL", ["T2"]),
+        (_tabla(S2="**FAIL**", T2="FAIL", C1="N/A") + "\nVEREDICTO: FAIL", ["S2", "T2"]),
+        (_tabla() + "\nVEREDICTO: PASS", []),
+        # Otras grafías del resultado o del Id siguen contando como FAIL.
+        (_tabla(S2="Fail", T2="FAIL") + "\nVEREDICTO: FAIL", ["S2", "T2"]),
+        (_tabla(_id_S2="`S2`", S2="`FAIL`", T2="FAIL") + "\nVEREDICTO: FAIL", ["S2", "T2"]),
+        # Una mención de T2 FAIL fuera de la tabla no cuenta.
+        (_tabla() + "\nEl T2 | FAIL anterior\nVEREDICTO: FAIL", []),
+    ],
+)
+def test_reglas_fail_del_revisor(tmp_path, respuesta, reglas):
+    entrada = {"agent_type": "revisor-reglas", "agent_transcript_path": _transcript(tmp_path, respuesta)}
+    registro = registro_uso.construir_registro(entrada, huella=lambda raiz: "h1", coste=lambda m, t: None)
+    assert registro["reglas_fail"] == reglas
+
+
+@pytest.mark.parametrize(
+    "respuesta",
+    [
+        "VEREDICTO: FAIL",
+        # Falta una regla de la tabla.
+        "\n".join(l for l in _tabla(T2="FAIL").splitlines() if not l.startswith("| S2 ")) + "\nVEREDICTO: FAIL",
+        # Resultado no reconocido en una fila de regla.
+        _tabla(S2="FALLA", T2="FAIL") + "\nVEREDICTO: FAIL",
+        # Regla repetida.
+        _tabla(T2="FAIL") + "\n| S2 | FAIL | otra |\nVEREDICTO: FAIL",
+    ],
+)
+def test_reglas_fail_sin_detalle_fiable_no_se_registra(tmp_path, respuesta):
+    """Fallo cerrado: sin ``reglas_fail`` el FAIL nunca se excusa."""
+    entrada = {"agent_type": "revisor-reglas", "agent_transcript_path": _transcript(tmp_path, respuesta)}
+    registro = registro_uso.construir_registro(entrada, huella=lambda raiz: "h1", coste=lambda m, t: None)
+    assert "reglas_fail" not in registro and registro["veredicto"] == "FAIL"
 
 
 def test_veredicto_leido_del_handback(tmp_path):

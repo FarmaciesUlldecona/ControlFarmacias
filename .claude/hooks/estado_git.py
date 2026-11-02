@@ -184,6 +184,17 @@ def _sumar_coste(ejecuciones: list[dict]) -> dict | None:
     }
 
 
+def _veredicto_grupo(lineas: list[dict]) -> str:
+    """PASS si cada línea es PASS o es un FAIL solo por T2 seguido de un PASS (ver ``agrupar_revisiones``)."""
+    pases = [i for i, r in enumerate(lineas) if r.get("veredicto") == "PASS"]
+    for i, registro in enumerate(lineas):
+        if registro.get("veredicto") == "PASS":
+            continue
+        if not (registro.get("reglas_fail") == ["T2"] and pases and pases[-1] > i):
+            return "FAIL"
+    return "PASS"
+
+
 def agrupar_revisiones(registros: list[dict], repositorio_por_defecto: str = DIRECTORIO_PROYECTO) -> list[dict]:
     """Revisiones de revisor-reglas agrupadas por (repositorio, huella) al leer.
 
@@ -193,7 +204,11 @@ def agrupar_revisiones(registros: list[dict], repositorio_por_defecto: str = DIR
     revisión; dentro, una ejecución por ``agent_id`` con su última línea, que
     ya es el acumulado. Tokens, coste y contadores suman las ejecuciones, nunca
     las líneas repetidas. Veredicto PASS solo si todas las líneas del grupo son
-    PASS (decisión de Pio, 2026-10-27).
+    PASS (decisión de Pio, 2026-10-27), con una excepción (Pio, 2026-11-02): un
+    FAIL cuya única regla fallida es T2 (``reglas_fail == ["T2"]``) no cuenta si
+    hay un PASS posterior de la misma huella. La suite registrada la sigue
+    exigiendo ``barrera_commit``. Cualquier otro FAIL, o uno sin
+    ``reglas_fail`` (registros anteriores), sigue contando.
 
     Las líneas sin huella (p. ej. transcript no disponible) no forman grupo.
     Orden: por la última línea de cada grupo.
@@ -225,7 +240,7 @@ def agrupar_revisiones(registros: list[dict], repositorio_por_defecto: str = DIR
             "huella_cambios": huella,
             "ts_inicio": lineas[0].get("ts"),
             "ts": lineas[-1].get("ts"),
-            "veredicto": "PASS" if all(r.get("veredicto") == "PASS" for r in lineas) else "FAIL",
+            "veredicto": _veredicto_grupo(lineas),
             "ejecuciones": len(ultimas),
             "lineas": len(lineas),
             "paradas_por_ejecucion": {k: e["paradas"] for k, e in grupo["ejecuciones"].items()},
