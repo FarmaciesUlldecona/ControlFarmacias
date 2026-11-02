@@ -141,6 +141,31 @@ def test_parada_por_resultado_distinto_del_plan(serie):
     assert len(registro["ejecuciones"]) == 1 and registro["veredicto"] == "PARADA"
     assert any(x.startswith("RESULTADO_INESPERADO:estado_lectura") for x in registro["motivos"])
     assert _estado(serie.pg, serie.ids["roto"]) == "PENDIENTE"  # no siguio
+    # 2BK: la parada tambien hace el postcheck 2AX por fila (solo cambio el documento ejecutado).
+    assert registro["postcheck"] == {"veredicto": "POSTCHECK_OK", "problemas": [],
+                                     "documentos": [serie.ids["hefame"]], "corte_alliance": False}
+    assert (serie.raiz / "t01" / "snapshot_post.json").exists()
+
+
+def test_parada_por_persistencia_cancelada_con_postcheck(serie, monkeypatch):
+    """Caso de produccion (tanda 5, 2026-11-02): la RPC multifactura cae por statement timeout."""
+    real = serie.cliente._rpc
+
+    def cancelada(nombre, payload):
+        if nombre == "cf_persistir_documento_multifactura":
+            raise RuntimeError("canceling statement due to statement timeout")
+        return real(nombre, payload)
+
+    monkeypatch.setattr(serie.cliente, "_rpc", cancelada)
+    assert serie.m.tanda(5, serie.plan, serie.raiz / "t01") == 3
+    registro = _leer(serie.raiz / "t01" / "tanda.json")
+    assert registro["veredicto"] == "PARADA" and len(registro["ejecuciones"]) == 3
+    assert any(x.startswith("RETORNO_INESPERADO") for x in registro["motivos"])
+    assert registro["postcheck"]["veredicto"] == "POSTCHECK_OK"
+    assert registro["postcheck"]["documentos"] == [serie.ids["hefame"], serie.ids["roto"], serie.ids["alliance"]]
+    assert _estado(serie.pg, serie.ids["alliance"]) == "ERROR"
+    assert serie.pg.sql("select count(*) from public.facturas f join public.documentos_facturas d "
+                        f"on d.id = f.documento_id where d.id = {_lit(serie.ids['alliance'])}") == "0"
 
 
 def test_parada_antes_de_ejecutar_si_el_numero_1_no_esta_en_el_plan(serie):
@@ -180,7 +205,9 @@ def test_parada_por_huerfano(serie, monkeypatch):
 
     monkeypatch.setattr(serie.m, "_ejecutar_una", morir_tras_el_claim)
     assert serie.m.tanda(5, serie.plan, serie.raiz / "t01") == 3
-    assert "HUERFANO:1" in _leer(serie.raiz / "t01" / "tanda.json")["motivos"]
+    registro = _leer(serie.raiz / "t01" / "tanda.json")
+    assert "HUERFANO:1" in registro["motivos"]
+    assert "NORMALIZANDO_O_HUERFANOS_TRAS_LA_TANDA" in registro["postcheck"]["problemas"]
 
 
 def test_parada_por_fila_ajena_cambiada(serie, monkeypatch):
@@ -197,6 +224,8 @@ def test_parada_por_fila_ajena_cambiada(serie, monkeypatch):
     registro = _leer(serie.raiz / "t01" / "tanda.json")
     assert any(x.startswith("FILA_CAMBIADA_AJENA:albaranes:") for x in registro["motivos"])
     assert len(registro["ejecuciones"]) == 1
+    assert registro["postcheck"]["veredicto"] == "POSTCHECK_REVISAR"
+    assert any(x.startswith("FILA_CAMBIADA_AJENA:albaranes:") for x in registro["postcheck"]["problemas"])
 
 
 @pytest.mark.parametrize("caso", ["flags", "tareas", "normalizando"])
@@ -220,6 +249,8 @@ def test_puertas_paran_antes_de_ejecutar(serie, monkeypatch, caso):
     esperado = {"flags": "FLAGS_INESPERADOS", "tareas": "TAREA", "normalizando": "DOCUMENTOS_EN_NORMALIZANDO"}[caso]
     assert any(esperado in x for x in registro["motivos"]), registro["motivos"]
     assert _huella(pg) == antes
+    assert registro["postcheck"]["documentos"] == [] and registro["postcheck"]["veredicto"] == (
+        "POSTCHECK_REVISAR" if caso == "normalizando" else "POSTCHECK_OK")
 
 
 pytestmark = pytest.mark.pg17_local

@@ -19,7 +19,8 @@ totales), ``NO_SOPORTADO``, ``DEFECTO`` o ``SIN_PREDICCION`` (no esta en el mirr
 ejecucion, puertas (flags y configuracion, 25, 0 NORMALIZANDO, 0 huerfanos, 0 locks/claims/workers, tareas a
 60 min o mas, n.o 1 con prediccion y mismo SHA que en el plan), UNA llamada a ``ejecutar_una_manual()`` y
 comprobacion (estado previsto, facturas del plan, filas cambiadas solo del documento). Cualquier desviacion
--> PARADA. Al final, postcheck 2AX por fila de toda la tanda. Salidas fuera del repositorio.
+-> PARADA. Al final, y tambien al parar (2BK), postcheck 2AX por fila de toda la tanda. Salidas fuera del
+repositorio.
 """
 from __future__ import annotations
 
@@ -343,8 +344,29 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
                       "plan_sha256": hashlib.sha256(plan_ruta.read_bytes()).hexdigest(),
                       "inicio_utc": _ahora(), "ejecuciones": []}
     salida = directorio / "tanda.json"
+    pre: dict = {}
+    reclamados: list[str] = []
+    alliance = False
+
+    def postcheck() -> list[str]:
+        """2AX por fila de toda la tanda frente al snapshot previo (tambien al parar, 2BK)."""
+        _, post = _ejecutar_lectura(_leer_tanda)
+        _escribir(directorio / "snapshot_post.json", post)
+        problemas = diferencias_filas(pre["filas"], post["filas"], set(reclamados), {"documentos_facturas"})
+        if post["normalizando"] or post["huerfanos"]:
+            problemas.append("NORMALIZANDO_O_HUERFANOS_TRAS_LA_TANDA")
+        if post["cf_configuracion"] != pre["cf_configuracion"] or post["operacion"]["flags"] != pre["operacion"]["flags"]:
+            problemas.append("CONFIGURACION_U_OPERACION_DISTINTA")
+        registro["postcheck"] = {"veredicto": "POSTCHECK_OK" if not problemas else "POSTCHECK_REVISAR",
+                                 "problemas": problemas, "documentos": list(reclamados), "corte_alliance": alliance}
+        return problemas
 
     def cerrar(veredicto: str, motivos: list[str]) -> int:
+        if veredicto == "PARADA" and pre and "postcheck" not in registro:
+            try:
+                postcheck()
+            except Exception as exc:  # la parada se registra igual; el postcheck queda como no realizado
+                registro["postcheck"] = {"veredicto": "POSTCHECK_NO_REALIZADO", "error": f"{type(exc).__name__}: {exc}"}
         registro.update({"veredicto": veredicto, "motivos": motivos, "fin_utc": _ahora()})
         _escribir(salida, registro)
         print(json.dumps({k: registro[k] for k in ("veredicto", "motivos")} | {
@@ -352,14 +374,14 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
                             for e in registro["ejecuciones"]]}, ensure_ascii=False, indent=1, default=str))
         return 0 if veredicto == "TANDA_OK" else 3
 
-    _, pre = _ejecutar_lectura(_leer_tanda)
+    pre.update(_ejecutar_lectura(_leer_tanda)[1])
     _escribir(directorio / "snapshot_pre.json", pre)
     registro["preflight"] = {k: pre.get(k) for k in ("project_ref", "capturado_utc", "transaction_read_only")}
     try:
         cliente = _cliente()
     except SystemExit as exc:
         return cerrar("PARADA", [str(exc)])
-    anterior, reclamados, alliance = pre, [], False
+    anterior = pre
     for i in range(n):
         tareas = _tareas()
         fallos = puertas(anterior, plan_docs, pre, tareas, dt.datetime.now(dt.timezone.utc))
@@ -413,16 +435,8 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
             alliance = True
             break  # corte: postcheck propio de cada Alliance persistido
 
-    _, post = _ejecutar_lectura(_leer_tanda)
-    _escribir(directorio / "snapshot_post.json", post)
-    postcheck = diferencias_filas(pre["filas"], post["filas"], set(reclamados), {"documentos_facturas"})
-    if post["normalizando"] or post["huerfanos"]:
-        postcheck.append("NORMALIZANDO_O_HUERFANOS_TRAS_LA_TANDA")
-    if post["cf_configuracion"] != pre["cf_configuracion"] or post["operacion"]["flags"] != pre["operacion"]["flags"]:
-        postcheck.append("CONFIGURACION_U_OPERACION_DISTINTA")
-    registro["postcheck"] = {"veredicto": "POSTCHECK_OK" if not postcheck else "POSTCHECK_REVISAR",
-                             "problemas": postcheck, "documentos": reclamados, "corte_alliance": alliance}
-    return cerrar("TANDA_OK" if not postcheck else "PARADA", postcheck)
+    problemas = postcheck()
+    return cerrar("TANDA_OK" if not problemas else "PARADA", problemas)
 
 
 if __name__ == "__main__":

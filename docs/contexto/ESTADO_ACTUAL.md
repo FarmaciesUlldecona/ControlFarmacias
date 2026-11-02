@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-10-30 (Hito 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
+Actualizado: 2026-11-02 (Hito 2BK: migración 26, persistencia multifactura indexada, solo local; serie 2BJ
+en producción, tandas 1–5, en pausa; 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
 tests; 2BG: R19 ECO360 y conciliación one-shot de
 08007970; 2BE-D: migración 24 desplegada en producción y
@@ -192,6 +193,67 @@ versionar); nota de estado `C:\ControlFarmacias\encargos\2AT_rev2_ESTADO.txt`.
   `into v_id` (fuera de PL/pgSQL sería DDL).
 - Suites: 1576 passed sin `pg17_local`; 88 passed `pg17_local` (2026-10-05,
   mismo código).
+
+### Serie 2BJ en producción: tandas 1–5 (2026-11-02, EN PAUSA)
+
+`CONFIRMADO EN PRODUCCIÓN` (evidencias en `C:\ControlFarmacias\evidencias_2bj`, fuera del repo). Cada tanda,
+con confirmación expresa de Pio y lanzada una sola vez.
+
+- **Plan** (READ_ONLY, 172 documentos):
+  - 12 Alliance (47 facturas);
+  - 138 no soportados;
+  - 21 defectos;
+  - 1 sin predicción (posición 84, «SISFARMA ABONO 31.11.26.PDF», ausente del mirror).
+- **Tandas 1–4:** `TANDA_OK`, postcheck 2AX por fila OK. Persistidos los Alliance de las posiciones 9
+  (08008427–30) y 28 (08006568–71), `NORMALIZADA`/`COMPLETA` y frente al plan y al banco 2AZ:
+  - totales, fechas, número de albaranes y vencimientos R14 iguales;
+  - avisos `MONEDA_NO_DOCUMENTADA`.
+- **Tanda 5: PARADA** en el Alliance de la posición 57 (08007499–502):
+  - persistencia cancelada por `statement timeout` (57014, `APIError`, `TRANSITORIO`, intento 1 de 4);
+  - sin escritura parcial; postcheck manual READ_ONLY OK.
+  - Límite efectivo: 8 s (`authenticator`). La persistencia multifactura tarda 3,7–7,1 s
+    (`pg_stat_statements`). El coste que crece es el recorrido de `facturas.datos_extraidos` completo por cada
+    factura del payload.
+- **Serie en pausa** hasta desplegar la 26 (Hito 2BK). Diagnóstico READ_ONLY en
+  `C:\ControlFarmacias\evidencias_2bk_diag`. El Alliance de la posición 57 queda en `ERROR` (intento 1 de 4),
+  reclamable de nuevo desde las 10:27 UTC.
+- ~~Pendiente: que `tanda` haga también el postcheck 2AX por fila al parar~~: hecho en el 2BK.
+
+### Hito 2BK: persistencia multifactura indexada (migración 26, solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-02, commit local (sin push). Producción, Farmatic y Task
+Scheduler no tocados. Diseño, medición y decisiones en `pruebas/auditoria_2bk/DISENO.md`.
+
+- **Causa** (medida en PG17): por cada factura del documento, la función de la 15 recorría `facturas` y
+  descomprimía `datos_extraidos` de cada fila. La persistencia del documento de 274 líneas con el volumen final
+  (54 facturas) tardaba 7,9 s y crecía con cada documento.
+- **Migración 26** (`26_cf_persistencia_multifactura_indexada.sql` + rollback, generadas por
+  `generar_migracion_26.py` desde la 15 y la 17). Decisión de Pio: índice de expresión, sin columna nueva.
+  - Índice de expresión sobre la misma función de identidad del bucle.
+  - `COST 10000` declarado en `cf_componentes_identidad_factura`, para que el planificador use el índice (perfil
+    `auto_explain`: sin él seguía recorriendo la tabla).
+  - El bucle solo visita las filas del mismo núcleo, en el orden de la lectura secuencial.
+  - La ejecución se escribe una sola vez.
+  - Firmas, privilegios de las RPC y filas existentes sin cambios; núcleos internos solo para el propietario.
+  - Requiere la 25. Si se redefine la función de identidad, hay que hacer `REINDEX` del índice.
+- **Medición en PG17** (14 Alliance, el último de 274 líneas): la peor persistencia pasa de 7,87 s a **1,07 s**
+  netos (1,54 s con transporte), sin crecer con el volumen. `cf_persistir_conciliacion` con la mayor prevista
+  (08009277, 167 detalles): 0,08–0,18 s. Estimación en producción `INFERIDO` (factor ≈ 3,2): unos 3,5 s en el
+  peor caso, frente al límite de 8 s.
+- **Tests** (`test_integracion_pg17_2bk.py`, 19):
+  - equivalencia 25 = 26 con el mismo payload real en 9 escenarios (nuevo, duplicado, versión incompatible,
+    replay, relectura, parcial, 6 parámetros, un documento, claim ajeno);
+  - escritura única;
+  - plan con el índice;
+  - generador reproducible, rollback igual a la 25, exige la 25, no altera datos y privilegios;
+  - `desplegar_26.py` ensayado.
+- **Serie 2BJ:** `tanda` hace el postcheck 2AX por fila también al parar. Test nuevo con el caso de producción
+  (RPC cancelada → PARADA con postcheck OK).
+- **Norma nueva en REGLAS_CRITICAS:** ante un hook, una denegación o el clasificador, PARA e informa, nunca
+  reformular.
+- `PENDIENTE` (con confirmación de Pio):
+  - preflight y despliegue de la 26, con postcheck 2AX;
+  - reanudar la serie desde el Alliance de la posición 57.
 
 ### Hito 2BJ: serie supervisada de normalización (solo local)
 

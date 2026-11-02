@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-10-30 (Hito 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
+Actualizado: 2026-11-02 (Hito 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
+supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
 de la suite; 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
 de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
@@ -22,6 +23,11 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   corresponda.
 - La consolidación solo fusiona cuando existe `MISMA_FACTURA_DEMOSTRADA`.
   Completitud, origen, orden o primera coincidencia no demuestran identidad.
+- **Hooks, denegaciones y clasificador (Pio, 2026-11-02, Hito 2BK).** Si un hook, una denegación de
+  permiso o el clasificador bloquean una acción, el agente **PARA e informa** a Pio de qué intentaba y
+  qué lo bloqueó. Nunca reformula, parte, ofusca ni cambia de herramienta la acción para esquivar el
+  bloqueo. Origen: en el diagnóstico del 2BK se partió el nombre de un rol para pasar un hook y el
+  clasificador lo rechazó.
 
 ## Extractores locales
 
