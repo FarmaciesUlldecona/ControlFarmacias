@@ -67,7 +67,14 @@ al máximo); cambia la etiqueta. `INVENTARIO_RELECTURA_INCOMPATIBLE` sigue como 
 timeout con la clave original y la de la tanda 6 con `:intento:2`). Con la 27, el reintento persistiría con
 `<clave>:intento:3`. Con la normalización automática desactivada no se reintenta solo.
 
-## 6. Pendiente (con confirmación de Pio)
+## 6. Serie 2BJ: la 27 es puerta
+
+Decisión de Pio: `serie_normalizacion.py tanda` comprueba antes de cada ejecución las marcas de la 27
+(`cf_ejecucion_persistida` existe y la usan los dos núcleos y el envoltorio de 7 parámetros). Si faltan, la tanda
+para sin ejecutar con `MIGRACION_27_AUSENTE` (test con las plantillas 26 y 27_rollback). Los tests de la serie
+usan ahora la plantilla 27.
+
+## 7. Pendiente (con confirmación de Pio)
 
 1. Preflight READ_ONLY y despliegue de la 27 con `desplegar_27.py` (commit y SHA) y postcheck 2AX.
 2. Reanudar la serie (tanda: el Alliance de la posición 57 en reintento, tras los defectos previstos).

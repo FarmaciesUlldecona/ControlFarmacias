@@ -16,7 +16,7 @@ mirror con el mismo SHA (``pruebas/auditoria_2ay/banco_extraccion.py``): ``ALLIA
 totales), ``NO_SOPORTADO``, ``DEFECTO`` o ``SIN_PREDICCION`` (no esta en el mirror o no se reconoce el motivo).
 
 ``tanda`` (guard exclusivo por tanda, sin reintentos): preflight READ_ONLY y snapshot por fila; para cada
-ejecucion, puertas (flags y configuracion, 25, 0 NORMALIZANDO, 0 huerfanos, 0 locks/claims/workers, tareas a
+ejecucion, puertas (flags y configuracion, 25, 27 desde el 2BL, 0 NORMALIZANDO, 0 huerfanos, 0 locks/claims/workers, tareas a
 60 min o mas, n.o 1 con prediccion y mismo SHA que en el plan), UNA llamada a ``ejecutar_una_manual()`` y
 comprobacion (estado previsto, facturas del plan, filas cambiadas solo del documento). Cualquier desviacion
 -> PARADA. Al final, y tambien al parar (2BK), postcheck 2AX por fila de toda la tanda. Salidas fuera del
@@ -80,6 +80,16 @@ SQL_COLA_TOTAL = (
     "d.intentos_fallo_normalizacion from public.documentos_facturas d cross join public.cf_configuracion c "
     "where c.id = true and d.farmacia = any(c.farmacias_habilitadas) and d.estado_lectura in ('PENDIENTE','ERROR') "
     "order by (d.reprocesar_solicitado_at is not null) desc, d.fecha_importacion, d.id")
+
+
+# Marcas de la 27 (2BL): la funcion de repeticion existe y la usan los dos nucleos y el envoltorio de 7 parametros.
+SQL_MARCAS_27 = (
+    "select to_regprocedure('public.cf_ejecucion_persistida(uuid,text)') is not null and coalesce(("
+    "select bool_and(position('cf_ejecucion_persistida' in p.prosrc) > 0) and count(*) = 3 from pg_proc p "
+    "where p.oid in ("
+    "to_regprocedure('public.cf_persistir_normalizacion_nucleo(uuid,text,text,text,text,jsonb,jsonb)'), "
+    "to_regprocedure('public.cf_persistir_documento_multifactura_nucleo(uuid,text,text,text,jsonb,text[],text)'), "
+    "to_regprocedure('public.cf_persistir_documento_multifactura(uuid,text,text,text,jsonb,text[],text)'))), false)")
 
 
 def _ahora() -> str:
@@ -191,6 +201,8 @@ def _estado_operativo(lector) -> dict:
     out["cf_configuracion"] = lector.json("select to_jsonb(c)::text from public.cf_configuracion c where id")
     out["migracion_25"] = lector.valor(
         "select to_regprocedure('public.cf_huerfanos_normalizacion(interval)') is not null")
+    # 2BL (decision de Pio): la serie exige la 27; un fallo de persistencia no debe bloquear el reintento.
+    out["migracion_27"] = lector.valor(SQL_MARCAS_27)
     out["normalizando"] = lector.valor(
         "select count(*) from public.documentos_facturas where estado_lectura = 'NORMALIZANDO'")
     out["claims_normalizacion"] = lector.valor(
@@ -228,6 +240,8 @@ def puertas(estado: dict, plan_docs: dict, referencia: dict, tareas: dict, ahora
         fallos.append("CONFIGURACION_DISTINTA_DEL_PREFLIGHT")
     if not estado["migracion_25"]:
         fallos.append("MIGRACION_25_AUSENTE")
+    if not estado["migracion_27"]:
+        fallos.append("MIGRACION_27_AUSENTE")
     if estado["normalizando"]:
         fallos.append(f"DOCUMENTOS_EN_NORMALIZANDO:{estado['normalizando']}")
     if estado["claims_normalizacion"]:

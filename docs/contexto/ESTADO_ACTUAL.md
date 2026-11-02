@@ -245,6 +245,9 @@ en `pruebas/auditoria_2bl/DISENO.md`.
   manual real (timeout simulado → fallo → reintento → `NORMALIZADA/COMPLETA`); equivalencia 26 = 27 sin fallo
   previo en los 9 escenarios del 2BK; generador, rollback igual a la 26, exige la 26, datos intactos, privilegios;
   `desplegar_27.py` ensayado.
+- **Serie:** `serie_normalizacion.py tanda` exige las marcas de la 27 antes de cada ejecución
+  (`cf_ejecucion_persistida` y los tres puntos que la usan); si faltan, `PARADA` sin ejecutar
+  (`MIGRACION_27_AUSENTE`, test con las plantillas 26 y 27_rollback). Decisión de Pio.
 - `PENDIENTE` (con confirmación de Pio): preflight y despliegue de la 27 con postcheck 2AX; después, reanudar la
   serie. El Alliance de la posición 57 conserva 2 de 4 intentos.
 

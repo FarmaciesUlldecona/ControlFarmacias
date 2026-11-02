@@ -1,6 +1,6 @@
 """Hito 2BJ: serie supervisada de normalizacion (``pruebas/auditoria_2bj/serie_normalizacion.py``).
 
-PostgreSQL 17 local (plantilla "25", estado productivo) con una cola real: HEFAME no autorizado (R2,
+PostgreSQL 17 local (plantilla "27"; desde el 2BL la serie exige la 27) con una cola real: HEFAME no autorizado (R2,
 NO_SOPORTADO), un PDF roto (defecto de extraccion, R3) y el PDF Alliance multifactura del 2AP. Lecturas por la
 puerta del 2AT sobre la base local en READ ONLY; escrituras con el worker manual real sobre ``ClientePg17``.
 Tareas programadas fijas. Sin produccion ni Farmatic.
@@ -58,7 +58,11 @@ def test_defecto_previsto_pasa_a_revision_al_maximo_r3():
 
 @pytest.fixture
 def serie(pg17_nueva_base, tmp_path, monkeypatch):
-    pg = pg17_nueva_base("25")
+    return _serie(pg17_nueva_base, tmp_path, monkeypatch, "27")
+
+
+def _serie(pg17_nueva_base, tmp_path, monkeypatch, variante):
+    pg = pg17_nueva_base(variante)
     pg.sql("update public.documentos_facturas set estado_lectura = 'NORMALIZADA' "
            "where estado_lectura in ('PENDIENTE', 'ERROR');")
     cliente = _ClienteServiceRole(pg)  # como PostgREST con la clave de servicio (2AT)
@@ -226,6 +230,18 @@ def test_parada_por_fila_ajena_cambiada(serie, monkeypatch):
     assert len(registro["ejecuciones"]) == 1
     assert registro["postcheck"]["veredicto"] == "POSTCHECK_REVISAR"
     assert any(x.startswith("FILA_CAMBIADA_AJENA:albaranes:") for x in registro["postcheck"]["problemas"])
+
+
+@pytest.mark.parametrize("variante", ["26", "27_rollback"])
+def test_sin_la_27_para_antes_de_ejecutar(pg17_nueva_base, tmp_path, monkeypatch, variante):
+    """2BL (decision de Pio): sin las marcas de la 27, PARADA sin ejecutar nada."""
+    serie = _serie(pg17_nueva_base, tmp_path, monkeypatch, variante)
+    antes = _huella(serie.pg)
+    assert serie.m.tanda(5, serie.plan, serie.raiz / "t01") == 3
+    registro = _leer(serie.raiz / "t01" / "tanda.json")
+    assert registro["veredicto"] == "PARADA" and registro["ejecuciones"] == []
+    assert registro["motivos"] == ["MIGRACION_27_AUSENTE"]
+    assert _huella(serie.pg) == antes
 
 
 @pytest.mark.parametrize("caso", ["flags", "tareas", "normalizando"])
