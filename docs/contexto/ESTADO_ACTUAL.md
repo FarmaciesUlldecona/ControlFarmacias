@@ -1,7 +1,8 @@
 # Estado actual
 
-Actualizado: 2026-11-02 (Hito 2BK: migración 26, persistencia multifactura indexada, solo local; serie 2BJ
-en producción, tandas 1–5, en pausa; 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
+Actualizado: 2026-11-02 (Hito 2BL: migración 27, reintento tras fallo de persistencia, solo local; 2BK-D:
+migración 26 desplegada, tanda 6 PARADA, serie en pausa hasta la 27; 2BK: migración 26, persistencia
+multifactura indexada; serie 2BJ en producción, tandas 1–5; 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
 tests; 2BG: R19 ECO360 y conciliación one-shot de
 08007970; 2BE-D: migración 24 desplegada en producción y
@@ -218,6 +219,49 @@ con confirmación expresa de Pio y lanzada una sola vez.
   `C:\ControlFarmacias\evidencias_2bk_diag`. El Alliance de la posición 57 queda en `ERROR` (intento 1 de 4),
   reclamable de nuevo desde las 10:27 UTC.
 - ~~Pendiente: que `tanda` haga también el postcheck 2AX por fila al parar~~: hecho en el 2BK.
+- La 26 se desplegó en el 2BK-D; la tanda 6 paró por otro defecto (ver "Hito 2BK-D"). **Serie en PAUSA hasta
+  desplegar la 27** (decisión de Pio).
+
+### Hito 2BL: un fallo registrado no bloquea el reintento (migración 27, solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-02, commit local (sin push). Producción no tocada. Diseño
+en `pruebas/auditoria_2bl/DISENO.md`.
+
+- **Causa** (tanda 6): tras un fallo de persistencia, el worker registra el fallo con la clave de la persistencia
+  (`worker_normalizacion.py`). En el reintento (mismo PDF, mismo hash, misma clave) la RPC tomaba esa ejecución
+  en `ERROR` por una repetición: la multifactura la rechazaba con `IDEMPOTENCIA_PAYLOAD_DISTINTO` y la de un
+  documento devolvía la ejecución del fallo sin persistir nada. Defecto anterior a la 26 (desde la 15/17).
+- **Migración 27** (`27_cf_reintento_tras_fallo_de_persistencia.sql` + rollback, generadas por
+  `generar_migracion_27.py` desde la 26). Decisión de Pio:
+  - una ejecución en `ERROR` sin resultado persistido no es una repetición: intento nuevo con fila propia y clave
+    derivada `<clave>:intento:<n>`;
+  - ejecución persistida con la misma solicitud: replay como hoy; multifactura con otra firma: rechazo como hoy;
+  - nueva función interna `cf_ejecucion_persistida` (solo propietario), usada por los dos núcleos y el envoltorio
+    de 7 parámetros. Firmas, privilegios de las RPC y filas existentes sin cambios. Requiere la 26.
+- **Clasificación:** `IDEMPOTENCIA_PAYLOAD_DISTINTO` pasa de `DEFECTO_DOCUMENTO` a `TRANSITORIO` (conflicto con
+  una ejecución registrada, no defecto del documento).
+- **Tests** (`test_integracion_pg17_2bl.py`, 24): fallo transitorio → reintento guarda, replay y payload
+  distinto, en multifactura y un documento (con la 26 se reproduce el defecto); camino completo con el worker
+  manual real (timeout simulado → fallo → reintento → `NORMALIZADA/COMPLETA`); equivalencia 26 = 27 sin fallo
+  previo en los 9 escenarios del 2BK; generador, rollback igual a la 26, exige la 26, datos intactos, privilegios;
+  `desplegar_27.py` ensayado.
+- `PENDIENTE` (con confirmación de Pio): preflight y despliegue de la 27 con postcheck 2AX; después, reanudar la
+  serie. El Alliance de la posición 57 conserva 2 de 4 intentos.
+
+### Hito 2BK-D: migración 26 en producción y tanda 6 (2026-11-02)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación expresa de Pio. Evidencias en `C:\ControlFarmacias\evidencias_2bk_d`
+y `C:\ControlFarmacias\evidencias_2bj` (`tanda_06*`). Script READ_ONLY: `pruebas/auditoria_2bk_d/preflight_readonly.py`.
+
+- Puerta (`origin/main` = `5a5e362`), 9 precondiciones OK, captura pre OK, esquema 25 confirmado en el alcance.
+- `desplegar_26.py` una vez: `APLICADA` (SHA LF `fc882465…`). Captura post y postcheck 2AX: `POSTCHECK_OK`
+  (solo los 7 objetos del alcance, iguales a la referencia local 26; filas idénticas).
+- **Tanda 6 (≤ 20): PARADA.** Los 7 reintentos de defectos previstos quedaron en `ERROR` (2 de 4). El Alliance
+  de la posición 57 falló al instante con `IDEMPOTENCIA_PAYLOAD_DISTINTO` (ver 2BL), clasificado
+  `DEFECTO_DOCUMENTO`, 2 de 4 intentos, sin facturas. Postcheck 2AX de la tanda OK. Sin medición del tiempo de
+  la 26 en producción (la RPC falló antes de la búsqueda indexada).
+- Barrera de commit (decisión de Pio): un FAIL de `revisor-reglas` cuya única regla fallida es T2 no bloquea si
+  hay un PASS posterior de la misma huella (ver REGLAS_CRITICAS).
 
 ### Hito 2BK: persistencia multifactura indexada (migración 26, solo local)
 
@@ -251,9 +295,7 @@ Scheduler no tocados. Diseño, medición y decisiones en `pruebas/auditoria_2bk/
   (RPC cancelada → PARADA con postcheck OK).
 - **Norma nueva en REGLAS_CRITICAS:** ante un hook, una denegación o el clasificador, PARA e informa, nunca
   reformular.
-- `PENDIENTE` (con confirmación de Pio):
-  - preflight y despliegue de la 26, con postcheck 2AX;
-  - reanudar la serie desde el Alliance de la posición 57.
+- ~~`PENDIENTE`: preflight y despliegue de la 26~~: hecho en el 2BK-D.
 
 ### Hito 2BJ: serie supervisada de normalización (solo local)
 

@@ -36,7 +36,9 @@ ROLLBACK = ROOT / "sql/migrations/17_cf_replay_y_fallos_no_bloqueantes.rollback.
     ("ValueError", "DOCUMENTO_INCOMPLETO", DEFECTO_DOCUMENTO),
     ("ErrorFarmaciaDocumental", "FARMACIA_DOCUMENTO_CONTRADICTORIA", DEFECTO_DOCUMENTO),
     ("ErrorCompletitudDocumental", "EXTRACCION_INCOMPLETA_REQUIERE_REVISION", DEFECTO_DOCUMENTO),
-    ("APIError", "{'message': 'IDEMPOTENCIA_PAYLOAD_DISTINTO'}", DEFECTO_DOCUMENTO),
+    # 2BL: conflicto con una ejecucion registrada, no defecto del documento.
+    ("APIError", "{'message': 'IDEMPOTENCIA_PAYLOAD_DISTINTO'}", TRANSITORIO),
+    ("APIError", "{'message': 'INVENTARIO_RELECTURA_INCOMPATIBLE'}", DEFECTO_DOCUMENTO),
     ("APIError", "{'message': 'CLAIM_DOCUMENTAL_NO_VALIDO'}", TRANSITORIO),
     ("ConnectionError", "timeout", TRANSITORIO),
     (None, None, TRANSITORIO),

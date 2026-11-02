@@ -44,9 +44,10 @@ MOTIVOS_DEFECTO_DOCUMENTO = frozenset({
     "NINGUNA_FACTURA_AUTORIZABLE_AUTOMATICAMENTE",
     "CAMPOS_PENDIENTES_TRAS_EXTRACCION",
     "DOCUMENTO_NORMALIZADO_AUSENTE",
-    "IDEMPOTENCIA_PAYLOAD_DISTINTO",
     "INVENTARIO_RELECTURA_INCOMPATIBLE",
 })
+# 2BL: IDEMPOTENCIA_PAYLOAD_DISTINTO es un conflicto con una ejecucion ya registrada, no un defecto del
+# documento (en la serie 2BJ fue un fallo de persistencia tomado por repeticion): queda como TRANSITORIO.
 
 CODIGOS_DEFECTO_DOCUMENTO = frozenset({
     "ErrorCompletitudDocumental",
@@ -62,7 +63,7 @@ def clasificar_fallo(codigo: str | None, detalle: str | None) -> str:
         return NO_SOPORTADO
     if motivo in MOTIVOS_DEFECTO_DOCUMENTO:
         return DEFECTO_DOCUMENTO
-    if any(m in texto for m in ("IDEMPOTENCIA_PAYLOAD_DISTINTO", "INVENTARIO_RELECTURA_INCOMPATIBLE")):
+    if "INVENTARIO_RELECTURA_INCOMPATIBLE" in texto:
         return DEFECTO_DOCUMENTO
     if codigo in CODIGOS_DEFECTO_DOCUMENTO:
         return DEFECTO_DOCUMENTO

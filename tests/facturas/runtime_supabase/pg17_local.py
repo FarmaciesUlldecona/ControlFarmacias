@@ -193,6 +193,8 @@ MIGRACION_25 = MIG / "25_cf_claims_huerfanos_normalizacion.sql"
 ROLLBACK_25 = MIG / "25_cf_claims_huerfanos_normalizacion.rollback.sql"
 MIGRACION_26 = MIG / "26_cf_persistencia_multifactura_indexada.sql"
 ROLLBACK_26 = MIG / "26_cf_persistencia_multifactura_indexada.rollback.sql"
+MIGRACION_27 = MIG / "27_cf_reintento_tras_fallo_de_persistencia.sql"
+ROLLBACK_27 = MIG / "27_cf_reintento_tras_fallo_de_persistencia.rollback.sql"
 
 
 def esquema(pg: "_Pg") -> str:
@@ -471,7 +473,7 @@ def _ejecuciones(pg: _Pg, documento_id: str):
 # --------------------------------------------------------------------------
 
 VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback", "19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback",
-             "23", "23_rollback", "24", "24_rollback", "25", "25_rollback", "26", "26_rollback")
+             "23", "23_rollback", "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback")
 
 
 def construir_plantilla(contenedor: str, variante: str) -> str:
@@ -486,6 +488,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     24 (2BE): 23 + migracion 24 aplicada dos veces; 24_rollback: 24 + rollback de la 24.
     25 (2BI): 24 + migracion 25 aplicada dos veces; 25_rollback: 25 + rollback de la 25.
     26 (2BK): 25 + migracion 26 aplicada dos veces; 26_rollback: 26 + rollback de la 26.
+    27 (2BL): 26 + migracion 27 aplicada dos veces; 27_rollback: 27 + rollback de la 27.
     Idempotente: si la plantilla ya existe en el contenedor, se reutiliza.
     """
     assert variante in VARIANTES
@@ -494,7 +497,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     if existente == "1":
         return f"cf_plantilla_{variante}"
     if variante in ("19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback", "23", "23_rollback",
-                    "24", "24_rollback", "25", "25_rollback", "26", "26_rollback"):
+                    "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback"):
         nombre = f"cf_plantilla_{variante}"
         base = construir_plantilla(contenedor, {"19": "18", "20": "19", "20_rollback": "20",
                                                  "21": "20", "21_rollback": "21",
@@ -502,7 +505,8 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
                                                  "23": "22", "23_rollback": "23",
                                                  "24": "23", "24_rollback": "24",
                                                  "25": "24", "25_rollback": "25",
-                                                 "26": "25", "26_rollback": "26"}[variante])
+                                                 "26": "25", "26_rollback": "26",
+                                                 "27": "26", "27_rollback": "27"}[variante])
         cerrar_sesiones(contenedor, base)  # createdb -T exige que nadie este conectado al origen
         _docker("exec", contenedor, "createdb", "-U", "postgres", "-T", base, nombre)
         pg = _Pg(contenedor, nombre)
@@ -542,8 +546,13 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         elif variante == "26":
             pg.sql(MIGRACION_26.read_text(encoding="utf-8"))
             pg.sql(MIGRACION_26.read_text(encoding="utf-8"))
-        else:
+        elif variante == "26_rollback":
             pg.sql(ROLLBACK_26.read_text(encoding="utf-8"))
+        elif variante == "27":
+            pg.sql(MIGRACION_27.read_text(encoding="utf-8"))
+            pg.sql(MIGRACION_27.read_text(encoding="utf-8"))
+        else:
+            pg.sql(ROLLBACK_27.read_text(encoding="utf-8"))
         cerrar_sesiones(contenedor, nombre)
         return nombre
     assert variante in VARIANTES
