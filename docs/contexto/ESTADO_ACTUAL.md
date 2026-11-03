@@ -222,6 +222,32 @@ con confirmación expresa de Pio y lanzada una sola vez.
 - ~~Pendiente: que `tanda` haga también el postcheck 2AX por fila al parar~~: hecho en el 2BK.
 - La 26 se desplegó en el 2BK-D; la tanda 6 paró por otro defecto (ver "Hito 2BK-D"). **Serie en PAUSA hasta
   desplegar la 27** (decisión de Pio).
+- **Tanda 6** (2026-11-02, con la 26): `PARADA`. Los 7 reintentos de defectos previstos quedaron en `ERROR` (2 de
+  4). El Alliance de la posición 57 falló al instante con `IDEMPOTENCIA_PAYLOAD_DISTINTO` (el fallo del timeout
+  ocupaba su clave; corregido en la 27). Postcheck 2AX OK.
+- **Tanda 7** (2026-11-03, con la 27): `TANDA_OK`, postcheck 2AX OK. Antes, plan revalidado READ_ONLY: los 5
+  documentos importados el 2026-11-02 a las 20:00 UTC quedan al final de la cola (posiciones 124–128 de la cola,
+  fuera del plan), sin alterar el orden previsto. Los 7 defectos, en `ERROR` (3 de 4). El Alliance de la
+  posición 57, `NORMALIZADA/COMPLETA` con 08007499 (13.263,30), 08007500 (4.976,42), 08007501 (6,51) y 08007502
+  (46,38): totales, fechas, número de albaranes (130, 94, 1, 2) y vencimientos R14 iguales al plan y al banco.
+  Ejecución persistida como intento 3 con clave `…:intento:3` (la 27 en producción).
+  - **Primera medición real con la 26:** 5,90 s en el servidor (`pg_stat_statements`; el índice se usó: 4
+    búsquedas). En local, 0,85 s: factor ≈ 6,9 (no 3,2). Estimación `INFERIDO` para el Alliance de la posición 122
+    (274 líneas): ≈ 7,4 s, cerca del límite de 8 s.
+  - **Diagnóstico local** (2026-11-03, PG17 con ajustes de producción, sentencia exacta de PostgREST y payload
+    real de la posición 122, 4,6 MB; evidencias en `C:\ControlFarmacias\evidencias_2bm_diag`): 1,20 s en el
+    servidor. Reparto: parseo del cuerpo 0,16 s; firma SHA-256 0,11 s; bucle de validación e identidad 0,31–0,37 s
+    (comprobación de hermanas recalculando la identidad 0,06 s); copias del payload hasta el núcleo 0,21 s;
+    inserción de la ejecución con `resultado_json` 0,12–0,20 s; facturas y líneas 0,21–0,32 s; resto 0,05 s.
+    `lz4` en las columnas jsonb grandes: −15 % (producción lo admite). `wal_compression` no influye. El
+    `resultado_json` (4,6 MB) duplica el contenido de `facturas.datos_extraidos` (4,6 MB). Propuesta pendiente de
+    Pio.
+- **Tanda 8** (2026-11-03): `TANDA_OK`, postcheck 2AX OK; agotó las 20 ejecuciones (18 no soportados, 2
+  defectos) sin llegar al Alliance de la posición 82, que queda 5.º en la cola reclamable.
+- **SERVICIO BÁSICO (Pio, 2026-11-03):** el cargo de 31,46 es el cargo mensual de servicio de Alliance
+  (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
+  El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
+  comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
 ### Hito 2BL-D: migración 27 en producción (2026-11-03)
 
