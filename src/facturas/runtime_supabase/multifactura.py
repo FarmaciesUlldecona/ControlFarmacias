@@ -138,6 +138,40 @@ def persistir_multifactura(cliente, documento_id, documento, segmentos_autorizad
     }).execute()
 
 
+# 28 (2BM): en resultado_json, la factura persistida por la misma ejecucion es una referencia a
+# facturas.datos_extraidos (completo), que anade factura_id e identidad_economica_clave.
+REFERENCIA_FACTURA = "_factura_persistida"
+CLAVES_ANADIDAS = ("factura_id", "identidad_economica_clave")
+
+
+def tiene_referencias(resultado):
+    facturas = resultado.get("facturas") if isinstance(resultado, dict) else None
+    return isinstance(facturas, list) and any(isinstance(f, dict) and REFERENCIA_FACTURA in f for f in facturas)
+
+
+def reconstruir_resultado_json(resultado, datos_por_clave):
+    """Lectura completa (formato 27): cada referencia, sustituida por su factura original.
+
+    ``datos_por_clave``: ``proyeccion_clave`` -> ``datos_extraidos`` del mismo documento. Una referencia sin su
+    fila no se resuelve: falla cerrado.
+    """
+    if not tiene_referencias(resultado):
+        return resultado
+    facturas = []
+    for factura in resultado["facturas"]:
+        if isinstance(factura, dict) and REFERENCIA_FACTURA in factura:
+            referencia = factura[REFERENCIA_FACTURA]
+            datos = datos_por_clave.get(referencia.get("proyeccion_clave")) if isinstance(referencia, dict) else None
+            if not isinstance(datos, dict):
+                raise ValueError("RESULTADO_JSON_REFERENCIA_NO_RESUELTA")
+            original = {k: v for k, v in datos.items() if k not in CLAVES_ANADIDAS}
+            original.update(referencia.get("claves_originales") or {})
+            facturas.append(original)
+        else:
+            facturas.append(factura)
+    return {**resultado, "facturas": facturas}
+
+
 def adaptar_resultado_local(local):
     """Puente mecanico de lectura completa Alliance; no eleva candidatos a albaranes."""
     from dataclasses import asdict, is_dataclass

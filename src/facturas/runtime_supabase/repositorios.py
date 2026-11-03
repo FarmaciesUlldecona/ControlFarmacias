@@ -9,6 +9,7 @@ from typing import Any, Protocol
 from src.facturas.completitud_documental import validar_documento_antes_de_persistir
 
 from .clasificacion_fallos import clasificar_fallo, clasificar_fallo_conciliacion
+from .multifactura import reconstruir_resultado_json, tiene_referencias
 from .modelos import (
     DetalleConciliacion,
     conservar_id_proveedor,
@@ -537,10 +538,19 @@ class RepositorioRuntimeSupabase:
         if fila.get("farmacia") != factura.farmacia:
             raise ValueError("FARMACIA_DOCUMENTO_CONTRADICTORIA")
         ejecucion = (self._cliente.table("normalizacion_ejecuciones")
-                     .select("resultado_json")
+                     .select("resultado_json,documento_id")
                      .eq("id", fila.get("normalizacion_ejecucion_id"))
                      .single().execute()).data
-        validar_documento_antes_de_persistir(factura.farmacia, ejecucion.get("resultado_json"))
+        resultado_json = ejecucion.get("resultado_json")
+        if tiene_referencias(resultado_json):
+            # 28 (2BM): la barrera de farmacia revalida la lectura completa, reconstruida desde datos_extraidos.
+            filas = (self._cliente.table("facturas")
+                     .select("proyeccion_clave,datos_extraidos")
+                     .eq("documento_id", ejecucion.get("documento_id"))
+                     .execute()).data or []
+            resultado_json = reconstruir_resultado_json(
+                resultado_json, {f["proyeccion_clave"]: f["datos_extraidos"] for f in filas})
+        validar_documento_antes_de_persistir(factura.farmacia, resultado_json)
         payload = payload_conciliacion(resultado)
         respuesta = self._cliente.rpc("cf_persistir_conciliacion", {
             "p_factura_id": factura.factura_id,

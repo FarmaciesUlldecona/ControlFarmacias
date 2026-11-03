@@ -1,6 +1,6 @@
 """Hito 2BJ: serie supervisada de normalizacion (``pruebas/auditoria_2bj/serie_normalizacion.py``).
 
-PostgreSQL 17 local (plantilla "27"; desde el 2BL la serie exige la 27) con una cola real: HEFAME no autorizado (R2,
+PostgreSQL 17 local (plantilla "28"; desde el 2BL la serie exige la 27) con una cola real: HEFAME no autorizado (R2,
 NO_SOPORTADO), un PDF roto (defecto de extraccion, R3) y el PDF Alliance multifactura del 2AP. Lecturas por la
 puerta del 2AT sobre la base local en READ ONLY; escrituras con el worker manual real sobre ``ClientePg17``.
 Tareas programadas fijas. Sin produccion ni Farmatic.
@@ -58,7 +58,7 @@ def test_defecto_previsto_pasa_a_revision_al_maximo_r3():
 
 @pytest.fixture
 def serie(pg17_nueva_base, tmp_path, monkeypatch):
-    return _serie(pg17_nueva_base, tmp_path, monkeypatch, "27")
+    return _serie(pg17_nueva_base, tmp_path, monkeypatch, "28")
 
 
 def _serie(pg17_nueva_base, tmp_path, monkeypatch, variante):
@@ -230,6 +230,12 @@ def test_parada_por_fila_ajena_cambiada(serie, monkeypatch):
     assert len(registro["ejecuciones"]) == 1
     assert registro["postcheck"]["veredicto"] == "POSTCHECK_REVISAR"
     assert any(x.startswith("FILA_CAMBIADA_AJENA:albaranes:") for x in registro["postcheck"]["problemas"])
+
+
+@pytest.mark.parametrize("variante,esperado", [("26", "f"), ("27_rollback", "f"), ("27", "t"), ("28", "t"),
+                                               ("28_rollback", "t")])
+def test_marcas_de_la_27_por_variante(pg17_nueva_base, variante, esperado):
+    assert pg17_nueva_base(variante).sql(_modulo().SQL_MARCAS_27 + ";") == esperado
 
 
 @pytest.mark.parametrize("variante", ["26", "27_rollback"])

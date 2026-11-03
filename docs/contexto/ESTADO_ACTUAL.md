@@ -1,7 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-03 (Hito 2BL-D: migración 27 desplegada en producción, serie en pausa a la espera de
-confirmación; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
+Actualizado: 2026-11-03 (Hito 2BM: migración 28, persistencia multifactura ligera, solo local; serie 2BJ
+PARADA en la tanda 9 hasta desplegar la 28; 2BL-D: migración 27 desplegada en producción; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
 migración 26 desplegada, tanda 6 PARADA, serie en pausa hasta la 27; 2BK: migración 26, persistencia
 multifactura indexada; serie 2BJ en producción, tandas 1–5; 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
@@ -244,10 +244,40 @@ con confirmación expresa de Pio y lanzada una sola vez.
     Pio.
 - **Tanda 8** (2026-11-03): `TANDA_OK`, postcheck 2AX OK; agotó las 20 ejecuciones (18 no soportados, 2
   defectos) sin llegar al Alliance de la posición 82, que queda 5.º en la cola reclamable.
+- **Tanda 9** (2026-11-03): `PARADA`. Los 4 no soportados, como en el plan. El Alliance de la posición 82
+  (08008834–37) superó el `statement_timeout` de 8 s (57014): `ERROR`, intento 1 de 4 (`TRANSITORIO`), sin
+  escritura parcial. Postcheck 2AX OK. **Serie PARADA hasta desplegar la 28** (decisión de Pio; ver "Hito 2BM").
 - **SERVICIO BÁSICO (Pio, 2026-11-03):** el cargo de 31,46 es el cargo mensual de servicio de Alliance
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito 2BM: persistencia multifactura ligera (migración 28, solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-03, commit local (sin push). Producción no tocada. Diseño,
+diagnóstico y medición en `pruebas/auditoria_2bm/DISENO.md`; evidencias en `C:\ControlFarmacias\evidencias_2bm_diag`.
+
+- **Migración 28** (`28_cf_persistencia_multifactura_ligera.sql` + rollback, generadas por
+  `generar_migracion_28.py` desde la 27). Decisiones de Pio:
+  - `lz4` en las columnas jsonb grandes (valores nuevos);
+  - el `resultado_json` de la multifactura guarda referencias a `facturas.datos_extraidos` (completo) en lugar de
+    las facturas que persiste la propia ejecución; histórico conservado con el trigger
+    `facturas_materializar_referencia` (copia completa en toda ejecución del documento que la referencia, antes
+    de que cambie `datos_extraidos` o se borre la fila);
+  - sin copias del payload (núcleo de normalización de 9 parámetros) e identidad calculada una vez;
+  - firma de la solicitud sin objeto intermedio; las repeticiones de ejecuciones con la firma de la 15–27 se
+    comprueban con esa fórmula.
+- **Conciliación:** la revalidación de farmacia reconstruye la lectura completa desde `datos_extraidos`
+  (`reconstruir_resultado_json`; una referencia sin su fila falla cerrado).
+- **Serie:** la puerta de la 27 comprueba por nombre de función (compatible con la 28).
+- **Medición** (posición 122, sentencia exacta de PostgREST, ajustes de producción): 1,22 s con la 27 →
+  **0,52–0,55 s** con la 28 (objetivo de Pio ≤ 0,55 s; ≈ 4 s en producción con factor ≈ 7, `INFERIDO`).
+- **Tests** (`test_integracion_pg17_2bm.py`, 30): equivalencia 27 = 28 en los 9 escenarios del 2BK (lectura
+  reconstruida), referencias y trazabilidad, firma nueva y antigua, histórico de relecturas, conciliación,
+  rollback (esquema 27 y `resultado_json` al formato 27), privilegios, `lz4` y `desplegar_28.py` ensayado.
+- `PENDIENTE` (con confirmación de Pio): preflight y despliegue de la 28 con postcheck 2AX; reintentar el
+  Alliance de la posición 82 y medir el tiempo real; con ese factor, decidir la evidencia en tabla aparte antes de
+  la posición 122.
 
 ### Hito 2BL-D: migración 27 en producción (2026-11-03)
 

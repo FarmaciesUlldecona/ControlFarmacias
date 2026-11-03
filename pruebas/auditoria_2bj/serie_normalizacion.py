@@ -83,13 +83,13 @@ SQL_COLA_TOTAL = (
 
 
 # Marcas de la 27 (2BL): la funcion de repeticion existe y la usan los dos nucleos y el envoltorio de 7 parametros.
+# Por nombre (2BM): desde la 28 el nucleo de normalizacion que la usa es el de 9 parametros.
 SQL_MARCAS_27 = (
     "select to_regprocedure('public.cf_ejecucion_persistida(uuid,text)') is not null and coalesce(("
-    "select bool_and(position('cf_ejecucion_persistida' in p.prosrc) > 0) and count(*) = 3 from pg_proc p "
-    "where p.oid in ("
-    "to_regprocedure('public.cf_persistir_normalizacion_nucleo(uuid,text,text,text,text,jsonb,jsonb)'), "
-    "to_regprocedure('public.cf_persistir_documento_multifactura_nucleo(uuid,text,text,text,jsonb,text[],text)'), "
-    "to_regprocedure('public.cf_persistir_documento_multifactura(uuid,text,text,text,jsonb,text[],text)'))), false)")
+    "select count(distinct p.proname) = 3 from pg_proc p "
+    "where p.pronamespace = 'public'::regnamespace and p.proname in ("
+    "'cf_persistir_normalizacion_nucleo', 'cf_persistir_documento_multifactura_nucleo', "
+    "'cf_persistir_documento_multifactura') and position('cf_ejecucion_persistida' in p.prosrc) > 0), false)")
 
 
 def _ahora() -> str:
