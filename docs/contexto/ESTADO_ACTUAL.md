@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-02 (Hito 2BL: migración 27, reintento tras fallo de persistencia, solo local; 2BK-D:
+Actualizado: 2026-11-03 (Hito 2BL-D: migración 27 desplegada en producción, serie en pausa a la espera de
+confirmación; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
 migración 26 desplegada, tanda 6 PARADA, serie en pausa hasta la 27; 2BK: migración 26, persistencia
 multifactura indexada; serie 2BJ en producción, tandas 1–5; 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
@@ -222,6 +223,22 @@ con confirmación expresa de Pio y lanzada una sola vez.
 - La 26 se desplegó en el 2BK-D; la tanda 6 paró por otro defecto (ver "Hito 2BK-D"). **Serie en PAUSA hasta
   desplegar la 27** (decisión de Pio).
 
+### Hito 2BL-D: migración 27 en producción (2026-11-03)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación expresa de Pio. Evidencias en `C:\ControlFarmacias\evidencias_2bl_d`
+(con `SHA256SUMS.txt`). Script READ_ONLY: `pruebas/auditoria_2bl_d/preflight_readonly.py`.
+
+- Puerta: `origin/main` = HEAD = `b7e76e1`, árbol limpio.
+- Referencias locales 26/27 y alcance (4 funciones: `cf_ejecucion_persistida` nueva, los dos núcleos y el
+  envoltorio de 7 parámetros). Precondiciones 9/9, captura pre `CAPTURA_OK`, `ESQUEMA_26_CONFIRMADO`.
+- `desplegar_27.py` una vez (commit `6426899`, SHA LF `26eb8953…`): `APLICADA`, datos sin cambios, objetos y
+  privilegios de la 27 correctos.
+- Captura post `CAPTURA_OK` (marcas de la 27, incluidas las de la puerta de la serie) y postcheck 2AX
+  `POSTCHECK_OK`: solo cambian los 4 objetos del alcance, iguales a la referencia local 27; filas, configuración,
+  operación, reservas y aprobaciones idénticas. Objetos públicos: 73 → 74.
+- **Serie 2BJ:** sigue en pausa hasta nueva confirmación de Pio. El Alliance de la posición 57 conserva 2 de 4
+  intentos; con la 27, su reintento persistiría con `<clave>:intento:3`.
+
 ### Hito 2BL: un fallo registrado no bloquea el reintento (migración 27, solo local)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-02, commit local (sin push). Producción no tocada. Diseño
@@ -248,8 +265,8 @@ en `pruebas/auditoria_2bl/DISENO.md`.
 - **Serie:** `serie_normalizacion.py tanda` exige las marcas de la 27 antes de cada ejecución
   (`cf_ejecucion_persistida` y los tres puntos que la usan); si faltan, `PARADA` sin ejecutar
   (`MIGRACION_27_AUSENTE`, test con las plantillas 26 y 27_rollback). Decisión de Pio.
-- `PENDIENTE` (con confirmación de Pio): preflight y despliegue de la 27 con postcheck 2AX; después, reanudar la
-  serie. El Alliance de la posición 57 conserva 2 de 4 intentos.
+- ~~`PENDIENTE`: preflight y despliegue de la 27 con postcheck 2AX~~: hecho en el 2BL-D. Reanudar la serie,
+  con confirmación de Pio.
 
 ### Hito 2BK-D: migración 26 en producción y tanda 6 (2026-11-02)
 
