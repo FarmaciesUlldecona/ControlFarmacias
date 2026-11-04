@@ -1,7 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-03 (Hito 2BM: migración 28, persistencia multifactura ligera, solo local; serie 2BJ
-PARADA en la tanda 9 hasta desplegar la 28; 2BL-D: migración 27 desplegada en producción; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
+Actualizado: 2026-11-04 (Hito 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración
+28, persistencia multifactura ligera; serie 2BJ parada en la tanda 9 a la espera de confirmación; 2BL-D: migración 27 desplegada en producción; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
 migración 26 desplegada, tanda 6 PARADA, serie en pausa hasta la 27; 2BK: migración 26, persistencia
 multifactura indexada; serie 2BJ en producción, tandas 1–5; 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
@@ -251,6 +251,28 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito 2BM-D: migración 28 en producción (2026-11-03)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación expresa de Pio. Evidencias en `C:\ControlFarmacias\evidencias_2bm_d`
+(con `SHA256SUMS.txt`). Script READ_ONLY: `pruebas/auditoria_2bm_d/preflight_readonly.py`.
+
+- Puerta: `origin/main` = HEAD = `85241ba`, árbol limpio.
+- La huella de esquema del 2AZ no recoge triggers ni la compresión de las columnas, que la 28 cambia: el preflight
+  los captura aparte (también en las referencias locales) y entran en el alcance y en el postcheck. Alcance: 15
+  objetos (6 funciones, el trigger `facturas_materializar_referencia` y la compresión de 8 columnas).
+- Precondiciones 9/9, captura pre `CAPTURA_OK`, `ESQUEMA_27_CONFIRMADO`.
+- `desplegar_28.py` una vez (commit `85241ba`, SHA LF `34b18e04…`): `APLICADA`, datos sin cambios, objetos y
+  privilegios de la 28 correctos.
+- Captura post `CAPTURA_OK` (marcas de la 28 y de la 27) y postcheck 2AX `POSTCHECK_OK`: solo cambian los 15
+  objetos del alcance, iguales a la referencia local 28; filas, configuración, operación, reservas y aprobaciones
+  idénticas. Objetos públicos 74 → 78; triggers públicos 13 → 14.
+- **Noche del 2026-11-03** (READ_ONLY, evidencias en `C:\ControlFarmacias\evidencias_noche_0311`): las dos tareas
+  terminaron con resultado 0 (20:00 y 20:30 UTC). 46 albaranes nuevos de PIO (fechas 2–3/11), ninguno
+  actualizado, 0 cambios de albarán, 0 documentos nuevos, 0 NORMALIZANDO, 0 claims, 0 ejecuciones de
+  normalización.
+- **Serie 2BJ:** sigue parada hasta nueva confirmación de Pio. Siguiente paso previsto: reintentar el Alliance de
+  la posición 82 (`ERROR`, 1 de 4) y medir el tiempo real con la 28.
 
 ### Hito 2BM: persistencia multifactura ligera (migración 28, solo local)
 
