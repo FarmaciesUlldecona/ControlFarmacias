@@ -1,7 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-05 (serie 2BJ: tandas 10 y 11 con la 28, Alliance de las posiciones 82 y 90
-persistidos; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
+Actualizado: 2026-11-05 (serie 2BJ: tandas 10–14 con la 28, Alliance de las posiciones 82, 90, 93, 102 y 122
+persistidos, parada tras la 122; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
 multifactura ligera; 2BL-D: migración 27 desplegada en producción; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
 migración 26 desplegada, tanda 6 PARADA, serie en pausa hasta la 27; 2BK: migración 26, persistencia
@@ -274,6 +274,23 @@ con confirmación expresa de Pio y lanzada una sola vez.
   - **Persistencia: 1,27 s** (primera medición con el límite de 20 s). Mucho menos que la posición 82 (5,22 s) con
     un tamaño parecido (179 frente a 214 líneas): el tiempo en producción varía mucho entre llamadas; el factor
     frente a local no es estable.
+- **Tandas 12–14** (2026-11-05, encadenadas con confirmación expresa de Pio hasta el Alliance de la posición 122
+  incluido; tras cada Alliance, seguir solo con `TANDA_OK`, postcheck 2AX OK, facturas idénticas al plan y al
+  banco —número, fecha, total, número de albaranes— y persistencia < 10 s; tras la 122, parada siempre). Puerta
+  git con la excepción documental de Pio (HEAD `90c95b0` por delante de `origin/main` `cb76fd2` solo con
+  `docs/contexto/ESTADO_ACTUAL.md`). Comprobación por tanda: `tanda_NN_comprobacion.json`.
+
+  | Tanda | Resultado | Postcheck 2AX | Ejecuciones | Alliance | Persistencia |
+  |---|---|---|---|---|---|
+  | 12 | `TANDA_OK` | OK | 3 (2 no soportados) | posición 93: 08010085–88 | 5,60 s |
+  | 13 | `TANDA_OK` | OK | 9 (7 no soportados, 1 defecto en `ERROR` 1 de 4) | posición 102: 08010461–64 | **9,19 s** |
+  | 14 | `TANDA_OK` | OK | 20 (15 no soportados, 4 defectos en `ERROR` 1 de 4) | posición 122: 08010885–88 | 6,34 s |
+
+  Facturas idénticas al plan y al banco en los tres: 08010085 (13.122,42; 146 albaranes), 08010086 (3.842,19;
+  102), 08010087 (248,71; 1), 08010088 (92,09; 5); 08010461 (11.659,74; 130), 08010462 (3.069,54; 82), 08010463
+  (1.073,70; 1), 08010464 (83,00; 5); 08010885 (14.658,97; 160), 08010886 (3.651,67; 107), 08010887 (259,98; 1),
+  08010888 (92,16; 6). La posición 102 (9,19 s) se habría cancelado con el límite anterior de 8 s. **Serie
+  parada tras la posición 122** (decisión de Pio). Quedan 4 Alliance en el plan (posiciones 128, 146, 156 y 166).
 - `PENDIENTE` (hito, con decisión de Pio): enviar la evidencia por celda en llamadas aparte (tabla de evidencias
   con `lz4`, persistencia con documento ligero), para que el coste fijo por petición (parseo del JSON, firma y
   recorridos, proporcional a los 4–5 MB del payload) no dependa del margen del límite.

@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-11-02 (Hito 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
+Actualizado: 2026-11-05 (puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
 de la suite; 2BG: regla R19, aplicada a 08007970; 2BE-D: migración 24 desplegada y norma de tests antes
@@ -28,6 +29,10 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   qué lo bloqueó. Nunca reformula, parte, ofusca ni cambia de herramienta la acción para esquivar el
   bloqueo. Origen: en el diagnóstico del 2BK se partió el nombre de un rol para pasar un hook y el
   clasificador lo rechazó.
+- **Puerta git antes de una ejecución productiva (tandas de la serie, despliegues).** Árbol siempre limpio y
+  HEAD == `origin/main`. **Excepción acotada (DECISIÓN DE PIO, 2026-11-05):** HEAD puede ir por delante de
+  `origin/main` solo si los commits pendientes tocan exclusivamente documentación (`docs/` o `*.md`); se
+  comprueba antes de cada tanda con `git diff --name-only origin/main..HEAD`. Cualquier otro archivo: PARA.
 
 ## Extractores locales
 
