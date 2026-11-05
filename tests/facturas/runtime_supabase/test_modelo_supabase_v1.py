@@ -200,6 +200,8 @@ def test_migraciones_06b_y_07_a_13_existen_en_orden() -> None:
         "27_cf_reintento_tras_fallo_de_persistencia.sql",
         "28_cf_persistencia_multifactura_ligera.rollback.sql",
         "28_cf_persistencia_multifactura_ligera.sql",
+        "29_cf_rol_lectura.rollback.sql",
+        "29_cf_rol_lectura.sql",
     ]
     assert [ruta.name for ruta in sorted(MIGRACIONES.glob("*_cf_*.sql"))] == esperadas
 

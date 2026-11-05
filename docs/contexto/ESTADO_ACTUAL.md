@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-05 (serie 2BJ completada para los Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
+Actualizado: 2026-11-05 (Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
 multifactura ligera; 2BL-D: migración 27 desplegada en producción; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
@@ -324,6 +325,23 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito 2BN: rol de solo lectura `cf_lectura` (migración 29, solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-05, commit local (sin push). Producción no tocada. Diseño en
+`pruebas/auditoria_2bn/DISENO.md`.
+
+- **Migración 29** (`29_cf_rol_lectura.sql` + rollback): rol `cf_lectura` con LOGIN y sin atributos privilegiados,
+  transacciones de solo lectura por defecto, **sin contraseña en el repositorio** (la fija Pio fuera). `SELECT`
+  solo sobre una lista cerrada de 20 tablas y 4 vistas de `public` (facturas y sus hijas, documentos, historial,
+  ejecuciones, conciliaciones, detalles, reservas, albaranes y sus cambios y aprobaciones, proveedores,
+  configuración y las vistas de la web). Sin escritura, secuencias ni `EXECUTE`; sin acceso a esquemas de secretos.
+- **RLS coherente:** las 15 políticas de lectura de `authenticated` se aplican también a `cf_lectura`; las 5 tablas
+  de albaranes y reservas reciben una política equivalente (farmacias habilitadas).
+- **Tests** (`test_integracion_pg17_2bn.py`, 42): lectura de lo previsto y nada más, RLS por farmacia, escrituras y
+  RPC denegadas, inicio de sesión real en solo lectura, atributos y credencial, rollback, `desplegar_29.py` ensayado.
+- `PENDIENTE` (con confirmación de Pio): preflight y despliegue de la 29 con postcheck 2AX; contraseña del rol
+  fijada por Pio; adaptar la web y los preflights a `cf_lectura`.
 
 ### Hito 2BM-D: migración 28 en producción (2026-11-03)
 
