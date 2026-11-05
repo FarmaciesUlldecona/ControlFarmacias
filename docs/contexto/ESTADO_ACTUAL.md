@@ -1,7 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-05 (serie 2BJ: tandas 10–14 con la 28, Alliance de las posiciones 82, 90, 93, 102 y 122
-persistidos, parada tras la 122; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
+Actualizado: 2026-11-05 (serie 2BJ completada para los Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
+persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
 multifactura ligera; 2BL-D: migración 27 desplegada en producción; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
 migración 26 desplegada, tanda 6 PARADA, serie en pausa hasta la 27; 2BK: migración 26, persistencia
@@ -291,6 +291,32 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (1.073,70; 1), 08010464 (83,00; 5); 08010885 (14.658,97; 160), 08010886 (3.651,67; 107), 08010887 (259,98; 1),
   08010888 (92,16; 6). La posición 102 (9,19 s) se habría cancelado con el límite anterior de 8 s. **Serie
   parada tras la posición 122** (decisión de Pio). Quedan 4 Alliance en el plan (posiciones 128, 146, 156 y 166).
+- **Tandas 15–18** (2026-11-05, encadenadas con confirmación expresa de Pio hasta el Alliance de la posición 166
+  incluido; mismas condiciones con persistencia < 15 s; misma puerta git).
+
+  | Tanda | Resultado | Postcheck 2AX | Ejecuciones | Alliance | Persistencia |
+  |---|---|---|---|---|---|
+  | 15 | `TANDA_OK` | OK | 6 (5 no soportados) | posición 128: 08011303–05 | 3,23 s |
+  | 16 | `TANDA_OK` | OK | 18 (14 no soportados, 3 defectos en `ERROR`) | posición 146: 08011733–36 | 6,61 s |
+  | 17 | `TANDA_OK` | OK | 10 (7 no soportados, 2 defectos en `ERROR`) | posición 156: 08012197–200 | 1,60 s |
+  | 18 | `TANDA_OK` | OK | 10 (9 no soportados) | posición 166: 08012619–22 | 3,63 s |
+
+  - Facturas idénticas al plan (número, total) y a la referencia (fecha, número de albaranes): 08011303 (9.670,92;
+    107 albaranes), 08011304 (4.195,24; 65), 08011305 (141,21; 5); 08011733 (13.767,39; 153), 08011734 (3.440,52;
+    88), 08011735 (69,01; 1), 08011736 (70,74; 5); 08012197 (10.018,46; 100), 08012198 (2.667,39; 76), 08012199
+    (242,99; 1), 08012200 (38,22; 2); 08012619 (12.867,73; 117), 08012620 (4.265,40; 78), 08012621 (421,51; 3),
+    08012622 (56,50; 3).
+  - **Parada tras la tanda 17 y DECISIÓN DE PIO (2026-11-05):** las posiciones 156 y 166 no están en el banco 2AZ,
+    así que la fecha y el número de albaranes no tenían referencia (el plan solo guarda número y total) y la
+    comprobación paró. Pio eligió recalcularlos en local con la cadena oficial en memoria sobre el PDF del mirror
+    (mismo SHA que el plan; sin producción): coincidieron en la 156 y sirvieron de referencia para la 166
+    (`referencia_local_156_166.json`).
+- **Resumen final de la serie** (READ_ONLY, 2026-11-05 08:23 UTC, `resumen_serie_tras_166.json`): 188 documentos PIO:
+  14 `NORMALIZADA/COMPLETA` (todos Alliance: los 12 del plan y los 2 normalizados antes de la serie), 4 `NORMALIZADA/PENDIENTE` (previos a la serie), 135
+  `PROVEEDOR_NO_SOPORTADO`, 12 `ERROR` (defectos con intentos restantes), 7 `REVISION` (defectos 4 de 4), 16
+  `PENDIENTE` (6 del plan tras la posición 166 y 10 importados después del plan). 0 NORMALIZANDO, 0 claims.
+  Facturas: 59 (55 Alliance), 11 `CONCILIADA` (30.785,21) y **48 `PENDIENTE_CONCILIAR` (190.517,33)**. Todos los
+  Alliance del plan, persistidos. **Serie parada tras la posición 166** (decisión de Pio).
 - `PENDIENTE` (hito, con decisión de Pio): enviar la evidencia por celda en llamadas aparte (tabla de evidencias
   con `lz4`, persistencia con documento ligero), para que el coste fijo por petición (parseo del JSON, firma y
   recorridos, proporcional a los 4–5 MB del payload) no dependa del margen del límite.
