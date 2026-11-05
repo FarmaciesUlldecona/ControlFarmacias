@@ -1,7 +1,9 @@
 # Estado actual
 
-Actualizado: 2026-11-04 (Hito 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración
-28, persistencia multifactura ligera; serie 2BJ parada en la tanda 9 a la espera de confirmación; 2BL-D: migración 27 desplegada en producción; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
+Actualizado: 2026-11-05 (serie 2BJ: tandas 10 y 11 con la 28, Alliance de las posiciones 82 y 90
+persistidos; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
+noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
+multifactura ligera; 2BL-D: migración 27 desplegada en producción; 2BL: migración 27, reintento tras fallo de persistencia; 2BK-D:
 migración 26 desplegada, tanda 6 PARADA, serie en pausa hasta la 27; 2BK: migración 26, persistencia
 multifactura indexada; serie 2BJ en producción, tandas 1–5; 2BJ: serie supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: infraestructura de
@@ -247,6 +249,34 @@ con confirmación expresa de Pio y lanzada una sola vez.
 - **Tanda 9** (2026-11-03): `PARADA`. Los 4 no soportados, como en el plan. El Alliance de la posición 82
   (08008834–37) superó el `statement_timeout` de 8 s (57014): `ERROR`, intento 1 de 4 (`TRANSITORIO`), sin
   escritura parcial. Postcheck 2AX OK. **Serie PARADA hasta desplegar la 28** (decisión de Pio; ver "Hito 2BM").
+- **Tanda 10** (2026-11-04, con la 28): `TANDA_OK`, postcheck 2AX OK. Los 9 reintentos de defectos, como en el
+  plan (R3): 7 pasan a `REVISION` (4 de 4) y 2 quedan en `ERROR` (2 de 4). El Alliance de la posición 82
+  (08008834–37), `NORMALIZADA/COMPLETA` en el intento 2 (clave `…:intento:2`): totales, fechas y número de albaranes
+  (129, 76, 4, 5) iguales al plan y al banco; `resultado_json` de 4,3 KB con 4 referencias (la 28 en producción).
+  - **Persistencia: 5,22 s** en el servidor (`pg_stat_statements`). En local, el mismo payload con la 28: 0,44 s
+    (con la 27: 1,0 s): factor ≈ 12. Estimación `INFERIDO` para la posición 122 (0,53 s en local): ≈ 6,5 s. Sin
+    instrumentación que lo explique en producción (`auto_explain` desde 10 s y sin `log_analyze`; profiler de
+    `plpgsql_check` apagado).
+- **Límite de 20 s para el rol del sistema (Hito 2BO, aplicado por Pio en el SQL Editor):** `statement_timeout =
+  20s` solo para el rol del sistema (el de la clave de servicio) y recarga de PostgREST
+  (`NOTIFY pgrst, 'reload config'`, según la documentación de Supabase «Timeouts»). Comprobación de Pio: ese rol con
+  `{statement_timeout=20s}`; `anon` 3 s, `authenticated` 8 s y `authenticator` 8 s sin cambios. El hook
+  `barreras_agentes` bloquea cualquier comando o ruta que nombre ese rol: por la norma de parada, Claude no lo
+  preparó ni lo ejecutó; lo hizo Pio.
+- **Documento 84 («SISFARMA ABONO 31.11.26.PDF», ausente del mirror): DECISIÓN DE PIO (2026-11-05)**: predicción
+  `NO_SOPORTADO` (no es Alliance), registrada en `plan.json` (`decisiones_pio`; copia del plan original en
+  `plan_original_2026-11-02.json`). Si el resultado real no coincidía: PARADA. Resultado real en la tanda 11:
+  `PROVEEDOR_NO_SOPORTADO`.
+- **Tanda 11** (2026-11-05, con la 28 y el límite de 20 s): `TANDA_OK`, postcheck 2AX OK. Los 2 defectos, en
+  `ERROR` (3 de 4); 8 no soportados (incluido el 84). El Alliance de la posición 90 (08009716–19),
+  `NORMALIZADA/COMPLETA`: totales, fechas y número de albaranes (106, 1, 69, 3) iguales al plan y al banco; el
+  SERVICIO BÁSICO (31,46) en 08009716, con vencimiento el día 6.
+  - **Persistencia: 1,27 s** (primera medición con el límite de 20 s). Mucho menos que la posición 82 (5,22 s) con
+    un tamaño parecido (179 frente a 214 líneas): el tiempo en producción varía mucho entre llamadas; el factor
+    frente a local no es estable.
+- `PENDIENTE` (hito, con decisión de Pio): enviar la evidencia por celda en llamadas aparte (tabla de evidencias
+  con `lz4`, persistencia con documento ligero), para que el coste fijo por petición (parseo del JSON, firma y
+  recorridos, proporcional a los 4–5 MB del payload) no dependa del margen del límite.
 - **SERVICIO BÁSICO (Pio, 2026-11-03):** el cargo de 31,46 es el cargo mensual de servicio de Alliance
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
@@ -271,8 +301,11 @@ con confirmación expresa de Pio y lanzada una sola vez.
   terminaron con resultado 0 (20:00 y 20:30 UTC). 46 albaranes nuevos de PIO (fechas 2–3/11), ninguno
   actualizado, 0 cambios de albarán, 0 documentos nuevos, 0 NORMALIZANDO, 0 claims, 0 ejecuciones de
   normalización.
-- **Serie 2BJ:** sigue parada hasta nueva confirmación de Pio. Siguiente paso previsto: reintentar el Alliance de
-  la posición 82 (`ERROR`, 1 de 4) y medir el tiempo real con la 28.
+- **Serie 2BJ:** reanudada con las tandas 10 y 11 (ver "Serie 2BJ en producción").
+- **Noche del 2026-11-04** (READ_ONLY, evidencias en `C:\ControlFarmacias\evidencias_noche_0411`): las dos tareas
+  terminaron con resultado 0. 32 albaranes nuevos de PIO (fechas 3–4/11), ninguno actualizado, 0 cambios de
+  albarán, 5 documentos nuevos en `PENDIENTE` (al final de la cola, fuera del plan), 0 NORMALIZANDO, 0 claims;
+  las 10 ejecuciones del periodo son las de la tanda 10.
 
 ### Hito 2BM: persistencia multifactura ligera (migración 28, solo local)
 
