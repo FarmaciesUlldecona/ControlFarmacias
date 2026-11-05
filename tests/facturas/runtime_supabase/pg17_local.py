@@ -201,6 +201,30 @@ MIGRACION_29 = MIG / "29_cf_rol_lectura.sql"
 ROLLBACK_29 = MIG / "29_cf_rol_lectura.rollback.sql"
 
 
+# Norma de Pio (2BN-D): todo ensayo de despliegue se hace con un rol que imita al postgres de Supabase. Alli postgres
+# no es superusuario (CREATEROLE, REPLICATION, BYPASSRLS) pero es propietario de public; aqui lo es por herencia de
+# postgres sin poder adoptarlo (SET FALSE), asi que nunca actua como superusuario.
+ROL_SUPABASE = "cf_postgres_supabase"
+CLAVE_ROL_SUPABASE = "local-only"
+
+
+def rol_supabase(contenedor: str) -> str:
+    """Crea (si falta) el rol de imitacion del postgres de Supabase en el cluster del contenedor."""
+    _docker("exec", contenedor, "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", "postgres",
+            "-c", f"do $$ begin if not exists (select 1 from pg_roles where rolname = '{ROL_SUPABASE}') then "
+                  f"create role {ROL_SUPABASE} login password '{CLAVE_ROL_SUPABASE}' nosuperuser createrole "
+                  f"replication bypassrls inherit; end if; end $$; "
+                  f"grant postgres to {ROL_SUPABASE} with inherit true, set false;")
+    return ROL_SUPABASE
+
+
+def sql_como_supabase(pg: "_Pg", sentencia: str) -> subprocess.CompletedProcess:
+    """Inicio de sesion real con el rol de imitacion (no SET ROLE: desde una sesion superusuario no limita)."""
+    return subprocess.run(["docker", "exec", pg.contenedor, "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1",
+                           "-U", rol_supabase(pg.contenedor), "-d", pg.db, "-c", sentencia],
+                          capture_output=True, text=True, encoding="utf-8", timeout=120)
+
+
 def esquema(pg: "_Pg") -> str:
     """Volcado de esquema sin las lineas restrict/unrestrict aleatorias de pg_dump."""
     salida = _docker("exec", pg.contenedor, "pg_dump", "-U", "postgres", "-s", pg.db).stdout

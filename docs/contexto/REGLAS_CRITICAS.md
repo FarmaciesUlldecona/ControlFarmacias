@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-05 (puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-05 (2BN-D: ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -346,6 +346,13 @@ módulos parciales.
   intento de desplegar la 19 falló por un `select` omitido en las precondiciones
   (sin cambios en producción). Referencia:
   `tests/facturas/runtime_supabase/test_ensayo_despliegue_19_2ax.py`.
+- **Norma de Pio (Hito 2BN-D, 2026-11-05): todo ensayo de despliegue usa un rol que imita al `postgres` de
+  Supabase**, nunca un superusuario: LOGIN, `CREATEROLE`, `REPLICATION`, `BYPASSRLS`, **sin** `SUPERUSER`, con
+  los privilegios de propietario de `public` (miembro de `postgres` con herencia y sin poder adoptarlo).
+  Helper: `pg17_local.rol_supabase` / `sql_como_supabase` (rol `cf_postgres_supabase`); la conexión del ensayo
+  del script de despliegue y el rollback se hacen con ese rol. Motivo: el primer despliegue de la 29 se revirtió
+  en producción por un `ALTER ROLE … NOSUPERUSER` que local aceptaba como superusuario. Se aplica a los
+  despliegues pendientes desde el 2BN-D (los ya desplegados no se reensayan).
 - **Norma de Pio de tests antes de commit (Hito 2BE-D, 2026-10-29), sin excepciones:**
   - **suite completa con `pg17_local`** (`pytest tests/ --basetemp=<propio>`, con Docker disponible: ningún
     test `pg17_local` omitido) si el commit toca `src/`, `sql/`, scripts de despliegue o cualquier código que

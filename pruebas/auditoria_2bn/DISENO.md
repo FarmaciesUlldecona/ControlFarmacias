@@ -32,6 +32,9 @@ lo que necesitan, no puede escribir ni ejecutar RPC que escriban y no tiene acce
   `realtime` ni `graphql` (postcondición del despliegue para los que existan). El rol no se concede a
   `authenticator`, así que la API (PostgREST) no puede cambiar a él.
 - Requiere la 28 (`MIGRACION_28_AUSENTE`). Sin cambios de datos ni de funciones.
+- **Atributos solo en `CREATE ROLE` (2BN-D):** en Supabase `postgres` no es superusuario y un `ALTER ROLE` que
+  nombre `SUPERUSER` (aunque sea `NOSUPERUSER`) se rechaza; el primer despliegue se revirtió por eso. Los
+  `ALTER ROLE` de la 29 solo fijan ajustes (`SET`); las postcondiciones comprueban los atributos.
 
 **Rollback:** retira las políticas nuevas, devuelve las 15 a `authenticated`, revoca todo y elimina el rol. Un rol
 es del clúster: si otra base aún le concede algo (en los tests, las bases del contenedor; en producción, una sola
@@ -48,7 +51,7 @@ lectura de la lista y nada más, ninguna escritura, ninguna secuencia, ninguna f
 Tras el despliegue, Pio fija la contraseña en el editor SQL (fuera del repositorio) y se comprueba el inicio de
 sesión del rol por el pooler (usuario `cf_lectura.<project_ref>`).
 
-## 4. Tests (`test_integracion_pg17_2bn.py`, 42)
+## 4. Tests (`test_integracion_pg17_2bn.py`, 44)
 
 - Lee cada objeto previsto (24); no lee nada fuera de la lista.
 - La RLS oculta las filas de una farmacia no habilitada (documentos y albaranes) y deja ver las hijas a través de
@@ -60,6 +63,9 @@ sesión del rol por el pooler (usuario `cf_lectura.<project_ref>`).
 - Atributos del rol, sin contraseña, sin pertenencia a otros roles, ninguna `password` en la migración.
 - Rollback igual a la 28; exige la 28; no altera datos; `desplegar_29.py` ensayado (aplicada; el segundo intento se
   revierte) y rechazo de un SQL distinto del commit.
+- 2BN-D: el ensayo de despliegue y el rollback se hacen con `cf_postgres_supabase` (imitación del `postgres` de
+  Supabase, sin superusuario); la imitación rechaza `ALTER ROLE … NOSUPERUSER` y no puede adoptar `postgres`; ningún
+  `ALTER ROLE` de la 29 nombra atributos.
 
 ## 5. Pendiente (con confirmación de Pio)
 

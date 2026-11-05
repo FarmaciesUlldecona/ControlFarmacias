@@ -22,8 +22,8 @@ begin
 end;
 $$;
 
-alter role cf_lectura login nosuperuser nocreatedb nocreaterole noinherit noreplication nobypassrls
-    connection limit 5;
+-- Los atributos solo se fijan al crear el rol: en Supabase postgres no es superusuario y un ALTER ROLE que nombre
+-- SUPERUSER (aunque sea NOSUPERUSER) se rechaza (2BN-D). Las postcondiciones del despliegue comprueban los atributos.
 alter role cf_lectura set default_transaction_read_only = on;
 alter role cf_lectura set statement_timeout = '60s';
 alter role cf_lectura set idle_in_transaction_session_timeout = '60s';

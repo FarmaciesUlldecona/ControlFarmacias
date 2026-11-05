@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-05 (Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-05 (2BN-D: primer despliegue de la 29 REVERTIDO por permisos, producción intacta, 29 corregida en local; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -326,6 +326,37 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito 2BN-D: primer despliegue de la 29 revertido (2026-11-05)
+
+Con confirmación expresa de Pio. Evidencias en `C:\ControlFarmacias\evidencias_2bn_d` (con `SHA256SUMS.txt`).
+Script READ_ONLY: `pruebas/auditoria_2bn_d/preflight_readonly.py` (patrón 2BM-D; captura además los roles de cada
+política, la ACL de los esquemas y el rol, que la huella del 2AZ no recoge).
+
+- Puerta: HEAD = `origin/main` = `623b4c2`. Precondiciones 9/9; captura pre `CAPTURA_OK` (18:26 y 18:31 UTC,
+  idénticas). Alcance de la 29 derivado de las referencias locales 28/29: 46 objetos.
+- `comparar_pre`: 43/46 iguales a la referencia 28. Las 3 diferencias son deuda de baseline conocida (2AS y
+  excepción del 2BC): índices `albaranes_fecha_idx` y `albaranes_proveedor_idx`, columna
+  `documentos_facturas.observaciones` y permisos propios de Supabase sobre el esquema `public`. **Excepción
+  aprobada por Pio** para el postcheck, solo en esos 3 objetos: en las dos tablas, pre→post solo cambia la ACL (y, en
+  `albaranes`, el alta de la política nueva de la 29), igual a la referencia 29, con índices y columna idénticos; en
+  `public`, solo se añade `cf_lectura` con USAGE. Implementada en `comparar_despliegue` y ensayada (9 casos
+  negativos).
+- **Despliegue** (`desplegar_29.py 623b4c2 5f13fa02…`, 18:32 UTC, una vez): **REVERTIDA**. `permission denied to
+  alter role` (*Only roles with the SUPERUSER attribute may alter roles with the SUPERUSER attribute*). Causa: en
+  Supabase `postgres` no es superusuario (PostgreSQL 17.6; CREATEROLE, REPLICATION y BYPASSRLS) y la 29 repetía los
+  atributos en un `ALTER ROLE … NOSUPERUSER`; los tests locales aplicaban como superusuario. Sin reintento.
+- Captura post READ_ONLY: idéntica a la pre (sin rol, sin políticas nuevas, filas, operación y configuración sin
+  cambios). Producción intacta.
+- Noche del 4/11 (desde las 19:30 UTC hasta las 18:28 UTC del 5/11): tareas con resultado 0; 32 albaranes nuevos de
+  PIO, ninguno actualizado, 0 cambios; 5 documentos nuevos en `PENDIENTE`; 0 NORMALIZANDO, 0 claims; las 86
+  ejecuciones son de las tandas de la mañana del 5/11 (07:07–08:23 UTC).
+- **Corrección (local, aprobada por Pio):** la 29 fija los atributos solo en `CREATE ROLE`; postcondiciones sin
+  cambios. Nuevo SHA LF de la 29: `0e2525165a5400b9994fcc6efff1e0f87348372f802b4f02cef2f49dfeb7698e`. Ensayo de
+  despliegue y rollback con el rol `cf_postgres_supabase`, que imita al `postgres` de Supabase (norma en
+  REGLAS_CRITICAS); con la 29 antigua el ensayo se revierte igual que en producción.
+- `PENDIENTE` (con confirmación de Pio): push, nuevo preflight (referencias locales y alcance recalculados) y
+  despliegue de la 29 corregida con postcheck 2AX y la excepción.
+
 ### Hito 2BN: rol de solo lectura `cf_lectura` (migración 29, solo local)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-05, commit local (sin push). Producción no tocada. Diseño en
@@ -338,7 +369,7 @@ con confirmación expresa de Pio y lanzada una sola vez.
   configuración y las vistas de la web). Sin escritura, secuencias ni `EXECUTE`; sin acceso a esquemas de secretos.
 - **RLS coherente:** las 15 políticas de lectura de `authenticated` se aplican también a `cf_lectura`; las 5 tablas
   de albaranes y reservas reciben una política equivalente (farmacias habilitadas).
-- **Tests** (`test_integracion_pg17_2bn.py`, 42): lectura de lo previsto y nada más, RLS por farmacia, escrituras y
+- **Tests** (`test_integracion_pg17_2bn.py`, 42; 44 tras el 2BN-D): lectura de lo previsto y nada más, RLS por farmacia, escrituras y
   RPC denegadas, inicio de sesión real en solo lectura, atributos y credencial, rollback, `desplegar_29.py` ensayado.
 - `PENDIENTE` (con confirmación de Pio): preflight y despliegue de la 29 con postcheck 2AX; contraseña del rol
   fijada por Pio; adaptar la web y los preflights a `cf_lectura`.

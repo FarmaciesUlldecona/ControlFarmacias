@@ -247,8 +247,9 @@ def test_ensayo_completo_despliegue_29_y_segundo_intento_revierte(contenedor_tcp
     nombre, puerto, _plantilla_19 = contenedor_tcp
     pg = base_desde(nombre, pgl.construir_plantilla(nombre, "28"))
     _datos_previos(pg, tmp_path)
-    referencia = base_desde(nombre, pg.db)
-    referencia.sql(MIGRACION_29.read_text(encoding="utf-8"))
+    # Como en produccion: el rol no existe en el cluster y se despliega con la imitacion del postgres de Supabase.
+    assert pg.sql(f"select count(*) from pg_roles where rolname = '{ROL}'") == "0"
+    rol_despliegue = pgl.rol_supabase(nombre)
     commit, sha, despliegue = _repositorio_con_commit(repo_corto)
 
     sys.path.insert(0, str(ROOT / "tmp_pg_probe_deps"))
@@ -261,8 +262,8 @@ def test_ensayo_completo_despliegue_29_y_segundo_intento_revierte(contenedor_tcp
 
     def conectar_local(dsn, **_kwargs):
         dsns.append(dsn)
-        return real(host="127.0.0.1", port=puerto, dbname=pg.db, user="postgres", password="local-only",
-                    connect_timeout=10)
+        return real(host="127.0.0.1", port=puerto, dbname=pg.db, user=rol_despliegue,
+                    password=pgl.CLAVE_ROL_SUPABASE, connect_timeout=10)
 
     monkeypatch.setattr(psycopg2, "connect", conectar_local)
     monkeypatch.setattr(dotenv, "dotenv_values",
@@ -284,14 +285,50 @@ def test_ensayo_completo_despliegue_29_y_segundo_intento_revierte(contenedor_tcp
     assert registro["precondiciones"] == [True] * 9
     assert registro["postcondiciones"] == {"datos_sin_cambios": True, "rol": True, "privilegios": True,
                                            "politicas": True}
-    assert esquema(pg) == esquema(referencia)
+    # Referencia (superusuario) despues del despliegue: el rol ya existe y lo creo la imitacion.
+    referencia = pgl.base_desde(nombre, pgl.construir_plantilla(nombre, "28"))
+    _datos_previos(referencia, tmp_path)
+    referencia.sql(MIGRACION_29.read_text(encoding="utf-8"))
+    assert esquema(pg).replace(pg.db, "") == esquema(referencia).replace(referencia.db, "")
     assert {k: _huella(pg, q) for k, q in CONSULTAS_HUELLA.items()} == antes and _reservas(pg) == reservas
 
     registro = ejecutar(tmp_path / "segundo.json")
     assert registro["resultado"] == "REVERTIDA" and "PRECONDICIONES_NO_CUMPLIDAS" in registro["error"]
     # Ya aplicada: ni «29 ausente» ni «politicas de la 28»; el resto sigue en verde.
     assert registro["precondiciones"] == [False, True, False, True, True, True, True, True, True]
-    assert esquema(pg) == esquema(referencia)
+    assert esquema(pg).replace(pg.db, "") == esquema(referencia).replace(referencia.db, "")
+
+    # El rollback tambien funciona con la imitacion: politicas de vuelta a authenticated, sin privilegios del rol.
+    atras = pgl.sql_como_supabase(pg, ROLLBACK_29.read_text(encoding="utf-8"))
+    assert atras.returncode == 0, atras.stderr
+    for t, p in DESPLIEGUE.POLITICAS_COMPARTIDAS:
+        assert pg.sql(f"select array_to_string({DESPLIEGUE._roles_politica(t, p)}, ',')") == "authenticated"
+    assert pg.sql("select count(*) from pg_class c where c.relnamespace = 'public'::regnamespace "
+                  f"and has_table_privilege('{ROL}', c.oid, 'SELECT')") == "0"
+
+
+def test_la_imitacion_del_postgres_de_supabase_rechaza_lo_que_rechaza_produccion(contenedor_tcp):
+    """2BN-D: el primer despliegue de la 29 se revirtio por un ALTER ROLE ... NOSUPERUSER (postgres no es
+    superusuario en Supabase). La imitacion reproduce ese rechazo y no puede adoptar postgres."""
+    nombre, _puerto, _plantilla = contenedor_tcp
+    pg = pgl._Pg(nombre, "postgres")
+    rol = pgl.rol_supabase(nombre)
+    assert pg.sql(f"select rolsuper, rolcreaterole, rolreplication, rolbypassrls from pg_roles "
+                  f"where rolname = '{rol}'") == "f|t|t|t"
+    rechazo = pgl.sql_como_supabase(pg, f"alter role {rol} nosuperuser")
+    assert rechazo.returncode != 0 and "permission denied to alter role" in rechazo.stderr
+    adoptar = pgl.sql_como_supabase(pg, "set role postgres")
+    assert adoptar.returncode != 0 and "permission denied" in adoptar.stderr
+    assert pgl.sql_como_supabase(pg, "select current_setting('is_superuser')").stdout.strip() == "off"
+
+
+def test_la_29_no_altera_atributos_del_rol():
+    """Los atributos solo se fijan en CREATE ROLE; ningun ALTER ROLE de la 29 nombra atributos."""
+    import re
+
+    sql = re.sub(r"--[^\n]*", "", MIGRACION_29.read_text(encoding="utf-8")).lower()
+    alteraciones = re.findall(r"alter role\s+cf_lectura\s+([a-z_]+)", sql)
+    assert alteraciones and set(alteraciones) == {"set"}
 
 
 def test_el_despliegue_rechaza_un_sql_distinto_del_commit(tmp_path, repo_corto):
