@@ -51,7 +51,7 @@ lectura de la lista y nada más, ninguna escritura, ninguna secuencia, ninguna f
 Tras el despliegue, Pio fija la contraseña en el editor SQL (fuera del repositorio) y se comprueba el inicio de
 sesión del rol por el pooler (usuario `cf_lectura.<project_ref>`).
 
-## 4. Tests (`test_integracion_pg17_2bn.py`, 45)
+## 4. Tests (`test_integracion_pg17_2bn.py`, 48)
 
 - Lee cada objeto previsto (24); no lee nada fuera de la lista.
 - La RLS oculta las filas de una farmacia no habilitada (documentos y albaranes) y deja ver las hijas a través de
@@ -69,8 +69,13 @@ sesión del rol por el pooler (usuario `cf_lectura.<project_ref>`).
 - 2BN-D (segundo intento): la postcondición de privilegios excluye las funciones `event_trigger` (no se pueden
   llamar directamente); el ensayo incluye una copia de `rls_auto_enable()` de Supabase con sus permisos y un test
   comprueba que `cf_lectura` no puede llamarla.
+- 2BN-D (prueba de acceso): `pruebas/auditoria_2bn_d/probar_acceso_cf_lectura.py` ensayado contra PostgreSQL 17 local
+  por TCP con contraseña (lee, solo ve PIO, INSERT y RPC denegados con 42501); sin contraseña no conecta; la
+  contraseña nunca se imprime.
 
 ## 5. Pendiente (con confirmación de Pio)
+
+El punto 1 está hecho: la 29 se desplegó en producción el 2026-11-06 (tercer intento; ver ESTADO_ACTUAL, Hito 2BN-D).
 
 1. Preflight READ_ONLY, despliegue de la 29 con `desplegar_29.py` (commit y SHA) y postcheck 2AX.
 2. Contraseña del rol fijada por Pio fuera del repositorio; prueba de inicio de sesión de solo lectura.

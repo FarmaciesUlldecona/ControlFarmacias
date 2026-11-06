@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-06 (2BN-D: dos despliegues de la 29 REVERTIDOS, producción intacta, correcciones en local; PENDIENTE PRIORITARIO: alinear la base local de tests con Supabase; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-06 (2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; PENDIENTE PRIORITARIO: alinear la base local de tests con Supabase; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -326,7 +326,7 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
-### Hito 2BN-D: despliegues de la 29 revertidos (2026-11-05 y 2026-11-06)
+### Hito 2BN-D: migración 29 en producción al tercer intento (2026-11-05 y 2026-11-06)
 
 Con confirmación expresa de Pio. Evidencias en `C:\ControlFarmacias\evidencias_2bn_d` (con `SHA256SUMS.txt`).
 Script READ_ONLY: `pruebas/auditoria_2bn_d/preflight_readonly.py` (patrón 2BM-D; captura además los roles de cada
@@ -371,12 +371,32 @@ política, la ACL de los esquemas y el rol, que la huella del 2AZ no recoge).
   una copia local de `rls_auto_enable()` con los permisos de producción (`pg17_local.copia_rls_auto_enable`; la
   concesión al rol del sistema no se reproduce, no afecta a `cf_lectura`); un test comprueba que `cf_lectura` no
   puede llamarla. Con el script anterior el ensayo se revierte igual que en producción.
-- `PENDIENTE` (con confirmación de Pio): push, nuevo preflight y despliegue de la 29 con postcheck 2AX y la
-  excepción.
+- **Tercer intento (2026-11-06)**, con confirmación expresa de Pio. `CONFIRMADO EN PRODUCCIÓN`. Evidencias en
+  `C:\ControlFarmacias\evidencias_2bn_d\intento_3`. Puerta HEAD = `origin/main` = `e1320ee`; referencias locales
+  idénticas (46 objetos); 0 cambios desde las 07:58 UTC; precondiciones 9/9; captura pre `CAPTURA_OK` (10:05 UTC,
+  idéntica a la del intento 2); `comparar_pre` con las 3 diferencias de la excepción y nada más.
+- **Despliegue** (`desplegar_29.py e1320ee 0e252516…`, 10:10 UTC, una vez): **APLICADA**; postcondiciones 4/4
+  (datos, rol, privilegios, políticas).
+- Captura post `CAPTURA_OK` (marcas 28 y 29). Rol `cf_lectura`: LOGIN, sin atributos privilegiados, 5 conexiones,
+  solo lectura por defecto, miembro de ningún rol, USAGE en `public`. Postcheck 2AX: solo cambian los 46 objetos del
+  alcance; fuera de alcance, filas, configuración, operación, reservas, aprobaciones y privilegios por defecto
+  idénticos; excepción de los 3 objetos cumplida; 45/46 iguales a la referencia 29. **Única diferencia:**
+  `rol:cf_lectura`, campo `miembros`: `postgres` con ADMIN sí, INHERIT no y SET no (concedido por `supabase_admin`).
+  PostgreSQL 16+ la crea sola cuando el rol lo crea un no superusuario; la referencia local se crea como superusuario.
+  No da permisos a `cf_lectura`; permite a `postgres` administrarlo (contraseña y ajustes). **Excepción aceptada
+  (DECISIÓN DE PÍO):** solo ese campo y solo con esas opciones.
+- **Prueba de acceso** (`pruebas/auditoria_2bn_d/probar_acceso_cf_lectura.py`, ensayada contra PostgreSQL 17 local):
+  host y puerto del pooler como argumentos, usuario `cf_lectura.vklaiuytvegkelgyspxc`, contraseña solo desde
+  `CF_LECTURA_PASSWORD` (nunca argumento ni impresa). Comprueba conexión TLS, conteos de facturas, conciliaciones y
+  documentos, solo PIO visible, y que un INSERT y una RPC de escritura fallan (cada uno en una transacción READ WRITE
+  que se deshace siempre).
+- `PENDIENTE` (Pio): fijar la contraseña de `cf_lectura` en el editor SQL (fuera del repositorio) y ejecutar la
+  prueba de acceso; después, adaptar la web y los preflights a `cf_lectura`.
 - **`PENDIENTE PRIORITARIO` (Pio, 2026-11-06): alinear la base local de tests con Supabase**: `rls_auto_enable()`,
-  índices `albaranes_fecha_idx` y `albaranes_proveedor_idx`, columna `documentos_facturas.observaciones` y ACL del
-  esquema `public` (y los privilegios por defecto de Supabase de la deuda 2AS). Los dos despliegues revertidos de la
-  29 se debieron a diferencias entre local y Supabase.
+  índices `albaranes_fecha_idx` y `albaranes_proveedor_idx`, columna `documentos_facturas.observaciones`, ACL del
+  esquema `public` (y los privilegios por defecto de Supabase de la deuda 2AS) y la pertenencia automática del
+  creador en los roles nuevos (referencias locales generadas con el rol que imita al `postgres` de Supabase). Los
+  dos despliegues revertidos de la 29 y la diferencia del postcheck se debieron a diferencias entre local y Supabase.
 
 ### Hito 2BN: rol de solo lectura `cf_lectura` (migración 29, solo local)
 
@@ -392,8 +412,8 @@ política, la ACL de los esquemas y el rol, que la huella del 2AZ no recoge).
   de albaranes y reservas reciben una política equivalente (farmacias habilitadas).
 - **Tests** (`test_integracion_pg17_2bn.py`, 42; 44 tras el 2BN-D): lectura de lo previsto y nada más, RLS por farmacia, escrituras y
   RPC denegadas, inicio de sesión real en solo lectura, atributos y credencial, rollback, `desplegar_29.py` ensayado.
-- `PENDIENTE` (con confirmación de Pio): preflight y despliegue de la 29 con postcheck 2AX; contraseña del rol
-  fijada por Pio; adaptar la web y los preflights a `cf_lectura`.
+- Desplegada en producción el 2026-11-06 (ver Hito 2BN-D). `PENDIENTE`: contraseña del rol fijada por Pio y prueba
+  de acceso; adaptar la web y los preflights a `cf_lectura`.
 
 ### Hito 2BM-D: migración 28 en producción (2026-11-03)
 

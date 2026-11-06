@@ -60,6 +60,10 @@ def con_datos(pg17_nueva_base, tmp_path):
     """Base 29 con datos de PIO y filas de otra farmacia (no habilitada) en las tablas con columna farmacia."""
     pg = pg17_nueva_base("29")
     _datos_previos(pg, tmp_path)
+    return _con_rita(pg)
+
+
+def _con_rita(pg):
     pg.sql("insert into public.documentos_facturas(id,farmacia,archivo_nombre,archivo_ruta,archivo_hash) values "
            "('00000000-0000-4000-8000-0000000002b0','RITA','r.pdf','RITA/r.pdf',"
            f"{_lit(hashlib.sha256(b'rita-2bn').hexdigest())});")
@@ -355,3 +359,61 @@ def test_el_despliegue_rechaza_un_sql_distinto_del_commit(tmp_path, repo_corto):
     copia.write_text(copia.read_text(encoding="utf-8") + "\n-- cambio\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="MIGRACION_29_NO_COINCIDE_CON_COMMIT"):
         despliegue.main(commit, sha, tmp_path / "x.json")
+
+
+# --------------------------------------------------------------------------- prueba de acceso (2BN-D)
+# Al final del modulo: usan contenedor_tcp despues del ensayo de despliegue (que exige el rol ausente al empezar).
+
+SCRIPT_ACCESO = ROOT / "pruebas/auditoria_2bn_d/probar_acceso_cf_lectura.py"
+
+
+def _cargar_acceso():
+    spec = importlib.util.spec_from_file_location(f"acceso_2bnd_{uuid.uuid4().hex[:6]}", SCRIPT_ACCESO)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+def test_prueba_de_acceso_contra_pg17_local(contenedor_tcp, tmp_path):
+    nombre, puerto, _plantilla = contenedor_tcp
+    pg = base_desde(nombre, pgl.construir_plantilla(nombre, "29"))
+    _datos_previos(pg, tmp_path)
+    _con_rita(pg)
+    pg.sql(f"alter role {ROL} password 'local-only'")
+    try:
+        resultado = _cargar_acceso().probar("127.0.0.1", puerto, ROL, "local-only", dbname=pg.db, sslmode="disable")
+    finally:
+        pg.sql(f"alter role {ROL} password null")
+    assert resultado["veredicto"] == "ACCESO_OK", resultado
+    assert resultado["farmacias_visibles"] == ["PIO"]
+    assert resultado["insert"]["sqlstate"] == "42501" and resultado["rpc_escritura"]["sqlstate"] == "42501"
+    pio = ("select (select count(*) from public.facturas where farmacia = 'PIO'), "
+           "(select count(*) from public.conciliaciones c join public.facturas f on f.id = c.factura_id "
+           "where f.farmacia = 'PIO'), (select count(*) from public.documentos_facturas where farmacia = 'PIO')")
+    assert "|".join(str(v) for v in resultado["conteos"].values()) == pg.sql(pio)
+
+
+def test_prueba_de_acceso_sin_contrasena_no_conecta(monkeypatch, capsys):
+    acceso = _cargar_acceso()
+    monkeypatch.delenv(acceso.VARIABLE, raising=False)
+    monkeypatch.setattr(acceso, "probar", lambda *a, **k: pytest.fail("no debe conectar"))
+    assert acceso.main(["host", "6543"]) == 2
+    with pytest.raises(SystemExit):
+        acceso.main(["host", "6543", "contrasena-como-argumento"])
+
+
+def test_prueba_de_acceso_no_imprime_la_contrasena(monkeypatch, capsys):
+    acceso = _cargar_acceso()
+    secreto = "secreto-" + uuid.uuid4().hex
+    monkeypatch.setenv(acceso.VARIABLE, secreto)
+    recibidos = []
+
+    def falla(host, puerto, usuario, contrasena, **_k):
+        recibidos.append((usuario, contrasena))
+        raise RuntimeError("conexion rechazada")
+
+    monkeypatch.setattr(acceso, "probar", falla)
+    assert acceso.main(["host", "6543"]) == 2
+    assert recibidos == [(f"cf_lectura.{acceso.PROJECT_REF}", secreto)]
+    assert secreto not in capsys.readouterr().out
+
