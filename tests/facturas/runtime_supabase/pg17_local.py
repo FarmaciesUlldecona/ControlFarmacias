@@ -225,6 +225,47 @@ def sql_como_supabase(pg: "_Pg", sentencia: str) -> subprocess.CompletedProcess:
                           capture_output=True, text=True, encoding="utf-8", timeout=120)
 
 
+# Copia de la funcion de Supabase rls_auto_enable() (solo existe en produccion; definicion de la captura 2BN-D).
+# SECURITY DEFINER, devuelve event_trigger y la ejecuta PUBLIC, como en produccion; ademas anon y authenticated. La
+# concesion al rol del sistema no se reproduce (no afecta a cf_lectura). Sin event trigger asociado.
+SQL_RLS_AUTO_ENABLE = r"""
+CREATE OR REPLACE FUNCTION public.rls_auto_enable()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog'
+AS $function$
+DECLARE
+  cmd record;
+BEGIN
+  FOR cmd IN
+    SELECT *
+    FROM pg_event_trigger_ddl_commands()
+    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
+      AND object_type IN ('table','partitioned table')
+  LOOP
+     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
+      BEGIN
+        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
+        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
+      END;
+     ELSE
+        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
+     END IF;
+  END LOOP;
+END;
+$function$;
+GRANT EXECUTE ON FUNCTION public.rls_auto_enable() TO PUBLIC, anon, authenticated;
+"""
+
+
+def copia_rls_auto_enable(pg: "_Pg") -> None:
+    pg.sql(SQL_RLS_AUTO_ENABLE)
+
+
 def esquema(pg: "_Pg") -> str:
     """Volcado de esquema sin las lineas restrict/unrestrict aleatorias de pg_dump."""
     salida = _docker("exec", pg.contenedor, "pg_dump", "-U", "postgres", "-s", pg.db).stdout

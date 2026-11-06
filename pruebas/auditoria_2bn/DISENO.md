@@ -51,7 +51,7 @@ lectura de la lista y nada más, ninguna escritura, ninguna secuencia, ninguna f
 Tras el despliegue, Pio fija la contraseña en el editor SQL (fuera del repositorio) y se comprueba el inicio de
 sesión del rol por el pooler (usuario `cf_lectura.<project_ref>`).
 
-## 4. Tests (`test_integracion_pg17_2bn.py`, 44)
+## 4. Tests (`test_integracion_pg17_2bn.py`, 45)
 
 - Lee cada objeto previsto (24); no lee nada fuera de la lista.
 - La RLS oculta las filas de una farmacia no habilitada (documentos y albaranes) y deja ver las hijas a través de
@@ -66,6 +66,9 @@ sesión del rol por el pooler (usuario `cf_lectura.<project_ref>`).
 - 2BN-D: el ensayo de despliegue y el rollback se hacen con `cf_postgres_supabase` (imitación del `postgres` de
   Supabase, sin superusuario); la imitación rechaza `ALTER ROLE … NOSUPERUSER` y no puede adoptar `postgres`; ningún
   `ALTER ROLE` de la 29 nombra atributos.
+- 2BN-D (segundo intento): la postcondición de privilegios excluye las funciones `event_trigger` (no se pueden
+  llamar directamente); el ensayo incluye una copia de `rls_auto_enable()` de Supabase con sus permisos y un test
+  comprueba que `cf_lectura` no puede llamarla.
 
 ## 5. Pendiente (con confirmación de Pio)
 

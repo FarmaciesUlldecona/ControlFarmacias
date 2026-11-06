@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-05 (2BN-D: primer despliegue de la 29 REVERTIDO por permisos, producción intacta, 29 corregida en local; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-06 (2BN-D: dos despliegues de la 29 REVERTIDOS, producción intacta, correcciones en local; PENDIENTE PRIORITARIO: alinear la base local de tests con Supabase; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -326,7 +326,7 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
-### Hito 2BN-D: primer despliegue de la 29 revertido (2026-11-05)
+### Hito 2BN-D: despliegues de la 29 revertidos (2026-11-05 y 2026-11-06)
 
 Con confirmación expresa de Pio. Evidencias en `C:\ControlFarmacias\evidencias_2bn_d` (con `SHA256SUMS.txt`).
 Script READ_ONLY: `pruebas/auditoria_2bn_d/preflight_readonly.py` (patrón 2BM-D; captura además los roles de cada
@@ -354,8 +354,29 @@ política, la ACL de los esquemas y el rol, que la huella del 2AZ no recoge).
   cambios. Nuevo SHA LF de la 29: `0e2525165a5400b9994fcc6efff1e0f87348372f802b4f02cef2f49dfeb7698e`. Ensayo de
   despliegue y rollback con el rol `cf_postgres_supabase`, que imita al `postgres` de Supabase (norma en
   REGLAS_CRITICAS); con la 29 antigua el ensayo se revierte igual que en producción.
-- `PENDIENTE` (con confirmación de Pio): push, nuevo preflight (referencias locales y alcance recalculados) y
-  despliegue de la 29 corregida con postcheck 2AX y la excepción.
+- **Segundo intento (2026-11-06)**, con confirmación expresa de Pio. Evidencias en
+  `C:\ControlFarmacias\evidencias_2bn_d\intento_2`. Puerta HEAD = `origin/main` = `8c6f35c`; referencias locales
+  con la 29 corregida idénticas a las del primer intento (mismo alcance, 46 objetos); precondiciones 9/9; captura
+  pre `CAPTURA_OK` (07:59 UTC; frente al 5/11 solo cambian las 33 altas de albaranes de la noche); `comparar_pre`
+  con las 3 diferencias de la excepción y nada más. Noche del 5/11: tareas con resultado 0, 33 albaranes nuevos de
+  PIO, 0 cambios, 0 documentos nuevos, 0 NORMALIZANDO, 0 claims, 0 ejecuciones.
+- **Despliegue** (`desplegar_29.py 8c6f35c 0e252516…`, 08:02 UTC, una vez): **REVERTIDA** por
+  `POSTCONDICIONES_NO_CUMPLIDAS` (`privilegios: false`; datos, rol y políticas en verde). Causa:
+  `public.rls_auto_enable()` (función de Supabase que activa RLS en las tablas nuevas; solo en producción, deuda
+  aceptada) es `SECURITY DEFINER`, devuelve `event_trigger` y la ejecuta `PUBLIC`; la postcondición la contaba como
+  función privilegiada. No se puede llamar directamente (*trigger functions can only be called as triggers*,
+  comprobado en local). Sin reintento. Captura post READ_ONLY idéntica a la pre: producción intacta.
+- **Corrección (local, aprobada por Pio):** la postcondición de privilegios de `desplegar_29.py` excluye también
+  las funciones que devuelven `event_trigger` (la 29 no cambia: SHA LF `0e252516…`). El ensayo de despliegue crea
+  una copia local de `rls_auto_enable()` con los permisos de producción (`pg17_local.copia_rls_auto_enable`; la
+  concesión al rol del sistema no se reproduce, no afecta a `cf_lectura`); un test comprueba que `cf_lectura` no
+  puede llamarla. Con el script anterior el ensayo se revierte igual que en producción.
+- `PENDIENTE` (con confirmación de Pio): push, nuevo preflight y despliegue de la 29 con postcheck 2AX y la
+  excepción.
+- **`PENDIENTE PRIORITARIO` (Pio, 2026-11-06): alinear la base local de tests con Supabase**: `rls_auto_enable()`,
+  índices `albaranes_fecha_idx` y `albaranes_proveedor_idx`, columna `documentos_facturas.observaciones` y ACL del
+  esquema `public` (y los privilegios por defecto de Supabase de la deuda 2AS). Los dos despliegues revertidos de la
+  29 se debieron a diferencias entre local y Supabase.
 
 ### Hito 2BN: rol de solo lectura `cf_lectura` (migración 29, solo local)
 

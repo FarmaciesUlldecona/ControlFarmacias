@@ -117,8 +117,9 @@ POSTCONDICIONES = (
     f"  and not exists (select 1 from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind = 'S' "
     f"  and case when c.relkind = 'S' then has_sequence_privilege('{ROL}', c.oid, 'USAGE,SELECT,UPDATE') end)"
     f"  and not exists (select 1 from pg_proc p where p.pronamespace = 'public'::regnamespace "
-    f"  and has_function_privilege('{ROL}', p.oid, 'EXECUTE') and (p.prosecdef or (p.provolatile = 'v' "
-    f"  and p.prorettype <> 'trigger'::regtype)))"
+    # Las de event_trigger (rls_auto_enable de Supabase, 2BN-D) no se pueden llamar directamente.
+    f"  and has_function_privilege('{ROL}', p.oid, 'EXECUTE') and p.prorettype <> 'event_trigger'::regtype "
+    f"  and (p.prosecdef or (p.provolatile = 'v' and p.prorettype <> 'trigger'::regtype)))"
     + "".join(f"  and not coalesce(has_schema_privilege('{ROL}', to_regnamespace('{e}'), 'USAGE'), false)"
               for e in ESQUEMAS_VEDADOS)
     + "  and not has_table_privilege('authenticated', 'public.albaranes', 'UPDATE'),"

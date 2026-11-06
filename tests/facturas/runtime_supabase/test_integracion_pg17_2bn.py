@@ -250,6 +250,9 @@ def test_ensayo_completo_despliegue_29_y_segundo_intento_revierte(contenedor_tcp
     # Como en produccion: el rol no existe en el cluster y se despliega con la imitacion del postgres de Supabase.
     assert pg.sql(f"select count(*) from pg_roles where rolname = '{ROL}'") == "0"
     rol_despliegue = pgl.rol_supabase(nombre)
+    # Como en produccion: rls_auto_enable() (SECURITY DEFINER, event_trigger, EXECUTE para PUBLIC). El segundo
+    # despliegue de la 29 se revirtio porque la postcondicion la contaba como funcion privilegiada (2BN-D).
+    pgl.copia_rls_auto_enable(pg)
     commit, sha, despliegue = _repositorio_con_commit(repo_corto)
 
     sys.path.insert(0, str(ROOT / "tmp_pg_probe_deps"))
@@ -288,6 +291,7 @@ def test_ensayo_completo_despliegue_29_y_segundo_intento_revierte(contenedor_tcp
     # Referencia (superusuario) despues del despliegue: el rol ya existe y lo creo la imitacion.
     referencia = pgl.base_desde(nombre, pgl.construir_plantilla(nombre, "28"))
     _datos_previos(referencia, tmp_path)
+    pgl.copia_rls_auto_enable(referencia)
     referencia.sql(MIGRACION_29.read_text(encoding="utf-8"))
     assert esquema(pg).replace(pg.db, "") == esquema(referencia).replace(referencia.db, "")
     assert {k: _huella(pg, q) for k, q in CONSULTAS_HUELLA.items()} == antes and _reservas(pg) == reservas
@@ -320,6 +324,20 @@ def test_la_imitacion_del_postgres_de_supabase_rechaza_lo_que_rechaza_produccion
     adoptar = pgl.sql_como_supabase(pg, "set role postgres")
     assert adoptar.returncode != 0 and "permission denied" in adoptar.stderr
     assert pgl.sql_como_supabase(pg, "select current_setting('is_superuser')").stdout.strip() == "off"
+
+
+def test_cf_lectura_no_puede_llamar_a_rls_auto_enable(con_datos):
+    """La postcondicion excluye las funciones event_trigger: el rol tiene EXECUTE (via PUBLIC), pero no se pueden
+    llamar directamente."""
+    pg = con_datos
+    pgl.copia_rls_auto_enable(pg)
+    assert pg.sql(f"select has_function_privilege('{ROL}', 'public.rls_auto_enable()', 'EXECUTE'), p.prosecdef "
+                  "from pg_proc p where p.oid = 'public.rls_auto_enable()'::regprocedure") == "t|t"
+    llamada = _sesion_del_rol(pg, "select public.rls_auto_enable()")
+    assert llamada.returncode != 0 and "trigger functions can only be called as triggers" in llamada.stderr
+    # La postcondicion de privilegios del despliegue sigue en verde con la funcion presente.
+    # Columnas: datos (2), rol, privilegios, politicas.
+    assert pg.sql(DESPLIEGUE.POSTCONDICIONES).split("|")[2:] == ["t", "t", "t"]
 
 
 def test_la_29_no_altera_atributos_del_rol():
