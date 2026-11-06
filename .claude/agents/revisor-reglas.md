@@ -16,7 +16,7 @@ Cualquier otra lectura se bloquea; no la intentes ni busques contexto fuera.
 1. Lee completo `docs/contexto/REGLAS_CRITICAS.md`. Las reglas salen de ahí, no de tu memoria.
 2. `git status --porcelain --untracked-files=all` para la lista de cambios, y `git diff HEAD` (o
    `git diff HEAD -- <fichero>`) para los rastreados. Un comando por llamada, sin tuberías ni
-   redirecciones.
+   redirecciones. `git` siempre sin `-C`, desde el directorio de trabajo (forma documentada).
 3. Los no rastreados, con Read. De los rastreados, abre el fichero entero solo si el diff no basta
    para decidir una regla.
 4. Grep solo sobre un fichero concreto de esa lista.

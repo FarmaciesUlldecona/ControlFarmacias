@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-05 (2BN-D: ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-06 (2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -29,6 +29,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   qué lo bloqueó. Nunca reformula, parte, ofusca ni cambia de herramienta la acción para esquivar el
   bloqueo. Origen: en el diagnóstico del 2BK se partió el nombre de un rol para pasar un hook y el
   clasificador lo rechazó.
+  **Aclaración (Pio, 2026-11-06, 2BN-D):** PROHIBIDO reformular una acción para conseguir lo que un hook
+  impide. PERMITIDO usar la forma documentada de una acción autorizada (por ejemplo, `git` sin `-C`, desde el
+  directorio de trabajo, para la misma lectura del repositorio). En la duda, PARA.
 - **Puerta git antes de una ejecución productiva (tandas de la serie, despliegues).** Árbol siempre limpio y
   HEAD == `origin/main`. **Excepción acotada (DECISIÓN DE PIO, 2026-11-05):** HEAD puede ir por delante de
   `origin/main` solo si los commits pendientes tocan exclusivamente documentación (`docs/` o `*.md`); se
