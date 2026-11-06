@@ -47,6 +47,8 @@ create table public.facturas (
         constraint facturas_estado_lectura_check
         check (estado_lectura in ('PENDIENTE','PROCESANDO','EXTRAIDA','REVISION','ERROR')),
     requiere_revision boolean not null default false,
+    -- Columna productiva (deuda 2AS, alineada en el 2BQ): la 06 la conserva en documentos_facturas.
+    observaciones text,
     datos_extraidos jsonb not null default '{}'::jsonb,
     fecha_importacion timestamptz not null default now(),
     fecha_actualizacion timestamptz not null default now(),
@@ -87,6 +89,9 @@ create table public.albaranes (
     constraint albaranes_contador_unico unique (farmacia, id_contador),
     constraint albaranes_numero_unico unique (farmacia, id_proveedor, numero_albaran)
 );
+-- Indices productivos (presentes al menos desde el 2P; excepcion del 2BC, alineados en el 2BQ).
+create index albaranes_fecha_idx on public.albaranes using btree (fecha);
+create index albaranes_proveedor_idx on public.albaranes using btree (id_proveedor);
 
 \ir ../migrations/06_reestructurar_documentos_y_facturas.sql
 
@@ -98,5 +103,7 @@ alter table public.facturas_vencimientos enable row level security;
 alter table public.facturas_impuestos enable row level security;
 alter table public.facturas_albaranes_extraidos enable row level security;
 alter table public.facturas_ajustes enable row level security;
+-- ACL del esquema public de Supabase (2BQ): USAGE explicito para anon, authenticated, postgres y el rol del sistema.
+grant usage on schema public to anon, authenticated, postgres, service_role;
 grant all on all tables in schema public to anon, authenticated, service_role;
 grant all on table storage.buckets to anon, authenticated, service_role;

@@ -144,6 +144,11 @@ def local(variante: str, salida: Path) -> None:
         pg = pgl._Pg(nombre, pgl.construir_plantilla(nombre, variante))
         datos = {"variante": variante, "esquema": json.loads(pg.sql(bid.SQL_ESQUEMA + ";")),
                  "extra": json.loads(pg.sql(SQL_EXTRA + ";"))}
+        # 2BQ: la plantilla aplica la 29 con la imitacion del postgres de Supabase; su pertenencia ADMIN en el rol
+        # nuevo es la que en produccion tiene postgres.
+        if datos["extra"]["rol"]:
+            datos["extra"]["rol"]["miembros"] = sorted(
+                "postgres" if m == pgl.ROL_SUPABASE else m for m in datos["extra"]["rol"]["miembros"])
     finally:
         pgl.cerrar_sesiones(nombre)
         pgl._docker("rm", "-f", nombre, comprobar=False)

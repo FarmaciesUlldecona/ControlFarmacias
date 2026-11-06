@@ -432,6 +432,7 @@ def test_paquete_staging_autocontenido_y_sin_destino_productivo() -> None:
         "05_test_conciliacion.sql",
         "06_test_backfill_pio.sql",
         "07_test_claim_conciliacion_v2.sql",
+        "08_supabase_alineacion.sql",  # 2BQ: alineacion de la base local de tests con Supabase
     ]
     assert [ruta.name for ruta in sorted(staging.glob("*.sql"))] == esperados
     texto = "\n".join((staging / nombre).read_text(encoding="utf-8") for nombre in esperados)

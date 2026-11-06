@@ -225,45 +225,25 @@ def sql_como_supabase(pg: "_Pg", sentencia: str) -> subprocess.CompletedProcess:
                           capture_output=True, text=True, encoding="utf-8", timeout=120)
 
 
-# Copia de la funcion de Supabase rls_auto_enable() (solo existe en produccion; definicion de la captura 2BN-D).
-# SECURITY DEFINER, devuelve event_trigger y la ejecuta PUBLIC, como en produccion; ademas anon y authenticated. La
-# concesion al rol del sistema no se reproduce (no afecta a cf_lectura). Sin event trigger asociado.
-SQL_RLS_AUTO_ENABLE = r"""
-CREATE OR REPLACE FUNCTION public.rls_auto_enable()
- RETURNS event_trigger
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'pg_catalog'
-AS $function$
-DECLARE
-  cmd record;
-BEGIN
-  FOR cmd IN
-    SELECT *
-    FROM pg_event_trigger_ddl_commands()
-    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
-      AND object_type IN ('table','partitioned table')
-  LOOP
-     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
-      BEGIN
-        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
-        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
-      EXCEPTION
-        WHEN OTHERS THEN
-          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
-      END;
-     ELSE
-        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
-     END IF;
-  END LOOP;
-END;
-$function$;
-GRANT EXECUTE ON FUNCTION public.rls_auto_enable() TO PUBLIC, anon, authenticated;
-"""
+# Alineacion con Supabase (2BQ): la plantilla 19 aplica, entre el rollback de la 19 y la 19, la copia de
+# rls_auto_enable() (que recibe la ACL productiva de los privilegios por defecto vigentes) y la ACL productiva de
+# cuatro funciones que la 19 no toca.
+ALINEACION_SUPABASE = STG / "08_supabase_alineacion.sql"
 
 
-def copia_rls_auto_enable(pg: "_Pg") -> None:
-    pg.sql(SQL_RLS_AUTO_ENABLE)
+def _aplicar_29_como_supabase(pg: "_Pg") -> None:
+    """La 29 con la imitacion del postgres de Supabase (2BQ): el creador del rol queda con ADMIN sobre cf_lectura
+    (INHERIT y SET no), como en produccion. El rol es del cluster: si ya lo creo un superusuario en otra base, se da
+    a la imitacion la misma pertenencia que habria recibido al crearlo."""
+    rol = rol_supabase(pg.contenedor)
+    pg.sql(f"do $$ begin if exists (select 1 from pg_roles where rolname = 'cf_lectura') and not exists ("
+           f"select 1 from pg_auth_members where pg_get_userbyid(roleid) = 'cf_lectura' "
+           f"and pg_get_userbyid(member) = '{rol}') "
+           f"then grant cf_lectura to {rol} with admin true, inherit false, set false; end if; end $$;")
+    for _ in range(2):
+        r = sql_como_supabase(pg, MIGRACION_29.read_text(encoding="utf-8"))
+        if r.returncode:
+            raise RuntimeError(r.stderr.strip()[-2000:])
 
 
 def esquema(pg: "_Pg") -> str:
@@ -549,7 +529,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     """16: cadena 2AN; 17: 16 + migracion 17 aplicada dos veces; 16_rollback: 16 + 17 + rollback.
 
     18: 17 + migracion 18 aplicada dos veces; 17_rollback: 17 + 18 + rollback de la 18.
-    19 (2AZ): 18 + rollback de la 19 (matriz y privilegios por defecto productivos, 2AX) + 19.
+    19 (2AZ): 18 + rollback de la 19 (matriz y privilegios por defecto productivos, 2AX) + alineacion Supabase (2BQ) + 19.
     20: 19 + migracion 20 aplicada dos veces; 20_rollback: 20 + rollback de la 20.
     21 (2BA): 20 + migracion 21 aplicada dos veces; 21_rollback: 21 + rollback de la 21.
     22 (2BD): 21 + migracion 22 aplicada dos veces; 22_rollback: 22 + rollback de la 22.
@@ -559,7 +539,8 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     26 (2BK): 25 + migracion 26 aplicada dos veces; 26_rollback: 26 + rollback de la 26.
     27 (2BL): 26 + migracion 27 aplicada dos veces; 27_rollback: 27 + rollback de la 27.
     28 (2BM): 27 + migracion 28 aplicada dos veces; 28_rollback: 28 + rollback de la 28.
-    29 (2BN): 28 + migracion 29 aplicada dos veces; 29_rollback: 29 + rollback de la 29.
+    29 (2BN): 28 + migracion 29 aplicada dos veces con la imitacion del postgres de Supabase (2BQ); 29_rollback: 29 +
+    rollback de la 29.
     Idempotente: si la plantilla ya existe en el contenedor, se reutiliza.
     """
     assert variante in VARIANTES
@@ -585,6 +566,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         pg = _Pg(contenedor, nombre)
         if variante == "19":
             pg.sql(ROLLBACK_19.read_text(encoding="utf-8"))
+            pg.sql(ALINEACION_SUPABASE.read_text(encoding="utf-8"))
             pg.sql(MIGRACION_19.read_text(encoding="utf-8"))
         elif variante == "20":
             pg.sql(MIGRACION_20.read_text(encoding="utf-8"))
@@ -632,8 +614,8 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         elif variante == "28_rollback":
             pg.sql(ROLLBACK_28.read_text(encoding="utf-8"))
         elif variante == "29":
-            pg.sql(MIGRACION_29.read_text(encoding="utf-8"))
-            pg.sql(MIGRACION_29.read_text(encoding="utf-8"))
+            cerrar_sesiones(contenedor, nombre)
+            _aplicar_29_como_supabase(pg)
         else:
             pg.sql(ROLLBACK_29.read_text(encoding="utf-8"))
         cerrar_sesiones(contenedor, nombre)
