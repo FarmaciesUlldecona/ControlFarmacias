@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-06 (2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-08 (decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -146,6 +146,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - **R9 `id_proveedor` tolerante:** solo en la comparación de
     `buscar_candidato_albaran` (trim y ceros a la izquierda: `'2' == '0002' == '0002 '`);
     los literales se conservan.
+    **Decisión de Pio (2026-11-08):** fuera de `buscar_candidato_albaran`, la R9 solo se permite como uso de
+    LECTURA para mostrar en la web (agrupar proveedores sin CIF y detectar posibles duplicados en Farmatic).
+    Sin efecto en datos ni en conciliaciones: no escribe, no cambia literales ni decide casamientos.
 - Reglas aprobadas por Pio en el Hito 2AZ (2026-10-06/07; `CONFIRMADO POR TEST` en
   PostgreSQL 17 local; migración 20 `CONFIRMADO EN PRODUCCIÓN`, desplegada en el
   Hito 2AZ-D el 2026-10-08; diseño en
@@ -317,6 +320,10 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   `MANUAL_ONE_SHOT`.
 - Una diferencia documental nunca genera automáticamente movimientos, sentidos,
   categorías ni explicaciones.
+- **Sentido de los vencimientos (decisión de Pio, 2026-11-08):** se toma de
+  `datos_extraidos.tipo_documento.valor`, NUNCA de la columna `tipo_documento`. `FACTURA` o
+  `FACTURA_DUPLICADO` = cargo; `ABONO` = abono; `FACTURA_RECTIFICATIVA`, vacío u `OTRO` = no documentado (no se
+  suma en el cashflow).
 - Las relaciones con Farmatic conservan el identificador literal de proveedor; no
   se coacciona a número ni se normaliza destructivamente.
 - En conciliación, SAFA, Alliance y Cencora (y ECO360 por R19, 2BG) pueden canonicalizarse dentro del grupo
