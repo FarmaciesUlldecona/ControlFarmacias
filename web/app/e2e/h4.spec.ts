@@ -23,7 +23,7 @@ test.describe('Inicio PC 1440', () => {
     await abrirInicio(page);
     const esperado: Record<string, string> = {
       conciliadas: '3', 'pendientes-conciliar': '4', 'requieren-revision': '2', 'pendientes-procesar': '1',
-      'con-defecto': '2', 'sin-automatizar': '4', incidencias: '6',
+      'con-defecto': '2', 'sin-automatizar': '4', incidencias: '13',
     };
     for (const [clave, n] of Object.entries(esperado)) await expect(page.locator(`[data-contador="${clave}"]`)).toHaveText(n);
     await expect(page.locator('.contadores')).toContainText('2 bloqueantes');
@@ -42,13 +42,14 @@ test.describe('Inicio PC 1440', () => {
     await expect(c).toContainText('sin datos bancarios');
   });
 
-  test('próximos vencimientos: 5, "x de N" e importe desconocido', async ({ page }) => {
+  test('próximos vencimientos: 5, "x de N" e importe pendiente (H4c)', async ({ page }) => {
     await abrirInicio(page);
     const filas = page.locator('[data-vencimiento]');
     await expect(filas).toHaveCount(5);
     await expect(filas.nth(3)).toContainText('2 de 3');
     await expect(filas.nth(4)).toContainText('3 de 3');
-    await expect(filas.nth(4)).toContainText('desconocido');
+    await expect(filas.nth(4)).toContainText('importe pendiente');
+    await expect(filas.nth(4)).not.toContainText('desconocido');
     await expect(filas.nth(4)).not.toContainText('0,00 €');
     await expect(filas.first()).toContainText('04/11/2026');
   });
@@ -56,20 +57,22 @@ test.describe('Inicio PC 1440', () => {
   test('necesita tu atención: alertas (duplicado regla B) e incidencias con enlace', async ({ page }) => {
     await abrirInicio(page);
     const at = page.locator('#atencion');
-    // Rojos primero; los 8 primeros visibles y el resto tras "Mostrar N avisos más".
-    await expect(at.locator('.aviso')).toHaveCount(8);
-    await expect(at.locator('.aviso').first()).toHaveClass(/borde-rojo/);
-    await at.getByRole('button', { name: /Mostrar \d+ avisos más/ }).click();
-    const dup = at.locator('[data-aviso="Duplicado en Farmatic"]');
-    await expect(dup).toHaveCount(1);
+    // H4d: agrupado; primero "Diferencia con albaranes" (rojo).
+    await expect(at.locator('[data-grupo]').first()).toHaveAttribute('data-grupo', 'DIFERENCIA_ALBARANES');
+    await expect(at.locator('[data-grupo]').first()).toHaveClass(/borde-rojo/);
+    const dup = at.locator('[data-grupo="DUPLICADO_FARMATIC"]');
+    await dup.locator('summary').click();
+    await expect(dup.locator('[data-caso]')).toHaveCount(1);
     await expect(dup).toContainText('08C66676');
     await expect(dup).toContainText('57,40 €');
     await expect(at).not.toContainText('08C70015');
-    await expect(at.locator('[data-aviso="Incidencia bloqueante"]')).toHaveCount(2);
-    await expect(at).toContainText('El total de la factura no tiene evidencia legible en el documento.');
-    await expect(at).toContainText('Diferencia según el motor: 41,90 €');
-    // Enlace a destino: el aviso de albarán fuera de Farmatic abre su factura.
-    await at.locator('[data-aviso="Fuera de Farmatic"]').getByRole('link', { name: /^Abrir/ }).click();
+    const dif = at.locator('[data-grupo="DIFERENCIA_ALBARANES"]');
+    await dif.locator('summary').click();
+    await expect(dif).toContainText('Diferencia según el motor: 41,90 €');
+    // Enlace a destino: el albarán fuera de Farmatic abre su factura.
+    const fuera = at.locator('[data-grupo="ALBARAN_NO_EN_FARMATIC"]');
+    await fuera.locator('summary').click();
+    await fuera.getByRole('link', { name: /^Abrir/ }).click();
     await expect(page).toHaveURL(/\/facturas\/f0000000-0000-4000-8000-000000000001$/);
   });
 

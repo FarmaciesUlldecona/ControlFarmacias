@@ -187,6 +187,12 @@ a:hover { color: #0f252e; }
 .tabla .proveedor a:hover { text-decoration: underline; }
 .nota { display: inline-block; margin-left: 8px; font-size: 12px; color: var(--tenue); white-space: nowrap; }
 .desconocido { color: var(--naranja-texto); font-weight: 600; }
+/* H4c: total de la factura junto a un vencimiento pendiente; solo referencia, nunca su importe. */
+.referencia-total { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; color: var(--gris-texto); white-space: normal; }
+.referencia-total strong { font-weight: 600; white-space: nowrap; }
+.detalle-vencimientos { margin-top: 16px; }
+.detalle-vencimientos .nota { display: block; margin: 2px 0 0; white-space: normal; }
+.tabla .proveedor .nota { white-space: normal; }
 
 /* Avisos */
 .avisos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -205,6 +211,46 @@ a:hover { color: #0f252e; }
 .aviso-ref { font-size: 13px; overflow-wrap: anywhere; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
 .aviso-abrir { font-size: 14px; font-weight: 600; min-height: 32px; display: inline-flex; align-items: center; }
 .pie-inicio { margin: 0; font-size: 13px; }
+
+/* H4d: "Necesita tu atención" agrupado (una fila por tipo, desplegable con los casos) */
+.grupos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.grupo { border-bottom: 1px solid var(--borde-suave); border-left: 3px solid transparent; }
+.grupo:last-child { border-bottom: 0; }
+.grupo.borde-rojo { border-left-color: var(--rojo); } .grupo.borde-naranja { border-left-color: var(--naranja); }
+.grupo.borde-gris { border-left-color: var(--gris); }
+.grupo summary {
+  display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 4px 8px 12px; cursor: pointer;
+  list-style: none; font-size: 15px; font-weight: 600;
+}
+.grupo summary::-webkit-details-marker { display: none; }
+.grupo summary::after { content: '▸'; color: var(--tenue); margin-left: 2px; transition: transform 0.15s; }
+.grupo details[open] summary::after { transform: rotate(90deg); }
+.grupo summary:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; }
+.grupo-titulo { flex: 1 1 auto; min-width: 0; }
+.grupo summary .insignia { flex: 0 0 auto; }
+.casos { list-style: none; margin: 0 0 8px; padding: 0 0 0 12px; }
+.caso {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: start;
+  padding: 10px 0 10px 18px; border-top: 1px dashed var(--borde-suave);
+}
+.caso-cuerpo { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.caso-texto { font-size: 14px; }
+.caso-ref { font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; min-width: 0; }
+.caso-referencia { overflow-wrap: anywhere; }
+.caso-fecha { font-variant-numeric: tabular-nums; }
+.caso-ref .nombre-truncado { max-width: 100%; }
+.casos-detalle { padding: 0; margin: 0; }
+.casos-detalle .caso { grid-template-columns: minmax(0, 1fr); padding-left: 0; }
+.casos-detalle .caso:first-child { border-top: 0; }
+
+/* H4d: nombre largo de proveedor en una línea con "…" (completo en title); nunca cortado a mitad de palabra */
+.nombre-truncado { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.tabla-fija { table-layout: fixed; }
+.tabla-fija .col-fecha { width: 6.6em; }
+.tabla-fija .col-importe { width: 9.6em; }
+.tabla .proveedor a:has(.nombre-truncado) { display: block; max-width: 100%; }
+.tabla .proveedor .nombre-truncado { display: block; }
+.insignia-mini { margin-top: 4px; padding: 1px 8px; font-size: 11px; }
 
 @media (max-width: 1100px) {
   .fila-dos { grid-template-columns: minmax(0, 1fr); }

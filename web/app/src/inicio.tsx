@@ -1,16 +1,12 @@
 // H4: pantalla Inicio (maqueta web/docs/maquetas/Main.dc.html) sobre el contrato `inicio`.
-// Solo presenta: no recalcula diferencias ni tolerancias; importe null = "desconocido", nunca 0.
-import { useState } from 'react';
+// Solo presenta: no recalcula diferencias ni tolerancias; importe null nunca es 0 (vencimiento: "importe pendiente").
 import { Link } from 'react-router-dom';
-import type { Alerta, Color, Importe, InicioDTO, ItemAtencion, Vencimiento } from '../server/contrato.ts';
+import type { CasoAtencion, Color, Importe, InicioDTO, VencimientoInicio } from '../server/contrato.ts';
 import { useApiRecargable } from './api.ts';
 import { euros, fechaCorta, fechaLarga, hora, plural, porcentaje } from './formato.ts';
 
 const CLASE: Record<Color, string> = { verde: 'g', azul: 'b', naranja: 'o', rojo: 'r', gris: 'n' };
 const PUNTO: Record<Color, string> = { verde: 'pg', azul: 'pb', naranja: 'po', rojo: 'pr', gris: 'pn' };
-/** Orden de "Necesita tu atención": incidencias primero, información al final. */
-const PRIORIDAD: Record<Color, number> = { rojo: 0, naranja: 1, azul: 2, gris: 3, verde: 4 };
-const VISIBLES = 8;
 
 // ---------------------------------------------------------------------------
 // Contadores (sin importes)
@@ -90,16 +86,24 @@ function Cobertura({ d }: { d: InicioDTO }) {
 // Próximos vencimientos
 // ---------------------------------------------------------------------------
 
-function ImporteCelda({ v }: { v: Importe }) {
+/** Vencimiento sin importe (R14): "importe pendiente"; nunca 0 ni el total de la factura. */
+export function ImporteVencimiento({ v }: { v: Importe }) {
   const t = euros(v);
-  return t === null ? <span className="desconocido">desconocido</span> : <>{t}</>;
+  return t === null ? <span className="desconocido" data-importe-pendiente>importe pendiente</span> : <>{t}</>;
 }
 
-function notaVencimiento(v: Vencimiento): string[] {
+function notaVencimiento(v: VencimientoInicio): string[] {
   const notas: string[] = [];
   if (v.vencimientos_factura > 1) notas.push(`${v.orden ?? '?'} de ${v.vencimientos_factura}`);
-  if (v.tipo_documento === 'ABONO') notas.push('abono');
+  if (v.sentido === 'ABONO') notas.push('abono');
+  if (v.sentido === 'NO_DOCUMENTADO') notas.push('sentido no documentado');
   return notas;
+}
+
+/** H4d: nombre de proveedor en una línea; si no cabe, "…" y el nombre completo en title (nunca cortado a mitad). */
+function NombreProveedor({ nombre }: { nombre: string | null }) {
+  const n = nombre ?? 'Proveedor sin identificar';
+  return <span className="nombre-truncado" title={n}>{n}</span>;
 }
 
 function Vencimientos({ d }: { d: InicioDTO }) {
@@ -113,17 +117,19 @@ function Vencimientos({ d }: { d: InicioDTO }) {
       {vs.length === 0 ? (
         <p className="tenue vacio">No hay vencimientos documentados a partir de hoy.</p>
       ) : (
-        <table className="tabla">
+        <table className="tabla tabla-fija">
+          <colgroup><col className="col-fecha" /><col /><col className="col-importe" /></colgroup>
           <thead><tr><th scope="col">Fecha</th><th scope="col">Proveedor</th><th scope="col" className="num">Importe</th></tr></thead>
           <tbody>
             {vs.map((v) => (
               <tr key={v.vencimiento_id} data-vencimiento={v.vencimiento_id}>
                 <td className="fecha">{fechaCorta(v.fecha_vencimiento)}</td>
                 <td className="proveedor">
-                  <Link to={`/facturas/${v.factura_id}`}>{v.proveedor ?? 'Proveedor sin identificar'}</Link>
+                  <Link to={`/facturas/${v.factura_id}`}><NombreProveedor nombre={v.proveedor} /></Link>
                   {notaVencimiento(v).map((n) => <span key={n} className="nota">{n}</span>)}
+                  {v.posible_duplicado && <span className="insignia o insignia-mini" data-posible-duplicado>posible duplicado</span>}
                 </td>
-                <td className="num"><ImporteCelda v={v.importe} /></td>
+                <td className="num"><ImporteVencimiento v={v.importe} /></td>
               </tr>
             ))}
           </tbody>
@@ -134,97 +140,67 @@ function Vencimientos({ d }: { d: InicioDTO }) {
 }
 
 // ---------------------------------------------------------------------------
-// Necesita tu atención: avisos del contrato + alertas, en lenguaje llano
+// Necesita tu atención (H4d): una fila por tipo con su nº de casos; desplegable con los casos y su enlace
 // ---------------------------------------------------------------------------
 
-interface Aviso {
-  clave: string;
-  etiqueta: string;
-  color: Color;
-  texto: string;
-  detalle: string | null;
-  referencia: string;
-  codigo: string | null;
-  a: string;
-}
-
-function destinoItem(i: ItemAtencion): string {
-  return i.factura_id ? `/facturas/${i.factura_id}` : '/facturas';
-}
-
-function detalleDiferencia(i: ItemAtencion): string | null {
-  if (!('diferencia_motor' in i) || i.diferencia_motor === undefined) return null;
-  const t = euros(i.diferencia_motor);
-  return t === null ? 'Diferencia no evaluable' : `Diferencia según el motor: ${t}`;
-}
-
-function avisoDeItem(i: ItemAtencion, n: number): Aviso {
-  return {
-    clave: `i${n}`, etiqueta: i.tipo, color: i.color, texto: i.texto, detalle: detalleDiferencia(i),
-    referencia: i.referencia, codigo: i.codigo, a: destinoItem(i),
-  };
-}
-
-function avisoDeAlerta(a: Alerta, n: number): Aviso {
-  const num = a.numero_albaran ?? '(sin número)';
-  const base = { clave: `a${n}`, color: a.color, codigo: null, a: a.factura_id ? `/facturas/${a.factura_id}` : '/conciliacion' };
-  switch (a.tipo) {
-    case 'ALBARAN_FACTURADO_NO_EN_FARMATIC':
-      return { ...base, etiqueta: 'Fuera de Farmatic', texto: `El albarán ${num} está en una factura, pero ya no aparece en Farmatic`, detalle: null,
-        referencia: [a.proveedor, a.numero_factura].filter(Boolean).join(' ') };
-    case 'POSIBLE_DUPLICADO_FARMATIC': {
-      const filas = (a.detalle.filas as { numero_albaran: string | null }[] | undefined) ?? [];
-      const imp = euros((a.detalle.importe_puc as Importe | undefined) ?? null);
-      return { ...base, etiqueta: 'Duplicado en Farmatic',
-        texto: `El albarán ${num} está ${a.id_contadores.length} veces en Farmatic con el mismo importe`,
-        detalle: imp === null ? null : `Importe de cada uno: ${imp}`,
-        referencia: [a.proveedor, filas.map((f) => f.numero_albaran).filter(Boolean).join(', ')].filter(Boolean).join(' · ') };
-    }
-    case 'CORRECCION_APROBADA':
-      return { ...base, etiqueta: a.color === 'verde' ? 'Corrección aplicada' : 'Corrección pendiente',
-        texto: a.color === 'verde' ? `Se aplicó la corrección aprobada del albarán ${num}` : `La corrección aprobada del albarán ${num} está pendiente de aplicar`,
-        detalle: null, referencia: a.proveedor ?? '' };
+function detalleCaso(c: CasoAtencion): string | null {
+  if (c.diferencia_motor !== undefined) {
+    const t = euros(c.diferencia_motor);
+    return t === null ? 'Diferencia no evaluable' : `Diferencia según el motor: ${t}`;
   }
+  if (c.importe_duplicado !== undefined) {
+    const t = euros(c.importe_duplicado);
+    return t === null ? null : `Importe de cada uno: ${t}`;
+  }
+  return null;
+}
+
+function Caso({ c }: { c: CasoAtencion }) {
+  const detalle = detalleCaso(c);
+  return (
+    <li className="caso" data-caso>
+      <div className="caso-cuerpo">
+        <span className="caso-texto">{c.texto}</span>
+        {detalle && <span className="aviso-detalle">{detalle}</span>}
+        <span className="caso-ref tenue">
+          {c.proveedor !== null && <NombreProveedor nombre={c.proveedor} />}
+          {c.referencia && <span className="caso-referencia">{c.referencia}</span>}
+          {c.fecha && <span className="caso-fecha">{fechaCorta(c.fecha)}</span>}
+          {c.codigo && <code className="codigo">{c.codigo}</code>}
+        </span>
+      </div>
+      <Link to={c.enlace} className="aviso-abrir" aria-label={`Abrir: ${c.texto}`}>Abrir</Link>
+    </li>
+  );
 }
 
 function Atencion({ d }: { d: InicioDTO }) {
-  const [todos, setTodos] = useState(false);
-  const avisos = [...d.alertas.map(avisoDeAlerta), ...d.atencion.map(avisoDeItem)]
-    .map((a, n) => ({ a, n }))
-    .sort((x, y) => PRIORIDAD[x.a.color] - PRIORIDAD[y.a.color] || x.n - y.n)
-    .map((x) => x.a);
-  const visibles = todos ? avisos : avisos.slice(0, VISIBLES);
-  const ocultos = avisos.length - visibles.length;
+  const { tipos, casos, grupos } = d.atencion;
   return (
     <section id="atencion" className="tarjeta bloque" aria-labelledby="t-atencion">
       <div className="bloque-cabecera">
-        <h2 id="t-atencion">Necesita tu atención <span className="cuenta tenue">{avisos.length}</span></h2>
+        <h2 id="t-atencion">Necesita tu atención <span className="cuenta tenue" data-atencion-resumen>— {plural(tipos, 'tipo', 'tipos')}, {plural(casos, 'caso', 'casos')}</span></h2>
         <Link to="/conciliacion" className="enlace-bloque">Abrir bandeja de conciliación</Link>
       </div>
-      {avisos.length === 0 ? (
+      {grupos.length === 0 ? (
         <p className="tenue vacio">Nada pendiente. Todo lo leído está en orden.</p>
       ) : (
-        <ul className="avisos">
-          {visibles.map((a) => (
-            <li key={a.clave} className={`aviso borde-${a.color}`} data-aviso={a.etiqueta}>
-              <span className={`insignia ${CLASE[a.color]}`}>{a.etiqueta}</span>
-              <div className="aviso-cuerpo">
-                <span className="aviso-texto">{a.texto}</span>
-                {a.detalle && <span className="aviso-detalle">{a.detalle}</span>}
-                <span className="aviso-ref tenue">
-                  {a.referencia}
-                  {a.codigo && <code className="codigo">{a.codigo}</code>}
-                </span>
-              </div>
-              <Link to={a.a} className="aviso-abrir" aria-label={`Abrir: ${a.texto}`}>Abrir</Link>
+        <ul className="grupos">
+          {grupos.map((g) => (
+            <li key={g.clave} className={`grupo borde-${g.color}`} data-grupo={g.clave} data-color={g.color} data-orden={g.orden}>
+              <details>
+                <summary>
+                  <span className={`punto ${PUNTO[g.color]}`} aria-hidden="true" />
+                  <span className="grupo-titulo">{g.titulo}</span>
+                  <span className={`insignia ${CLASE[g.color]}`} data-casos={g.casos.length}>{plural(g.casos.length, 'caso', 'casos')}</span>
+                </summary>
+                <ul className="casos">
+                  {g.casos.map((c, n) => <Caso key={`${g.clave}-${n}`} c={c} />)}
+                </ul>
+              </details>
             </li>
           ))}
         </ul>
-      )}
-      {avisos.length > VISIBLES && (
-        <button type="button" className="boton-secundario" onClick={() => setTodos((v) => !v)} aria-expanded={todos}>
-          {todos ? 'Mostrar solo los primeros' : `Mostrar ${plural(ocultos, 'aviso más', 'avisos más')}`}
-        </button>
       )}
     </section>
   );

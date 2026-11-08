@@ -5,9 +5,13 @@
  * imprime solo: nombre, OK/ERROR (+ mensaje), nº de columnas y nº de filas. Nunca filas ni valores.
  * Las consultas por factura (factura_*) usan la factura PIO más reciente, elegida dentro del
  * adaptador; su id no se imprime (solo "factura=reciente" o "factura=ninguna" si PIO no tiene facturas).
- * Al final, diagnósticos (H4b): proveedores (CIF distintos, facturas sin CIF), vencimientos (total, null,
- * incidencia IMPORTE_VENCIMIENTO_NO_DOCUMENTADO, nulls por grupo de CIF sin CIF ni nombres), duplicados
- * (candidatos y tras filtro de importe) y par 08C66676/08C66676A (sí/no y nombres de columna).
+ * Al final, diagnósticos (H4b/H4c): proveedores (facturas con CIF en la columna y en datos_extraidos, CIF
+ * distintos, facturas sin CIF, sin CIF con id R9), vencimientos (total, null, incidencia
+ * IMPORTE_VENCIMIENTO_NO_DOCUMENTADO, nulls por grupo de CIF sin CIF ni nombres, tipo_documento null en la
+ * columna y en datos_extraidos, OTRO, sentido no documentado), documentos (PDF sin factura con y sin campo de
+ * proveedor), tipo_documento (H4c-2: facturas por datos_extraidos.tipo_documento.valor en etiquetas fijas;
+ * un valor no previsto solo suma en otros_valores, nunca se muestra), sentido (H4d-3: casos por origen:
+ * vencimiento_regla, incidencia_sentido_no_documentado, incidencia_sentido_no_etiquetado), duplicados (candidatos y tras filtro de importe) y par 08C66676/08C66676A (sí/no y nombres de columna).
  * Solo recuentos, sí/no o nombres de columna; nunca valores.
  * Código de salida: 0 si todas OK; 1 si alguna falla (también sin conexión); 2 si falta .env.web o está incompleto.
  */
@@ -60,9 +64,9 @@ try {
   }
 } catch (e) {
   fallos += 1;
-  console.log(`DIAGNOSTICO vencimientos/duplicados/par_08C66676 ${error(e)}`);
+  console.log(`DIAGNOSTICO vencimientos/documentos/tipo_documento/sentido/duplicados/par_08C66676 ${error(e)}`);
 }
 
 await real.cerrar();
-console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + 4 diagnósticos, ${fallos} con error`);
+console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + 7 diagnósticos, ${fallos} con error`);
 process.exit(fallos ? 1 : 0);

@@ -53,7 +53,7 @@
       "ultima_fecha_factura": "2026-10-08"
     },
     {
-      "clave": "nombre:FEDEFARMA",
+      "clave": "id:4",
       "cif": null,
       "sin_cif": true,
       "etiqueta": "FEDEFARMA",
@@ -85,6 +85,7 @@
         "clave": "cif:B00000003",
         "proveedor": "ALLIANCEHEALTHCARECENCORA",
         "sin_cif": false,
+        "origen": "FACTURAS",
         "por_estado": {
           "PENDIENTE": 0,
           "PROCESANDO": 0,
@@ -101,6 +102,7 @@
         "clave": "cif:A00000001",
         "proveedor": "COFARES",
         "sin_cif": false,
+        "origen": "FACTURAS",
         "por_estado": {
           "PENDIENTE": 0,
           "PROCESANDO": 0,
@@ -117,6 +119,7 @@
         "clave": "cif:B00000002",
         "proveedor": "HEFAME",
         "sin_cif": false,
+        "origen": "FACTURAS",
         "por_estado": {
           "PENDIENTE": 0,
           "PROCESANDO": 0,
@@ -130,9 +133,27 @@
         "total": 1
       },
       {
-        "clave": "nombre:ALLIANCEHEALTHCARECENCORA",
+        "clave": "id:4",
+        "proveedor": "FEDEFARMA",
+        "sin_cif": true,
+        "origen": "FACTURAS",
+        "por_estado": {
+          "PENDIENTE": 0,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 1,
+          "REVISION": 0,
+          "ERROR": 0,
+          "PROVEEDOR_NO_SOPORTADO": 0
+        },
+        "total": 1
+      },
+      {
+        "clave": "catalogo:a0000000-0000-4000-8000-000000000003",
         "proveedor": "ALLIANCEHEALTHCARECENCORA",
         "sin_cif": true,
+        "origen": "CATALOGO",
         "por_estado": {
           "PENDIENTE": 0,
           "PROCESANDO": 0,
@@ -146,9 +167,10 @@
         "total": 1
       },
       {
-        "clave": "nombre:BEIERSDORFFICTICIO",
+        "clave": "catalogo:a0000000-0000-4000-8000-000000000006",
         "proveedor": "BEIERSDORF (FICTICIO)",
         "sin_cif": true,
+        "origen": "CATALOGO",
         "por_estado": {
           "PENDIENTE": 0,
           "PROCESANDO": 0,
@@ -162,25 +184,10 @@
         "total": 1
       },
       {
-        "clave": "nombre:FEDEFARMA",
-        "proveedor": "FEDEFARMA",
-        "sin_cif": true,
-        "por_estado": {
-          "PENDIENTE": 0,
-          "PROCESANDO": 0,
-          "EXTRAIDA": 0,
-          "NORMALIZANDO": 0,
-          "NORMALIZADA": 1,
-          "REVISION": 0,
-          "ERROR": 0,
-          "PROVEEDOR_NO_SOPORTADO": 0
-        },
-        "total": 1
-      },
-      {
-        "clave": "nombre:LABORATORIODEMOFICTICIO",
+        "clave": "catalogo:a0000000-0000-4000-8000-000000000005",
         "proveedor": "LABORATORIO DEMO (FICTICIO)",
         "sin_cif": true,
+        "origen": "CATALOGO",
         "por_estado": {
           "PENDIENTE": 0,
           "PROCESANDO": 0,
@@ -194,9 +201,10 @@
         "total": 2
       },
       {
-        "clave": "sin_identificar",
-        "proveedor": "Proveedor sin identificar",
+        "clave": "sin_factura_sin_proveedor",
+        "proveedor": "PDF sin factura (proveedor no identificado)",
         "sin_cif": true,
+        "origen": "SIN_PROVEEDOR",
         "por_estado": {
           "PENDIENTE": 1,
           "PROCESANDO": 0,

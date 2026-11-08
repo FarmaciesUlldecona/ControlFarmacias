@@ -9,6 +9,8 @@
       "pagina_inicio": 1,
       "pagina_fin": 2,
       "tipo_documento": "FACTURA",
+      "tipo_documento_documental": "FACTURA",
+      "sentido": "CARGO",
       "categoria": "MERCANCIA",
       "numero_factura": "AL-26-100231",
       "fecha_factura": "2026-10-05",
@@ -17,7 +19,9 @@
       "proveedor_codigo": "ALLIANCE",
       "proveedor": "ALLIANCEHEALTHCARECENCORA",
       "proveedor_literal": "ALLIANCEHEALTHCARECENCORA",
-      "proveedor_cif": "B00000003",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "B00000003",
+      "id_proveedor_albaranes": "0002",
       "base_imponible_total": 136.78,
       "iva_total": 13.68,
       "recargo_equivalencia_total": 1.91,
@@ -54,7 +58,7 @@
       },
       "uso_luna": false,
       "coste_luna": null,
-      "incidencias_abiertas": 1,
+      "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00"
     },
@@ -69,7 +73,9 @@
       "fecha_importacion": "2026-10-06T21:00:00+00:00"
     },
     "proveedor": {
-      "proveedor_cif": "B00000003",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "B00000003",
+      "cif": "B00000003",
       "id_proveedor_albaranes": "0002",
       "extractor_codigo": "alliance",
       "nivel_confianza": "PIO_VALIDADO"
@@ -91,18 +97,38 @@
     "datos_extraidos": {
       "ficticio": true,
       "fuente": "FIXTURE_H3B",
-      "numero_factura": "AL-26-100231",
-      "fecha_factura": "2026-10-05",
-      "tipo_documento": "FACTURA",
+      "numero_factura": {
+        "valor": "AL-26-100231"
+      },
+      "fecha_factura": {
+        "valor": {
+          "iso": "2026-10-05"
+        }
+      },
+      "tipo_documento": {
+        "valor": "FACTURA"
+      },
       "proveedor": {
-        "nombre": "ALLIANCEHEALTHCARECENCORA",
-        "nif": "B00000003"
+        "nombre": {
+          "valor": "ALLIANCEHEALTHCARECENCORA"
+        },
+        "nif": {
+          "valor": "B00000003"
+        }
       },
       "totales": {
-        "base": 136.78,
-        "iva": 13.68,
-        "recargo": 1.91,
-        "total": 152.37
+        "base_imponible": {
+          "valor": 136.78
+        },
+        "iva": {
+          "valor": 13.68
+        },
+        "recargo_equivalencia": {
+          "valor": 1.91
+        },
+        "total": {
+          "valor": 152.37
+        }
       }
     },
     "provenance": {
@@ -176,6 +202,8 @@
         "factura_id": "f0000000-0000-4000-8000-000000000001",
         "numero_factura": "AL-26-100231",
         "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
         "proveedor": "ALLIANCEHEALTHCARECENCORA",
         "orden": 1,
         "fecha_vencimiento": "2026-11-04",
@@ -242,6 +270,50 @@
           "fuente": "FIXTURE_H3A"
         },
         "created_at": "2026-10-24T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000056",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "numero_factura": "AL-26-100231",
+        "archivo_nombre": null,
+        "codigo": "CANDIDATO_ALBARAN_NO_PROMOVIDO",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "TIPO_PEDIDO_NO_CERTIFICADO",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3B",
+          "motivo": "TIPO_PEDIDO_NO_CERTIFICADO",
+          "tipos_pedido": [
+            "PEDIDO X"
+          ]
+        },
+        "created_at": "2026-10-24T21:07:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000060",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "numero_factura": "AL-26-100231",
+        "archivo_nombre": null,
+        "codigo": "FILA_IMPORTE_CERO_INFORMATIVA",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "FILA_IMPORTE_CERO_INFORMATIVA",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-30T21:08:00+00:00",
         "resuelta_at": null,
         "resuelta_por": null
       }
@@ -356,6 +428,8 @@
       "pagina_inicio": 1,
       "pagina_fin": 3,
       "tipo_documento": "FACTURA",
+      "tipo_documento_documental": "FACTURA",
+      "sentido": "CARGO",
       "categoria": "MERCANCIA",
       "numero_factura": "AL-26-100577",
       "fecha_factura": "2026-10-12",
@@ -364,7 +438,9 @@
       "proveedor_codigo": "ALLIANCE",
       "proveedor": "ALLIANCEHEALTHCARECENCORA",
       "proveedor_literal": "Alliance Healthcare España",
-      "proveedor_cif": "b-00000003",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "b-00000003",
+      "id_proveedor_albaranes": "0002",
       "base_imponible_total": 423.9,
       "iva_total": 42.39,
       "recargo_equivalencia_total": 5.93,
@@ -401,7 +477,7 @@
       },
       "uso_luna": false,
       "coste_luna": null,
-      "incidencias_abiertas": 1,
+      "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00"
     },
@@ -416,7 +492,9 @@
       "fecha_importacion": "2026-10-13T21:00:00+00:00"
     },
     "proveedor": {
-      "proveedor_cif": "b-00000003",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "b-00000003",
+      "cif": "B00000003",
       "id_proveedor_albaranes": "0002",
       "extractor_codigo": "alliance",
       "nivel_confianza": "PIO_VALIDADO"
@@ -438,18 +516,38 @@
     "datos_extraidos": {
       "ficticio": true,
       "fuente": "FIXTURE_H3B",
-      "numero_factura": "AL-26-100577",
-      "fecha_factura": "2026-10-12",
-      "tipo_documento": "FACTURA",
+      "numero_factura": {
+        "valor": "AL-26-100577"
+      },
+      "fecha_factura": {
+        "valor": {
+          "iso": "2026-10-12"
+        }
+      },
+      "tipo_documento": {
+        "valor": "FACTURA"
+      },
       "proveedor": {
-        "nombre": "Alliance Healthcare España",
-        "nif": "b-00000003"
+        "nombre": {
+          "valor": "Alliance Healthcare España"
+        },
+        "nif": {
+          "valor": "b-00000003"
+        }
       },
       "totales": {
-        "base": 423.9,
-        "iva": 42.39,
-        "recargo": 5.93,
-        "total": 472.22
+        "base_imponible": {
+          "valor": 423.9
+        },
+        "iva": {
+          "valor": 42.39
+        },
+        "recargo_equivalencia": {
+          "valor": 5.93
+        },
+        "total": {
+          "valor": 472.22
+        }
       }
     },
     "provenance": {
@@ -697,6 +795,8 @@
         "factura_id": "f0000000-0000-4000-8000-000000000002",
         "numero_factura": "AL-26-100577",
         "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
         "proveedor": "ALLIANCEHEALTHCARECENCORA",
         "orden": 1,
         "fecha_vencimiento": "2026-11-11",
@@ -827,6 +927,47 @@
         "created_at": "2026-10-25T21:06:00+00:00",
         "resuelta_at": null,
         "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000053",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "numero_factura": "AL-26-100577",
+        "archivo_nombre": null,
+        "codigo": "SENTIDO_NO_DOCUMENTADO",
+        "categoria": "NORMALIZACION",
+        "severidad": "ERROR",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "SENTIDO_NO_DOCUMENTADO",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-29T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000057",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "numero_factura": "AL-26-100577",
+        "archivo_nombre": null,
+        "codigo": "CANDIDATO_ALBARAN_NO_PROMOVIDO",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "SENTIDO_O_SIGNO_NO_COHERENTE",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3B",
+          "motivo": "SENTIDO_O_SIGNO_NO_COHERENTE"
+        },
+        "created_at": "2026-10-25T21:07:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
       }
     ],
     "historial": [
@@ -919,7 +1060,9 @@
       "archivo_nombre": "Cofares_lote_15-10-2026.pdf",
       "pagina_inicio": 1,
       "pagina_fin": 3,
-      "tipo_documento": "FACTURA",
+      "tipo_documento": "FACTURA_RECTIFICATIVA",
+      "tipo_documento_documental": "FACTURA_RECTIFICATIVA",
+      "sentido": "NO_DOCUMENTADO",
       "categoria": "MERCANCIA",
       "numero_factura": "CF-2026-55810",
       "fecha_factura": "2026-10-15",
@@ -928,7 +1071,9 @@
       "proveedor_codigo": "COFARES",
       "proveedor": "COFARES",
       "proveedor_literal": "COFARES",
-      "proveedor_cif": "A00000001",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "A00000001",
+      "id_proveedor_albaranes": "0001",
       "base_imponible_total": 336.76,
       "iva_total": 33.68,
       "recargo_equivalencia_total": 4.71,
@@ -965,7 +1110,7 @@
       },
       "uso_luna": false,
       "coste_luna": null,
-      "incidencias_abiertas": 0,
+      "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00"
     },
@@ -980,7 +1125,9 @@
       "fecha_importacion": "2026-10-16T21:00:00+00:00"
     },
     "proveedor": {
-      "proveedor_cif": "A00000001",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "A00000001",
+      "cif": "A00000001",
       "id_proveedor_albaranes": "0001",
       "extractor_codigo": "cofares",
       "nivel_confianza": "DOCUMENTAL"
@@ -1002,18 +1149,38 @@
     "datos_extraidos": {
       "ficticio": true,
       "fuente": "FIXTURE_H3B",
-      "numero_factura": "CF-2026-55810",
-      "fecha_factura": "2026-10-15",
-      "tipo_documento": "FACTURA",
+      "numero_factura": {
+        "valor": "CF-2026-55810"
+      },
+      "fecha_factura": {
+        "valor": {
+          "iso": "2026-10-15"
+        }
+      },
+      "tipo_documento": {
+        "valor": "FACTURA_RECTIFICATIVA"
+      },
       "proveedor": {
-        "nombre": "COFARES",
-        "nif": "A00000001"
+        "nombre": {
+          "valor": "COFARES"
+        },
+        "nif": {
+          "valor": "A00000001"
+        }
       },
       "totales": {
-        "base": 336.76,
-        "iva": 33.68,
-        "recargo": 4.71,
-        "total": 375.15
+        "base_imponible": {
+          "valor": 336.76
+        },
+        "iva": {
+          "valor": 33.68
+        },
+        "recargo_equivalencia": {
+          "valor": 4.71
+        },
+        "total": {
+          "valor": 375.15
+        }
       }
     },
     "provenance": {
@@ -1115,7 +1282,9 @@
         "vencimiento_id": "90000000-0000-4000-8000-000000000003",
         "factura_id": "f0000000-0000-4000-8000-000000000003",
         "numero_factura": "CF-2026-55810",
-        "tipo_documento": "FACTURA",
+        "tipo_documento": "FACTURA_RECTIFICATIVA",
+        "tipo_documento_documental": "FACTURA_RECTIFICATIVA",
+        "sentido": "NO_DOCUMENTADO",
         "proveedor": "COFARES",
         "orden": 1,
         "fecha_vencimiento": "2026-11-14",
@@ -1171,7 +1340,48 @@
     ],
     "movimientos": [],
     "ajustes": [],
-    "incidencias": [],
+    "incidencias": [
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000052",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "archivo_nombre": null,
+        "codigo": "SENTIDO_NO_DOCUMENTADO",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "SENTIDO_NO_DOCUMENTADO",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-27T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000058",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "archivo_nombre": null,
+        "codigo": "REPRESENTACIONES_CONSOLIDADAS",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "REPRESENTACIONES_CONSOLIDADAS",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-30T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      }
+    ],
     "historial": [
       {
         "evento_id": 13,
@@ -1280,6 +1490,8 @@
       "pagina_inicio": 4,
       "pagina_fin": 5,
       "tipo_documento": "FACTURA",
+      "tipo_documento_documental": "FACTURA",
+      "sentido": "CARGO",
       "categoria": "MERCANCIA",
       "numero_factura": "CF-2026-55811",
       "fecha_factura": "2026-10-15",
@@ -1288,7 +1500,9 @@
       "proveedor_codigo": "COFARES",
       "proveedor": "COFARES",
       "proveedor_literal": "COFARES",
-      "proveedor_cif": "A00000001",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "A00000001",
+      "id_proveedor_albaranes": "0001",
       "base_imponible_total": 509.92,
       "iva_total": 50.99,
       "recargo_equivalencia_total": 7.14,
@@ -1325,7 +1539,7 @@
       },
       "uso_luna": false,
       "coste_luna": null,
-      "incidencias_abiertas": 1,
+      "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00"
     },
@@ -1340,7 +1554,9 @@
       "fecha_importacion": "2026-10-16T21:00:00+00:00"
     },
     "proveedor": {
-      "proveedor_cif": "A00000001",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "A00000001",
+      "cif": "A00000001",
       "id_proveedor_albaranes": "0001",
       "extractor_codigo": "cofares",
       "nivel_confianza": "DOCUMENTAL"
@@ -1362,18 +1578,38 @@
     "datos_extraidos": {
       "ficticio": true,
       "fuente": "FIXTURE_H3B",
-      "numero_factura": "CF-2026-55811",
-      "fecha_factura": "2026-10-15",
-      "tipo_documento": "FACTURA",
+      "numero_factura": {
+        "valor": "CF-2026-55811"
+      },
+      "fecha_factura": {
+        "valor": {
+          "iso": "2026-10-15"
+        }
+      },
+      "tipo_documento": {
+        "valor": "FACTURA"
+      },
       "proveedor": {
-        "nombre": "COFARES",
-        "nif": "A00000001"
+        "nombre": {
+          "valor": "COFARES"
+        },
+        "nif": {
+          "valor": "A00000001"
+        }
       },
       "totales": {
-        "base": 509.92,
-        "iva": 50.99,
-        "recargo": 7.14,
-        "total": 568.05
+        "base_imponible": {
+          "valor": 509.92
+        },
+        "iva": {
+          "valor": 50.99
+        },
+        "recargo_equivalencia": {
+          "valor": 7.14
+        },
+        "total": {
+          "valor": 568.05
+        }
       }
     },
     "provenance": {
@@ -1505,6 +1741,8 @@
         "factura_id": "f0000000-0000-4000-8000-000000000004",
         "numero_factura": "CF-2026-55811",
         "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
         "proveedor": "COFARES",
         "orden": 1,
         "fecha_vencimiento": "2026-10-30",
@@ -1527,6 +1765,8 @@
         "factura_id": "f0000000-0000-4000-8000-000000000004",
         "numero_factura": "CF-2026-55811",
         "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
         "proveedor": "COFARES",
         "orden": 2,
         "fecha_vencimiento": "2026-11-15",
@@ -1549,6 +1789,8 @@
         "factura_id": "f0000000-0000-4000-8000-000000000004",
         "numero_factura": "CF-2026-55811",
         "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
         "proveedor": "COFARES",
         "orden": 3,
         "fecha_vencimiento": "2026-11-30",
@@ -1637,6 +1879,46 @@
           "fuente": "FIXTURE_H3A"
         },
         "created_at": "2026-10-16T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000054",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "numero_factura": "CF-2026-55811",
+        "archivo_nombre": null,
+        "codigo": "MONEDA_NO_DOCUMENTADA",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "MONEDA_NO_DOCUMENTADA",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-20T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000062",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "numero_factura": "CF-2026-55811",
+        "archivo_nombre": null,
+        "codigo": "SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-26T21:07:00+00:00",
         "resuelta_at": null,
         "resuelta_por": null
       }
@@ -1768,6 +2050,8 @@
       "pagina_inicio": 1,
       "pagina_fin": 2,
       "tipo_documento": "FACTURA",
+      "tipo_documento_documental": null,
+      "sentido": "NO_DOCUMENTADO",
       "categoria": "MERCANCIA",
       "numero_factura": "HF-0563-889120",
       "fecha_factura": "2026-10-08",
@@ -1776,7 +2060,9 @@
       "proveedor_codigo": "HEFAME",
       "proveedor": "HEFAME",
       "proveedor_literal": "HEFAME",
-      "proveedor_cif": "B00000002",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "B00000002",
+      "id_proveedor_albaranes": "0563",
       "base_imponible_total": 258.53,
       "iva_total": 25.85,
       "recargo_equivalencia_total": 3.62,
@@ -1813,7 +2099,7 @@
       },
       "uso_luna": false,
       "coste_luna": null,
-      "incidencias_abiertas": 0,
+      "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00"
     },
@@ -1828,7 +2114,9 @@
       "fecha_importacion": "2026-10-09T21:00:00+00:00"
     },
     "proveedor": {
-      "proveedor_cif": "B00000002",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "B00000002",
+      "cif": "B00000002",
       "id_proveedor_albaranes": "0563",
       "extractor_codigo": "hefame",
       "nivel_confianza": "PIO_VALIDADO"
@@ -1850,18 +2138,36 @@
     "datos_extraidos": {
       "ficticio": true,
       "fuente": "FIXTURE_H3B",
-      "numero_factura": "HF-0563-889120",
-      "fecha_factura": "2026-10-08",
-      "tipo_documento": "FACTURA",
+      "numero_factura": {
+        "valor": "HF-0563-889120"
+      },
+      "fecha_factura": {
+        "valor": {
+          "iso": "2026-10-08"
+        }
+      },
+      "tipo_documento": null,
       "proveedor": {
-        "nombre": "HEFAME",
-        "nif": "B00000002"
+        "nombre": {
+          "valor": "HEFAME"
+        },
+        "nif": {
+          "valor": "B00000002"
+        }
       },
       "totales": {
-        "base": 258.53,
-        "iva": 25.85,
-        "recargo": 3.62,
-        "total": 288
+        "base_imponible": {
+          "valor": 258.53
+        },
+        "iva": {
+          "valor": 25.85
+        },
+        "recargo_equivalencia": {
+          "valor": 3.62
+        },
+        "total": {
+          "valor": 288
+        }
       }
     },
     "provenance": {
@@ -1993,6 +2299,8 @@
         "factura_id": "f0000000-0000-4000-8000-000000000005",
         "numero_factura": "HF-0563-889120",
         "tipo_documento": "FACTURA",
+        "tipo_documento_documental": null,
+        "sentido": "NO_DOCUMENTADO",
         "proveedor": "HEFAME",
         "orden": 1,
         "fecha_vencimiento": "2026-11-07",
@@ -2059,7 +2367,48 @@
     ],
     "movimientos": [],
     "ajustes": [],
-    "incidencias": [],
+    "incidencias": [
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000055",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "numero_factura": "HF-0563-889120",
+        "archivo_nombre": null,
+        "codigo": "CODIGO_FICTICIO_SIN_TRADUCCION",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "CODIGO_FICTICIO_SIN_TRADUCCION",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-22T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000061",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "numero_factura": "HF-0563-889120",
+        "archivo_nombre": null,
+        "codigo": "ALBARANES_CONSUMIBLES_SOLO_REFERENCIA_DOCUMENTAL",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "ALBARANES_CONSUMIBLES_SOLO_REFERENCIA_DOCUMENTAL",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-30T21:09:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      }
+    ],
     "historial": [
       {
         "evento_id": 5,
@@ -2150,7 +2499,9 @@
       "archivo_nombre": "Fedefarma_scan_0447.pdf",
       "pagina_inicio": 1,
       "pagina_fin": 1,
-      "tipo_documento": "FACTURA",
+      "tipo_documento": "OTRO",
+      "tipo_documento_documental": "OTRO",
+      "sentido": "NO_DOCUMENTADO",
       "categoria": "MERCANCIA",
       "numero_factura": "FD-26/04471",
       "fecha_factura": "2026-10-20",
@@ -2160,6 +2511,8 @@
       "proveedor": "FEDEFARMA",
       "proveedor_literal": "FEDEFARMA",
       "proveedor_cif": null,
+      "proveedor_nif_documental": null,
+      "id_proveedor_albaranes": "0004",
       "base_imponible_total": null,
       "iva_total": null,
       "recargo_equivalencia_total": null,
@@ -2178,7 +2531,7 @@
       "conciliacion": null,
       "uso_luna": true,
       "coste_luna": 0.0184,
-      "incidencias_abiertas": 1,
+      "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 1,
       "updated_at": "2026-10-28T08:00:00+00:00"
     },
@@ -2194,6 +2547,8 @@
     },
     "proveedor": {
       "proveedor_cif": null,
+      "proveedor_nif_documental": null,
+      "cif": null,
       "id_proveedor_albaranes": "0004",
       "extractor_codigo": "fedefarma",
       "nivel_confianza": "DOCUMENTAL"
@@ -2218,18 +2573,36 @@
     "datos_extraidos": {
       "ficticio": true,
       "fuente": "FIXTURE_H3B",
-      "numero_factura": "FD-26/04471",
-      "fecha_factura": "2026-10-20",
-      "tipo_documento": "FACTURA",
+      "numero_factura": {
+        "valor": "FD-26/04471"
+      },
+      "fecha_factura": {
+        "valor": {
+          "iso": "2026-10-20"
+        }
+      },
+      "tipo_documento": {
+        "valor": "OTRO"
+      },
       "proveedor": {
-        "nombre": "FEDEFARMA",
+        "nombre": {
+          "valor": "FEDEFARMA"
+        },
         "nif": null
       },
       "totales": {
-        "base": null,
-        "iva": null,
-        "recargo": null,
-        "total": null
+        "base_imponible": {
+          "valor": null
+        },
+        "iva": {
+          "valor": null
+        },
+        "recargo_equivalencia": {
+          "valor": null
+        },
+        "total": {
+          "valor": null
+        }
       }
     },
     "provenance": {
@@ -2243,7 +2616,9 @@
         "vencimiento_id": "90000000-0000-4000-8000-000000000008",
         "factura_id": "f0000000-0000-4000-8000-000000000006",
         "numero_factura": "FD-26/04471",
-        "tipo_documento": "FACTURA",
+        "tipo_documento": "OTRO",
+        "tipo_documento_documental": "OTRO",
+        "sentido": "NO_DOCUMENTADO",
         "proveedor": "FEDEFARMA",
         "orden": 1,
         "fecha_vencimiento": "2026-11-19",
@@ -2284,6 +2659,26 @@
           "fuente": "FIXTURE_H3A"
         },
         "created_at": "2026-10-21T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000051",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000006",
+        "numero_factura": "FD-26/04471",
+        "archivo_nombre": null,
+        "codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-28T21:06:00+00:00",
         "resuelta_at": null,
         "resuelta_por": null
       }
@@ -2342,6 +2737,8 @@
       "pagina_inicio": 1,
       "pagina_fin": 1,
       "tipo_documento": "ABONO",
+      "tipo_documento_documental": "ABONO",
+      "sentido": "ABONO",
       "categoria": "MERCANCIA",
       "numero_factura": "CF-AB-2026-0912",
       "fecha_factura": "2026-10-22",
@@ -2350,7 +2747,9 @@
       "proveedor_codigo": "COFARES",
       "proveedor": "COFARES",
       "proveedor_literal": "COFARES",
-      "proveedor_cif": "A00000001",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "A00000001",
+      "id_proveedor_albaranes": "0001",
       "base_imponible_total": -40.66,
       "iva_total": -4.07,
       "recargo_equivalencia_total": -0.57,
@@ -2387,7 +2786,7 @@
       },
       "uso_luna": false,
       "coste_luna": null,
-      "incidencias_abiertas": 1,
+      "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00"
     },
@@ -2402,7 +2801,9 @@
       "fecha_importacion": "2026-10-23T21:00:00+00:00"
     },
     "proveedor": {
-      "proveedor_cif": "A00000001",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "A00000001",
+      "cif": "A00000001",
       "id_proveedor_albaranes": "0001",
       "extractor_codigo": "cofares",
       "nivel_confianza": "DOCUMENTAL"
@@ -2424,18 +2825,38 @@
     "datos_extraidos": {
       "ficticio": true,
       "fuente": "FIXTURE_H3B",
-      "numero_factura": "CF-AB-2026-0912",
-      "fecha_factura": "2026-10-22",
-      "tipo_documento": "ABONO",
+      "numero_factura": {
+        "valor": "CF-AB-2026-0912"
+      },
+      "fecha_factura": {
+        "valor": {
+          "iso": "2026-10-22"
+        }
+      },
+      "tipo_documento": {
+        "valor": "ABONO"
+      },
       "proveedor": {
-        "nombre": "COFARES",
-        "nif": "A00000001"
+        "nombre": {
+          "valor": "COFARES"
+        },
+        "nif": {
+          "valor": "A00000001"
+        }
       },
       "totales": {
-        "base": -40.66,
-        "iva": -4.07,
-        "recargo": -0.57,
-        "total": -45.3
+        "base_imponible": {
+          "valor": -40.66
+        },
+        "iva": {
+          "valor": -4.07
+        },
+        "recargo_equivalencia": {
+          "valor": -0.57
+        },
+        "total": {
+          "valor": -45.3
+        }
       }
     },
     "provenance": {
@@ -2509,6 +2930,8 @@
         "factura_id": "f0000000-0000-4000-8000-000000000007",
         "numero_factura": "CF-AB-2026-0912",
         "tipo_documento": "ABONO",
+        "tipo_documento_documental": "ABONO",
+        "sentido": "ABONO",
         "proveedor": "COFARES",
         "orden": 1,
         "fecha_vencimiento": "2026-11-21",
@@ -2575,6 +2998,26 @@
           "fuente": "FIXTURE_H3A"
         },
         "created_at": "2026-10-23T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      },
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000059",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "numero_factura": "CF-AB-2026-0912",
+        "archivo_nombre": null,
+        "codigo": "FILAS_DUPLICADAS_EVIDENCIA_IDENTICA",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "FILAS_DUPLICADAS_EVIDENCIA_IDENTICA",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4D"
+        },
+        "created_at": "2026-10-30T21:07:00+00:00",
         "resuelta_at": null,
         "resuelta_por": null
       }
@@ -2669,7 +3112,9 @@
       "archivo_nombre": "Alliance_AL-26-100231_copia.pdf",
       "pagina_inicio": 1,
       "pagina_fin": 2,
-      "tipo_documento": "FACTURA",
+      "tipo_documento": "OTRO",
+      "tipo_documento_documental": "FACTURA_DUPLICADO",
+      "sentido": "CARGO",
       "categoria": "MERCANCIA",
       "numero_factura": "AL-26-100231",
       "fecha_factura": "2026-10-05",
@@ -2678,7 +3123,9 @@
       "proveedor_codigo": "ALLIANCE",
       "proveedor": "ALLIANCEHEALTHCARECENCORA",
       "proveedor_literal": "ALLIANCEHEALTHCARECENCORA",
-      "proveedor_cif": "B00000003",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "B00000003",
+      "id_proveedor_albaranes": "0002",
       "base_imponible_total": 136.78,
       "iva_total": 13.68,
       "recargo_equivalencia_total": 1.91,
@@ -2712,7 +3159,9 @@
       "fecha_importacion": "2026-10-24T21:00:00+00:00"
     },
     "proveedor": {
-      "proveedor_cif": "B00000003",
+      "proveedor_cif": null,
+      "proveedor_nif_documental": "B00000003",
+      "cif": "B00000003",
       "id_proveedor_albaranes": "0002",
       "extractor_codigo": "alliance",
       "nivel_confianza": "PIO_VALIDADO"
@@ -2734,18 +3183,38 @@
     "datos_extraidos": {
       "ficticio": true,
       "fuente": "FIXTURE_H3B",
-      "numero_factura": "AL-26-100231",
-      "fecha_factura": "2026-10-05",
-      "tipo_documento": "FACTURA",
+      "numero_factura": {
+        "valor": "AL-26-100231"
+      },
+      "fecha_factura": {
+        "valor": {
+          "iso": "2026-10-05"
+        }
+      },
+      "tipo_documento": {
+        "valor": "FACTURA_DUPLICADO"
+      },
       "proveedor": {
-        "nombre": "ALLIANCEHEALTHCARECENCORA",
-        "nif": "B00000003"
+        "nombre": {
+          "valor": "ALLIANCEHEALTHCARECENCORA"
+        },
+        "nif": {
+          "valor": "B00000003"
+        }
       },
       "totales": {
-        "base": 136.78,
-        "iva": 13.68,
-        "recargo": 1.91,
-        "total": 152.37
+        "base_imponible": {
+          "valor": 136.78
+        },
+        "iva": {
+          "valor": 13.68
+        },
+        "recargo_equivalencia": {
+          "valor": 1.91
+        },
+        "total": {
+          "valor": 152.37
+        }
       }
     },
     "provenance": {
@@ -2759,7 +3228,9 @@
         "vencimiento_id": "90000000-0000-4000-8000-000000000010",
         "factura_id": "f0000000-0000-4000-8000-000000000008",
         "numero_factura": "AL-26-100231",
-        "tipo_documento": "FACTURA",
+        "tipo_documento": "OTRO",
+        "tipo_documento_documental": "FACTURA_DUPLICADO",
+        "sentido": "CARGO",
         "proveedor": "ALLIANCEHEALTHCARECENCORA",
         "orden": 1,
         "fecha_vencimiento": "2026-11-04",

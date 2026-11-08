@@ -9,6 +9,7 @@
       "vencimientos_sin_importe": 0,
       "importe_cargos_conocido": 400,
       "importe_abonos_conocido": null,
+      "vencimientos_sentido_no_documentado": 0,
       "vencimientos_sin_validar": 0
     },
     {
@@ -16,8 +17,9 @@
       "semana_fin": "2026-11-08",
       "vencimientos": 3,
       "vencimientos_sin_importe": 0,
-      "importe_cargos_conocido": 592.74,
+      "importe_cargos_conocido": 304.74,
       "importe_abonos_conocido": null,
+      "vencimientos_sentido_no_documentado": 1,
       "vencimientos_sin_validar": 2
     },
     {
@@ -25,8 +27,9 @@
       "semana_fin": "2026-11-15",
       "vencimientos": 3,
       "vencimientos_sin_importe": 0,
-      "importe_cargos_conocido": 997.37,
+      "importe_cargos_conocido": 622.22,
       "importe_abonos_conocido": null,
+      "vencimientos_sentido_no_documentado": 1,
       "vencimientos_sin_validar": 2
     },
     {
@@ -36,6 +39,7 @@
       "vencimientos_sin_importe": 1,
       "importe_cargos_conocido": null,
       "importe_abonos_conocido": -45.3,
+      "vencimientos_sentido_no_documentado": 1,
       "vencimientos_sin_validar": 2
     },
     {
@@ -45,6 +49,7 @@
       "vencimientos_sin_importe": 1,
       "importe_cargos_conocido": null,
       "importe_abonos_conocido": null,
+      "vencimientos_sentido_no_documentado": 0,
       "vencimientos_sin_validar": 0
     }
   ],

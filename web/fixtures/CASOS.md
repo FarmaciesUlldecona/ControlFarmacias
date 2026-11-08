@@ -92,5 +92,94 @@ Casos añadidos en `scripts/gen_fixtures.mjs` sobre las filas H3a (los `v_web_*.
 |---|---|---|
 | CIF distinto por proveedor | COFARES `A00000001`, HEFAME `B00000002`, Alliance `B00000003` (H3a los tenía todos en `B00000000`) | proveedores, facturas (`proveedores_filtro`, `proveedor_grupo`) |
 | CIF escrito de otra forma + otro literal | F02: `b-00000003` y literal «Alliance Healthcare España» → mismo grupo que Alliance; etiqueta = literal más frecuente (ALLIANCEHEALTHCARECENCORA), el otro como alias | proveedores, facturas |
-| Factura sin CIF | F06 (FEDEFARMA) sin CIF → grupo `nombre:FEDEFARMA` (nombre canónico R9), marcado sin CIF | proveedores, facturas |
+| Factura sin CIF | F06 (FEDEFARMA) sin CIF → grupo de respaldo (H4c: `id:4`, ver abajo), marcado sin CIF | proveedores, facturas |
 | Incidencia INFO | MONEDA_NO_DOCUMENTADA (INFO, abierta) en F02 → solo en el detalle de F02; ni contador ni «Necesita tu atención» de Inicio | detalle, inicio |
+
+## H4c: ajustes con la forma real de producción
+
+Casos añadidos en `scripts/gen_fixtures.mjs` (los `v_web_*.json` no cambian). Todo ficticio.
+
+| Caso H4c | Datos | DTO |
+|---|---|---|
+| CIF en `datos_extraidos` | Como en producción, `facturas.proveedor_cif` es null en todas; el CIF va en `datos_extraidos.proveedor.nif.valor` (columna `proveedor_nif_documental` de la consulta). Los CIF H4b no cambian; F02 lo tiene escrito `b-00000003` → `cif:B00000003` | facturas, detalle (`proveedor.cif`), proveedores |
+| Sin CIF: respaldo R9 | F06 (FEDEFARMA) sin CIF y `id_proveedor_albaranes` `0004` → grupo `id:4` (R9: `'0004'` = `'4'`), marcado sin CIF. El nombre ya no agrupa | proveedores, facturas (`proveedores_filtro`) |
+| Vencimiento con importe null | F04, 3.º vencimiento (30/11): la UI muestra «importe pendiente»; en el detalle de F04, aparte, «total factura: 568,05 € (referencia)», nunca como importe del vencimiento | detalle, inicio |
+| Tipo de documento no documentado | F05 (HEFAME, 288,00 €): `datos_extraidos.tipo_documento` null (la columna quedó en FACTURA por defecto) → sentido `NO_DOCUMENTADO`: no suma como cargo ni abono | vencimientos, cashflow, detalle |
+| PDF sin factura con proveedor | D08 y D13 (LAB_DEMO), D11 (BEIERSDORF), D14 (Alliance): `normalizacion_ejecuciones.proveedor_id` del catálogo → fila `catalogo:<id>` del mapa, marcada sin CIF | proveedores (`mapa_documentos`) |
+| PDF sin factura sin proveedor | D09 (ERROR), D10 (PENDIENTE), D12 (PROVEEDOR_NO_SOPORTADO): sin ese campo → una sola fila «PDF sin factura (proveedor no identificado)», solo por estado | proveedores (`mapa_documentos`) |
+
+## H4c-2: regla de sentido de Pío
+
+El sentido de cada factura y de sus vencimientos sale **solo** de `datos_extraidos.tipo_documento.valor`, nunca de la
+columna `tipo_documento`. FACTURA y FACTURA_DUPLICADO cuentan como CARGO y ABONO como ABONO. El resto queda
+NO_DOCUMENTADO, que no suma y se cuenta aparte: FACTURA_RECTIFICATIVA y sus variantes (cualquier valor que contenga
+RECTIFICATIVA), vacío, null, OTRO u otro valor. En las fixtures, la columna se rellena como lo hace la persistencia
+(migración 28): null → FACTURA y, si el valor está fuera de la lista, OTRO.
+
+| Factura | Tipo documental | Columna | Sentido | Efecto |
+|---|---|---|---|---|
+| F01, F02, F04 | FACTURA | FACTURA | CARGO | — |
+| F08 | FACTURA_DUPLICADO | OTRO | CARGO | Sigue sumando como cargo (semana 2026-11-02) |
+| F07 | ABONO | ABONO | ABONO | Abonos −45,30 |
+| F03 | FACTURA_RECTIFICATIVA | FACTURA_RECTIFICATIVA | NO_DOCUMENTADO | Sale de los cargos de la semana 2026-11-09 (997,37 → 622,22) |
+| F05 | null | FACTURA | NO_DOCUMENTADO | Sale de los cargos de la semana 2026-11-02 (592,74 → 304,74) |
+| F06 | «OTRO» literal | OTRO | NO_DOCUMENTADO | Importe null; se cuenta en la semana 2026-11-16 |
+
+Resultado: `vencimientos.totales.sentido_no_documentado` = 3, y 1 por semana en 2026-11-02, 2026-11-09 y 2026-11-16.
+Diagnóstico de tipo de las fixtures: factura 3, factura_duplicado 1, abono 1, factura_rectificativa 1, otro 1,
+vacio_o_null 1, otros_valores 0.
+
+## H4d: «Necesita tu atención» agrupado
+
+Incidencias añadidas en `scripts/gen_fixtures.mjs` (`INCIDENCIAS_H4D`). Todas son ficticias y están abiertas. Como hace la
+persistencia, `mensaje_usuario` lleva el propio código, así que la web nunca lo muestra: usa `TEXTO_INCIDENCIA`.
+
+| Caso H4d | Datos | Efecto en Inicio |
+|---|---|---|
+| Varios casos del mismo código | IMPORTE_VENCIMIENTO_NO_DOCUMENTADO en F04 (H3a) y F06 | Una fila «Un vencimiento de la factura no indica su importe», con 2 casos |
+| Incidencia SENTIDO_NO_DOCUMENTADO | F07 (H3a), F03 (AVISO) y F02 (**ERROR**) | Desde H4d-3: nivel 7, grupo propio con 3 casos, en naranja aunque uno sea ERROR |
+| MONEDA_NO_DOCUMENTADA con severidad AVISO | F04 (en producción se guarda como AVISO) | No sale en Inicio ni en el contador; sí en el detalle de F04 |
+| Código sin traducción | CODIGO_FICTICIO_SIN_TRADUCCION en F05 | «Aviso técnico del motor (ver detalle)», con el código en pequeño |
+| CANDIDATO_ALBARAN_NO_PROMOVIDO con dos motivos | F01 (TIPO_PEDIDO_NO_CERTIFICADO) y F02 (SENTIDO_O_SIGNO_NO_COHERENTE) | Una fila con 2 casos; el texto de cada caso depende de `detalle_tecnico.motivo` |
+| Posible duplicado en vencimientos | F01 tiene POSIBLE_DUPLICADO | El vencimiento del 04/11 sale marcado «posible duplicado» |
+
+Resultado tras H4d-3: «15 tipos, 26 casos». Incidencias abiertas en el contador: 13, de ellas 2 bloqueantes.
+
+Orden de los grupos:
+
+1. Diferencia con albaranes (3 casos)
+2. Documentos con defecto (2)
+3. Duplicados en Farmatic (1)
+4. Vencimiento sin cargo/abono documentado (3: F06, F03 y F05; ver H4d-3)
+5. Albarán facturado que ya no está en Farmatic (1)
+6. Incidencias ERROR, un grupo por código: REQUIERE_REVISION («Facturas con datos por revisar», en **naranja**), SEGUNDA_LECTURA_FALLIDA y VALOR_SIN_EVIDENCIA
+7. Avisos, un grupo por código, del más reciente al más antiguo: SENTIDO_NO_DOCUMENTADO (3), IMPORTE_VENCIMIENTO (2), SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE (1), CANDIDATO (2), POSIBLE_DUPLICADO (2) y el código sin traducción (1)
+8. Correcciones aprobadas (2)
+
+## H4d-2: ajustes de Pío
+
+- «Facturas con datos por revisar» (REQUIERE_REVISION) sigue en el grupo 6, pero en naranja: revisión = naranja.
+- Los PDF sin automatizar (PROVEEDOR_NO_SOPORTADO: D08, D11, D12 y D13) ya no salen en «Necesita tu atención».
+  Siguen en el contador gris «Sin automatizar» (4) y en el mapa de Proveedores.
+- Nuevos códigos solo de detalle: fuera de Inicio y de sus contadores, visibles en el detalle de su factura. Cada
+  fixture lleva severidad AVISO, como la guarda producción.
+
+| Código | Factura |
+|---|---|
+| MONEDA_NO_DOCUMENTADA | F04 (H4d) |
+| REPRESENTACIONES_CONSOLIDADAS | F03 |
+| FILAS_DUPLICADAS_EVIDENCIA_IDENTICA | F07 |
+| FILA_IMPORTE_CERO_INFORMATIVA | F01 |
+| ALBARANES_CONSUMIBLES_SOLO_REFERENCIA_DOCUMENTAL | F05 |
+
+## H4d-3: sentido no documentado separado en dos
+
+- **Grupo 4, «Vencimiento sin cargo/abono documentado»** (naranja): un caso por vencimiento con sentido NO_DOCUMENTADO
+  según la regla de Pío (`datos_extraidos.tipo_documento.valor`). Texto: «No se sabe si esta factura es un pago o un
+  abono; no se suma en el cashflow». No lleva código técnico y el enlace va a la factura. Casos: F06 (OTRO, 19/11),
+  F03 (FACTURA_RECTIFICATIVA, 14/11) y F05 (sin tipo, 07/11).
+- **Incidencias del motor SENTIDO_NO_DOCUMENTADO y SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE**: cada código tiene su
+  propio grupo en el nivel 7 (naranja), con su texto de movimiento o de línea. Fixture nueva:
+  SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE (AVISO) en F04, que sube el contador de incidencias a 13.
+- **Diagnóstico `sentido` de check:real.** Sobre las fixtures daría vencimiento_regla 3,
+  incidencia_sentido_no_documentado 3 e incidencia_sentido_no_etiquetado 1.

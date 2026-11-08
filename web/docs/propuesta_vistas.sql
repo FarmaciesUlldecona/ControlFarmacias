@@ -154,6 +154,11 @@ select
     coalesce(p.nombre, f.proveedor_literal, f.proveedor_nombre) as proveedor,
     f.proveedor_literal,
     f.proveedor_cif,
+    -- H4c: el motor guarda el CIF en datos_extraidos (proveedor_cif vacía en producción);
+    -- CIF del grupo como la migración 20, normalizado como el motor.
+    f.datos_extraidos #>> '{proveedor,nif,valor}' as proveedor_nif_documental,
+    nullif(regexp_replace(upper(coalesce(coalesce(nullif(f.proveedor_cif, ''),
+        f.datos_extraidos #>> '{proveedor,nif,valor}'), '')), '[^A-Z0-9]', '', 'g'), '') as cif,
     f.id_proveedor_albaranes,
     -- importes (NULL = desconocido)
     f.base_imponible_total,
@@ -311,7 +316,14 @@ where cfg.id = true
   and coalesce(f.farmacia, d.farmacia) = any(cfg.farmacias_habilitadas);
 
 -- 7. Vencimientos v2: añade literal, tipo de documento y los tres estados.
---    importe NULL se conserva (R14: sin importe + incidencia).
+--    importe NULL se conserva (R14: sin importe + incidencia; la web lo muestra como
+--    "importe pendiente", nunca 0 ni el total de la factura).
+--    H4c-2, sentido (regla de Pío; igual que sentidoDocumental de
+--    web/app/server/contrato.ts): solo desde datos_extraidos.tipo_documento.valor,
+--    nunca la columna tipo_documento (la persistencia la rellena por defecto,
+--    migración 28). FACTURA o FACTURA_DUPLICADO → CARGO; ABONO → ABONO;
+--    FACTURA_RECTIFICATIVA y variantes, vacío, NULL, OTRO u otro valor →
+--    NO_DOCUMENTADO, que nunca suma como cargo ni como abono.
 create or replace view public.v_web_vencimientos
 with (security_invoker = true)
 as
@@ -321,6 +333,13 @@ select
     f.farmacia,
     f.numero_factura,
     f.tipo_documento,
+    f.datos_extraidos #>> '{tipo_documento,valor}' as tipo_documento_documental,
+    case upper(btrim(f.datos_extraidos #>> '{tipo_documento,valor}'))
+        when 'FACTURA' then 'CARGO'
+        when 'FACTURA_DUPLICADO' then 'CARGO'
+        when 'ABONO' then 'ABONO'
+        else 'NO_DOCUMENTADO'
+    end as sentido,
     coalesce(p.nombre, f.proveedor_literal, f.proveedor_nombre) as proveedor,
     v.orden,
     v.fecha_vencimiento,
@@ -343,24 +362,24 @@ where cfg.id = true
 
 -- 8. Cashflow semanal: suma solo importes conocidos; los desconocidos se cuentan.
 --    Cargos y abonos por separado (no se infiere signo). Semana NULL = sin fecha.
+--    H4c: sobre v_web_vencimientos.sentido; los de sentido NO_DOCUMENTADO se cuentan
+--    aparte y no entran en ninguna suma (antes `tipo_documento <> 'ABONO'` sumaba como
+--    cargo el tipo por defecto, OTRO y las rectificativas).
 create or replace view public.v_web_cashflow_semanal
 with (security_invoker = true)
 as
 select
-    f.farmacia,
+    v.farmacia,
     date_trunc('week', v.fecha_vencimiento)::date as semana,
     count(*) as vencimientos,
     count(*) filter (where v.importe is null) as vencimientos_sin_importe,
-    sum(v.importe) filter (where f.tipo_documento <> 'ABONO') as importe_cargos_conocido,
-    sum(v.importe) filter (where f.tipo_documento = 'ABONO')  as importe_abonos_conocido,
-    count(*) filter (where f.estado_revision <> 'VALIDADA_PIO') as vencimientos_sin_validar
-from public.facturas_vencimientos v
-join public.facturas f on f.id = v.factura_id
-cross join public.cf_configuracion cfg
-where cfg.id = true
-  and f.farmacia = any(cfg.farmacias_habilitadas)
-  and f.estado_pago <> 'PAGADA'
-group by f.farmacia, date_trunc('week', v.fecha_vencimiento)::date;
+    sum(v.importe) filter (where v.sentido = 'CARGO') as importe_cargos_conocido,
+    sum(v.importe) filter (where v.sentido = 'ABONO') as importe_abonos_conocido,
+    count(*) filter (where v.sentido = 'NO_DOCUMENTADO') as vencimientos_sentido_no_documentado,
+    count(*) filter (where v.estado_revision <> 'VALIDADA_PIO') as vencimientos_sin_validar
+from public.v_web_vencimientos v
+where v.estado_pago <> 'PAGADA'
+group by v.farmacia, date_trunc('week', v.fecha_vencimiento)::date;
 
 -- 9. Proveedores v2: añade REVISION_CONCILIACION, incidencias, alias y última factura.
 create or replace view public.v_web_proveedores_estado

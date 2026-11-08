@@ -8,12 +8,12 @@ import { join } from 'node:path';
 import {
   CONSULTAS, CONSULTAS_CHECK, CONSULTAS_POR_BLOQUE, OBJETOS_PERMITIDOS, OBJETOS_VETADOS, PAGO_SIN_DATOS,
   gruposDuplicadoFarmatic, idProveedorR9, numeroAlbaranBase,
-  TEXTO_INCIDENCIA, etiquetaYAlias, grupoProveedor, nombreCanonico, normalizarCif, resumenDuplicados, resumenPar08C66676,
-  textoIncidencia,
+  TEXTO_INCIDENCIA, cifFactura, etiquetaYAlias, grupoProveedor, normalizarCif, resumenDuplicados, resumenPar08C66676,
+  CATEGORIAS_TIPO_DOCUMENTAL, CODIGOS_SOLO_DETALLE, TEXTO_SIN_TRADUCCION, categoriaTipoDocumental, sentidoDocumental, textoIncidencia,
 } from '../../app/server/contrato.ts';
 import { FICHEROS_DTO } from '../../app/server/adaptador_fixtures.ts';
-import { validarDiagnostico } from '../../app/server/adaptador_real.ts';
-import { ALERTA_DUPLICADO, INCIDENCIAS_H4B, generar } from './gen_fixtures.mjs';
+import { COLUMNAS_SENTIDO, validarDiagnostico } from '../../app/server/adaptador_real.ts';
+import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
 
 const RAIZ = join(import.meta.dirname, '..');
 const DTO = join(RAIZ, 'dto');
@@ -117,10 +117,25 @@ comprobar('vencimientos: totales con nulls contados aparte', () => {
   const t = vencimientos.totales;
   return si(t.sin_importe === vencimientos.vencimientos.filter((x) => x.importe === null).length && t.sin_importe >= 2, JSON.stringify(t));
 });
-comprobar('cashflow: igual a v_web_cashflow_semanal de H3a', () => {
-  const esperado = h3a('cashflow_semanal').map(({ farmacia, ...r }) => r).sort((a, b) => String(a.semana).localeCompare(String(b.semana))); // eslint-disable-line no-unused-vars
+comprobar('cashflow: igual a v_web_cashflow_semanal de H3a salvo los vencimientos de sentido no documentado (H4c-2)', () => {
+  // H3a sumaba como cargo todo lo que no era ABONO. Los NO_DOCUMENTADO (F03 rectificativa, F05 sin tipo, F06 OTRO)
+  // salen de los cargos y se cuentan aparte; el resto de la semana no cambia.
+  const noDoc = new Set(Object.keys(TIPO_DOCUMENTAL_H4C).filter((id) => sentidoDocumental(TIPO_DOCUMENTAL_H4C[id]) === 'NO_DOCUMENTADO'));
+  const venc = h3a('vencimientos');
+  const lunes = (f) => { const d = new Date(f + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+  const esperado = h3a('cashflow_semanal').map(({ farmacia, ...r }) => { // eslint-disable-line no-unused-vars
+    const nd = venc.filter((v) => noDoc.has(v.factura_id) && v.fecha_vencimiento && lunes(v.fecha_vencimiento) === r.semana);
+    const restar = nd.reduce((a, v) => a + (v.importe ?? 0), 0);
+    const quedan = venc.filter((v) => v.fecha_vencimiento && lunes(v.fecha_vencimiento) === r.semana && v.tipo_documento !== 'ABONO' && !noDoc.has(v.factura_id) && v.importe !== null);
+    return {
+      ...r,
+      importe_cargos_conocido: quedan.length === 0 ? null : Math.round((r.importe_cargos_conocido - restar) * 10000) / 10000,
+      vencimientos_sentido_no_documentado: nd.length,
+    };
+  }).sort((a, b) => String(a.semana).localeCompare(String(b.semana)));
   const obtenido = cashflowSemanas.semanas.map(({ semana_fin, ...r }) => r); // eslint-disable-line no-unused-vars
-  return si(isDeepStrictEqual(obtenido, esperado), `obtenido ${JSON.stringify(obtenido)}`);
+  const orden = (o) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
+  return si(isDeepStrictEqual(obtenido.map(orden), esperado.map(orden)), `obtenido ${JSON.stringify(obtenido)}`);
 });
 comprobar('cashflow: semana 2026-11-30 con cargos null (no 0)', () => {
   const s = cashflowSemanas.semanas.find((x) => x.semana === '2026-11-30');
@@ -157,16 +172,23 @@ comprobar('inicio (1A): "Sin automatizar" = PROVEEDOR_NO_SOPORTADO (4), aparte d
   const d = inicio.documentos;
   return si(d.sin_automatizar === d.por_estado.PROVEEDOR_NO_SOPORTADO && d.sin_automatizar === 4 && !('documentos_sin_leer' in d), JSON.stringify(d));
 });
-comprobar('inicio (1A): atención — con defecto en rojo, sin automatizar en gris', () => {
-  const def = inicio.atencion.filter((a) => a.tipo === 'Con defecto');
-  const sa = inicio.atencion.filter((a) => a.tipo === 'Sin automatizar');
-  return si(def.length === 2 && def.every((a) => a.color === 'rojo') && sa.length === 4 && sa.every((a) => a.color === 'gris') && !inicio.atencion.some((a) => a.tipo === 'Sin leer'),
-    JSON.stringify(inicio.atencion.map((a) => [a.tipo, a.color])));
+const grupo = (clave) => inicio.atencion.grupos.find((g) => g.clave === clave);
+const casosAtencion = inicio.atencion.grupos.flatMap((g) => g.casos.map((c) => ({ ...c, grupo: g })));
+/** H4d-2: códigos solo de detalle (decisión de Pío), escritos aquí a mano para no depender del contrato. */
+const SOLO_DETALLE = ['MONEDA_NO_DOCUMENTADA', 'REPRESENTACIONES_CONSOLIDADAS', 'FILAS_DUPLICADAS_EVIDENCIA_IDENTICA',
+  'FILA_IMPORTE_CERO_INFORMATIVA', 'ALBARANES_CONSUMIBLES_SOLO_REFERENCIA_DOCUMENTAL'];
+/** Incidencias abiertas que deben salir en Inicio: sin INFO ni códigos solo de detalle. */
+const abiertasInicio = [...h3a('incidencias'), ...INCIDENCIAS_H4B, ...INCIDENCIAS_H4D]
+  .filter((i) => i.estado === 'ABIERTA' && i.severidad !== 'INFO' && !SOLO_DETALLE.includes(i.codigo));
+comprobar('inicio (1A): atención — con defecto en rojo (2); los PDF sin automatizar no salen (H4d-2), solo en su contador gris (4)', () => {
+  const def = grupo('DOCUMENTOS_DEFECTO');
+  return si(def?.casos.length === 2 && def.color === 'rojo' && !grupo('SIN_AUTOMATIZAR')
+    && !casosAtencion.some((c) => c.codigo === 'PROVEEDOR_NO_SOPORTADO') && inicio.documentos.sin_automatizar === 4,
+  JSON.stringify(inicio.atencion.grupos.map((g) => [g.clave, g.color, g.casos.length])));
 });
-comprobar('inicio: incidencias abiertas = todas las ABIERTA (documento + factura)', () => {
-  const ab = h3a('incidencias').filter((i) => i.estado === 'ABIERTA');
-  return si(inicio.incidencias.abiertas === ab.length && inicio.incidencias.bloqueantes === ab.filter((i) => i.bloqueante).length, JSON.stringify(inicio.incidencias));
-});
+comprobar('inicio: incidencias abiertas = las ABIERTA sin INFO ni MONEDA_NO_DOCUMENTADA (documento + factura)', () =>
+  si(inicio.incidencias.abiertas === abiertasInicio.length && inicio.incidencias.abiertas === 13
+    && inicio.incidencias.bloqueantes === abiertasInicio.filter((i) => i.bloqueante).length, JSON.stringify(inicio.incidencias)));
 comprobar('inicio: luna del mes (F06, 0,0184 €)', () => si(inicio.luna_mes.ejecuciones === 1 && inicio.luna_mes.coste === 0.0184, JSON.stringify(inicio.luna_mes)));
 
 // --- Casos H3a mantenidos --------------------------------------------------------
@@ -243,33 +265,33 @@ comprobar('H3b: correcciones aprobadas (aplicada verde, pendiente azul)', () => 
 comprobar('alertas de Inicio = alertas validadas de la bandeja', () =>
   si(isDeepStrictEqual(inicio.alertas, conciliacionBandeja.alertas.filter((x) => x.validacion === 'VALIDADA')), 'distintas'));
 comprobar('inicio: atención incluye cada incidencia abierta (lenguaje llano) y las de factura enlazan a su factura', () => {
-  const ab = h3a('incidencias').filter((i) => i.estado === 'ABIERTA');
-  const items = inicio.atencion.filter((a) => a.tipo.startsWith('Incidencia') || a.tipo === 'Posible duplicado');
-  const sinTexto = items.filter((a) => !a.texto);
-  const facturaMal = ab.filter((i) => i.factura_id && !items.some((a) => a.factura_id === i.factura_id));
-  return si(items.length === ab.length && sinTexto.length === 0 && facturaMal.length === 0, `${items.length} items / ${ab.length} abiertas`);
+  const deIncidencia = ['INCIDENCIA_ERROR', 'INCIDENCIA_AVISO'];
+  const items = casosAtencion.filter((c) => deIncidencia.includes(c.grupo.categoria) && c.codigo !== 'REQUIERE_REVISION');
+  const sinTexto = casosAtencion.filter((c) => !c.texto);
+  const facturaMal = abiertasInicio.filter((i) => i.factura_id && !casosAtencion.some((c) => c.factura_id === i.factura_id && c.codigo === i.codigo && c.enlace === `/facturas/${i.factura_id}`));
+  return si(items.length === abiertasInicio.length && sinTexto.length === 0 && facturaMal.length === 0, `${items.length} casos / ${abiertasInicio.length} abiertas`);
 });
 comprobar('H3b: varios PROVEEDOR_NO_SOPORTADO (≥3) sin factura', () => {
   const pns = facturas.documentos_sin_factura.filter((d) => d.estado_lectura === 'PROVEEDOR_NO_SOPORTADO');
   return si(pns.length >= 3, `${pns.length}`);
 });
-comprobar('H3b: mapa proveedor×estado cuadra con documentos e incluye "Sin identificar"', () => {
+comprobar('H3b: mapa proveedor×estado cuadra con documentos y tiene PDF sin factura', () => {
   const m = proveedores.mapa_documentos;
   const total = m.filas.reduce((a, f) => a + f.total, 0);
   const sumaCeldas = m.filas.every((f) => Object.values(f.por_estado).reduce((a, n) => a + n, 0) === f.total);
-  return si(total === inicio.documentos.total && sumaCeldas && m.filas.some((f) => f.clave === 'sin_identificar') && m.filas.filter((f) => f.por_estado.PROVEEDOR_NO_SOPORTADO > 0).length >= 3, JSON.stringify(m.filas.map((f) => [f.proveedor, f.total])));
+  return si(total === inicio.documentos.total && sumaCeldas && m.filas.filter((f) => f.por_estado.PROVEEDOR_NO_SOPORTADO > 0).length >= 3, JSON.stringify(m.filas.map((f) => [f.proveedor, f.total])));
 });
 comprobar('proveedores: importes null-aware (FEDEFARMA, sin CIF, sin importe conocido = null)', () => {
-  const fed = proveedores.proveedores.find((p) => p.clave === 'nombre:FEDEFARMA');
-  return si(fed && fed.sin_cif && fed.importe_total_conocido === null && fed.facturas_sin_importe === 1, JSON.stringify(fed));
+  const fed = proveedores.proveedores.find((p) => p.clave === 'id:4');
+  return si(fed && fed.sin_cif && fed.etiqueta === 'FEDEFARMA' && fed.importe_total_conocido === null && fed.facturas_sin_importe === 1, JSON.stringify(fed));
 });
 
 // --- Casos H4b ---------------------------------------------------------------------
-comprobar('H4b: proveedores agrupados por CIF (nunca proveedor_id); sin CIF por nombre canónico R9', () => {
+comprobar('H4b/H4c: proveedores agrupados por CIF (nunca proveedor_id); sin CIF por id_proveedor_albaranes R9', () => {
   const ps = proveedores.proveedores;
-  const malos = ps.filter((p) => !/^(cif:[A-Z0-9]+|nombre:[A-Z0-9]+|sin_identificar)$/.test(p.clave) || 'id' in p || 'proveedor_id' in p);
+  const malos = ps.filter((p) => !/^(cif:[A-Z0-9]+|id:[^\s]+|sin_identificar)$/.test(p.clave) || 'id' in p || 'proveedor_id' in p);
   const claves = ps.map((p) => p.clave);
-  return si(malos.length === 0 && isDeepStrictEqual(claves, ['cif:B00000003', 'cif:A00000001', 'cif:B00000002', 'nombre:FEDEFARMA'])
+  return si(malos.length === 0 && isDeepStrictEqual(claves, ['cif:B00000003', 'cif:A00000001', 'cif:B00000002', 'id:4'])
     && ps.reduce((a, p) => a + p.facturas, 0) === facturas.facturas.length && !CONSULTAS_POR_BLOQUE.proveedores.includes('proveedores'), JSON.stringify(claves));
 });
 comprobar('H4b: etiqueta = literal más frecuente del CIF; resto como alias (F02 "b-00000003" normalizado)', () => {
@@ -283,31 +305,252 @@ comprobar('H4b: filtro de proveedor de Facturas con el mismo criterio que Provee
   const f02 = facturas.facturas.find((f) => f.factura_id === F(2));
   return si(igual && todas && f02.proveedor_grupo === 'cif:B00000003', JSON.stringify(op));
 });
-comprobar('H4b: funciones puras de CIF y nombre canónico', () => {
+comprobar('H4b/H4c: funciones puras de CIF (como el motor) y grupo de respaldo R9', () => {
   const casos = [
-    [normalizarCif(' b-0000.0003 '), 'B00000003'], [normalizarCif('  '), null], [normalizarCif(null), null],
-    [nombreCanonico('Alliance Healthcare España, S.A.'), 'ALLIANCEHEALTHCAREESPANASA'],
-    [nombreCanonico(' - '), null],
-    [grupoProveedor('B00000003', 'X').clave, 'cif:B00000003'], [grupoProveedor(null, 'Fedefarma').clave, 'nombre:FEDEFARMA'],
-    [grupoProveedor('', '  ').clave, 'sin_identificar'],
+    [normalizarCif(' b-0000.0003 '), 'B00000003'], [normalizarCif('es/b_00000003'), 'ESB00000003'],
+    [normalizarCif('  '), null], [normalizarCif(null), null], [normalizarCif('-.'), null],
+    // Precedencia del motor (migración 20): columna si no está vacía; si no, datos_extraidos.
+    [cifFactura(null, 'b-00000003'), 'B00000003'], [cifFactura('', 'B00000003'), 'B00000003'],
+    [cifFactura('A00000001', 'B00000003'), 'A00000001'], [cifFactura(null, null), null],
+    [grupoProveedor('B00000003', '0004').clave, 'cif:B00000003'], [grupoProveedor(null, '0004').clave, 'id:4'],
+    [grupoProveedor(null, ' 4 ').clave, 'id:4'], [grupoProveedor(null, 'ABC1').clave, 'id:ABC1'],
+    [grupoProveedor('', '  ').clave, 'sin_identificar'], [grupoProveedor(null, null).sin_cif, true],
     [etiquetaYAlias(['B', 'A', 'B', null]).etiqueta, 'B'], [etiquetaYAlias(['B', 'A']).etiqueta, 'A'],
   ];
   const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
   return si(malos.length === 0, malos.join(', '));
 });
+
+// --- Casos H4c ---------------------------------------------------------------------
+comprobar('H4c: CIF solo en datos_extraidos (columna vacía, como en producción) y agrupa por él', () => {
+  const todas = facturas.facturas;
+  const conColumna = todas.filter((f) => f.proveedor_cif !== null);
+  const f02 = todas.find((f) => f.factura_id === F(2));
+  const det = facturaDetalle[F(2)];
+  return si(conColumna.length === 0 && todas.filter((f) => f.proveedor_nif_documental !== null).length === 7
+    && f02.proveedor_nif_documental === 'b-00000003' && f02.proveedor_grupo === 'cif:B00000003'
+    && det.datos_extraidos.proveedor.nif.valor === 'b-00000003' && det.proveedor.cif === 'B00000003' && det.proveedor.proveedor_cif === null,
+  JSON.stringify(todas.map((f) => [f.factura_id.slice(-2), f.proveedor_cif, f.proveedor_nif_documental, f.proveedor_grupo])));
+});
+comprobar('H4c: consultas leen el CIF de datos_extraidos {proveedor,nif,valor} con la normalización del motor', () => {
+  const sql = [CONSULTAS.facturas.sql, CONSULTAS.documentos.sql, CONSULTAS_CHECK.diagnostico_proveedores.sql].join('\n');
+  return si(sql.includes("datos_extraidos #>> '{proveedor,nif,valor}'") && sql.includes("'[^A-Z0-9]'") && !sql.includes('[[:space:].-]'), 'sql');
+});
+comprobar('H4c: sin CIF → grupo de respaldo id_proveedor_albaranes R9 ("0004" → id:4), marcado sin CIF', () => {
+  const f06 = facturas.facturas.find((f) => f.factura_id === F(6));
+  const op = facturas.proveedores_filtro.find((o) => o.clave === 'id:4');
+  return si(f06.proveedor_nif_documental === null && f06.id_proveedor_albaranes === '0004' && f06.proveedor_grupo === 'id:4' && op?.sin_cif === true, JSON.stringify([f06.proveedor_grupo, op]));
+});
+comprobar('H4c: vencimiento con importe null → la UI dice "importe pendiente" y el total de factura va aparte', () => {
+  const v = facturaDetalle[F(4)].vencimientos.find((x) => x.importe === null);
+  return si(v && v.importe_conocido === false && v.importe_factura === 568.05 && v.importe === null, JSON.stringify(v));
+});
+comprobar('H4c-2: regla de sentido de Pío (solo tipo documental; nunca la columna)', () => {
+  const casos = [
+    [sentidoDocumental('FACTURA'), 'CARGO'], [sentidoDocumental(' factura '), 'CARGO'], [sentidoDocumental('FACTURA_DUPLICADO'), 'CARGO'],
+    [sentidoDocumental('ABONO'), 'ABONO'],
+    [sentidoDocumental('FACTURA_RECTIFICATIVA'), 'NO_DOCUMENTADO'], [sentidoDocumental('FACTURA RECTIFICATIVA'), 'NO_DOCUMENTADO'],
+    [sentidoDocumental('RECTIFICATIVA_ABONO'), 'NO_DOCUMENTADO'],
+    [sentidoDocumental(null), 'NO_DOCUMENTADO'], [sentidoDocumental(''), 'NO_DOCUMENTADO'], [sentidoDocumental('  '), 'NO_DOCUMENTADO'],
+    [sentidoDocumental('OTRO'), 'NO_DOCUMENTADO'], [sentidoDocumental('PROFORMA'), 'NO_DOCUMENTADO'],
+  ];
+  const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
+  return si(malos.length === 0, malos.join(', '));
+});
+comprobar('H4c-2: sentido por factura en fixtures (F08 duplicado cargo, F03 rectificativa, F06 OTRO, F05 vacío, F07 abono)', () => {
+  const s = (n) => facturas.facturas.find((f) => f.factura_id === F(n));
+  const esperado = { 1: 'CARGO', 2: 'CARGO', 3: 'NO_DOCUMENTADO', 4: 'CARGO', 5: 'NO_DOCUMENTADO', 6: 'NO_DOCUMENTADO', 7: 'ABONO', 8: 'CARGO' };
+  const malos = Object.entries(esperado).filter(([n, se]) => s(Number(n)).sentido !== se).map(([n]) => `F0${n}=${s(Number(n)).sentido}`);
+  // La columna no decide: F08 tiene la columna en OTRO (persistencia) y es cargo; F03 la tiene en FACTURA_RECTIFICATIVA y no suma.
+  return si(malos.length === 0 && s(8).tipo_documento === 'OTRO' && s(8).tipo_documento_documental === 'FACTURA_DUPLICADO'
+    && s(6).tipo_documento_documental === 'OTRO' && s(3).tipo_documento === 'FACTURA_RECTIFICATIVA'
+    && facturaDetalle[F(8)].datos_extraidos.tipo_documento.valor === 'FACTURA_DUPLICADO'
+    && vencimientos.vencimientos.every((v) => v.sentido === s(Number(v.factura_id.slice(-2))).sentido), malos.join(', '));
+});
+comprobar('H4c-2: diagnóstico tipo_documento con etiquetas fijas (recuentos de las fixtures y SQL)', () => {
+  const n = Object.fromEntries(CATEGORIAS_TIPO_DOCUMENTAL.map((c) => [c, 0]));
+  for (const f of facturas.facturas) n[categoriaTipoDocumental(f.tipo_documento_documental)] += 1;
+  const casos = [
+    [categoriaTipoDocumental('Factura_Rectificativa'), 'factura_rectificativa'], [categoriaTipoDocumental('RECTIFICATIVA'), 'factura_rectificativa'],
+    [categoriaTipoDocumental(' '), 'vacio_o_null'], [categoriaTipoDocumental(null), 'vacio_o_null'],
+    [categoriaTipoDocumental('ALBARAN'), 'otros_valores'], [categoriaTipoDocumental('otro'), 'otro'],
+  ];
+  const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
+  const sql = CONSULTAS_CHECK.diagnostico_tipo_documento.sql;
+  const faltan = ['facturas', ...CATEGORIAS_TIPO_DOCUMENTAL].filter((c) => !sql.includes(`as ${c}`));
+  let rechaza = false;
+  try { validarDiagnostico({ otros_valores: ['PROFORMA X'] }); } catch { rechaza = true; }
+  // Solo el tipo documental; nunca la columna f.tipo_documento.
+  return si(malos.length === 0 && faltan.length === 0 && rechaza && sql.includes("{tipo_documento,valor}") && !/\bf\.tipo_documento\b/.test(sql)
+    && isDeepStrictEqual(n, { factura: 3, factura_duplicado: 1, abono: 1, factura_rectificativa: 1, otro: 1, vacio_o_null: 1, otros_valores: 0 }),
+  `${malos.join(', ')} faltan=${faltan.join(',')} n=${JSON.stringify(n)}`);
+});
+comprobar('H4c: F05 sin tipo documental → sentido no documentado; nunca suma como cargo ni abono', () => {
+  const v = vencimientos.vencimientos.filter((x) => x.factura_id === F05_SIN_TIPO_DOCUMENTAL);
+  const t = vencimientos.totales;
+  const cargos = vencimientos.vencimientos.filter((x) => x.sentido === 'CARGO' && x.importe !== null).reduce((a, x) => a + x.importe, 0);
+  const abonos = vencimientos.vencimientos.filter((x) => x.sentido === 'ABONO' && x.importe !== null).reduce((a, x) => a + x.importe, 0);
+  const s = cashflowSemanas.semanas.find((x) => x.semana === '2026-11-02');
+  return si(v.length === 1 && v[0].tipo_documento === 'FACTURA' && v[0].tipo_documento_documental === null && v[0].sentido === 'NO_DOCUMENTADO'
+    && t.sentido_no_documentado === 3 && t.importe_cargos_conocido === Math.round(cargos * 10000) / 10000 && t.importe_abonos_conocido === abonos
+    && s.vencimientos_sentido_no_documentado === 1 && facturaDetalle[F05_SIN_TIPO_DOCUMENTAL].vencimientos[0]?.sentido === 'NO_DOCUMENTADO',
+  JSON.stringify([t, s]));
+});
+comprobar('H4c: abono F07 sigue sumando como abono (tipo documental ABONO)', () => {
+  const v = vencimientos.vencimientos.find((x) => x.factura_id === F(7));
+  return si(v.sentido === 'ABONO' && vencimientos.totales.importe_abonos_conocido === -45.3, JSON.stringify(v));
+});
+comprobar('H4c: mapa — PDF con factura por su grupo; sin factura por proveedor_id del catálogo o solo por estado', () => {
+  const m = proveedores.mapa_documentos.filas;
+  const por = (o) => m.filter((f) => f.origen === o);
+  const sinProv = por('SIN_PROVEEDOR');
+  const cat = por('CATALOGO');
+  const conFacturas = por('FACTURAS').reduce((a, f) => a + f.total, 0);
+  const sinFactura = facturas.documentos_sin_factura;
+  const esperadosSinProv = sinFactura.filter((d) => d.proveedor_id === null).length;
+  const nombresArchivo = new Set(inicio.documentos.total ? sinFactura.map((d) => d.archivo_nombre) : []);
+  return si(sinProv.length === 1 && sinProv[0].clave === 'sin_factura_sin_proveedor' && sinProv[0].total === esperadosSinProv && esperadosSinProv === 3
+    && cat.length >= 2 && cat.every((f) => f.clave.startsWith('catalogo:') && f.sin_cif)
+    && cat.reduce((a, f) => a + f.total, 0) + sinProv[0].total === sinFactura.length
+    && conFacturas === inicio.documentos.total - sinFactura.length
+    && m.every((f) => !nombresArchivo.has(f.proveedor)) && m.every((f) => f.origen !== 'FACTURAS' || proveedores.proveedores.some((p) => p.clave === f.clave)),
+  JSON.stringify(m.map((f) => [f.origen, f.clave, f.proveedor, f.total])));
+});
+comprobar('H4c: diagnósticos de check:real solo devuelven recuentos (columnas declaradas)', () => {
+  const p = CONSULTAS_CHECK.diagnostico_proveedores.sql;
+  const v = CONSULTAS_CHECK.diagnostico_vencimientos.sql;
+  const d = CONSULTAS_CHECK.diagnostico_documentos.sql;
+  const faltan = [
+    ...['facturas_cif_columna', 'facturas_cif_datos_extraidos', 'cif_distintos', 'facturas_sin_cif', 'facturas_sin_cif_con_id_r9'].filter((c) => !p.includes(`as ${c}`)),
+    ...['vencimientos_tipo_documento_null', 'vencimientos_tipo_documental_null', 'vencimientos_tipo_otro', 'vencimientos_sentido_no_documentado'].filter((c) => !v.includes(`as ${c}`)),
+    ...['pdf_sin_factura', 'pdf_sin_factura_con_proveedor_id', 'pdf_sin_factura_con_proveedor_catalogo', 'pdf_sin_factura_sin_proveedor'].filter((c) => !d.includes(`as ${c}`)),
+  ];
+  let rechaza = false;
+  try { validarDiagnostico({ x: 'B00000003' }); } catch { rechaza = true; }
+  return si(faltan.length === 0 && rechaza && !/archivo_nombre/.test(d), faltan.join(', ') || 'validarDiagnostico acepta texto');
+});
 comprobar('H4b: incidencias INFO solo en el detalle de factura (ni contador ni atención de Inicio)', () => {
   const info = facturaDetalle[F(2)].incidencias.filter((i) => i.severidad === 'INFO');
-  const enInicio = inicio.atencion.some((a) => a.codigo === 'MONEDA_NO_DOCUMENTADA');
-  const abiertasNoInfo = [...h3a('incidencias'), ...INCIDENCIAS_H4B].filter((i) => i.estado === 'ABIERTA' && i.severidad !== 'INFO').length;
-  return si(info.length === 1 && info[0].codigo === 'MONEDA_NO_DOCUMENTADA' && !enInicio && inicio.incidencias.abiertas === abiertasNoInfo
-    && facturas.facturas.find((f) => f.factura_id === F(2)).incidencias_abiertas === 1, `info=${info.length} enInicio=${enInicio} abiertas=${inicio.incidencias.abiertas}/${abiertasNoInfo}`);
+  const enInicio = casosAtencion.some((c) => c.codigo === 'MONEDA_NO_DOCUMENTADA');
+  return si(info.length === 1 && info[0].codigo === 'MONEDA_NO_DOCUMENTADA' && !enInicio && inicio.incidencias.abiertas === abiertasInicio.length
+    && facturas.facturas.find((f) => f.factura_id === F(2)).incidencias_abiertas === 3, `info=${info.length} enInicio=${enInicio} abiertas=${inicio.incidencias.abiertas}/${abiertasInicio.length}`);
 });
-comprobar('H4b: textos de incidencia: diccionario por código; sin entrada, mensaje_usuario', () => {
-  const t = (c) => inicio.atencion.find((a) => a.codigo === c)?.texto;
-  return si(textoIncidencia({ codigo: 'MONEDA_NO_DOCUMENTADA', mensaje_usuario: 'x' }) === 'La factura no indica la moneda'
+comprobar('H4b/H4d: textos de incidencia por código (nunca mensaje_usuario); sin entrada, "Aviso técnico del motor"', () => {
+  const t = (c) => casosAtencion.find((a) => a.codigo === c)?.texto;
+  return si(textoIncidencia({ codigo: 'MONEDA_NO_DOCUMENTADA' }) === 'La factura no indica la moneda'
     && t('POSIBLE_DUPLICADO') === TEXTO_INCIDENCIA.POSIBLE_DUPLICADO
-    && t('VALOR_SIN_EVIDENCIA') === 'El total de la factura no tiene evidencia legible en el documento.'
-    && textoIncidencia({ codigo: 'CODIGO_DESCONOCIDO', mensaje_usuario: null }) === 'Incidencia CODIGO_DESCONOCIDO', 'textos mal');
+    && t('VALOR_SIN_EVIDENCIA') === TEXTO_INCIDENCIA.VALOR_SIN_EVIDENCIA
+    && textoIncidencia({ codigo: 'CODIGO_DESCONOCIDO' }) === TEXTO_SIN_TRADUCCION
+    && t('CODIGO_FICTICIO_SIN_TRADUCCION') === 'Aviso técnico del motor (ver detalle)', 'textos mal');
+});
+
+// --- Casos H4d ---------------------------------------------------------------------
+comprobar('H4d: cabecera "N tipos, M casos" y una fila por tipo', () => {
+  const g = inicio.atencion.grupos;
+  const claves = new Set(g.map((x) => x.clave));
+  return si(inicio.atencion.tipos === g.length && inicio.atencion.casos === casosAtencion.length && claves.size === g.length
+    && g.length === 15 && casosAtencion.length === 26, JSON.stringify([inicio.atencion.tipos, inicio.atencion.casos]));
+});
+comprobar('H4d: orden fijo de grupos (1 diferencia … 8 correcciones) y casos del más reciente al más antiguo', () => {
+  const g = inicio.atencion.grupos;
+  const orden = g.map((x) => x.orden);
+  const ordenado = orden.every((o, i) => i === 0 || orden[i - 1] <= o);
+  const primeros = g.slice(0, 5).map((x) => x.clave);
+  const casosOrdenados = g.every((x) => x.casos.every((c, i) => i === 0 || (x.casos[i - 1].fecha ?? '') >= (c.fecha ?? '')));
+  // Dentro de 6 y 7 (un grupo por código): el grupo con el caso más reciente primero.
+  const de7 = g.filter((x) => x.orden === 7).map((x) => x.clave.split(':')[1]);
+  return si(ordenado && casosOrdenados && isDeepStrictEqual(primeros, ['DIFERENCIA_ALBARANES', 'DOCUMENTOS_DEFECTO', 'DUPLICADO_FARMATIC', 'VENCIMIENTO_SIN_SENTIDO', 'ALBARAN_NO_EN_FARMATIC'])
+    && isDeepStrictEqual(de7, ['SENTIDO_NO_DOCUMENTADO', 'IMPORTE_VENCIMIENTO_NO_DOCUMENTADO', 'SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE',
+      'CANDIDATO_ALBARAN_NO_PROMOVIDO', 'POSIBLE_DUPLICADO', 'CODIGO_FICTICIO_SIN_TRADUCCION'])
+    && g.find((x) => x.orden === 8).clave === 'CORRECCION_APROBADA', JSON.stringify(g.map((x) => [x.orden, x.clave])));
+});
+comprobar('H4d: colores (1–2 y ERROR rojo; revisión, 3–5 y AVISO naranja; correcciones gris; duplicado y sentido nunca rojo)', () => {
+  const malos = inicio.atencion.grupos.filter((g) => {
+    // H4d-2: "Facturas con datos por revisar" sigue en el grupo 6 pero en naranja (revisión = naranja).
+    const esperado = g.clave === 'INCIDENCIA_ERROR:REQUIERE_REVISION' ? 'naranja'
+      : [1, 2, 6].includes(g.orden) ? 'rojo' : [3, 4, 5, 7].includes(g.orden) ? 'naranja' : 'gris';
+    return g.color !== esperado;
+  });
+  const sentidoError = grupo('INCIDENCIA_AVISO:SENTIDO_NO_DOCUMENTADO').casos.some((c) => c.factura_id === F(2)); // SENTIDO con severidad ERROR
+  const dup = inicio.atencion.grupos.filter((g) => /DUPLICADO|SENTIDO/.test(g.clave));
+  return si(malos.length === 0 && sentidoError && dup.length >= 3 && dup.every((g) => g.color !== 'rojo'),
+    JSON.stringify(inicio.atencion.grupos.map((g) => [g.orden, g.clave, g.color])));
+});
+comprobar('H4d: agrupación por código (2 IMPORTE_VENCIMIENTO, 3 SENTIDO, 2 CANDIDATO con texto según motivo)', () => {
+  const iv = grupo('INCIDENCIA_AVISO:IMPORTE_VENCIMIENTO_NO_DOCUMENTADO');
+  const ca = grupo('INCIDENCIA_AVISO:CANDIDATO_ALBARAN_NO_PROMOVIDO');
+  return si(iv.casos.length === 2 && grupo('INCIDENCIA_AVISO:SENTIDO_NO_DOCUMENTADO').casos.length === 3 && ca.casos.length === 2
+    && ca.casos.map((c) => c.texto).sort().join('|') === [TEXTO_INCIDENCIA.SENTIDO_O_SIGNO_NO_COHERENTE, TEXTO_INCIDENCIA.TIPO_PEDIDO_NO_CERTIFICADO].sort().join('|')
+    && !casosAtencion.some((c) => /^[A-Z_]+$/.test(c.texto)), JSON.stringify(ca.casos.map((c) => c.texto)));
+});
+comprobar('H4d: MONEDA_NO_DOCUMENTADA (AVISO) fuera de Inicio y de sus contadores; visible en el detalle de F04', () => {
+  const det = facturaDetalle[F(4)].incidencias.filter((i) => i.codigo === 'MONEDA_NO_DOCUMENTADA');
+  return si(det.length === 1 && det[0].severidad === 'AVISO' && !casosAtencion.some((c) => c.codigo === 'MONEDA_NO_DOCUMENTADA')
+    && !inicio.atencion.grupos.some((g) => g.clave.includes('MONEDA')), JSON.stringify(det));
+});
+comprobar('H4d-2: códigos solo de detalle fuera de Inicio y del contador; visibles en el detalle de su factura', () => {
+  const malos = [];
+  for (const codigo of SOLO_DETALLE) {
+    const fx = INCIDENCIAS_H4D.find((i) => i.codigo === codigo);
+    if (!fx) { malos.push(`${codigo}: sin fixture`); continue; }
+    if (!isDeepStrictEqual([...CODIGOS_SOLO_DETALLE].sort(), [...SOLO_DETALLE].sort())) malos.push('CODIGOS_SOLO_DETALLE distinto');
+    if (casosAtencion.some((c) => c.codigo === codigo)) malos.push(`${codigo}: en Inicio`);
+    if (!facturaDetalle[fx.factura_id].incidencias.some((i) => i.codigo === codigo)) malos.push(`${codigo}: no está en el detalle`);
+  }
+  return si(malos.length === 0 && inicio.incidencias.abiertas === 13, [...new Set(malos)].join('; ') || `abiertas=${inicio.incidencias.abiertas}`);
+});
+comprobar('H4d-3: grupo 4 = solo vencimientos con sentido NO_DOCUMENTADO (regla de Pío), naranja, texto fijo', () => {
+  const g4 = grupo('VENCIMIENTO_SIN_SENTIDO');
+  const esperados = vencimientos.vencimientos.filter((v) => v.sentido === 'NO_DOCUMENTADO');
+  const ids = (xs) => xs.map((x) => x.factura_id).sort();
+  return si(g4 && g4.orden === 4 && g4.color === 'naranja' && g4.titulo === 'Vencimiento sin cargo/abono documentado'
+    && g4.casos.length === esperados.length && esperados.length === 3 && isDeepStrictEqual(ids(g4.casos), ids(esperados))
+    && isDeepStrictEqual(ids(g4.casos), [F(3), F(5), F(6)])
+    && g4.casos.every((c) => c.texto === 'No se sabe si esta factura es un pago o un abono; no se suma en el cashflow' && c.codigo === null
+      && c.enlace === `/facturas/${c.factura_id}`), JSON.stringify(g4));
+});
+comprobar('H4d-3: incidencias de sentido del motor en su propio grupo del nivel 7, naranja, con texto de movimiento/línea', () => {
+  const nd = grupo('INCIDENCIA_AVISO:SENTIDO_NO_DOCUMENTADO');
+  const ne = grupo('INCIDENCIA_AVISO:SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE');
+  return si(nd && ne && [nd, ne].every((g) => g.orden === 7 && g.color === 'naranja')
+    && nd.casos.length === 3 && nd.casos.every((c) => c.texto === TEXTO_INCIDENCIA.SENTIDO_NO_DOCUMENTADO && /movimiento/.test(c.texto))
+    && ne.casos.length === 1 && ne.casos[0].texto === TEXTO_INCIDENCIA.SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE && /línea/.test(ne.casos[0].texto)
+    && !grupo('SENTIDO_NO_DOCUMENTADO') && !grupo('VENCIMIENTO_SIN_SENTIDO').casos.some((c) => c.codigo !== null),
+  JSON.stringify([nd, ne].map((g) => g && [g.clave, g.color, g.casos.length])));
+});
+comprobar('H4d-3: diagnóstico check:real "sentido" (recuentos por origen; fixtures: 3 / 3 / 1)', () => {
+  const sql = CONSULTAS_CHECK.diagnostico_sentido.sql;
+  const cols = ['vencimiento_regla', 'incidencia_sentido_no_documentado', 'incidencia_sentido_no_etiquetado'];
+  const faltan = cols.filter((c) => !sql.includes(`as ${c}`));
+  // Mismo cálculo sobre las fixtures (lo que verá Pío en check:real si los datos fueran estos).
+  const regla = vencimientos.vencimientos.filter((v) => v.sentido === 'NO_DOCUMENTADO').length;
+  const inc = (c) => abiertasInicio.filter((i) => i.codigo === c).length;
+  const g = (c) => grupo(`INCIDENCIA_AVISO:${c}`)?.casos.length ?? 0;
+  return si(faltan.length === 0 && isDeepStrictEqual(COLUMNAS_SENTIDO, cols) && sql.includes("{tipo_documento,valor}") && !/\bf\.tipo_documento\b/.test(sql)
+    && regla === 3 && grupo('VENCIMIENTO_SIN_SENTIDO').casos.length === regla
+    && inc('SENTIDO_NO_DOCUMENTADO') === 3 && g('SENTIDO_NO_DOCUMENTADO') === 3
+    && inc('SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE') === 1 && g('SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE') === 1, faltan.join(', ') || 'recuentos');
+});
+comprobar('H4d: diccionario completo (cada código emitido por el motor tiene texto; nunca el código como texto)', () => {
+  const motor = ['ARCHIVO_NO_ENCONTRADO', 'RUTA_NO_ES_ARCHIVO', 'FORMATO_NO_ADMITIDO', 'RESULTADO_INVALIDO', 'ERROR_PROCESAMIENTO',
+    'PENDIENTE_OCR', 'LAYOUT_NO_RECONOCIDO', 'LAYOUT_DESCONOCIDO', 'LAYOUT_AMBIGUO', 'SEGUNDA_LECTURA_FALLIDA', 'RESUMEN_FISCAL_OCR_INCOMPLETO',
+    'TOTALES_IMPUESTOS_OCR_INCOMPLETOS', 'DETALLE_OCR_PARCIAL', 'CAMPOS_DETALLE_NO_RECUPERADOS_OCR', 'VALOR_SIN_EVIDENCIA',
+    'CAMPOS_PENDIENTES_TRAS_EXTRACCION', 'MONEDA_NO_DOCUMENTADA', 'PROVEEDOR_NIF_NO_DOCUMENTADO', 'PROVEEDOR_DIRECCION_NO_DOCUMENTADA',
+    'TIPOS_FISCALES_NO_DOCUMENTADOS', 'IMPORTE_VENCIMIENTO_NO_DOCUMENTADO', 'IMPORTE_VENCIMIENTO_NO_VISIBLE', 'VENCIMIENTO_CONTRADICTORIO_ENTRE_HOJAS',
+    'SENTIDO_NO_DOCUMENTADO', 'SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE', 'IMPORTE_MOVIMIENTO_NO_DOCUMENTADO', 'CATEGORIA_MOVIMIENTO_NO_DECIDIDA',
+    'CANDIDATO_ALBARAN_NO_PROMOVIDO', 'TIPO_PEDIDO_NO_CERTIFICADO', 'SENTIDO_O_SIGNO_NO_COHERENTE', 'FILA_IMPORTE_CERO_INFORMATIVA',
+    'ROL_FILA_INDETERMINADO', 'FILAS_DUPLICADAS_EVIDENCIA_IDENTICA', 'ALBARANES_CONSUMIBLES_SOLO_REFERENCIA_DOCUMENTAL',
+    'COMPONENTE_DOCUMENTAL_AUSENTE', 'DIFERENCIA_CONCILIACION_NO_EXPLICADA', 'POSIBLE_DUPLICADO', 'DUPLICADO_CONFLICTIVO',
+    'CONFLICTO_ENTRE_REPRESENTACIONES', 'EQUIVALENCIA_DOCUMENTAL_INSUFICIENTE', 'REPRESENTACIONES_CONSOLIDADAS'];
+  const faltan = motor.filter((c) => textoIncidencia({ codigo: c }) === TEXTO_SIN_TRADUCCION);
+  const comoCodigo = Object.values(TEXTO_INCIDENCIA).filter((t) => /^[A-Z_]+$/.test(t));
+  return si(faltan.length === 0 && comoCodigo.length === 0, faltan.join(', '));
+});
+comprobar('H4d: próximos vencimientos marcan "posible duplicado" (F01 con incidencia POSIBLE_DUPLICADO)', () => {
+  const pv = inicio.proximos_vencimientos;
+  const conDup = new Set(abiertasInicio.filter((i) => i.codigo === 'POSIBLE_DUPLICADO').map((i) => i.factura_id));
+  return si(pv.length === 5 && pv.every((v) => v.posible_duplicado === conDup.has(v.factura_id)) && pv.some((v) => v.posible_duplicado),
+    JSON.stringify(pv.map((v) => [v.factura_id.slice(-2), v.posible_duplicado])));
 });
 comprobar('H4b: diagnóstico duplicados (2 candidatos, 1 tras filtro de importe)', () => {
   const d = resumenDuplicados(ALERTA_DUPLICADO);

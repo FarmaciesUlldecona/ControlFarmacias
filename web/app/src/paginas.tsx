@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import type { FacturaDetalleDTO, FacturasDTO } from '../server/contrato.ts';
+import { textoIncidencia, type FacturaDetalleDTO, type FacturasDTO, type Incidencia, type Vencimiento } from '../server/contrato.ts';
 import { useApi, type Carga } from './api.ts';
 import type { Pantalla } from './App.tsx';
+import { euros, fechaCorta } from './formato.ts';
+import { ImporteVencimiento } from './inicio.tsx';
 
 function Cabecera({ titulo, subtitulo }: { titulo: string; subtitulo: string }) {
   return (
@@ -72,6 +74,75 @@ export function PaginaFacturas({ pantalla }: { pantalla: Pantalla }) {
   );
 }
 
+const SENTIDO: Record<Vencimiento['sentido'], string> = { CARGO: 'cargo', ABONO: 'abono', NO_DOCUMENTADO: 'sentido no documentado' };
+
+/**
+ * H4c: vencimientos de la factura. Importe null = "importe pendiente" (R14); junto a él, el total de la factura
+ * como referencia separada y rotulada "total factura": nunca se asigna al vencimiento.
+ */
+function VencimientosFactura({ vencimientos }: { vencimientos: Vencimiento[] }) {
+  return (
+    <section className="tarjeta bloque detalle-vencimientos" aria-labelledby="t-vencimientos-factura">
+      <h2 id="t-vencimientos-factura">Vencimientos</h2>
+      {vencimientos.length === 0 ? (
+        <p className="tenue vacio">La factura no documenta vencimientos.</p>
+      ) : (
+        <table className="tabla">
+          <thead><tr><th scope="col">Vencimiento</th><th scope="col">Fecha</th><th scope="col" className="num">Importe</th></tr></thead>
+          <tbody>
+            {vencimientos.map((v) => {
+              const total = euros(v.importe_factura);
+              return (
+                <tr key={v.vencimiento_id} data-vencimiento={v.vencimiento_id}>
+                  <td>
+                    {v.orden ?? '?'} de {v.vencimientos_factura}
+                    <span className="nota" data-sentido={v.sentido}>{SENTIDO[v.sentido]}</span>
+                  </td>
+                  <td className="fecha">{fechaCorta(v.fecha_vencimiento)}</td>
+                  <td className="num">
+                    <ImporteVencimiento v={v.importe} />
+                    {v.importe === null && (
+                      <span className="referencia-total" data-total-factura>
+                        total factura: <strong>{total ?? 'no consta'}</strong> (referencia)
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
+
+/** H4d: incidencias de la factura en texto llano; el código técnico solo como etiqueta pequeña. Aquí sí salen las INFO y MONEDA_NO_DOCUMENTADA. */
+function IncidenciasFactura({ incidencias }: { incidencias: Incidencia[] }) {
+  return (
+    <section className="tarjeta bloque detalle-vencimientos" aria-labelledby="t-incidencias-factura">
+      <h2 id="t-incidencias-factura">Incidencias</h2>
+      {incidencias.length === 0 ? (
+        <p className="tenue vacio">La factura no tiene incidencias.</p>
+      ) : (
+        <ul className="casos casos-detalle">
+          {incidencias.map((i) => (
+            <li key={i.incidencia_id} className="caso" data-incidencia={i.codigo}>
+              <div className="caso-cuerpo">
+                <span className="caso-texto">{textoIncidencia(i)}</span>
+                <span className="caso-ref tenue">
+                  <span>{i.estado === 'ABIERTA' ? 'Abierta' : 'Resuelta'}{i.bloqueante ? ' · bloqueante' : ''}</span>
+                  <code className="codigo">{i.codigo}</code>
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function PaginaDetalle() {
   const { id = '' } = useParams();
   const carga = useApi<FacturaDetalleDTO>(`/api/facturas/${encodeURIComponent(id)}`);
@@ -83,6 +154,8 @@ export function PaginaDetalle() {
       <p className="migas"><Link to="/facturas">Facturas</Link> / Detalle</p>
       <Cabecera titulo={titulo} subtitulo={subtitulo} />
       <EnConstruccion bloque="facturaDetalle" carga={carga} />
+      {carga.estado === 'ok' && <VencimientosFactura vencimientos={carga.datos.vencimientos} />}
+      {carga.estado === 'ok' && <IncidenciasFactura incidencias={carga.datos.incidencias} />}
     </>
   );
 }

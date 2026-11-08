@@ -93,7 +93,8 @@ test.describe('Acceso PC 1440', () => {
     await page.setViewportSize({ width: 1440, height: 640 });
     await entrar(page);
     await expect(page.locator('[data-contrato-ok="inicio"]')).toBeVisible();
-    await page.locator('#atencion').getByRole('button', { name: /Mostrar \d+ avisos más/ }).click();
+    // H4d: todos los grupos desplegados para que la página sea larga.
+    for (const s of await page.locator('#atencion summary').all()) await s.click();
     const medidas = await page.evaluate(() => ({
       documento: document.documentElement.scrollHeight,
       lateral: (document.querySelector('.lateral') as HTMLElement).getBoundingClientRect().height,
@@ -111,12 +112,12 @@ test.describe('Acceso PC 1440', () => {
   test('Inicio: incidencias INFO fuera de "Necesita tu atención"; textos llanos por código', async ({ page }) => {
     await entrar(page);
     const at = page.locator('#atencion');
-    await at.getByRole('button', { name: /Mostrar \d+ avisos más/ }).click();
+    for (const s of await at.locator('summary').all()) await s.click();
     await expect(at).not.toContainText('MONEDA_NO_DOCUMENTADA');
     await expect(at).not.toContainText('moneda');
     await expect(at).toContainText('Puede que esta factura esté repetida en otro PDF');
     await expect(at).toContainText('Un vencimiento de la factura no indica su importe');
-    await expect(page.locator('[data-contador="incidencias"]')).toHaveText('6');
+    await expect(page.locator('[data-contador="incidencias"]')).toHaveText('13');
     // La INFO sigue en el detalle (contrato) de su factura.
     const det = await (await page.request.get('/api/facturas/f0000000-0000-4000-8000-000000000002')).json();
     expect(det.incidencias.map((i: { codigo: string }) => i.codigo)).toContain('MONEDA_NO_DOCUMENTADA');

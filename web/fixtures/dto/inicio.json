@@ -46,7 +46,7 @@
     "facturas_sin_importe": 1
   },
   "incidencias": {
-    "abiertas": 6,
+    "abiertas": 13,
     "bloqueantes": 2
   },
   "proximos_vencimientos": [
@@ -55,6 +55,8 @@
       "factura_id": "f0000000-0000-4000-8000-000000000001",
       "numero_factura": "AL-26-100231",
       "tipo_documento": "FACTURA",
+      "tipo_documento_documental": "FACTURA",
+      "sentido": "CARGO",
       "proveedor": "ALLIANCEHEALTHCARECENCORA",
       "orden": 1,
       "fecha_vencimiento": "2026-11-04",
@@ -70,13 +72,16 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "posible_duplicado": true
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000002",
       "factura_id": "f0000000-0000-4000-8000-000000000002",
       "numero_factura": "AL-26-100577",
       "tipo_documento": "FACTURA",
+      "tipo_documento_documental": "FACTURA",
+      "sentido": "CARGO",
       "proveedor": "ALLIANCEHEALTHCARECENCORA",
       "orden": 1,
       "fecha_vencimiento": "2026-11-11",
@@ -92,13 +97,16 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "posible_duplicado": false
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000003",
       "factura_id": "f0000000-0000-4000-8000-000000000003",
       "numero_factura": "CF-2026-55810",
-      "tipo_documento": "FACTURA",
+      "tipo_documento": "FACTURA_RECTIFICATIVA",
+      "tipo_documento_documental": "FACTURA_RECTIFICATIVA",
+      "sentido": "NO_DOCUMENTADO",
       "proveedor": "COFARES",
       "orden": 1,
       "fecha_vencimiento": "2026-11-14",
@@ -114,13 +122,16 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "posible_duplicado": false
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000005",
       "factura_id": "f0000000-0000-4000-8000-000000000004",
       "numero_factura": "CF-2026-55811",
       "tipo_documento": "FACTURA",
+      "tipo_documento_documental": "FACTURA",
+      "sentido": "CARGO",
       "proveedor": "COFARES",
       "orden": 2,
       "fecha_vencimiento": "2026-11-15",
@@ -136,13 +147,16 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "posible_duplicado": false
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000006",
       "factura_id": "f0000000-0000-4000-8000-000000000004",
       "numero_factura": "CF-2026-55811",
       "tipo_documento": "FACTURA",
+      "tipo_documento_documental": "FACTURA",
+      "sentido": "CARGO",
       "proveedor": "COFARES",
       "orden": 3,
       "fecha_vencimiento": "2026-11-30",
@@ -158,158 +172,415 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
+      },
+      "posible_duplicado": false
+    }
+  ],
+  "atencion": {
+    "tipos": 15,
+    "casos": 26,
+    "grupos": [
+      {
+        "clave": "DIFERENCIA_ALBARANES",
+        "categoria": "DIFERENCIA_ALBARANES",
+        "orden": 1,
+        "titulo": "Diferencia con albaranes",
+        "color": "rojo",
+        "casos": [
+          {
+            "texto": "No se puede comprobar la factura contra sus albaranes",
+            "proveedor": "COFARES",
+            "referencia": "CF-AB-2026-0912",
+            "codigo": "NO_EVALUABLE",
+            "fecha": "2026-10-24T09:00:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000007",
+            "documento_id": "d0000000-0000-4000-8000-000000000006",
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000007",
+            "diferencia_motor": null
+          },
+          {
+            "texto": "La factura no cuadra con sus albaranes",
+            "proveedor": "COFARES",
+            "referencia": "CF-2026-55810",
+            "codigo": "DIFERENCIA",
+            "fecha": "2026-10-17T09:00:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000003",
+            "documento_id": "d0000000-0000-4000-8000-000000000003",
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000003",
+            "diferencia_motor": 41.9
+          },
+          {
+            "texto": "Se han agotado los intentos de conciliar la factura con sus albaranes",
+            "proveedor": "HEFAME",
+            "referencia": "HF-0563-889120",
+            "codigo": "DIFERENCIA",
+            "fecha": "2026-10-10T09:00:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000005",
+            "documento_id": "d0000000-0000-4000-8000-000000000004",
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000005",
+            "diferencia_motor": 23.45
+          }
+        ]
+      },
+      {
+        "clave": "DOCUMENTOS_DEFECTO",
+        "categoria": "DOCUMENTOS_DEFECTO",
+        "orden": 2,
+        "titulo": "Documentos con defecto",
+        "color": "rojo",
+        "casos": [
+          {
+            "texto": "El PDF necesita revisión manual",
+            "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "referencia": "Alliance_multifactura_incompleta_0111.pdf",
+            "codigo": "FACTURA_INCOMPLETA",
+            "fecha": "2026-11-01T21:00:00+00:00",
+            "factura_id": null,
+            "documento_id": "d0000000-0000-4000-8000-000000000014",
+            "enlace": "/facturas"
+          },
+          {
+            "texto": "No se ha podido leer el PDF",
+            "proveedor": null,
+            "referencia": "Escaneo_ilegible_2610.pdf",
+            "codigo": "SEGUNDA_LECTURA_FALLIDA",
+            "fecha": "2026-10-26T21:00:00+00:00",
+            "factura_id": null,
+            "documento_id": "d0000000-0000-4000-8000-000000000009",
+            "enlace": "/facturas"
+          }
+        ]
+      },
+      {
+        "clave": "DUPLICADO_FARMATIC",
+        "categoria": "DUPLICADO_FARMATIC",
+        "orden": 3,
+        "titulo": "Duplicados en Farmatic",
+        "color": "naranja",
+        "casos": [
+          {
+            "proveedor": "ALLIANCE HEALTHCARE (FICTICIO)",
+            "codigo": null,
+            "fecha": "2026-10-21",
+            "factura_id": null,
+            "documento_id": null,
+            "enlace": "/conciliacion",
+            "texto": "El albarán 08C66676 está 2 veces en Farmatic con el mismo importe",
+            "referencia": "08C66676, 08C66676A",
+            "importe_duplicado": 57.4
+          }
+        ]
+      },
+      {
+        "clave": "VENCIMIENTO_SIN_SENTIDO",
+        "categoria": "VENCIMIENTO_SIN_SENTIDO",
+        "orden": 4,
+        "titulo": "Vencimiento sin cargo/abono documentado",
+        "color": "naranja",
+        "casos": [
+          {
+            "texto": "No se sabe si esta factura es un pago o un abono; no se suma en el cashflow",
+            "proveedor": "FEDEFARMA",
+            "referencia": "FD-26/04471",
+            "codigo": null,
+            "fecha": "2026-11-19",
+            "factura_id": "f0000000-0000-4000-8000-000000000006",
+            "documento_id": "d0000000-0000-4000-8000-000000000005",
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000006"
+          },
+          {
+            "texto": "No se sabe si esta factura es un pago o un abono; no se suma en el cashflow",
+            "proveedor": "COFARES",
+            "referencia": "CF-2026-55810",
+            "codigo": null,
+            "fecha": "2026-11-14",
+            "factura_id": "f0000000-0000-4000-8000-000000000003",
+            "documento_id": "d0000000-0000-4000-8000-000000000003",
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000003"
+          },
+          {
+            "texto": "No se sabe si esta factura es un pago o un abono; no se suma en el cashflow",
+            "proveedor": "HEFAME",
+            "referencia": "HF-0563-889120",
+            "codigo": null,
+            "fecha": "2026-11-07",
+            "factura_id": "f0000000-0000-4000-8000-000000000005",
+            "documento_id": "d0000000-0000-4000-8000-000000000004",
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000005"
+          }
+        ]
+      },
+      {
+        "clave": "ALBARAN_NO_EN_FARMATIC",
+        "categoria": "ALBARAN_NO_EN_FARMATIC",
+        "orden": 5,
+        "titulo": "Albarán facturado que ya no está en Farmatic",
+        "color": "naranja",
+        "casos": [
+          {
+            "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "codigo": null,
+            "fecha": "2026-10-30T03:00:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000001",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000001",
+            "texto": "El albarán 08X10002 está en una factura, pero ya no aparece en Farmatic",
+            "referencia": "AL-26-100231"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_ERROR:REQUIERE_REVISION",
+        "categoria": "INCIDENCIA_ERROR",
+        "orden": 6,
+        "titulo": "Facturas con datos por revisar",
+        "color": "naranja",
+        "casos": [
+          {
+            "texto": "Faltan datos de la factura: el total no consta en el documento",
+            "proveedor": "FEDEFARMA",
+            "referencia": "FD-26/04471",
+            "codigo": "REQUIERE_REVISION",
+            "fecha": "2026-10-28T08:00:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000006",
+            "documento_id": "d0000000-0000-4000-8000-000000000005",
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000006"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_ERROR:SEGUNDA_LECTURA_FALLIDA",
+        "categoria": "INCIDENCIA_ERROR",
+        "orden": 6,
+        "titulo": "No se ha podido leer el PDF; se volverá a intentar automáticamente",
+        "color": "rojo",
+        "casos": [
+          {
+            "texto": "No se ha podido leer el PDF; se volverá a intentar automáticamente",
+            "proveedor": null,
+            "referencia": "Escaneo_ilegible_2610.pdf",
+            "codigo": "SEGUNDA_LECTURA_FALLIDA",
+            "fecha": "2026-10-26T21:06:00+00:00",
+            "factura_id": null,
+            "documento_id": "d0000000-0000-4000-8000-000000000009",
+            "enlace": "/facturas"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_ERROR:VALOR_SIN_EVIDENCIA",
+        "categoria": "INCIDENCIA_ERROR",
+        "orden": 6,
+        "titulo": "Un dato de la factura no tiene respaldo legible en el documento",
+        "color": "rojo",
+        "casos": [
+          {
+            "texto": "Un dato de la factura no tiene respaldo legible en el documento",
+            "proveedor": "FEDEFARMA",
+            "referencia": "FD-26/04471",
+            "codigo": "VALOR_SIN_EVIDENCIA",
+            "fecha": "2026-10-21T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000006",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000006"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_AVISO:SENTIDO_NO_DOCUMENTADO",
+        "categoria": "INCIDENCIA_AVISO",
+        "orden": 7,
+        "titulo": "La factura no indica si un movimiento es un cargo o un abono",
+        "color": "naranja",
+        "casos": [
+          {
+            "texto": "La factura no indica si un movimiento es un cargo o un abono",
+            "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "referencia": "AL-26-100577",
+            "codigo": "SENTIDO_NO_DOCUMENTADO",
+            "fecha": "2026-10-29T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000002",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000002"
+          },
+          {
+            "texto": "La factura no indica si un movimiento es un cargo o un abono",
+            "proveedor": "COFARES",
+            "referencia": "CF-2026-55810",
+            "codigo": "SENTIDO_NO_DOCUMENTADO",
+            "fecha": "2026-10-27T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000003",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000003"
+          },
+          {
+            "texto": "La factura no indica si un movimiento es un cargo o un abono",
+            "proveedor": "COFARES",
+            "referencia": "CF-AB-2026-0912",
+            "codigo": "SENTIDO_NO_DOCUMENTADO",
+            "fecha": "2026-10-23T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000007",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000007"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_AVISO:IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
+        "categoria": "INCIDENCIA_AVISO",
+        "orden": 7,
+        "titulo": "Un vencimiento de la factura no indica su importe",
+        "color": "naranja",
+        "casos": [
+          {
+            "texto": "Un vencimiento de la factura no indica su importe",
+            "proveedor": "FEDEFARMA",
+            "referencia": "FD-26/04471",
+            "codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
+            "fecha": "2026-10-28T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000006",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000006"
+          },
+          {
+            "texto": "Un vencimiento de la factura no indica su importe",
+            "proveedor": "COFARES",
+            "referencia": "CF-2026-55811",
+            "codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
+            "fecha": "2026-10-16T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000004",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000004"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_AVISO:SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE",
+        "categoria": "INCIDENCIA_AVISO",
+        "orden": 7,
+        "titulo": "El documento no indica si una línea es un cargo o un abono",
+        "color": "naranja",
+        "casos": [
+          {
+            "texto": "El documento no indica si una línea es un cargo o un abono",
+            "proveedor": "COFARES",
+            "referencia": "CF-2026-55811",
+            "codigo": "SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE",
+            "fecha": "2026-10-26T21:07:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000004",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000004"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_AVISO:CANDIDATO_ALBARAN_NO_PROMOVIDO",
+        "categoria": "INCIDENCIA_AVISO",
+        "orden": 7,
+        "titulo": "Hay filas de la factura que parecen albaranes, pero no se han podido confirmar",
+        "color": "naranja",
+        "casos": [
+          {
+            "texto": "Hay filas de la factura cuyo cargo, abono o signo no cuadra; no se han tomado como albaranes",
+            "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "referencia": "AL-26-100577",
+            "codigo": "CANDIDATO_ALBARAN_NO_PROMOVIDO",
+            "fecha": "2026-10-25T21:07:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000002",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000002"
+          },
+          {
+            "texto": "Hay filas de la factura con un tipo de pedido que el sistema no reconoce; no se han tomado como albaranes",
+            "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "referencia": "AL-26-100231",
+            "codigo": "CANDIDATO_ALBARAN_NO_PROMOVIDO",
+            "fecha": "2026-10-24T21:07:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000001",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000001"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_AVISO:POSIBLE_DUPLICADO",
+        "categoria": "INCIDENCIA_AVISO",
+        "orden": 7,
+        "titulo": "Puede que esta factura esté repetida en otro PDF",
+        "color": "naranja",
+        "casos": [
+          {
+            "texto": "Puede que esta factura esté repetida en otro PDF",
+            "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "referencia": "AL-26-100231",
+            "codigo": "POSIBLE_DUPLICADO",
+            "fecha": "2026-10-24T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000001",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000001"
+          },
+          {
+            "texto": "Puede que esta factura esté repetida en otro PDF",
+            "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "referencia": "AL-26-100231",
+            "codigo": "POSIBLE_DUPLICADO",
+            "fecha": "2026-10-24T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000008",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000008"
+          }
+        ]
+      },
+      {
+        "clave": "INCIDENCIA_AVISO:CODIGO_FICTICIO_SIN_TRADUCCION",
+        "categoria": "INCIDENCIA_AVISO",
+        "orden": 7,
+        "titulo": "Aviso técnico del motor (ver detalle)",
+        "color": "naranja",
+        "casos": [
+          {
+            "texto": "Aviso técnico del motor (ver detalle)",
+            "proveedor": "HEFAME",
+            "referencia": "HF-0563-889120",
+            "codigo": "CODIGO_FICTICIO_SIN_TRADUCCION",
+            "fecha": "2026-10-22T21:06:00+00:00",
+            "factura_id": "f0000000-0000-4000-8000-000000000005",
+            "documento_id": null,
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000005"
+          }
+        ]
+      },
+      {
+        "clave": "CORRECCION_APROBADA",
+        "categoria": "CORRECCION_APROBADA",
+        "orden": 8,
+        "titulo": "Correcciones de albarán aprobadas",
+        "color": "gris",
+        "casos": [
+          {
+            "proveedor": "FEDEFARMA (FICTICIO)",
+            "codigo": null,
+            "fecha": "2026-10-31T09:00:00+00:00",
+            "factura_id": null,
+            "documento_id": null,
+            "enlace": "/conciliacion",
+            "texto": "La corrección aprobada del albarán FD-ALB-55120 está pendiente de aplicar",
+            "referencia": "FD-ALB-55120"
+          },
+          {
+            "proveedor": "ALLIANCE HEALTHCARE (FICTICIO)",
+            "codigo": null,
+            "fecha": "2026-10-29T10:05:00+00:00",
+            "factura_id": null,
+            "documento_id": null,
+            "enlace": "/conciliacion",
+            "texto": "Se aplicó la corrección aprobada del albarán 08X10050A",
+            "referencia": "08X10050A"
+          }
+        ]
       }
-    }
-  ],
-  "atencion": [
-    {
-      "tipo": "Diferencia",
-      "color": "rojo",
-      "factura_id": "f0000000-0000-4000-8000-000000000007",
-      "documento_id": "d0000000-0000-4000-8000-000000000006",
-      "referencia": "COFARES CF-AB-2026-0912",
-      "codigo": "NO_EVALUABLE",
-      "diferencia_motor": null,
-      "texto": "No se puede comprobar la factura contra sus albaranes"
-    },
-    {
-      "tipo": "Revisión normalización",
-      "color": "naranja",
-      "factura_id": "f0000000-0000-4000-8000-000000000006",
-      "documento_id": "d0000000-0000-4000-8000-000000000005",
-      "referencia": "FEDEFARMA FD-26/04471",
-      "codigo": "REQUIERE_REVISION",
-      "texto": "Faltan datos de la factura: el total no consta en el documento"
-    },
-    {
-      "tipo": "Diferencia",
-      "color": "rojo",
-      "factura_id": "f0000000-0000-4000-8000-000000000003",
-      "documento_id": "d0000000-0000-4000-8000-000000000003",
-      "referencia": "COFARES CF-2026-55810",
-      "codigo": "DIFERENCIA",
-      "diferencia_motor": 41.9,
-      "texto": "La factura no cuadra con sus albaranes"
-    },
-    {
-      "tipo": "Revisión conciliación",
-      "color": "naranja",
-      "factura_id": "f0000000-0000-4000-8000-000000000005",
-      "documento_id": "d0000000-0000-4000-8000-000000000004",
-      "referencia": "HEFAME HF-0563-889120",
-      "codigo": "DIFERENCIA",
-      "diferencia_motor": 23.45,
-      "texto": "Se han agotado los intentos de conciliar la factura con sus albaranes"
-    },
-    {
-      "tipo": "Posible duplicado",
-      "color": "naranja",
-      "factura_id": "f0000000-0000-4000-8000-000000000001",
-      "documento_id": null,
-      "referencia": "AL-26-100231",
-      "codigo": "POSIBLE_DUPLICADO",
-      "texto": "Puede que esta factura esté repetida en otro PDF"
-    },
-    {
-      "tipo": "Posible duplicado",
-      "color": "naranja",
-      "factura_id": "f0000000-0000-4000-8000-000000000008",
-      "documento_id": null,
-      "referencia": "AL-26-100231",
-      "codigo": "POSIBLE_DUPLICADO",
-      "texto": "Puede que esta factura esté repetida en otro PDF"
-    },
-    {
-      "tipo": "Incidencia",
-      "color": "rojo",
-      "factura_id": "f0000000-0000-4000-8000-000000000004",
-      "documento_id": null,
-      "referencia": "CF-2026-55811",
-      "codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
-      "texto": "Un vencimiento de la factura no indica su importe"
-    },
-    {
-      "tipo": "Incidencia bloqueante",
-      "color": "rojo",
-      "factura_id": "f0000000-0000-4000-8000-000000000006",
-      "documento_id": null,
-      "referencia": "FD-26/04471",
-      "codigo": "VALOR_SIN_EVIDENCIA",
-      "texto": "El total de la factura no tiene evidencia legible en el documento."
-    },
-    {
-      "tipo": "Incidencia",
-      "color": "rojo",
-      "factura_id": "f0000000-0000-4000-8000-000000000007",
-      "documento_id": null,
-      "referencia": "CF-AB-2026-0912",
-      "codigo": "SENTIDO_NO_DOCUMENTADO",
-      "texto": "La factura no indica si un movimiento es un cargo o un abono"
-    },
-    {
-      "tipo": "Incidencia bloqueante",
-      "color": "rojo",
-      "factura_id": null,
-      "documento_id": "d0000000-0000-4000-8000-000000000009",
-      "referencia": "Escaneo_ilegible_2610.pdf",
-      "codigo": "SEGUNDA_LECTURA_FALLIDA",
-      "texto": "No se ha podido leer el PDF; se volverá a intentar automáticamente"
-    },
-    {
-      "tipo": "Con defecto",
-      "color": "rojo",
-      "factura_id": null,
-      "documento_id": "d0000000-0000-4000-8000-000000000014",
-      "referencia": "ALLIANCEHEALTHCARECENCORA · Alliance_multifactura_incompleta_0111.pdf",
-      "codigo": "FACTURA_INCOMPLETA",
-      "texto": "El PDF necesita revisión manual"
-    },
-    {
-      "tipo": "Sin automatizar",
-      "color": "gris",
-      "factura_id": null,
-      "documento_id": "d0000000-0000-4000-8000-000000000013",
-      "referencia": "LABORATORIO DEMO (FICTICIO) · Laboratorio_demo_factura_2.pdf",
-      "codigo": "PROVEEDOR_NO_SOPORTADO",
-      "texto": "El sistema todavía no sabe leer las facturas de este proveedor"
-    },
-    {
-      "tipo": "Sin automatizar",
-      "color": "gris",
-      "factura_id": null,
-      "documento_id": "d0000000-0000-4000-8000-000000000012",
-      "referencia": "Proveedor sin identificar · Factura_sin_membrete_3010.pdf",
-      "codigo": "PROVEEDOR_NO_SOPORTADO",
-      "texto": "El sistema todavía no sabe leer las facturas de este proveedor"
-    },
-    {
-      "tipo": "Sin automatizar",
-      "color": "gris",
-      "factura_id": null,
-      "documento_id": "d0000000-0000-4000-8000-000000000011",
-      "referencia": "BEIERSDORF (FICTICIO) · Beiersdorf_FV_2026_1029.pdf",
-      "codigo": "PROVEEDOR_NO_SOPORTADO",
-      "texto": "El sistema todavía no sabe leer las facturas de este proveedor"
-    },
-    {
-      "tipo": "Con defecto",
-      "color": "rojo",
-      "factura_id": null,
-      "documento_id": "d0000000-0000-4000-8000-000000000009",
-      "referencia": "Proveedor sin identificar · Escaneo_ilegible_2610.pdf",
-      "codigo": "SEGUNDA_LECTURA_FALLIDA",
-      "texto": "No se ha podido leer el PDF"
-    },
-    {
-      "tipo": "Sin automatizar",
-      "color": "gris",
-      "factura_id": null,
-      "documento_id": "d0000000-0000-4000-8000-000000000008",
-      "referencia": "LABORATORIO DEMO (FICTICIO) · Laboratorio_demo_factura.pdf",
-      "codigo": "PROVEEDOR_NO_SOPORTADO",
-      "texto": "El sistema todavía no sabe leer las facturas de este proveedor"
-    }
-  ],
+    ]
+  },
   "alertas": [
     {
       "tipo": "ALBARAN_FACTURADO_NO_EN_FARMATIC",

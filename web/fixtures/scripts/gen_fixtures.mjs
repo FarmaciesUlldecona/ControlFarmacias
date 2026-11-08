@@ -8,7 +8,7 @@
 // Uso: node web/fixtures/scripts/gen_fixtures.mjs   (o `npm run fixtures:gen` en web/app)
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { construir } from '../../app/server/contrato.ts';
+import { cifFactura, construir, idProveedorR9 } from '../../app/server/contrato.ts';
 
 const RAIZ = join(import.meta.dirname, '..');
 const DTO = join(RAIZ, 'dto');
@@ -164,13 +164,79 @@ export const INCIDENCIAS_H4B = [{
   resuelta_at: null, resuelta_por: null,
 }];
 
-const detalle = h3a('factura_detalle').map((r) => ({
+// ---------------------------------------------------------------------------
+// Casos H4c: ajustes con la forma real de producción (todo ficticio)
+// ---------------------------------------------------------------------------
+
+/**
+ * H4c: como en producción, facturas.proveedor_cif vacía y el CIF en datos_extraidos (proveedor.nif.valor).
+ * Las filas de la consulta lo traen en `proveedor_nif_documental`. FEDEFARMA (F06) sin CIF: grupo de respaldo por
+ * id_proveedor_albaranes R9 ('0004' → id:4).
+ */
+const conCifDocumental = (r) => ({ ...r, proveedor_cif: null, proveedor_nif_documental: r.proveedor_cif });
+
+/** H4c: F05 (HEFAME) sin tipo de documento en datos_extraidos (la columna quedó en FACTURA por defecto). */
+export const F05_SIN_TIPO_DOCUMENTAL = 'f0000000-0000-4000-8000-000000000005';
+/**
+ * H4c/H4c-2: tipo en datos_extraidos.tipo_documento.valor distinto del de H3a (el resto: el de H3a).
+ *  - F05 null → NO_DOCUMENTADO;  F08 FACTURA_DUPLICADO → CARGO (copia de F01);
+ *  - F03 FACTURA_RECTIFICATIVA → NO_DOCUMENTADO;  F06 'OTRO' literal → NO_DOCUMENTADO;  F07 ABONO (H3a) → ABONO.
+ */
+export const TIPO_DOCUMENTAL_H4C = {
+  [F05_SIN_TIPO_DOCUMENTAL]: null,
+  'f0000000-0000-4000-8000-000000000008': 'FACTURA_DUPLICADO',
+  'f0000000-0000-4000-8000-000000000003': 'FACTURA_RECTIFICATIVA',
+  'f0000000-0000-4000-8000-000000000006': 'OTRO',
+};
+const tipoDocumental = (r) => (Object.hasOwn(TIPO_DOCUMENTAL_H4C, r.factura_id) ? TIPO_DOCUMENTAL_H4C[r.factura_id] : r.tipo_documento);
+/** Columna tipo_documento como la persistencia (migración 28): null → FACTURA; fuera de la lista → OTRO. */
+const columnaTipo = (t) => (t === null ? 'FACTURA' : ['FACTURA', 'ABONO', 'FACTURA_RECTIFICATIVA', 'OTRO'].includes(t) ? t : 'OTRO');
+
+// ---------------------------------------------------------------------------
+// Casos H4d: "Necesita tu atención" agrupado (todo ficticio)
+// ---------------------------------------------------------------------------
+
+const incidenciaH4d = (n, factura, numero, codigo, severidad, created_at, extra = {}) => ({
+  incidencia_id: `20000000-0000-4000-8000-0000000000${n}`, farmacia: 'PIO', documento_id: null,
+  factura_id: `f0000000-0000-4000-8000-0000000000${factura}`, numero_factura: numero, archivo_nombre: null,
+  codigo, categoria: 'NORMALIZACION', severidad, bloqueante: false, estado: 'ABIERTA',
+  // Como la persistencia (migración 28): mensaje_usuario = descripción técnica o el propio código.
+  mensaje_usuario: codigo, detalle_tecnico: { ...FICTICIO, fuente: 'FIXTURE_H4D' }, created_at,
+  resuelta_at: null, resuelta_por: null, ...extra,
+});
+/**
+ * H4d: varios casos del mismo código (agrupación), un SENTIDO_NO_DOCUMENTADO con severidad ERROR (nunca rojo), un
+ * MONEDA_NO_DOCUMENTADA AVISO (como lo guarda producción: fuera de Inicio), un código sin traducción y
+ * CANDIDATO_ALBARAN_NO_PROMOVIDO con dos motivos (el texto se precisa con detalle_tecnico.motivo).
+ */
+export const INCIDENCIAS_H4D = [
+  incidenciaH4d(51, '06', 'FD-26/04471', 'IMPORTE_VENCIMIENTO_NO_DOCUMENTADO', 'AVISO', '2026-10-28T21:06:00+00:00'),
+  incidenciaH4d(52, '03', 'CF-2026-55810', 'SENTIDO_NO_DOCUMENTADO', 'AVISO', '2026-10-27T21:06:00+00:00'),
+  incidenciaH4d(53, '02', 'AL-26-100577', 'SENTIDO_NO_DOCUMENTADO', 'ERROR', '2026-10-29T21:06:00+00:00'),
+  incidenciaH4d(54, '04', 'CF-2026-55811', 'MONEDA_NO_DOCUMENTADA', 'AVISO', '2026-10-20T21:06:00+00:00'),
+  incidenciaH4d(55, '05', 'HF-0563-889120', 'CODIGO_FICTICIO_SIN_TRADUCCION', 'AVISO', '2026-10-22T21:06:00+00:00'),
+  incidenciaH4d(56, '01', 'AL-26-100231', 'CANDIDATO_ALBARAN_NO_PROMOVIDO', 'AVISO', '2026-10-24T21:07:00+00:00',
+    { mensaje_usuario: 'TIPO_PEDIDO_NO_CERTIFICADO', detalle_tecnico: { ...FICTICIO, motivo: 'TIPO_PEDIDO_NO_CERTIFICADO', tipos_pedido: ['PEDIDO X'] } }),
+  incidenciaH4d(57, '02', 'AL-26-100577', 'CANDIDATO_ALBARAN_NO_PROMOVIDO', 'AVISO', '2026-10-25T21:07:00+00:00',
+    { mensaje_usuario: 'SENTIDO_O_SIGNO_NO_COHERENTE', detalle_tecnico: { ...FICTICIO, motivo: 'SENTIDO_O_SIGNO_NO_COHERENTE' } }),
+  // H4d-3: incidencia de sentido de línea: su propio grupo en el nivel 7 (no en el grupo 4 de vencimientos).
+  incidenciaH4d(62, '04', 'CF-2026-55811', 'SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE', 'AVISO', '2026-10-26T21:07:00+00:00'),
+  // H4d-2: códigos informativos solo de detalle (guardados como AVISO, como en producción).
+  incidenciaH4d(58, '03', 'CF-2026-55810', 'REPRESENTACIONES_CONSOLIDADAS', 'AVISO', '2026-10-30T21:06:00+00:00'),
+  incidenciaH4d(59, '07', 'CF-AB-2026-0912', 'FILAS_DUPLICADAS_EVIDENCIA_IDENTICA', 'AVISO', '2026-10-30T21:07:00+00:00'),
+  incidenciaH4d(60, '01', 'AL-26-100231', 'FILA_IMPORTE_CERO_INFORMATIVA', 'AVISO', '2026-10-30T21:08:00+00:00'),
+  incidenciaH4d(61, '05', 'HF-0563-889120', 'ALBARANES_CONSUMIBLES_SOLO_REFERENCIA_DOCUMENTAL', 'AVISO', '2026-10-30T21:09:00+00:00'),
+];
+
+const detalle = h3a('factura_detalle').map((r) => conCifDocumental({
   ...r,
+  tipo_documento: columnaTipo(tipoDocumental(r)),
+  tipo_documento_documental: tipoDocumental(r),
   proveedor_cif: Object.hasOwn(CIF_H4B, r.proveedor_id) ? CIF_H4B[r.proveedor_id] : r.proveedor_cif,
   ...(AJUSTES_FACTURA_H4B[r.factura_id] ?? {}),
 }));
 const lineasH3a = h3a('conciliacion_lineas').filter((l) => l.es_actual);
-const incidenciasH3a = [...h3a('incidencias'), ...INCIDENCIAS_H4B];
+const incidenciasH3a = [...h3a('incidencias'), ...INCIDENCIAS_H4B, ...INCIDENCIAS_H4D];
 const historialH3a = h3a('historial');
 const vencimientosH3a = h3a('vencimientos');
 const proveedoresH3a = h3a('proveedores_estado');
@@ -189,20 +255,27 @@ const nombreProveedor = new Map([...proveedoresH3a, PROVEEDOR_BEIERSDORF].map((p
 const documentos = [
   ...h3a('documentos_estado').map((d) => {
     const [proveedor_id, proveedor] = proveedorDeDocumento.get(d.documento_id) ?? [null, null];
-    // CIF y literal de la primera factura del PDF que los tenga (como la consulta `documentos`).
+    // CIF (columna o datos_extraidos), id R9 y literal de la primera factura del PDF que los tenga (como la consulta `documentos`).
     const fs = detalle.filter((f) => f.documento_id === d.documento_id).sort((a, b) => a.pagina_inicio - b.pagina_inicio);
-    const proveedor_cif = fs.find((f) => f.proveedor_cif)?.proveedor_cif ?? null;
+    const proveedor_cif = fs.map((f) => cifFactura(f.proveedor_cif, f.proveedor_nif_documental)).find((c) => c !== null) ?? null;
+    const id_proveedor_albaranes = fs.find((f) => idProveedorR9(f.id_proveedor_albaranes) !== null)?.id_proveedor_albaranes ?? null;
     const proveedor_literal = fs.find((f) => f.proveedor_literal)?.proveedor_literal ?? null;
-    return { ...sinFarmacia(d), proveedor_id, proveedor, proveedor_cif, proveedor_literal };
+    return { ...sinFarmacia(d), proveedor_id, proveedor, proveedor_cif, id_proveedor_albaranes, proveedor_literal };
   }),
   ...[...DOCUMENTOS_H3B, DOCUMENTO_REVISION].map((d) => ({
-    ...d, proveedor: d.proveedor_id ? nombreProveedor.get(d.proveedor_id) : null, proveedor_cif: null, proveedor_literal: null,
+    ...d, proveedor: d.proveedor_id ? nombreProveedor.get(d.proveedor_id) : null, proveedor_cif: null,
+    id_proveedor_albaranes: null, proveedor_literal: null,
   })),
 ].sort((a, b) => b.fecha_importacion.localeCompare(a.fecha_importacion) || a.documento_id.localeCompare(b.documento_id));
 
 const facturas = detalle.map(filaFactura)
   .sort((a, b) => (b.fecha_factura ?? '').localeCompare(a.fecha_factura ?? '') || a.factura_id.localeCompare(b.factura_id));
-const vencimientos = vencimientosH3a.map(({ farmacia, importe_conocido, estado_pago, provenance, ...r }) => r); // eslint-disable-line no-unused-vars
+const facturaDe = new Map(detalle.map((r) => [r.factura_id, r]));
+const vencimientos = vencimientosH3a.map(({ farmacia, importe_conocido, estado_pago, provenance, ...r }) => ({ // eslint-disable-line no-unused-vars
+  ...r,
+  tipo_documento: facturaDe.get(r.factura_id).tipo_documento,
+  tipo_documento_documental: facturaDe.get(r.factura_id).tipo_documento_documental,
+}));
 const lineas = lineasH3a.map(({ farmacia, es_actual, ...r }) => r); // eslint-disable-line no-unused-vars
 const incidenciasAbiertas = incidenciasH3a.filter((i) => i.estado === 'ABIERTA').map(sinFarmacia);
 const luna = detalle.filter((r) => r.uso_luna);
@@ -233,11 +306,14 @@ function filasDetalle(r) {
   return {
     factura_cabecera: [{
       ...filaFactura(r),
+      // Forma del motor: cada campo documentado es { valor, ... } (H4c: CIF en proveedor.nif.valor).
       datos_extraidos: {
         ...FICTICIO,
-        numero_factura: r.numero_factura, fecha_factura: r.fecha_factura, tipo_documento: r.tipo_documento,
-        proveedor: { nombre: r.proveedor_literal, nif: r.proveedor_cif },
-        totales: { base: r.base_imponible_total, iva: r.iva_total, recargo: r.recargo_equivalencia_total, total: r.importe_total },
+        numero_factura: { valor: r.numero_factura }, fecha_factura: { valor: { iso: r.fecha_factura } },
+        tipo_documento: r.tipo_documento_documental === null ? null : { valor: r.tipo_documento_documental },
+        proveedor: { nombre: { valor: r.proveedor_literal }, nif: r.proveedor_nif_documental === null ? null : { valor: r.proveedor_nif_documental } },
+        totales: { base_imponible: { valor: r.base_imponible_total }, iva: { valor: r.iva_total },
+          recargo_equivalencia: { valor: r.recargo_equivalencia_total }, total: { valor: r.importe_total } },
       },
     }],
     factura_lineas: ls,
