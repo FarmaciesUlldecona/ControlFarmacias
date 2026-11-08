@@ -1,0 +1,20 @@
+# Programa_web/web — reglas
+- Web ControlFarmacias fase 1: solo lectura, solo en el PC de Pío (127.0.0.1). Nunca nube ni Vercel.
+- Identidad: MOSTRADOR\Usuari. Nunca ControlFarmaciasRO, service_role ni el .env de Programa.
+- Datos reales: solo rol cf_lectura; contraseña en web\app\.env.web (gitignored). Code nunca lee, crea ni edita .env*. Solo Pío ejecuta modo REAL y check:real.
+- Code trabaja y verifica solo en modo FIXTURES. Nunca abre, captura ni lee datos reales.
+- Objetos legibles: solo la lista cerrada de ..\pruebas\auditoria_2bn\DISENO.md.
+- No usar v_dashboard_diario para importes (convierte null en 0).
+- Farmacia: solo PIO.
+- 3 estados separados: normalización / conciliación / revisión Pío.
+- Importe ausente = null, nunca 0. Diferencias siempre visibles. Tolerancia: resultado del motor (R11), no recalcular.
+- Estado de pago: gris, 'sin datos bancarios'.
+- Colores: verde OK, azul pendiente, naranja revisión, rojo incidencia, gris neutro. Tema claro.
+- UI: skill frontend-design; referencia web\docs\maquetas\. Playwright solo en modo FIXTURES.
+- Hooks: ante un bloqueo, PARA e informa; prohibido reformular para esquivarlo.
+- Commit solo con OK de Pío, tras suite según norma y revisor-reglas PASS. Push manual por Pío.
+- Informes esquemáticos.
+- La sesión WEB no carga hooks de Programa: nunca commitea, ni hace merge, ni cambia de rama. Commits: ventana WEB-COMMIT (raíz Programa_web) con barrera.
+- Prohibido leer o escribir .env* (incluido .env.web), logs\agentes, tmp, pruebas\facturas, .venv y cualquier ruta de C:\ControlFarmacias\Programa. Prohibida la clave del sistema (service_role).
+- Hook bloqueo_rutas: cualquier herramienta que nombre rutas prohibidas se bloquea; ante bloqueo, PARA.
+- Code nunca ejecuta dev:real, check:real, set-password ni iniciar_web; solo Pío. Riesgo aceptado: si node no está disponible el hook no bloquea; las reglas deny son segunda capa.

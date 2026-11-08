@@ -1,0 +1,56 @@
+{
+  "farmacia": "PIO",
+  "generado_at": "2026-11-02T08:00:00+00:00",
+  "semanas": [
+    {
+      "semana": "2026-10-26",
+      "semana_fin": "2026-11-01",
+      "vencimientos": 1,
+      "vencimientos_sin_importe": 0,
+      "importe_cargos_conocido": 400,
+      "importe_abonos_conocido": null,
+      "vencimientos_sin_validar": 0
+    },
+    {
+      "semana": "2026-11-02",
+      "semana_fin": "2026-11-08",
+      "vencimientos": 3,
+      "vencimientos_sin_importe": 0,
+      "importe_cargos_conocido": 592.74,
+      "importe_abonos_conocido": null,
+      "vencimientos_sin_validar": 2
+    },
+    {
+      "semana": "2026-11-09",
+      "semana_fin": "2026-11-15",
+      "vencimientos": 3,
+      "vencimientos_sin_importe": 0,
+      "importe_cargos_conocido": 997.37,
+      "importe_abonos_conocido": null,
+      "vencimientos_sin_validar": 2
+    },
+    {
+      "semana": "2026-11-16",
+      "semana_fin": "2026-11-22",
+      "vencimientos": 2,
+      "vencimientos_sin_importe": 1,
+      "importe_cargos_conocido": null,
+      "importe_abonos_conocido": -45.3,
+      "vencimientos_sin_validar": 2
+    },
+    {
+      "semana": "2026-11-30",
+      "semana_fin": "2026-12-06",
+      "vencimientos": 1,
+      "vencimientos_sin_importe": 1,
+      "importe_cargos_conocido": null,
+      "importe_abonos_conocido": null,
+      "vencimientos_sin_validar": 0
+    }
+  ],
+  "pago": {
+    "estado": "SIN_DATOS_BANCARIOS",
+    "texto": "sin datos bancarios",
+    "color": "gris"
+  }
+}

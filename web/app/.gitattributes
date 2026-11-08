@@ -1,0 +1,2 @@
+# Los .cmd de Windows siempre con CRLF.
+*.cmd text eol=crlf

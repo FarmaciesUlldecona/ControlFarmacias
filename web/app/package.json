@@ -1,0 +1,44 @@
+{
+  "name": "controlfarmacias-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Web ControlFarmacias fase 1: solo lectura, solo 127.0.0.1. Modo FIXTURES por defecto.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite build && node server/index.ts --modo=FIXTURES",
+    "dev:real": "vite build && node server/index.ts --modo=REAL",
+    "dev:server": "node --watch server/index.ts",
+    "dev:front": "vite",
+    "build": "vite build",
+    "start": "node server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "fixtures:gen": "node ../fixtures/scripts/gen_fixtures.mjs",
+    "fixtures:check": "node ../fixtures/scripts/check_fixtures.mjs",
+    "test:e2e": "playwright test",
+    "check:real": "node server/check_real.ts",
+    "set-password": "node server/fijar_clave.ts",
+    "test:unit": "node --test server/pruebas/*.test.ts"
+  },
+  "dependencies": {
+    "@fastify/static": "10.1.7",
+    "@fontsource/figtree": "5.3.0",
+    "fastify": "5.12.7",
+    "pg": "8.23.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router-dom": "7.18.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.5",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "typescript": "5.9.3",
+    "vite": "8.3.5"
+  }
+}

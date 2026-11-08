@@ -1,0 +1,28 @@
+{
+  "farmacia": "PIO",
+  "generado_at": "2026-11-02T08:00:00+00:00",
+  "farmacia_activa": "PIO",
+  "farmacias_habilitadas": [
+    "PIO"
+  ],
+  "normalizacion_automatica": false,
+  "conciliacion_automatica": false,
+  "luna_habilitada": false,
+  "tolerancia_conciliacion": 0.05,
+  "conciliacion_tolerancia_suelo": 0.05,
+  "conciliacion_tolerancia_por_albaran": 0.01,
+  "conciliacion_tolerancia_tope": 0.5,
+  "normalizacion_max_intentos": 4,
+  "normalizacion_backoff": [
+    "01:00:00",
+    "06:00:00",
+    "24:00:00"
+  ],
+  "conciliacion_max_intentos": 4,
+  "conciliacion_backoff": [
+    "01:00:00",
+    "06:00:00",
+    "24:00:00"
+  ],
+  "updated_at": "2026-10-08T09:07:03+00:00"
+}

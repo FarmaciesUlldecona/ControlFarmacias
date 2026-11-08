@@ -1,0 +1,24 @@
+[
+  {
+    "farmacia": "PIO",
+    "pendientes_procesar": 1,
+    "documentos_sin_leer": 2,
+    "requieren_revision": 2,
+    "facturas": 8,
+    "norm_pendiente": 0,
+    "norm_en_curso": 0,
+    "norm_ok": 7,
+    "norm_revision": 1,
+    "conc_pendiente": 4,
+    "conc_ok": 3,
+    "conc_revision": 1,
+    "conc_no_aplica": 0,
+    "rev_no_requerida": 3,
+    "rev_pendiente": 3,
+    "rev_validada": 2,
+    "facturas_sin_importe": 1,
+    "importe_total_conocido": 1962.86,
+    "incidencias_abiertas": 5,
+    "incidencias_bloqueantes": 1
+  }
+]

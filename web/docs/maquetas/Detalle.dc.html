@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Detalle de factura · ControlFarmacias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif;color:#18211E;background:#F4F5F2}
+a{color:#1D3B47}a:hover{color:#0F252E}
+.app{display:flex;flex-wrap:wrap;align-items:stretch}
+.side{flex:1 1 232px;background:#FFFFFF;border-right:1px solid #E2E5E0;padding:20px 14px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px;font-weight:800;font-size:17px;letter-spacing:-0.01em}
+.mark{width:30px;height:30px;border-radius:8px;background:#1D3B47;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.farm{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #E2E5E0;border-radius:10px;font-size:13px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;text-decoration:none;color:#3E4A46;font-weight:500;font-size:15px;box-sizing:border-box}
+.nav a.on{background:#E6EDEF;color:#1D3B47;font-weight:700}
+.foot{margin-top:auto;font-size:12px;color:#56625D;padding:10px 12px;border-top:1px solid #E2E5E0}
+.main{flex:999 1 560px;min-width:0;padding:28px 36px 56px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px}
+.card{background:#FFFFFF;border:1px solid #E2E5E0;border-radius:12px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.g{background:#E3F2E8;color:#17663D}.b{background:#E4ECF8;color:#1F5BAA}.o{background:#FBEBD9;color:#8F4500}.r{background:#FBE4E2;color:#A8221A}.n{background:#ECEEEB;color:#4F5B57}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:12px;color:#56625D;font-weight:600;padding:8px 12px;border-bottom:1px solid #E2E5E0;white-space:nowrap}
+.tbl td{padding:10px 12px;border-bottom:1px solid #EEF0EC;vertical-align:middle}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:#56625D}
+.btn{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid #D5DAD6;background:#F1F3F0;color:#6B7671;font:inherit;font-size:14px;font-weight:600;cursor:not-allowed}
+.kv{display:flex;flex-direction:column;gap:4px}
+.kv span:first-child{font-size:12px;color:#56625D;font-weight:600}
+.kv span:last-child{font-size:16px;font-weight:600}
+details.sec{background:#FFFFFF;border:1px solid #E2E5E0;border-radius:12px}
+details.sec summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 18px;font-weight:700;font-size:15px}
+details.sec summary::-webkit-details-marker{display:none}
+details.sec summary::after{content:'+';margin-left:auto;font-size:20px;color:#56625D}
+details.sec[open] summary::after{content:'−'}
+.secb{padding:0 18px 16px;overflow-x:auto}
+</style>
+</helmet>
+<div class="app">
+<aside class="side">
+<div class="brand"><span class="mark">CF</span>ControlFarmacias</div>
+<div class="farm"><span class="muted">Farmacia</span><strong>PIO PUIG SALOMON</strong><span class="muted">RITA: no habilitada</span></div>
+<nav class="nav" aria-label="Menú principal">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 6px 12px 2px">FINANZAS</span>
+<a href="Main.dc.html">Inicio</a>
+<a class="on" href="Facturas.dc.html">Facturas</a>
+<a href="Conciliacion.dc.html">Conciliación</a>
+<a href="Vencimientos.dc.html">Vencimientos</a>
+<a href="Cashflow.dc.html">Cashflow</a>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">NEGOCIO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Compras<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Stock<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Ventas<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Clientes<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">EQUIPO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Trabajadores<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">GENERAL</span>
+<a href="Proveedores.dc.html">Proveedores</a>
+<a href="Configuracion.dc.html">Configuración</a>
+</nav>
+<div class="foot">Fase 1 · solo lectura<br>Datos ficticios</div>
+</aside>
+<main class="main">
+<a href="Facturas.dc.html" style="font-size: 14px; font-weight: 600">← Volver a facturas</a>
+
+<section class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start">
+<div>
+<div class="muted" style="font-size: 13px; font-weight: 600">ALLIANCE · Factura</div>
+<h1 style="margin: 4px 0 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em">31-5820744</h1>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button class="btn" type="button" disabled title="Disponible en fase 2">Validar factura</button>
+<button class="btn" type="button" disabled title="Disponible en fase 2">Deshacer validación</button>
+<button class="btn" type="button" disabled title="Disponible en fase 2">Reintentar conciliación</button>
+<button class="btn" type="button" disabled title="Disponible en fase 2">Reprocesar factura</button>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px">
+<div class="kv"><span>Fecha</span><span>09/10/2026</span></div>
+<div class="kv"><span>Total</span><span style="font-variant-numeric: tabular-nums">198,60 €</span></div>
+<div class="kv"><span>Vencimiento</span><span>15/11/2026 · 198,60 €</span></div>
+<div class="kv"><span>Normalización</span><span><span class="badge g">Normalizada</span></span></div>
+<div class="kv"><span>Conciliación</span><span><span class="badge b">Pendiente de conciliar</span></span></div>
+<div class="kv"><span>Revisión Pío</span><span><span class="badge n">No requerida</span></span></div>
+<div class="kv"><span>Pago</span><span class="muted" style="font-size: 14px; font-weight: 500">Sin datos bancarios</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; gap: 10px; align-items: center; padding: 12px 14px; background: #FBE4E2; border-radius: 10px; color: #7E1A13; font-weight: 600; flex-wrap: wrap">Diferencia entre factura y albaranes: 41,90 €<span style="font-weight: 500">· Tolerancia del motor para esta factura: 0,03 €</span></div>
+<div style="display: flex; gap: 10px; align-items: center; padding: 12px 14px; background: #FBEBD9; border-radius: 10px; color: #6E3500; font-weight: 600">Falta localizar un albarán. Se reintentará esta noche.</div>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+<div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+
+<details class="sec" open>
+<summary>Fiscalidad</summary>
+<div class="secb">
+<table class="tbl">
+<thead><tr><th>Tipo</th><th class="num">Base</th><th class="num">IVA</th><th class="num">Recargo eq.</th></tr></thead>
+<tbody>
+<tr><td>IVA superreducido 4 %</td><td class="num">150,07 €</td><td class="num">6,00 €</td><td class="num">0,75 €</td></tr>
+<tr><td>IVA reducido 10 %</td><td class="num">37,50 €</td><td class="num">3,75 €</td><td class="num">0,53 €</td></tr>
+<tr style="font-weight: 700"><td>Totales</td><td class="num">187,57 €</td><td class="num">9,75 €</td><td class="num">1,28 €</td></tr>
+</tbody>
+</table>
+<div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; font-size: 14px"><span>Total factura <strong>198,60 €</strong></span><span>Cargos <strong>0,00 €</strong></span><span>Abonos <strong>0,00 €</strong></span><span>Importe a pagar <span class="muted">no demostrado</span></span></div>
+</div>
+</details>
+
+<details class="sec" open>
+<summary>Albaranes <span class="badge r">1 no localizado</span></summary>
+<div class="secb">
+<table class="tbl" style="min-width: 520px">
+<thead><tr><th>Albarán</th><th>Fecha</th><th class="num">Importe</th><th>Casado</th></tr></thead>
+<tbody>
+<tr><td>7712034</td><td>12/10/2026</td><td class="num">61,20 €</td><td><span class="badge g">1 factura = 1 albarán</span></td></tr>
+<tr><td>7712035</td><td>13/10/2026</td><td class="num">52,30 €</td><td><span class="badge g">1 factura = 1 albarán</span></td></tr>
+<tr><td>Q000418 <span class="muted" style="font-size: 12px">nº interno</span></td><td>14/10/2026</td><td class="num">43,20 €</td><td><span class="badge g">Cuadra por importe</span></td></tr>
+<tr><td class="muted">En factura: 7712041</td><td class="muted">—</td><td class="num">41,90 €</td><td><span class="badge r">Albarán no localizado</span></td></tr>
+<tr style="font-weight: 700"><td>Explicado por albaranes</td><td></td><td class="num">156,70 €</td><td></td></tr>
+</tbody>
+</table>
+</div>
+</details>
+
+<details class="sec">
+<summary>Cargos y abonos <span class="badge n">ninguno</span></summary>
+<div class="secb muted" style="font-size: 14px">Esta factura no tiene cargos, servicios ni abonos.</div>
+</details>
+
+<details class="sec">
+<summary>Movimientos</summary>
+<div class="secb muted" style="font-size: 14px">Sin movimientos comerciales registrados.</div>
+</details>
+
+<details class="sec">
+<summary>Vencimientos <span class="badge n">1</span></summary>
+<div class="secb">
+<table class="tbl"><thead><tr><th>Nº</th><th>Fecha</th><th class="num">Importe</th><th>Pago</th></tr></thead>
+<tbody><tr><td>1</td><td>15/11/2026</td><td class="num">198,60 €</td><td class="muted">Sin datos bancarios</td></tr></tbody></table>
+</div>
+</details>
+
+<details class="sec" open>
+<summary>Conciliación</summary>
+<div class="secb" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; font-size: 14px">
+<div class="kv"><span>Resultado</span><span>Diferencia</span></div>
+<div class="kv"><span>Total factura</span><span>198,60 €</span></div>
+<div class="kv"><span>Explicado</span><span>156,70 €</span></div>
+<div class="kv"><span>Diferencia</span><span style="color: #A8221A">41,90 €</span></div>
+<div class="kv"><span>Tolerancia (motor R11)</span><span>0,03 €</span></div>
+<div class="kv"><span>Último intento</span><span>19/10 03:00</span></div>
+</div>
+</details>
+
+<details class="sec">
+<summary>Incidencias <span class="badge r">2 abiertas</span></summary>
+<div class="secb">
+<table class="tbl"><tbody>
+<tr><td><span class="badge r">Bloqueante</span></td><td>Diferencia entre factura y albaranes: 41,90 €</td><td class="muted">10/10/2026</td></tr>
+<tr><td><span class="badge o">Aviso</span></td><td>Falta localizar un albarán</td><td class="muted">10/10/2026</td></tr>
+</tbody></table>
+</div>
+</details>
+
+<details class="sec">
+<summary>Historial</summary>
+<div class="secb">
+<table class="tbl"><tbody>
+<tr><td class="muted" style="white-space: nowrap">10/10 09:12</td><td>PDF importado (contiene 2 facturas)</td></tr>
+<tr><td class="muted" style="white-space: nowrap">10/10 09:13</td><td>Normalizada con extractor local ALLIANCE</td></tr>
+<tr><td class="muted" style="white-space: nowrap">10/10 09:15</td><td>Conciliación: diferencia 41,90 €</td></tr>
+<tr><td class="muted" style="white-space: nowrap">19/10 03:00</td><td>Reintento nocturno: sin cambios</td></tr>
+</tbody></table>
+</div>
+</details>
+
+<details class="sec">
+<summary>Evidencia técnica</summary>
+<div class="secb" style="font-size: 13px; font-family: ui-monospace, Menlo, Consolas, monospace; color: #3E4A46; display: flex; flex-direction: column; gap: 4px">
+<span>extractor: alliance · motor 0.5.x</span>
+<span>tipo_relacion: SIN_COINCIDENCIA · estado_matching: NO_DEMOSTRABLE</span>
+<span>incidencia: código del motor + detalle técnico</span>
+<span>IA: no utilizada</span>
+</div>
+</details>
+</div>
+
+<aside class="card" style="flex: 1 1 420px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px"><strong>PDF original</strong><span class="muted" style="font-size: 13px">páginas 1–2 de 4 · el PDF contiene también 31-5820745</span></div>
+<div style="height: 820px; border: 1px dashed #B9C1BC; border-radius: 10px; background: #FAFAF8; display: flex; align-items: center; justify-content: center; text-align: center; color: #56625D; font-size: 14px; padding: 24px; box-sizing: border-box">[Visor del PDF original]<br>En móvil: pestaña “PDF”</div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

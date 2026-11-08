@@ -1,0 +1,140 @@
+[
+  {
+    "incidencia_id": "20000000-0000-4000-8000-000000000001",
+    "farmacia": "PIO",
+    "documento_id": null,
+    "factura_id": "f0000000-0000-4000-8000-000000000001",
+    "numero_factura": "AL-26-100231",
+    "archivo_nombre": "Alliance_AL-26-100231.pdf",
+    "codigo": "POSIBLE_DUPLICADO",
+    "categoria": "IDENTIDAD_DOCUMENTAL",
+    "severidad": "AVISO",
+    "bloqueante": false,
+    "estado": "ABIERTA",
+    "mensaje_usuario": "Existe otra factura con la misma identidad economica en un PDF diferente.",
+    "detalle_tecnico": {
+      "proveedor_clave": "ALLIANCE",
+      "numero_clave": "AL-26-100231",
+      "fecha_factura": "2026-10-05",
+      "accion_automatica": "NINGUNA",
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-24T21:06:00+00:00",
+    "resuelta_at": null,
+    "resuelta_por": null
+  },
+  {
+    "incidencia_id": "20000000-0000-4000-8000-000000000002",
+    "farmacia": "PIO",
+    "documento_id": null,
+    "factura_id": "f0000000-0000-4000-8000-000000000008",
+    "numero_factura": "AL-26-100231",
+    "archivo_nombre": "Alliance_AL-26-100231_copia.pdf",
+    "codigo": "POSIBLE_DUPLICADO",
+    "categoria": "IDENTIDAD_DOCUMENTAL",
+    "severidad": "AVISO",
+    "bloqueante": false,
+    "estado": "ABIERTA",
+    "mensaje_usuario": "Existe otra factura con la misma identidad economica en un PDF diferente.",
+    "detalle_tecnico": {
+      "proveedor_clave": "ALLIANCE",
+      "numero_clave": "AL-26-100231",
+      "fecha_factura": "2026-10-05",
+      "accion_automatica": "NINGUNA",
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-24T21:06:00+00:00",
+    "resuelta_at": null,
+    "resuelta_por": null
+  },
+  {
+    "incidencia_id": "20000000-0000-4000-8000-000000000003",
+    "farmacia": "PIO",
+    "documento_id": null,
+    "factura_id": "f0000000-0000-4000-8000-000000000004",
+    "numero_factura": "CF-2026-55811",
+    "archivo_nombre": "Cofares_lote_15-10-2026.pdf",
+    "codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
+    "categoria": "NORMALIZACION",
+    "severidad": "AVISO",
+    "bloqueante": false,
+    "estado": "ABIERTA",
+    "mensaje_usuario": "El tercer vencimiento no tiene importe legible en el documento.",
+    "detalle_tecnico": {
+      "vencimiento_orden": 3,
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-16T21:06:00+00:00",
+    "resuelta_at": null,
+    "resuelta_por": null
+  },
+  {
+    "incidencia_id": "20000000-0000-4000-8000-000000000004",
+    "farmacia": "PIO",
+    "documento_id": null,
+    "factura_id": "f0000000-0000-4000-8000-000000000006",
+    "numero_factura": "FD-26/04471",
+    "archivo_nombre": "Fedefarma_scan_0447.pdf",
+    "codigo": "VALOR_SIN_EVIDENCIA",
+    "categoria": "NORMALIZACION",
+    "severidad": "ERROR",
+    "bloqueante": true,
+    "estado": "ABIERTA",
+    "mensaje_usuario": "El total de la factura no tiene evidencia legible en el documento.",
+    "detalle_tecnico": {
+      "campo": "totales.total",
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-21T21:06:00+00:00",
+    "resuelta_at": null,
+    "resuelta_por": null
+  },
+  {
+    "incidencia_id": "20000000-0000-4000-8000-000000000005",
+    "farmacia": "PIO",
+    "documento_id": null,
+    "factura_id": "f0000000-0000-4000-8000-000000000007",
+    "numero_factura": "CF-AB-2026-0912",
+    "archivo_nombre": "Cofares_abono_0912.pdf",
+    "codigo": "SENTIDO_NO_DOCUMENTADO",
+    "categoria": "NORMALIZACION",
+    "severidad": "AVISO",
+    "bloqueante": false,
+    "estado": "ABIERTA",
+    "mensaje_usuario": "El documento demuestra movimientos comerciales, pero no su sentido CARGO/ABONO",
+    "detalle_tecnico": {
+      "movimiento": "REGULARIZACION SIN SENTIDO VISIBLE",
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-23T21:06:00+00:00",
+    "resuelta_at": null,
+    "resuelta_por": null
+  },
+  {
+    "incidencia_id": "20000000-0000-4000-8000-000000000006",
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000009",
+    "factura_id": null,
+    "numero_factura": null,
+    "archivo_nombre": "Escaneo_ilegible_2610.pdf",
+    "codigo": "SEGUNDA_LECTURA_FALLIDA",
+    "categoria": "NORMALIZACION",
+    "severidad": "ERROR",
+    "bloqueante": true,
+    "estado": "ABIERTA",
+    "mensaje_usuario": "No se pudo leer el documento; se reintentara automaticamente.",
+    "detalle_tecnico": {
+      "intentos": 2,
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-26T21:06:00+00:00",
+    "resuelta_at": null,
+    "resuelta_por": null
+  }
+]

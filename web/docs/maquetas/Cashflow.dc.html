@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cashflow · ControlFarmacias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif;color:#18211E;background:#F4F5F2}
+a{color:#1D3B47}a:hover{color:#0F252E}
+.app{display:flex;flex-wrap:wrap;align-items:stretch}
+.side{flex:1 1 232px;background:#FFFFFF;border-right:1px solid #E2E5E0;padding:20px 14px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px;font-weight:800;font-size:17px;letter-spacing:-0.01em}
+.mark{width:30px;height:30px;border-radius:8px;background:#1D3B47;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.farm{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #E2E5E0;border-radius:10px;font-size:13px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;text-decoration:none;color:#3E4A46;font-weight:500;font-size:15px;box-sizing:border-box}
+.nav a.on{background:#E6EDEF;color:#1D3B47;font-weight:700}
+.foot{margin-top:auto;font-size:12px;color:#56625D;padding:10px 12px;border-top:1px solid #E2E5E0}
+.main{flex:999 1 560px;min-width:0;padding:28px 36px 56px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px}
+.card{background:#FFFFFF;border:1px solid #E2E5E0;border-radius:12px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.n{background:#ECEEEB;color:#4F5B57}.o{background:#FBEBD9;color:#8F4500}
+.muted{color:#56625D}
+.num{font-variant-numeric:tabular-nums}
+.wk{display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:12px;border:1px solid #E2E5E0;background:#FFFFFF;min-height:150px;box-sizing:border-box}
+.wk.hot{border:2px solid #1D3B47;background:#F2F6F7}
+.ln{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+</style>
+</helmet>
+<div class="app">
+<aside class="side">
+<div class="brand"><span class="mark">CF</span>ControlFarmacias</div>
+<div class="farm"><span class="muted">Farmacia</span><strong>PIO PUIG SALOMON</strong><span class="muted">RITA: no habilitada</span></div>
+<nav class="nav" aria-label="Menú principal">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 6px 12px 2px">FINANZAS</span>
+<a href="Main.dc.html">Inicio</a>
+<a href="Facturas.dc.html">Facturas</a>
+<a href="Conciliacion.dc.html">Conciliación</a>
+<a href="Vencimientos.dc.html">Vencimientos</a>
+<a class="on" href="Cashflow.dc.html">Cashflow</a>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">NEGOCIO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Compras<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Stock<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Ventas<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Clientes<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">EQUIPO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Trabajadores<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">GENERAL</span>
+<a href="Proveedores.dc.html">Proveedores</a>
+<a href="Configuracion.dc.html">Configuración</a>
+</nav>
+<div class="foot">Fase 1 · solo lectura<br>Datos ficticios</div>
+</aside>
+<main class="main">
+<div><h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em">Cashflow</h1><div class="muted" style="margin-top: 4px; font-size: 14px">¿Cuánto dinero necesito y cuándo? · solo vencimientos, sin banco</div></div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px">
+<div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 6px"><span class="muted" style="font-size: 13px; font-weight: 600">Esta semana · 19–25/10</span><span class="num" style="font-size: 34px; font-weight: 800">0,00 €</span><span class="muted" style="font-size: 13px">Ningún vencimiento</span></div>
+<div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 6px"><span class="muted" style="font-size: 13px; font-weight: 600">Próximos 30 días</span><span class="num" style="font-size: 34px; font-weight: 800">1.767,13 €</span><span class="muted" style="font-size: 13px">+ 2 vencimientos sin importe · abonos 45,30 € aparte</span></div>
+<div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 6px; border: 2px solid #1D3B47"><span class="muted" style="font-size: 13px; font-weight: 600">Semana más cargada</span><span class="num" style="font-size: 34px; font-weight: 800">909,55 €</span><span class="muted" style="font-size: 13px">02/11 – 08/11 · 3 facturas</span></div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+<sc-for list="{{weeks}}" as="w" hint-placeholder-count="6">
+<div class="{{w.cls}}">
+<span class="muted" style="font-size: 12px; font-weight: 700">{{w.rango}}</span>
+<span class="num" style="font-size: 22px; font-weight: 800">{{w.total}}</span>
+<sc-for list="{{w.lines}}" as="l" hint-placeholder-count="2"><div class="ln"><span>{{l.p}}</span><span class="num">{{l.i}}</span></div></sc-for>
+</div>
+</sc-for>
+</div>
+
+<section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<strong>Detalle de la semana 02/11 – 08/11</strong>
+<div class="ln" style="font-size: 15px; padding: 8px 0; border-bottom: 1px solid #EEF0EC"><span>Lun 02/11 · COFARES 2026-10-04512</span><span class="num">312,40 €</span></div>
+<div class="ln" style="font-size: 15px; padding: 8px 0; border-bottom: 1px solid #EEF0EC"><span>Lun 02/11 · COFARES 2026-10-04512 <span class="badge o">posible duplicado</span></span><span class="num">312,40 €</span></div>
+<div class="ln" style="font-size: 15px; padding: 8px 0"><span>Jue 05/11 · HEFAME 0563901122</span><span class="num">284,75 €</span></div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const w = (rango, total, lines, hot) => ({ rango, total, lines, cls: hot ? 'wk hot' : 'wk' });
+    return {
+      weeks: [
+        w('19 – 25/10', '0,00 €', [], false),
+        w('26/10 – 01/11', '241,04 €', [{ p: 'ALLIANCE', i: '241,04 €' }], false),
+        w('02 – 08/11', '909,55 €', [{ p: 'COFARES ×2', i: '624,80 €' }, { p: 'HEFAME', i: '284,75 €' }], true),
+        w('09 – 15/11', '616,54 €', [{ p: 'ALLIANCE ×2', i: '439,64 €' }, { p: 'FEDEFARMA', i: '176,90 €' }, { p: 'Abono FEDEFARMA', i: '− 45,30 €' }], false),
+        w('16 – 22/11', 'Sin importe', [{ p: 'COFARES', i: '?' }], false),
+        w('23 – 29/11', 'Sin importe', [{ p: 'ALLIANCE', i: '?' }], false)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

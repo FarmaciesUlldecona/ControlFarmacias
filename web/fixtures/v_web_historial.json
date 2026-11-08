@@ -1,0 +1,600 @@
+[
+  {
+    "evento_id": 1,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000001",
+    "factura_id": null,
+    "evento": "NORMALIZACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-06T21:04:00+00:00"
+  },
+  {
+    "evento_id": 2,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000001",
+    "factura_id": null,
+    "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-06T21:05:00+00:00"
+  },
+  {
+    "evento_id": 3,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000001",
+    "factura_id": "f0000000-0000-4000-8000-000000000001",
+    "evento": "CONCILIACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-07T08:59:00+00:00"
+  },
+  {
+    "evento_id": 4,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000001",
+    "factura_id": "f0000000-0000-4000-8000-000000000001",
+    "evento": "CONCILIACION_PERSISTIDA",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "CONCILIADA",
+      "resultado": "CONCILIADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-07T09:00:00+00:00"
+  },
+  {
+    "evento_id": 5,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000004",
+    "factura_id": null,
+    "evento": "NORMALIZACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-09T21:04:00+00:00"
+  },
+  {
+    "evento_id": 6,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000004",
+    "factura_id": null,
+    "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-09T21:05:00+00:00"
+  },
+  {
+    "evento_id": 7,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000004",
+    "factura_id": "f0000000-0000-4000-8000-000000000005",
+    "evento": "CONCILIACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-10T08:59:00+00:00"
+  },
+  {
+    "evento_id": 8,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000004",
+    "factura_id": "f0000000-0000-4000-8000-000000000005",
+    "evento": "CONCILIACION_PERSISTIDA",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "REVISION_CONCILIACION",
+      "resultado": "DIFERENCIA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-10T09:00:00+00:00"
+  },
+  {
+    "evento_id": 9,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000002",
+    "factura_id": null,
+    "evento": "NORMALIZACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-13T21:04:00+00:00"
+  },
+  {
+    "evento_id": 10,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000002",
+    "factura_id": null,
+    "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-13T21:05:00+00:00"
+  },
+  {
+    "evento_id": 11,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000002",
+    "factura_id": "f0000000-0000-4000-8000-000000000002",
+    "evento": "CONCILIACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-14T08:59:00+00:00"
+  },
+  {
+    "evento_id": 12,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000002",
+    "factura_id": "f0000000-0000-4000-8000-000000000002",
+    "evento": "CONCILIACION_PERSISTIDA",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "CONCILIADA",
+      "resultado": "CONCILIADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-14T09:00:00+00:00"
+  },
+  {
+    "evento_id": 13,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000003",
+    "factura_id": null,
+    "evento": "NORMALIZACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-16T21:04:00+00:00"
+  },
+  {
+    "evento_id": 14,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000003",
+    "factura_id": null,
+    "evento": "INVENTARIO_MULTIFACTURA",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_persistencia": "COMPLETA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-16T21:04:30+00:00"
+  },
+  {
+    "evento_id": 15,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000003",
+    "factura_id": null,
+    "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-16T21:05:00+00:00"
+  },
+  {
+    "evento_id": 16,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000003",
+    "factura_id": "f0000000-0000-4000-8000-000000000003",
+    "evento": "CONCILIACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-17T08:59:00+00:00"
+  },
+  {
+    "evento_id": 17,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000003",
+    "factura_id": "f0000000-0000-4000-8000-000000000004",
+    "evento": "CONCILIACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-17T08:59:00+00:00"
+  },
+  {
+    "evento_id": 18,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000003",
+    "factura_id": "f0000000-0000-4000-8000-000000000003",
+    "evento": "CONCILIACION_PERSISTIDA",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+      "resultado": "DIFERENCIA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-17T09:00:00+00:00"
+  },
+  {
+    "evento_id": 19,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000003",
+    "factura_id": "f0000000-0000-4000-8000-000000000004",
+    "evento": "CONCILIACION_PERSISTIDA",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "CONCILIADA",
+      "resultado": "CONCILIADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-17T09:00:00+00:00"
+  },
+  {
+    "evento_id": 20,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000005",
+    "factura_id": null,
+    "evento": "NORMALIZACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-21T21:04:00+00:00"
+  },
+  {
+    "evento_id": 21,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000005",
+    "factura_id": null,
+    "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-21T21:05:00+00:00"
+  },
+  {
+    "evento_id": 22,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000006",
+    "factura_id": null,
+    "evento": "NORMALIZACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-23T21:04:00+00:00"
+  },
+  {
+    "evento_id": 23,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000006",
+    "factura_id": null,
+    "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-23T21:05:00+00:00"
+  },
+  {
+    "evento_id": 24,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000006",
+    "factura_id": "f0000000-0000-4000-8000-000000000007",
+    "evento": "CONCILIACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-24T08:59:00+00:00"
+  },
+  {
+    "evento_id": 25,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000006",
+    "factura_id": "f0000000-0000-4000-8000-000000000007",
+    "evento": "CONCILIACION_PERSISTIDA",
+    "origen": "RPC",
+    "actor": "worker-conciliacion",
+    "estado_anterior": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+    },
+    "estado_nuevo": {
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+      "resultado": "NO_EVALUABLE"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-24T09:00:00+00:00"
+  },
+  {
+    "evento_id": 26,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000007",
+    "factura_id": null,
+    "evento": "NORMALIZACION_CLAIM",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": null,
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-24T21:04:00+00:00"
+  },
+  {
+    "evento_id": 27,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000007",
+    "factura_id": null,
+    "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "NORMALIZADA"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-24T21:05:00+00:00"
+  },
+  {
+    "evento_id": 28,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000008",
+    "factura_id": null,
+    "evento": "NORMALIZACION_ERROR",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "PROVEEDOR_NO_SOPORTADO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-25T21:05:00+00:00"
+  },
+  {
+    "evento_id": 29,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000009",
+    "factura_id": null,
+    "evento": "NORMALIZACION_ERROR",
+    "origen": "RPC",
+    "actor": "worker-manual",
+    "estado_anterior": {
+      "estado_lectura": "NORMALIZANDO"
+    },
+    "estado_nuevo": {
+      "estado_lectura": "ERROR"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-26T21:05:00+00:00"
+  },
+  {
+    "evento_id": 30,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000001",
+    "factura_id": "f0000000-0000-4000-8000-000000000001",
+    "evento": "FACTURA_VALIDADA_PIO",
+    "origen": "RPC",
+    "actor": "pio",
+    "estado_anterior": {
+      "estado_revision": "NO_REQUERIDA"
+    },
+    "estado_nuevo": {
+      "estado_revision": "VALIDADA_PIO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-27T12:00:00+00:00"
+  },
+  {
+    "evento_id": 31,
+    "farmacia": "PIO",
+    "documento_id": "d0000000-0000-4000-8000-000000000003",
+    "factura_id": "f0000000-0000-4000-8000-000000000004",
+    "evento": "FACTURA_VALIDADA_PIO",
+    "origen": "RPC",
+    "actor": "pio",
+    "estado_anterior": {
+      "estado_revision": "NO_REQUERIDA"
+    },
+    "estado_nuevo": {
+      "estado_revision": "VALIDADA_PIO"
+    },
+    "detalle": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "created_at": "2026-10-27T12:00:00+00:00"
+  }
+]

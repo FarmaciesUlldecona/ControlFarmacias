@@ -1,0 +1,7 @@
+# Credenciales del rol cf_lectura (solo en el PC de Pío)
+.env.web
+
+node_modules/
+dist/
+test-results/
+playwright-report/

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Vencimientos · ControlFarmacias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif;color:#18211E;background:#F4F5F2}
+a{color:#1D3B47}a:hover{color:#0F252E}
+.app{display:flex;flex-wrap:wrap;align-items:stretch}
+.side{flex:1 1 232px;background:#FFFFFF;border-right:1px solid #E2E5E0;padding:20px 14px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px;font-weight:800;font-size:17px;letter-spacing:-0.01em}
+.mark{width:30px;height:30px;border-radius:8px;background:#1D3B47;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.farm{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #E2E5E0;border-radius:10px;font-size:13px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;text-decoration:none;color:#3E4A46;font-weight:500;font-size:15px;box-sizing:border-box}
+.nav a.on{background:#E6EDEF;color:#1D3B47;font-weight:700}
+.foot{margin-top:auto;font-size:12px;color:#56625D;padding:10px 12px;border-top:1px solid #E2E5E0}
+.main{flex:999 1 560px;min-width:0;padding:28px 36px 56px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.top h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-0.02em}
+.card{background:#FFFFFF;border:1px solid #E2E5E0;border-radius:12px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.n{background:#ECEEEB;color:#4F5B57}
+.muted{color:#56625D}
+.tab{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid #E2E5E0;background:#FFFFFF;font:inherit;font-size:14px;font-weight:600;color:#3E4A46}
+.tab.on{background:#1D3B47;border-color:#1D3B47;color:#FFFFFF}
+.wd{font-size:12px;font-weight:700;color:#56625D;padding:0 6px}
+.it{display:flex;align-items:center;gap:6px;width:100%;min-height:30px;padding:3px 6px;border:0;border-radius:6px;background:#F4F5F2;font:inherit;font-size:12px;text-align:left;cursor:pointer;color:#18211E}
+.it:hover{background:#E6EDEF}
+.dot{width:8px;height:8px;border-radius:999px;flex:0 0 8px}
+.dg{background:#2E8B57}.db{background:#2F6FD0}.do{background:#D9822B}.dr{background:#C8372D}
+</style>
+</helmet>
+<div class="app">
+<aside class="side">
+<div class="brand"><span class="mark">CF</span>ControlFarmacias</div>
+<div class="farm"><span class="muted">Farmacia</span><strong>PIO PUIG SALOMON</strong><span class="muted">RITA: no habilitada</span></div>
+<nav class="nav" aria-label="Menú principal">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 6px 12px 2px">FINANZAS</span>
+<a href="Main.dc.html">Inicio</a>
+<a href="Facturas.dc.html">Facturas</a>
+<a href="Conciliacion.dc.html">Conciliación</a>
+<a class="on" href="Vencimientos.dc.html">Vencimientos</a>
+<a href="Cashflow.dc.html">Cashflow</a>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">NEGOCIO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Compras<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Stock<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Ventas<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Clientes<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">EQUIPO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Trabajadores<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">GENERAL</span>
+<a href="Proveedores.dc.html">Proveedores</a>
+<a href="Configuracion.dc.html">Configuración</a>
+</nav>
+<div class="foot">Fase 1 · solo lectura<br>Datos ficticios</div>
+</aside>
+<main class="main">
+<div class="top">
+<div><h1>Vencimientos</h1><div class="muted" style="margin-top: 4px; font-size: 14px">Noviembre 2026 · pulsa una factura para ver todos sus vencimientos</div></div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button class="tab" type="button">Hoy</button>
+<button class="tab" type="button">Esta semana</button>
+<button class="tab" type="button">Próxima semana</button>
+<button class="tab on" type="button">Mes</button>
+</div>
+</div>
+
+<div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 13px" class="muted">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot dg"></span>Conciliada</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot db"></span>Pendiente</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot do"></span>Revisión</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span class="dot dr"></span>Incidencia</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border: 2px solid #33403B; border-radius: 4px; box-sizing: border-box"></span>Día con un vencimiento de una factura de varios vencimientos</span>
+</div>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+<div class="card" style="padding: 14px 18px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; border-color: #1D3B47">
+<strong>{{sel.titulo}}</strong>
+<span class="muted" style="font-size: 14px">{{sel.resumen}}</span>
+<a href="Detalle.dc.html" style="font-size: 14px; font-weight: 600">Abrir factura</a>
+<button class="tab" type="button" onClick="{{clear}}" style="margin-left: auto">Quitar selección</button>
+</div>
+</sc-if>
+
+<div class="card" style="padding: 14px; overflow-x: auto">
+<div style="display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr)); gap: 8px; min-width: 900px">
+<span class="wd">Lun</span><span class="wd">Mar</span><span class="wd">Mié</span><span class="wd">Jue</span><span class="wd">Vie</span><span class="wd">Sáb</span><span class="wd">Dom</span>
+<sc-for list="{{days}}" as="d" hint-placeholder-count="42">
+<div style="{{d.style}}">
+<span style="font-size: 13px; font-weight: 700; color: {{d.numColor}}">{{d.num}}</span>
+<sc-for list="{{d.items}}" as="it" hint-placeholder-count="0">
+<button class="it" type="button" onClick="{{it.pick}}" aria-label="{{it.aria}}"><span class="dot {{it.dot}}" aria-hidden="true"></span><span style="flex: 1 1 auto; font-weight: 600">{{it.prov}}</span><span style="font-variant-numeric: tabular-nums">{{it.imp}}</span></button>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+<sc-for list="{{weeks}}" as="w" hint-placeholder-count="5">
+<div class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+<span class="muted" style="font-size: 12px; font-weight: 600">{{w.rango}}</span>
+<span style="font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums">{{w.total}}</span>
+<span class="muted" style="font-size: 12px">{{w.nota}}</span>
+</div>
+</sc-for>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sel: null }; }
+  renderVals() {
+    const sel = this.state.sel;
+    const F = {
+      F01: { prov: 'COFARES', dot: 'dg', num: '2026-10-04512', multi: false },
+      F08: { prov: 'COFARES', dot: 'do', num: '2026-10-04512 (posible duplicado)', multi: false },
+      F02: { prov: 'HEFAME', dot: 'dg', num: '0563901122', multi: false },
+      F03: { prov: 'ALLIANCE', dot: 'dr', num: '31-5820744', multi: false },
+      F04: { prov: 'ALLIANCE', dot: 'dg', num: '31-5820745', multi: true },
+      F05: { prov: 'FEDEFARMA', dot: 'do', num: 'FV26-008812', multi: false },
+      F06: { prov: 'COFARES', dot: 'do', num: '2026-10-04788', multi: false },
+      F07: { prov: 'FEDEFARMA', dot: 'db', num: 'AB26-000341 (abono)', multi: false }
+    };
+    const V = [
+      ['F04', '30/10', '241,04 €'], ['F01', '02/11', '312,40 €'], ['F08', '02/11', '312,40 €'],
+      ['F02', '05/11', '284,75 €'], ['F05', '10/11', '176,90 €'], ['F07', '10/11', '− 45,30 €'],
+      ['F04', '13/11', '241,04 €'], ['F03', '15/11', '198,60 €'], ['F06', '20/11', 'desconocido'],
+      ['F04', '27/11', 'desconocido']
+    ];
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+      const dt = new Date(2026, 9, 26 + i);
+      const key = String(dt.getDate()).padStart(2, '0') + '/' + String(dt.getMonth() + 1).padStart(2, '0');
+      const inMonth = dt.getMonth() === 10;
+      const items = V.filter(v => v[1] === key).map(v => ({
+        prov: F[v[0]].prov, imp: v[2], dot: F[v[0]].dot,
+        aria: F[v[0]].prov + ' ' + F[v[0]].num + ' ' + v[2],
+        pick: () => this.setState({ sel: this.state.sel === v[0] ? null : v[0] })
+      }));
+      const ids = V.filter(v => v[1] === key).map(v => v[0]);
+      const multi = ids.some(id => F[id].multi);
+      const hit = sel && ids.includes(sel);
+      let border = '1px solid #E2E5E0';
+      if (multi) border = '2px solid #33403B';
+      if (hit) border = '3px solid #1D3B47';
+      const bg = hit ? '#E6EDEF' : (inMonth ? '#FFFFFF' : '#F7F8F6');
+      const op = sel && !hit ? '0.38' : '1';
+      days.push({
+        num: dt.getDate(), items, numColor: inMonth ? '#18211E' : '#7A8580',
+        style: 'min-height: 112px; padding: 8px; border-radius: 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; border: ' + border + '; background: ' + bg + '; opacity: ' + op
+      });
+    }
+    const resumen = {
+      F04: '3 vencimientos: 30/10 241,04 € · 13/11 241,04 € · 27/11 importe desconocido'
+    };
+    const selInfo = sel ? { titulo: F[sel].prov + ' · ' + F[sel].num, resumen: resumen[sel] || ('1 vencimiento: ' + V.filter(v => v[0] === sel).map(v => v[1] + ' ' + v[2]).join(' · ')) } : { titulo: '', resumen: '' };
+    return {
+      days, hasSel: !!sel, sel: selInfo,
+      clear: () => this.setState({ sel: null }),
+      weeks: [
+        { rango: '26/10 – 01/11', total: '241,04 €', nota: '1 vencimiento' },
+        { rango: '02/11 – 08/11', total: '909,55 €', nota: '3 vencimientos' },
+        { rango: '09/11 – 15/11', total: '616,54 €', nota: '3 cargos · abono 45,30 € aparte' },
+        { rango: '16/11 – 22/11', total: 'Sin importe conocido', nota: '1 vencimiento con importe desconocido' },
+        { rango: '23/11 – 29/11', total: 'Sin importe conocido', nota: '1 vencimiento con importe desconocido' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

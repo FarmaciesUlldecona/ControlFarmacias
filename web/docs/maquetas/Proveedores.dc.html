@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Proveedores · ControlFarmacias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif;color:#18211E;background:#F4F5F2}
+a{color:#1D3B47}a:hover{color:#0F252E}
+.app{display:flex;flex-wrap:wrap;align-items:stretch}
+.side{flex:1 1 232px;background:#FFFFFF;border-right:1px solid #E2E5E0;padding:20px 14px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px;font-weight:800;font-size:17px;letter-spacing:-0.01em}
+.mark{width:30px;height:30px;border-radius:8px;background:#1D3B47;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.farm{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #E2E5E0;border-radius:10px;font-size:13px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;text-decoration:none;color:#3E4A46;font-weight:500;font-size:15px;box-sizing:border-box}
+.nav a.on{background:#E6EDEF;color:#1D3B47;font-weight:700}
+.foot{margin-top:auto;font-size:12px;color:#56625D;padding:10px 12px;border-top:1px solid #E2E5E0}
+.main{flex:999 1 560px;min-width:0;padding:28px 36px 56px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px}
+.top h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-0.02em}
+.card{background:#FFFFFF;border:1px solid #E2E5E0;border-radius:12px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.g{background:#E3F2E8;color:#17663D}.b{background:#E4ECF8;color:#1F5BAA}.o{background:#FBEBD9;color:#8F4500}.r{background:#FBE4E2;color:#A8221A}.n{background:#ECEEEB;color:#4F5B57}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:12px;color:#56625D;font-weight:600;padding:10px 14px;border-bottom:1px solid #E2E5E0;white-space:nowrap}
+.tbl td{padding:14px;border-bottom:1px solid #EEF0EC;vertical-align:middle}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:#56625D}
+</style>
+</helmet>
+<div class="app">
+<aside class="side">
+<div class="brand"><span class="mark">CF</span>ControlFarmacias</div>
+<div class="farm"><span class="muted">Farmacia</span><strong>PIO PUIG SALOMON</strong><span class="muted">RITA: no habilitada</span></div>
+<nav class="nav" aria-label="Menú principal">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 6px 12px 2px">FINANZAS</span>
+<a href="Main.dc.html">Inicio</a>
+<a href="Facturas.dc.html">Facturas</a>
+<a href="Conciliacion.dc.html">Conciliación</a>
+<a href="Vencimientos.dc.html">Vencimientos</a>
+<a href="Cashflow.dc.html">Cashflow</a>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">NEGOCIO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Compras<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Stock<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Ventas<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Clientes<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">EQUIPO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Trabajadores<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">GENERAL</span>
+<a class="on" href="Proveedores.dc.html">Proveedores</a>
+<a href="Configuracion.dc.html">Configuración</a>
+</nav>
+<div class="foot">Fase 1 · solo lectura<br>Datos ficticios</div>
+</aside>
+<main class="main">
+<div class="top"><h1>Proveedores</h1><div class="muted" style="margin-top: 4px; font-size: 14px">Estado real del motor por proveedor</div></div>
+
+<div class="card" style="overflow-x: auto">
+<table class="tbl" style="min-width: 1000px">
+<thead><tr><th>Proveedor</th><th>Extractor</th><th>Confianza</th><th class="num">Facturas recientes</th><th class="num">En revisión</th><th class="num">Conciliadas</th><th>IA (Luna)</th><th>Última factura</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="p" hint-placeholder-count="5">
+<tr>
+<td><div style="font-weight: 700">{{p.nombre}}</div><div class="muted" style="font-size: 12px">{{p.alias}}</div></td>
+<td>{{p.ext}}</td>
+<td><span class="badge {{p.cc}}">{{p.conf}}</span></td>
+<td class="num">{{p.fact}}</td>
+<td class="num">{{p.rev}}</td>
+<td class="num">{{p.conc}}</td>
+<td class="muted">{{p.luna}}</td>
+<td class="muted" style="white-space: nowrap">{{p.ult}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+
+<div class="card" style="padding: 16px 20px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px">
+<span><span class="badge g">Validado por Pío</span> facturas revisadas repetidamente sin errores</span>
+<span><span class="badge b">Documental</span> el extractor lee el documento; pendiente de validación repetida</span>
+<span><span class="badge o">No verificado</span> sin extractor fiable; requiere revisión</span>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      rows: [
+        { nombre: 'COFARES', alias: '', ext: 'Local · cofares', conf: 'Validado por Pío', cc: 'g', fact: 3, rev: 2, conc: 1, luna: '1 uso · 0,0184 €', ult: '13/10/2026' },
+        { nombre: 'HEFAME', alias: '', ext: 'Local · hefame', conf: 'Validado por Pío', cc: 'g', fact: 1, rev: 0, conc: 1, luna: '—', ult: '06/10/2026' },
+        { nombre: 'ALLIANCEHEALTHCARECENCORA', alias: 'Alliance · SAFA', ext: 'Local · alliance', conf: 'Documental', cc: 'b', fact: 2, rev: 0, conc: 1, luna: '—', ult: '09/10/2026' },
+        { nombre: 'FEDEFARMA', alias: '', ext: 'Local · fedefarma', conf: 'Documental', cc: 'b', fact: 2, rev: 1, conc: 0, luna: '—', ult: '14/10/2026' },
+        { nombre: 'LAB_DEMO', alias: 'Proveedor nuevo', ext: 'Sin extractor', conf: 'No verificado', cc: 'o', fact: 0, rev: 0, conc: 0, luna: '—', ult: '1 PDF sin leer' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

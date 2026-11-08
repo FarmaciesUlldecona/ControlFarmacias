@@ -1,0 +1,93 @@
+{
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/bloqueo_rutas.mjs\""
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "ask": [
+      "PowerShell(git stash *)",
+      "Bash(git stash *)"
+    ],
+    "deny": [
+      "PowerShell(git commit)",
+      "Bash(git commit)",
+      "PowerShell(git commit *)",
+      "Bash(git commit *)",
+      "PowerShell(git merge *)",
+      "Bash(git merge *)",
+      "PowerShell(git rebase *)",
+      "Bash(git rebase *)",
+      "PowerShell(git switch *)",
+      "Bash(git switch *)",
+      "PowerShell(git checkout *)",
+      "Bash(git checkout *)",
+      "PowerShell(git push *)",
+      "Bash(git push *)",
+      "PowerShell(git reset *)",
+      "Bash(git reset *)",
+      "PowerShell(git clean *)",
+      "Bash(git clean *)",
+      "PowerShell(git restore *)",
+      "Bash(git restore *)",
+      "PowerShell(*service_role*)",
+      "Bash(*service_role*)",
+      "PowerShell(*SUPABASE_SERVICE*)",
+      "Bash(*SUPABASE_SERVICE*)",
+      "PowerShell(*supabase*)",
+      "Bash(*supabase*)",
+      "PowerShell(*psql*)",
+      "Bash(*psql*)",
+      "PowerShell(*pg_dump*)",
+      "Bash(*pg_dump*)",
+      "PowerShell(*pg_restore*)",
+      "Bash(*pg_restore*)",
+      "PowerShell(*docker*)",
+      "Bash(*docker*)",
+      "PowerShell(*sql/migrations*)",
+      "Bash(*sql/migrations*)",
+      "PowerShell(*sql\\migrations*)",
+      "Bash(*sql\\migrations*)",
+      "PowerShell(*pip install*)",
+      "Bash(*pip install*)",
+      "PowerShell(*winget*)",
+      "Bash(*winget*)",
+      "Read(../.env)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/.env*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(**/.env*)",
+      "Write(**/.env)",
+      "Write(**/.env.*)",
+      "Write(**/.env*)",
+      "Read(../logs/**)",
+      "Edit(../logs/**)",
+      "Write(../logs/**)",
+      "Read(../tmp/**)",
+      "Edit(../tmp/**)",
+      "Write(../tmp/**)",
+      "Read(../pruebas/facturas/**)",
+      "Edit(../pruebas/facturas/**)",
+      "Write(../pruebas/facturas/**)",
+      "Read(../.venv/**)",
+      "Edit(../.venv/**)",
+      "Write(../.venv/**)",
+      "Read(//c/ControlFarmacias/Programa/**)",
+      "Edit(//c/ControlFarmacias/Programa/**)",
+      "Write(//c/ControlFarmacias/Programa/**)"
+    ]
+  }
+}

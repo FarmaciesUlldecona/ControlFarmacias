@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Facturas · ControlFarmacias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif;color:#18211E;background:#F4F5F2}
+a{color:#1D3B47}a:hover{color:#0F252E}
+.app{display:flex;flex-wrap:wrap;align-items:stretch}
+.side{flex:1 1 232px;background:#FFFFFF;border-right:1px solid #E2E5E0;padding:20px 14px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px;font-weight:800;font-size:17px;letter-spacing:-0.01em}
+.mark{width:30px;height:30px;border-radius:8px;background:#1D3B47;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.farm{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #E2E5E0;border-radius:10px;font-size:13px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;text-decoration:none;color:#3E4A46;font-weight:500;font-size:15px;box-sizing:border-box}
+.nav a.on{background:#E6EDEF;color:#1D3B47;font-weight:700}
+.foot{margin-top:auto;font-size:12px;color:#56625D;padding:10px 12px;border-top:1px solid #E2E5E0}
+.main{flex:999 1 560px;min-width:0;padding:28px 36px 56px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px}
+.top{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.top h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-0.02em}
+.search{display:flex;align-items:center;gap:8px;font-size:13px;color:#56625D}
+.search input{min-height:40px;width:300px;max-width:100%;padding:0 12px;border:1px solid #CBD1CC;border-radius:8px;font:inherit;font-size:14px;background:#FFFFFF;box-sizing:border-box}
+.card{background:#FFFFFF;border:1px solid #E2E5E0;border-radius:12px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.g{background:#E3F2E8;color:#17663D}.b{background:#E4ECF8;color:#1F5BAA}.o{background:#FBEBD9;color:#8F4500}.r{background:#FBE4E2;color:#A8221A}.n{background:#ECEEEB;color:#4F5B57}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:12px;color:#56625D;font-weight:600;padding:10px 14px;border-bottom:1px solid #E2E5E0;white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid #EEF0EC;vertical-align:middle}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:#56625D}
+.flt{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#56625D;font-weight:600}
+.flt select{min-height:40px;padding:0 10px;border:1px solid #CBD1CC;border-radius:8px;font:inherit;font-size:14px;font-weight:500;color:#18211E;background:#FFFFFF;min-width:150px}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid #E2E5E0;background:#FFFFFF;font:inherit;font-size:14px;font-weight:600;color:#3E4A46}
+.tab.on{background:#1D3B47;border-color:#1D3B47;color:#FFFFFF}
+</style>
+</helmet>
+<div class="app">
+<aside class="side">
+<div class="brand"><span class="mark">CF</span>ControlFarmacias</div>
+<div class="farm"><span class="muted">Farmacia</span><strong>PIO PUIG SALOMON</strong><span class="muted">RITA: no habilitada</span></div>
+<nav class="nav" aria-label="Menú principal">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 6px 12px 2px">FINANZAS</span>
+<a href="Main.dc.html">Inicio</a>
+<a class="on" href="Facturas.dc.html">Facturas</a>
+<a href="Conciliacion.dc.html">Conciliación</a>
+<a href="Vencimientos.dc.html">Vencimientos</a>
+<a href="Cashflow.dc.html">Cashflow</a>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">NEGOCIO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Compras<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Stock<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Ventas<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Clientes<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">EQUIPO</span>
+<span style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: #6B7671; font-size: 15px">Trabajadores<span style="font-size: 11px; font-weight: 600; background: #ECEEEB; color: #56625D; padding: 2px 8px; border-radius: 999px">Próximamente</span></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #56625D; padding: 10px 12px 2px">GENERAL</span>
+<a href="Proveedores.dc.html">Proveedores</a>
+<a href="Configuracion.dc.html">Configuración</a>
+</nav>
+<div class="foot">Fase 1 · solo lectura<br>Datos ficticios</div>
+</aside>
+<main class="main">
+<div class="top">
+<div><h1>Facturas</h1><div class="muted" style="margin-top: 4px; font-size: 14px">8 facturas · octubre 2026</div></div>
+<label class="search">Buscar<input type="search" placeholder="Proveedor, nº factura o importe"></label>
+</div>
+
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button class="tab on" type="button">Todas <span>8</span></button>
+<button class="tab" type="button">Conciliadas <span>3</span></button>
+<button class="tab" type="button">Pendientes de conciliar <span>4</span></button>
+<button class="tab" type="button">En revisión <span>2</span></button>
+<button class="tab" type="button">No revisadas por Pío <span>3</span></button>
+</div>
+
+<div class="card" style="padding: 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end">
+<label class="flt">Proveedor<select><option>Todos</option><option>COFARES</option><option>HEFAME</option><option>ALLIANCE</option><option>FEDEFARMA</option></select></label>
+<label class="flt">Fecha factura<select><option>Octubre 2026</option><option>Últimos 30 días</option></select></label>
+<label class="flt">Vencimiento<select><option>Cualquiera</option><option>Esta semana</option><option>Próxima semana</option></select></label>
+<label class="flt">Estado<select><option>Todos</option><option>Normalizada</option><option>Requiere revisión</option><option>Conciliada</option><option>Pendiente de conciliar</option><option>Revisión conciliación</option></select></label>
+<label class="flt">Importe<select><option>Cualquiera</option><option>Hasta 200 €</option><option>Más de 200 €</option><option>Sin importe conocido</option></select></label>
+<label class="flt">Revisión Pío<select><option>Todas</option><option>Pendiente</option><option>Validada</option><option>No requerida</option></select></label>
+</div>
+
+<div class="card" style="overflow-x: auto">
+<table class="tbl" style="min-width: 1100px">
+<thead><tr><th>Proveedor ↕</th><th>Nº factura ↕</th><th>Fecha ↓</th><th class="num">Total ↕</th><th>Vencimiento ↕</th><th>Normalización</th><th>Conciliación</th><th>Revisión Pío</th><th>Pago</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="f" hint-placeholder-count="8">
+<tr>
+<td style="font-weight: 600">{{f.prov}}</td>
+<td><a href="Detalle.dc.html" style="font-weight: 600">{{f.num}}</a> <span class="muted" style="font-size: 12px">{{f.tipo}}</span></td>
+<td style="white-space: nowrap">{{f.fecha}}</td>
+<td class="num" style="font-weight: 600">{{f.total}}</td>
+<td style="white-space: nowrap">{{f.venc}} <sc-if value="{{f.hasMas}}" hint-placeholder-val="{{ false }}"><span class="badge n" style="padding: 1px 7px">{{f.mas}}</span></sc-if></td>
+<td><span class="badge {{f.nc}}">{{f.norm}}</span></td>
+<td><span class="badge {{f.cc}}">{{f.conc}}</span> <span class="muted" style="font-size: 12px">{{f.dif}}</span></td>
+<td><span class="badge {{f.rc}}">{{f.rev}}</span></td>
+<td><span class="muted" style="font-size: 12px">Sin datos bancarios</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div class="muted" style="font-size: 13px">Una factura con varios vencimientos muestra el próximo y “+N”. Todos se ven en el detalle y en el calendario.</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const N = { ok: ['Normalizada', 'g'], rev: ['Requiere revisión', 'o'] };
+    const C = { ok: ['Conciliada', 'g'], pen: ['Pendiente de conciliar', 'b'], rev: ['Revisión conciliación', 'o'] };
+    const R = { no: ['No requerida', 'n'], pen: ['Pendiente Pío', 'o'], val: ['Validada Pío', 'g'] };
+    const mk = (prov, num, tipo, fecha, total, venc, mas, n, c, dif, r) => ({
+      prov, num, tipo, fecha, total, venc, mas, dif, hasMas: mas !== '',
+      norm: N[n][0], nc: N[n][1], conc: C[c][0], cc: C[c][1], rev: R[r][0], rc: R[r][1]
+    });
+    return {
+      rows: [
+        mk('FEDEFARMA', 'AB26-000341', 'Abono', '14/10/2026', 'Abono − 45,30 €', '10/11/2026', '', 'ok', 'pen', '', 'no'),
+        mk('COFARES', '2026-10-04788', '', '13/10/2026', 'Desconocido', '20/11/2026', '', 'rev', 'pen', '', 'pen'),
+        mk('FEDEFARMA', 'FV26-008812', '', '11/10/2026', '176,90 €', '10/11/2026', '', 'ok', 'rev', 'falta 1 albarán', 'pen'),
+        mk('ALLIANCE', '31-5820745', '', '09/10/2026', '723,11 €', '30/10/2026', '+2', 'ok', 'ok', '', 'val'),
+        mk('ALLIANCE', '31-5820744', '', '09/10/2026', '198,60 €', '15/11/2026', '', 'ok', 'pen', 'dif. 41,90 €', 'no'),
+        mk('HEFAME', '0563901122', '', '06/10/2026', '284,75 €', '05/11/2026', '', 'ok', 'ok', 'dif. 0,07 €', 'no'),
+        mk('COFARES', '2026-10-04512', 'posible duplicado', '03/10/2026', '312,40 €', '02/11/2026', '', 'ok', 'pen', '', 'pen'),
+        mk('COFARES', '2026-10-04512', '', '03/10/2026', '312,40 €', '02/11/2026', '', 'ok', 'ok', '', 'val')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

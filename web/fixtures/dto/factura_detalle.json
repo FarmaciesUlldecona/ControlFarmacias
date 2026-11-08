@@ -1,0 +1,2854 @@
+{
+  "f0000000-0000-4000-8000-000000000001": {
+    "farmacia": "PIO",
+    "generado_at": "2026-11-02T08:00:00+00:00",
+    "factura": {
+      "factura_id": "f0000000-0000-4000-8000-000000000001",
+      "documento_id": "d0000000-0000-4000-8000-000000000001",
+      "archivo_nombre": "Alliance_AL-26-100231.pdf",
+      "pagina_inicio": 1,
+      "pagina_fin": 2,
+      "tipo_documento": "FACTURA",
+      "categoria": "MERCANCIA",
+      "numero_factura": "AL-26-100231",
+      "fecha_factura": "2026-10-05",
+      "moneda": "EUR",
+      "proveedor_id": "a0000000-0000-4000-8000-000000000003",
+      "proveedor_codigo": "ALLIANCE",
+      "proveedor": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_literal": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_cif": "B00000003",
+      "base_imponible_total": 136.78,
+      "iva_total": 13.68,
+      "recargo_equivalencia_total": 1.91,
+      "importe_total": 152.37,
+      "cuadre_fiscal_correcto": true,
+      "diferencia_cuadre": 0,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "CONCILIADA",
+      "estado_revision": "VALIDADA_PIO",
+      "estado_pago_bd": "SIN_PAGAR",
+      "requiere_conciliacion_albaranes": true,
+      "conciliacion_intentos": 1,
+      "conciliacion_intentos_fallo": 0,
+      "conciliacion_ultima_clase_fallo": null,
+      "conciliacion_proximo_at": null,
+      "conciliacion": {
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000101",
+        "intento": 1,
+        "disparador": "MANUAL_ONE_SHOT",
+        "estado": "COMPLETADA",
+        "resultado": "CONCILIADA",
+        "importe_factura": 152.37,
+        "importe_explicado": 152.37,
+        "diferencia": 0,
+        "tolerancia": 0.05,
+        "tolerancia_regla": {
+          "suelo": "0.0500",
+          "por_albaran": "0.0100",
+          "tope": "0.5000",
+          "albaranes_casados": 2,
+          "tolerancia": "0.0500"
+        },
+        "finalizado_at": "2026-10-07T09:00:00+00:00"
+      },
+      "uso_luna": false,
+      "coste_luna": null,
+      "incidencias_abiertas": 1,
+      "incidencias_bloqueantes": 0,
+      "updated_at": "2026-10-28T08:00:00+00:00"
+    },
+    "documento": {
+      "documento_id": "d0000000-0000-4000-8000-000000000001",
+      "archivo_nombre": "Alliance_AL-26-100231.pdf",
+      "archivo_ruta": "PIO/2026-10/Alliance_AL_26_100231_1978d094c8a3.pdf",
+      "archivo_hash": "1978d094c8a305f8e99bfd2acd3abef9da10c8f532169f087e580975e48b4ae2",
+      "numero_paginas": 2,
+      "estado_lectura": "NORMALIZADA",
+      "estado_persistencia": "COMPLETA",
+      "fecha_importacion": "2026-10-06T21:00:00+00:00"
+    },
+    "proveedor": {
+      "proveedor_cif": "B00000003",
+      "id_proveedor_albaranes": "0002",
+      "extractor_codigo": "alliance",
+      "nivel_confianza": "PIO_VALIDADO"
+    },
+    "normalizacion": {
+      "ejecucion_id": "e0000000-0000-4000-8000-000000000001",
+      "disparador": "MANUAL_ONE_SHOT",
+      "estado": "COMPLETADA",
+      "extractor_usado": "alliance-local",
+      "normalizador_version": "normalizador_v2-2.3",
+      "uso_ocr": false,
+      "uso_luna": false,
+      "luna_modelo": null,
+      "luna_campos": [],
+      "tokens_total": null,
+      "coste_luna": null,
+      "finalizado_at": "2026-10-06T21:05:00+00:00"
+    },
+    "datos_extraidos": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3B",
+      "numero_factura": "AL-26-100231",
+      "fecha_factura": "2026-10-05",
+      "tipo_documento": "FACTURA",
+      "proveedor": {
+        "nombre": "ALLIANCEHEALTHCARECENCORA",
+        "nif": "B00000003"
+      },
+      "totales": {
+        "base": 136.78,
+        "iva": 13.68,
+        "recargo": 1.91,
+        "total": 152.37
+      }
+    },
+    "provenance": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "lineas": [
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000101",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000001",
+        "orden": 1,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000001",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X10001",
+        "fecha_albaran_documental": "2026-10-01",
+        "sentido_documental": "CARGO",
+        "importe_documental": 84.2,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900101,
+        "numero_albaran_farmatic": "08X10001",
+        "fecha_albaran_farmatic": "2026-10-01",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 84.2,
+        "importe_pvp": 113.67,
+        "importe_farmatic": 84.2,
+        "importe_aplicado": 84.2,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000101",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000002",
+        "orden": 2,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000002",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X10002",
+        "fecha_albaran_documental": "2026-10-02",
+        "sentido_documental": "CARGO",
+        "importe_documental": 68.17,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900102,
+        "numero_albaran_farmatic": "08X10002",
+        "fecha_albaran_farmatic": "2026-10-02",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 68.17,
+        "importe_pvp": 92.03,
+        "importe_farmatic": 68.17,
+        "importe_aplicado": 68.17,
+        "diferencia": 0
+      }
+    ],
+    "impuestos": [],
+    "vencimientos": [
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000001",
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "numero_factura": "AL-26-100231",
+        "tipo_documento": "FACTURA",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-04",
+        "importe": 152.37,
+        "importe_conocido": true,
+        "literal": "VTO. 04/11/2026",
+        "importe_factura": 152.37,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "VALIDADA_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      }
+    ],
+    "albaranes_extraidos": [
+      {
+        "id": "b0000000-0000-4000-8000-000000000001",
+        "orden": 1,
+        "numero_albaran": "08X10001",
+        "fecha_albaran": "2026-10-01",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 84.2,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000002",
+        "orden": 2,
+        "numero_albaran": "08X10002",
+        "fecha_albaran": "2026-10-02",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 68.17,
+        "descripcion": null,
+        "literal": null
+      }
+    ],
+    "movimientos": [],
+    "ajustes": [],
+    "incidencias": [
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000001",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "numero_factura": "AL-26-100231",
+        "archivo_nombre": "Alliance_AL-26-100231.pdf",
+        "codigo": "POSIBLE_DUPLICADO",
+        "categoria": "IDENTIDAD_DOCUMENTAL",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "Existe otra factura con la misma identidad economica en un PDF diferente.",
+        "detalle_tecnico": {
+          "proveedor_clave": "ALLIANCE",
+          "numero_clave": "AL-26-100231",
+          "fecha_factura": "2026-10-05",
+          "accion_automatica": "NINGUNA",
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-24T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      }
+    ],
+    "historial": [
+      {
+        "evento_id": 1,
+        "documento_id": "d0000000-0000-4000-8000-000000000001",
+        "factura_id": null,
+        "evento": "NORMALIZACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-06T21:04:00+00:00"
+      },
+      {
+        "evento_id": 2,
+        "documento_id": "d0000000-0000-4000-8000-000000000001",
+        "factura_id": null,
+        "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-06T21:05:00+00:00"
+      },
+      {
+        "evento_id": 3,
+        "documento_id": "d0000000-0000-4000-8000-000000000001",
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "evento": "CONCILIACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-07T08:59:00+00:00"
+      },
+      {
+        "evento_id": 4,
+        "documento_id": "d0000000-0000-4000-8000-000000000001",
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "evento": "CONCILIACION_PERSISTIDA",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "CONCILIADA",
+          "resultado": "CONCILIADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-07T09:00:00+00:00"
+      },
+      {
+        "evento_id": 30,
+        "documento_id": "d0000000-0000-4000-8000-000000000001",
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "evento": "FACTURA_VALIDADA_PIO",
+        "origen": "RPC",
+        "actor": "pio",
+        "estado_anterior": {
+          "estado_revision": "NO_REQUERIDA"
+        },
+        "estado_nuevo": {
+          "estado_revision": "VALIDADA_PIO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-27T12:00:00+00:00"
+      }
+    ],
+    "pago": {
+      "estado": "SIN_DATOS_BANCARIOS",
+      "texto": "sin datos bancarios",
+      "color": "gris"
+    }
+  },
+  "f0000000-0000-4000-8000-000000000002": {
+    "farmacia": "PIO",
+    "generado_at": "2026-11-02T08:00:00+00:00",
+    "factura": {
+      "factura_id": "f0000000-0000-4000-8000-000000000002",
+      "documento_id": "d0000000-0000-4000-8000-000000000002",
+      "archivo_nombre": "Alliance_AL-26-100577.pdf",
+      "pagina_inicio": 1,
+      "pagina_fin": 3,
+      "tipo_documento": "FACTURA",
+      "categoria": "MERCANCIA",
+      "numero_factura": "AL-26-100577",
+      "fecha_factura": "2026-10-12",
+      "moneda": "EUR",
+      "proveedor_id": "a0000000-0000-4000-8000-000000000003",
+      "proveedor_codigo": "ALLIANCE",
+      "proveedor": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_literal": "Alliance Healthcare España",
+      "proveedor_cif": "b-00000003",
+      "base_imponible_total": 423.9,
+      "iva_total": 42.39,
+      "recargo_equivalencia_total": 5.93,
+      "importe_total": 472.22,
+      "cuadre_fiscal_correcto": true,
+      "diferencia_cuadre": 0,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "CONCILIADA",
+      "estado_revision": "NO_REQUERIDA",
+      "estado_pago_bd": "SIN_PAGAR",
+      "requiere_conciliacion_albaranes": true,
+      "conciliacion_intentos": 1,
+      "conciliacion_intentos_fallo": 0,
+      "conciliacion_ultima_clase_fallo": null,
+      "conciliacion_proximo_at": null,
+      "conciliacion": {
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "disparador": "MANUAL_ONE_SHOT",
+        "estado": "COMPLETADA",
+        "resultado": "CONCILIADA",
+        "importe_factura": 472.22,
+        "importe_explicado": 472.15,
+        "diferencia": 0.07,
+        "tolerancia": 0.08,
+        "tolerancia_regla": {
+          "suelo": "0.0500",
+          "por_albaran": "0.0100",
+          "tope": "0.5000",
+          "albaranes_casados": 8,
+          "tolerancia": "0.0800"
+        },
+        "finalizado_at": "2026-10-14T09:00:00+00:00"
+      },
+      "uso_luna": false,
+      "coste_luna": null,
+      "incidencias_abiertas": 1,
+      "incidencias_bloqueantes": 0,
+      "updated_at": "2026-10-28T08:00:00+00:00"
+    },
+    "documento": {
+      "documento_id": "d0000000-0000-4000-8000-000000000002",
+      "archivo_nombre": "Alliance_AL-26-100577.pdf",
+      "archivo_ruta": "PIO/2026-10/Alliance_AL_26_100577_be5ffc1fddcf.pdf",
+      "archivo_hash": "be5ffc1fddcf506e11ae9f769a9a2cb9c9e8b81b034859f4afa47cbd80acc6d0",
+      "numero_paginas": 3,
+      "estado_lectura": "NORMALIZADA",
+      "estado_persistencia": "COMPLETA",
+      "fecha_importacion": "2026-10-13T21:00:00+00:00"
+    },
+    "proveedor": {
+      "proveedor_cif": "b-00000003",
+      "id_proveedor_albaranes": "0002",
+      "extractor_codigo": "alliance",
+      "nivel_confianza": "PIO_VALIDADO"
+    },
+    "normalizacion": {
+      "ejecucion_id": "e0000000-0000-4000-8000-000000000002",
+      "disparador": "MANUAL_ONE_SHOT",
+      "estado": "COMPLETADA",
+      "extractor_usado": "alliance-local",
+      "normalizador_version": "normalizador_v2-2.3",
+      "uso_ocr": false,
+      "uso_luna": false,
+      "luna_modelo": null,
+      "luna_campos": [],
+      "tokens_total": null,
+      "coste_luna": null,
+      "finalizado_at": "2026-10-13T21:05:00+00:00"
+    },
+    "datos_extraidos": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3B",
+      "numero_factura": "AL-26-100577",
+      "fecha_factura": "2026-10-12",
+      "tipo_documento": "FACTURA",
+      "proveedor": {
+        "nombre": "Alliance Healthcare España",
+        "nif": "b-00000003"
+      },
+      "totales": {
+        "base": 423.9,
+        "iva": 42.39,
+        "recargo": 5.93,
+        "total": 472.22
+      }
+    },
+    "provenance": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "lineas": [
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000003",
+        "orden": 1,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000003",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X20001",
+        "fecha_albaran_documental": "2026-10-06",
+        "sentido_documental": "CARGO",
+        "importe_documental": 112.51,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900103,
+        "numero_albaran_farmatic": "08X20001",
+        "fecha_albaran_farmatic": "2026-10-06",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 112.5,
+        "importe_pvp": 151.88,
+        "importe_farmatic": 112.5,
+        "importe_aplicado": 112.5,
+        "diferencia": 0.01
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000004",
+        "orden": 2,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000004",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X20002",
+        "fecha_albaran_documental": "2026-10-06",
+        "sentido_documental": "CARGO",
+        "importe_documental": 43.1,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900104,
+        "numero_albaran_farmatic": "08X20002",
+        "fecha_albaran_farmatic": "2026-10-06",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 43.09,
+        "importe_pvp": 58.17,
+        "importe_farmatic": 43.09,
+        "importe_aplicado": 43.09,
+        "diferencia": 0.01
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000005",
+        "orden": 3,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000005",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X20003",
+        "fecha_albaran_documental": "2026-10-07",
+        "sentido_documental": "CARGO",
+        "importe_documental": 28.99,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900105,
+        "numero_albaran_farmatic": "08X20003",
+        "fecha_albaran_farmatic": "2026-10-07",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 28.98,
+        "importe_pvp": 39.12,
+        "importe_farmatic": 28.98,
+        "importe_aplicado": 28.98,
+        "diferencia": 0.01
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000006",
+        "orden": 4,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000006",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X20004",
+        "fecha_albaran_documental": "2026-10-08",
+        "sentido_documental": "CARGO",
+        "importe_documental": 156.74,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900106,
+        "numero_albaran_farmatic": "08X20004",
+        "fecha_albaran_farmatic": "2026-10-08",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 156.73,
+        "importe_pvp": 211.59,
+        "importe_farmatic": 156.73,
+        "importe_aplicado": 156.73,
+        "diferencia": 0.01
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000007",
+        "orden": 5,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000007",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X20005",
+        "fecha_albaran_documental": "2026-10-08",
+        "sentido_documental": "CARGO",
+        "importe_documental": 9.05,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900107,
+        "numero_albaran_farmatic": "08X20005",
+        "fecha_albaran_farmatic": "2026-10-08",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 9.04,
+        "importe_pvp": 12.2,
+        "importe_farmatic": 9.04,
+        "importe_aplicado": 9.04,
+        "diferencia": 0.01
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000008",
+        "orden": 6,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000008",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X20006",
+        "fecha_albaran_documental": "2026-10-09",
+        "sentido_documental": "CARGO",
+        "importe_documental": 67.4,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900108,
+        "numero_albaran_farmatic": "08X20006",
+        "fecha_albaran_farmatic": "2026-10-09",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 67.39,
+        "importe_pvp": 90.98,
+        "importe_farmatic": 67.39,
+        "importe_aplicado": 67.39,
+        "diferencia": 0.01
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000009",
+        "orden": 7,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000009",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X20007",
+        "fecha_albaran_documental": "2026-10-10",
+        "sentido_documental": "CARGO",
+        "importe_documental": 33.18,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900109,
+        "numero_albaran_farmatic": "08X20007",
+        "fecha_albaran_farmatic": "2026-10-10",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 33.17,
+        "importe_pvp": 44.78,
+        "importe_farmatic": 33.17,
+        "importe_aplicado": 33.17,
+        "diferencia": 0.01
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000010",
+        "orden": 8,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000010",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "08X20008",
+        "fecha_albaran_documental": "2026-10-10",
+        "sentido_documental": "CARGO",
+        "importe_documental": 21.25,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900110,
+        "numero_albaran_farmatic": "08X20008",
+        "fecha_albaran_farmatic": "2026-10-10",
+        "farmatic_id_proveedor": "0002",
+        "importe_puc": 21.25,
+        "importe_pvp": 28.69,
+        "importe_farmatic": 21.25,
+        "importe_aplicado": 21.25,
+        "diferencia": 0
+      }
+    ],
+    "impuestos": [],
+    "vencimientos": [
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000002",
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "numero_factura": "AL-26-100577",
+        "tipo_documento": "FACTURA",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-11",
+        "importe": 472.22,
+        "importe_conocido": true,
+        "literal": "VTO. 11/11/2026",
+        "importe_factura": 472.22,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      }
+    ],
+    "albaranes_extraidos": [
+      {
+        "id": "b0000000-0000-4000-8000-000000000003",
+        "orden": 1,
+        "numero_albaran": "08X20001",
+        "fecha_albaran": "2026-10-06",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 112.51,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000004",
+        "orden": 2,
+        "numero_albaran": "08X20002",
+        "fecha_albaran": "2026-10-06",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 43.1,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000005",
+        "orden": 3,
+        "numero_albaran": "08X20003",
+        "fecha_albaran": "2026-10-07",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 28.99,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000006",
+        "orden": 4,
+        "numero_albaran": "08X20004",
+        "fecha_albaran": "2026-10-08",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 156.74,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000007",
+        "orden": 5,
+        "numero_albaran": "08X20005",
+        "fecha_albaran": "2026-10-08",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 9.05,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000008",
+        "orden": 6,
+        "numero_albaran": "08X20006",
+        "fecha_albaran": "2026-10-09",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 67.4,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000009",
+        "orden": 7,
+        "numero_albaran": "08X20007",
+        "fecha_albaran": "2026-10-10",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 33.18,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000010",
+        "orden": 8,
+        "numero_albaran": "08X20008",
+        "fecha_albaran": "2026-10-10",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 21.25,
+        "descripcion": null,
+        "literal": null
+      }
+    ],
+    "movimientos": [],
+    "ajustes": [],
+    "incidencias": [
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000041",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "numero_factura": "AL-26-100577",
+        "archivo_nombre": "Alliance_AL-26-100577.pdf",
+        "codigo": "MONEDA_NO_DOCUMENTADA",
+        "categoria": "DATOS_DOCUMENTALES",
+        "severidad": "INFO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "La moneda no consta en el documento; se asume EUR.",
+        "detalle_tecnico": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H4B"
+        },
+        "created_at": "2026-10-25T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      }
+    ],
+    "historial": [
+      {
+        "evento_id": 9,
+        "documento_id": "d0000000-0000-4000-8000-000000000002",
+        "factura_id": null,
+        "evento": "NORMALIZACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-13T21:04:00+00:00"
+      },
+      {
+        "evento_id": 10,
+        "documento_id": "d0000000-0000-4000-8000-000000000002",
+        "factura_id": null,
+        "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-13T21:05:00+00:00"
+      },
+      {
+        "evento_id": 11,
+        "documento_id": "d0000000-0000-4000-8000-000000000002",
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "evento": "CONCILIACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-14T08:59:00+00:00"
+      },
+      {
+        "evento_id": 12,
+        "documento_id": "d0000000-0000-4000-8000-000000000002",
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "evento": "CONCILIACION_PERSISTIDA",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "CONCILIADA",
+          "resultado": "CONCILIADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-14T09:00:00+00:00"
+      }
+    ],
+    "pago": {
+      "estado": "SIN_DATOS_BANCARIOS",
+      "texto": "sin datos bancarios",
+      "color": "gris"
+    }
+  },
+  "f0000000-0000-4000-8000-000000000003": {
+    "farmacia": "PIO",
+    "generado_at": "2026-11-02T08:00:00+00:00",
+    "factura": {
+      "factura_id": "f0000000-0000-4000-8000-000000000003",
+      "documento_id": "d0000000-0000-4000-8000-000000000003",
+      "archivo_nombre": "Cofares_lote_15-10-2026.pdf",
+      "pagina_inicio": 1,
+      "pagina_fin": 3,
+      "tipo_documento": "FACTURA",
+      "categoria": "MERCANCIA",
+      "numero_factura": "CF-2026-55810",
+      "fecha_factura": "2026-10-15",
+      "moneda": "EUR",
+      "proveedor_id": "a0000000-0000-4000-8000-000000000001",
+      "proveedor_codigo": "COFARES",
+      "proveedor": "COFARES",
+      "proveedor_literal": "COFARES",
+      "proveedor_cif": "A00000001",
+      "base_imponible_total": 336.76,
+      "iva_total": 33.68,
+      "recargo_equivalencia_total": 4.71,
+      "importe_total": 375.15,
+      "cuadre_fiscal_correcto": true,
+      "diferencia_cuadre": 0,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+      "estado_revision": "NO_REQUERIDA",
+      "estado_pago_bd": "SIN_PAGAR",
+      "requiere_conciliacion_albaranes": true,
+      "conciliacion_intentos": 1,
+      "conciliacion_intentos_fallo": 1,
+      "conciliacion_ultima_clase_fallo": "DIFERENCIA",
+      "conciliacion_proximo_at": "2026-10-17T10:00:00+00:00",
+      "conciliacion": {
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000103",
+        "intento": 1,
+        "disparador": "MANUAL_ONE_SHOT",
+        "estado": "COMPLETADA",
+        "resultado": "DIFERENCIA",
+        "importe_factura": 375.15,
+        "importe_explicado": 333.25,
+        "diferencia": 41.9,
+        "tolerancia": 0.05,
+        "tolerancia_regla": {
+          "suelo": "0.0500",
+          "por_albaran": "0.0100",
+          "tope": "0.5000",
+          "albaranes_casados": 2,
+          "tolerancia": "0.0500"
+        },
+        "finalizado_at": "2026-10-17T09:00:00+00:00"
+      },
+      "uso_luna": false,
+      "coste_luna": null,
+      "incidencias_abiertas": 0,
+      "incidencias_bloqueantes": 0,
+      "updated_at": "2026-10-28T08:00:00+00:00"
+    },
+    "documento": {
+      "documento_id": "d0000000-0000-4000-8000-000000000003",
+      "archivo_nombre": "Cofares_lote_15-10-2026.pdf",
+      "archivo_ruta": "PIO/2026-10/Cofares_lote_15_10_2026_a2146448610d.pdf",
+      "archivo_hash": "a2146448610d3ec3e60039a5727e94d75e8958b4e9a7ec7b5d63db8e661fb528",
+      "numero_paginas": 5,
+      "estado_lectura": "NORMALIZADA",
+      "estado_persistencia": "COMPLETA",
+      "fecha_importacion": "2026-10-16T21:00:00+00:00"
+    },
+    "proveedor": {
+      "proveedor_cif": "A00000001",
+      "id_proveedor_albaranes": "0001",
+      "extractor_codigo": "cofares",
+      "nivel_confianza": "DOCUMENTAL"
+    },
+    "normalizacion": {
+      "ejecucion_id": "e0000000-0000-4000-8000-000000000003",
+      "disparador": "MANUAL_ONE_SHOT",
+      "estado": "COMPLETADA",
+      "extractor_usado": "cofares-local",
+      "normalizador_version": "normalizador_v2-2.3",
+      "uso_ocr": false,
+      "uso_luna": false,
+      "luna_modelo": null,
+      "luna_campos": [],
+      "tokens_total": null,
+      "coste_luna": null,
+      "finalizado_at": "2026-10-16T21:05:00+00:00"
+    },
+    "datos_extraidos": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3B",
+      "numero_factura": "CF-2026-55810",
+      "fecha_factura": "2026-10-15",
+      "tipo_documento": "FACTURA",
+      "proveedor": {
+        "nombre": "COFARES",
+        "nif": "A00000001"
+      },
+      "totales": {
+        "base": 336.76,
+        "iva": 33.68,
+        "recargo": 4.71,
+        "total": 375.15
+      }
+    },
+    "provenance": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "lineas": [
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000103",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000011",
+        "orden": 1,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000011",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "77001",
+        "fecha_albaran_documental": "2026-10-10",
+        "sentido_documental": "CARGO",
+        "importe_documental": 234.55,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900111,
+        "numero_albaran_farmatic": "77001",
+        "fecha_albaran_farmatic": "2026-10-10",
+        "farmatic_id_proveedor": "0001",
+        "importe_puc": 234.55,
+        "importe_pvp": 316.64,
+        "importe_farmatic": 234.55,
+        "importe_aplicado": 234.55,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000103",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000012",
+        "orden": 2,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000012",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "77002",
+        "fecha_albaran_documental": "2026-10-12",
+        "sentido_documental": "CARGO",
+        "importe_documental": 98.7,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900112,
+        "numero_albaran_farmatic": "77002",
+        "fecha_albaran_farmatic": "2026-10-12",
+        "farmatic_id_proveedor": "0001",
+        "importe_puc": 98.7,
+        "importe_pvp": 133.25,
+        "importe_farmatic": 98.7,
+        "importe_aplicado": 98.7,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000103",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000013",
+        "orden": 3,
+        "tipo_relacion": "SIN_COINCIDENCIA",
+        "estado_linea": "DIFERENCIA",
+        "estado_matching": "SIN_COINCIDENCIA",
+        "coincidencia_numero": "NO_EVALUADO",
+        "clase_numero": null,
+        "coincidencia_numero_literal": false,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000013",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "77003",
+        "fecha_albaran_documental": "2026-10-13",
+        "sentido_documental": "CARGO",
+        "importe_documental": 41.9,
+        "albaran_farmacia": null,
+        "albaran_id_contador": null,
+        "numero_albaran_farmatic": null,
+        "fecha_albaran_farmatic": null,
+        "farmatic_id_proveedor": null,
+        "importe_puc": null,
+        "importe_pvp": null,
+        "importe_farmatic": null,
+        "importe_aplicado": 0,
+        "diferencia": 41.9
+      }
+    ],
+    "impuestos": [],
+    "vencimientos": [
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000003",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "tipo_documento": "FACTURA",
+        "proveedor": "COFARES",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-14",
+        "importe": 375.15,
+        "importe_conocido": true,
+        "literal": "Vencimiento 14-11-2026",
+        "importe_factura": 375.15,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      }
+    ],
+    "albaranes_extraidos": [
+      {
+        "id": "b0000000-0000-4000-8000-000000000011",
+        "orden": 1,
+        "numero_albaran": "77001",
+        "fecha_albaran": "2026-10-10",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 234.55,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000012",
+        "orden": 2,
+        "numero_albaran": "77002",
+        "fecha_albaran": "2026-10-12",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 98.7,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000013",
+        "orden": 3,
+        "numero_albaran": "77003",
+        "fecha_albaran": "2026-10-13",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 41.9,
+        "descripcion": null,
+        "literal": null
+      }
+    ],
+    "movimientos": [],
+    "ajustes": [],
+    "incidencias": [],
+    "historial": [
+      {
+        "evento_id": 13,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": null,
+        "evento": "NORMALIZACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-16T21:04:00+00:00"
+      },
+      {
+        "evento_id": 14,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": null,
+        "evento": "INVENTARIO_MULTIFACTURA",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_persistencia": "COMPLETA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-16T21:04:30+00:00"
+      },
+      {
+        "evento_id": 15,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": null,
+        "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-16T21:05:00+00:00"
+      },
+      {
+        "evento_id": 16,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "evento": "CONCILIACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-17T08:59:00+00:00"
+      },
+      {
+        "evento_id": 18,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "evento": "CONCILIACION_PERSISTIDA",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+          "resultado": "DIFERENCIA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-17T09:00:00+00:00"
+      }
+    ],
+    "pago": {
+      "estado": "SIN_DATOS_BANCARIOS",
+      "texto": "sin datos bancarios",
+      "color": "gris"
+    }
+  },
+  "f0000000-0000-4000-8000-000000000004": {
+    "farmacia": "PIO",
+    "generado_at": "2026-11-02T08:00:00+00:00",
+    "factura": {
+      "factura_id": "f0000000-0000-4000-8000-000000000004",
+      "documento_id": "d0000000-0000-4000-8000-000000000003",
+      "archivo_nombre": "Cofares_lote_15-10-2026.pdf",
+      "pagina_inicio": 4,
+      "pagina_fin": 5,
+      "tipo_documento": "FACTURA",
+      "categoria": "MERCANCIA",
+      "numero_factura": "CF-2026-55811",
+      "fecha_factura": "2026-10-15",
+      "moneda": "EUR",
+      "proveedor_id": "a0000000-0000-4000-8000-000000000001",
+      "proveedor_codigo": "COFARES",
+      "proveedor": "COFARES",
+      "proveedor_literal": "COFARES",
+      "proveedor_cif": "A00000001",
+      "base_imponible_total": 509.92,
+      "iva_total": 50.99,
+      "recargo_equivalencia_total": 7.14,
+      "importe_total": 568.05,
+      "cuadre_fiscal_correcto": true,
+      "diferencia_cuadre": 0,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "CONCILIADA",
+      "estado_revision": "VALIDADA_PIO",
+      "estado_pago_bd": "SIN_PAGAR",
+      "requiere_conciliacion_albaranes": true,
+      "conciliacion_intentos": 1,
+      "conciliacion_intentos_fallo": 0,
+      "conciliacion_ultima_clase_fallo": null,
+      "conciliacion_proximo_at": null,
+      "conciliacion": {
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000104",
+        "intento": 1,
+        "disparador": "MANUAL_ONE_SHOT",
+        "estado": "COMPLETADA",
+        "resultado": "CONCILIADA",
+        "importe_factura": 568.05,
+        "importe_explicado": 568.05,
+        "diferencia": 0,
+        "tolerancia": 0.05,
+        "tolerancia_regla": {
+          "suelo": "0.0500",
+          "por_albaran": "0.0100",
+          "tope": "0.5000",
+          "albaranes_casados": 3,
+          "tolerancia": "0.0500"
+        },
+        "finalizado_at": "2026-10-17T09:00:00+00:00"
+      },
+      "uso_luna": false,
+      "coste_luna": null,
+      "incidencias_abiertas": 1,
+      "incidencias_bloqueantes": 0,
+      "updated_at": "2026-10-28T08:00:00+00:00"
+    },
+    "documento": {
+      "documento_id": "d0000000-0000-4000-8000-000000000003",
+      "archivo_nombre": "Cofares_lote_15-10-2026.pdf",
+      "archivo_ruta": "PIO/2026-10/Cofares_lote_15_10_2026_a2146448610d.pdf",
+      "archivo_hash": "a2146448610d3ec3e60039a5727e94d75e8958b4e9a7ec7b5d63db8e661fb528",
+      "numero_paginas": 5,
+      "estado_lectura": "NORMALIZADA",
+      "estado_persistencia": "COMPLETA",
+      "fecha_importacion": "2026-10-16T21:00:00+00:00"
+    },
+    "proveedor": {
+      "proveedor_cif": "A00000001",
+      "id_proveedor_albaranes": "0001",
+      "extractor_codigo": "cofares",
+      "nivel_confianza": "DOCUMENTAL"
+    },
+    "normalizacion": {
+      "ejecucion_id": "e0000000-0000-4000-8000-000000000003",
+      "disparador": "MANUAL_ONE_SHOT",
+      "estado": "COMPLETADA",
+      "extractor_usado": "cofares-local",
+      "normalizador_version": "normalizador_v2-2.3",
+      "uso_ocr": false,
+      "uso_luna": false,
+      "luna_modelo": null,
+      "luna_campos": [],
+      "tokens_total": null,
+      "coste_luna": null,
+      "finalizado_at": "2026-10-16T21:05:00+00:00"
+    },
+    "datos_extraidos": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3B",
+      "numero_factura": "CF-2026-55811",
+      "fecha_factura": "2026-10-15",
+      "tipo_documento": "FACTURA",
+      "proveedor": {
+        "nombre": "COFARES",
+        "nif": "A00000001"
+      },
+      "totales": {
+        "base": 509.92,
+        "iva": 50.99,
+        "recargo": 7.14,
+        "total": 568.05
+      }
+    },
+    "provenance": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "lineas": [
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000104",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000014",
+        "orden": 1,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000014",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "77010",
+        "fecha_albaran_documental": "2026-10-11",
+        "sentido_documental": "CARGO",
+        "importe_documental": 312.2,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900113,
+        "numero_albaran_farmatic": "77010",
+        "fecha_albaran_farmatic": "2026-10-11",
+        "farmatic_id_proveedor": "0001",
+        "importe_puc": 312.2,
+        "importe_pvp": 421.47,
+        "importe_farmatic": 312.2,
+        "importe_aplicado": 312.2,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000104",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000015",
+        "orden": 2,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000015",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "77011",
+        "fecha_albaran_documental": "2026-10-13",
+        "sentido_documental": "CARGO",
+        "importe_documental": 187.45,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900114,
+        "numero_albaran_farmatic": "77011",
+        "fecha_albaran_farmatic": "2026-10-13",
+        "farmatic_id_proveedor": "0001",
+        "importe_puc": 187.45,
+        "importe_pvp": 253.06,
+        "importe_farmatic": 187.45,
+        "importe_aplicado": 187.45,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000104",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000016",
+        "orden": 3,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000016",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "77012",
+        "fecha_albaran_documental": "2026-10-14",
+        "sentido_documental": "CARGO",
+        "importe_documental": 56.3,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900115,
+        "numero_albaran_farmatic": "77012",
+        "fecha_albaran_farmatic": "2026-10-14",
+        "farmatic_id_proveedor": "0001",
+        "importe_puc": 56.3,
+        "importe_pvp": 76.01,
+        "importe_farmatic": 56.3,
+        "importe_aplicado": 56.3,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000104",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000017",
+        "orden": 4,
+        "tipo_relacion": "MOVIMIENTO_NO_FARMATIC",
+        "estado_linea": "COINCIDE",
+        "estado_matching": null,
+        "coincidencia_numero": null,
+        "clase_numero": null,
+        "coincidencia_numero_literal": false,
+        "factura_albaran_extraido_id": null,
+        "factura_movimiento_id": "c0000000-0000-4000-8000-000000000001",
+        "numero_albaran_documental": null,
+        "fecha_albaran_documental": null,
+        "sentido_documental": null,
+        "importe_documental": 12.1,
+        "albaran_farmacia": null,
+        "albaran_id_contador": null,
+        "numero_albaran_farmatic": null,
+        "fecha_albaran_farmatic": null,
+        "farmatic_id_proveedor": null,
+        "importe_puc": null,
+        "importe_pvp": null,
+        "importe_farmatic": null,
+        "importe_aplicado": 12.1,
+        "diferencia": 0
+      }
+    ],
+    "impuestos": [],
+    "vencimientos": [
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000004",
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "numero_factura": "CF-2026-55811",
+        "tipo_documento": "FACTURA",
+        "proveedor": "COFARES",
+        "orden": 1,
+        "fecha_vencimiento": "2026-10-30",
+        "importe": 400,
+        "importe_conocido": true,
+        "literal": "30/10/2026  400,00",
+        "importe_factura": 568.05,
+        "vencimientos_factura": 3,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "VALIDADA_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000005",
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "numero_factura": "CF-2026-55811",
+        "tipo_documento": "FACTURA",
+        "proveedor": "COFARES",
+        "orden": 2,
+        "fecha_vencimiento": "2026-11-15",
+        "importe": 150,
+        "importe_conocido": true,
+        "literal": "15/11/2026  150,00",
+        "importe_factura": 568.05,
+        "vencimientos_factura": 3,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "VALIDADA_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000006",
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "numero_factura": "CF-2026-55811",
+        "tipo_documento": "FACTURA",
+        "proveedor": "COFARES",
+        "orden": 3,
+        "fecha_vencimiento": "2026-11-30",
+        "importe": null,
+        "importe_conocido": false,
+        "literal": "30/11/2026",
+        "importe_factura": 568.05,
+        "vencimientos_factura": 3,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "VALIDADA_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      }
+    ],
+    "albaranes_extraidos": [
+      {
+        "id": "b0000000-0000-4000-8000-000000000014",
+        "orden": 1,
+        "numero_albaran": "77010",
+        "fecha_albaran": "2026-10-11",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 312.2,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000015",
+        "orden": 2,
+        "numero_albaran": "77011",
+        "fecha_albaran": "2026-10-13",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 187.45,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000016",
+        "orden": 3,
+        "numero_albaran": "77012",
+        "fecha_albaran": "2026-10-14",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 56.3,
+        "descripcion": null,
+        "literal": null
+      }
+    ],
+    "movimientos": [
+      {
+        "id": "c0000000-0000-4000-8000-000000000001",
+        "orden": 4,
+        "categoria": "SERVICIO_OPERATIVO",
+        "descripcion_literal": "SERVICIO INTEGRAL DE DISTRIBUCION",
+        "sentido": "CARGO",
+        "base": null,
+        "iva": null,
+        "recargo_equivalencia": null,
+        "importe": 12.1,
+        "independiente": true,
+        "conciliable_farmatic": false
+      }
+    ],
+    "ajustes": [],
+    "incidencias": [
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000003",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "numero_factura": "CF-2026-55811",
+        "archivo_nombre": "Cofares_lote_15-10-2026.pdf",
+        "codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "El tercer vencimiento no tiene importe legible en el documento.",
+        "detalle_tecnico": {
+          "vencimiento_orden": 3,
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-16T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      }
+    ],
+    "historial": [
+      {
+        "evento_id": 13,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": null,
+        "evento": "NORMALIZACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-16T21:04:00+00:00"
+      },
+      {
+        "evento_id": 14,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": null,
+        "evento": "INVENTARIO_MULTIFACTURA",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_persistencia": "COMPLETA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-16T21:04:30+00:00"
+      },
+      {
+        "evento_id": 15,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": null,
+        "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-16T21:05:00+00:00"
+      },
+      {
+        "evento_id": 17,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "evento": "CONCILIACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-17T08:59:00+00:00"
+      },
+      {
+        "evento_id": 19,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "evento": "CONCILIACION_PERSISTIDA",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "CONCILIADA",
+          "resultado": "CONCILIADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-17T09:00:00+00:00"
+      },
+      {
+        "evento_id": 31,
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "evento": "FACTURA_VALIDADA_PIO",
+        "origen": "RPC",
+        "actor": "pio",
+        "estado_anterior": {
+          "estado_revision": "NO_REQUERIDA"
+        },
+        "estado_nuevo": {
+          "estado_revision": "VALIDADA_PIO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-27T12:00:00+00:00"
+      }
+    ],
+    "pago": {
+      "estado": "SIN_DATOS_BANCARIOS",
+      "texto": "sin datos bancarios",
+      "color": "gris"
+    }
+  },
+  "f0000000-0000-4000-8000-000000000005": {
+    "farmacia": "PIO",
+    "generado_at": "2026-11-02T08:00:00+00:00",
+    "factura": {
+      "factura_id": "f0000000-0000-4000-8000-000000000005",
+      "documento_id": "d0000000-0000-4000-8000-000000000004",
+      "archivo_nombre": "Hefame_889120.pdf",
+      "pagina_inicio": 1,
+      "pagina_fin": 2,
+      "tipo_documento": "FACTURA",
+      "categoria": "MERCANCIA",
+      "numero_factura": "HF-0563-889120",
+      "fecha_factura": "2026-10-08",
+      "moneda": "EUR",
+      "proveedor_id": "a0000000-0000-4000-8000-000000000002",
+      "proveedor_codigo": "HEFAME",
+      "proveedor": "HEFAME",
+      "proveedor_literal": "HEFAME",
+      "proveedor_cif": "B00000002",
+      "base_imponible_total": 258.53,
+      "iva_total": 25.85,
+      "recargo_equivalencia_total": 3.62,
+      "importe_total": 288,
+      "cuadre_fiscal_correcto": true,
+      "diferencia_cuadre": 0,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "REVISION_CONCILIACION",
+      "estado_revision": "PENDIENTE_REVISION_PIO",
+      "estado_pago_bd": "SIN_PAGAR",
+      "requiere_conciliacion_albaranes": true,
+      "conciliacion_intentos": 4,
+      "conciliacion_intentos_fallo": 4,
+      "conciliacion_ultima_clase_fallo": "DIFERENCIA",
+      "conciliacion_proximo_at": null,
+      "conciliacion": {
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000105",
+        "intento": 4,
+        "disparador": "MANUAL_ONE_SHOT",
+        "estado": "COMPLETADA",
+        "resultado": "DIFERENCIA",
+        "importe_factura": 288,
+        "importe_explicado": 264.55,
+        "diferencia": 23.45,
+        "tolerancia": 0.05,
+        "tolerancia_regla": {
+          "suelo": "0.0500",
+          "por_albaran": "0.0100",
+          "tope": "0.5000",
+          "albaranes_casados": 3,
+          "tolerancia": "0.0500"
+        },
+        "finalizado_at": "2026-10-10T09:00:00+00:00"
+      },
+      "uso_luna": false,
+      "coste_luna": null,
+      "incidencias_abiertas": 0,
+      "incidencias_bloqueantes": 0,
+      "updated_at": "2026-10-28T08:00:00+00:00"
+    },
+    "documento": {
+      "documento_id": "d0000000-0000-4000-8000-000000000004",
+      "archivo_nombre": "Hefame_889120.pdf",
+      "archivo_ruta": "PIO/2026-10/Hefame_889120_c3da4163ca6b.pdf",
+      "archivo_hash": "c3da4163ca6bd054956d2df831c279f6ac48e87f57cffd7526394338507e9385",
+      "numero_paginas": 2,
+      "estado_lectura": "NORMALIZADA",
+      "estado_persistencia": "COMPLETA",
+      "fecha_importacion": "2026-10-09T21:00:00+00:00"
+    },
+    "proveedor": {
+      "proveedor_cif": "B00000002",
+      "id_proveedor_albaranes": "0563",
+      "extractor_codigo": "hefame",
+      "nivel_confianza": "PIO_VALIDADO"
+    },
+    "normalizacion": {
+      "ejecucion_id": "e0000000-0000-4000-8000-000000000004",
+      "disparador": "MANUAL_ONE_SHOT",
+      "estado": "COMPLETADA",
+      "extractor_usado": "hefame-local",
+      "normalizador_version": "normalizador_v2-2.3",
+      "uso_ocr": false,
+      "uso_luna": false,
+      "luna_modelo": null,
+      "luna_campos": [],
+      "tokens_total": null,
+      "coste_luna": null,
+      "finalizado_at": "2026-10-09T21:05:00+00:00"
+    },
+    "datos_extraidos": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3B",
+      "numero_factura": "HF-0563-889120",
+      "fecha_factura": "2026-10-08",
+      "tipo_documento": "FACTURA",
+      "proveedor": {
+        "nombre": "HEFAME",
+        "nif": "B00000002"
+      },
+      "totales": {
+        "base": 258.53,
+        "iva": 25.85,
+        "recargo": 3.62,
+        "total": 288
+      }
+    },
+    "provenance": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "lineas": [
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000105",
+        "intento": 4,
+        "detalle_id": "10000000-0000-4000-8000-000000000018",
+        "orden": 1,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "EXACTO_ECONOMICO",
+        "coincidencia_numero": "DIFERENTE",
+        "clase_numero": "INTERNO",
+        "coincidencia_numero_literal": false,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000017",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "4471201",
+        "fecha_albaran_documental": "2026-10-02",
+        "sentido_documental": "CARGO",
+        "importe_documental": 145.2,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900116,
+        "numero_albaran_farmatic": "HF4471201",
+        "fecha_albaran_farmatic": "2026-10-02",
+        "farmatic_id_proveedor": "0563",
+        "importe_puc": 145.2,
+        "importe_pvp": 196.02,
+        "importe_farmatic": 145.2,
+        "importe_aplicado": 145.2,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000105",
+        "intento": 4,
+        "detalle_id": "10000000-0000-4000-8000-000000000019",
+        "orden": 2,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "EXACTO_ECONOMICO",
+        "coincidencia_numero": "DIFERENTE",
+        "clase_numero": "INTERNO",
+        "coincidencia_numero_literal": false,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000018",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "4471202",
+        "fecha_albaran_documental": "2026-10-03",
+        "sentido_documental": "CARGO",
+        "importe_documental": 88.6,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900117,
+        "numero_albaran_farmatic": "HF4471202",
+        "fecha_albaran_farmatic": "2026-10-03",
+        "farmatic_id_proveedor": "0563",
+        "importe_puc": 88.6,
+        "importe_pvp": 119.61,
+        "importe_farmatic": 88.6,
+        "importe_aplicado": 88.6,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000105",
+        "intento": 4,
+        "detalle_id": "10000000-0000-4000-8000-000000000020",
+        "orden": 3,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "EXACTO_ECONOMICO",
+        "coincidencia_numero": "DIFERENTE",
+        "clase_numero": "INTERNO",
+        "coincidencia_numero_literal": false,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000019",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "4471203",
+        "fecha_albaran_documental": "2026-10-05",
+        "sentido_documental": "CARGO",
+        "importe_documental": 30.75,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900118,
+        "numero_albaran_farmatic": "HF4471203",
+        "fecha_albaran_farmatic": "2026-10-05",
+        "farmatic_id_proveedor": "0563",
+        "importe_puc": 30.75,
+        "importe_pvp": 41.51,
+        "importe_farmatic": 30.75,
+        "importe_aplicado": 30.75,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000105",
+        "intento": 4,
+        "detalle_id": "10000000-0000-4000-8000-000000000021",
+        "orden": 4,
+        "tipo_relacion": "SIN_COINCIDENCIA",
+        "estado_linea": "DIFERENCIA",
+        "estado_matching": "AMBIGUO",
+        "coincidencia_numero": "DIFERENTE",
+        "clase_numero": null,
+        "coincidencia_numero_literal": false,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000020",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "4471204",
+        "fecha_albaran_documental": "2026-10-06",
+        "sentido_documental": "CARGO",
+        "importe_documental": 23.45,
+        "albaran_farmacia": null,
+        "albaran_id_contador": null,
+        "numero_albaran_farmatic": null,
+        "fecha_albaran_farmatic": null,
+        "farmatic_id_proveedor": null,
+        "importe_puc": null,
+        "importe_pvp": null,
+        "importe_farmatic": null,
+        "importe_aplicado": 0,
+        "diferencia": 23.45
+      }
+    ],
+    "impuestos": [],
+    "vencimientos": [
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000007",
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "numero_factura": "HF-0563-889120",
+        "tipo_documento": "FACTURA",
+        "proveedor": "HEFAME",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-07",
+        "importe": 288,
+        "importe_conocido": true,
+        "literal": "VENCE 07.11.2026",
+        "importe_factura": 288,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "REVISION_CONCILIACION",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      }
+    ],
+    "albaranes_extraidos": [
+      {
+        "id": "b0000000-0000-4000-8000-000000000017",
+        "orden": 1,
+        "numero_albaran": "4471201",
+        "fecha_albaran": "2026-10-02",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 145.2,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000018",
+        "orden": 2,
+        "numero_albaran": "4471202",
+        "fecha_albaran": "2026-10-03",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 88.6,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000019",
+        "orden": 3,
+        "numero_albaran": "4471203",
+        "fecha_albaran": "2026-10-05",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 30.75,
+        "descripcion": null,
+        "literal": null
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000020",
+        "orden": 4,
+        "numero_albaran": "4471204",
+        "fecha_albaran": "2026-10-06",
+        "tipo_movimiento": "CARGO",
+        "importe_base": null,
+        "importe_total": 23.45,
+        "descripcion": null,
+        "literal": null
+      }
+    ],
+    "movimientos": [],
+    "ajustes": [],
+    "incidencias": [],
+    "historial": [
+      {
+        "evento_id": 5,
+        "documento_id": "d0000000-0000-4000-8000-000000000004",
+        "factura_id": null,
+        "evento": "NORMALIZACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-09T21:04:00+00:00"
+      },
+      {
+        "evento_id": 6,
+        "documento_id": "d0000000-0000-4000-8000-000000000004",
+        "factura_id": null,
+        "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-09T21:05:00+00:00"
+      },
+      {
+        "evento_id": 7,
+        "documento_id": "d0000000-0000-4000-8000-000000000004",
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "evento": "CONCILIACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-10T08:59:00+00:00"
+      },
+      {
+        "evento_id": 8,
+        "documento_id": "d0000000-0000-4000-8000-000000000004",
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "evento": "CONCILIACION_PERSISTIDA",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "REVISION_CONCILIACION",
+          "resultado": "DIFERENCIA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-10T09:00:00+00:00"
+      }
+    ],
+    "pago": {
+      "estado": "SIN_DATOS_BANCARIOS",
+      "texto": "sin datos bancarios",
+      "color": "gris"
+    }
+  },
+  "f0000000-0000-4000-8000-000000000006": {
+    "farmacia": "PIO",
+    "generado_at": "2026-11-02T08:00:00+00:00",
+    "factura": {
+      "factura_id": "f0000000-0000-4000-8000-000000000006",
+      "documento_id": "d0000000-0000-4000-8000-000000000005",
+      "archivo_nombre": "Fedefarma_scan_0447.pdf",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "tipo_documento": "FACTURA",
+      "categoria": "MERCANCIA",
+      "numero_factura": "FD-26/04471",
+      "fecha_factura": "2026-10-20",
+      "moneda": "EUR",
+      "proveedor_id": "a0000000-0000-4000-8000-000000000004",
+      "proveedor_codigo": "FEDEFARMA",
+      "proveedor": "FEDEFARMA",
+      "proveedor_literal": "FEDEFARMA",
+      "proveedor_cif": null,
+      "base_imponible_total": null,
+      "iva_total": null,
+      "recargo_equivalencia_total": null,
+      "importe_total": null,
+      "cuadre_fiscal_correcto": null,
+      "diferencia_cuadre": null,
+      "estado_normalizacion": "REQUIERE_REVISION",
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+      "estado_revision": "PENDIENTE_REVISION_PIO",
+      "estado_pago_bd": "SIN_PAGAR",
+      "requiere_conciliacion_albaranes": true,
+      "conciliacion_intentos": 0,
+      "conciliacion_intentos_fallo": 0,
+      "conciliacion_ultima_clase_fallo": null,
+      "conciliacion_proximo_at": null,
+      "conciliacion": null,
+      "uso_luna": true,
+      "coste_luna": 0.0184,
+      "incidencias_abiertas": 1,
+      "incidencias_bloqueantes": 1,
+      "updated_at": "2026-10-28T08:00:00+00:00"
+    },
+    "documento": {
+      "documento_id": "d0000000-0000-4000-8000-000000000005",
+      "archivo_nombre": "Fedefarma_scan_0447.pdf",
+      "archivo_ruta": "PIO/2026-10/Fedefarma_scan_0447_dd09a23d0ae8.pdf",
+      "archivo_hash": "dd09a23d0ae8bafee49b1705974524b6eacf9ccd56b99c9927c9e3ef329506e9",
+      "numero_paginas": 1,
+      "estado_lectura": "NORMALIZADA",
+      "estado_persistencia": "REQUIERE_REVISION",
+      "fecha_importacion": "2026-10-21T21:00:00+00:00"
+    },
+    "proveedor": {
+      "proveedor_cif": null,
+      "id_proveedor_albaranes": "0004",
+      "extractor_codigo": "fedefarma",
+      "nivel_confianza": "DOCUMENTAL"
+    },
+    "normalizacion": {
+      "ejecucion_id": "e0000000-0000-4000-8000-000000000007",
+      "disparador": "MANUAL_ONE_SHOT",
+      "estado": "INCOMPLETA",
+      "extractor_usado": "fedefarma-local",
+      "normalizador_version": "normalizador_v2-2.3",
+      "uso_ocr": true,
+      "uso_luna": true,
+      "luna_modelo": "luna-demo",
+      "luna_campos": [
+        "totales.total",
+        "vencimientos[0].importe"
+      ],
+      "tokens_total": 5321,
+      "coste_luna": 0.0184,
+      "finalizado_at": "2026-10-21T21:05:00+00:00"
+    },
+    "datos_extraidos": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3B",
+      "numero_factura": "FD-26/04471",
+      "fecha_factura": "2026-10-20",
+      "tipo_documento": "FACTURA",
+      "proveedor": {
+        "nombre": "FEDEFARMA",
+        "nif": null
+      },
+      "totales": {
+        "base": null,
+        "iva": null,
+        "recargo": null,
+        "total": null
+      }
+    },
+    "provenance": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "lineas": [],
+    "impuestos": [],
+    "vencimientos": [
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000008",
+        "factura_id": "f0000000-0000-4000-8000-000000000006",
+        "numero_factura": "FD-26/04471",
+        "tipo_documento": "FACTURA",
+        "proveedor": "FEDEFARMA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-19",
+        "importe": null,
+        "importe_conocido": false,
+        "literal": "Vto: 19/11/2026",
+        "importe_factura": null,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "REQUIERE_REVISION",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      }
+    ],
+    "albaranes_extraidos": [],
+    "movimientos": [],
+    "ajustes": [],
+    "incidencias": [
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000004",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000006",
+        "numero_factura": "FD-26/04471",
+        "archivo_nombre": "Fedefarma_scan_0447.pdf",
+        "codigo": "VALOR_SIN_EVIDENCIA",
+        "categoria": "NORMALIZACION",
+        "severidad": "ERROR",
+        "bloqueante": true,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "El total de la factura no tiene evidencia legible en el documento.",
+        "detalle_tecnico": {
+          "campo": "totales.total",
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-21T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      }
+    ],
+    "historial": [
+      {
+        "evento_id": 20,
+        "documento_id": "d0000000-0000-4000-8000-000000000005",
+        "factura_id": null,
+        "evento": "NORMALIZACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-21T21:04:00+00:00"
+      },
+      {
+        "evento_id": 21,
+        "documento_id": "d0000000-0000-4000-8000-000000000005",
+        "factura_id": null,
+        "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-21T21:05:00+00:00"
+      }
+    ],
+    "pago": {
+      "estado": "SIN_DATOS_BANCARIOS",
+      "texto": "sin datos bancarios",
+      "color": "gris"
+    }
+  },
+  "f0000000-0000-4000-8000-000000000007": {
+    "farmacia": "PIO",
+    "generado_at": "2026-11-02T08:00:00+00:00",
+    "factura": {
+      "factura_id": "f0000000-0000-4000-8000-000000000007",
+      "documento_id": "d0000000-0000-4000-8000-000000000006",
+      "archivo_nombre": "Cofares_abono_0912.pdf",
+      "pagina_inicio": 1,
+      "pagina_fin": 1,
+      "tipo_documento": "ABONO",
+      "categoria": "MERCANCIA",
+      "numero_factura": "CF-AB-2026-0912",
+      "fecha_factura": "2026-10-22",
+      "moneda": "EUR",
+      "proveedor_id": "a0000000-0000-4000-8000-000000000001",
+      "proveedor_codigo": "COFARES",
+      "proveedor": "COFARES",
+      "proveedor_literal": "COFARES",
+      "proveedor_cif": "A00000001",
+      "base_imponible_total": -40.66,
+      "iva_total": -4.07,
+      "recargo_equivalencia_total": -0.57,
+      "importe_total": -45.3,
+      "cuadre_fiscal_correcto": true,
+      "diferencia_cuadre": 0,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+      "estado_revision": "NO_REQUERIDA",
+      "estado_pago_bd": "SIN_PAGAR",
+      "requiere_conciliacion_albaranes": true,
+      "conciliacion_intentos": 1,
+      "conciliacion_intentos_fallo": 1,
+      "conciliacion_ultima_clase_fallo": "DEFECTO_DOCUMENTO",
+      "conciliacion_proximo_at": "2026-10-24T10:00:00+00:00",
+      "conciliacion": {
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000106",
+        "intento": 1,
+        "disparador": "MANUAL_ONE_SHOT",
+        "estado": "COMPLETADA",
+        "resultado": "NO_EVALUABLE",
+        "importe_factura": -45.3,
+        "importe_explicado": null,
+        "diferencia": null,
+        "tolerancia": 0.05,
+        "tolerancia_regla": {
+          "suelo": "0.0500",
+          "por_albaran": "0.0100",
+          "tope": "0.5000",
+          "albaranes_casados": 1,
+          "tolerancia": "0.0500"
+        },
+        "finalizado_at": "2026-10-24T09:00:00+00:00"
+      },
+      "uso_luna": false,
+      "coste_luna": null,
+      "incidencias_abiertas": 1,
+      "incidencias_bloqueantes": 0,
+      "updated_at": "2026-10-28T08:00:00+00:00"
+    },
+    "documento": {
+      "documento_id": "d0000000-0000-4000-8000-000000000006",
+      "archivo_nombre": "Cofares_abono_0912.pdf",
+      "archivo_ruta": "PIO/2026-10/Cofares_abono_0912_7617c8dd4ee4.pdf",
+      "archivo_hash": "7617c8dd4ee40b618143c57c2a5b790c5336bab23ecb2c38cb987da9473b2b3a",
+      "numero_paginas": 1,
+      "estado_lectura": "NORMALIZADA",
+      "estado_persistencia": "COMPLETA",
+      "fecha_importacion": "2026-10-23T21:00:00+00:00"
+    },
+    "proveedor": {
+      "proveedor_cif": "A00000001",
+      "id_proveedor_albaranes": "0001",
+      "extractor_codigo": "cofares",
+      "nivel_confianza": "DOCUMENTAL"
+    },
+    "normalizacion": {
+      "ejecucion_id": "e0000000-0000-4000-8000-000000000005",
+      "disparador": "MANUAL_ONE_SHOT",
+      "estado": "COMPLETADA",
+      "extractor_usado": "cofares-local",
+      "normalizador_version": "normalizador_v2-2.3",
+      "uso_ocr": false,
+      "uso_luna": false,
+      "luna_modelo": null,
+      "luna_campos": [],
+      "tokens_total": null,
+      "coste_luna": null,
+      "finalizado_at": "2026-10-23T21:05:00+00:00"
+    },
+    "datos_extraidos": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3B",
+      "numero_factura": "CF-AB-2026-0912",
+      "fecha_factura": "2026-10-22",
+      "tipo_documento": "ABONO",
+      "proveedor": {
+        "nombre": "COFARES",
+        "nif": "A00000001"
+      },
+      "totales": {
+        "base": -40.66,
+        "iva": -4.07,
+        "recargo": -0.57,
+        "total": -45.3
+      }
+    },
+    "provenance": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "lineas": [
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000106",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000022",
+        "orden": 1,
+        "tipo_relacion": "UNO_A_UNO",
+        "estado_linea": "COINCIDE",
+        "estado_matching": "MATCH_UNICO",
+        "coincidencia_numero": "EXACTA",
+        "clase_numero": "EXACTA",
+        "coincidencia_numero_literal": true,
+        "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000021",
+        "factura_movimiento_id": null,
+        "numero_albaran_documental": "77090",
+        "fecha_albaran_documental": "2026-10-20",
+        "sentido_documental": "ABONO",
+        "importe_documental": -45.3,
+        "albaran_farmacia": "PIO",
+        "albaran_id_contador": 900119,
+        "numero_albaran_farmatic": "77090",
+        "fecha_albaran_farmatic": "2026-10-20",
+        "farmatic_id_proveedor": "0001",
+        "importe_puc": 45.3,
+        "importe_pvp": 61.16,
+        "importe_farmatic": 45.3,
+        "importe_aplicado": -45.3,
+        "diferencia": 0
+      },
+      {
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "conciliacion_id": "c0000000-0000-4000-8000-000000000106",
+        "intento": 1,
+        "detalle_id": "10000000-0000-4000-8000-000000000023",
+        "orden": 2,
+        "tipo_relacion": "MOVIMIENTO_NO_FARMATIC",
+        "estado_linea": "NO_EVALUABLE",
+        "estado_matching": null,
+        "coincidencia_numero": null,
+        "clase_numero": null,
+        "coincidencia_numero_literal": false,
+        "factura_albaran_extraido_id": null,
+        "factura_movimiento_id": "c0000000-0000-4000-8000-000000000002",
+        "numero_albaran_documental": null,
+        "fecha_albaran_documental": null,
+        "sentido_documental": null,
+        "importe_documental": 3.2,
+        "albaran_farmacia": null,
+        "albaran_id_contador": null,
+        "numero_albaran_farmatic": null,
+        "fecha_albaran_farmatic": null,
+        "farmatic_id_proveedor": null,
+        "importe_puc": null,
+        "importe_pvp": null,
+        "importe_farmatic": null,
+        "importe_aplicado": null,
+        "diferencia": null
+      }
+    ],
+    "impuestos": [],
+    "vencimientos": [
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000009",
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "numero_factura": "CF-AB-2026-0912",
+        "tipo_documento": "ABONO",
+        "proveedor": "COFARES",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-21",
+        "importe": -45.3,
+        "importe_conocido": true,
+        "literal": "VTO. 21/11/2026  -45,30",
+        "importe_factura": -45.3,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      }
+    ],
+    "albaranes_extraidos": [
+      {
+        "id": "b0000000-0000-4000-8000-000000000021",
+        "orden": 1,
+        "numero_albaran": "77090",
+        "fecha_albaran": "2026-10-20",
+        "tipo_movimiento": "ABONO",
+        "importe_base": null,
+        "importe_total": -45.3,
+        "descripcion": null,
+        "literal": null
+      }
+    ],
+    "movimientos": [
+      {
+        "id": "c0000000-0000-4000-8000-000000000002",
+        "orden": 2,
+        "categoria": "DESCONOCIDA",
+        "descripcion_literal": "REGULARIZACION",
+        "sentido": null,
+        "base": null,
+        "iva": null,
+        "recargo_equivalencia": null,
+        "importe": 3.2,
+        "independiente": true,
+        "conciliable_farmatic": false
+      }
+    ],
+    "ajustes": [],
+    "incidencias": [
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000005",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "numero_factura": "CF-AB-2026-0912",
+        "archivo_nombre": "Cofares_abono_0912.pdf",
+        "codigo": "SENTIDO_NO_DOCUMENTADO",
+        "categoria": "NORMALIZACION",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "El documento demuestra movimientos comerciales, pero no su sentido CARGO/ABONO",
+        "detalle_tecnico": {
+          "movimiento": "REGULARIZACION SIN SENTIDO VISIBLE",
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-23T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      }
+    ],
+    "historial": [
+      {
+        "evento_id": 22,
+        "documento_id": "d0000000-0000-4000-8000-000000000006",
+        "factura_id": null,
+        "evento": "NORMALIZACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-23T21:04:00+00:00"
+      },
+      {
+        "evento_id": 23,
+        "documento_id": "d0000000-0000-4000-8000-000000000006",
+        "factura_id": null,
+        "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-23T21:05:00+00:00"
+      },
+      {
+        "evento_id": 24,
+        "documento_id": "d0000000-0000-4000-8000-000000000006",
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "evento": "CONCILIACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-24T08:59:00+00:00"
+      },
+      {
+        "evento_id": 25,
+        "documento_id": "d0000000-0000-4000-8000-000000000006",
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "evento": "CONCILIACION_PERSISTIDA",
+        "origen": "RPC",
+        "actor": "worker-conciliacion",
+        "estado_anterior": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR"
+        },
+        "estado_nuevo": {
+          "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+          "resultado": "NO_EVALUABLE"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-24T09:00:00+00:00"
+      }
+    ],
+    "pago": {
+      "estado": "SIN_DATOS_BANCARIOS",
+      "texto": "sin datos bancarios",
+      "color": "gris"
+    }
+  },
+  "f0000000-0000-4000-8000-000000000008": {
+    "farmacia": "PIO",
+    "generado_at": "2026-11-02T08:00:00+00:00",
+    "factura": {
+      "factura_id": "f0000000-0000-4000-8000-000000000008",
+      "documento_id": "d0000000-0000-4000-8000-000000000007",
+      "archivo_nombre": "Alliance_AL-26-100231_copia.pdf",
+      "pagina_inicio": 1,
+      "pagina_fin": 2,
+      "tipo_documento": "FACTURA",
+      "categoria": "MERCANCIA",
+      "numero_factura": "AL-26-100231",
+      "fecha_factura": "2026-10-05",
+      "moneda": "EUR",
+      "proveedor_id": "a0000000-0000-4000-8000-000000000003",
+      "proveedor_codigo": "ALLIANCE",
+      "proveedor": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_literal": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_cif": "B00000003",
+      "base_imponible_total": 136.78,
+      "iva_total": 13.68,
+      "recargo_equivalencia_total": 1.91,
+      "importe_total": 152.37,
+      "cuadre_fiscal_correcto": true,
+      "diferencia_cuadre": 0,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+      "estado_revision": "PENDIENTE_REVISION_PIO",
+      "estado_pago_bd": "SIN_PAGAR",
+      "requiere_conciliacion_albaranes": true,
+      "conciliacion_intentos": 0,
+      "conciliacion_intentos_fallo": 0,
+      "conciliacion_ultima_clase_fallo": null,
+      "conciliacion_proximo_at": null,
+      "conciliacion": null,
+      "uso_luna": false,
+      "coste_luna": null,
+      "incidencias_abiertas": 1,
+      "incidencias_bloqueantes": 0,
+      "updated_at": "2026-10-28T08:00:00+00:00"
+    },
+    "documento": {
+      "documento_id": "d0000000-0000-4000-8000-000000000007",
+      "archivo_nombre": "Alliance_AL-26-100231_copia.pdf",
+      "archivo_ruta": "PIO/2026-10/Alliance_AL_26_100231_copia_c387603ade33.pdf",
+      "archivo_hash": "c387603ade33aedbae7ac98353e2e4c4a8970a22987327e72e455fbae2a44dd5",
+      "numero_paginas": 2,
+      "estado_lectura": "NORMALIZADA",
+      "estado_persistencia": "COMPLETA",
+      "fecha_importacion": "2026-10-24T21:00:00+00:00"
+    },
+    "proveedor": {
+      "proveedor_cif": "B00000003",
+      "id_proveedor_albaranes": "0002",
+      "extractor_codigo": "alliance",
+      "nivel_confianza": "PIO_VALIDADO"
+    },
+    "normalizacion": {
+      "ejecucion_id": "e0000000-0000-4000-8000-000000000006",
+      "disparador": "MANUAL_ONE_SHOT",
+      "estado": "COMPLETADA",
+      "extractor_usado": "alliance-local",
+      "normalizador_version": "normalizador_v2-2.3",
+      "uso_ocr": false,
+      "uso_luna": false,
+      "luna_modelo": null,
+      "luna_campos": [],
+      "tokens_total": null,
+      "coste_luna": null,
+      "finalizado_at": "2026-10-24T21:05:00+00:00"
+    },
+    "datos_extraidos": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3B",
+      "numero_factura": "AL-26-100231",
+      "fecha_factura": "2026-10-05",
+      "tipo_documento": "FACTURA",
+      "proveedor": {
+        "nombre": "ALLIANCEHEALTHCARECENCORA",
+        "nif": "B00000003"
+      },
+      "totales": {
+        "base": 136.78,
+        "iva": 13.68,
+        "recargo": 1.91,
+        "total": 152.37
+      }
+    },
+    "provenance": {
+      "ficticio": true,
+      "fuente": "FIXTURE_H3A"
+    },
+    "lineas": [],
+    "impuestos": [],
+    "vencimientos": [
+      {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000010",
+        "factura_id": "f0000000-0000-4000-8000-000000000008",
+        "numero_factura": "AL-26-100231",
+        "tipo_documento": "FACTURA",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-04",
+        "importe": 152.37,
+        "importe_conocido": true,
+        "literal": "VTO. 04/11/2026",
+        "importe_factura": 152.37,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      }
+    ],
+    "albaranes_extraidos": [],
+    "movimientos": [],
+    "ajustes": [],
+    "incidencias": [
+      {
+        "incidencia_id": "20000000-0000-4000-8000-000000000002",
+        "documento_id": null,
+        "factura_id": "f0000000-0000-4000-8000-000000000008",
+        "numero_factura": "AL-26-100231",
+        "archivo_nombre": "Alliance_AL-26-100231_copia.pdf",
+        "codigo": "POSIBLE_DUPLICADO",
+        "categoria": "IDENTIDAD_DOCUMENTAL",
+        "severidad": "AVISO",
+        "bloqueante": false,
+        "estado": "ABIERTA",
+        "mensaje_usuario": "Existe otra factura con la misma identidad economica en un PDF diferente.",
+        "detalle_tecnico": {
+          "proveedor_clave": "ALLIANCE",
+          "numero_clave": "AL-26-100231",
+          "fecha_factura": "2026-10-05",
+          "accion_automatica": "NINGUNA",
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-24T21:06:00+00:00",
+        "resuelta_at": null,
+        "resuelta_por": null
+      }
+    ],
+    "historial": [
+      {
+        "evento_id": 26,
+        "documento_id": "d0000000-0000-4000-8000-000000000007",
+        "factura_id": null,
+        "evento": "NORMALIZACION_CLAIM",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": null,
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-24T21:04:00+00:00"
+      },
+      {
+        "evento_id": 27,
+        "documento_id": "d0000000-0000-4000-8000-000000000007",
+        "factura_id": null,
+        "evento": "DOCUMENTO_NORMALIZADO_PERSISTIDO",
+        "origen": "RPC",
+        "actor": "worker-manual",
+        "estado_anterior": {
+          "estado_lectura": "NORMALIZANDO"
+        },
+        "estado_nuevo": {
+          "estado_lectura": "NORMALIZADA"
+        },
+        "detalle": {
+          "ficticio": true,
+          "fuente": "FIXTURE_H3A"
+        },
+        "created_at": "2026-10-24T21:05:00+00:00"
+      }
+    ],
+    "pago": {
+      "estado": "SIN_DATOS_BANCARIOS",
+      "texto": "sin datos bancarios",
+      "color": "gris"
+    }
+  }
+}

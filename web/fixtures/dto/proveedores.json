@@ -1,0 +1,214 @@
+{
+  "farmacia": "PIO",
+  "generado_at": "2026-11-02T08:00:00+00:00",
+  "proveedores": [
+    {
+      "clave": "cif:B00000003",
+      "cif": "B00000003",
+      "sin_cif": false,
+      "etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "alias": [
+        "Alliance Healthcare España"
+      ],
+      "facturas": 3,
+      "norm_revision": 0,
+      "conc_pendiente": 1,
+      "conc_ok": 2,
+      "conc_revision": 0,
+      "rev_pendiente": 1,
+      "facturas_sin_importe": 0,
+      "importe_total_conocido": 776.96,
+      "ultima_fecha_factura": "2026-10-12"
+    },
+    {
+      "clave": "cif:A00000001",
+      "cif": "A00000001",
+      "sin_cif": false,
+      "etiqueta": "COFARES",
+      "alias": [],
+      "facturas": 3,
+      "norm_revision": 0,
+      "conc_pendiente": 2,
+      "conc_ok": 1,
+      "conc_revision": 0,
+      "rev_pendiente": 0,
+      "facturas_sin_importe": 0,
+      "importe_total_conocido": 897.9,
+      "ultima_fecha_factura": "2026-10-22"
+    },
+    {
+      "clave": "cif:B00000002",
+      "cif": "B00000002",
+      "sin_cif": false,
+      "etiqueta": "HEFAME",
+      "alias": [],
+      "facturas": 1,
+      "norm_revision": 0,
+      "conc_pendiente": 0,
+      "conc_ok": 0,
+      "conc_revision": 1,
+      "rev_pendiente": 1,
+      "facturas_sin_importe": 0,
+      "importe_total_conocido": 288,
+      "ultima_fecha_factura": "2026-10-08"
+    },
+    {
+      "clave": "nombre:FEDEFARMA",
+      "cif": null,
+      "sin_cif": true,
+      "etiqueta": "FEDEFARMA",
+      "alias": [],
+      "facturas": 1,
+      "norm_revision": 1,
+      "conc_pendiente": 1,
+      "conc_ok": 0,
+      "conc_revision": 0,
+      "rev_pendiente": 1,
+      "facturas_sin_importe": 1,
+      "importe_total_conocido": null,
+      "ultima_fecha_factura": "2026-10-20"
+    }
+  ],
+  "mapa_documentos": {
+    "estados": [
+      "PENDIENTE",
+      "PROCESANDO",
+      "EXTRAIDA",
+      "NORMALIZANDO",
+      "NORMALIZADA",
+      "REVISION",
+      "ERROR",
+      "PROVEEDOR_NO_SOPORTADO"
+    ],
+    "filas": [
+      {
+        "clave": "cif:B00000003",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "sin_cif": false,
+        "por_estado": {
+          "PENDIENTE": 0,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 3,
+          "REVISION": 0,
+          "ERROR": 0,
+          "PROVEEDOR_NO_SOPORTADO": 0
+        },
+        "total": 3
+      },
+      {
+        "clave": "cif:A00000001",
+        "proveedor": "COFARES",
+        "sin_cif": false,
+        "por_estado": {
+          "PENDIENTE": 0,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 2,
+          "REVISION": 0,
+          "ERROR": 0,
+          "PROVEEDOR_NO_SOPORTADO": 0
+        },
+        "total": 2
+      },
+      {
+        "clave": "cif:B00000002",
+        "proveedor": "HEFAME",
+        "sin_cif": false,
+        "por_estado": {
+          "PENDIENTE": 0,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 1,
+          "REVISION": 0,
+          "ERROR": 0,
+          "PROVEEDOR_NO_SOPORTADO": 0
+        },
+        "total": 1
+      },
+      {
+        "clave": "nombre:ALLIANCEHEALTHCARECENCORA",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "sin_cif": true,
+        "por_estado": {
+          "PENDIENTE": 0,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 0,
+          "REVISION": 1,
+          "ERROR": 0,
+          "PROVEEDOR_NO_SOPORTADO": 0
+        },
+        "total": 1
+      },
+      {
+        "clave": "nombre:BEIERSDORFFICTICIO",
+        "proveedor": "BEIERSDORF (FICTICIO)",
+        "sin_cif": true,
+        "por_estado": {
+          "PENDIENTE": 0,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 0,
+          "REVISION": 0,
+          "ERROR": 0,
+          "PROVEEDOR_NO_SOPORTADO": 1
+        },
+        "total": 1
+      },
+      {
+        "clave": "nombre:FEDEFARMA",
+        "proveedor": "FEDEFARMA",
+        "sin_cif": true,
+        "por_estado": {
+          "PENDIENTE": 0,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 1,
+          "REVISION": 0,
+          "ERROR": 0,
+          "PROVEEDOR_NO_SOPORTADO": 0
+        },
+        "total": 1
+      },
+      {
+        "clave": "nombre:LABORATORIODEMOFICTICIO",
+        "proveedor": "LABORATORIO DEMO (FICTICIO)",
+        "sin_cif": true,
+        "por_estado": {
+          "PENDIENTE": 0,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 0,
+          "REVISION": 0,
+          "ERROR": 0,
+          "PROVEEDOR_NO_SOPORTADO": 2
+        },
+        "total": 2
+      },
+      {
+        "clave": "sin_identificar",
+        "proveedor": "Proveedor sin identificar",
+        "sin_cif": true,
+        "por_estado": {
+          "PENDIENTE": 1,
+          "PROCESANDO": 0,
+          "EXTRAIDA": 0,
+          "NORMALIZANDO": 0,
+          "NORMALIZADA": 0,
+          "REVISION": 0,
+          "ERROR": 1,
+          "PROVEEDOR_NO_SOPORTADO": 1
+        },
+        "total": 3
+      }
+    ]
+  }
+}
