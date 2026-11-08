@@ -146,8 +146,8 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - **R9 `id_proveedor` tolerante:** solo en la comparación de
     `buscar_candidato_albaran` (trim y ceros a la izquierda: `'2' == '0002' == '0002 '`);
     los literales se conservan.
-    **Decisión de Pio (2026-11-08):** fuera de `buscar_candidato_albaran`, la R9 solo se permite como uso de
-    LECTURA para mostrar en la web (agrupar proveedores sin CIF y detectar posibles duplicados en Farmatic).
+    **Decisión de Pio (2026-11-08):** fuera de `buscar_candidato_albaran` y de los usos aprobados en R17, R18 y
+    R19, la R9 solo se permite como uso de LECTURA para mostrar en la web (agrupar proveedores sin CIF y detectar posibles duplicados en Farmatic).
     Sin efecto en datos ni en conciliaciones: no escribe, no cambia literales ni decide casamientos.
 - Reglas aprobadas por Pio en el Hito 2AZ (2026-10-06/07; `CONFIRMADO POR TEST` en
   PostgreSQL 17 local; migración 20 `CONFIRMADO EN PRODUCCIÓN`, desplegada en el
