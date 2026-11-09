@@ -27,9 +27,8 @@ cambia**. Tolerancia por línea: **0,05** (la misma con la que casa una línea y
   `DIFERENCIA` tiene en `COINCIDE` todas las líneas que casan: es la información que pedía la web.
 - En R17, para sumar importes del PDF por línea se agrupa por `factura_albaran_extraido_id` (los dos detalles
   repiten el de la línea).
-- **`PENDIENTE` de confirmación de Pio:** el estado de los movimientos (`NO_EVALUABLE`, «no se compara con Farmatic»).
-  Alternativa: `COINCIDE` (el movimiento se aplica entero por su propia evidencia). Cambiarlo es un reemplazo en
-  `valores_por_linea` y en `cf_detalles_por_linea`, antes de desplegar.
+- **DECISIÓN DE PIO (2026-11-09):** los movimientos quedan `NO_EVALUABLE` («no se compara con Farmatic»); se acepta
+  el cambio de clave idempotente; primero desplegar la 30 y después conciliar.
 - No se rellenan `numero_albaran_documental` ni `numero_albaran_farmatic` (fuera del alcance; siguen en la
   provenance).
 

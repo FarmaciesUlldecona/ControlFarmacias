@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-09 (2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-09 (2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -326,6 +326,21 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito 2BP: serie supervisada de conciliación (solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-09, commit local (sin push). Producción no tocada. Diseño en
+`pruebas/auditoria_2bp/DISENO.md`.
+
+- **`serie_conciliacion.py`**: `plan` READ_ONLY (simulación de cada factura elegible en el orden del selector, en
+  cadena por las reservas R15, con resultado y diferencia previstos y clave idempotente) y `tanda` (confirmación de
+  Pio por tanda; 5 y luego hasta 20; puertas git, operación, tareas y **migración 30 desplegada**; simulación inmediata
+  igual al plan; **PARADA si el n.º 1 simula DIFERENCIA**, salvo decisión de Pio para esa factura y esa diferencia;
+  2AX por fila tras cada ejecución y postcheck de la tanda también al parar).
+- **Hallazgo:** el simulador del 2AT (`auditoria_readonly._simular`) no reconstruía las referencias de la 28 y
+  simulaba `FARMACIA_DOCUMENTO_NO_DEMOSTRABLE` en todas las facturas; corregido como en el worker.
+- Tests: `test_serie_conciliacion_2bp.py` (24).
+- `PENDIENTE` (Pio): desplegar la 30, plan READ_ONLY en producción y primera tanda.
+
 ### Hito 2BR: detalle por línea en la conciliación (migración 30, solo local)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-09, commit local (sin push). Producción no tocada. Diseño en
@@ -343,8 +358,9 @@ con confirmación expresa de Pio y lanzada una sola vez.
   lleva los cuatro valores.
 - **`desplegar_30.py`** ensayado con el rol que imita al `postgres` de Supabase (precondiciones 9, postcondiciones 5,
   segundo intento revertido, rollback con la imitación).
-- `PENDIENTE` (Pio): confirmar el estado de los movimientos (`NO_EVALUABLE` o `COINCIDE`); preflight y despliegue de
-  la 30 (primero la 30, después conciliar con el código 2BR).
+- **Decisiones de Pio (2026-11-09):** movimientos `NO_EVALUABLE`; cambio de clave idempotente aceptado; primero
+  desplegar la 30 y después conciliar.
+- `PENDIENTE` (con confirmación de Pio): push, preflight y despliegue de la 30.
 
 ### Hito 2BQ: base local de tests alineada con Supabase (2026-11-06, solo local)
 
