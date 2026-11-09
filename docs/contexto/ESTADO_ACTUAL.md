@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-06 (2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-09 (2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -325,6 +325,26 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito 2BR: detalle por línea en la conciliación (migración 30, solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-09, commit local (sin push). Producción no tocada. Diseño en
+`pruebas/auditoria_2br/DISENO.md`.
+
+- **Hallazgo de la web:** `conciliacion_detalles` guardaba `importe_documental`, `importe_farmatic` y `diferencia` en
+  NULL y en cada línea el estado de la factura.
+- **Migración 30** (`30_cf_detalle_por_linea.sql` + rollback, generadas por `generar_migracion_30.py` desde la 24):
+  `cf_detalles_por_linea` calcula por detalle el importe del PDF, el de Farmatic, la diferencia y el estado de su
+  línea (tolerancia por línea 0,05; R17 con la misma diferencia en los dos detalles; movimientos `NO_EVALUABLE`).
+  `cf_persistir_conciliacion` guarda esos valores y rechaza `DETALLE_LINEA_NO_COINCIDE` si el resultado trae otros.
+  Relleno determinista, una vez, de los detalles existentes (en producción, las 17 conciliaciones) con valores previos
+  guardados para el rollback; el resultado de las facturas y conciliaciones no cambia.
+- **Código:** `valores_por_linea` (espejo de la función) y `importe_documental` en cada detalle de albarán; el payload
+  lleva los cuatro valores.
+- **`desplegar_30.py`** ensayado con el rol que imita al `postgres` de Supabase (precondiciones 9, postcondiciones 5,
+  segundo intento revertido, rollback con la imitación).
+- `PENDIENTE` (Pio): confirmar el estado de los movimientos (`NO_EVALUABLE` o `COINCIDE`); preflight y despliegue de
+  la 30 (primero la 30, después conciliar con el código 2BR).
 
 ### Hito 2BQ: base local de tests alineada con Supabase (2026-11-06, solo local)
 

@@ -29,6 +29,7 @@ from .conciliacion import (
     buscar_albaranes_factura,
     construir_detalles_movimientos_documentales,
     detalles_desde_busqueda,
+    valores_por_linea,
 )
 
 PAGINA_LECTURA = 1000
@@ -610,8 +611,17 @@ DISPARADORES_CONCILIACION = frozenset({"AUTOMATICO", "MANUAL_ONE_SHOT"})
 
 
 def payload_conciliacion(resultado: ResultadoConciliacion) -> dict[str, Any]:
-    """Resultado serializable para ``cf_persistir_conciliacion`` (importes como texto)."""
-    estado_detalle = "COINCIDE" if resultado.resultado == "CONCILIADA" else "DIFERENCIA"
+    """Resultado serializable para ``cf_persistir_conciliacion`` (importes como texto).
+
+    2BR (migracion 30): cada detalle lleva su importe del PDF, su importe de Farmatic, su diferencia y su estado
+    POR LINEA (``valores_por_linea``); la BD los recalcula y rechaza el resultado si no coinciden. El resultado de
+    la factura no cambia.
+    """
+    lineas = valores_por_linea(resultado.detalles)
+
+    def texto(valor: Decimal | None) -> str | None:
+        return None if valor is None else str(valor)
+
     payload = {
         "importe_factura": str(resultado.importe_factura),
         "importe_explicado": str(resultado.importe_explicado),
@@ -628,10 +638,13 @@ def payload_conciliacion(resultado: ResultadoConciliacion) -> dict[str, Any]:
                 "coincidencia_numero_literal": detalle.coincidencia_numero_literal,
                 "tipo_relacion": detalle.tipo_relacion.value,
                 "importe_aplicado": str(detalle.importe_aplicado),
-                "estado": estado_detalle,
+                "importe_documental": texto(linea.importe_documental),
+                "importe_farmatic": texto(linea.importe_farmatic),
+                "diferencia": texto(linea.diferencia),
+                "estado": linea.estado,
                 "provenance": dict(detalle.provenance),
             }
-            for orden, detalle in enumerate(resultado.detalles, start=1)
+            for orden, (detalle, linea) in enumerate(zip(resultado.detalles, lineas), start=1)
         ],
     }
     if resultado.regla_tolerancia is not None:

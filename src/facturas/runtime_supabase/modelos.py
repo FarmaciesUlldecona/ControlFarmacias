@@ -181,6 +181,8 @@ class DetalleConciliacion:
     factura_movimiento_id: str | None = None
     coincidencia_numero_literal: bool = False
     provenance: Mapping[str, Any] = field(default_factory=dict)
+    # 2BR (migracion 30): importe de la linea del PDF con signo (ABONO en negativo), para el detalle por linea.
+    importe_documental: Decimal | None = None
 
     def __post_init__(self) -> None:
         referencia_operacional = (

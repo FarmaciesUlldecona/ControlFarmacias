@@ -94,7 +94,8 @@ def _resultado(importe="10"):
     detalle = DetalleConciliacion(
         tipo_relacion=TipoRelacionConciliacion.UNO_A_UNO, importe_aplicado=Decimal(importe),
         albaran_farmacia="PIO", albaran_id_contador=7, factura_albaran_extraido_id="a1",
-        coincidencia_numero_literal=True, provenance={"fecha": date(2026, 6, 23)})
+        coincidencia_numero_literal=True, provenance={"fecha": date(2026, 6, 23)},
+        importe_documental=Decimal("10"))  # 2BR: el estado del detalle es el de su linea (PDF 10 frente a Farmatic)
     return conciliar_importes(Decimal("10"), [detalle])
 
 

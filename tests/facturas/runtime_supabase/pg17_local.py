@@ -199,6 +199,8 @@ MIGRACION_28 = MIG / "28_cf_persistencia_multifactura_ligera.sql"
 ROLLBACK_28 = MIG / "28_cf_persistencia_multifactura_ligera.rollback.sql"
 MIGRACION_29 = MIG / "29_cf_rol_lectura.sql"
 ROLLBACK_29 = MIG / "29_cf_rol_lectura.rollback.sql"
+MIGRACION_30 = MIG / "30_cf_detalle_por_linea.sql"
+ROLLBACK_30 = MIG / "30_cf_detalle_por_linea.rollback.sql"
 
 
 # Norma de Pio (2BN-D): todo ensayo de despliegue se hace con un rol que imita al postgres de Supabase. Alli postgres
@@ -522,7 +524,8 @@ def _ejecuciones(pg: _Pg, documento_id: str):
 # --------------------------------------------------------------------------
 
 VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback", "19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback",
-             "23", "23_rollback", "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback", "28", "28_rollback", "29", "29_rollback")
+             "23", "23_rollback", "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback", "28", "28_rollback", "29", "29_rollback",
+             "30", "30_rollback")
 
 
 def construir_plantilla(contenedor: str, variante: str) -> str:
@@ -541,6 +544,8 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     28 (2BM): 27 + migracion 28 aplicada dos veces; 28_rollback: 28 + rollback de la 28.
     29 (2BN): 28 + migracion 29 aplicada dos veces con la imitacion del postgres de Supabase (2BQ); 29_rollback: 29 +
     rollback de la 29.
+    30 (2BR): 29 + migracion 30 aplicada dos veces; 30_rollback: 30 + rollback de la 30. Como postgres, propietario de
+    los objetos nuevos como en Supabase; el ensayo de ``desplegar_30.py`` usa la imitacion (test 2BR).
     Idempotente: si la plantilla ya existe en el contenedor, se reutiliza.
     """
     assert variante in VARIANTES
@@ -549,7 +554,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     if existente == "1":
         return f"cf_plantilla_{variante}"
     if variante in ("19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback", "23", "23_rollback",
-                    "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback", "28", "28_rollback", "29", "29_rollback"):
+                    "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback", "28", "28_rollback", "29", "29_rollback", "30", "30_rollback"):
         nombre = f"cf_plantilla_{variante}"
         base = construir_plantilla(contenedor, {"19": "18", "20": "19", "20_rollback": "20",
                                                  "21": "20", "21_rollback": "21",
@@ -560,7 +565,8 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
                                                  "26": "25", "26_rollback": "26",
                                                  "27": "26", "27_rollback": "27",
                                                  "28": "27", "28_rollback": "28",
-                                                 "29": "28", "29_rollback": "29"}[variante])
+                                                 "29": "28", "29_rollback": "29",
+                                                 "30": "29", "30_rollback": "30"}[variante])
         cerrar_sesiones(contenedor, base)  # createdb -T exige que nadie este conectado al origen
         _docker("exec", contenedor, "createdb", "-U", "postgres", "-T", base, nombre)
         pg = _Pg(contenedor, nombre)
@@ -616,8 +622,13 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         elif variante == "29":
             cerrar_sesiones(contenedor, nombre)
             _aplicar_29_como_supabase(pg)
-        else:
+        elif variante == "29_rollback":
             pg.sql(ROLLBACK_29.read_text(encoding="utf-8"))
+        elif variante == "30":
+            pg.sql(MIGRACION_30.read_text(encoding="utf-8"))
+            pg.sql(MIGRACION_30.read_text(encoding="utf-8"))
+        else:
+            pg.sql(ROLLBACK_30.read_text(encoding="utf-8"))
         cerrar_sesiones(contenedor, nombre)
         return nombre
     assert variante in VARIANTES

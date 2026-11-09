@@ -74,7 +74,10 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
 - `src/database` y `src/sql_explorer`: acceso y barreras de solo lectura a
   Farmatic.
 - `src/supabase_client`: integración histórica de albaranes y documentos.
-- `sql/migrations/25_cf_claims_huerfanos_normalizacion.sql` (+ `.rollback.sql`): migración más reciente,
+- `sql/migrations/30_cf_detalle_por_linea.sql` (+ `.rollback.sql`): migración más reciente, **solo local, no
+  desplegada** (Hito 2BR, 2026-11-09): detalle por línea en la conciliación (importe del PDF, de Farmatic,
+  diferencia y estado de cada línea). Las 26–29 están desplegadas (ver `ESTADO_ACTUAL.md`).
+- `sql/migrations/25_cf_claims_huerfanos_normalizacion.sql` (+ `.rollback.sql`):
   **desplegada en producción** (Hito 2BI-D, 2026-10-30; implementada en el 2BI): recuperación de claims
   huérfanos de normalización.
 - `sql/migrations/24_cf_r17_recepcion.sql` (+ `.rollback.sql`): **desplegada en

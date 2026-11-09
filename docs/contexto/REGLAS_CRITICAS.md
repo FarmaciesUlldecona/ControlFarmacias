@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-08 (decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-09 (2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -309,6 +309,15 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - Los defectos de extracción previstos por el plan consumen intentos (R3) y no son parada.
   - Conciliación posterior: un n.º 1 que simula DIFERENCIA → PARADA y Pio decide caso a caso (serie de
     conciliación **no implementada**).
+- Diseño del Hito 2BR (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 30 **no desplegada**;
+  diseño en `pruebas/auditoria_2br/DISENO.md`):
+  - **Detalle por línea:** cada detalle guarda el importe del PDF (con signo), el de Farmatic (el aplicado), la
+    diferencia y el estado de **su línea**; tolerancia por línea 0,05. Sin coincidencia → `DIFERENCIA`; sin importe
+    documental o movimiento sin contraparte en Farmatic → `NO_EVALUABLE` (`PENDIENTE` de confirmación de Pio para los
+    movimientos). R17: la misma diferencia y estado en los dos detalles.
+  - El resultado de la factura no cambia. La BD calcula los valores (`cf_detalles_por_linea`) y rechaza
+    `DETALLE_LINEA_NO_COINCIDE` si el resultado trae otros.
+  - **Orden de despliegue:** primero la 30 y después conciliar con el código 2BR.
 - Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
   - total de devoluciones = abono;
   - servicio integral de distribución = cargo sin albarán;
