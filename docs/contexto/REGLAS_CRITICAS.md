@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-09 (2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-10 (2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -321,6 +321,11 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - **Clave idempotente (DECISIÓN DE PIO, 2026-11-09):** aceptado que cambie respecto del código anterior (el resultado
     lleva los valores por línea): una reevaluación con el código nuevo de una conciliación del anterior es intento
     nuevo, no replay.
+  - **Relleno de las conciliaciones de septiembre (DECISIÓN DE PIO, 2026-11-10, 2BR-D, opción A):** se rellenan las
+    17 conciliaciones con la fórmula única, también los 744 detalles de las 12 de septiembre (anteriores a la 24) que
+    ya tenían importes por línea. Sus valores antiguos van a `conciliacion_detalles_previo_30` (rollback exacto);
+    `provenance` no se toca (el `estado_matching` antiguo queda intacto). La precondición 3 de `desplegar_30.py`
+    exige exactamente esos 744 detalles, de esas 12 conciliaciones, con su huella; cualquier otro dato → PARA.
 - Reglas de Pio del Hito 2BP (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; diseño en
   `pruebas/auditoria_2bp/DISENO.md`):
   - **Serie supervisada de conciliación** (`pruebas/auditoria_2bp/serie_conciliacion.py`), mismo esquema que la 2BJ:

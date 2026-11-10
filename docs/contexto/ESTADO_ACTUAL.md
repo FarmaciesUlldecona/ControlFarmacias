@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-09 (2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-10 (2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -325,6 +325,37 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito 2BR-D: preflight de la migración 30 parado en la precondición 3; opción A de Pio (2026-11-10)
+
+Producción solo leída (READ_ONLY). Evidencias y scripts de lectura en `C:\ControlFarmacias\evidencias_2br_d`
+(con `SHA256SUMS.txt`).
+
+- Puerta: HEAD = `origin/main` = `caa00be`, árbol limpio; SHA LF de la 30 `e39dd149…6d2` (igual al del commit).
+- Noche del 9/11: tareas con resultado 0; 50 albaranes nuevos de PIO; la resincronización de la ventana dejó 2
+  `CAMBIO_IDENTIDAD` en `REVISION` (sin aplicar) y actualizó PUC y descuento de otros 2 (Hefame; ninguno reservado);
+  0 documentos nuevos (3 en `PENDIENTE` desde el 6/11), 0 NORMALIZANDO, 0 claims, 0 ejecuciones; 17 conciliaciones,
+  11 `CONCILIADA` y 48 `PENDIENTE_CONCILIAR`.
+- **Precondiciones 8/9: PARADA en la 3** («importes por línea todos NULL»): 744 de los 963 detalles ya tienen
+  importes. Son de las conciliaciones de septiembre (2I–2AA, persistencia anterior a la 24); las 5 de octubre (24)
+  están en NULL. La base local de tests reproducía el esquema, no esos datos.
+- **DECISIÓN DE PIO (opción A):** rellenar las 17 con la fórmula única; precondición 3 = exactamente los 744 detalles
+  de las 12 de septiembre con su huella (`92d7aa84…38ad`, capturada READ_ONLY); valores antiguos a la tabla de valores
+  previos; `provenance` intacta. La migración 30 no cambia (mismo SHA); cambia `desplegar_30.py` (precondición 3
+  parametrizada y `RELLENO_PREVISTO`, la simulación de solo lectura del relleno). Con ella, precondiciones 9/9
+  (READ_ONLY).
+- **Relleno previsto (READ_ONLY):** de los 744, 718 conservan sus valores y 26 pasan a `NO_EVALUABLE`: 16
+  movimientos, 9 `SIN_COINCIDENCIA` sin línea del PDF y la fila `UNO_A_UNO` de 08009277 (abajo). Los 219 en NULL
+  reciben los de su línea.
+- **Fila `UNO_A_UNO` con diferencia antigua distinta de PDF − Farmatic:** factura 08009277, conciliación `79e6b0e1`
+  (intento 2, no vigente), orden 6; albarán Farmatic 08C49481 (contador 283463, PUC 414,75), ligado al movimiento del
+  PDF «ABONOS AGRUPADOS 08C61795» (−414,76), sin línea de albarán del PDF; aplicado −414,75. Antes: PDF −414,76,
+  Farmatic 414,75, diferencia −0,01 (= PDF − aplicado), `COINCIDE`. Después: PDF vacío, Farmatic −414,75, diferencia
+  vacía, `NO_EVALUABLE` (la fórmula solo lee líneas de albarán del PDF).
+- Tests (`test_integracion_pg17_2br.py`, 26): escenario como el de septiembre; la precondición 3 PARA en 8 casos;
+  relleno = `RELLENO_PREVISTO` = `cf_detalles_por_linea`, valores previos exactos, `provenance` intacta y rollback
+  exacto; ensayo de `desplegar_30.py` con esos datos.
+- `PENDIENTE` (con confirmación de Pio): push y repetir el 2BR-D (puerta, precondiciones, captura pre) y despliegue.
 
 ### Hito 2BP: serie supervisada de conciliación (solo local)
 
