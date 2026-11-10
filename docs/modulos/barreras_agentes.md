@@ -55,16 +55,37 @@ Cada bloqueo se añade a `logs/agentes/barreras.jsonl` con `ts`, `agent_type`,
 
 ## Barreras globales (sesión principal y subagentes)
 
+Hito 2BS (2026-11-10): las referencias de esta sección y de las dos siguientes son las del código
+del 2BS. En el resto del documento pueden haberse desplazado unas líneas.
+
 | Motivo | Qué bloquea | Referencia |
 |---|---|---|
-| `env` | Ruta cuyo nombre empieza por `.env` o que contiene un segmento `.env`; comando de shell que nombra `.env*` | `barreras_agentes.py:54`, `254-257`, `278-279` |
-| `service_role` | Ruta o comando de shell que contiene `service_role` | `:258-259`, `274-275` |
-| `schtasks` | Comando de shell que contiene `schtasks` | `:276-277` |
-| `registro_agentes` | Escritura (Write, Edit, NotebookEdit) dentro de `logs/agentes` o del directorio de logs configurado; comando de shell que nombra `logs/agentes`, `uso.jsonl` o `barreras.jsonl` | `:47`, `260-267`, `280-281` |
-| `commit_*` | `git commit` sin PASS vigente de `revisor-reglas` | `:282-283`, `288-306` |
+| motivo de la clave del sistema | La clave del sistema en cualquier grafía, en los campos `file_path`, `path`, `notebook_path`, `glob`, `pattern`, `command` y `url` de **cualquier** herramienta. Se compara el texto normalizado (minúsculas, solo letras y dígitos: sin separadores ni comodines) con `CLAVE_SISTEMA`, que contiene la forma normalizada del nombre del rol y la de `SUPABASE_KEY`, la variable que guarda la clave. El contenido que se escribe (Write, Edit) no se analiza | `barreras_agentes.py:61-66`, `225-236`, `340-343` |
+| `env` | Ruta cuyo nombre empieza por `.env` o que contiene un segmento `.env`; comando que nombra `.env*` | `:348-351`, `366-367` |
+| `registro_agentes` | Con **cualquier** herramienta: una ruta (o el patrón de Glob) dentro de `logs/agentes` o del directorio de logs configurado, o cuyo texto normalizado contiene `logsagent`, `usojsonl`, `barrerasjsonl` o `suitesjsonl`. Glob y Grep cuya raíz contiene `logs/agentes`: siempre desde `logs/` o desde encima del proyecto; desde el proyecto, si el filtro de rutas (patrón de Glob, `glob` de Grep) nombra `logs` o `jsonl`. Comando que nombra `logs/agentes`, un comodín tras `logs/`, uno de esos ficheros o `logs` junto con `agentes` | `:68-70`, `307-337`, `345-357`, `368-371` |
+| `schtasks` | Comando que contiene `schtasks` | `:364-365` |
+| `commit_*` | El subcomando real `git commit` (ver abajo) sin PASS vigente de `revisor-reglas` o sin suite registrada | `:239-255`, `372-373`, `378` |
 
-"Shell" significa Bash o PowerShell (`:48`, `269`). Un `command` que no sea texto lanza
-error y, por tanto, bloquea (`:271-272`).
+"Comando" es el campo `command` de Bash, PowerShell o cualquier herramienta que lo traiga
+(Monitor). Un `command` que no sea texto lanza error y, por tanto, bloquea.
+
+`logs/` está ignorado por Git, y Grep (ripgrep) no entra en él desde la raíz del proyecto.
+`settings.json` deniega además `Read(/logs/agentes/**)` (que Claude Code aplica también a Glob y
+Grep) y `Edit(/logs/agentes/**)`. Solo escriben el registro los hooks y el ejecutor de pytest.
+La documentación puede nombrar `logs/agentes` como texto; buscarlo con comandos de shell sigue
+bloqueado (regla de Pio, 2BS).
+
+Origen (2BS): en la sesión WEB-COMMIT, tras dos bloqueos, se leyó `logs/agentes` con Glob y se
+buscó la clave con otro separador, sin exposición. Antes del 2BS solo se bloqueaba la escritura
+en `logs/agentes` y la grafía exacta de la clave en rutas y comandos de shell.
+
+### Detección del commit (2BS)
+
+Solo el subcomando real activa la barrera: `git`, opcionalmente `git.exe` o una ruta, seguido de
+opciones globales (`-C`/`-c` con valor, `--git-dir`, `--work-tree`, `--no-pager`...) y de `commit`.
+`commit-tree` también cuenta. Por fallo cerrado, cuenta también una línea con `git` y `commit` que
+define un `alias` o usa `Start-Process` (`es_git_commit`, `:239-255`). `git merge --no-ff --no-commit`
+ya no activa la barrera: era el falso positivo de la regex anterior (`\bgit\b…\bcommit\b`).
 
 ## Commit condicionado al PASS de revisor-reglas
 
@@ -102,8 +123,10 @@ Cualquier edición posterior a la revisión cambia la huella y obliga a revisar 
 `logs/` está ignorado por Git, de modo que escribir registros no altera la huella
 (`estado_git.py:6-8`).
 
-Límite: la barrera solo mira comandos de shell que casen con `git ... commit`
-(`barreras_agentes.py:282-283`).
+Desde el 2BH exige además una suite en verde registrada sobre la huella actual (`commit_sin_suite`,
+`commit_suite_roja`).
+
+Límite: la barrera solo mira comandos que casen con el subcomando `commit` (sección anterior).
 
 ## Políticas por subagente
 
@@ -120,8 +143,11 @@ Lectura restringida (`barreras_agentes.py:319-337`):
   `lectura_fuera_de_diff` (`:319-324`, `332-336`; `estado_git.py:57-76`).
 - Glob queda bloqueado, igual que cualquier otra herramienta no shell:
   `herramienta_no_permitida` (`barreras_agentes.py:338-339`).
-- De shell, solo `git diff`, `git status` y `git log` (`comando_no_permitido`,
-  `:343-344`).
+- De shell, solo `git diff`, `git status` y `git log` (`comando_no_permitido`) y, para T2, el script
+  de solo lectura `./.venv/Scripts/python.exe -B tests/consultar_suite.py`, exacto y sin argumentos
+  (`COMANDO_CONSULTA_SUITE`, `:441-443`). El script responde `PASS`/`FAIL` con el resumen de la línea
+  de suite válida para la huella actual, sin exponer el registro (2BS). El revisor ya no lee el
+  registro de suites.
 - Se rechazan los metacaracteres de encadenado, redirección o sustitución
   (punto y coma, `&`, `|`, `<`, `>`, comilla invertida, `$` y saltos de línea; motivo
   `encadenado`) (`:52`, `341-342`).

@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-10 (2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-10 (2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -38,6 +38,23 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   en `grant usage on schema public` de `00_baseline_controlfarmacias.sql`. Motivo: alinear la base local con Supabase
   (0 diferencias frente a producción). Nunca en migraciones, scripts de despliegue, preflights ni nada que conecte a
   producción. Cualquier otra edición que nombre ese rol requiere autorización nueva.
+  **Ejemplo prohibido (incidente de la sesión WEB-COMMIT, Hito 2BS, 2026-11-10):** tras dos bloqueos, el agente
+  leyó `logs/agentes` con Glob y buscó la clave del sistema con otro patrón (separador cambiado). Se comprobó
+  que no hubo exposición de claves. **Cambiar de herramienta o de patrón para obtener lo bloqueado está
+  PROHIBIDO**, aunque la herramienta nueva no esté bloqueada. Desde el 2BS, `barreras_agentes.py` cierra esos
+  huecos: `logs/agentes` no se lee, busca ni escribe con ninguna herramienta, y la clave del sistema se
+  detecta en texto normalizado (sin mayúsculas, separadores ni comodines, más los nombres de sus variables) en
+  rutas, patrones, comandos y URL de todas las herramientas.
+  **Segundo incidente (Hito 2BS, 2026-11-10; DECISIÓN DE PIO):** el hook bloqueó un comando de Bash que aplicaba
+  al propio hook un parche que nombraba el rol del sistema, y el agente hizo las mismas ediciones con Edit.
+  Pio las autorizó a posteriori. **Aunque el contenido sea legítimo: PARA y pide autorización ANTES, nunca
+  después.**
+  **Regla permanente (Pio, 2026-11-10, 2BS):** el mantenimiento de la barrera puede nombrar el rol del sistema
+  SOLO en `.claude/hooks/barreras_agentes.py` y `tests/test_hook_barreras_agentes.py`, y SOLO si la orden de
+  Pio lo indica expresamente. Cualquier otro fichero: autorización nueva.
+  **Regla permanente (Pio, 2026-11-10, 2BS):** la documentación (`docs/*.md`) puede nombrar `logs/agentes` y el
+  registro de suites como TEXTO para documentar la barrera. Buscarlos en comandos de shell sigue bloqueado y
+  nada se lee ni se escribe dentro de `logs/`.
 - **Puerta git antes de una ejecución productiva (tandas de la serie, despliegues).** Árbol siempre limpio y
   HEAD == `origin/main`. **Excepción acotada (DECISIÓN DE PIO, 2026-11-05):** HEAD puede ir por delante de
   `origin/main` solo si los commits pendientes tocan exclusivamente documentación (`docs/` o `*.md`); se
@@ -149,6 +166,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
     **Decisión de Pio (2026-11-08):** fuera de `buscar_candidato_albaran` y de los usos aprobados en R17, R18 y
     R19, la R9 solo se permite como uso de LECTURA para mostrar en la web (agrupar proveedores sin CIF y detectar posibles duplicados en Farmatic).
     Sin efecto en datos ni en conciliaciones: no escribe, no cambia literales ni decide casamientos.
+    **Ampliación (DECISIÓN DE PIO, 2026-11-10, 2BS):** la web puede usar la R9 para CUALQUIER presentación de
+    solo lectura: por ejemplo, agrupar proveedores sin CIF, avisar de duplicados en Farmatic o mostrar notas
+    como «ECO360 = Alliance». **Nunca** para decidir casamientos ni para cambiar datos.
 - Reglas aprobadas por Pio en el Hito 2AZ (2026-10-06/07; `CONFIRMADO POR TEST` en
   PostgreSQL 17 local; migración 20 `CONFIRMADO EN PRODUCCIÓN`, desplegada en el
   Hito 2AZ-D el 2026-10-08; diseño en
@@ -416,8 +436,9 @@ módulos parciales.
     (`completa`, `rapida` o `parcial`) y `verde`. «Documentación» = ficheros `.md` fuera de `.claude/`.
     - La **barrera de commit** exige una línea con la huella actual, alcance suficiente y en verde
       (`commit_sin_suite`, `commit_suite_roja`).
-    - `revisor-reglas` (T2) lee ese registro y comprueba una línea con `base` = HEAD, `rutas` = `git status`,
-      alcance suficiente y `verde`.
+    - `revisor-reglas` (T2) comprueba una línea con `base` = HEAD, `rutas` = `git status`, alcance suficiente y
+      `verde`. **Desde el 2BS** no lee el registro: ejecuta `tests/consultar_suite.py`, un script de solo lectura
+      que responde `PASS`/`FAIL` con el resumen de la línea válida y sin exponer el fichero.
     - Ya no basta con declarar la suite en el encargo.
     - **Excepción de Pio (2026-11-02):** un FAIL de `revisor-reglas` cuya **única** regla fallida es T2 no
       bloquea el commit si hay un PASS posterior de la misma huella (y la suite registrada sigue exigida).
