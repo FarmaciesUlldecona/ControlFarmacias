@@ -329,8 +329,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - Los defectos de extracción previstos por el plan consumen intentos (R3) y no son parada.
   - Conciliación posterior: un n.º 1 que simula DIFERENCIA → PARADA y Pio decide caso a caso (serie de
     conciliación **no implementada**).
-- Diseño del Hito 2BR (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 30 **no desplegada**;
-  diseño en `pruebas/auditoria_2br/DISENO.md`):
+- Diseño del Hito 2BR (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 30 **desplegada en
+  producción** el 2026-11-10, 2BR-D, `APLICADA` con postcheck 2AX OK, ver ESTADO_ACTUAL; diseño en
+  `pruebas/auditoria_2br/DISENO.md`):
   - **Detalle por línea:** cada detalle guarda el importe del PDF (con signo), el de Farmatic (el aplicado), la
     diferencia y el estado de **su línea**; tolerancia por línea 0,05. Sin coincidencia → `DIFERENCIA`; sin importe
     documental o movimiento sin contraparte en Farmatic → `NO_EVALUABLE` (**DECISIÓN DE PIO, 2026-11-09:** los
