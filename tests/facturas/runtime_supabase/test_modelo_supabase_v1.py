@@ -202,6 +202,8 @@ def test_migraciones_06b_y_07_a_13_existen_en_orden() -> None:
         "28_cf_persistencia_multifactura_ligera.sql",
         "29_cf_rol_lectura.rollback.sql",
         "29_cf_rol_lectura.sql",
+        "30_cf_detalle_por_linea.rollback.sql",
+        "30_cf_detalle_por_linea.sql",
     ]
     assert [ruta.name for ruta in sorted(MIGRACIONES.glob("*_cf_*.sql"))] == esperadas
 
@@ -432,6 +434,7 @@ def test_paquete_staging_autocontenido_y_sin_destino_productivo() -> None:
         "05_test_conciliacion.sql",
         "06_test_backfill_pio.sql",
         "07_test_claim_conciliacion_v2.sql",
+        "08_supabase_alineacion.sql",  # 2BQ: alineacion de la base local de tests con Supabase
     ]
     assert [ruta.name for ruta in sorted(staging.glob("*.sql"))] == esperados
     texto = "\n".join((staging / nombre).read_text(encoding="utf-8") for nombre in esperados)

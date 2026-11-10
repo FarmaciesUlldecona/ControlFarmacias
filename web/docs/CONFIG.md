@@ -80,6 +80,7 @@ Diagnósticos de `check:real` (solo recuentos, sí/no o nombres de columna; nunc
 | `DIAGNOSTICO proveedores` | facturas, sin `proveedor_id`, catálogo, `cif_distintos`, `facturas_sin_cif` |
 | `DIAGNOSTICO vencimientos` | total, con importe null, null con/sin incidencia `IMPORTE_VENCIMIENTO_NO_DOCUMENTADO`, facturas e incidencias con ese código, null sin CIF y `nulls_por_grupo_cif` (lista de recuentos por grupo de CIF, sin CIF ni nombres) |
 | `DIAGNOSTICO duplicados` | candidatos (mismo proveedor R9 + número sin letra final), albaranes candidatos, grupos tras el filtro de importe, si se alcanzó el límite de 200 |
+| `DIAGNOSTICO casado` | Líneas de conciliación vigentes por `clase_numero` y por `estado_matching` (provenance): `clase_numero.<etiqueta>` y `estado_matching.<etiqueta>` con etiquetas fijas y `sin_valor`. Un valor no previsto sale como `<eje>.no_previsto.<VALOR>=n` solo si es un código (`^[A-Z0-9_]{1,40}$`); cualquier otro suma en `otros_no_codigo` sin mostrarse |
 | `DIAGNOSTICO par_08C66676` | filas de cada número, existen ambos, mismo proveedor R9, mismo `importe_puc` y nombres de las otras columnas numéricas de `albaranes` que coinciden |
 
 Otros: `npm run typecheck`, `npm run fixtures:gen`, `npm run fixtures:check`, `npm run test:unit`

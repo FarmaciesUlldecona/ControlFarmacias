@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-06 (2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; PENDIENTE PRIORITARIO: alinear la base local de tests con Supabase; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-09 (2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -326,6 +326,71 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito 2BP: serie supervisada de conciliación (solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-09, commit local (sin push). Producción no tocada. Diseño en
+`pruebas/auditoria_2bp/DISENO.md`.
+
+- **`serie_conciliacion.py`**: `plan` READ_ONLY (simulación de cada factura elegible en el orden del selector, en
+  cadena por las reservas R15, con resultado y diferencia previstos y clave idempotente) y `tanda` (confirmación de
+  Pio por tanda; 5 y luego hasta 20; puertas git, operación, tareas y **migración 30 desplegada**; simulación inmediata
+  igual al plan; **PARADA si el n.º 1 simula DIFERENCIA**, salvo decisión de Pio para esa factura y esa diferencia;
+  2AX por fila tras cada ejecución y postcheck de la tanda también al parar).
+- **Hallazgo:** el simulador del 2AT (`auditoria_readonly._simular`) no reconstruía las referencias de la 28 y
+  simulaba `FARMACIA_DOCUMENTO_NO_DEMOSTRABLE` en todas las facturas; corregido como en el worker.
+- Tests: `test_serie_conciliacion_2bp.py` (24).
+- `PENDIENTE` (Pio): desplegar la 30, plan READ_ONLY en producción y primera tanda.
+
+### Hito 2BR: detalle por línea en la conciliación (migración 30, solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), 2026-11-09, commit local (sin push). Producción no tocada. Diseño en
+`pruebas/auditoria_2br/DISENO.md`.
+
+- **Hallazgo de la web:** `conciliacion_detalles` guardaba `importe_documental`, `importe_farmatic` y `diferencia` en
+  NULL y en cada línea el estado de la factura.
+- **Migración 30** (`30_cf_detalle_por_linea.sql` + rollback, generadas por `generar_migracion_30.py` desde la 24):
+  `cf_detalles_por_linea` calcula por detalle el importe del PDF, el de Farmatic, la diferencia y el estado de su
+  línea (tolerancia por línea 0,05; R17 con la misma diferencia en los dos detalles; movimientos `NO_EVALUABLE`).
+  `cf_persistir_conciliacion` guarda esos valores y rechaza `DETALLE_LINEA_NO_COINCIDE` si el resultado trae otros.
+  Relleno determinista, una vez, de los detalles existentes (en producción, las 17 conciliaciones) con valores previos
+  guardados para el rollback; el resultado de las facturas y conciliaciones no cambia.
+- **Código:** `valores_por_linea` (espejo de la función) y `importe_documental` en cada detalle de albarán; el payload
+  lleva los cuatro valores.
+- **`desplegar_30.py`** ensayado con el rol que imita al `postgres` de Supabase (precondiciones 9, postcondiciones 5,
+  segundo intento revertido, rollback con la imitación).
+- **Decisiones de Pio (2026-11-09):** movimientos `NO_EVALUABLE`; cambio de clave idempotente aceptado; primero
+  desplegar la 30 y después conciliar.
+- `PENDIENTE` (con confirmación de Pio): push, preflight y despliegue de la 30.
+
+### Hito 2BQ: base local de tests alineada con Supabase (2026-11-06, solo local)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local), commit local (sin push). Producción no tocada (la comparación usa las
+capturas READ_ONLY del intento 3 del 2BN-D, sin conectar). Evidencias en `C:\ControlFarmacias\evidencias_2bq`
+(con `SHA256SUMS.txt` y el script de comparación).
+
+- **Base (`sql/staging/00_baseline_controlfarmacias.sql`):** columna `observaciones` en la tabla antigua `facturas`
+  (la 06 la conserva en `documentos_facturas`, en su posición productiva tras `requiere_revision`); índices
+  `albaranes_fecha_idx` y `albaranes_proveedor_idx`; USAGE explícito sobre el esquema `public` para `anon`,
+  `authenticated`, `postgres` y el rol del sistema.
+- **`sql/staging/08_supabase_alineacion.sql`** (nuevo; solo base local, nunca producción), aplicado por la plantilla
+  19 entre el rollback de la 19 y la 19: copia de `rls_auto_enable()` (recibe la ACL productiva de los privilegios
+  por defecto de Supabase vigentes en ese punto) y la ACL productiva de `cf_historial_append_only()`,
+  `cf_resultado_conciliacion()`, `cf_set_updated_at()` y `cf_solicitar_reprocesado()` (deuda 2AS).
+- **Plantilla 29:** la migración se aplica con la imitación del `postgres` de Supabase (`cf_postgres_supabase`), que
+  queda con ADMIN sobre `cf_lectura` (INHERIT y SET no); la referencia local del preflight 2BN-D registra esa
+  pertenencia como de `postgres`.
+- **Comparación estricta (sin excepciones)** de las referencias locales 28 y 29 con las capturas pre y post del
+  intento 3: **0 diferencias** en 116 y 122 objetos (todos los de `public`, triggers, compresión, roles de las
+  políticas, ACL de `public` y rol); alcance de la 29 idéntico sin excepciones. Las excepciones del 2BC, del 2AS y
+  del 2BN-D dejan de hacer falta.
+- **Exclusión explícita:** los esquemas internos de Supabase (`auth`, `storage`, `graphql`, `realtime`, `vault`,
+  `pgsodium`, `pgsodium_masks`, `supabase_functions`, `net`, `cron`) quedan fuera de la comparación con la
+  referencia local (ver REGLAS_CRITICAS). Tampoco se reproducen los privilegios por defecto de `supabase_admin`: el
+  postcheck solo los compara antes y después.
+- **Excepción expresa de Pio (una vez)** para nombrar el rol del sistema en dos ediciones de `sql/staging/` (registrada
+  en REGLAS_CRITICAS).
+- Tests: `test_integracion_pg17_2bq.py` (5) y ajustes en los de la 2BN y en la lista de staging.
+
 ### Hito 2BN-D: migración 29 en producción al tercer intento (2026-11-05 y 2026-11-06)
 
 Con confirmación expresa de Pio. Evidencias en `C:\ControlFarmacias\evidencias_2bn_d` (con `SHA256SUMS.txt`).
@@ -390,9 +455,11 @@ política, la ACL de los esquemas y el rol, que la huella del 2AZ no recoge).
   `CF_LECTURA_PASSWORD` (nunca argumento ni impresa). Comprueba conexión TLS, conteos de facturas, conciliaciones y
   documentos, solo PIO visible, y que un INSERT y una RPC de escritura fallan (cada uno en una transacción READ WRITE
   que se deshace siempre).
-- `PENDIENTE` (Pio): fijar la contraseña de `cf_lectura` en el editor SQL (fuera del repositorio) y ejecutar la
-  prueba de acceso; después, adaptar la web y los preflights a `cf_lectura`.
-- **`PENDIENTE PRIORITARIO` (Pio, 2026-11-06): alinear la base local de tests con Supabase**: `rls_auto_enable()`,
+- **Prueba de acceso de Pio (2026-11-06): `ACCESO_OK`.** Contraseña fijada por Pio fuera del repositorio; por el
+  pooler: 59 facturas, 17 conciliaciones y 188 documentos, solo PIO visible, INSERT y RPC de escritura rechazados con
+  42501. **2BN cerrado.**
+- `PENDIENTE`: adaptar la web y los preflights a `cf_lectura`.
+- **Hecho en el 2BQ** (antes `PENDIENTE PRIORITARIO`, Pio, 2026-11-06): alinear la base local de tests con Supabase: `rls_auto_enable()`,
   índices `albaranes_fecha_idx` y `albaranes_proveedor_idx`, columna `documentos_facturas.observaciones`, ACL del
   esquema `public` (y los privilegios por defecto de Supabase de la deuda 2AS) y la pertenencia automática del
   creador en los roles nuevos (referencias locales generadas con el rol que imita al `postgres` de Supabase). Los
@@ -412,8 +479,8 @@ política, la ACL de los esquemas y el rol, que la huella del 2AZ no recoge).
   de albaranes y reservas reciben una política equivalente (farmacias habilitadas).
 - **Tests** (`test_integracion_pg17_2bn.py`, 42; 44 tras el 2BN-D): lectura de lo previsto y nada más, RLS por farmacia, escrituras y
   RPC denegadas, inicio de sesión real en solo lectura, atributos y credencial, rollback, `desplegar_29.py` ensayado.
-- Desplegada en producción el 2026-11-06 (ver Hito 2BN-D). `PENDIENTE`: contraseña del rol fijada por Pio y prueba
-  de acceso; adaptar la web y los preflights a `cf_lectura`.
+- Desplegada en producción el 2026-11-06 y prueba de acceso de Pio `ACCESO_OK` (ver Hito 2BN-D). `PENDIENTE`:
+  adaptar la web y los preflights a `cf_lectura`.
 
 ### Hito 2BM-D: migración 28 en producción (2026-11-03)
 

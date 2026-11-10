@@ -1,0 +1,173 @@
+/* H5: pantalla Facturas (listado y detalle). Mismos tokens que estilos.css y las maquetas. */
+
+/* ===================== Listado ===================== */
+.facturas { display: flex; flex-direction: column; gap: 16px; transition: opacity 0.15s; }
+.facturas[aria-busy='true'] { opacity: 0.6; }
+.buscar { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--tenue); }
+.buscar input {
+  flex: 1; max-width: 420px; min-height: 44px; padding: 0 12px; border: 1px solid #cbd1cc; border-radius: 8px;
+  font: inherit; font-size: 15px; color: var(--texto); background: var(--superficie);
+}
+.pestanas { display: flex; flex-wrap: wrap; gap: 8px; }
+.pestana {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--borde); background: var(--superficie); color: #3e4a46; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.pestana:hover { border-color: #c9d0cb; }
+.pestana.activa { background: var(--primario); border-color: var(--primario); color: #fff; }
+.pestana-n { font-variant-numeric: tabular-nums; font-weight: 700; opacity: 0.85; }
+.filtros { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.filtro { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--tenue); min-width: 150px; flex: 1 1 150px; max-width: 240px; }
+.filtro select {
+  min-height: 40px; padding: 0 8px; border: 1px solid #cbd1cc; border-radius: 8px; font: inherit; font-size: 14px;
+  font-weight: 500; color: var(--texto); background: var(--superficie); max-width: 100%;
+}
+.boton-limpiar { min-height: 40px; }
+.resumen-listado { margin: 0; font-size: 13px; }
+.tabla-desplazable { overflow-x: auto; }
+.tabla-facturas { min-width: 1000px; }
+.tabla-facturas th, .tabla-facturas td { padding-left: 8px; padding-right: 8px; vertical-align: middle; }
+.tabla-facturas .insignia { white-space: nowrap; }
+.tabla-facturas .enlace-factura { white-space: nowrap; }
+.tabla-facturas .pago-gris { display: inline-block; max-width: 7em; line-height: 1.3; }
+.tabla-facturas th:first-child, .tabla-facturas td:first-child { padding-left: 16px; }
+.tabla-facturas th:last-child, .tabla-facturas td:last-child { padding-right: 16px; }
+.ordenar {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0; border: 0; background: none;
+  font: inherit; font-size: 12px; font-weight: 600; color: var(--tenue); cursor: pointer; white-space: nowrap;
+}
+.ordenar:hover { color: var(--texto); }
+th[aria-sort='ascending'] .ordenar, th[aria-sort='descending'] .ordenar { color: var(--primario); font-weight: 700; }
+.flecha { font-size: 11px; }
+.tabla-facturas .proveedor { max-width: 170px; font-weight: 600; }
+.celda-proveedor { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.celda-proveedor .nombre-truncado { display: block; }
+.enlace-factura { font-weight: 700; text-decoration: none; font-variant-numeric: tabular-nums; }
+.enlace-factura:hover { text-decoration: underline; }
+.insignias-fila { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.insignias-fila .insignia { padding: 1px 8px; font-size: 11px; }
+.tabla-facturas .total { font-weight: 700; }
+.celda-vencimiento, .celda-estado { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.celda-vencimiento .mas { padding: 1px 7px; }
+.nota-celda { display: block; font-size: 12px; color: var(--tenue); font-weight: 500; }
+.celda-vencimiento .nota-celda, .celda-estado .nota-celda { flex-basis: 100%; }
+.pago-gris { font-size: 12px; color: var(--gris-texto); }
+.paginacion { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.nota-listado { margin: 0; font-size: 13px; }
+.tarjetas-facturas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.tarjeta-factura { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.tf-cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-weight: 700; }
+.tf-cabecera .celda-proveedor { flex: 1; }
+.tf-total { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tf-numero { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.tf-linea { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; align-items: center; }
+.tf-estados { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+/* ===================== Detalle ===================== */
+.detalle { display: flex; flex-direction: column; gap: 18px; }
+.cabecera-factura { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.cf-arriba { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.cf-titulo { min-width: 0; max-width: 100%; }
+.cf-proveedor { font-size: 13px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 0 2px; }
+.cf-proveedor .nombre-truncado { max-width: 320px; }
+.cabecera-factura h1 { margin: 4px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.cf-tipo { font-size: 13px; margin-top: 2px; }
+.cf-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.cf-botones .boton-deshabilitado { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.kv-rejilla { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 16px; }
+.kv { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kv dt { font-size: 12px; color: var(--tenue); font-weight: 600; }
+.kv dd { margin: 0; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kv dd.cifra { font-size: 20px; font-weight: 800; }
+.kv dd.pago-gris { font-size: 14px; font-weight: 500; }
+.kv-lista { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.kv-pequena .kv dd { font-size: 15px; }
+.avisos-detalle { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.aviso-detalle { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding: 11px 14px; border-radius: 10px; font-weight: 600; font-size: 15px; }
+.aviso-detalle-extra { font-weight: 500; font-size: 14px; }
+.av-r { background: var(--rojo-fondo); color: #7e1a13; }
+.av-o { background: var(--naranja-fondo); color: #6e3500; }
+.av-b { background: var(--azul-fondo); color: var(--azul-texto); }
+.av-n { background: var(--gris-fondo); color: var(--gris-texto); }
+.av-g { background: var(--verde-fondo); color: var(--verde-texto); }
+.aviso-detalle .codigo { background: rgba(255, 255, 255, 0.6); }
+.aviso-ok { margin: 0; padding: 11px 14px; border-radius: 10px; background: var(--verde-fondo); color: var(--verde-texto); font-weight: 600; }
+.detalle-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 18px; align-items: start; }
+.secciones { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.desplegable summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 18px;
+  font-weight: 700; font-size: 15px;
+}
+.desplegable summary::-webkit-details-marker { display: none; }
+.desplegable summary::after { content: '+'; margin-left: auto; font-size: 20px; color: var(--tenue); }
+.desplegable[open] summary::after { content: '−'; }
+.desplegable-cuerpo { padding: 0 18px 16px; min-width: 0; }
+.desplegable .tabla td, .desplegable .tabla th { vertical-align: top; }
+.fila-total td { font-weight: 700; border-top: 1px solid var(--borde); }
+.tabla .tipo { color: var(--tenue); font-size: 12px; margin-right: 4px; }
+.nota-seccion { margin: 10px 0 0; font-size: 13px; color: var(--tenue); }
+.tabla-albaranes { min-width: 640px; }
+/* H5-2: base de cada importe, rotulada bajo el encabezado (nunca mezclar bases en una columna). */
+.th-base { display: block; font-size: 11px; font-weight: 500; color: var(--tenue); white-space: nowrap; }
+.tabla .tipo-despues { margin: 0 0 0 4px; }
+.la-importe .th-base { text-align: right; }
+.tabla-albaranes .numero { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tabla tr.sin-borde td { border-bottom-style: dashed; }
+.casado { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.casado .insignia { white-space: normal; }
+.dif-linea { color: var(--rojo-texto); font-weight: 700; }
+.evidencia { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 13px; }
+.evidencia div { display: contents; }
+.evidencia dt { color: var(--tenue); font-weight: 600; }
+.evidencia dd { margin: 0; overflow-wrap: anywhere; }
+.evidencia-lineas { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pdf-original { padding: 16px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 16px; }
+.pdf-cabecera { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pdf-cabecera h2 { margin: 0; font-size: 15px; font-weight: 700; }
+.pdf-cabecera .tenue { font-size: 13px; }
+.pdf-recuadro {
+  border: 1px dashed #b9c1bc; border-radius: 10px; background: #fafaf8; padding: 28px 20px; text-align: center;
+  display: flex; flex-direction: column; gap: 8px; font-size: 14px; min-height: 260px; justify-content: center;
+}
+.pdf-recuadro p { margin: 0; color: var(--tenue); }
+.pdf-nombre { font-size: 12px; overflow-wrap: anywhere; }
+.pdf-otras { font-size: 14px; }
+.pdf-otras ul { margin: 6px 0 0; padding-left: 18px; }
+.pestanas-movil .pestana { flex: 1; justify-content: center; }
+.lista-albaranes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.la-linea { padding: 10px 0; border-bottom: 1px solid var(--borde-suave); display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.la-pdf, .la-fila { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.la-farmatic { display: flex; flex-direction: column; gap: 4px; padding-left: 10px; border-left: 2px solid var(--borde); }
+.la-importe { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.la-fila .casado { flex: 1; min-width: 0; }
+
+/* H5-2: hasta 1500 px el recuadro del PDF va debajo, para que la tabla de albaranes (6 columnas) tenga el ancho completo. */
+@media (max-width: 1500px) {
+  .detalle-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .pdf-original { position: static; }
+  .pdf-recuadro { min-height: 140px; }
+}
+.casado .insignia { border-radius: 8px; }
+/* Solo el encabezado: con rowspan (R17) el n.º de celda de las filas no coincide con la columna. */
+.tabla-albaranes th:nth-child(5) { min-width: 200px; }
+@media (max-width: 900px) {
+  .buscar { flex-direction: column; align-items: stretch; gap: 6px; }
+  .buscar input { max-width: none; }
+  .pestanas:not(.pestanas-movil) { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .pestana { white-space: nowrap; flex: none; }
+  .filtros { padding: 12px; }
+  .filtro { max-width: none; flex: 1 1 140px; min-width: 0; }
+  .cabecera-factura { padding: 16px; }
+  .cabecera-factura h1 { font-size: 24px; }
+  .kv-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .cf-proveedor .nombre-truncado { max-width: 100%; }
+  .desplegable summary { padding: 0 14px; }
+  .desplegable-cuerpo { padding: 0 14px 14px; }
+  /* El pago (gris, sin datos bancarios) ya está en el Resumen: en móvil la columna se omite para no desbordar. */
+  .detalle-vencimientos .col-pago { display: none; }
+  .tabla-fiscal th:nth-child(5), .tabla-fiscal td:nth-child(5) { display: none; }
+  .tabla-fiscal .tipo { display: block; }
+  .desplegable-cuerpo { overflow-x: auto; }
+  .evidencia { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .evidencia dd { margin-bottom: 6px; }
+}

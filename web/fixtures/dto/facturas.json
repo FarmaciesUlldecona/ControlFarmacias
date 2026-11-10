@@ -1,6 +1,7 @@
 {
   "farmacia": "PIO",
   "generado_at": "2026-11-02T08:00:00+00:00",
+  "hoy": "2026-11-02",
   "facturas": [
     {
       "factura_id": "f0000000-0000-4000-8000-000000000007",
@@ -61,7 +62,38 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "cif:A00000001"
+      "proveedor_grupo": "cif:A00000001",
+      "proveedor_etiqueta": "COFARES",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000009",
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "numero_factura": "CF-AB-2026-0912",
+        "tipo_documento": "ABONO",
+        "tipo_documento_documental": "ABONO",
+        "sentido": "ABONO",
+        "proveedor": "COFARES",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-21",
+        "importe": -45.3,
+        "importe_conocido": true,
+        "literal": "VTO. 21/11/2026  -45,30",
+        "importe_factura": -45.3,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "vencimientos_total": 1,
+      "vencimientos_importes": [
+        -45.3
+      ],
+      "posible_duplicado": false
     },
     {
       "factura_id": "f0000000-0000-4000-8000-000000000006",
@@ -104,7 +136,38 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 1,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "id:4"
+      "proveedor_grupo": "id:4",
+      "proveedor_etiqueta": "FEDEFARMA",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000008",
+        "factura_id": "f0000000-0000-4000-8000-000000000006",
+        "numero_factura": "FD-26/04471",
+        "tipo_documento": "OTRO",
+        "tipo_documento_documental": "OTRO",
+        "sentido": "NO_DOCUMENTADO",
+        "proveedor": "FEDEFARMA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-19",
+        "importe": null,
+        "importe_conocido": false,
+        "literal": "Vto: 19/11/2026",
+        "importe_factura": null,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "REQUIERE_REVISION",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "vencimientos_total": 1,
+      "vencimientos_importes": [
+        null
+      ],
+      "posible_duplicado": false
     },
     {
       "factura_id": "f0000000-0000-4000-8000-000000000003",
@@ -165,7 +228,38 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "cif:A00000001"
+      "proveedor_grupo": "cif:A00000001",
+      "proveedor_etiqueta": "COFARES",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000003",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "tipo_documento": "FACTURA_RECTIFICATIVA",
+        "tipo_documento_documental": "FACTURA_RECTIFICATIVA",
+        "sentido": "NO_DOCUMENTADO",
+        "proveedor": "COFARES",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-14",
+        "importe": 375.15,
+        "importe_conocido": true,
+        "literal": "Vencimiento 14-11-2026",
+        "importe_factura": 375.15,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "vencimientos_total": 1,
+      "vencimientos_importes": [
+        375.15
+      ],
+      "posible_duplicado": false
     },
     {
       "factura_id": "f0000000-0000-4000-8000-000000000004",
@@ -226,7 +320,40 @@
       "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "cif:A00000001"
+      "proveedor_grupo": "cif:A00000001",
+      "proveedor_etiqueta": "COFARES",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000005",
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "numero_factura": "CF-2026-55811",
+        "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
+        "proveedor": "COFARES",
+        "orden": 2,
+        "fecha_vencimiento": "2026-11-15",
+        "importe": 150,
+        "importe_conocido": true,
+        "literal": "15/11/2026  150,00",
+        "importe_factura": 568.05,
+        "vencimientos_factura": 3,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "VALIDADA_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "vencimientos_total": 3,
+      "vencimientos_importes": [
+        400,
+        150,
+        null
+      ],
+      "posible_duplicado": false
     },
     {
       "factura_id": "f0000000-0000-4000-8000-000000000002",
@@ -287,7 +414,38 @@
       "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "cif:B00000003"
+      "proveedor_grupo": "cif:B00000003",
+      "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000002",
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "numero_factura": "AL-26-100577",
+        "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-11",
+        "importe": 472.22,
+        "importe_conocido": true,
+        "literal": "VTO. 11/11/2026",
+        "importe_factura": 472.22,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "vencimientos_total": 1,
+      "vencimientos_importes": [
+        472.22
+      ],
+      "posible_duplicado": false
     },
     {
       "factura_id": "f0000000-0000-4000-8000-000000000005",
@@ -348,7 +506,38 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "cif:B00000002"
+      "proveedor_grupo": "cif:B00000002",
+      "proveedor_etiqueta": "HEFAME",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000007",
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "numero_factura": "HF-0563-889120",
+        "tipo_documento": "FACTURA",
+        "tipo_documento_documental": null,
+        "sentido": "NO_DOCUMENTADO",
+        "proveedor": "HEFAME",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-07",
+        "importe": 288,
+        "importe_conocido": true,
+        "literal": "VENCE 07.11.2026",
+        "importe_factura": 288,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "REVISION_CONCILIACION",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "vencimientos_total": 1,
+      "vencimientos_importes": [
+        288
+      ],
+      "posible_duplicado": false
     },
     {
       "factura_id": "f0000000-0000-4000-8000-000000000001",
@@ -409,7 +598,38 @@
       "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "cif:B00000003"
+      "proveedor_grupo": "cif:B00000003",
+      "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000001",
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "numero_factura": "AL-26-100231",
+        "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-04",
+        "importe": 152.37,
+        "importe_conocido": true,
+        "literal": "VTO. 04/11/2026",
+        "importe_factura": 152.37,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "VALIDADA_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "vencimientos_total": 1,
+      "vencimientos_importes": [
+        152.37
+      ],
+      "posible_duplicado": true
     },
     {
       "factura_id": "f0000000-0000-4000-8000-000000000008",
@@ -452,7 +672,38 @@
       "incidencias_abiertas": 1,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "cif:B00000003"
+      "proveedor_grupo": "cif:B00000003",
+      "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000010",
+        "factura_id": "f0000000-0000-4000-8000-000000000008",
+        "numero_factura": "AL-26-100231",
+        "tipo_documento": "OTRO",
+        "tipo_documento_documental": "FACTURA_DUPLICADO",
+        "sentido": "CARGO",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-04",
+        "importe": 152.37,
+        "importe_conocido": true,
+        "literal": "VTO. 04/11/2026",
+        "importe_factura": 152.37,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "vencimientos_total": 1,
+      "vencimientos_importes": [
+        152.37
+      ],
+      "posible_duplicado": true
     }
   ],
   "proveedores_filtro": [

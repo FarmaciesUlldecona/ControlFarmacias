@@ -66,6 +66,8 @@ test.describe('Detalle de factura móvil 390', () => {
 
   test('F04 sin desbordamiento horizontal y captura', async ({ page }) => {
     await abrirDetalle(page, F(4));
+    // H5: en móvil los vencimientos están en la pestaña "Detalle".
+    await page.getByRole('tab', { name: 'Detalle' }).click();
     await expect(page.locator('[data-total-factura]')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     await page.screenshot({ path: join(CAPTURAS, 'movil390_detalle_vencimiento_pendiente.png'), fullPage: true });

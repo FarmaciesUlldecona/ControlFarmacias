@@ -246,7 +246,10 @@ export function PaginaInicio() {
           </div>
           <Atencion d={d} />
           <p className="tenue pie-inicio">
-            IA usada este mes: Luna, {d.luna_mes.coste === null ? 'coste desconocido' : euros(d.luna_mes.coste, true)} ({plural(d.luna_mes.ejecuciones, 'lectura', 'lecturas')})
+            {/* H5: con 0 lecturas, "IA no utilizada este mes" (nunca "0 lecturas" ni coste). */}
+            {d.luna_mes.ejecuciones === 0 ? <span data-ia-mes="no-utilizada">IA no utilizada este mes</span> : (
+              <span data-ia-mes="utilizada">IA usada este mes: Luna, {d.luna_mes.coste === null ? 'coste desconocido' : euros(d.luna_mes.coste, true)} ({plural(d.luna_mes.ejecuciones, 'lectura', 'lecturas')})</span>
+            )}
           </p>
         </div>
       )}

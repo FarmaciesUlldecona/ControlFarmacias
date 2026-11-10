@@ -16,7 +16,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import pg from 'pg';
 import {
-  CATEGORIAS_TIPO_DOCUMENTAL, CONSULTAS, CONSULTAS_CHECK, FARMACIA, UUID_RE, contratoDesdeConsultas, resumenDuplicados, resumenPar08C66676,
+  CATEGORIAS_TIPO_DOCUMENTAL, CONSULTAS, CONSULTAS_CHECK, FARMACIA, UUID_RE, contratoDesdeConsultas, resumenCasado, resumenDuplicados, resumenPar08C66676,
   type Contrato, type EjecutorBloque, type Fila, type NombreConsulta, type ValorDiagnostico,
 } from './contrato.ts';
 
@@ -94,8 +94,11 @@ export interface AdaptadorReal {
   probar(n: NombreConsulta): Promise<{ columnas: number; filas: number; factura?: 'reciente' | 'ninguna' }>;
   /** Recuentos de diagnóstico del bloque proveedores (solo números). */
   diagnosticoProveedores(): Promise<Record<string, number>>;
-  /** H4b/H4c: diagnósticos de vencimientos, documentos, duplicados y par 08C66676 (recuentos, sí/no, nombres de columna). */
-  diagnosticos(): Promise<Record<'vencimientos' | 'documentos' | 'tipo_documento' | 'sentido' | 'duplicados' | 'par_08C66676', Record<string, ValorDiagnostico>>>;
+  /**
+   * H5-4: un diagnóstico (recuentos, sí/no, nombres de columna), cada uno en su propia transacción READ ONLY: si uno
+   * falla, los demás siguen (antes compartían transacción y el error de uno abortaba todos).
+   */
+  diagnostico(nombre: NombreDiagnostico): Promise<Record<string, ValorDiagnostico>>;
   cerrar(): Promise<void>;
 }
 
@@ -109,6 +112,10 @@ const COLUMNAS_VENCIMIENTOS = ['vencimientos', 'vencimientos_importe_null', 'ven
   'vencimientos_null_sin_incidencia', 'facturas_con_incidencia', 'incidencias_importe_vencimiento', 'vencimientos_null_sin_cif',
   'vencimientos_tipo_documento_null', 'vencimientos_tipo_documental_null', 'vencimientos_tipo_otro',
   'vencimientos_sentido_no_documentado'];
+/** H5-4: diagnósticos de la comprobación REAL, en orden de impresión; cada uno en su propia transacción. */
+export const NOMBRES_DIAGNOSTICO = ['vencimientos', 'documentos', 'tipo_documento', 'sentido', 'casado', 'duplicados', 'par_08C66676'] as const;
+export type NombreDiagnostico = (typeof NOMBRES_DIAGNOSTICO)[number];
+
 /** H4d-3: casos de sentido por origen. */
 export const COLUMNAS_SENTIDO = ['vencimiento_regla', 'incidencia_sentido_no_documentado', 'incidencia_sentido_no_etiquetado'];
 /** H4c-2: facturas + una columna por etiqueta fija (CATEGORIAS_TIPO_DOCUMENTAL). */
@@ -203,41 +210,43 @@ export function crearAdaptadorReal(): AdaptadorReal {
       }
       return out;
     }),
-    diagnosticos: () => soloLectura(async (cliente) => {
-      const v = await cliente.query<Fila>(CONSULTAS_CHECK.diagnostico_vencimientos.sql, [FARMACIA]);
-      if (v.rows.length !== 1) throw new Error(`DIAGNOSTICO_FILAS_INESPERADAS: ${v.rows.length}`);
-      const venc: Record<string, ValorDiagnostico> = {};
-      for (const col of COLUMNAS_VENCIMIENTOS) venc[col] = recuento(v.rows[0][col], col);
-      const grupos = v.rows[0].nulls_por_grupo_cif;
-      if (!Array.isArray(grupos)) throw new Error('DIAGNOSTICO_NO_ES_RECUENTO: nulls_por_grupo_cif');
-      venc.nulls_por_grupo_cif = grupos.map((n) => recuento(n, 'nulls_por_grupo_cif'));
-
-      const doc = await cliente.query<Fila>(CONSULTAS_CHECK.diagnostico_documentos.sql, [FARMACIA]);
-      if (doc.rows.length !== 1) throw new Error(`DIAGNOSTICO_FILAS_INESPERADAS: ${doc.rows.length}`);
-      const documentos: Record<string, ValorDiagnostico> = {};
-      for (const col of COLUMNAS_DOCUMENTOS) documentos[col] = recuento(doc.rows[0][col], col);
-
-      const tip = await cliente.query<Fila>(CONSULTAS_CHECK.diagnostico_tipo_documento.sql, [FARMACIA]);
-      if (tip.rows.length !== 1) throw new Error(`DIAGNOSTICO_FILAS_INESPERADAS: ${tip.rows.length}`);
-      const tipos: Record<string, ValorDiagnostico> = {};
-      for (const col of COLUMNAS_TIPO_DOCUMENTO) tipos[col] = recuento(tip.rows[0][col], col);
-
-      const sen = await cliente.query<Fila>(CONSULTAS_CHECK.diagnostico_sentido.sql, [FARMACIA]);
-      if (sen.rows.length !== 1) throw new Error(`DIAGNOSTICO_FILAS_INESPERADAS: ${sen.rows.length}`);
-      const sentido: Record<string, ValorDiagnostico> = {};
-      for (const col of COLUMNAS_SENTIDO) sentido[col] = recuento(sen.rows[0][col], col);
-
-      const dup = await cliente.query<Fila>(CONSULTAS.alertas_duplicado_farmatic.sql, [FARMACIA]);
-      const par = await cliente.query<Fila>(CONSULTAS_CHECK.diagnostico_par_08c66676.sql, [FARMACIA]);
-      const columnasImporte = par.fields.filter((f) => OID_IMPORTE.has(f.dataTypeID)).map((f) => f.name);
-      return {
-        vencimientos: validarDiagnostico(venc),
-        documentos: validarDiagnostico(documentos),
-        tipo_documento: validarDiagnostico(tipos),
-        sentido: validarDiagnostico(sentido),
-        duplicados: validarDiagnostico(resumenDuplicados(dup.rows)),
-        par_08C66676: validarDiagnostico(resumenPar08C66676(par.rows, columnasImporte)),
+    diagnostico: (nombre) => soloLectura(async (cliente) => {
+      const una = async (sql: string): Promise<Fila> => {
+        const r = await cliente.query<Fila>(sql, [FARMACIA]);
+        if (r.rows.length !== 1) throw new Error(`DIAGNOSTICO_FILAS_INESPERADAS: ${r.rows.length}`);
+        return r.rows[0];
       };
+      const recuentos = (fila: Fila, columnas: readonly string[]) => {
+        const out: Record<string, ValorDiagnostico> = {};
+        for (const col of columnas) out[col] = recuento(fila[col], col);
+        return out;
+      };
+      switch (nombre) {
+        case 'vencimientos': {
+          const f = await una(CONSULTAS_CHECK.diagnostico_vencimientos.sql);
+          const venc = recuentos(f, COLUMNAS_VENCIMIENTOS);
+          const grupos = f.nulls_por_grupo_cif;
+          if (!Array.isArray(grupos)) throw new Error('DIAGNOSTICO_NO_ES_RECUENTO: nulls_por_grupo_cif');
+          venc.nulls_por_grupo_cif = grupos.map((n) => recuento(n, 'nulls_por_grupo_cif'));
+          return validarDiagnostico(venc);
+        }
+        case 'documentos': return validarDiagnostico(recuentos(await una(CONSULTAS_CHECK.diagnostico_documentos.sql), COLUMNAS_DOCUMENTOS));
+        case 'tipo_documento': return validarDiagnostico(recuentos(await una(CONSULTAS_CHECK.diagnostico_tipo_documento.sql), COLUMNAS_TIPO_DOCUMENTO));
+        case 'sentido': return validarDiagnostico(recuentos(await una(CONSULTAS_CHECK.diagnostico_sentido.sql), COLUMNAS_SENTIDO));
+        case 'casado': {
+          const r = await cliente.query<Fila>(CONSULTAS_CHECK.diagnostico_casado.sql, [FARMACIA]);
+          return validarDiagnostico(resumenCasado(r.rows));
+        }
+        case 'duplicados': {
+          const r = await cliente.query<Fila>(CONSULTAS.alertas_duplicado_farmatic.sql, [FARMACIA]);
+          return validarDiagnostico(resumenDuplicados(r.rows));
+        }
+        case 'par_08C66676': {
+          const r = await cliente.query<Fila>(CONSULTAS_CHECK.diagnostico_par_08c66676.sql, [FARMACIA]);
+          const columnasImporte = r.fields.filter((f) => OID_IMPORTE.has(f.dataTypeID)).map((f) => f.name);
+          return validarDiagnostico(resumenPar08C66676(r.rows, columnasImporte));
+        }
+      }
     }),
     cerrar: () => pool.end(),
   };

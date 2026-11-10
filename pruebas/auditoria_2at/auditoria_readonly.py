@@ -588,6 +588,7 @@ def _simular(lector: _Lector, factura_id: str) -> dict:
     from src.facturas.runtime_supabase.clasificacion_fallos import clasificar_fallo_conciliacion
     from src.facturas.runtime_supabase.conciliacion import conciliar_importes
     from src.facturas.runtime_supabase.modelos import FacturaTrabajo
+    from src.facturas.runtime_supabase.multifactura import reconstruir_resultado_json, tiene_referencias
     from src.facturas.runtime_supabase.repositorios import (
         RepositorioRuntimeSupabase, clave_idempotente_conciliacion, payload_conciliacion)
 
@@ -628,9 +629,17 @@ def _simular(lector: _Lector, factura_id: str) -> dict:
             .eq("id", factura.factura_id).single().execute().data
         if rev.get("farmacia") != factura.farmacia:
             raise ValueError("FARMACIA_DOCUMENTO_CONTRADICTORIA")
-        ejecucion = cliente.table("normalizacion_ejecuciones").select("resultado_json") \
+        ejecucion = cliente.table("normalizacion_ejecuciones").select("resultado_json,documento_id") \
             .eq("id", rev.get("normalizacion_ejecucion_id")).single().execute().data
-        validar_documento_antes_de_persistir(factura.farmacia, ejecucion.get("resultado_json"))
+        resultado_json = ejecucion.get("resultado_json")
+        if tiene_referencias(resultado_json):
+            # 2BP: replica de la revalidacion de la 28 (2BM) en guardar_conciliacion: lectura completa
+            # reconstruida desde datos_extraidos (sin ella, toda factura de la 28 simulaba un fallo de farmacia).
+            filas = cliente.table("facturas").select("proyeccion_clave,datos_extraidos") \
+                .eq("documento_id", ejecucion.get("documento_id")).execute().data or []
+            resultado_json = reconstruir_resultado_json(
+                resultado_json, {f["proyeccion_clave"]: f["datos_extraidos"] for f in filas})
+        validar_documento_antes_de_persistir(factura.farmacia, resultado_json)
         payload = payload_conciliacion(resultado)
     except Exception as exc:  # mismo criterio que WorkerConciliacion._procesar
         out["camino"] = "FALLO"

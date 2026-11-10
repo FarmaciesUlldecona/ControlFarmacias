@@ -12,6 +12,11 @@ import {
   CATEGORIAS_TIPO_DOCUMENTAL, CODIGOS_SOLO_DETALLE, TEXTO_SIN_TRADUCCION, categoriaTipoDocumental, sentidoDocumental, textoIncidencia,
 } from '../../app/server/contrato.ts';
 import { FICHEROS_DTO } from '../../app/server/adaptador_fixtures.ts';
+import { ETIQUETAS_CLASE_NUMERO, ETIQUETAS_ESTADO_MATCHING, PDF_ORIGINAL, resumenCasado, vencimientoProximo } from '../../app/server/contrato.ts';
+import {
+  DICCIONARIO_CASADO, RELACION_CASADO, agruparLineas, avisosFactura, baseAlbaran, canonicalizarProveedor, claveCasado, claveRelacion,
+  ESTADOS_MATCHING, ESTADOS_VERSION_ANTERIOR, estadoSinDescripcion, coincideImporte, esEco360, insigniasFactura, origenAplicado, rangoImporteBuscado, textoEstadoMatching, textoEvento,
+} from '../../app/server/detalle.ts';
 import { COLUMNAS_SENTIDO, validarDiagnostico } from '../../app/server/adaptador_real.ts';
 import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
 
@@ -570,6 +575,194 @@ comprobar('configuración: interruptores apagados, solo PIO, R11 0,05/0,01/0,50'
   const c = configuracion;
   return si(isDeepStrictEqual(c.farmacias_habilitadas, ['PIO']) && !c.normalizacion_automatica && !c.conciliacion_automatica && !c.luna_habilitada
     && c.conciliacion_tolerancia_suelo === 0.05 && c.conciliacion_tolerancia_por_albaran === 0.01 && c.conciliacion_tolerancia_tope === 0.5, JSON.stringify(c));
+});
+
+// --- Casos H5: pantalla Facturas ----------------------------------------------------
+const lineasTodas = Object.values(facturaDetalle).flatMap((x) => x.lineas);
+comprobar('H5: diccionario de tipos de casado completo, con texto llano y fuente (fichero:línea)', () => {
+  const malos = Object.entries(DICCIONARIO_CASADO).filter(([k]) => k !== 'ESTADO:SIN_DESCRIPCION').filter(([, e]) => !e.texto || /^[A-Z_:]+$/.test(e.texto) || !/^[A-Z0-9]+:|\.sql:|^[0-9a-f]{7}:[a-z0-9_/]+\.py:\d/.test(e.fuente)); // H5-5: commit:fichero:línea
+  return si(malos.length === 0 && Object.keys(DICCIONARIO_CASADO).length >= 20, malos.map(([k]) => k).join(', '));
+});
+comprobar('H5-2: las fixtures cubren las formas de casado (principal) y los tipos de relación (secundario)', () => {
+  const claves = new Set(lineasTodas.map(claveCasado));
+  const faltan = ['NUMERO:EXACTA', 'NUMERO:LETRA_FINAL', 'NUMERO:FINAL_DOCUMENTAL', 'NUMERO:INTERNO', 'HEFAME:EXACTO_ECONOMICO',
+    'MOVIMIENTO', 'MOVIMIENTO:SIN_SENTIDO', 'SIN:SIN_COINCIDENCIA', 'SIN:AMBIGUO'].filter((k) => !claves.has(k));
+  const rel = new Set(lineasTodas.map(claveRelacion));
+  const faltanRel = ['UNO_A_UNO', 'UNO_A_VARIOS', 'MOVIMIENTO_NO_FARMATIC', 'SIN_COINCIDENCIA'].filter((k) => !rel.has(k));
+  // R17: principal = forma del número de cada albarán (su número / numeración interna), secundario = misma recepción.
+  const r17 = lineasTodas.filter((l) => l.tipo_relacion === 'UNO_A_VARIOS').map(claveCasado).join();
+  return si(faltan.length === 0 && faltanRel.length === 0 && r17 === 'NUMERO:EXACTA,NUMERO:INTERNO'
+    && !claves.has('SIN:OTRO') && !claves.has('NUMERO:OTRO') && Object.keys(RELACION_CASADO).every((k) => RELACION_CASADO[k].texto && RELACION_CASADO[k].fuente),
+  `faltan ${[...faltan, ...faltanRel].join(', ')} · r17 ${r17}`);
+});
+comprobar('H5-2: líneas con la forma de producción (sin importe_documental, importe_farmatic ni diferencia por línea; importes del albarán del PDF)', () => {
+  const malas = lineasTodas.filter((l) => l.importe_documental !== null || l.importe_farmatic !== null || l.diferencia !== null
+    || (l.factura_albaran_extraido_id !== null && l.albaran_importe_total === null)
+    || (l.factura_albaran_extraido_id === null && (l.albaran_importe_total !== null || l.albaran_importe_base !== null)));
+  const mov = facturaDetalle[F(4)].lineas.find((l) => l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC');
+  return si(malas.length === 0 && mov.magnitud_usada === 'IMPORTE', malas.map((l) => `${l.factura_id.slice(-2)}/${l.orden}`).join(', '));
+});
+comprobar('H5-2: bases: Hefame base neta, resto con IVA y RE (criterio de proveedor del motor); aplicado = PUC o PVP', () => {
+  const casos = [
+    [baseAlbaran(facturaDetalle[F(5)].factura.proveedor_literal), 'BASE_NETA'],
+    [baseAlbaran(facturaDetalle[F(2)].factura.proveedor_literal), 'CON_IVA'],
+    [baseAlbaran(facturaDetalle[F(3)].factura.proveedor_literal), 'CON_IVA'],
+    [canonicalizarProveedor('Alliance Healthcare España, S.A.'), 'ALLIANCEHEALTHCARECENCORA'],
+    [canonicalizarProveedor('Hefame'), 'HEFAMEMERCANCIA'],
+    [canonicalizarProveedor('Cofares S.L.'), 'COFARES'],
+    [origenAplicado(facturaDetalle[F(1)].lineas[0]), 'PUC'],
+    [origenAplicado({ importe_aplicado: -45.3, importe_puc: 45.3, importe_pvp: null }), 'PUC'],
+    [origenAplicado({ importe_aplicado: 10, importe_puc: 9, importe_pvp: 10 }), 'PVP'],
+    [origenAplicado({ importe_aplicado: 10, importe_puc: 9, importe_pvp: null }), null],
+  ];
+  const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
+  const f05 = facturaDetalle[F(5)].lineas.filter((l) => l.tipo_relacion === 'UNO_A_UNO');
+  return si(malos.length === 0 && f05.every((l) => l.albaran_importe_base === null && l.albaran_importe_total !== null), malos.join(', '));
+});
+comprobar('H5-2: búsqueda por importe (sin coma = de N,00 a N,99; con coma = exacto; puntos, espacios y € ignorados)', () => {
+  const r = (q) => JSON.stringify(rangoImporteBuscado(q));
+  const casos = [
+    [r('5000'), '{"desde":500000,"hasta":500099}'], [r('5.000'), '{"desde":500000,"hasta":500099}'], [r('5 000 €'), '{"desde":500000,"hasta":500099}'],
+    [r('5000,1'), '{"desde":500010,"hasta":500010}'], [r('5.000,10'), '{"desde":500010,"hasta":500010}'], [r('-45,30'), '{"desde":4530,"hasta":4530}'],
+    [r('abc'), 'null'], [r('5000,123'), 'null'], [r('5,000,1'), 'null'], [r(''), 'null'],
+    [coincideImporte('5000', [5000]), true], [coincideImporte('5000', [5000.99]), true], [coincideImporte('5000', [5001]), false],
+    [coincideImporte('5000', [4999.99]), false], [coincideImporte('5000,1', [5000.1]), true], [coincideImporte('5000,1', [5000.11]), false],
+    [coincideImporte('45,30', [-45.3]), true], [coincideImporte('5000', [null]), false],
+  ];
+  const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
+  const f4 = facturas.facturas.find((x) => x.factura_id === F(4));
+  return si(malos.length === 0 && isDeepStrictEqual(f4.vencimientos_importes, [400, 150, null]), malos.join(', ') || JSON.stringify(f4.vencimientos_importes));
+});
+comprobar('H5-3: diagnóstico de casado (etiquetas fijas; no previstos listados solo si son código; el resto en otros_no_codigo)', () => {
+  const PAT = /^[A-Z0-9_]{1,40}$/;
+  // Mismo CASE que SQL_ETIQUETA, en JS, sobre las líneas de las fixtures.
+  const etq = (v, lista) => (v === null || v === '' ? 'sin_valor' : lista.includes(v) ? v.toLowerCase() : PAT.test(v) ? `no_previsto:${v}` : 'otros_no_codigo');
+  const filasDiag = [];
+  const contar = (eje, valores) => { const m = new Map(); for (const v of valores) m.set(v, (m.get(v) ?? 0) + 1); for (const [e, n] of m) filasDiag.push({ eje, etiqueta: e, n: String(n) }); };
+  contar('clase_numero', lineasTodas.map((l) => etq(l.clase_numero, ETIQUETAS_CLASE_NUMERO)));
+  contar('estado_matching', lineasTodas.map((l) => etq(l.estado_matching, ETIQUETAS_ESTADO_MATCHING)));
+  const d = resumenCasado(filasDiag);
+  const rechaza = (fila) => { try { resumenCasado([fila]); return false; } catch { return true; } };
+  const total = (eje) => Object.entries(d).filter(([k]) => k.startsWith(eje + '.')).reduce((a, [, n]) => a + n, 0);
+  const sql = CONSULTAS_CHECK.diagnostico_casado.sql;
+  return si(d['estado_matching.no_previsto.ESTADO_FUTURO_PRUEBA'] === 1 && d['clase_numero.no_previsto.CLASE_FUTURA_PRUEBA'] === 1
+    && d['estado_matching.otros_no_codigo'] === 1 && d['estado_matching.albaran_ya_conciliado'] === 1 && d['clase_numero.no_disponible'] === 1
+    && d['estado_matching.match_r17'] === 2 && !Object.keys(d).some((k) => k.includes('raro'))
+    && total('clase_numero') === lineasTodas.length && total('estado_matching') === lineasTodas.length
+    // Falla cerrado: etiqueta literal, no_previsto que no es código o que es una etiqueta fija, eje ajeno.
+    && rechaza({ eje: 'clase_numero', etiqueta: 'VALOR_LITERAL', n: '1' })
+    && rechaza({ eje: 'estado_matching', etiqueta: 'no_previsto:valor raro', n: '1' })
+    && rechaza({ eje: 'estado_matching', etiqueta: `no_previsto:${'A'.repeat(41)}`, n: '1' })
+    && rechaza({ eje: 'estado_matching', etiqueta: 'no_previsto:MATCH_UNICO', n: '1' })
+    && rechaza({ eje: 'otro_eje', etiqueta: 'no_previsto:X', n: '1' })
+    && sql.includes("~ '^[A-Z0-9_]{1,40}$'") && sql.includes("'otros_no_codigo'") && !sql.includes("'otros_valores'"), JSON.stringify(d));
+});
+comprobar('H5-3: diccionario de estado_matching = valores que escribe el motor (12), con texto llano y fuente', () => {
+  const claves = Object.keys(ESTADOS_MATCHING).sort();
+  const ok = isDeepStrictEqual(claves, [...ETIQUETAS_ESTADO_MATCHING].sort())
+    && Object.entries(ESTADOS_MATCHING).every(([k, e]) => e.texto && !/^[A-Z_]+$/.test(e.texto)
+      // H5-5: los de la versión anterior citan commit:fichero:línea; los actuales, conciliacion.py (C:).
+      && (ESTADOS_VERSION_ANTERIOR.includes(k) ? /^e18acf0:pruebas\/auditoria_2[tv]\/[a-z0-9_]+\.py:\d/.test(e.fuente) : /^C:\d/.test(e.fuente)))
+    && DICCIONARIO_CASADO['ESTADO:SIN_DESCRIPCION'].texto === 'Estado del motor sin descripción (ver evidencia técnica)'
+    && textoEstadoMatching('MATCH_UNICO') !== null && textoEstadoMatching('ESTADO_FUTURO_PRUEBA') === null;
+  return si(ok, claves.join(', '));
+});
+comprobar('H5-5: EXACTO y ECONOMICO_UNICO (versión anterior del motor): texto llano marcado, casados, diagnóstico con etiqueta fija', () => {
+  const l1 = facturaDetalle[F(1)].lineas.find((l) => l.orden === 1);
+  const l2 = facturaDetalle[F(1)].lineas.find((l) => l.orden === 2);
+  const d = resumenCasado([{ eje: 'estado_matching', etiqueta: 'exacto', n: '266' }, { eje: 'estado_matching', etiqueta: 'economico_unico', n: '8' }]);
+  const rechaza = (fila) => { try { resumenCasado([fila]); return false; } catch { return true; } };
+  const ok = l1.estado_matching === 'EXACTO' && l2.estado_matching === 'ECONOMICO_UNICO' && l1.clase_numero === null && l2.clase_numero === null
+    && claveCasado(l1) === 'ANTERIOR:EXACTO' && claveCasado(l2) === 'ANTERIOR:ECONOMICO_UNICO'
+    && ['ANTERIOR:EXACTO', 'ANTERIOR:ECONOMICO_UNICO'].every((k) => DICCIONARIO_CASADO[k].color === 'verde' && DICCIONARIO_CASADO[k].texto.includes('versión anterior del motor'))
+    && ESTADOS_VERSION_ANTERIOR.every((k) => ESTADOS_MATCHING[k].version_anterior === true && /^Versión anterior del motor: /.test(textoEstadoMatching(k)))
+    && !estadoSinDescripcion(l1) && !estadoSinDescripcion(l2)
+    // H5-6: texto neutro de EXACTO (el motor anterior admitía prefijo o letra final): nunca "mismo número".
+    && DICCIONARIO_CASADO['ANTERIOR:EXACTO'].texto === 'Un único albarán; el motor anterior lo dio por número coincidente (versión anterior del motor)'
+    && ![DICCIONARIO_CASADO['ANTERIOR:EXACTO'].texto, ESTADOS_MATCHING.EXACTO.texto].some((t) => /mismo número/i.test(t))
+    && d['estado_matching.exacto'] === 266 && d['estado_matching.economico_unico'] === 8
+    && rechaza({ eje: 'estado_matching', etiqueta: 'no_previsto:EXACTO', n: '1' })
+    && [l1, l2].every((l) => l.estado_linea === 'COINCIDE' && l.importe_aplicado !== null);
+  return si(ok, `${claveCasado(l1)} ${claveCasado(l2)} ${JSON.stringify([d['estado_matching.exacto'], d['estado_matching.economico_unico']])}`);
+});
+comprobar('H5-3: fixtures: NO_DISPONIBLE, estado no previsto, valor no código y clase no prevista → sin descripción; aviso en el detalle', () => {
+  const k = (n, orden) => claveCasado(facturaDetalle[F(n)].lineas.find((l) => l.orden === orden));
+  const casos = [[k(7, 1), 'NUMERO:NO_DISPONIBLE'], [k(7, 3), 'ESTADO:SIN_DESCRIPCION'], [k(7, 4), 'ESTADO:SIN_DESCRIPCION'],
+    [k(7, 5), 'SIN:ALBARAN_YA_CONCILIADO'], [k(4, 2), 'ESTADO:SIN_DESCRIPCION']];
+  const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
+  const av7 = avisosFactura(facturaDetalle[F(7)]).map((a) => a.clave);
+  const f7 = facturaDetalle[F(7)];
+  return si(malos.length === 0 && av7.includes('lineas-ESTADO:SIN_DESCRIPCION') && av7.includes('lineas-SIN:ALBARAN_YA_CONCILIADO')
+    && f7.lineas.filter((l) => l.tipo_relacion === 'SIN_COINCIDENCIA').every((l) => l.importe_aplicado === 0), malos.join(', ') || av7.join(', '));
+});
+comprobar('H5: ECO360 (id 154) solo en F02 línea 7; claves sintéticas de sin coincidencia', () => {
+  const eco = lineasTodas.filter(esEco360);
+  const l = (tipo, extra = {}) => ({ tipo_relacion: tipo, estado_matching: null, clase_numero: null, papel_r17: null, sentido_documental: 'CARGO', estado_linea: 'COINCIDE', ...extra });
+  const casos = [
+    [claveCasado(l('SIN_COINCIDENCIA', { estado_matching: 'ALBARAN_YA_CONCILIADO' })), 'SIN:ALBARAN_YA_CONCILIADO'],
+    [claveCasado(l('SIN_COINCIDENCIA', { estado_matching: 'NUMERO_PROVEEDOR_DISTINTO' })), 'SIN:NUMERO_PROVEEDOR_DISTINTO'],
+    [claveCasado(l('SIN_COINCIDENCIA', { estado_matching: 'CONFLICTO_R17' })), 'SIN:CONFLICTO_R17'],
+    [claveCasado(l('SIN_COINCIDENCIA', { estado_matching: 'DESCONOCIDO_X' })), 'ESTADO:SIN_DESCRIPCION'], [claveCasado(l('SIN_COINCIDENCIA', { estado_matching: null })), 'SIN:OTRO'],
+    [claveCasado(l('UNO_A_UNO', { clase_numero: 'SIN_PATRON' })), 'NUMERO:SIN_PATRON'],
+    [claveCasado(l('UNO_A_UNO', { clase_numero: 'RARO' })), 'ESTADO:SIN_DESCRIPCION'], [claveCasado(l('UNO_A_UNO', { clase_numero: null })), 'NUMERO:OTRO'],
+    [claveCasado(l('VARIOS_A_UNO', { clase_numero: 'EXACTA' })), 'NUMERO:EXACTA'],
+    [claveRelacion(l('VARIOS_A_UNO')), 'VARIOS_A_UNO'],
+    [claveCasado(l('UNO_A_UNO', { coincidencia_numero: 'EXACTA' })), 'NUMERO:EXACTA'],
+    [claveCasado(l('MOVIMIENTO_NO_FARMATIC', { sentido_documental: 'ABONO' })), 'MOVIMIENTO:ABONO'],
+    [esEco360({ farmatic_id_proveedor: '0154', farmatic_proveedor: null }), true],
+  ];
+  const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
+  return si(eco.length === 1 && eco[0].factura_id === F(2) && eco[0].orden === 7 && malos.length === 0, `eco=${eco.length} ${malos.join(', ')}`);
+});
+comprobar('H5: R17 en F03: dos detalles UNO_A_VARIOS con el mismo albarán documental (una línea), PUC 60,00 + 38,70', () => {
+  const d = facturaDetalle[F(3)];
+  const r17 = d.lineas.filter((x) => x.tipo_relacion === 'UNO_A_VARIOS');
+  const g = agruparLineas(d.lineas.filter((x) => x.tipo_relacion !== 'MOVIMIENTO_NO_FARMATIC'));
+  return si(r17.length === 2 && r17[0].factura_albaran_extraido_id === r17[1].factura_albaran_extraido_id
+    && isDeepStrictEqual(r17.map((x) => x.importe_aplicado), [60, 38.7]) && g.length === 3 && g[1].detalles.length === 2
+    && d.albaranes_extraidos.length === 3, JSON.stringify(r17.map((x) => [x.orden, x.papel_r17, x.importe_aplicado])));
+});
+comprobar('H5: listado: hoy, vencimiento próximo y "+N", importe pendiente, posible duplicado', () => {
+  const f = (n) => facturas.facturas.find((x) => x.factura_id === F(n));
+  const ok = facturas.hoy === '2026-11-02'
+    && f(4).vencimiento_proximo.fecha_vencimiento === '2026-11-15' && f(4).vencimientos_total === 3 && !f(4).vencimiento_vencido
+    && f(6).vencimiento_proximo.importe === null && f(6).importe_total === null
+    && facturas.facturas.filter((x) => x.posible_duplicado).map((x) => x.factura_id).sort().join() === [F(1), F(8)].join()
+    && facturas.facturas.every((x) => x.proveedor_etiqueta && x.proveedor_grupo);
+  const v = (fecha, orden) => ({ fecha_vencimiento: fecha, orden, importe: 1 });
+  const puros = vencimientoProximo([v('2026-10-01', 1), v('2026-10-20', 2)], '2026-11-02').vencido === true
+    && vencimientoProximo([v('2026-10-01', 1), v('2026-10-20', 2)], '2026-11-02').proximo.orden === 2
+    && vencimientoProximo([v(null, 2), v(null, 1)], '2026-11-02').proximo.orden === 1
+    && vencimientoProximo([], '2026-11-02').proximo === null;
+  return si(ok && puros, JSON.stringify({ hoy: facturas.hoy, f4: f(4).vencimiento_proximo?.fecha_vencimiento, puros }));
+});
+comprobar('H5: insignias del listado (posible duplicado, abono y sentido no documentado por la regla de Pío)', () => {
+  const ins = Object.fromEntries(facturas.facturas.map((x) => [x.factura_id.slice(-2), insigniasFactura(x).map((i) => i.clave).join('+')]));
+  return si(isDeepStrictEqual(ins, { '01': 'posible-duplicado', '02': '', '03': 'sentido-no-documentado', '04': '', '05': 'sentido-no-documentado',
+    '06': 'sentido-no-documentado', '07': 'abono', '08': 'posible-duplicado' }), JSON.stringify(ins));
+});
+comprobar('H5: impuestos de las fixtures coherentes con los totales de cada factura (sin tramos si faltan base o IVA)', () => {
+  const malas = Object.values(facturaDetalle).filter((d) => {
+    const x = d.impuestos;
+    if (d.factura.base_imponible_total === null || d.factura.iva_total === null) return x.length !== 0;
+    const s = (k) => Math.round(x.reduce((a, t) => a + (t[k] ?? 0), 0) * 100) / 100;
+    return x.length === 0 || s('base_imponible') !== d.factura.base_imponible_total || s('cuota_iva') !== d.factura.iva_total;
+  });
+  return si(malas.length === 0, malas.map((d) => d.factura.numero_factura).join(', '));
+});
+comprobar('H5: avisos del detalle (diferencia del motor, albarán no localizado, sentido nunca rojo) y PDF no legible por cf_lectura', () => {
+  const a3 = avisosFactura(facturaDetalle[F(3)]).map((a) => a.clave);
+  const a2 = avisosFactura(facturaDetalle[F(2)]);
+  const sentido2 = a2.find((a) => a.codigo === 'SENTIDO_NO_DOCUMENTADO');
+  const pdf = Object.values(facturaDetalle).every((d) => isDeepStrictEqual(d.pdf_original, PDF_ORIGINAL) && d.pdf_original.disponible === false);
+  const otras = facturaDetalle[F(3)].otras_facturas_pdf.map((o) => o.factura_id).join() === F(4) && facturaDetalle[F(4)].otras_facturas_pdf.map((o) => o.factura_id).join() === F(3);
+  return si(['diferencia', 'lineas-SIN:SIN_COINCIDENCIA', 'sentido'].every((k) => a3.includes(k)) && sentido2?.color === 'naranja' && pdf && otras
+    && CONSULTAS_POR_BLOQUE.facturaDetalle.includes('factura_otras_pdf'), JSON.stringify({ a3, sentido2, pdf, otras }));
+});
+comprobar('H5: historial en texto llano (eventos de las fixtures traducidos)', () => {
+  const ev = [...new Set(Object.values(facturaDetalle).flatMap((d) => d.historial.map((h) => h.evento)))];
+  const sin = ev.filter((e) => textoEvento(e) === e);
+  return si(sin.length === 0, sin.join(', '));
 });
 
 // --- Informe ----------------------------------------------------------------------

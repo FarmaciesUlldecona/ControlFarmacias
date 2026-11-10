@@ -276,7 +276,122 @@ const vencimientos = vencimientosH3a.map(({ farmacia, importe_conocido, estado_p
   tipo_documento: facturaDe.get(r.factura_id).tipo_documento,
   tipo_documento_documental: facturaDe.get(r.factura_id).tipo_documento_documental,
 }));
-const lineas = lineasH3a.map(({ farmacia, es_actual, ...r }) => r); // eslint-disable-line no-unused-vars
+// ---------------------------------------------------------------------------
+// Casos H5: tipos de casado del detalle (todo ficticio; mismos importes que H3a, la conciliación no cambia)
+// ---------------------------------------------------------------------------
+
+const FX = (n) => `f0000000-0000-4000-8000-0000000000${n}`;
+/** Ajustes de líneas H3a (factura, orden) → campos. */
+const AJUSTES_LINEAS_H5 = [
+  // F02 (Alliance) línea 8: mismo número con letra final (08X20008A = 08X20008).
+  [FX('02'), 8, { numero_albaran_farmatic: '08X20008A', clase_numero: 'LETRA_FINAL', coincidencia_numero: 'DIFERENTE', coincidencia_numero_literal: false }],
+  // F02 línea 7: albarán de la plataforma ECO360 (id 154), que Farmatic registra como compra a Alliance (R19).
+  [FX('02'), 7, { farmatic_id_proveedor: '154', farmatic_proveedor: '6PLATAFECO360AH' }],
+  // F04 (Cofares) línea 3: el número de Farmatic (8 dígitos) es el final del número de la factura.
+  [FX('04'), 3, { numero_albaran_documental: 'CF-26007012', numero_albaran_farmatic: '26007012', clase_numero: 'FINAL_DOCUMENTAL',
+    coincidencia_numero: 'DIFERENTE', coincidencia_numero_literal: false }],
+  // H5-3: F07 línea 1 sin número en el PDF → clase NO_DISPONIBLE (casa por PUC, ±3 días).
+  [FX('07'), 1, { numero_albaran_documental: null, clase_numero: 'NO_DISPONIBLE', coincidencia_numero: 'NO_DISPONIBLE', coincidencia_numero_literal: false }],
+  // H5-3: F04 línea 2 con una clase_numero que el código no escribe (sin descripción; diagnóstico no_previsto).
+  [FX('04'), 2, { clase_numero: 'CLASE_FUTURA_PRUEBA' }],
+  // H5-5: F01 (Alliance) con estados de la versión anterior del motor (2T/2V): sin clase_numero en provenance.
+  [FX('01'), 1, { estado_matching: 'EXACTO', clase_numero: null }],
+  [FX('01'), 2, { estado_matching: 'ECONOMICO_UNICO', clase_numero: null, numero_albaran_farmatic: '08X10002B',
+    coincidencia_numero: 'DIFERENTE', coincidencia_numero_literal: false }],
+];
+/**
+ * H5-3: líneas sin casar de F07 (abono) con estados de motor: uno no previsto con forma de código, uno que no es
+ * código (en el diagnóstico solo suma en otros_no_codigo) y ALBARAN_YA_CONCILIADO. importe_aplicado 0: el explicado no cambia.
+ */
+const SIN_CASAR_H5_3 = [
+  [3, '77091', 'ESTADO_FUTURO_PRUEBA'],
+  [4, '77092', 'valor raro (no es código)'],
+  [5, '77093', 'ALBARAN_YA_CONCILIADO'],
+];
+function sinCasarF07(plantilla) {
+  return SIN_CASAR_H5_3.map(([orden, numero, estado]) => ({
+    ...plantilla, detalle_id: `10000000-0000-4000-8000-0000000007${orden}0`, orden, tipo_relacion: 'SIN_COINCIDENCIA',
+    estado_linea: 'DIFERENCIA', estado_matching: estado, coincidencia_numero: null, clase_numero: null, coincidencia_numero_literal: false,
+    factura_albaran_extraido_id: `b0000000-0000-4000-8000-0000000007${orden}0`, factura_movimiento_id: null,
+    numero_albaran_documental: numero, fecha_albaran_documental: '2026-10-20', sentido_documental: 'ABONO', importe_documental: -10 * orden,
+    albaran_farmacia: null, albaran_id_contador: null, numero_albaran_farmatic: null, fecha_albaran_farmatic: null,
+    farmatic_id_proveedor: null, importe_puc: null, importe_pvp: null, importe_farmatic: null, importe_aplicado: 0, diferencia: null,
+  }));
+}
+/**
+ * F03 línea 2 (98,70 €): R17, una línea = dos albaranes de la misma recepción: 77002 (60,00, su número) + Q039904/2026
+ * (38,70, numeración interna). La línea sin coincidencia pasa al orden 4. R17 cuenta como una línea casada (R11).
+ */
+function r17F03(l) {
+  const comun = { tipo_relacion: 'UNO_A_VARIOS', estado_matching: 'MATCH_R17', regla: 'R17', coincidencia_numero: null };
+  return [
+    { ...l, ...comun, papel_r17: 'NUMERO', clase_numero: 'EXACTA', importe_puc: 60, importe_pvp: 81, importe_farmatic: 60, importe_aplicado: 60, diferencia: 0 },
+    { ...l, ...comun, detalle_id: '10000000-0000-4000-8000-000000000131', orden: 3, papel_r17: 'INTERNO', clase_numero: 'INTERNO',
+      coincidencia_numero_literal: false, albaran_id_contador: 900131, numero_albaran_farmatic: 'Q039904/2026',
+      importe_puc: 38.7, importe_pvp: 52.25, importe_farmatic: 38.7, importe_aplicado: 38.7, diferencia: 0 },
+  ];
+}
+/**
+ * H5-2: forma de producción de las líneas.
+ *  - La persistencia solo escribe importe_aplicado (24_cf_r17_recepcion.sql:338-354): importe_documental,
+ *    importe_farmatic y diferencia de conciliacion_detalles quedan null.
+ *  - Importes del albarán en el PDF (facturas_albaranes_extraidos): importe_total = el importe documental H3a (total
+ *    con IVA y RE, lo que compara el motor) e importe_base = su base sin IVA (ficticia: IVA 10 % + RE 1,4 %).
+ *    Hefame (F05): el total del albarán es la base neta (hefame.py:155-161) e importe_base no consta.
+ *  - F05: número exacto, como lo clasifica el motor en Hefame (comparar_numeros_albaran, conciliacion.py:290).
+ *  - Movimiento de F04: magnitud_usada IMPORTE (conciliacion.py:722).
+ */
+const HEFAME = FX('05');
+const base114 = (v) => (v === null ? null : Math.round((v / 1.114) * 100) / 100);
+function formaProduccion(l) {
+  const conAlbaran = l.factura_albaran_extraido_id !== null;
+  const hefame = l.factura_id === HEFAME;
+  const total = conAlbaran ? (hefame ? base114(l.importe_documental) : l.importe_documental) : null;
+  return {
+    ...l,
+    importe_movimiento_fixture: l.importe_documental, // solo para generar facturas_movimientos (no está en el contrato)
+    albaran_importe_total: total,
+    albaran_importe_base: conAlbaran && !hefame ? base114(l.importe_documental) : null,
+    magnitud_usada: l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC' && l.sentido_documental !== null ? 'IMPORTE' : null,
+    ...(hefame && l.tipo_relacion === 'UNO_A_UNO'
+      ? { clase_numero: 'EXACTA', coincidencia_numero: 'EXACTA', coincidencia_numero_literal: true, numero_albaran_farmatic: l.numero_albaran_documental }
+      : {}),
+    importe_documental: null, importe_farmatic: null, diferencia: null,
+  };
+}
+
+function lineasH5(ls) {
+  const out = [];
+  for (const l0 of ls) {
+    const mov = l0.factura_movimiento_id ? MOVIMIENTOS[l0.factura_movimiento_id] : null;
+    // sentido_documental como la consulta: coalesce(fae.tipo_movimiento, fm.sentido) (H3a lo dejaba null en F04).
+    let l = { ...l0, sentido_documental: l0.sentido_documental ?? mov?.sentido ?? null, papel_r17: null, regla: null, farmatic_proveedor: null,
+      concepto_movimiento: mov?.descripcion_literal ?? null, categoria_movimiento: mov?.categoria ?? null };
+    for (const [factura, orden, campos] of AJUSTES_LINEAS_H5) if (l.factura_id === factura && l.orden === orden) l = { ...l, ...campos };
+    if (l.factura_id === FX('03') && l.orden === 2) { out.push(...r17F03(l).map(formaProduccion)); continue; }
+    if (l.factura_id === FX('03') && l.orden === 3) l = { ...l, orden: 4 };
+    out.push(formaProduccion(l));
+    if (l.factura_id === FX('07') && l.orden === 1) extrasF07.push(...sinCasarF07(l).map(formaProduccion));
+  }
+  // Las líneas sin casar de F07 van tras las suyas (mismo orden que la consulta: factura_id, orden).
+  const ultimaF07 = out.findLastIndex((x) => x.factura_id === FX('07'));
+  out.splice(ultimaF07 + 1, 0, ...extrasF07);
+  return out;
+}
+const extrasF07 = [];
+/** Impuestos: un tramo por factura con base e IVA conocidos (IVA 10 % y recargo 1,4 %, los de los totales H3a). */
+function impuestosH5(r) {
+  if (r.base_imponible_total === null || r.iva_total === null) return [];
+  const re = r.recargo_equivalencia_total;
+  return [{
+    id: `90000000-0000-4000-8000-0000000000${r.factura_id.slice(-2)}`, orden: 1, concepto: 'IVA 10 %',
+    base_imponible: r.base_imponible_total, tipo_iva: 10, cuota_iva: r.iva_total,
+    tipo_recargo_equivalencia: re === null ? null : 1.4, cuota_recargo_equivalencia: re,
+    total_tramo: Math.round((r.base_imponible_total + r.iva_total + (re ?? 0)) * 100) / 100, literal: null,
+  }];
+}
+
+const lineas = lineasH5(lineasH3a.map(({ farmacia, es_actual, ...r }) => r)); // eslint-disable-line no-unused-vars
 const incidenciasAbiertas = incidenciasH3a.filter((i) => i.estado === 'ABIERTA').map(sinFarmacia);
 const luna = detalle.filter((r) => r.uso_luna);
 
@@ -317,21 +432,26 @@ function filasDetalle(r) {
       },
     }],
     factura_lineas: ls,
-    factura_impuestos: [],
+    factura_impuestos: impuestosH5(r),
     factura_vencimientos: vencimientos.filter((v) => v.factura_id === id),
-    factura_albaranes_extraidos: ls.filter((l) => l.factura_albaran_extraido_id).map((l) => ({
+    // Una fila por albarán documental (R17: dos detalles con el mismo origen).
+    factura_albaranes_extraidos: ls.filter((l, i) => l.factura_albaran_extraido_id
+      && ls.findIndex((x) => x.factura_albaran_extraido_id === l.factura_albaran_extraido_id) === i).map((l) => ({
       id: l.factura_albaran_extraido_id, orden: l.orden, numero_albaran: l.numero_albaran_documental,
-      fecha_albaran: l.fecha_albaran_documental, tipo_movimiento: l.sentido_documental, importe_base: null,
-      importe_total: l.importe_documental, descripcion: null, literal: null,
+      fecha_albaran: l.fecha_albaran_documental, tipo_movimiento: l.sentido_documental, importe_base: l.albaran_importe_base,
+      importe_total: l.albaran_importe_total, descripcion: null, literal: null,
     })),
     factura_movimientos: ls.filter((l) => l.factura_movimiento_id).map((l) => ({
       id: l.factura_movimiento_id, orden: l.orden, ...MOVIMIENTOS[l.factura_movimiento_id],
-      base: null, iva: null, recargo_equivalencia: null, importe: l.importe_documental,
+      base: base114(l.importe_movimiento_fixture), iva: null, recargo_equivalencia: null, importe: l.importe_movimiento_fixture,
       independiente: true, conciliable_farmatic: false,
     })),
     factura_ajustes: [],
     factura_incidencias: incidenciasH3a.filter((i) => i.factura_id === id || i.documento_id === r.documento_id).map(sinFarmacia),
     factura_historial: historial,
+    factura_otras_pdf: detalle.filter((x) => x.documento_id === r.documento_id && x.factura_id !== id)
+      .sort((a, b) => a.pagina_inicio - b.pagina_inicio)
+      .map((x) => ({ factura_id: x.factura_id, numero_factura: x.numero_factura, pagina_inicio: x.pagina_inicio, pagina_fin: x.pagina_fin })),
   };
 }
 

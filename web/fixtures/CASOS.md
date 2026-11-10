@@ -183,3 +183,63 @@ Orden de los grupos:
   SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE (AVISO) en F04, que sube el contador de incidencias a 13.
 - **Diagnóstico `sentido` de check:real.** Sobre las fixtures daría vencimiento_regla 3,
   incidencia_sentido_no_documentado 3 e incidencia_sentido_no_etiquetado 1.
+
+## H5: pantalla Facturas (listado y detalle)
+
+Casos añadidos en `scripts/gen_fixtures.mjs` sobre las líneas H3a (mismos importes: las conciliaciones no cambian). Todo ficticio.
+
+| Caso H5 | Datos | Efecto |
+|---|---|---|
+| Letra final (Alliance) | F02 línea 8: PDF 08X20008 ↔ Farmatic 08X20008A, `clase_numero` LETRA_FINAL | «Mismo número con una letra final» |
+| ECO360 (R19) | F02 línea 7: albarán de Farmatic con `id_proveedor` 154 y proveedor 6PLATAFECO360AH | Nota «Albarán de la plataforma ECO360: Farmatic lo registra como compra a Alliance» |
+| Final documental | F04 línea 3: PDF CF-26007012 ↔ Farmatic 26007012, `clase_numero` FINAL_DOCUMENTAL | «El número de Farmatic es el final del número de la factura» |
+| R17 (misma recepción) | F03 línea 2 (98,70): dos detalles UNO_A_VARIOS, 77002 (60,00, papel NUMERO) + Q039904/2026 (38,70, papel INTERNO); la línea sin coincidencia pasa al orden 4 | Una línea del PDF con dos albaranes de Farmatic |
+| Cargo sin albarán | F04 movimiento «SERVICIO INTEGRAL DE DISTRIBUCION»: `sentido_documental` = CARGO, como la consulta (`coalesce(fae.tipo_movimiento, fm.sentido)`) | «Cargo o servicio sin albarán: no se busca en Farmatic» |
+| Impuestos | Un tramo por factura con base e IVA conocidos (IVA 10 % y recargo 1,4 %, los de los totales H3a); F06 sin tramos | Desplegable Fiscalidad |
+| Otras facturas del PDF | D03: F03 (págs. 1–3) y F04 (págs. 4–5) | «El PDF contiene también…» en el recuadro del PDF |
+
+Ya existían: número exacto (F01, F02…), Hefame número e importe (F05, EXACTO_ECONOMICO), albarán no localizado (F03,
+SIN_COINCIDENCIA), varios candidatos (F05, AMBIGUO) y movimiento sin sentido (F07).
+
+Listado (generado_at 02/11/2026 = «hoy»): F04 muestra el vencimiento del 15/11 con «+2» (el del 30/10 ya pasó); F06,
+«importe pendiente». Pestañas: Todas 8, Conciliadas 3, Pendientes de conciliar 4, En revisión 2, No revisadas por Pío 3.
+Insignias: posible duplicado F01 y F08; abono F07; sentido no documentado F03, F05 y F06.
+
+## H5-2: bases de importe, cómo casó y búsqueda por importe
+
+Las líneas de conciliación de las fixtures siguen la forma de producción:
+- **Columnas que la persistencia no escribe.** `importe_documental`, `importe_farmatic` y `diferencia` de `conciliacion_detalles` van a null, porque la persistencia solo escribe `importe_aplicado` (migración 24, líneas 338-354).
+- **Importes del albarán en el PDF** (`facturas_albaranes_extraidos`):
+  - `importe_total` es el importe documental de H3a: total con IVA y RE, que es lo que compara el motor.
+  - `importe_base` es su base sin IVA, ficticia (÷ 1,114).
+  - Hefame (F05): `importe_total` es la base neta e `importe_base` no consta.
+- **F05:** sus tres albaranes casados pasan a número exacto (antes INTERNO), como los clasifica el motor en Hefame.
+- **F04:** el movimiento lleva `magnitud_usada` IMPORTE y su base en `facturas_movimientos.base`.
+
+| Caso | Efecto |
+|---|---|
+| Cómo casó | Principal = forma del número (mismo número, letra final, final documental, numeración interna, Hefame número e importe) o motivo de no casar. Secundario = relación (1 línea = 1 albarán, 1 línea = 2 albaranes de la misma recepción R17, sin albarán, sin casar). R17 en F03: «Mismo número de albarán» + «Numeración interna…», los dos con la relación R17 |
+| Bases rotuladas | Total albarán (PDF) y Aplicado (Farmatic): con IVA y RE, se comparan. Base (PDF): sin IVA, no se compara. Sin columna de diferencia por línea (el motor no la guarda) |
+| Filtro «Con importe pendiente» | Cualquier vencimiento con importe null: F04 (3.º) y F06 |
+| Búsqueda por importe | Probada en el e2e con importes ficticios inyectados (F02 total 5.000,10; F04 2.º vencimiento 5.000,95): «5000», «5.000» y «5 000 €» → F02 y F04; «5000,1» → F02; «5000,95» → F04 |
+
+## H5-3: estados de casado no previstos
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Sin número para comparar | F07 línea 1: PDF sin número, `clase_numero` NO_DISPONIBLE | «Sin número para comparar: casa por importe (PUC) y fecha (±3 días)» |
+| Estado no previsto con forma de código | F07 línea 3 (77091): `estado_matching` ESTADO_FUTURO_PRUEBA | «Estado del motor sin descripción (ver evidencia técnica)»; el literal solo en Evidencia técnica. Diagnóstico: `estado_matching.no_previsto.ESTADO_FUTURO_PRUEBA=1` |
+| Valor que no es código | F07 línea 4 (77092): `estado_matching` «valor raro (no es código)» | Mismo texto en la web; en el diagnóstico solo suma en `estado_matching.otros_no_codigo` |
+| Albarán ya conciliado | F07 línea 5 (77093): ALBARAN_YA_CONCILIADO | «El albarán ya justifica otra factura o línea» |
+| Clase no prevista | F04 línea 2: `clase_numero` CLASE_FUTURA_PRUEBA | Sin descripción; diagnóstico `clase_numero.no_previsto.CLASE_FUTURA_PRUEBA=1` |
+
+Las líneas 3 a 5 de F07 son sin casar con `importe_aplicado` 0, así que el explicado y la conciliación de F07 no cambian.
+
+## H5-5: estados de una versión anterior del motor
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| EXACTO | F01 línea 1: `estado_matching` EXACTO, sin `clase_numero` | «Un único albarán; el motor anterior lo dio por número coincidente (versión anterior del motor)»; secundario «Versión anterior del motor: …». H5-6: texto neutro, nunca «mismo número» (hay líneas reales con prefijo o letra final, p. ej. 57517 ↔ 08C57517A). Casada (verde). Diagnóstico `estado_matching.exacto` (etiqueta fija) |
+| ECONOMICO_UNICO | F01 línea 2: `estado_matching` ECONOMICO_UNICO, sin `clase_numero`, Farmatic 08X10002B | «Un único albarán por importe; el número no es idéntico (versión anterior del motor)». Casada (verde). Diagnóstico `estado_matching.economico_unico` |
+
+Fuente: commit e18acf0, `pruebas/auditoria_2t/flujo_controlado.py:210-211,370` y `pruebas/auditoria_2v/conciliar_08009277.py:72-73,197` (EXACTO = MATCH_UNICO con número EXACTA; ECONOMICO_UNICO = MATCH_UNICO sin número exacto); `pruebas/auditoria_2t/resultado.md:36-40` (criterios del casado económico). Importes y conciliación de F01 sin cambios.

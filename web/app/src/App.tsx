@@ -1,7 +1,9 @@
 import { Route, Routes } from 'react-router-dom';
 import Layout from './Layout.tsx';
 import { PaginaInicio } from './inicio.tsx';
-import { PaginaDetalle, PaginaEnConstruccion, PaginaFacturas, PaginaNoEncontrada } from './paginas.tsx';
+import { PaginaDetalle } from './detalle.tsx';
+import { PaginaFacturas } from './facturas.tsx';
+import { PaginaEnConstruccion, PaginaNoEncontrada } from './paginas.tsx';
 
 /** Pantallas de la fase 1. En H3b: cabecera + "En construcción". */
 export const PANTALLAS = [
@@ -25,7 +27,7 @@ export default function App() {
             key={p.ruta}
             path={p.ruta}
             element={p.ruta === '/' ? <PaginaInicio />
-              : p.ruta === '/facturas' ? <PaginaFacturas pantalla={p} /> : <PaginaEnConstruccion pantalla={p} />}
+              : p.ruta === '/facturas' ? <PaginaFacturas /> : <PaginaEnConstruccion pantalla={p} />}
           />
         ))}
         <Route path="/facturas/:id" element={<PaginaDetalle />} />

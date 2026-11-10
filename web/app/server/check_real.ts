@@ -11,12 +11,14 @@
  * columna y en datos_extraidos, OTRO, sentido no documentado), documentos (PDF sin factura con y sin campo de
  * proveedor), tipo_documento (H4c-2: facturas por datos_extraidos.tipo_documento.valor en etiquetas fijas;
  * un valor no previsto solo suma en otros_valores, nunca se muestra), sentido (H4d-3: casos por origen:
- * vencimiento_regla, incidencia_sentido_no_documentado, incidencia_sentido_no_etiquetado), duplicados (candidatos y tras filtro de importe) y par 08C66676/08C66676A (sí/no y nombres de columna).
+ * vencimiento_regla, incidencia_sentido_no_documentado, incidencia_sentido_no_etiquetado), casado (H5-2/H5-3: líneas
+ * vigentes por clase_numero y estado_matching; un valor no previsto se lista solo si cumple ^[A-Z0-9_]{1,40}$, el resto
+ * suma en otros_no_codigo sin mostrarse), duplicados (candidatos y tras filtro de importe) y par 08C66676/08C66676A (sí/no y nombres de columna).
  * Solo recuentos, sí/no o nombres de columna; nunca valores.
  * Código de salida: 0 si todas OK; 1 si alguna falla (también sin conexión); 2 si falta .env.web o está incompleto.
  */
 import { CONSULTAS, type NombreConsulta } from './contrato.ts';
-import { crearAdaptadorReal, type AdaptadorReal } from './adaptador_real.ts';
+import { NOMBRES_DIAGNOSTICO, crearAdaptadorReal, type AdaptadorReal } from './adaptador_real.ts';
 
 function primeraLinea(e: unknown): string {
   const m = e instanceof Error ? e.message : String(e);
@@ -57,16 +59,17 @@ try {
 
 // H4b: diagnósticos de vencimientos, duplicados y par 08C66676 (recuentos, sí/no o nombres de columna).
 const formato = (v: unknown) => (typeof v === 'boolean' ? (v ? 'sí' : 'no') : Array.isArray(v) ? `[${v.join(',')}]` : String(v));
-try {
-  const ds = await real.diagnosticos();
-  for (const [seccion, d] of Object.entries(ds)) {
-    console.log(`DIAGNOSTICO ${seccion} ${Object.entries(d).map(([k, v]) => `${k}=${formato(v)}`).join(' ')}`);
+// H5-4: cada diagnóstico por separado (su propia transacción): un error solo afecta a su línea.
+for (const nombre of NOMBRES_DIAGNOSTICO) {
+  try {
+    const d = await real.diagnostico(nombre);
+    console.log(`DIAGNOSTICO ${nombre} ${Object.entries(d).map(([k, v]) => `${k}=${formato(v)}`).join(' ')}`);
+  } catch (e) {
+    fallos += 1;
+    console.log(`DIAGNOSTICO ${nombre} ${error(e)}`);
   }
-} catch (e) {
-  fallos += 1;
-  console.log(`DIAGNOSTICO vencimientos/documentos/tipo_documento/sentido/duplicados/par_08C66676 ${error(e)}`);
 }
 
 await real.cerrar();
-console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + 7 diagnósticos, ${fallos} con error`);
+console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + ${1 + NOMBRES_DIAGNOSTICO.length} diagnósticos, ${fallos} con error`);
 process.exit(fallos ? 1 : 0);

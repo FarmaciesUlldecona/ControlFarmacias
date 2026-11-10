@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-06 (2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-09 (2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -32,6 +32,12 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   **Aclaración (Pio, 2026-11-06, 2BN-D):** PROHIBIDO reformular una acción para conseguir lo que un hook
   impide. PERMITIDO usar la forma documentada de una acción autorizada (por ejemplo, `git` sin `-C`, desde el
   directorio de trabajo, para la misma lectura del repositorio). En la duda, PARA.
+  **Excepción expresa de Pio (2026-11-06, Hito 2BQ, una sola vez):** el hook bloqueó un comando que escribía el
+  nombre del rol del sistema; Pio autorizó usar Edit SOLO para dos ediciones de la base local de tests
+  (`sql/staging/`): los GRANT de EXECUTE sobre cuatro funciones en `08_supabase_alineacion.sql` y el rol del sistema
+  en `grant usage on schema public` de `00_baseline_controlfarmacias.sql`. Motivo: alinear la base local con Supabase
+  (0 diferencias frente a producción). Nunca en migraciones, scripts de despliegue, preflights ni nada que conecte a
+  producción. Cualquier otra edición que nombre ese rol requiere autorización nueva.
 - **Puerta git antes de una ejecución productiva (tandas de la serie, despliegues).** Árbol siempre limpio y
   HEAD == `origin/main`. **Excepción acotada (DECISIÓN DE PIO, 2026-11-05):** HEAD puede ir por delante de
   `origin/main` solo si los commits pendientes tocan exclusivamente documentación (`docs/` o `*.md`); se
@@ -140,6 +146,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - **R9 `id_proveedor` tolerante:** solo en la comparación de
     `buscar_candidato_albaran` (trim y ceros a la izquierda: `'2' == '0002' == '0002 '`);
     los literales se conservan.
+    **Decisión de Pio (2026-11-08):** fuera de `buscar_candidato_albaran` y de los usos aprobados en R17, R18 y
+    R19, la R9 solo se permite como uso de LECTURA para mostrar en la web (agrupar proveedores sin CIF y detectar posibles duplicados en Farmatic).
+    Sin efecto en datos ni en conciliaciones: no escribe, no cambia literales ni decide casamientos.
 - Reglas aprobadas por Pio en el Hito 2AZ (2026-10-06/07; `CONFIRMADO POR TEST` en
   PostgreSQL 17 local; migración 20 `CONFIRMADO EN PRODUCCIÓN`, desplegada en el
   Hito 2AZ-D el 2026-10-08; diseño en
@@ -300,6 +309,29 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - Los defectos de extracción previstos por el plan consumen intentos (R3) y no son parada.
   - Conciliación posterior: un n.º 1 que simula DIFERENCIA → PARADA y Pio decide caso a caso (serie de
     conciliación **no implementada**).
+- Diseño del Hito 2BR (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 30 **no desplegada**;
+  diseño en `pruebas/auditoria_2br/DISENO.md`):
+  - **Detalle por línea:** cada detalle guarda el importe del PDF (con signo), el de Farmatic (el aplicado), la
+    diferencia y el estado de **su línea**; tolerancia por línea 0,05. Sin coincidencia → `DIFERENCIA`; sin importe
+    documental o movimiento sin contraparte en Farmatic → `NO_EVALUABLE` (**DECISIÓN DE PIO, 2026-11-09:** los
+    movimientos, `NO_EVALUABLE`). R17: la misma diferencia y estado en los dos detalles.
+  - El resultado de la factura no cambia. La BD calcula los valores (`cf_detalles_por_linea`) y rechaza
+    `DETALLE_LINEA_NO_COINCIDE` si el resultado trae otros.
+  - **Orden de despliegue (DECISIÓN DE PIO, 2026-11-09):** primero desplegar la 30 y después conciliar.
+  - **Clave idempotente (DECISIÓN DE PIO, 2026-11-09):** aceptado que cambie respecto del código anterior (el resultado
+    lleva los valores por línea): una reevaluación con el código nuevo de una conciliación del anterior es intento
+    nuevo, no replay.
+- Reglas de Pio del Hito 2BP (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; diseño en
+  `pruebas/auditoria_2bp/DISENO.md`):
+  - **Serie supervisada de conciliación** (`pruebas/auditoria_2bp/serie_conciliacion.py`), mismo esquema que la 2BJ:
+    - plan READ_ONLY con la simulación de cada factura pendiente en el orden del selector, en cadena (R15), con el
+      resultado previsto (`CONCILIADA` / `DIFERENCIA` y cuánto);
+    - tandas de `ejecutar_una_manual_conciliacion()` con confirmación de Pio por tanda (5 la primera, luego hasta 20) y
+      puertas git, de operación y de tareas;
+    - **exige la migración 30 desplegada** antes de cada ejecución;
+    - **PARADA si el n.º 1 simula DIFERENCIA** (o un fallo): Pio decide caso a caso (`decisiones_pio` del plan, para
+      esa factura y esa diferencia);
+    - PARADA ante cualquier desviación del plan; postcheck 2AX por fila, también al parar.
 - Clasificación de Pio para el futuro hito COFARES (**NO implementada**):
   - total de devoluciones = abono;
   - servicio integral de distribución = cargo sin albarán;
@@ -311,6 +343,10 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   `MANUAL_ONE_SHOT`.
 - Una diferencia documental nunca genera automáticamente movimientos, sentidos,
   categorías ni explicaciones.
+- **Sentido de los vencimientos (decisión de Pio, 2026-11-08):** se toma de
+  `datos_extraidos.tipo_documento.valor`, NUNCA de la columna `tipo_documento`. `FACTURA` o
+  `FACTURA_DUPLICADO` = cargo; `ABONO` = abono; `FACTURA_RECTIFICATIVA`, vacío u `OTRO` = no documentado (no se
+  suma en el cashflow).
 - Las relaciones con Farmatic conservan el identificador literal de proveedor; no
   se coacciona a número ni se normaliza destructivamente.
 - En conciliación, SAFA, Alliance y Cencora (y ECO360 por R19, 2BG) pueden canonicalizarse dentro del grupo
@@ -337,6 +373,11 @@ módulos parciales.
   después. Cualquier otra diferencia → PARAR (sin rollback sin confirmación de
   Pio). Las diferencias conocidas del baseline local fuera de alcance no son
   motivo de parada si cumplen (3).
+  **Exclusión explícita (Pio, 2026-11-06, Hito 2BQ):** los esquemas internos de Supabase (`auth`, `storage`,
+  `graphql`, `realtime`, `vault`, `pgsodium`, `pgsodium_masks`, `supabase_functions`, `net`, `cron`) no se comparan
+  con la referencia local (2): la base local no los reproduce. Siguen dentro de (1) y (3), antes frente a después.
+  Desde el 2BQ la base local reproduce todo lo demás (0 diferencias frente a la captura del intento 3 del 2BN-D):
+  una diferencia nueva con la referencia es motivo de parada, no una excepción.
 - **Preflight de propietarios (2AX):** ningún objeto de `public` con propietario
   distinto de `postgres`; si aparece → PARAR.
 - **Norma de Pio (Hito 2AX, 2026-09-28):** todo script de despliegue productivo

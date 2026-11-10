@@ -171,6 +171,24 @@ export interface LineaConciliacion {
   importe_farmatic: Importe;
   importe_aplicado: Importe;
   diferencia: Importe;
+  /** H5: provenance.papel_r17 (NUMERO | INTERNO) en los detalles UNO_A_VARIOS de R17. */
+  papel_r17: string | null;
+  /** H5: provenance.regla literal (p. ej. R17). */
+  regla: string | null;
+  /** H5: albaranes.proveedor literal (para reconocer la plataforma ECO360, R19). */
+  farmatic_proveedor: string | null;
+  /** H5: facturas_movimientos.descripcion_literal y categoria (cargos y abonos sin albarán). */
+  concepto_movimiento: string | null;
+  categoria_movimiento: string | null;
+  /**
+   * H5-2: importes del albarán en el PDF (facturas_albaranes_extraidos). importe_total es lo que compara el motor
+   * (repositorios.py:405,453) contra el PUC/PVP de Farmatic: total con IVA y RE, salvo Hefame, donde es la base neta
+   * (hefame.py:155-161). importe_base: base sin IVA (multifactura.py:241). Ver baseAlbaran en server/detalle.ts.
+   */
+  albaran_importe_total: Importe;
+  albaran_importe_base: Importe;
+  /** H5-2: provenance.magnitud_usada de un movimiento (IMPORTE = con IVA; BASE = sin IVA), conciliacion.py:722. */
+  magnitud_usada: string | null;
 }
 
 export interface Incidencia {
@@ -300,9 +318,26 @@ export interface InicioDTO extends Cabecera {
 export interface FacturaListado extends FacturaResumen {
   /** Clave del grupo de proveedor (OpcionFiltroProveedor.clave). */
   proveedor_grupo: string;
+  /** H5: etiqueta del grupo de proveedor (literal más frecuente del CIF). */
+  proveedor_etiqueta: string;
+  /**
+   * H5: vencimiento que se muestra en el listado: el primero con fecha >= hoy; si todos han pasado, el último
+   * (vencido); si ninguno tiene fecha, el primero por orden. null si la factura no documenta vencimientos.
+   */
+  vencimiento_proximo: Vencimiento | null;
+  /** true si vencimiento_proximo ya ha pasado (todos los vencimientos con fecha son anteriores a hoy). */
+  vencimiento_vencido: boolean;
+  /** Número total de vencimientos de la factura ("+N" = vencimientos_total − 1). */
+  vencimientos_total: number;
+  /** H5-2: importes de todos sus vencimientos (null = importe pendiente), para el filtro y la búsqueda. */
+  vencimientos_importes: Importe[];
+  /** Insignia "posible duplicado": incidencia POSIBLE_DUPLICADO abierta. */
+  posible_duplicado: boolean;
 }
 
 export interface FacturasDTO extends Cabecera {
+  /** H5: fecha de referencia ("hoy") del próximo vencimiento y de los filtros de fecha: generado_at (YYYY-MM-DD). */
+  hoy: string;
   facturas: FacturaListado[];
   /** Filtro de proveedor: grupos por CIF (y "sin CIF" por id_proveedor_albaranes R9). */
   proveedores_filtro: OpcionFiltroProveedor[];
@@ -358,8 +393,19 @@ export interface FacturaDetalleDTO extends Cabecera {
   ajustes: Fila[];
   incidencias: Incidencia[];
   historial: EventoHistorial[];
+  /** H5: otras facturas del mismo PDF (multifactura). */
+  otras_facturas_pdf: { factura_id: string; numero_factura: string | null; pagina_inicio: number | null; pagina_fin: number | null }[];
+  /** H5: el PDF original no es legible por cf_lectura (sin USAGE en el esquema storage, DISENO 2BN §2). */
+  pdf_original: typeof PDF_ORIGINAL;
   pago: EstadoPago;
 }
+
+/**
+ * H5: el visor del PDF queda para una fase posterior. pruebas/auditoria_2bn/DISENO.md:31: cf_lectura no tiene USAGE en
+ * el esquema `storage` (postcondición del despliegue de la migración 29), así que la web no puede leer el archivo.
+ * No se piden permisos nuevos.
+ */
+export const PDF_ORIGINAL = { disponible: false, motivo: 'CF_LECTURA_SIN_ACCESO_A_STORAGE' } as const;
 
 export interface FacturaBandeja extends FacturaResumen {
   prioridad: number;
@@ -649,7 +695,12 @@ select
     coalesce(cd.numero_albaran_farmatic, a.numero_albaran) as numero_albaran_farmatic,
     a.fecha as fecha_albaran_farmatic, a.id_proveedor as farmatic_id_proveedor,
     a.importe_puc, a.importe_pvp,
-    cd.importe_farmatic, cd.importe_aplicado, cd.diferencia
+    cd.importe_farmatic, cd.importe_aplicado, cd.diferencia,
+    cd.provenance ->> 'papel_r17' as papel_r17, cd.provenance ->> 'regla' as regla,
+    a.proveedor as farmatic_proveedor,
+    fm.descripcion_literal as concepto_movimiento, fm.categoria as categoria_movimiento,
+    fae.importe_total as albaran_importe_total, fae.importe_base as albaran_importe_base,
+    cd.provenance ->> 'magnitud_usada' as magnitud_usada
 from public.conciliacion_detalles cd
 join public.conciliaciones c on c.id = cd.conciliacion_id and c.es_actual
 join public.facturas f on f.id = c.factura_id
@@ -702,6 +753,47 @@ ${porFactura
 order by fi.created_at desc, fi.id`;
 }
 const OBJ_INCIDENCIAS = ['facturas_incidencias', 'facturas', 'documentos_facturas', 'cf_configuracion'];
+
+/**
+ * H5-2: etiquetas fijas del diagnóstico de casado (valores de provenance que escribe el motor, conciliacion.py).
+ * clase_numero: C:117,180-207 (+ DIFERENTE de comparar_numeros_albaran, C:170-177, que usa Hefame).
+ * estado_matching: C:327-375, 425, 430, 558, 562, 588.
+ * H5-3: un valor no previsto se lista con su recuento ('no_previsto:<VALOR>') solo si es un código
+ * (PATRON_CODIGO_DIAGNOSTICO); cualquier otro valor suma en otros_no_codigo sin mostrarse. Sin valor = sin_valor.
+ */
+export const PATRON_CODIGO_DIAGNOSTICO = /^[A-Z0-9_]{1,40}$/;
+export const ETIQUETAS_CLASE_NUMERO = ['EXACTA', 'LETRA_FINAL', 'FINAL_DOCUMENTAL', 'INTERNO', 'PROVEEDOR', 'SIN_PATRON', 'NO_DISPONIBLE', 'DIFERENTE'] as const;
+export const ETIQUETAS_ESTADO_MATCHING = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', 'SIN_COINCIDENCIA', 'AMBIGUO', 'AMBIGUO_R17',
+  'CONFLICTO_R17', 'ALBARAN_YA_CONCILIADO', 'NUMERO_PROVEEDOR_DISTINTO', 'NUMERO_AUSENTE', 'NO_DEMOSTRABLE',
+  'NUMERO_EXACTO_ECONOMIA_INCOMPATIBLE',
+  // H5-5: versión anterior del motor (scripts 2T/2V, commit e18acf0; ver ESTADOS_MATCHING en detalle.ts).
+  'EXACTO', 'ECONOMICO_UNICO'] as const;
+
+/**
+ * H5-4: etiqueta del diagnóstico sobre una COLUMNA DE TEXTO (`col`), nunca sobre una expresión jsonb. En H5-3 se
+ * pasaba `cd.provenance ->> 'clase_numero'` y `'no_previsto:' || cd.provenance ->> '…'` se leía como
+ * `('no_previsto:' || cd.provenance) ->> '…'` (|| y ->> tienen la misma precedencia, asociativa a la izquierda):
+ * PostgreSQL convertía el literal a jsonb → 22P02 invalid input syntax for type json. Ahora el valor se extrae antes
+ * como text (en el CTE) y aquí solo hay operaciones de texto, con el patrón filtrado antes de concatenar o agregar.
+ * Mismo criterio que etiquetaDiagnostico (TypeScript).
+ */
+function SQL_ETIQUETA(col: string, etiquetas: readonly string[]): string {
+  if (!/^[a-z_][a-z0-9_.]*$/.test(col)) throw new Error('SQL_ETIQUETA_COLUMNA_NO_VALIDA');
+  return `case
+        when ${col} is null or ${col} = '' then 'sin_valor'
+        when ${col} in (${etiquetas.map((e) => `'${e}'`).join(', ')}) then lower(${col})
+        when ${col} ~ '^[A-Z0-9_]{1,40}$' then 'no_previsto:'::text || ${col}
+        else 'otros_no_codigo'
+    end`;
+}
+
+/** Etiqueta de un valor, igual que SQL_ETIQUETA (para los tests y check_fixtures). */
+export function etiquetaDiagnostico(v: string | null, etiquetas: readonly string[]): string {
+  if (v === null || v === '') return 'sin_valor';
+  if (etiquetas.includes(v)) return v.toLowerCase();
+  if (PATRON_CODIGO_DIAGNOSTICO.test(v)) return `no_previsto:${v}`;
+  return 'otros_no_codigo';
+}
 
 export const CONSULTAS = {
   documentos: {
@@ -771,6 +863,19 @@ where f.farmacia = $1 and f.id = $2::uuid`,
   },
 
   factura_lineas: { objetos: OBJ_LINEAS, porFactura: true, sql: sqlLineas(true) },
+
+  /** H5: otras facturas del mismo PDF (multifactura). */
+  factura_otras_pdf: {
+    objetos: ['facturas', 'cf_configuracion'],
+    porFactura: true,
+    sql: `with ${HAB}
+select f2.id as factura_id, f2.numero_factura, f2.pagina_inicio, f2.pagina_fin
+from public.facturas f
+join public.facturas f2 on f2.documento_id = f.documento_id and f2.id <> f.id and f2.farmacia = f.farmacia
+cross join hab
+where f.farmacia = $1 and f.id = $2::uuid
+order by f2.pagina_inicio nulls last, f2.id`,
+  },
 
   factura_impuestos: {
     objetos: ['facturas_impuestos', 'facturas', 'cf_configuracion'],
@@ -1115,6 +1220,33 @@ from v`,
    * H4b, par 08C66676 / 08C66676A (regla B). Las filas no salen del adaptador: resumenPar08C66676 solo
    * devuelve sí/no, recuentos y nombres de columna.
    */
+  /**
+   * H5-2/H5-3: líneas de conciliación vigentes por clase_numero y por estado_matching (provenance). Etiquetas fijas
+   * (ETIQUETAS_*), 'sin_valor', 'no_previsto:<CÓDIGO>' (solo valores ^[A-Z0-9_]{1,40}$) u 'otros_no_codigo', y recuentos.
+   */
+  diagnostico_casado: {
+    objetos: ['conciliacion_detalles', 'conciliaciones', 'facturas', 'cf_configuracion'],
+    porFactura: false,
+    sql: `with ${HAB},
+v as (
+    -- Operadores jsonb solo sobre la columna jsonb provenance; el resultado (->>) ya es text.
+    select (cd.provenance ->> 'clase_numero')::text as clase_raw,
+           (cd.provenance ->> 'estado_matching')::text as estado_raw
+      from public.conciliacion_detalles cd
+      join public.conciliaciones c on c.id = cd.conciliacion_id and c.es_actual
+      join public.facturas f on f.id = c.factura_id
+      cross join hab
+     where f.farmacia = $1
+),
+l as (
+    select ${SQL_ETIQUETA('v.clase_raw', ETIQUETAS_CLASE_NUMERO)} as clase,
+           ${SQL_ETIQUETA('v.estado_raw', ETIQUETAS_ESTADO_MATCHING)} as estado
+      from v
+)
+select 'clase_numero' as eje, l.clase as etiqueta, count(*) as n from l group by l.clase
+union all
+select 'estado_matching' as eje, l.estado as etiqueta, count(*) as n from l group by l.estado`,
+  },
   diagnostico_par_08c66676: {
     objetos: ['albaranes', 'cf_configuracion'],
     porFactura: false,
@@ -1128,6 +1260,38 @@ order by a.id_contador`,
 } satisfies Record<string, Consulta>;
 
 export type ValorDiagnostico = number | boolean | number[] | string[];
+
+/**
+ * Recuentos del diagnóstico de casado; todas las etiquetas fijas presentes (0 incluido). H5-3: los valores no previstos
+ * salen como `<eje>.no_previsto.<CÓDIGO>` solo si el código cumple PATRON_CODIGO_DIAGNOSTICO (se revalida aquí aunque el
+ * SQL ya lo filtra) y no es una etiqueta fija; cualquier otra etiqueta hace fallar el diagnóstico (falla cerrado).
+ */
+export function resumenCasado(filasDiag: Fila[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  const ejes = { clase_numero: ETIQUETAS_CLASE_NUMERO, estado_matching: ETIQUETAS_ESTADO_MATCHING } as const;
+  for (const [eje, etiquetas] of Object.entries(ejes)) {
+    for (const e of [...etiquetas.map((x) => x.toLowerCase()), 'sin_valor', 'otros_no_codigo']) out[`${eje}.${e}`] = 0;
+  }
+  for (const r of filasDiag) {
+    const eje = texto(r.eje);
+    const etiqueta = texto(r.etiqueta) ?? '';
+    let k = `${eje}.${etiqueta}`;
+    if (etiqueta.startsWith('no_previsto:') && (eje === 'clase_numero' || eje === 'estado_matching')) {
+      const codigo = etiqueta.slice('no_previsto:'.length);
+      if (!PATRON_CODIGO_DIAGNOSTICO.test(codigo) || (ejes[eje] as readonly string[]).includes(codigo)) throw new Error('DIAGNOSTICO_ETIQUETA_NO_PREVISTA');
+      k = `${eje}.no_previsto.${codigo}`;
+      out[k] = out[k] ?? 0;
+    }
+    if (!Object.hasOwn(out, k)) throw new Error('DIAGNOSTICO_ETIQUETA_NO_PREVISTA');
+    // H5-4: recuento obligatorio (Number(null) sería 0 y ocultaría un error).
+    if (typeof r.n !== 'number' && typeof r.n !== 'string' && typeof r.n !== 'bigint') throw new Error('DIAGNOSTICO_NO_ES_RECUENTO: casado');
+    if (typeof r.n === 'string' && !/^[0-9]+$/.test(r.n)) throw new Error('DIAGNOSTICO_NO_ES_RECUENTO: casado');
+    const n = Number(r.n);
+    if (!Number.isSafeInteger(n) || n < 0) throw new Error('DIAGNOSTICO_NO_ES_RECUENTO: casado');
+    out[k] += n;
+  }
+  return out;
+}
 
 /** Duplicados en Farmatic: candidatos (mismo proveedor R9 + número sin letra final) y tras el filtro de importe. */
 export function resumenDuplicados(filasCandidatos: Fila[]): Record<string, ValorDiagnostico> {
@@ -1183,9 +1347,11 @@ const ALERTAS: NombreConsulta[] = ['alertas_albaran_no_en_farmatic', 'alertas_du
 /** Consultas que necesita cada bloque. */
 export const CONSULTAS_POR_BLOQUE: Record<Bloque, NombreConsulta[]> = {
   inicio: ['documentos', 'facturas', 'vencimientos', 'incidencias_abiertas', 'luna_mes', ...ALERTAS],
-  facturas: ['facturas', 'documentos'],
+  // H5: + vencimientos (próximo y "+N") e incidencias abiertas (insignia "posible duplicado").
+  facturas: ['facturas', 'documentos', 'vencimientos', 'incidencias_abiertas'],
   facturaDetalle: ['factura_cabecera', 'factura_lineas', 'factura_impuestos', 'factura_vencimientos',
-    'factura_albaranes_extraidos', 'factura_movimientos', 'factura_ajustes', 'factura_incidencias', 'factura_historial'],
+    'factura_albaranes_extraidos', 'factura_movimientos', 'factura_ajustes', 'factura_incidencias', 'factura_historial',
+    'factura_otras_pdf'],
   conciliacionBandeja: ['facturas', 'lineas', ...ALERTAS],
   vencimientos: ['vencimientos'],
   cashflowSemanas: ['vencimientos'],
@@ -1393,6 +1559,14 @@ export function aLinea(r: Fila): LineaConciliacion {
     importe_farmatic: importe(r.importe_farmatic),
     importe_aplicado: importe(r.importe_aplicado),
     diferencia: importe(r.diferencia),
+    papel_r17: texto(r.papel_r17),
+    regla: texto(r.regla),
+    farmatic_proveedor: texto(r.farmatic_proveedor),
+    concepto_movimiento: texto(r.concepto_movimiento),
+    categoria_movimiento: texto(r.categoria_movimiento),
+    albaran_importe_total: importe(r.albaran_importe_total),
+    albaran_importe_base: importe(r.albaran_importe_base),
+    magnitud_usada: texto(r.magnitud_usada),
   };
 }
 
@@ -1951,6 +2125,20 @@ function ahora(): string {
   return new Date().toISOString();
 }
 
+/**
+ * H5: vencimiento del listado de Facturas. El primero con fecha >= hoy; si todos los fechados han pasado, el último
+ * (vencido); si ninguno tiene fecha, el primero por orden. No recalcula importes: el importe null sigue null.
+ */
+export function vencimientoProximo(vs: Vencimiento[], hoy: string): { proximo: Vencimiento | null; vencido: boolean } {
+  if (vs.length === 0) return { proximo: null, vencido: false };
+  const fechados = vs.filter((v) => v.fecha_vencimiento !== null)
+    .sort((a, b) => (a.fecha_vencimiento as string).localeCompare(b.fecha_vencimiento as string) || (a.orden ?? 0) - (b.orden ?? 0));
+  const futuro = fechados.find((v) => (v.fecha_vencimiento as string).slice(0, 10) >= hoy);
+  if (futuro) return { proximo: futuro, vencido: false };
+  if (fechados.length) return { proximo: fechados[fechados.length - 1], vencido: true };
+  return { proximo: [...vs].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))[0], vencido: false };
+}
+
 export const construir = {
   inicio(f: Filas, generado_at: string = ahora()): InicioDTO {
     const docs = filas(f, 'documentos').map(aDocumento);
@@ -2004,12 +2192,27 @@ export const construir = {
   facturas(f: Filas, generado_at: string = ahora()): FacturasDTO {
     const facts = filas(f, 'facturas').map(aFactura);
     const grupos = agruparFacturasPorProveedor(facts);
-    const claveDe = new Map<string, string>();
-    for (const g of grupos) for (const fa of g.facturas) claveDe.set(fa.factura_id, g.grupo.clave);
+    const grupoDe = new Map<string, { clave: string; etiqueta: string }>();
+    for (const g of grupos) for (const fa of g.facturas) grupoDe.set(fa.factura_id, { clave: g.grupo.clave, etiqueta: g.etiqueta });
+    const hoy = generado_at.slice(0, 10);
+    const vencDe = new Map<string, Vencimiento[]>();
+    for (const v of filas(f, 'vencimientos').map(aVencimiento)) vencDe.set(v.factura_id, [...(vencDe.get(v.factura_id) ?? []), v]);
+    const dup = facturasPosibleDuplicado(filas(f, 'incidencias_abiertas').map(aIncidencia), []);
     return {
       farmacia: FARMACIA,
       generado_at,
-      facturas: facts.map((fa) => ({ ...fa, proveedor_grupo: claveDe.get(fa.factura_id) as string })),
+      hoy,
+      facturas: facts.map((fa) => {
+        const g = grupoDe.get(fa.factura_id) as { clave: string; etiqueta: string };
+        const vs = vencDe.get(fa.factura_id) ?? [];
+        const { proximo, vencido } = vencimientoProximo(vs, hoy);
+        return {
+          ...fa, proveedor_grupo: g.clave, proveedor_etiqueta: g.etiqueta,
+          vencimiento_proximo: proximo, vencimiento_vencido: vencido, vencimientos_total: vs.length,
+          vencimientos_importes: [...vs].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)).map((v) => v.importe),
+          posible_duplicado: dup.has(fa.factura_id),
+        };
+      }),
       proveedores_filtro: grupos.map((g) => ({ clave: g.grupo.clave, etiqueta: g.etiqueta, sin_cif: g.grupo.sin_cif, facturas: g.facturas.length })),
       documentos_sin_factura: filas(f, 'documentos').map(aDocumento).filter((d) => d.facturas === 0),
       pago: PAGO_SIN_DATOS,
@@ -2067,6 +2270,11 @@ export const construir = {
       ajustes: filas(f, 'factura_ajustes').map((x) => aFilaImportes(x, ['importe'])),
       incidencias: filas(f, 'factura_incidencias').map(aIncidencia),
       historial: filas(f, 'factura_historial').map(aEvento),
+      otras_facturas_pdf: filas(f, 'factura_otras_pdf').map((x) => ({
+        factura_id: textoReq(x.factura_id, 'factura_id'), numero_factura: texto(x.numero_factura),
+        pagina_inicio: entero(x.pagina_inicio), pagina_fin: entero(x.pagina_fin),
+      })),
+      pdf_original: PDF_ORIGINAL,
       pago: PAGO_SIN_DATOS,
     };
   },

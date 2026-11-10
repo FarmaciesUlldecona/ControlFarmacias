@@ -34,16 +34,17 @@ test.describe('PC 1440', () => {
       await menu.getByRole('link', { name: m.texto, exact: true }).click();
       await expect(page).toHaveURL(m.ruta);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(m.titulo);
-      // Inicio está construida desde H4 (e2e/h4.spec.ts).
-      if (m.ruta !== '/') await expect(page.getByText('En construcción')).toBeVisible();
+      // Inicio está construida desde H4 (e2e/h4.spec.ts) y Facturas desde H5 (e2e/h5.spec.ts).
+      if (m.ruta !== '/' && m.ruta !== '/facturas') await expect(page.getByText('En construcción')).toBeVisible();
       await expect(page.locator(`[data-contrato-ok="${m.bloque}"]`)).toBeVisible();
       await expect(menu.getByRole('link', { name: m.texto, exact: true })).toHaveClass(/activo/);
     }
     // 8.ª ruta: /facturas/:id desde Facturas.
     await menu.getByRole('link', { name: 'Facturas', exact: true }).click();
-    await page.getByRole('navigation', { name: 'Acceso provisional al detalle' }).getByRole('link').first().click();
+    // H5: desde el listado (antes, "Acceso provisional al detalle").
+    await page.locator('.tabla-facturas .enlace-factura').first().click();
     await expect(page).toHaveURL(/\/facturas\/[0-9a-f-]{36}$/);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^Factura /);
+    await expect(page.getByRole('heading', { level: 1 })).not.toBeEmpty();
     await expect(page.locator('[data-contrato-ok="facturaDetalle"]')).toBeVisible();
     // "Próximamente" en gris, no navegable.
     await expect(menu.getByText('Próximamente')).toHaveCount(5);

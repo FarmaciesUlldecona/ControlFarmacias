@@ -603,6 +603,7 @@ def detalles_desde_busqueda(
             albaran_id_contador=row.id_contador,
             factura_albaran_extraido_id=documental.id,
             coincidencia_numero_literal=papel == "NUMERO" and resultado.coincidencia_numero == "EXACTA",
+            importe_documental=importe_documental_con_signo(documental),
             provenance={**comun, "papel_r17": papel, "clase_numero": clase,
                         "numero_operacional": row.numero_albaran, "id_proveedor": row.id_proveedor,
                         "fecha_operacional": row.fecha.isoformat()},
@@ -624,6 +625,7 @@ def detalle_desde_busqueda(
             tipo_relacion=TipoRelacionConciliacion.SIN_COINCIDENCIA,
             importe_aplicado=Decimal("0"),
             factura_albaran_extraido_id=documental.id,
+            importe_documental=importe_documental_con_signo(documental),
             provenance={
                 "fuente": "ALBARANES_SUPABASE",
                 "estado_matching": resultado.estado,
@@ -643,6 +645,7 @@ def detalle_desde_busqueda(
         albaran_id_contador=candidate.id_contador,
         factura_albaran_extraido_id=documental.id,
         coincidencia_numero_literal=resultado.coincidencia_numero == "EXACTA",
+        importe_documental=importe_documental_con_signo(documental),
         provenance={
             "fuente": "ALBARANES_SUPABASE",
             "estado_matching": resultado.estado,
@@ -660,6 +663,71 @@ def detalle_desde_busqueda(
 
 def dinero(valor: Decimal | int | float | str) -> Decimal:
     return Decimal(str(valor)).quantize(CUATRO_DECIMALES, rounding=ROUND_HALF_UP)
+
+
+# 2BR (migracion 30): tolerancia por linea del detalle; la misma con la que casa una linea (0,05) y la de R17.
+TOLERANCIA_LINEA = Decimal("0.0500")
+_RELACIONES_ALBARAN = frozenset({
+    TipoRelacionConciliacion.UNO_A_UNO,
+    TipoRelacionConciliacion.UNO_A_VARIOS,
+    TipoRelacionConciliacion.VARIOS_A_UNO,
+})
+
+
+def importe_documental_con_signo(documental: AlbaranDocumentalTrabajo) -> Decimal | None:
+    """Importe de la linea del PDF con el signo de la factura: ABONO en negativo (como el importe aplicado)."""
+    if documental.importe is None:
+        return None
+    importe = dinero(documental.importe)
+    return -abs(importe) if documental.sentido == "ABONO" else importe
+
+
+@dataclass(frozen=True, slots=True)
+class ValoresLinea:
+    """Detalle por linea (2BR): importe del PDF, importe de Farmatic, diferencia y estado de la linea."""
+
+    importe_documental: Decimal | None
+    importe_farmatic: Decimal | None
+    diferencia: Decimal | None
+    estado: str
+
+
+def valores_por_linea(detalles: Iterable[DetalleConciliacion]) -> tuple[ValoresLinea, ...]:
+    """Valores por linea de cada detalle, en el mismo orden. Espejo exacto de ``cf_detalles_por_linea`` (30).
+
+    - Albaran casado (1:1 o R17): PDF = importe de la linea con signo; Farmatic = importe aplicado del albaran;
+      diferencia = PDF - suma de los albaranes de esa linea (en R17, la misma en los dos detalles);
+      COINCIDE si |diferencia| <= 0,05, si no DIFERENCIA.
+    - Linea sin coincidencia: PDF = importe de la linea, Farmatic vacio, diferencia = PDF, DIFERENCIA.
+    - Linea sin importe documental: NO_EVALUABLE, sin diferencia.
+    - Movimiento o ajuste documental: PDF = importe aplicado; sin contraparte en Farmatic -> NO_EVALUABLE.
+    No cambia el resultado de la factura (``conciliar_importes``).
+    """
+    detalles = tuple(detalles)
+    suma_linea: dict[str, Decimal] = {}
+    for d in detalles:
+        if d.tipo_relacion in _RELACIONES_ALBARAN and d.factura_albaran_extraido_id is not None:
+            suma_linea[d.factura_albaran_extraido_id] = (
+                suma_linea.get(d.factura_albaran_extraido_id, Decimal("0.0000")) + dinero(d.importe_aplicado))
+    valores = []
+    for d in detalles:
+        if d.tipo_relacion == TipoRelacionConciliacion.MOVIMIENTO_NO_FARMATIC:
+            valores.append(ValoresLinea(dinero(d.importe_aplicado), None, None, "NO_EVALUABLE"))
+            continue
+        documental = None
+        if d.factura_albaran_extraido_id is not None and d.importe_documental is not None:
+            documental = dinero(d.importe_documental)
+        farmatic = None if d.tipo_relacion == TipoRelacionConciliacion.SIN_COINCIDENCIA else dinero(
+            d.importe_aplicado)
+        if documental is None:
+            valores.append(ValoresLinea(None, farmatic, None, "NO_EVALUABLE"))
+        elif d.tipo_relacion == TipoRelacionConciliacion.SIN_COINCIDENCIA:
+            valores.append(ValoresLinea(documental, None, documental, "DIFERENCIA"))
+        else:
+            diferencia = (documental - suma_linea[d.factura_albaran_extraido_id]).quantize(CUATRO_DECIMALES)
+            valores.append(ValoresLinea(documental, farmatic, diferencia,
+                                        "COINCIDE" if abs(diferencia) <= TOLERANCIA_LINEA else "DIFERENCIA"))
+    return tuple(valores)
 
 
 def _importe_con_sentido(valor: Decimal, sentido: str) -> Decimal:

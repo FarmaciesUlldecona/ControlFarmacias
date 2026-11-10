@@ -31,6 +31,19 @@ export function fechaLarga(instante: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+/** Instante → '19/10/2026 03:00' en hora de Madrid (null → 'sin fecha'). */
+export function fechaHora(instante: string | null): string {
+  if (instante === null) return 'sin fecha';
+  return new Intl.DateTimeFormat('es-ES', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid',
+  }).format(new Date(instante)).replace(',', '');
+}
+
+/** Porcentaje literal de un tipo (10 → '10 %', 1.4 → '1,4 %'). */
+export function tipoPorcentaje(v: number | null): string {
+  return v === null ? '—' : `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(v)} %`;
+}
+
 export function hora(d: Date): string {
   return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
