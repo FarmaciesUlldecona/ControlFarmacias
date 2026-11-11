@@ -7,13 +7,13 @@ import {
   textoIncidencia, type FacturaDetalleDTO, type Fila, type Importe, type Incidencia, type LineaConciliacion, type Vencimiento,
 } from '../server/contrato.ts';
 import {
-  agruparLineas, avisosFactura, baseAlbaran, etiquetaConciliacion, origenAplicado, etiquetaNormalizacion, etiquetaResultadoMotor, etiquetaRevision,
+  ESTADO_LINEA, TEXTO_HEFAME_BASES, agruparLineas, avisosFactura, baseAlbaran, claveEstadoLinea, etiquetaConciliacion, lineasConDiferencia, origenAplicado, etiquetaNormalizacion, etiquetaResultadoMotor, etiquetaRevision,
   textoEstadoMatching, textoEvento, tipoCasado, type BaseAlbaran, type GrupoLinea,
 } from '../server/detalle.ts';
 import { useApi } from './api.ts';
 import { euros, fechaCorta, fechaHora, plural, tipoPorcentaje } from './formato.ts';
 import { ImporteVencimiento } from './inicio.tsx';
-import { CLASE, ImporteTotal, Insignia, MOVIL, useMedia } from './ui.tsx';
+import { CLASE, ImporteTotal, Insignia, MOVIL, NombreProveedor, useMedia } from './ui.tsx';
 
 const num = (v: unknown): Importe => (typeof v === 'number' ? v : null);
 const txt = (v: unknown): string | null => (typeof v === 'string' ? v : v === null || v === undefined ? null : String(v));
@@ -64,8 +64,8 @@ function CabeceraFactura({ d }: { d: FacturaDetalleDTO }) {
       <div className="cf-arriba">
         <div className="cf-titulo">
           <div className="tenue cf-proveedor">
-            <span className="nombre-truncado" title={f.proveedor_literal ?? f.proveedor ?? undefined}>{f.proveedor_literal ?? f.proveedor ?? 'Proveedor sin identificar'}</span>
-            {d.proveedor.cif ? <span> · CIF {d.proveedor.cif}</span> : <span> · sin CIF</span>}
+            <NombreProveedor comercial={d.proveedor.comercial} razon={d.proveedor.razon_social} respaldo={f.proveedor} />
+            {d.proveedor.cif ? <span className="cf-cif" data-cif> · CIF {d.proveedor.cif}</span> : <span className="cf-cif"> · sin CIF</span>}
           </div>
           <h1 id="t-factura">{f.numero_factura ?? '(sin número)'}</h1>
           <div className="tenue cf-tipo">{tipo}</div>
@@ -110,6 +110,11 @@ function Avisos({ d }: { d: FacturaDetalleDTO }) {
 // Desplegables
 // ---------------------------------------------------------------------------
 
+/** H5-8: "10 % 13,68 €" si consta el tipo; si no, solo el importe (sin guion delante); importe null = "no consta". */
+function TipoCuota({ tipo, cuota }: { tipo: Importe; cuota: Importe }) {
+  return <>{tipo !== null && <><span className="tipo">{tipoPorcentaje(tipo)}</span> </>}<Euros v={cuota} vacio="no consta" /></>;
+}
+
 function Fiscalidad({ d }: { d: FacturaDetalleDTO }) {
   const f = d.factura;
   const xs = d.impuestos;
@@ -124,12 +129,13 @@ function Fiscalidad({ d }: { d: FacturaDetalleDTO }) {
             <thead><tr><th scope="col">Tipo</th><th scope="col" className="num">Base</th><th scope="col" className="num">IVA</th><th scope="col" className="num">Recargo eq.</th><th scope="col" className="num">Total tramo</th></tr></thead>
             <tbody>
               {xs.map((x: Fila, i) => (
+                // H5-8: sin tipo → "tipo no indicado" y el importe solo (nunca "—" delante, que parecería un signo).
                 <tr key={txt(x.id) ?? i} data-impuesto>
-                  <td>{txt(x.concepto) ?? `IVA ${tipoPorcentaje(num(x.tipo_iva))}`}</td>
-                  <td className="num"><Euros v={num(x.base_imponible)} /></td>
-                  <td className="num"><span className="tipo">{tipoPorcentaje(num(x.tipo_iva))}</span> <Euros v={num(x.cuota_iva)} /></td>
-                  <td className="num"><span className="tipo">{tipoPorcentaje(num(x.tipo_recargo_equivalencia))}</span> <Euros v={num(x.cuota_recargo_equivalencia)} /></td>
-                  <td className="num"><Euros v={num(x.total_tramo)} /></td>
+                  <td data-tipo-impuesto>{txt(x.concepto) ?? (num(x.tipo_iva) === null ? <span className="tenue">tipo no indicado</span> : `IVA ${tipoPorcentaje(num(x.tipo_iva))}`)}</td>
+                  <td className="num"><Euros v={num(x.base_imponible)} vacio="no consta" /></td>
+                  <td className="num" data-cuota="iva"><TipoCuota tipo={num(x.tipo_iva)} cuota={num(x.cuota_iva)} /></td>
+                  <td className="num" data-cuota="re"><TipoCuota tipo={num(x.tipo_recargo_equivalencia)} cuota={num(x.cuota_recargo_equivalencia)} /></td>
+                  <td className="num"><Euros v={num(x.total_tramo)} vacio="no consta" /></td>
                 </tr>
               ))}
               <tr className="fila-total">
@@ -164,72 +170,90 @@ function Casado({ l }: { l: LineaConciliacion }) {
   );
 }
 
-/** Diferencia por línea: solo la que haya guardado el motor (la persistencia actual no la guarda: columna vacía). */
-function DiferenciaLinea({ l }: { l: LineaConciliacion }) {
-  if (l.diferencia === null) return <span className="tenue">—</span>;
-  return <span data-diferencia-linea>{euros(l.diferencia)}</span>;
+/**
+ * H5-7: valores por línea del motor (migración 30, cf_detalles_por_linea; conciliacion.py:695-730), tal cual.
+ * importe_documental, importe_farmatic o diferencia null → «no consta», nunca 0.
+ */
+function ImporteLinea({ v, dato }: { v: Importe; dato: string }) {
+  return v === null ? <span className="tenue" data-no-consta={dato}>no consta</span> : <span data-importe-linea={dato}>{euros(v)}</span>;
 }
-
-/** Importe del PDF en la base que compara el motor (total con IVA y RE). Hefame: no lo hay (el motor lo deriva en memoria). */
-function TotalPdf({ g, base }: { g: GrupoLinea; base: BaseAlbaran }) {
-  if (base === 'BASE_NETA') return <span className="tenue" title="Hefame: el PDF trae la base neta; el motor la pasa a bruto sin guardarla" data-total-pdf="no-consta">no consta</span>;
-  return <span data-total-pdf><Euros v={g.documental.importe_total} vacio="no consta" /></span>;
+function DiferenciaLinea({ l }: { l: LineaConciliacion }) {
+  if (l.diferencia === null) return <span className="tenue" data-no-consta="diferencia">no consta</span>;
+  return <span data-diferencia-linea className={l.estado_linea === 'DIFERENCIA' ? 'dif-linea' : undefined}>{euros(l.diferencia)}</span>;
+}
+function EstadoLinea({ l }: { l: LineaConciliacion }) {
+  const k = claveEstadoLinea(l);
+  const e = ESTADO_LINEA[k];
+  return <Insignia color={e.color} data-estado-linea={k}>{e.texto}</Insignia>;
 }
 /** Base sin IVA del PDF (informativa, no se compara). Hefame: su total de albarán es la base neta. */
 function BasePdf({ g, base }: { g: GrupoLinea; base: BaseAlbaran }) {
   const v = base === 'BASE_NETA' ? g.documental.importe_total : g.documental.importe_base;
   return <span className="tenue" data-base-pdf><Euros v={v} vacio="no consta" /></span>;
 }
-function Aplicado({ l }: { l: LineaConciliacion }) {
+function OrigenFarmatic({ l }: { l: LineaConciliacion }) {
   const o = origenAplicado(l);
-  return <span data-aplicado><Euros v={l.importe_aplicado} />{o && <span className="tipo tipo-despues" data-origen-aplicado={o}>{o}</span>}</span>;
+  return o ? <span className="tipo tipo-despues" data-origen-aplicado={o}>{o}</span> : null;
 }
 
-const ENCABEZADOS = {
-  total: { titulo: 'Total albarán (PDF)', base: 'con IVA y RE · se compara' },
-  aplicado: { titulo: 'Aplicado (Farmatic)', base: 'con IVA y RE · PUC o PVP' },
-  base: { titulo: 'Base (PDF)', base: 'sin IVA · no se compara' },
-};
-function Th({ k, num = true }: { k: keyof typeof ENCABEZADOS; num?: boolean }) {
-  const e = ENCABEZADOS[k];
+/** Rótulo de la base de cada importe por línea. Hefame: el importe del PDF es la base neta (hefame.py:155-161). */
+function encabezados(base: BaseAlbaran) {
+  return {
+    pdf: { titulo: 'Importe PDF', base: base === 'BASE_NETA' ? 'base neta sin IVA (Hefame)' : 'con IVA y RE' },
+    farmatic: { titulo: 'Importe Farmatic', base: 'con IVA y RE · PUC o PVP' },
+    diferencia: { titulo: 'Diferencia', base: 'la del motor · PDF − Farmatic' },
+    base: { titulo: 'Base (PDF)', base: 'sin IVA · no se compara' },
+  };
+}
+function Th({ e, num = true, k }: { e: { titulo: string; base: string }; num?: boolean; k: string }) {
   return <th scope="col" className={num ? 'num' : undefined} data-encabezado={k}>{e.titulo}<span className="th-base">{e.base}</span></th>;
 }
 
-function FilasGrupo({ g, base, conDiferencia }: { g: GrupoLinea; base: BaseAlbaran; conDiferencia: boolean }) {
+/** R17: los dos detalles de una línea llevan el mismo importe del PDF, diferencia y estado; si no, se muestran por detalle. */
+function valoresComunes(g: GrupoLinea): boolean {
+  const [a, ...resto] = g.detalles;
+  return resto.every((l) => l.importe_documental === a.importe_documental && l.diferencia === a.diferencia && l.estado_linea === a.estado_linea);
+}
+
+function FilasGrupo({ g, base }: { g: GrupoLinea; base: BaseAlbaran }) {
   const n = g.detalles.length;
+  const comun = valoresComunes(g);
   return (
     <>
-      {g.detalles.map((l, i) => (
-        <tr key={l.detalle_id} data-linea={l.detalle_id} className={i === n - 1 ? undefined : 'sin-borde'}>
-          {i === 0 && (
-            <>
+      {g.detalles.map((l, i) => {
+        const celdaLinea = (c: ReactNode, cls = 'num') => (comun ? (i === 0 && <td rowSpan={n} className={cls}>{c}</td>) : <td className={cls}>{c}</td>);
+        return (
+          <tr key={l.detalle_id} data-linea={l.detalle_id} data-estado-linea-fila={l.estado_linea} className={i === n - 1 ? undefined : 'sin-borde'}>
+            {i === 0 && (
               <td rowSpan={n} className="linea-pdf">
                 <span className="numero">{g.documental.numero ?? 'sin número'}</span>
                 <span className="tenue nota-celda">{fechaCorta(g.documental.fecha)}{g.documental.sentido === 'ABONO' ? ' · abono' : ''}</span>
               </td>
-              <td rowSpan={n} className="num"><TotalPdf g={g} base={base} /></td>
-            </>
-          )}
-          <td className="linea-farmatic">
-            {l.numero_albaran_farmatic ? (
-              <>
-                <span className="numero">{l.numero_albaran_farmatic}</span>
-                <span className="tenue nota-celda">{fechaCorta(l.fecha_albaran_farmatic)}</span>
-              </>
-            ) : <span className="tenue">—</span>}
-          </td>
-          <td className="num"><Aplicado l={l} /></td>
-          <td><Casado l={l} /></td>
-          {i === 0 && <td rowSpan={n} className="num"><BasePdf g={g} base={base} /></td>}
-          {conDiferencia && <td className="num"><DiferenciaLinea l={l} /></td>}
-        </tr>
-      ))}
+            )}
+            {celdaLinea(<ImporteLinea v={l.importe_documental} dato="pdf" />)}
+            <td className="linea-farmatic">
+              {l.numero_albaran_farmatic ? (
+                <>
+                  <span className="numero">{l.numero_albaran_farmatic}</span>
+                  <span className="tenue nota-celda">{fechaCorta(l.fecha_albaran_farmatic)}</span>
+                </>
+              ) : <span className="tenue">—</span>}
+            </td>
+            <td className="num"><span data-aplicado><ImporteLinea v={l.importe_farmatic} dato="farmatic" /><OrigenFarmatic l={l} /></span></td>
+            {celdaLinea(<DiferenciaLinea l={l} />)}
+            {celdaLinea(<EstadoLinea l={l} />, 'estado-linea')}
+            <td><Casado l={l} /></td>
+            {i === 0 && <td rowSpan={n} className="num"><BasePdf g={g} base={base} /></td>}
+          </tr>
+        );
+      })}
     </>
   );
 }
 
-/** Móvil: una tarjeta por línea del PDF con sus albaranes de Farmatic y cómo casaron; cada importe con su base. */
+/** Móvil: una tarjeta por línea del PDF con sus albaranes de Farmatic, cómo casaron, diferencia y estado del motor. */
 function AlbaranesLista({ grupos, base, explicado }: { grupos: GrupoLinea[]; base: BaseAlbaran; explicado: Importe }) {
+  const e = encabezados(base);
   return (
     <>
       <ul className="lista-albaranes">
@@ -237,15 +261,21 @@ function AlbaranesLista({ grupos, base, explicado }: { grupos: GrupoLinea[]; bas
           <li key={g.clave} className="la-linea">
             <div className="la-pdf">
               <span><span className="tenue">PDF</span> <strong>{g.documental.numero ?? 'sin número'}</strong> · {fechaCorta(g.documental.fecha)}</span>
-              <span className="la-importe"><strong><TotalPdf g={g} base={base} /></strong><span className="th-base">con IVA y RE</span></span>
+              <span className="la-importe"><strong><ImporteLinea v={g.detalles[0].importe_documental} dato="pdf" /></strong><span className="th-base">{e.pdf.base}</span></span>
             </div>
             {g.detalles.map((l) => (
               <div key={l.detalle_id} className="la-farmatic" data-linea={l.detalle_id}>
                 <div className="la-fila">
                   <span><span className="tenue">Farmatic</span> {l.numero_albaran_farmatic ?? '—'}</span>
-                  <span className="la-importe"><Aplicado l={l} /><span className="th-base">con IVA y RE</span></span>
+                  <span className="la-importe"><span data-aplicado><ImporteLinea v={l.importe_farmatic} dato="farmatic" /><OrigenFarmatic l={l} /></span><span className="th-base">{e.farmatic.base}</span></span>
                 </div>
                 <Casado l={l} />
+              </div>
+            ))}
+            {(valoresComunes(g) ? [g.detalles[0]] : g.detalles).map((l) => (
+              <div key={`dif-${l.detalle_id}`} className="la-fila">
+                <span><span className="tenue">Diferencia del motor</span> <DiferenciaLinea l={l} /></span>
+                <EstadoLinea l={l} />
               </div>
             ))}
             <div className="la-fila tenue"><span>Base sin IVA (PDF, no se compara)</span><BasePdf g={g} base={base} /></div>
@@ -260,14 +290,15 @@ function AlbaranesLista({ grupos, base, explicado }: { grupos: GrupoLinea[]; bas
 function Albaranes({ d }: { d: FacturaDetalleDTO }) {
   const grupos = agruparLineas(d.lineas.filter((l) => l.tipo_relacion !== 'MOVIMIENTO_NO_FARMATIC'));
   const sin = d.lineas.filter((l) => l.tipo_relacion === 'SIN_COINCIDENCIA').length;
+  const dif = lineasConDiferencia(d.lineas).total;
   const c = d.factura.conciliacion;
   const movil = useMedia(MOVIL);
   const base = baseAlbaran(d.factura.proveedor_literal ?? d.factura.proveedor);
-  // Columna de diferencia por línea solo si el motor la guardó en alguna línea (hoy la persistencia no la escribe).
-  const conDiferencia = d.lineas.some((l) => l.diferencia !== null);
+  const e = encabezados(base);
   return (
     <Desplegable id="albaranes" titulo="Albaranes" abierto
-      insignia={sin > 0 ? <Insignia color="rojo" data-insignia-seccion>{plural(sin, 'sin casar', 'sin casar')}</Insignia>
+      insignia={dif > 0 ? <Insignia color="rojo" data-insignia-seccion>{plural(dif, 'con diferencia', 'con diferencia')}</Insignia>
+        : sin > 0 ? <Insignia color="rojo" data-insignia-seccion>{plural(sin, 'sin casar', 'sin casar')}</Insignia>
         : <Insignia color="gris">{plural(grupos.length, 'línea', 'líneas')}</Insignia>}>
       {grupos.length === 0 ? <p className="tenue vacio">No hay líneas de albarán en la conciliación de esta factura.</p>
         : movil ? <AlbaranesLista grupos={grupos} base={base} explicado={c?.importe_explicado ?? null} /> : (
@@ -275,18 +306,18 @@ function Albaranes({ d }: { d: FacturaDetalleDTO }) {
           <table className="tabla tabla-albaranes">
             <thead>
               <tr>
-                <th scope="col">Línea del PDF</th><Th k="total" />
-                <th scope="col">Albarán Farmatic</th><Th k="aplicado" />
-                <th scope="col">Cómo casó</th><Th k="base" />
-                {conDiferencia && <th scope="col" className="num">Diferencia<span className="th-base">la del motor</span></th>}
+                <th scope="col">Línea del PDF</th><Th k="pdf" e={e.pdf} />
+                <th scope="col">Albarán Farmatic</th><Th k="farmatic" e={e.farmatic} />
+                <Th k="diferencia" e={e.diferencia} /><th scope="col">Estado</th>
+                <th scope="col">Cómo casó</th><Th k="base" e={e.base} />
               </tr>
             </thead>
             <tbody>
-              {grupos.map((g) => <FilasGrupo key={g.clave} g={g} base={base} conDiferencia={conDiferencia} />)}
+              {grupos.map((g) => <FilasGrupo key={g.clave} g={g} base={base} />)}
               <tr className="fila-total">
                 <td colSpan={3}>Explicado según el motor</td>
                 <td className="num" data-explicado><Euros v={c?.importe_explicado ?? null} vacio="sin dato" /></td>
-                <td colSpan={conDiferencia ? 3 : 2} />
+                <td colSpan={4} />
               </tr>
             </tbody>
           </table>
@@ -295,9 +326,9 @@ function Albaranes({ d }: { d: FacturaDetalleDTO }) {
       {grupos.length > 0 && (
         <p className="nota-seccion" data-nota-bases>
           {base === 'BASE_NETA'
-            ? 'Hefame: el PDF trae la base neta de cada albarán. El motor la pasa a importe con IVA y recargo para compararla con Farmatic, pero no guarda ese importe, así que aquí no se muestra.'
-            : 'El motor compara el total de cada albarán del PDF con el PUC (o el PVP) de Farmatic, los dos con IVA y recargo, dentro de su tolerancia.'}
-          {' '}No guarda una diferencia por línea: la diferencia de la factura está en Conciliación.
+            ? <><strong data-aviso-hefame>Hefame. {TEXTO_HEFAME_BASES}.</strong> Para casar, el motor pasa la base neta a importe con IVA sin guardarlo.</>
+            : 'El motor compara el importe de cada albarán del PDF con el PUC (o el PVP) de Farmatic, los dos con IVA y recargo. Cada línea coincide si su diferencia no pasa de 0,05 €.'}
+          {' '}La diferencia total de la factura, con su tolerancia, está en Conciliación.
         </p>
       )}
     </Desplegable>

@@ -40,7 +40,10 @@
       "PowerShell(.\\.venv\\Scripts\\python.exe -B -m src.sql_explorer.listar_objetos)",
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -B -m src.sql_explorer.listar_objetos)",
       "PowerShell(./.venv/Scripts/python.exe -B -m src.sql_explorer.listar_objetos)",
-      "Bash(./.venv/Scripts/python.exe -B -m src.sql_explorer.listar_objetos)"
+      "Bash(./.venv/Scripts/python.exe -B -m src.sql_explorer.listar_objetos)",
+      "PowerShell(.\\.venv\\Scripts\\python.exe -B tests\\consultar_suite.py)",
+      "PowerShell(./.venv/Scripts/python.exe -B tests/consultar_suite.py)",
+      "Bash(./.venv/Scripts/python.exe -B tests/consultar_suite.py)"
     ],
     "ask": [
       "PowerShell(*sincronizar_albaranes*)",
@@ -201,7 +204,8 @@
       "Bash(*SERVICE_ROLE*)",
       "PowerShell(*schtasks*)",
       "Bash(*schtasks*)",
-      "Edit(/logs/agentes/**)"
+      "Edit(/logs/agentes/**)",
+      "Read(/logs/agentes/**)"
     ]
   },
   "hooks": {

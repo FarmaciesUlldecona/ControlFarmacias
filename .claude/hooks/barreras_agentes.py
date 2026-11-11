@@ -4,8 +4,13 @@ Se ejecuta antes de cada herramienta. Devuelve exit 2 (Claude Code bloquea la
 llamada) cuando:
 
 - cualquier llamada (sesión principal o subagente) toca una ruta ``.env*``,
-  nombra ``service_role`` en una ruta o comando, o ejecuta ``schtasks``;
-- se intenta ``git commit`` sin un PASS de ``revisor-reglas`` registrado para
+  ejecuta ``schtasks``, nombra la clave del sistema en una ruta, patrón,
+  comando o URL (2BS: texto normalizado, sin mayúsculas, separadores ni
+  comodines, frente a ``servicerole`` y los nombres de sus variables) o
+  apunta a ``logs/agentes`` con cualquier herramienta (2BS: lectura,
+  búsqueda y escritura; solo lo escriben los hooks y pytest, y el revisor
+  consulta las suites con ``tests/consultar_suite.py``);
+- se intenta ``git commit`` (el subcomando real, 2BS) sin un PASS de ``revisor-reglas`` registrado para
   el estado actual exacto de los cambios, o sin una suite en verde registrada
   por pytest sobre ese mismo estado con el alcance que exige la norma de tests
   (2BH: ``logs/agentes/suites.jsonl``, ``tests/registro_suite.py``);
@@ -48,8 +53,21 @@ NOMBRE_REGISTRO = "barreras.jsonl"
 
 HERRAMIENTAS_ESCRITURA = frozenset({"Write", "Edit", "NotebookEdit"})
 HERRAMIENTAS_SHELL = frozenset({"Bash", "PowerShell"})
+HERRAMIENTAS_BUSQUEDA = frozenset({"Glob", "Grep"})
 HERRAMIENTA_DEVOLUCION = "SubagentHandback"
 CLAVES_RUTA = ("file_path", "path", "notebook_path", "glob")
+# 2BS: campos en los que se busca la clave del sistema, en todas las herramientas. El contenido que se escribe
+# (Write, Edit) no: las migraciones conceden EXECUTE a ese rol y se escriben con normalidad.
+CLAVES_TEXTO = CLAVES_RUTA + ("pattern", "command", "url")
+
+# 2BS (incidente WEB-COMMIT): la clave del sistema en cualquier grafía (service.role, service-role,
+# *service*role*, SERVICE ROLE...) y los nombres de las variables que la guardan (SUPABASE_KEY en
+# src/supabase_client/conexion_supabase.py; SUPABASE_SERVICE_ROLE_KEY).
+CLAVE_SISTEMA = ("servicerole", "supabasekey")
+# 2BS: logs/agentes y sus registros, en texto normalizado.
+REGISTRO_AGENTES = ("logsagent", "usojsonl", "barrerasjsonl", "suitesjsonl")
+# Filtro de Glob/Grep desde una raíz que contiene logs/agentes.
+FILTRO_REGISTRO = ("logs", "jsonl")
 
 # Metacaracteres de shell que permitirían encadenar, redirigir o sustituir.
 METACARACTERES = re.compile(r"[;&|<>`$\n\r]")
@@ -204,6 +222,39 @@ class ComandoEncadenado(ValueError):
     """El comando encadena, redirige o sustituye otros comandos."""
 
 
+def normalizado(texto: str) -> str:
+    """Minúsculas, sin separadores ni comodines: solo letras y dígitos (2BS)."""
+
+    return re.sub(r"[^0-9a-z]", "", texto.casefold())
+
+
+def textos_de(tool_input: dict) -> list[str]:
+    return [
+        valor
+        for clave in CLAVES_TEXTO
+        if isinstance((valor := tool_input.get(clave)), str) and valor
+    ]
+
+
+# 2BS: solo el subcomando real activa la barrera de commit; no ``git merge --no-ff --no-commit``. Admite opciones
+# globales de git entre ``git`` y el subcomando (``-C``/``-c`` con valor, ``--git-dir``, ``--no-pager``...).
+# ``commit-tree`` cuenta (crea commits). Se aplica al comando en minúsculas.
+_VALOR = r"(?:\"[^\"]*\"|'[^']*'|[^\s;&|()]+)"
+_OPCION_GIT = (rf"(?:-c\s*{_VALOR}|--(?:git-dir|work-tree|namespace|super-prefix|config-env|exec-path)"
+               rf"(?:=|\s+){_VALOR}|--?[a-z][\w-]*(?:={_VALOR})?)")
+RE_GIT_COMMIT = re.compile(rf"(?:^|[\s;&|()\"'/])git(?:\.exe)?[\"']?\s+(?:{_OPCION_GIT}\s+)*commit(?![\w])")
+
+
+def es_git_commit(texto: str) -> bool:
+    """``texto`` en minúsculas. Fallo cerrado ante alias definidos en la línea y ``Start-Process``."""
+
+    if RE_GIT_COMMIT.search(texto):
+        return True
+    if not (re.search(r"\bgit\b", texto) and re.search(r"\bcommit\b", texto)):
+        return False
+    return "alias" in texto or "start-process" in texto
+
+
 def tokens_shell(comando: str) -> list[str]:
     """Separa el comando respetando comillas.
 
@@ -253,36 +304,72 @@ def separar_python(comando: str) -> list[str] | None:
 # --- barreras globales -----------------------------------------------------
 
 
+def directorios_protegidos() -> tuple[str, ...]:
+    return (
+        os.path.join(DIRECTORIO_PROYECTO, "logs", "agentes"),
+        estado_git.directorio_logs(),
+    )
+
+
+def busqueda_alcanza_registro(tool_name: str, tool_input: dict, cwd: str) -> bool:
+    """Glob/Grep cuya raíz contiene logs/agentes (2BS).
+
+    Desde la raíz del proyecto, ``logs/`` está ignorado por Git y ripgrep no entra: se bloquea solo si el
+    filtro de rutas nombra ``logs`` o ``jsonl``. Desde ``logs/`` o desde encima del proyecto, siempre.
+    """
+
+    if tool_name not in HERRAMIENTAS_BUSQUEDA:
+        return False
+    raiz = normalizar(tool_input.get("path") or cwd, cwd)
+    filtro = tool_input.get("pattern") if tool_name == "Glob" else tool_input.get("glob")
+    proyecto = os.path.normcase(os.path.realpath(DIRECTORIO_PROYECTO))
+    for protegido in directorios_protegidos():
+        protegido = os.path.normcase(os.path.realpath(protegido))
+        if not dentro_de(protegido, raiz):
+            continue
+        if dentro_de(raiz, os.path.dirname(protegido)) or not dentro_de(raiz, proyecto):
+            return True
+        if isinstance(filtro, str) and any(t in normalizado(filtro) for t in FILTRO_REGISTRO):
+            return True
+    return False
+
+
+BLOQUEO_REGISTRO = "logs/agentes no se lee ni se escribe: solo lo escriben los hooks."
+
+
 def barrera_global(tool_name: str, tool_input: dict, cwd: str) -> Decision:
-    for ruta in rutas_de(tool_input):
+    for texto in textos_de(tool_input):
+        if any(clave in normalizado(texto) for clave in CLAVE_SISTEMA):
+            return bloquear("service_role", "la clave del sistema no se nombra ni se busca con ninguna herramienta.")
+
+    rutas = rutas_de(tool_input)
+    if tool_name == "Glob" and isinstance(tool_input.get("pattern"), str):
+        rutas.append(tool_input["pattern"])
+    for ruta in rutas:
         base = os.path.basename(ruta.replace("\\", "/").rstrip("/"))
         if base.casefold().startswith(".env") or RE_ENV.search(ruta):
             return bloquear("env", "acceso a ficheros .env* prohibido.")
-        if "service_role" in ruta.casefold():
-            return bloquear("service_role", "ruta con service_role prohibida.")
-        protegidos = (
-            os.path.join(DIRECTORIO_PROYECTO, "logs", "agentes"),
-            estado_git.directorio_logs(),
-        )
-        if tool_name in HERRAMIENTAS_ESCRITURA and any(
-            dentro_de(normalizar(ruta, cwd), p) for p in protegidos
+        if any(t in normalizado(ruta) for t in REGISTRO_AGENTES) or any(
+            dentro_de(normalizar(ruta, cwd), p) for p in directorios_protegidos()
         ):
-            return bloquear("registro_agentes", "logs/agentes solo lo escriben los hooks.")
+            return bloquear("registro_agentes", BLOQUEO_REGISTRO)
+    if busqueda_alcanza_registro(tool_name, tool_input, cwd):
+        return bloquear("registro_agentes", BLOQUEO_REGISTRO)
 
-    if tool_name in HERRAMIENTAS_SHELL:
+    if tool_name in HERRAMIENTAS_SHELL or "command" in tool_input:
         comando = tool_input.get("command")
         if not isinstance(comando, str):
             raise ValueError("command no es texto")
         texto = comando.casefold()
-        if "service_role" in texto:
-            return bloquear("service_role", "comando con service_role prohibido.")
         if "schtasks" in texto:
             return bloquear("schtasks", "Task Scheduler solo lo toca Pio a mano.")
         if RE_ENV.search(comando):
             return bloquear("env", "comando que nombra .env* prohibido.")
-        if re.search(r"logs[\\/]+agentes|uso\.jsonl|barreras\.jsonl", texto):
-            return bloquear("registro_agentes", "logs/agentes solo lo escriben los hooks.")
-        if re.search(r"\bgit\b[^\n]*\bcommit\b", texto):
+        if (re.search(r"logs[\\/]+agentes|logs[\\/][^\s\"']*[*?\[]", texto)
+                or any(t in normalizado(texto) for t in REGISTRO_AGENTES)
+                or (re.search(r"\blogs\b", texto) and "agentes" in texto)):
+            return bloquear("registro_agentes", BLOQUEO_REGISTRO)
+        if es_git_commit(texto):
             return barrera_commit()
 
     return PERMITIR
@@ -339,13 +426,20 @@ def comando_shell(tool_input: dict) -> str:
 
 
 def lecturas_revisor(cwd: str) -> set[str]:
-    """REGLAS_CRITICAS y los ficheros que toca el diff del repositorio revisado."""
+    """REGLAS_CRITICAS y los ficheros que toca el diff del repositorio revisado.
+
+    2BS: el registro de suites ya no; para T2, ``tests/consultar_suite.py`` (``COMANDO_CONSULTA_SUITE``).
+    """
 
     raiz = estado_git.raiz_repositorio(cwd)
-    # 2BH (T2): también el registro de suites que escribe pytest.
-    rutas = [os.path.join("docs", "contexto", "REGLAS_CRITICAS.md"), os.path.join("logs", "agentes", "suites.jsonl"),
-             *estado_git.rutas_cambiadas(raiz)]
+    rutas = [os.path.join("docs", "contexto", "REGLAS_CRITICAS.md"), *estado_git.rutas_cambiadas(raiz)]
     return {normalizar(os.path.join(raiz, r), raiz) for r in rutas}
+
+
+# 2BS (T2): único script que el revisor ejecuta además de git. Responde, de solo lectura, si hay una suite en
+# verde para la huella actual, sin exponer el registro. Se compara con el comando en minúsculas.
+COMANDO_CONSULTA_SUITE = re.compile(
+    r"\s*(?:\./)?\.venv[\\/]scripts[\\/]python(?:\.exe)?\s+-b\s+tests[\\/]consultar_suite\.py\s*")
 
 
 def politica_revisor(tool_name: str, tool_input: dict, cwd: str, politica: dict) -> Decision:
@@ -369,8 +463,11 @@ def politica_revisor(tool_name: str, tool_input: dict, cwd: str, politica: dict)
     comando = comando_shell(tool_input)
     if METACARACTERES.search(comando):
         return bloquear("encadenado", "revisor-reglas no puede encadenar ni redirigir comandos.")
+    if COMANDO_CONSULTA_SUITE.fullmatch(comando.casefold()):
+        return PERMITIR
     if not re.fullmatch(r"\s*git\s+(diff|status|log)(\s[^\n]*)?", comando):
-        return bloquear("comando_no_permitido", "revisor-reglas solo ejecuta git diff, git status y git log.")
+        return bloquear("comando_no_permitido",
+                        "revisor-reglas solo ejecuta git diff, git status, git log y tests/consultar_suite.py.")
     texto = comando.casefold()
     if re.search(r"(^|\s)-c(\s|$)", texto) or any(a in texto for a in ARGUMENTOS_GIT_PROHIBIDOS):
         return bloquear("argumento_git", "argumento de git no permitido para revisor-reglas.")

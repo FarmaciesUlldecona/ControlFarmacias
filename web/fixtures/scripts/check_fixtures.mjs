@@ -15,9 +15,10 @@ import { FICHEROS_DTO } from '../../app/server/adaptador_fixtures.ts';
 import { ETIQUETAS_CLASE_NUMERO, ETIQUETAS_ESTADO_MATCHING, PDF_ORIGINAL, resumenCasado, vencimientoProximo } from '../../app/server/contrato.ts';
 import {
   DICCIONARIO_CASADO, RELACION_CASADO, agruparLineas, avisosFactura, baseAlbaran, canonicalizarProveedor, claveCasado, claveRelacion,
-  ESTADOS_MATCHING, ESTADOS_VERSION_ANTERIOR, estadoSinDescripcion, coincideImporte, esEco360, insigniasFactura, origenAplicado, rangoImporteBuscado, textoEstadoMatching, textoEvento,
+  ESTADOS_MATCHING, ESTADOS_VERSION_ANTERIOR, ESTADO_LINEA, TEXTO_HEFAME_BASES, claveEstadoLinea, estadoSinDescripcion, coincideImporte, esEco360, insigniasFactura, origenAplicado, rangoImporteBuscado, textoEstadoMatching, textoEvento,
 } from '../../app/server/detalle.ts';
 import { COLUMNAS_SENTIDO, validarDiagnostico } from '../../app/server/adaptador_real.ts';
+import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
 import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
 
 const RAIZ = join(import.meta.dirname, '..');
@@ -296,7 +297,7 @@ comprobar('H4b/H4c: proveedores agrupados por CIF (nunca proveedor_id); sin CIF 
   const ps = proveedores.proveedores;
   const malos = ps.filter((p) => !/^(cif:[A-Z0-9]+|id:[^\s]+|sin_identificar)$/.test(p.clave) || 'id' in p || 'proveedor_id' in p);
   const claves = ps.map((p) => p.clave);
-  return si(malos.length === 0 && isDeepStrictEqual(claves, ['cif:B00000003', 'cif:A00000001', 'cif:B00000002', 'id:4'])
+  return si(malos.length === 0 && isDeepStrictEqual(claves, ['cif:B00000003', 'cif:A00000001', 'cif:F30004444', 'id:4'])
     && ps.reduce((a, p) => a + p.facturas, 0) === facturas.facturas.length && !CONSULTAS_POR_BLOQUE.proveedores.includes('proveedores'), JSON.stringify(claves));
 });
 comprobar('H4b: etiqueta = literal más frecuente del CIF; resto como alias (F02 "b-00000003" normalizado)', () => {
@@ -595,12 +596,50 @@ comprobar('H5-2: las fixtures cubren las formas de casado (principal) y los tipo
     && !claves.has('SIN:OTRO') && !claves.has('NUMERO:OTRO') && Object.keys(RELACION_CASADO).every((k) => RELACION_CASADO[k].texto && RELACION_CASADO[k].fuente),
   `faltan ${[...faltan, ...faltanRel].join(', ')} · r17 ${r17}`);
 });
-comprobar('H5-2: líneas con la forma de producción (sin importe_documental, importe_farmatic ni diferencia por línea; importes del albarán del PDF)', () => {
-  const malas = lineasTodas.filter((l) => l.importe_documental !== null || l.importe_farmatic !== null || l.diferencia !== null
-    || (l.factura_albaran_extraido_id !== null && l.albaran_importe_total === null)
-    || (l.factura_albaran_extraido_id === null && (l.albaran_importe_total !== null || l.albaran_importe_base !== null)));
+comprobar('H5-7: líneas con la forma de producción tras la migración 30 (valores por línea de cf_detalles_por_linea)', () => {
+  // Fórmula de 30_cf_detalle_por_linea.sql:43-70, escrita aparte del generador para contrastarlo.
+  const r4 = (v) => Math.round(v * 10000) / 10000;
+  const suma = new Map();
+  for (const l of lineasTodas) {
+    if (['UNO_A_UNO', 'UNO_A_VARIOS', 'VARIOS_A_UNO'].includes(l.tipo_relacion)) {
+      const k = `${l.factura_id}|${l.factura_albaran_extraido_id}`; suma.set(k, r4((suma.get(k) ?? 0) + l.importe_aplicado));
+    }
+  }
+  const malas = lineasTodas.filter((l) => {
+    const mov = l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC'; const sin = l.tipo_relacion === 'SIN_COINCIDENCIA';
+    const t = l.albaran_importe_total;
+    const doc = mov || t === null ? null : l.sentido_documental === 'ABONO' ? -Math.abs(t) : t;
+    const pdf = mov ? l.importe_aplicado : doc;
+    const far = mov || sin ? null : l.importe_aplicado;
+    const dif = mov || doc === null ? null : sin ? doc : r4(doc - suma.get(`${l.factura_id}|${l.factura_albaran_extraido_id}`));
+    const est = mov || doc === null ? 'NO_EVALUABLE' : sin ? 'DIFERENCIA' : Math.abs(dif) <= 0.05 ? 'COINCIDE' : 'DIFERENCIA';
+    return l.importe_documental !== pdf || l.importe_farmatic !== far || l.diferencia !== dif || l.estado_linea !== est
+      || (l.factura_albaran_extraido_id === null && (l.albaran_importe_total !== null || l.albaran_importe_base !== null));
+  });
   const mov = facturaDetalle[F(4)].lineas.find((l) => l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC');
-  return si(malas.length === 0 && mov.magnitud_usada === 'IMPORTE', malas.map((l) => `${l.factura_id.slice(-2)}/${l.orden}`).join(', '));
+  const estados = new Set(lineasTodas.map((l) => l.estado_linea));
+  // Ningún null convertido en 0: el movimiento de F07 sin importe aplicado queda sin importe del PDF.
+  const m7 = facturaDetalle[F(7)].lineas.find((l) => l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC');
+  return si(malas.length === 0 && mov.magnitud_usada === 'IMPORTE' && ['COINCIDE', 'DIFERENCIA', 'NO_EVALUABLE'].every((e) => estados.has(e))
+    && m7.importe_aplicado === null && m7.importe_documental === null,
+  malas.map((l) => `${l.factura_id.slice(-2)}/${l.orden}`).join(', '));
+});
+comprobar('H5-7: estados por línea en la web (texto y color), aviso «N albaranes con diferencia» y advertencia Hefame', () => {
+  const k = (n, orden) => claveEstadoLinea(facturaDetalle[F(n)].lineas.find((l) => l.orden === orden));
+  const casos = [[k(3, 1), 'DIFERENCIA'], [k(3, 2), 'COINCIDE'], [k(2, 6), 'NO_EVALUABLE_SIN_PDF'], [k(7, 5), 'NO_EVALUABLE'],
+    [k(4, 4), 'NO_EVALUABLE'], [claveEstadoLinea({ estado_linea: 'RARO', importe_farmatic: null }), 'OTRO']];
+  const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
+  const e = ESTADO_LINEA;
+  const aviso = (n) => avisosFactura(facturaDetalle[F(n)]).find((a) => a.clave === 'lineas-con-diferencia');
+  const a3 = aviso(3), a5 = aviso(5), a7 = aviso(7), a2 = aviso(2);
+  const ok = malos.length === 0 && e.COINCIDE.color === 'verde' && e.DIFERENCIA.color === 'rojo' && e.NO_EVALUABLE.color === 'gris'
+    && e.NO_EVALUABLE.texto === 'Sin contraparte en Farmatic' && e.NO_EVALUABLE_SIN_PDF.texto === 'Sin importe del PDF para comparar'
+    // F03: línea 1 (casada) + línea 4 (sin casar); R17 (dos detalles) cuenta como una línea y está en COINCIDE.
+    && a3?.texto === '2 albaranes con diferencia' && a3.detalle === 'De ellos, 1 sin casar en Farmatic'
+    && a5?.texto === '4 albaranes con diferencia' && a5.detalle.includes(TEXTO_HEFAME_BASES)
+    && a7?.texto === '2 albaranes con diferencia' && a2 === undefined
+    && TEXTO_HEFAME_BASES === 'El motor compara la base neta del PDF (sin IVA) con el importe de Farmatic (con IVA): la diferencia incluye el IVA y el recargo';
+  return si(ok, `${malos.join(', ')} | ${JSON.stringify([a3, a5, a7, a2])}`);
 });
 comprobar('H5-2: bases: Hefame base neta, resto con IVA y RE (criterio de proveedor del motor); aplicado = PUC o PVP', () => {
   const casos = [
@@ -763,6 +802,51 @@ comprobar('H5: historial en texto llano (eventos de las fixtures traducidos)', (
   const ev = [...new Set(Object.values(facturaDetalle).flatMap((d) => d.historial.map((h) => h.evento)))];
   const sin = ev.filter((e) => textoEvento(e) === e);
   return si(sin.length === 0, sin.join(', '));
+});
+
+// --- Casos H5-8 --------------------------------------------------------------------
+comprobar('H5-8: equivalencias de nombre comercial con fuente src/ fichero:línea; sin equivalencia o en conflicto → null', () => {
+  const fuentes = [...Object.values(COMERCIAL_POR_CIF), ...Object.values(COMERCIAL_POR_LITERAL)]
+    .every((e) => /^src\/facturas\/[\w/]+\.py:\d+$/.test(e.fuente) && /^[A-Z][A-Z ]*$/.test(e.nombre));
+  const casos = [
+    [nombreComercial('F30004444', null), 'HEFAME'], [nombreComercial('f-30.004.444', 'Otro literal'), 'HEFAME'],
+    [nombreComercial(null, 'HDAD.FMCTCA.MEDIT.,S.C.L.'), 'HEFAME'], [nombreComercial('A50004324', null), 'ALLIANCE'],
+    [nombreComercial(null, 'Alliance Healthcare España, S.A.'), 'ALLIANCE'], [nombreComercial('F-08-173395', null), 'FEDEFARMA'],
+    [nombreComercial('ESA61674347', null), 'LOGISTA PHARMA'], [nombreComercial(null, 'GRUPO COFARES'), 'COFARES'],
+    [nombreComercial(null, 'COFARES'), null], // sin equivalencia en src: literal del PDF
+    [nombreComercial(null, 'FEDEFARMA'), null], [nombreComercial('B00000003', 'LABORATORIO X'), null],
+    [nombreComercial('F30004444', 'ALLIANCE HEALTHCARE'), null], // CIF y literal en conflicto: falla cerrado
+    [nombreComercial(null, null), null],
+    [razonSocialSecundaria('HEFAME', 'HDAD.FMCTCA.MEDIT.,S.C.L.'), 'HDAD.FMCTCA.MEDIT.,S.C.L.'], [razonSocialSecundaria('HEFAME', 'Hefame'), null],
+    [razonSocialSecundaria(null, 'COFARES'), null],
+  ];
+  const malos = casos.filter(([a, b]) => a !== b);
+  return si(fuentes && malos.length === 0, JSON.stringify(malos));
+});
+comprobar('H5-8: listado, filtro, Inicio y detalle con nombre comercial + razón social del PDF (mismo criterio)', () => {
+  const f5 = facturas.facturas.find((f) => f.factura_id === F(5));
+  const f2 = facturas.facturas.find((f) => f.factura_id === F(2));
+  const f7 = facturas.facturas.find((f) => f.factura_id === F(7));
+  const op = Object.fromEntries(facturas.proveedores_filtro.map((o) => [o.clave, o.comercial]));
+  const pv = Object.fromEntries(proveedores.proveedores.map((p) => [p.clave, p.comercial]));
+  const mapa = proveedores.mapa_documentos.filas.find((x) => x.clave === 'cif:F30004444');
+  const det = facturaDetalle[F(5)].proveedor;
+  const inicio = JSON.parse(readFileSync(join(DTO, 'inicio.json'), 'utf8'));
+  const vAl = inicio.proximos_vencimientos.filter((v) => v.proveedor_comercial === 'ALLIANCE').length;
+  const casosF5 = inicio.atencion.grupos.flatMap((g) => g.casos).filter((c) => c.factura_id === F(5));
+  return si(f5.proveedor_comercial === 'HEFAME' && f5.proveedor_razon_social === 'HDAD.FMCTCA.MEDIT.,S.C.L.' && f5.proveedor_cif_comparable === 'F30004444'
+    && f2.proveedor_comercial === 'ALLIANCE' && f2.proveedor_razon_social === 'Alliance Healthcare España'
+    && f7.proveedor_comercial === null && f7.proveedor_razon_social === 'COFARES'
+    && isDeepStrictEqual(op, pv) && op['cif:F30004444'] === 'HEFAME' && op['cif:B00000003'] === 'ALLIANCE' && op['cif:A00000001'] === null
+    && mapa?.comercial === 'HEFAME' && det.comercial === 'HEFAME' && det.razon_social === 'HDAD.FMCTCA.MEDIT.,S.C.L.' && det.cif === 'F30004444'
+    && vAl > 0 && casosF5.length > 0 && casosF5.every((c) => c.proveedor_comercial === 'HEFAME'),
+  JSON.stringify({ f5, op, pv, det, vAl, casosF5: casosF5.length }));
+});
+comprobar('H5-8: fiscalidad Hefame (F05) sin tipo de IVA: tramo con tipos null, importes conocidos (positivos)', () => {
+  const x = facturaDetalle[F(5)].impuestos;
+  const otros = Object.entries(facturaDetalle).filter(([id]) => id !== F(5)).flatMap(([, d]) => d.impuestos);
+  return si(x.length === 1 && x[0].tipo_iva === null && x[0].tipo_recargo_equivalencia === null && x[0].concepto === null
+    && x[0].cuota_iva > 0 && x[0].cuota_recargo_equivalencia > 0 && otros.every((t) => t.tipo_iva !== null), JSON.stringify(x));
 });
 
 // --- Informe ----------------------------------------------------------------------

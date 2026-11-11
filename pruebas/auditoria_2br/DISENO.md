@@ -67,9 +67,9 @@ cambia**. Tolerancia por línea: **0,05** (la misma con la que casa una línea y
 
 Patrón de `desplegar_29.py`: SHA LF del commit, destino productivo demostrado, una transacción.
 
-- **Precondiciones (9):** 29 aplicada; 30 no aplicada; importes por línea todos NULL (estado de partida del
-  hallazgo); privilegios mínimos 19; flags; sin locks de conciliación; sin locks de normalización; reservas
-  coherentes (R15); propietarios `postgres` (2AX).
+- **Precondiciones (9):** 29 aplicada; 30 no aplicada; **detalles con importes = exactamente los 744 de las 12
+  conciliaciones de septiembre, con su huella** (decisión de Pio, 2BR-D, sección 7); privilegios mínimos 19; flags;
+  sin locks de conciliación; sin locks de normalización; reservas coherentes (R15); propietarios `postgres` (2AX).
 - **Postcondiciones (5):** datos sin cambios (conteos y huellas de facturas, conciliaciones, reservas y de cada
   detalle sin los cuatro valores); relleno igual a `cf_detalles_por_linea` y un valor previo por detalle; valores
   previos = valores antes del relleno; privilegios; propietarios (objetos nuevos del rol que despliega, `postgres` en
@@ -89,3 +89,21 @@ Patrón de `desplegar_29.py`: SHA LF del commit, destino productivo demostrado, 
   factura, que la BD deja `NO_EVALUABLE` y rechazaría); rollback exacto; precondiciones de solo lectura; ensayo
   completo de `desplegar_30.py`.
 - `test_conciliacion_manual_2av.py`: el detalle sintético lleva su importe del PDF (su estado es el de su línea).
+
+## 7. 2BR-D: detalles de septiembre con importes (DECISIÓN DE PIO, 2026-11-10, opción A)
+
+- El preflight READ_ONLY paró en la precondición 3 («importes por línea todos NULL»): en producción 744 de los 963
+  detalles ya tienen importes. Son de 10 de las 12 conciliaciones de septiembre (persistencia anterior a la 24); las
+  5 de octubre (24) están en NULL.
+- **Opción A:** se rellenan las 17 con la fórmula única. La migración 30 no cambia: ya guardaba los cuatro valores de
+  todos los detalles en `conciliacion_detalles_previo_30` y el rollback los devuelve exactos; `provenance` no se toca.
+- `desplegar_30.py`: `sql_precondiciones(conciliaciones, detalles, huella)`; con las constantes de producción
+  (`CONCILIACIONES_SEPTIEMBRE`, 744, `HUELLA_CON_IMPORTES`), la 3 exige exactamente esos detalles, todos de esas
+  conciliaciones, con la huella de la fila completa (`created_at` en epoch). Cualquier otro dato → PARA.
+- `RELLENO_PREVISTO`: el cálculo de `cf_detalles_por_linea` en una consulta de solo lectura (sin la función), para
+  saber antes del despliegue qué cambia. Un test comprueba que es lo que rellena la 30.
+- Relleno previsto en producción: de los 744, 718 iguales y 26 a `NO_EVALUABLE` (16 movimientos, 9 sin coincidencia
+  sin línea del PDF y la `UNO_A_UNO` de 08009277 ligada a un movimiento del PDF, cuya diferencia antigua era PDF −
+  aplicado y no PDF − Farmatic).
+- Tests: escenario como el de septiembre (08007969 con importes, estado por línea y `estado_matching` antiguos, una
+  `UNO_A_UNO` ligada a un movimiento y una `SIN_COINCIDENCIA` sin línea; 08007973 en NULL como octubre).

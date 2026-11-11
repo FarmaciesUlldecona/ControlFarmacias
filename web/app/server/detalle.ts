@@ -14,6 +14,7 @@ import {
   CODIGOS_SENTIDO, TEXTO_INCIDENCIA, TEXTO_VENCIMIENTO_SIN_SENTIDO, idProveedorR9, textoIncidencia,
   type Color, type FacturaDetalleDTO, type FacturaResumen, type Importe, type LineaConciliacion,
 } from './contrato.ts';
+import { canonicalizarProveedor } from './proveedor_comercial.ts';
 
 // ---------------------------------------------------------------------------
 // Estados (tres ejes separados) y etiquetas
@@ -221,24 +222,8 @@ export function tipoCasado(l: LineaConciliacion): Casado {
 // H5-2: bases de los importes de la línea (nunca se recalcula IVA ni diferencia)
 // ---------------------------------------------------------------------------
 
-/**
- * Identidad del proveedor como la canonicaliza el motor (conciliacion.py:124-141): mayúsculas sin acentos, solo
- * A-Z/0-9, sin sufijos societarios; alias autorizados de Alliance y de Hefame mercancía.
- */
-const ALIAS_ALLIANCE = ['SAFA', '1SAFA', 'ALLIANCE', 'ALLIANCEHEALTHCARE', 'ALLIANCEHEALTHCAREESPANA', 'CENCORA', '6PLATAFECO360AH'];
-const ALIAS_HEFAME = ['3HEFAME', 'HEFAME', 'HDADFMCTCAMEDITSCL'];
-export function canonicalizarProveedor(v: string | null): string | null {
-  if (v === null) return null;
-  const tokens = v.normalize('NFKD').replace(/\p{M}/gu, '').toUpperCase().match(/[A-Z0-9]+/g) ?? [];
-  while (tokens.length && ['SA', 'SAU', 'SL', 'SLU', 'SRL'].includes(tokens[tokens.length - 1])) tokens.pop();
-  for (const suf of [['S', 'A', 'U'], ['S', 'L', 'U'], ['S', 'A'], ['S', 'L']]) {
-    if (tokens.slice(-suf.length).join(' ') === suf.join(' ')) { tokens.splice(-suf.length); break; }
-  }
-  const n = tokens.join('') || null;
-  if (n !== null && ALIAS_ALLIANCE.includes(n)) return 'ALLIANCEHEALTHCARECENCORA';
-  if (n !== null && ALIAS_HEFAME.includes(n)) return 'HEFAMEMERCANCIA';
-  return n;
-}
+/** Identidad del proveedor como el motor (conciliacion.py:124-141); vive en proveedor_comercial.ts desde H5-8. */
+export { canonicalizarProveedor };
 
 /**
  * Base de facturas_albaranes_extraidos.importe_total, que es lo que compara el motor (repositorios.py:405,453):
@@ -310,6 +295,44 @@ const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno
  * motivo, datos que faltan y las incidencias abiertas ERROR o de posible duplicado. Los avisos AVISO restantes y las
  * INFO quedan en el desplegable Incidencias. Diferencia y tolerancia: las del motor, tal cual.
  */
+// ---------------------------------------------------------------------------
+// H5-7: estado por línea de la conciliación (migración 30, cf_detalles_por_linea; espejo en
+// conciliacion.py:695-730). La web no recalcula: muestra importe_documental, importe_farmatic, diferencia y estado.
+// ---------------------------------------------------------------------------
+
+export interface EntradaEstadoLinea { texto: string; color: Color }
+/** NO_EVALUABLE con importe de Farmatic: el PDF no trae importe para esa línea (30_cf_detalle_por_linea.sql:25,63,66). */
+export const ESTADO_LINEA = {
+  COINCIDE: { texto: 'Coincide', color: 'verde' },
+  DIFERENCIA: { texto: 'Diferencia', color: 'rojo' },
+  NO_EVALUABLE: { texto: 'Sin contraparte en Farmatic', color: 'gris' },
+  NO_EVALUABLE_SIN_PDF: { texto: 'Sin importe del PDF para comparar', color: 'gris' },
+  OTRO: { texto: 'Estado de línea no reconocido', color: 'gris' },
+} as const satisfies Record<string, EntradaEstadoLinea>;
+export type ClaveEstadoLinea = keyof typeof ESTADO_LINEA;
+
+export function claveEstadoLinea(l: Pick<LineaConciliacion, 'estado_linea' | 'importe_farmatic'>): ClaveEstadoLinea {
+  if (l.estado_linea === 'COINCIDE' || l.estado_linea === 'DIFERENCIA') return l.estado_linea;
+  if (l.estado_linea === 'NO_EVALUABLE') return l.importe_farmatic === null ? 'NO_EVALUABLE' : 'NO_EVALUABLE_SIN_PDF';
+  return 'OTRO';
+}
+
+/**
+ * H5-7 (decisión de Pío): Hefame. La diferencia por línea resta la base neta del PDF (hefame.py:155-161) al importe de
+ * Farmatic con IVA (conciliacion.py:639-648; 30_cf_detalle_por_linea.sql:51-53,63-65). Se muestra tal cual, con este aviso.
+ */
+export const TEXTO_HEFAME_BASES = 'El motor compara la base neta del PDF (sin IVA) con el importe de Farmatic (con IVA): la diferencia incluye el IVA y el recargo';
+
+/** Líneas del PDF (no movimientos) en DIFERENCIA; una línea R17 (dos detalles) cuenta una vez. */
+export function lineasConDiferencia(ls: readonly LineaConciliacion[]): { total: number; sinCasar: number } {
+  const vistas = new Map<string, boolean>();
+  for (const l of ls) {
+    if (l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC' || l.estado_linea !== 'DIFERENCIA') continue;
+    vistas.set(l.factura_albaran_extraido_id ?? l.detalle_id, l.tipo_relacion === 'SIN_COINCIDENCIA');
+  }
+  return { total: vistas.size, sinCasar: [...vistas.values()].filter(Boolean).length };
+}
+
 export function avisosFactura(d: FacturaDetalleDTO): AvisoDetalle[] {
   const out: AvisoDetalle[] = [];
   const f = d.factura;
@@ -325,6 +348,17 @@ export function avisosFactura(d: FacturaDetalleDTO): AvisoDetalle[] {
   } else if (c?.resultado === 'NO_EVALUABLE') {
     out.push({ clave: 'no-evaluable', color: 'rojo', codigo: 'NO_EVALUABLE',
       texto: 'No se puede comprobar la factura contra sus albaranes', detalle: 'Diferencia no evaluable' });
+  }
+  // H5-7: líneas del PDF que el motor deja en DIFERENCIA (estado por línea, migración 30), contadas por línea del PDF.
+  const conDif = lineasConDiferencia(d.lineas);
+  if (conDif.total > 0) {
+    const partes = [
+      conDif.sinCasar > 0 ? `De ${conDif.total === 1 ? 'él' : 'ellos'}, ${conDif.sinCasar} sin casar en Farmatic` : null,
+      // Hefame: misma advertencia que en Albaranes (la diferencia por línea del motor mezcla bases).
+      baseAlbaran(f.proveedor_literal ?? f.proveedor) === 'BASE_NETA' ? TEXTO_HEFAME_BASES : null,
+    ].filter((x) => x !== null);
+    out.push({ clave: 'lineas-con-diferencia', color: 'rojo', codigo: null,
+      texto: `${plural(conDif.total, 'albarán', 'albaranes')} con diferencia`, detalle: partes.length ? partes.join(' · ') : null });
   }
   // Albaranes sin casar, uno por motivo.
   const sin = new Map<ClaveCasado, number>();

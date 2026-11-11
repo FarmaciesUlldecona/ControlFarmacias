@@ -149,11 +149,19 @@ const MOVIMIENTOS = {
 // ---------------------------------------------------------------------------
 
 /** CIF ficticio por proveedor (H3a los tenía todos iguales). FEDEFARMA (P04) sin CIF → grupo "sin CIF". */
-const CIF_H4B = { [P(1)]: 'A00000001', [P(2)]: 'B00000002', [P(3)]: 'B00000003', [P(4)]: null };
+/**
+ * H5-8: HEFAME (P02) con el CIF que su adaptador exige (src/facturas/grupos_funcionales.py:41; CIF de empresa que
+ * consta en el código, no dato de Pío). El resto, ficticio.
+ */
+const CIF_H4B = { [P(1)]: 'A00000001', [P(2)]: 'F30004444', [P(3)]: 'B00000003', [P(4)]: null };
 /** F02: mismo CIF que Alliance escrito con guion y minúscula, y otro literal → alias del grupo. */
 const AJUSTES_FACTURA_H4B = {
   'f0000000-0000-4000-8000-000000000002': { proveedor_cif: 'b-00000003', proveedor_literal: 'Alliance Healthcare España' },
+  // H5-8: razón social que escribe el adaptador Hefame (src/facturas/motor_local/adaptadores/hefame.py:92).
+  'f0000000-0000-4000-8000-000000000005': { proveedor_literal: 'HDAD.FMCTCA.MEDIT.,S.C.L.' },
 };
+/** H5-8: Hefame no documenta los tipos de IVA (TIPOS_FISCALES_NO_DOCUMENTADOS, hefame.py:378): tramo sin tipo. */
+export const F05_SIN_TIPOS_FISCALES = 'f0000000-0000-4000-8000-000000000005';
 /** Incidencia INFO (solo en el detalle de factura; nunca en Inicio). */
 export const INCIDENCIAS_H4B = [{
   incidencia_id: '20000000-0000-4000-8000-000000000041', farmacia: 'PIO', documento_id: null,
@@ -333,8 +341,8 @@ function r17F03(l) {
 }
 /**
  * H5-2: forma de producción de las líneas.
- *  - La persistencia solo escribe importe_aplicado (24_cf_r17_recepcion.sql:338-354): importe_documental,
- *    importe_farmatic y diferencia de conciliacion_detalles quedan null.
+ *  - Aquí se dejan null importe_documental, importe_farmatic y diferencia; H5-7: valoresPorLinea los rellena después como
+ *    la migración 30 (antes de la 30 la persistencia solo escribía importe_aplicado, 24_cf_r17_recepcion.sql:338-354).
  *  - Importes del albarán en el PDF (facturas_albaranes_extraidos): importe_total = el importe documental H3a (total
  *    con IVA y RE, lo que compara el motor) e importe_base = su base sin IVA (ficticia: IVA 10 % + RE 1,4 %).
  *    Hefame (F05): el total del albarán es la base neta (hefame.py:155-161) e importe_base no consta.
@@ -376,13 +384,72 @@ function lineasH5(ls) {
   // Las líneas sin casar de F07 van tras las suyas (mismo orden que la consulta: factura_id, orden).
   const ultimaF07 = out.findLastIndex((x) => x.factura_id === FX('07'));
   out.splice(ultimaF07 + 1, 0, ...extrasF07);
-  return out;
+  return valoresPorLinea(out.map((l) => {
+    const a = AJUSTES_PDF_H5_7.find(([f, o]) => l.factura_id === f && l.orden === o);
+    return a ? { ...l, ...a[2] } : l;
+  }));
+}
+/**
+ * H5-7: importes del PDF (facturas_albaranes_extraidos) ajustados para cubrir los estados por línea (todo ficticio):
+ *  - F03 línea 1: el PDF trae 0,10 € más que Farmatic → DIFERENCIA en una línea casada (no Hefame);
+ *  - F02 línea 6: el PDF no trae importe → NO_EVALUABLE con importe de Farmatic ("Sin importe del PDF para comparar");
+ *  - F07 línea 5 (sin casar): el PDF no trae importe → NO_EVALUABLE sin Farmatic ("Sin contraparte en Farmatic").
+ */
+const AJUSTES_PDF_H5_7 = [
+  [FX('03'), 1, { albaran_importe_total: 234.65 }],
+  [FX('02'), 6, { albaran_importe_total: null, albaran_importe_base: null }],
+  [FX('07'), 5, { albaran_importe_total: null, albaran_importe_base: null }],
+];
+
+/**
+ * H5-7: detalle por línea como lo deja la migración 30 en producción (cf_detalles_por_linea,
+ * 30_cf_detalle_por_linea.sql:43-70; espejo en conciliacion.py:695-730). En FIXTURES este generador hace de BD:
+ *  - PDF = facturas_albaranes_extraidos.importe_total con signo (ABONO en negativo); movimiento: el importe aplicado;
+ *  - Farmatic = importe aplicado, salvo movimiento o sin coincidencia (null);
+ *  - diferencia = PDF − suma de lo aplicado en esa línea del PDF (R17: los dos detalles); sin coincidencia: = PDF;
+ *    null si es movimiento o el PDF no trae importe;
+ *  - estado: NO_EVALUABLE (movimiento o sin importe del PDF), DIFERENCIA (sin coincidencia), COINCIDE si |dif| ≤ 0,05.
+ * Hefame (F05): el importe_total del PDF es la base neta y Farmatic va con IVA: la diferencia mezcla bases, como en producción.
+ */
+const r4 = (v) => Math.round(v * 10000) / 10000;
+const CASADOS = ['UNO_A_UNO', 'UNO_A_VARIOS', 'VARIOS_A_UNO'];
+function valoresPorLinea(ls) {
+  const suma = new Map();
+  for (const l of ls) {
+    if (!CASADOS.includes(l.tipo_relacion)) continue;
+    const k = `${l.factura_id}|${l.factura_albaran_extraido_id}`;
+    suma.set(k, r4((suma.get(k) ?? 0) + l.importe_aplicado));
+  }
+  return ls.map((l) => {
+    const mov = l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC';
+    const sin = l.tipo_relacion === 'SIN_COINCIDENCIA';
+    const t = l.albaran_importe_total;
+    const documental = mov || t === null ? null : l.sentido_documental === 'ABONO' ? -Math.abs(r4(t)) : r4(t);
+    const dif = mov || documental === null ? null : sin ? documental
+      : r4(documental - (suma.get(`${l.factura_id}|${l.factura_albaran_extraido_id}`) ?? 0));
+    return {
+      ...l,
+      // null nunca se convierte en 0 (en la BD, round(null) = null).
+      importe_documental: mov ? (l.importe_aplicado === null ? null : r4(l.importe_aplicado)) : documental,
+      importe_farmatic: mov || sin || l.importe_aplicado === null ? null : r4(l.importe_aplicado),
+      diferencia: dif,
+      estado_linea: mov || documental === null ? 'NO_EVALUABLE' : sin ? 'DIFERENCIA' : Math.abs(dif) <= 0.05 ? 'COINCIDE' : 'DIFERENCIA',
+    };
+  });
 }
 const extrasF07 = [];
 /** Impuestos: un tramo por factura con base e IVA conocidos (IVA 10 % y recargo 1,4 %, los de los totales H3a). */
 function impuestosH5(r) {
   if (r.base_imponible_total === null || r.iva_total === null) return [];
   const re = r.recargo_equivalencia_total;
+  if (r.factura_id === F05_SIN_TIPOS_FISCALES) {
+    return [{
+      id: `90000000-0000-4000-8000-0000000000${r.factura_id.slice(-2)}`, orden: 1, concepto: null,
+      base_imponible: r.base_imponible_total, tipo_iva: null, cuota_iva: r.iva_total,
+      tipo_recargo_equivalencia: null, cuota_recargo_equivalencia: re,
+      total_tramo: Math.round((r.base_imponible_total + r.iva_total + (re ?? 0)) * 100) / 100, literal: null,
+    }];
+  }
   return [{
     id: `90000000-0000-4000-8000-0000000000${r.factura_id.slice(-2)}`, orden: 1, concepto: 'IVA 10 %',
     base_imponible: r.base_imponible_total, tipo_iva: 10, cuota_iva: r.iva_total,

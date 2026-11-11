@@ -11,7 +11,8 @@ import {
 import { useApiRecargable } from './api.ts';
 import { euros, fechaCorta, plural } from './formato.ts';
 import { ImporteVencimiento } from './inicio.tsx';
-import { Cabecera, ImporteTotal, Insignia, MOVIL, useMedia } from './ui.tsx';
+import { razonSocialSecundaria } from '../server/proveedor_comercial.ts';
+import { Cabecera, ImporteTotal, Insignia, MOVIL, NombreProveedor, useMedia } from './ui.tsx';
 
 export const POR_PAGINA = 50;
 
@@ -70,10 +71,14 @@ export function plano(s: string): string {
   return s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
 }
 
-/** Texto en el que busca la búsqueda global: proveedor (etiqueta y literal), nº de factura e importe (es-ES y con punto). */
-/** Texto de la búsqueda global: proveedor (etiqueta y literal) y nº de factura. Los importes van por coincideImporte. */
-function textoBusqueda(f: FacturaListado): string {
-  return plano([f.proveedor_etiqueta, f.proveedor_literal ?? '', f.proveedor ?? '', f.numero_factura ?? ''].join(' '));
+/**
+ * Texto de la búsqueda global (H5-8): nombre comercial, razón social (literal del PDF y etiqueta del grupo), nombre
+ * resuelto, CIF (comparable y tal como consta) y nº de factura; sin mayúsculas ni acentos. Importes: coincideImporte.
+ */
+export function textoBusqueda(f: FacturaListado): string {
+  return plano([f.proveedor_comercial ?? '', f.proveedor_razon_social ?? '', f.proveedor_etiqueta, f.proveedor_literal ?? '',
+    f.proveedor ?? '', f.proveedor_cif_comparable ?? '', f.proveedor_nif_documental ?? '', f.proveedor_cif ?? '',
+    f.numero_factura ?? ''].join(' '));
 }
 
 /**
@@ -83,6 +88,9 @@ function textoBusqueda(f: FacturaListado): string {
 function cumpleBusqueda(f: FacturaListado, q: string): boolean {
   if (q.trim() === '') return true;
   if (coincideImporte(q, [f.importe_total, ...f.vencimientos_importes])) return true;
+  // H5-8: CIF escrito con guiones, puntos o espacios ("F-30004444") contra el CIF comparable.
+  const cifQ = q.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (cifQ.length >= 5 && /\d/.test(cifQ) && f.proveedor_cif_comparable?.includes(cifQ)) return true;
   return plano(q).split(/\s+/).every((p) => textoBusqueda(f).includes(p));
 }
 
@@ -132,7 +140,7 @@ function cumpleFiltros(f: FacturaListado, x: Filtros, hoy: string): boolean {
 
 type Valor = string | number | null;
 const COLUMNAS: { clave: string; texto: string; num?: boolean; valor: (f: FacturaListado) => Valor }[] = [
-  { clave: 'proveedor', texto: 'Proveedor', valor: (f) => plano(f.proveedor_etiqueta) },
+  { clave: 'proveedor', texto: 'Proveedor', valor: (f) => plano(f.proveedor_comercial ?? f.proveedor_razon_social ?? f.proveedor_etiqueta) },
   { clave: 'numero', texto: 'Nº factura', valor: (f) => f.numero_factura },
   { clave: 'fecha', texto: 'Fecha', valor: (f) => f.fecha_factura },
   { clave: 'total', texto: 'Total', num: true, valor: (f) => f.importe_total },
@@ -191,10 +199,16 @@ function Insignias({ f }: { f: FacturaListado }) {
 function Proveedor({ f, opcion }: { f: FacturaListado; opcion: OpcionFiltroProveedor | undefined }) {
   return (
     <span className="celda-proveedor">
-      <span className="nombre-truncado" title={f.proveedor_etiqueta}>{f.proveedor_etiqueta}</span>
+      <NombreProveedor comercial={f.proveedor_comercial} razon={f.proveedor_razon_social} respaldo={f.proveedor_etiqueta} />
       {opcion?.sin_cif && <span className="nota-celda">sin CIF</span>}
     </span>
   );
+}
+
+/** H5-8: opción del filtro: nombre comercial · razón social del grupo (si difiere); "(sin CIF)" si el grupo no tiene. */
+export function textoOpcionProveedor(o: OpcionFiltroProveedor): string {
+  const sec = razonSocialSecundaria(o.comercial, o.etiqueta);
+  return `${o.comercial ?? o.etiqueta}${sec ? ` · ${sec}` : ''}${o.sin_cif ? ' (sin CIF)' : ''}`;
 }
 
 function Fila({ f, opcion }: { f: FacturaListado; opcion: OpcionFiltroProveedor | undefined }) {
@@ -320,7 +334,7 @@ export function PaginaFacturas() {
         <div className="facturas" data-contrato-ok="facturas" aria-busy={recargando}>
           <label className="buscar">
             <span>Buscar</span>
-            <input type="search" name="q" placeholder="Proveedor, nº de factura o importe" value={filtros.q}
+            <input type="search" name="q" placeholder="Proveedor, CIF, nº de factura o importe" value={filtros.q}
               onChange={(e) => cambiar({ q: e.target.value })} />
           </label>
 
@@ -336,7 +350,7 @@ export function PaginaFacturas() {
 
           <section className="tarjeta filtros" aria-label="Filtros">
             <Selector nombre="proveedor" etiqueta="Proveedor" todos="Todos" valor={filtros.proveedor} onChange={(v) => cambiar({ proveedor: v })}
-              opciones={d.proveedores_filtro.map((o) => ({ valor: o.clave, texto: `${o.etiqueta}${o.sin_cif ? ' (sin CIF)' : ''}` }))} />
+              opciones={d.proveedores_filtro.map((o) => ({ valor: o.clave, texto: textoOpcionProveedor(o) }))} />
             <Selector nombre="fecha" etiqueta="Fecha factura" todos="Todas" valor={filtros.fecha} onChange={(v) => cambiar({ fecha: v })}
               opciones={[{ valor: 'ultimos30', texto: 'Últimos 30 días' }, ...meses.map((m) => ({ valor: `mes:${m}`, texto: nombreMes(m) }))]} />
             <Selector nombre="venc" etiqueta="Vencimiento" todos="Cualquiera" valor={filtros.venc} onChange={(v) => cambiar({ venc: v })}

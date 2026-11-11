@@ -1,7 +1,23 @@
 // Piezas comunes de las pantallas (H5).
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Color, Importe } from '../server/contrato.ts';
+import { razonSocialSecundaria } from '../server/proveedor_comercial.ts';
 import { euros } from './formato.ts';
+
+/**
+ * H5-8: proveedor = nombre comercial (principal) + razón social del PDF (secundaria, pequeña). Sin equivalencia: el
+ * literal del PDF como principal (o el respaldo). Nombre largo: una línea con "…" y el completo en title.
+ */
+export function NombreProveedor({ comercial, razon, respaldo = null }: { comercial: string | null; razon: string | null; respaldo?: string | null }) {
+  const principal = comercial ?? razon ?? respaldo ?? 'Proveedor sin identificar';
+  const secundaria = razonSocialSecundaria(comercial, razon);
+  return (
+    <span className="nombre-proveedor" data-proveedor-principal={principal}>
+      <span className="nombre-truncado" title={principal}>{principal}</span>
+      {secundaria && <span className="razon-social nombre-truncado" title={secundaria} data-razon-social>{secundaria}</span>}
+    </span>
+  );
+}
 
 export const CLASE: Record<Color, string> = { verde: 'g', azul: 'b', naranja: 'o', rojo: 'r', gris: 'n' };
 

@@ -5,7 +5,7 @@ import { describe, test } from 'node:test';
 import {
   CONSULTAS, CONSULTAS_CHECK, ETIQUETAS_CLASE_NUMERO, ETIQUETAS_ESTADO_MATCHING, etiquetaDiagnostico, resumenCasado,
 } from '../contrato.ts';
-import { NOMBRES_DIAGNOSTICO, validarDiagnostico } from '../adaptador_real.ts';
+import { NOMBRES_DIAGNOSTICO, resumenEstadoLinea, validarDiagnostico } from '../adaptador_real.ts';
 
 const E = ETIQUETAS_ESTADO_MATCHING;
 
@@ -116,6 +116,40 @@ describe('SQL de diagnósticos (salvaguardas del 22P02 de H5-3)', () => {
   });
 
   test('cada diagnóstico tiene nombre propio (una línea y una transacción por diagnóstico)', () => {
-    assert.deepEqual([...NOMBRES_DIAGNOSTICO], ['vencimientos', 'documentos', 'tipo_documento', 'sentido', 'casado', 'duplicados', 'par_08C66676']);
+    assert.deepEqual([...NOMBRES_DIAGNOSTICO], ['vencimientos', 'documentos', 'tipo_documento', 'sentido', 'casado', 'estado_linea',
+      'duplicados', 'par_08C66676']);
+  });
+
+  test('estado_linea (H5-7): solo text, sin jsonb; un valor no previsto solo suma en otros_valores', () => {
+    const sql = CONSULTAS_CHECK.diagnostico_estado_linea.sql;
+    assert.ok(!/->|#>|::jsonb?\b/.test(sql));
+    assert.match(sql, /cd\.estado::text as estado/);
+    assert.match(sql, /not in \('COINCIDE', 'DIFERENCIA', 'NO_EVALUABLE'\)\) as otros_valores/);
+    assert.match(sql, /v\.diferencia is null\) as diferencia_null/);
+  });
+});
+
+describe('resumenEstadoLinea (H5-7)', () => {
+  const fila = { lineas: '10', coincide: '6', diferencia: '2', no_evaluable: '1', sin_valor: '0', otros_valores: '1', diferencia_null: '2' };
+  test('recuentos coherentes', () => {
+    const d = resumenEstadoLinea(fila);
+    assert.deepEqual(d, { lineas: 10, coincide: 6, diferencia: 2, no_evaluable: 1, sin_valor: 0, otros_valores: 1, diferencia_null: 2 });
+    assert.doesNotThrow(() => validarDiagnostico(d));
+  });
+  test('sin líneas: todo a 0', () => {
+    assert.deepEqual(Object.values(resumenEstadoLinea(Object.fromEntries(Object.keys(fila).map((k) => [k, 0])))), [0, 0, 0, 0, 0, 0, 0]);
+  });
+  test('falla cerrado', () => {
+    const malas = [
+      { ...fila, coincide: '7' }, // los estados no reparten el total
+      { ...fila, diferencia_null: '11' }, // más nulls que líneas
+      { ...fila, otros_valores: null },
+      { ...fila, sin_valor: '-1' },
+      { ...fila, diferencia: '1.5' },
+      { ...fila, coincide: 'COINCIDE' },
+      { ...fila, lineas: true },
+      (({ diferencia_null, ...r }) => r)(fila), // eslint-disable-line @typescript-eslint/no-unused-vars
+    ];
+    for (const f of malas) assert.throws(() => resumenEstadoLinea(f as Record<string, unknown>), Error, JSON.stringify(f));
   });
 });

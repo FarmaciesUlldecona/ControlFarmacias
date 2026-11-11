@@ -105,6 +105,128 @@ def test_sesion_principal_sin_politica_de_agente():
     assert _bash("git status").codigo == 0
 
 
+# 1b. Hito 2BS: huecos de la sesión WEB-COMMIT (tras dos bloqueos, lectura de logs/agentes con Glob y búsqueda
+# de "service.role")
+
+REGISTRO = RAIZ / "logs" / "agentes"
+TODOS = [None, "revisor-reglas", "general-purpose", "explorador-farmatic", "documentador"]
+
+
+@pytest.mark.parametrize("agente", TODOS)
+@pytest.mark.parametrize(
+    ("herramienta", "entrada"),
+    [
+        ("Read", {"file_path": str(REGISTRO / "suites.jsonl")}),
+        ("Read", {"file_path": "logs/agentes/uso.jsonl"}),
+        ("Read", {"file_path": "logs\\agentes\\barreras.jsonl"}),
+        ("Glob", {"pattern": "*", "path": str(REGISTRO)}),
+        ("Glob", {"pattern": "agentes/*", "path": str(RAIZ / "logs")}),
+        ("Glob", {"pattern": "logs/**"}),
+        ("Glob", {"pattern": "**/*.jsonl"}),
+        ("Glob", {"pattern": "**/*.py", "path": str(RAIZ.parent)}),
+        ("Grep", {"pattern": "x", "path": str(REGISTRO)}),
+        ("Grep", {"pattern": "x", "path": str(RAIZ / "logs")}),
+        ("Grep", {"pattern": "x", "glob": "*.jsonl"}),
+        ("Grep", {"pattern": "x", "glob": "logs/**"}),
+        ("Edit", {"file_path": str(REGISTRO / "suites.jsonl"), "old_string": "a", "new_string": "b"}),
+        ("Write", {"file_path": str(REGISTRO / "nuevo.txt"), "content": "x"}),
+        ("NotebookEdit", {"notebook_path": str(REGISTRO / "n.ipynb"), "new_source": "x"}),
+    ],
+)
+def test_registro_de_agentes_bloqueado_en_todas_las_herramientas(agente, herramienta, entrada):
+    assert _decidir(herramienta, entrada, agente).motivo == "registro_agentes"
+
+
+@pytest.mark.parametrize(
+    "comando",
+    ["type logs\\agentes\\uso.jsonl", "cat logs/agentes/suites.jsonl", "cat logs/*/s*", "ls logs/ag*",
+     "cd logs && cat agentes/x", "type suites.jsonl", "Get-Content uso.jsonl"],
+)
+def test_registro_de_agentes_bloqueado_en_la_shell(comando):
+    assert _bash(comando).motivo == "registro_agentes"
+
+
+def test_registro_de_agentes_bloqueado_con_la_raiz_de_log_dir(monkeypatch, tmp_path):
+    monkeypatch.setenv("CONTROLFARMACIAS_LOG_DIR", str(tmp_path))
+    assert _decidir("Read", {"file_path": str(tmp_path / "agentes" / "x.jsonl")}).motivo == "registro_agentes"
+    assert _decidir("Glob", {"pattern": "*", "path": str(tmp_path)}).motivo == "registro_agentes"
+
+
+@pytest.mark.parametrize(
+    ("herramienta", "entrada"),
+    [
+        ("Glob", {"pattern": "**/*.py"}),
+        ("Glob", {"pattern": "*.md", "path": str(RAIZ / ".claude" / "agents")}),
+        ("Grep", {"pattern": "def main", "path": str(RAIZ)}),
+        ("Grep", {"pattern": "registro", "path": "tests", "glob": "*.py"}),
+        ("Read", {"file_path": str(RAIZ / "tests" / "registro_suite.py")}),
+        ("Read", {"file_path": str(RAIZ / ".claude" / "hooks" / "barreras_agentes.py")}),
+    ],
+)
+def test_busquedas_normales_permitidas(herramienta, entrada):
+    assert _decidir(herramienta, entrada).codigo == 0
+
+
+@pytest.mark.parametrize("agente", TODOS)
+@pytest.mark.parametrize(
+    ("herramienta", "entrada"),
+    [
+        ("Grep", {"pattern": "service.role"}),
+        ("Grep", {"pattern": "SERVICE ROLE", "path": "src"}),
+        ("Grep", {"pattern": "service[_-]?role"}),
+        ("Grep", {"pattern": "x", "glob": "*service*role*"}),
+        ("Grep", {"pattern": "SUPABASE_KEY"}),
+        ("Grep", {"pattern": "supabase.key"}),
+        ("Glob", {"pattern": "**/*service*role*"}),
+        ("Read", {"file_path": "config/Service-Role.txt"}),
+        ("Read", {"file_path": "config/clave_service_role.txt"}),
+        ("Bash", {"command": "echo $SUPABASE_KEY"}),
+        ("Bash", {"command": "grep -r service.role src"}),
+        ("PowerShell", {"command": "$env:SUPABASE_SERVICE_ROLE_KEY"}),
+        ("PowerShell", {"command": "Select-String -Pattern 'Service Role' -Path src"}),
+        ("Monitor", {"command": "grep service-role x"}),
+        ("WebFetch", {"url": "https://ejemplo.invalid/?service_role=1"}),
+    ],
+)
+def test_clave_del_sistema_en_cualquier_grafia_y_herramienta(agente, herramienta, entrada):
+    assert _decidir(herramienta, entrada, agente).motivo == "service_role"
+
+
+def test_contenido_escrito_no_se_analiza():
+    """Las migraciones conceden EXECUTE al rol del sistema: se escriben con normalidad (2BS)."""
+    entrada = {"file_path": str(RAIZ / "sql" / "x.sql"), "old_string": "a",
+               "new_string": "grant execute on function f() to service_role;"}
+    assert _decidir("Edit", entrada).codigo == 0
+    assert _decidir("Bash", {"command": "git status", "description": "service role"}).codigo == 0
+
+
+@pytest.mark.parametrize(
+    "comando",
+    ["git commit -m x", "git add -A && git commit -F m.txt", 'git -C "C:/a b" commit -m x', "git --no-pager commit",
+     "git -c user.name=x commit", "& 'C:/Program Files/Git/cmd/git.exe' commit", "/usr/bin/git commit",
+     "cd x; git commit", "GIT COMMIT --amend", "git commit-tree abc", "git -c alias.ci=commit ci",
+     "Start-Process git -ArgumentList 'commit'"],
+)
+def test_subcomando_commit_pasa_por_la_barrera(comando, monkeypatch):
+    llamadas = []
+    monkeypatch.setattr(barreras, "barrera_commit", lambda: llamadas.append(1) or barreras.PERMITIR)
+    _bash(comando)
+    assert llamadas == [1]
+
+
+@pytest.mark.parametrize(
+    "comando",
+    ["git merge --no-ff --no-commit rama", "git log --grep commit", "git log -n 1 --format=%s", "echo commit",
+     "git show HEAD --stat", "git status"],
+)
+def test_falso_positivo_de_commit(comando, monkeypatch):
+    """2BS: «git merge --no-ff --no-commit» activaba la barrera (barreras_agentes.py:285 antes del 2BS)."""
+    llamadas = []
+    monkeypatch.setattr(barreras, "barrera_commit", lambda: llamadas.append(1) or barreras.PERMITIR)
+    _bash(comando)
+    assert llamadas == []
+
+
 # 2. Commit condicionado al PASS de revisor-reglas
 
 
@@ -283,12 +405,36 @@ def test_suite_de_otro_repositorio_no_vale(tmp_path):
     assert barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], suites).motivo == "commit_sin_suite"
 
 
-def test_revisor_puede_leer_el_registro_de_suites(monkeypatch):
+@pytest.mark.parametrize("herramienta", ["Read", "Grep"])
+def test_revisor_ya_no_lee_el_registro_de_suites(herramienta, monkeypatch):
+    """2BS: para T2 el revisor usa tests/consultar_suite.py; el registro no lo lee ninguna herramienta."""
     monkeypatch.setattr(estado_git, "rutas_cambiadas", lambda raiz: [])
     ruta = str(Path(estado_git.DIRECTORIO_PROYECTO) / "logs" / "agentes" / "suites.jsonl")
-    assert _decidir("Read", {"file_path": ruta}, agente="revisor-reglas").codigo == 0
-    otra = str(Path(estado_git.DIRECTORIO_PROYECTO) / "logs" / "agentes" / "uso.jsonl")
-    assert _decidir("Read", {"file_path": otra}, agente="revisor-reglas").motivo == "lectura_fuera_de_diff"
+    clave = "file_path" if herramienta == "Read" else "path"
+    entrada = {clave: ruta, "pattern": "x"}
+    assert _decidir(herramienta, entrada, agente="revisor-reglas").motivo == "registro_agentes"
+    assert _decidir(herramienta, entrada).motivo == "registro_agentes"
+
+
+@pytest.mark.parametrize(
+    "comando",
+    ["./.venv/Scripts/python.exe -B tests/consultar_suite.py", ".venv\\Scripts\\python.exe -B tests\\consultar_suite.py"],
+)
+def test_revisor_consulta_la_suite_con_el_script(comando):
+    assert _bash(comando, "revisor-reglas").codigo == 0
+
+
+@pytest.mark.parametrize(
+    ("comando", "motivo"),
+    [
+        ("./.venv/Scripts/python.exe -B tests/consultar_suite.py --todo", "comando_no_permitido"),
+        ("./.venv/Scripts/python.exe -B tests/registro_suite.py", "comando_no_permitido"),
+        ("./.venv/Scripts/python.exe -B -c print(1)", "comando_no_permitido"),
+        ("./.venv/Scripts/python.exe -B tests/consultar_suite.py | head", "encadenado"),
+    ],
+)
+def test_revisor_solo_ese_script(comando, motivo):
+    assert _bash(comando, "revisor-reglas").motivo == motivo
 
 
 def test_huella_igual_a_la_de_detalle(repo):
@@ -962,3 +1108,94 @@ def test_huella_estable_con_git_add_y_sensible_al_contenido(repo):
     assert estado_git.huella_cambios(str(ruta)) == cambiada
     (ruta / "nuevo.txt").write_text("y", encoding="utf-8")
     assert estado_git.huella_cambios(str(ruta)) != cambiada
+
+
+# 10. Hito 2BS: tests/consultar_suite.py (T2 del revisor sin leer el registro)
+
+
+def _consulta():
+    spec = importlib.util.spec_from_file_location("consultar_suite_2bs", RAIZ / "tests" / "consultar_suite.py")
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+def _linea_suite(ruta, **cambios):
+    detalle = estado_git.detalle_cambios(str(ruta))
+    linea = {"repositorio": estado_git.clave_repositorio(str(ruta)), "base": detalle["base"],
+             "rutas": detalle["rutas"], "huella": estado_git.huella_de(detalle), "alcance": "completa",
+             "verde": True, "arbol_cambiado_durante_la_suite": False, "passed": 5, "failed": 0, "errors": 0,
+             "skipped": 0, "ts_inicio": "a", "ts_fin": "b", "args": ["tests/", "--basetemp=secreto"]}
+    linea.update(cambios)
+    return linea
+
+
+def _registro_suites(fuera, *lineas):
+    ruta = fuera.mktemp("registro_2bs") / "registro.jsonl"
+    ruta.write_text("".join(json.dumps(linea) + "\n" for linea in lineas), encoding="utf-8")
+    return str(ruta)
+
+
+@pytest.fixture
+def repo_con_cambios(repo):
+    ruta, git = repo
+    (ruta / "a.txt").write_text("cambiado", encoding="utf-8")
+    (ruta / "nuevo.py").write_text("y", encoding="utf-8")
+    return ruta
+
+
+def test_consulta_suite_pass_sin_exponer_el_registro(repo_con_cambios, tmp_path_factory):
+    ruta = repo_con_cambios
+    otra = _linea_suite(ruta, huella="otra", base="otra")
+    registro = _registro_suites(tmp_path_factory, otra, _linea_suite(ruta))
+    respuesta = _consulta().consultar(ruta, registro)
+    assert respuesta["t2"] == "PASS"
+    assert respuesta["exigida"] == "completa"
+    assert respuesta["rutas"] == ["a.txt", "nuevo.py"]
+    assert set(respuesta["suite"]) == set(_consulta().CAMPOS_SUITE)
+    assert "secreto" not in json.dumps(respuesta) and "otra" not in json.dumps(respuesta)
+
+
+@pytest.mark.parametrize(
+    "cambios",
+    [{"verde": False, "failed": 1}, {"alcance": "parcial"}, {"alcance": "rapida"}, {"huella": "otra"},
+     {"arbol_cambiado_durante_la_suite": True}, {"repositorio": "otro"}],
+)
+def test_consulta_suite_fail(repo_con_cambios, tmp_path_factory, cambios):
+    registro = _registro_suites(tmp_path_factory, _linea_suite(repo_con_cambios, **cambios))
+    assert _consulta().consultar(repo_con_cambios, registro)["t2"] == "FAIL"
+
+
+def test_consulta_suite_la_ultima_de_alcance_suficiente_manda(repo_con_cambios, tmp_path_factory):
+    registro = _registro_suites(tmp_path_factory, _linea_suite(repo_con_cambios),
+                                _linea_suite(repo_con_cambios, verde=False, failed=2))
+    assert _consulta().consultar(repo_con_cambios, registro)["t2"] == "FAIL"
+
+
+def test_consulta_suite_sin_registro_ni_cambios(repo, tmp_path):
+    ruta, _git = repo
+    assert _consulta().consultar(ruta, str(tmp_path / "no_existe.jsonl"))["t2"] == "FAIL"
+
+
+def test_consulta_suite_documentacion_admite_la_rapida(repo, tmp_path_factory):
+    ruta, _git = repo
+    (ruta / "nota.md").write_text("x", encoding="utf-8")
+    registro = _registro_suites(tmp_path_factory, _linea_suite(ruta, alcance="rapida"))
+    respuesta = _consulta().consultar(ruta, registro)
+    assert (respuesta["exigida"], respuesta["t2"]) == ("rapida", "PASS")
+
+
+def test_consulta_suite_no_escribe(repo_con_cambios, tmp_path_factory):
+    registro = _registro_suites(tmp_path_factory, _linea_suite(repo_con_cambios))
+    zonas = (repo_con_cambios, Path(registro).parent)
+    def foto():
+        return {p: p.read_bytes() for z in zonas for p in z.rglob("*") if p.is_file() and ".git" not in p.parts}
+    antes = foto()
+    _consulta().consultar(repo_con_cambios, registro)
+    assert foto() == antes
+
+
+def test_definicion_del_revisor_usa_la_consulta():
+    texto = (RAIZ / ".claude" / "agents" / "revisor-reglas.md").read_text(encoding="utf-8")
+    assert "tests/consultar_suite.py" in texto
+    assert "suites.jsonl" not in texto

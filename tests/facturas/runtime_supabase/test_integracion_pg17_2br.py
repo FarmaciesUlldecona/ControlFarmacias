@@ -324,6 +324,180 @@ def test_rollback_devuelve_los_valores_previos_y_la_semantica_anterior(pg17_nuev
     assert _vigente(pg, objetivo)["resultado"] == "DIFERENCIA"
 
 
+# --------------------------------------------------------------------------- datos como los de septiembre (2BR-D)
+# DECISION DE PIO (2BR-D, 2026-11-10, opcion A): en produccion 744 detalles de las conciliaciones de septiembre
+# (anteriores a la 24) ya tienen importes por linea; se rellenan igual con la formula unica, sus valores antiguos van
+# a la tabla de valores previos (rollback exacto) y provenance no se toca. Aqui: 08007969 conciliada con la 29 y el
+# codigo anterior, con sus detalles reescritos como los de septiembre (importes por linea, estado por linea,
+# provenance con estado_matching, una linea UNO_A_UNO sin linea del PDF cuya diferencia no es PDF - Farmatic y una
+# SIN_COINCIDENCIA sin linea), y 08007973 persistida con la 29 (importes NULL, como las de octubre).
+
+VACIA = hashlib.md5(b"").hexdigest()
+VALORES = ("d.importe_documental::text as documental, d.importe_farmatic::text as farmatic, "
+           "d.diferencia::text as diferencia, d.estado")
+
+
+def _escenario_septiembre(pg, tmp_path):
+    objetivo = _conciliar(pg, tmp_path, recepcion_interno=50899, estado_de_factura=True)
+    septiembre = _vigente(pg, objetivo)["id"]
+    firmado = "(case when e.tipo_movimiento = 'ABONO' then -abs(e.importe_total) else e.importe_total end)"
+    pg.sql(
+        "update public.conciliacion_detalles d set "
+        "importe_documental = case when d.tipo_relacion = 'MOVIMIENTO_NO_FARMATIC' then d.importe_aplicado "
+        f"  else {firmado} end, "
+        "importe_farmatic = case when d.tipo_relacion in ('UNO_A_UNO', 'UNO_A_VARIOS') then d.importe_aplicado end, "
+        "diferencia = case when d.tipo_relacion = 'MOVIMIENTO_NO_FARMATIC' then 0 "
+        f"  when d.tipo_relacion = 'SIN_COINCIDENCIA' then {firmado} else {firmado} - d.importe_aplicado end, "
+        "estado = case when d.tipo_relacion = 'MOVIMIENTO_NO_FARMATIC' then 'COINCIDE' "
+        "  when d.tipo_relacion = 'SIN_COINCIDENCIA' then 'DIFERENCIA' "
+        f"  when abs({firmado} - d.importe_aplicado) <= 0.05 then 'COINCIDE' else 'DIFERENCIA' end, "
+        "provenance = coalesce(d.provenance, '{}'::jsonb) || jsonb_build_object('hito', '2t', 'estado_matching', "
+        "  case d.tipo_relacion when 'SIN_COINCIDENCIA' then 'NO_LOCALIZADO' when 'UNO_A_UNO' then 'EXACTO' end) "
+        "from public.conciliacion_detalles x left join public.facturas_albaranes_extraidos e "
+        "  on e.id = x.factura_albaran_extraido_id "
+        f"where x.id = d.id and d.conciliacion_id = {_lit(septiembre)};")
+    # La fila de 08009277: UNO_A_UNO ligada a un movimiento del PDF (abono agrupado), no a una linea; Farmatic con el
+    # signo cambiado y diferencia contra el aplicado.
+    rara = pg.json("select id::text from public.conciliacion_detalles where tipo_relacion = 'UNO_A_UNO' "
+                   f"and conciliacion_id = {_lit(septiembre)} order by orden limit 1")[0]["id"]
+    pg.sql("update public.conciliacion_detalles set factura_albaran_extraido_id = null, factura_movimiento_id = "
+           f"(select id from public.facturas_movimientos where factura_id = {_lit(objetivo)} order by orden limit 1), "
+           "importe_documental = importe_aplicado - 0.01, importe_farmatic = -importe_aplicado, diferencia = -0.01, "
+           "estado = 'COINCIDE', provenance = coalesce(provenance, '{}'::jsonb) || "
+           f"'{{\"estado_matching\": \"ECONOMICO_UNICO\"}}'::jsonb where id = {_lit(rara)};")
+    # Una SIN_COINCIDENCIA sin linea del PDF (como las 9 de septiembre).
+    sin_linea = str(uuid.uuid4())
+    pg.sql("insert into public.conciliacion_detalles (id, conciliacion_id, orden, tipo_relacion, importe_aplicado, "
+           f"importe_documental, diferencia, estado, provenance) select {_lit(sin_linea)}, {_lit(septiembre)}, "
+           "max(orden) + 1, 'SIN_COINCIDENCIA', 0, 12.34, 12.34, 'DIFERENCIA', "
+           "'{\"estado_matching\": \"NUMERO_AUSENTE\"}'::jsonb from public.conciliacion_detalles "
+           f"where conciliacion_id = {_lit(septiembre)};")
+    # Otra conciliacion persistida con la 29 (como las de octubre): importes por linea NULL.
+    ids = {f["numero_factura"]: f["id"] for f in pg.json("select id::text, numero_factura from public.facturas")}
+    linea = _linea_sintetica(pg, ids["08007973"])
+    _albaran(pg, 810001, "08Z00001", "97.00", 7001)
+    _albaran(pg, 810002, "Q999001/2026", "3.00", 7001)
+    octubre = _persistir(pg, ids["08007973"], _pareja(linea))
+    despliegue = _cargar_despliegue()
+    con_importes = int(pg.sql(f"select count(*) from public.conciliacion_detalles d "
+                              f"where {despliegue.CON_IMPORTES_FILTRO}"))
+    huella = pg.sql(f"select {despliegue._md5(despliegue.CON_IMPORTES)}")
+    return {"objetivo": objetivo, "septiembre": septiembre, "octubre": octubre, "rara": rara,
+            "sin_linea": sin_linea, "constantes": ((septiembre,), con_importes, huella), "despliegue": despliegue}
+
+
+def test_constantes_de_produccion_de_la_precondicion_3():
+    despliegue = _cargar_despliegue()
+    assert len(set(despliegue.CONCILIACIONES_SEPTIEMBRE)) == 12
+    assert all(str(uuid.UUID(c)) == c for c in despliegue.CONCILIACIONES_SEPTIEMBRE)
+    assert despliegue.DETALLES_CON_IMPORTES == 744
+    assert len(despliegue.HUELLA_CON_IMPORTES) == 32 and int(despliegue.HUELLA_CON_IMPORTES, 16) >= 0
+    assert despliegue.PRECONDICIONES == despliegue.sql_precondiciones(
+        despliegue.CONCILIACIONES_SEPTIEMBRE, 744, despliegue.HUELLA_CON_IMPORTES)
+
+
+@pytest.fixture
+def septiembre29(pg17_nueva_base, tmp_path):
+    pg = pg17_nueva_base("29")
+    return pg, _escenario_septiembre(pg, tmp_path / "a")
+
+
+def _precondiciones(pg, despliegue, constantes):
+    return pg.sql(f"begin read only; {despliegue.sql_precondiciones(*constantes)}; rollback;").split("|")
+
+
+@pytest.mark.parametrize("caso", ["otro_detalle_con_importe", "valor_cambiado", "provenance_cambiada",
+                                  "detalle_vaciado", "conciliacion_fuera_de_la_lista", "numero_distinto",
+                                  "huella_distinta", "constantes_de_produccion"])
+def test_precondicion_3_exige_exactamente_los_detalles_de_septiembre(septiembre29, caso):
+    pg, e = septiembre29
+    despliegue, (conciliaciones, numero, huella) = e["despliegue"], e["constantes"]
+    assert numero > 100 and pg.sql(f"select count(*) from public.conciliacion_detalles where conciliacion_id = "
+                                   f"{_lit(e['octubre'])} and importe_documental is null") == "2"
+    assert _precondiciones(pg, despliegue, (conciliaciones, numero, huella)) == ["t"] * 9
+    constantes = (conciliaciones, numero, huella)
+    if caso == "otro_detalle_con_importe":
+        pg.sql("update public.conciliacion_detalles set importe_documental = 100 where id = (select id from "
+               f"public.conciliacion_detalles where conciliacion_id = {_lit(e['octubre'])} order by orden limit 1);")
+    elif caso == "valor_cambiado":
+        pg.sql(f"update public.conciliacion_detalles set diferencia = diferencia + 0.0001 where id = {_lit(e['rara'])};")
+    elif caso == "provenance_cambiada":
+        pg.sql("update public.conciliacion_detalles set provenance = provenance - 'estado_matching' "
+               f"where id = {_lit(e['rara'])};")
+    elif caso == "detalle_vaciado":
+        pg.sql("update public.conciliacion_detalles set importe_documental = null, importe_farmatic = null, "
+               f"diferencia = null where id = {_lit(e['sin_linea'])};")
+    elif caso == "conciliacion_fuera_de_la_lista":
+        constantes = ((e["octubre"],), numero, huella)
+    elif caso == "numero_distinto":
+        constantes = (conciliaciones, numero - 1, huella)
+    elif caso == "huella_distinta":
+        constantes = (conciliaciones, numero, VACIA)
+    else:
+        constantes = (despliegue.CONCILIACIONES_SEPTIEMBRE, despliegue.DETALLES_CON_IMPORTES,
+                      despliegue.HUELLA_CON_IMPORTES)
+    assert _precondiciones(pg, despliegue, constantes) == ["t", "t", "f"] + ["t"] * 6
+
+
+def test_relleno_de_septiembre_con_la_formula_unica_y_rollback_exacto(septiembre29):
+    pg, e = septiembre29
+    despliegue = e["despliegue"]
+    antes, reservas, vigente = _huellas(pg), _reservas(pg), _vigente(pg, e["objetivo"])
+    filas_antes = _huella(pg, "select to_jsonb(d) from public.conciliacion_detalles d")
+    valores_antes = pg.json(f"select d.id::text, {VALORES} from public.conciliacion_detalles d order by d.id")
+    provenance_antes = pg.json("select id::text, provenance from public.conciliacion_detalles order by id")
+    previsto = pg.json("select p.detalle_id::text as id, p.importe_documental::text as documental, "
+                       "p.importe_farmatic::text as farmatic, p.diferencia::text as diferencia, p.estado "
+                       f"from ({despliegue.RELLENO_PREVISTO}) p order by p.detalle_id")
+
+    pg.sql(MIGRACION_30.read_text(encoding="utf-8"))
+
+    # Nada mas que los cuatro valores por linea: provenance (estado_matching antiguo), resultado, reservas intactos.
+    assert _huellas(pg) == antes and _reservas(pg) == reservas and _vigente(pg, e["objetivo"]) == vigente
+    assert pg.json("select id::text, provenance from public.conciliacion_detalles order by id") == provenance_antes
+    despues = pg.json(f"select d.id::text, {VALORES} from public.conciliacion_detalles d order by d.id")
+    # Formula unica: lo previsto en solo lectura es lo que rellena la 30 (y lo que calcula cf_detalles_por_linea).
+    assert despues == previsto
+    assert pg.sql("select count(*) from public.conciliaciones c cross join lateral public.cf_detalles_por_linea("
+                  "c.factura_id, (select jsonb_agg(jsonb_build_object('orden', x.orden, 'tipo_relacion', "
+                  "x.tipo_relacion, 'factura_albaran_extraido_id', x.factura_albaran_extraido_id, 'importe_aplicado', "
+                  "x.importe_aplicado)) from public.conciliacion_detalles x where x.conciliacion_id = c.id)) l "
+                  "join public.conciliacion_detalles d on d.conciliacion_id = c.id and d.orden = l.orden "
+                  "where (d.importe_documental, d.importe_farmatic, d.diferencia, d.estado) is distinct from "
+                  "(l.importe_documental, l.importe_farmatic, l.diferencia, l.estado)") == "0"
+    # Los valores antiguos, tal cual, en la tabla de valores previos.
+    assert pg.json(f"select p.detalle_id::text as id, p.importe_documental::text as documental, "
+                   "p.importe_farmatic::text as farmatic, p.diferencia::text as diferencia, p.estado "
+                   f"from {PREVIO} p order by p.detalle_id") == valores_antes
+    por_id = {d["id"]: d for d in despues}
+    previos = {d["id"]: d for d in valores_antes}
+    # La UNO_A_UNO sin linea del PDF (diferencia antigua distinta de PDF - Farmatic): NO_EVALUABLE.
+    rara, aplicado = por_id[e["rara"]], pg.sql(
+        f"select importe_aplicado::text from public.conciliacion_detalles where id = {_lit(e['rara'])}")
+    assert Decimal(previos[e["rara"]]["diferencia"]) != (Decimal(previos[e["rara"]]["documental"])
+                                                       - Decimal(previos[e["rara"]]["farmatic"]))
+    assert (rara["documental"], rara["farmatic"], rara["diferencia"], rara["estado"]) == (
+        None, aplicado, None, "NO_EVALUABLE")
+    assert (por_id[e["sin_linea"]]["documental"], por_id[e["sin_linea"]]["estado"]) == (None, "NO_EVALUABLE")
+    # Movimientos: NO_EVALUABLE (decision de Pio del 2BR), sin diferencia.
+    tipos = {d["id"]: d["tipo_relacion"] for d in pg.json(
+        "select id::text, tipo_relacion from public.conciliacion_detalles")}
+    movimientos = [por_id[i] for i, t in tipos.items() if t == "MOVIMIENTO_NO_FARMATIC"]
+    assert movimientos and all(m["estado"] == "NO_EVALUABLE" and m["diferencia"] is None for m in movimientos)
+    # Las lineas casadas y sin coincidencia con linea del PDF conservan sus valores de septiembre.
+    iguales = [i for i, t in tipos.items() if t in ("UNO_A_UNO", "SIN_COINCIDENCIA")
+               and i not in (e["rara"], e["sin_linea"]) and previos[i]["documental"] is not None]
+    assert iguales and all(por_id[i] == previos[i] for i in iguales)
+    # Octubre (importes NULL): ahora con los de su linea.
+    assert [por_id[d["id"]]["estado"] for d in pg.json(
+        f"select id::text from public.conciliacion_detalles where conciliacion_id = {_lit(e['octubre'])} "
+        "order by orden")] == ["COINCIDE", "COINCIDE"]
+
+    pg.sql(ROLLBACK_30.read_text(encoding="utf-8"))
+    assert _huella(pg, "select to_jsonb(d) from public.conciliacion_detalles d") == filas_antes
+    assert _huellas(pg) == antes and _reservas(pg) == reservas
+
+
 # --------------------------------------------------------------------------- desplegar_30.py
 
 @pytest.fixture
@@ -355,18 +529,29 @@ def _repositorio_con_commit(destino) -> tuple[str, str, object]:
 def test_sql_de_precondiciones_30_es_de_solo_lectura(pg17_nueva_base):
     despliegue = _cargar_despliegue()
     pg = pg17_nueva_base("29")
-    assert pg.sql(f"begin read only; {despliegue.PRECONDICIONES}; rollback;") == "|".join(["t"] * 9)
-    # Ya aplicada: «30 ausente» falla (la plantilla no tiene detalles, asi que «importes vacios» se cumple).
+    vacias = ((), 0, VACIA)
+    assert _precondiciones(pg, despliegue, vacias) == ["t"] * 9
+    # Con las constantes de produccion (744 detalles de septiembre), una base sin detalles no las cumple.
+    assert pg.sql(f"begin read only; {despliegue.PRECONDICIONES}; rollback;") == "|".join(["t", "t", "f"] + ["t"] * 6)
+    pg.sql(f"begin read only; {despliegue.RELLENO_PREVISTO}; rollback;")
+    # Ya aplicada: «30 ausente» falla (la plantilla no tiene detalles, asi que la 3 se cumple con las vacias).
     pg30 = pg17_nueva_base("30")
-    assert pg30.sql(f"begin read only; {despliegue.PRECONDICIONES}; rollback;").split("|")[:3] == ["t", "f", "t"]
+    assert _precondiciones(pg30, despliegue, vacias)[:3] == ["t", "f", "t"]
 
 
 def test_ensayo_completo_despliegue_30_y_segundo_intento_revierte(contenedor_tcp, tmp_path, monkeypatch, repo_corto):
     nombre, puerto, _plantilla_19 = contenedor_tcp
     pg = base_desde(nombre, pgl.construir_plantilla(nombre, "29"))
-    objetivo = _conciliar(pg, tmp_path / "a", recepcion_interno=50899, estado_de_factura=True)
+    # Como produccion (2BR-D): detalles de septiembre con importes y de octubre en NULL. La precondicion 3, con las
+    # constantes de este escenario (las de produccion son las de sus 744 detalles).
+    e = _escenario_septiembre(pg, tmp_path / "a")
+    objetivo = e["objetivo"]
     rol_despliegue = pgl.rol_supabase(nombre)
     commit, sha, despliegue = _repositorio_con_commit(repo_corto)
+    monkeypatch.setattr(despliegue, "PRECONDICIONES", despliegue.sql_precondiciones(*e["constantes"]))
+    previsto = {(r["tipo_relacion"], r["estado"]) for r in pg.json(
+        f"select d.tipo_relacion, p.estado from ({despliegue.RELLENO_PREVISTO}) p "
+        "join public.conciliacion_detalles d on d.id = p.detalle_id")}
 
     sys.path.insert(0, str(ROOT / "tmp_pg_probe_deps"))
     import dotenv
@@ -402,8 +587,10 @@ def test_ensayo_completo_despliegue_30_y_segundo_intento_revierte(contenedor_tcp
     assert registro["precondiciones"] == [True] * 9
     assert registro["postcondiciones"] == {"datos_sin_cambios": True, "relleno": True, "valores_previos": True,
                                            "privilegios": True, "propietarios": True}
-    assert {(r["tipo_relacion"], r["estado"]) for r in registro["resumen_detalles"]} == {
-        ("UNO_A_UNO", "COINCIDE"), ("SIN_COINCIDENCIA", "DIFERENCIA"), ("MOVIMIENTO_NO_FARMATIC", "NO_EVALUABLE")}
+    assert {(r["tipo_relacion"], r["estado"]) for r in registro["resumen_detalles"]} == previsto == {
+        ("UNO_A_UNO", "COINCIDE"), ("UNO_A_UNO", "NO_EVALUABLE"), ("UNO_A_VARIOS", "COINCIDE"),
+        ("SIN_COINCIDENCIA", "DIFERENCIA"), ("SIN_COINCIDENCIA", "NO_EVALUABLE"),
+        ("MOVIMIENTO_NO_FARMATIC", "NO_EVALUABLE")}
     assert _huellas(pg) == antes and _reservas(pg) == reservas and _vigente(pg, objetivo) == vigente
     # Referencia (superusuario postgres, como el propietario en Supabase): mismo esquema salvo el propietario de los
     # dos objetos nuevos, que es el rol que despliega (postgres en Supabase).
@@ -422,7 +609,7 @@ def test_ensayo_completo_despliegue_30_y_segundo_intento_revierte(contenedor_tcp
 
     registro = ejecutar(tmp_path / "segundo.json")
     assert registro["resultado"] == "REVERTIDA" and "PRECONDICIONES_NO_CUMPLIDAS" in registro["error"]
-    # Ya aplicada: ni «30 ausente» ni «importes por linea vacios»; el resto sigue en verde.
+    # Ya aplicada: ni «30 ausente» ni «exactamente los detalles de septiembre»; el resto sigue en verde.
     assert registro["precondiciones"] == [True, False, False, True, True, True, True, True, False]
     assert _huellas(pg) == antes
 
@@ -432,4 +619,3 @@ def test_ensayo_completo_despliegue_30_y_segundo_intento_revierte(contenedor_tcp
     limpia = pgl.base_desde(nombre, pgl.construir_plantilla(nombre, "29"))
     assert esquema(pg).replace(pg.db, "") == esquema(limpia).replace(limpia.db, "")
     assert _huella(pg, "select to_jsonb(d) from public.conciliacion_detalles d") == detalles_antes
-    assert {(d["estado"], d["documental"]) for d in _detalles(pg, objetivo)} == {("DIFERENCIA", None)}

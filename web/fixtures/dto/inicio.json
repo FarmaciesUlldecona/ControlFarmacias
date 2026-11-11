@@ -73,6 +73,8 @@
         "texto": "sin datos bancarios",
         "color": "gris"
       },
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
       "posible_duplicado": true
     },
     {
@@ -98,6 +100,8 @@
         "texto": "sin datos bancarios",
         "color": "gris"
       },
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "Alliance Healthcare España",
       "posible_duplicado": false
     },
     {
@@ -123,6 +127,8 @@
         "texto": "sin datos bancarios",
         "color": "gris"
       },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
       "posible_duplicado": false
     },
     {
@@ -148,6 +154,8 @@
         "texto": "sin datos bancarios",
         "color": "gris"
       },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
       "posible_duplicado": false
     },
     {
@@ -173,6 +181,8 @@
         "texto": "sin datos bancarios",
         "color": "gris"
       },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
       "posible_duplicado": false
     }
   ],
@@ -190,6 +200,8 @@
           {
             "texto": "No se puede comprobar la factura contra sus albaranes",
             "proveedor": "COFARES",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "COFARES",
             "referencia": "CF-AB-2026-0912",
             "codigo": "NO_EVALUABLE",
             "fecha": "2026-10-24T09:00:00+00:00",
@@ -201,6 +213,8 @@
           {
             "texto": "La factura no cuadra con sus albaranes",
             "proveedor": "COFARES",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "COFARES",
             "referencia": "CF-2026-55810",
             "codigo": "DIFERENCIA",
             "fecha": "2026-10-17T09:00:00+00:00",
@@ -212,6 +226,8 @@
           {
             "texto": "Se han agotado los intentos de conciliar la factura con sus albaranes",
             "proveedor": "HEFAME",
+            "proveedor_comercial": "HEFAME",
+            "proveedor_razon_social": "HDAD.FMCTCA.MEDIT.,S.C.L.",
             "referencia": "HF-0563-889120",
             "codigo": "DIFERENCIA",
             "fecha": "2026-10-10T09:00:00+00:00",
@@ -232,6 +248,8 @@
           {
             "texto": "El PDF necesita revisión manual",
             "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": null,
             "referencia": "Alliance_multifactura_incompleta_0111.pdf",
             "codigo": "FACTURA_INCOMPLETA",
             "fecha": "2026-11-01T21:00:00+00:00",
@@ -242,6 +260,8 @@
           {
             "texto": "No se ha podido leer el PDF",
             "proveedor": null,
+            "proveedor_comercial": null,
+            "proveedor_razon_social": null,
             "referencia": "Escaneo_ilegible_2610.pdf",
             "codigo": "SEGUNDA_LECTURA_FALLIDA",
             "fecha": "2026-10-26T21:00:00+00:00",
@@ -260,6 +280,8 @@
         "casos": [
           {
             "proveedor": "ALLIANCE HEALTHCARE (FICTICIO)",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": null,
             "codigo": null,
             "fecha": "2026-10-21",
             "factura_id": null,
@@ -281,6 +303,8 @@
           {
             "texto": "No se sabe si esta factura es un pago o un abono; no se suma en el cashflow",
             "proveedor": "FEDEFARMA",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "FEDEFARMA",
             "referencia": "FD-26/04471",
             "codigo": null,
             "fecha": "2026-11-19",
@@ -291,6 +315,8 @@
           {
             "texto": "No se sabe si esta factura es un pago o un abono; no se suma en el cashflow",
             "proveedor": "COFARES",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "COFARES",
             "referencia": "CF-2026-55810",
             "codigo": null,
             "fecha": "2026-11-14",
@@ -301,6 +327,8 @@
           {
             "texto": "No se sabe si esta factura es un pago o un abono; no se suma en el cashflow",
             "proveedor": "HEFAME",
+            "proveedor_comercial": "HEFAME",
+            "proveedor_razon_social": "HDAD.FMCTCA.MEDIT.,S.C.L.",
             "referencia": "HF-0563-889120",
             "codigo": null,
             "fecha": "2026-11-07",
@@ -319,6 +347,8 @@
         "casos": [
           {
             "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "proveedor_comercial": "ALLIANCE",
+            "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
             "codigo": null,
             "fecha": "2026-10-30T03:00:00+00:00",
             "factura_id": "f0000000-0000-4000-8000-000000000001",
@@ -339,6 +369,8 @@
           {
             "texto": "Faltan datos de la factura: el total no consta en el documento",
             "proveedor": "FEDEFARMA",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "FEDEFARMA",
             "referencia": "FD-26/04471",
             "codigo": "REQUIERE_REVISION",
             "fecha": "2026-10-28T08:00:00+00:00",
@@ -358,6 +390,8 @@
           {
             "texto": "No se ha podido leer el PDF; se volverá a intentar automáticamente",
             "proveedor": null,
+            "proveedor_comercial": null,
+            "proveedor_razon_social": null,
             "referencia": "Escaneo_ilegible_2610.pdf",
             "codigo": "SEGUNDA_LECTURA_FALLIDA",
             "fecha": "2026-10-26T21:06:00+00:00",
@@ -377,6 +411,8 @@
           {
             "texto": "Un dato de la factura no tiene respaldo legible en el documento",
             "proveedor": "FEDEFARMA",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "FEDEFARMA",
             "referencia": "FD-26/04471",
             "codigo": "VALOR_SIN_EVIDENCIA",
             "fecha": "2026-10-21T21:06:00+00:00",
@@ -396,6 +432,8 @@
           {
             "texto": "La factura no indica si un movimiento es un cargo o un abono",
             "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "proveedor_comercial": "ALLIANCE",
+            "proveedor_razon_social": "Alliance Healthcare España",
             "referencia": "AL-26-100577",
             "codigo": "SENTIDO_NO_DOCUMENTADO",
             "fecha": "2026-10-29T21:06:00+00:00",
@@ -406,6 +444,8 @@
           {
             "texto": "La factura no indica si un movimiento es un cargo o un abono",
             "proveedor": "COFARES",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "COFARES",
             "referencia": "CF-2026-55810",
             "codigo": "SENTIDO_NO_DOCUMENTADO",
             "fecha": "2026-10-27T21:06:00+00:00",
@@ -416,6 +456,8 @@
           {
             "texto": "La factura no indica si un movimiento es un cargo o un abono",
             "proveedor": "COFARES",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "COFARES",
             "referencia": "CF-AB-2026-0912",
             "codigo": "SENTIDO_NO_DOCUMENTADO",
             "fecha": "2026-10-23T21:06:00+00:00",
@@ -435,6 +477,8 @@
           {
             "texto": "Un vencimiento de la factura no indica su importe",
             "proveedor": "FEDEFARMA",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "FEDEFARMA",
             "referencia": "FD-26/04471",
             "codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
             "fecha": "2026-10-28T21:06:00+00:00",
@@ -445,6 +489,8 @@
           {
             "texto": "Un vencimiento de la factura no indica su importe",
             "proveedor": "COFARES",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "COFARES",
             "referencia": "CF-2026-55811",
             "codigo": "IMPORTE_VENCIMIENTO_NO_DOCUMENTADO",
             "fecha": "2026-10-16T21:06:00+00:00",
@@ -464,6 +510,8 @@
           {
             "texto": "El documento no indica si una línea es un cargo o un abono",
             "proveedor": "COFARES",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "COFARES",
             "referencia": "CF-2026-55811",
             "codigo": "SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE",
             "fecha": "2026-10-26T21:07:00+00:00",
@@ -483,6 +531,8 @@
           {
             "texto": "Hay filas de la factura cuyo cargo, abono o signo no cuadra; no se han tomado como albaranes",
             "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "proveedor_comercial": "ALLIANCE",
+            "proveedor_razon_social": "Alliance Healthcare España",
             "referencia": "AL-26-100577",
             "codigo": "CANDIDATO_ALBARAN_NO_PROMOVIDO",
             "fecha": "2026-10-25T21:07:00+00:00",
@@ -493,6 +543,8 @@
           {
             "texto": "Hay filas de la factura con un tipo de pedido que el sistema no reconoce; no se han tomado como albaranes",
             "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "proveedor_comercial": "ALLIANCE",
+            "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
             "referencia": "AL-26-100231",
             "codigo": "CANDIDATO_ALBARAN_NO_PROMOVIDO",
             "fecha": "2026-10-24T21:07:00+00:00",
@@ -512,6 +564,8 @@
           {
             "texto": "Puede que esta factura esté repetida en otro PDF",
             "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "proveedor_comercial": "ALLIANCE",
+            "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
             "referencia": "AL-26-100231",
             "codigo": "POSIBLE_DUPLICADO",
             "fecha": "2026-10-24T21:06:00+00:00",
@@ -522,6 +576,8 @@
           {
             "texto": "Puede que esta factura esté repetida en otro PDF",
             "proveedor": "ALLIANCEHEALTHCARECENCORA",
+            "proveedor_comercial": "ALLIANCE",
+            "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
             "referencia": "AL-26-100231",
             "codigo": "POSIBLE_DUPLICADO",
             "fecha": "2026-10-24T21:06:00+00:00",
@@ -541,6 +597,8 @@
           {
             "texto": "Aviso técnico del motor (ver detalle)",
             "proveedor": "HEFAME",
+            "proveedor_comercial": "HEFAME",
+            "proveedor_razon_social": "HDAD.FMCTCA.MEDIT.,S.C.L.",
             "referencia": "HF-0563-889120",
             "codigo": "CODIGO_FICTICIO_SIN_TRADUCCION",
             "fecha": "2026-10-22T21:06:00+00:00",
@@ -559,6 +617,8 @@
         "casos": [
           {
             "proveedor": "FEDEFARMA (FICTICIO)",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": null,
             "codigo": null,
             "fecha": "2026-10-31T09:00:00+00:00",
             "factura_id": null,
@@ -569,6 +629,8 @@
           },
           {
             "proveedor": "ALLIANCE HEALTHCARE (FICTICIO)",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": null,
             "codigo": null,
             "fecha": "2026-10-29T10:05:00+00:00",
             "factura_id": null,

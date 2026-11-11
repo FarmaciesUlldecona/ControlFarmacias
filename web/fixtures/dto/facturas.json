@@ -64,6 +64,9 @@
       "updated_at": "2026-10-28T08:00:00+00:00",
       "proveedor_grupo": "cif:A00000001",
       "proveedor_etiqueta": "COFARES",
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001",
       "vencimiento_proximo": {
         "vencimiento_id": "90000000-0000-4000-8000-000000000009",
         "factura_id": "f0000000-0000-4000-8000-000000000007",
@@ -138,6 +141,9 @@
       "updated_at": "2026-10-28T08:00:00+00:00",
       "proveedor_grupo": "id:4",
       "proveedor_etiqueta": "FEDEFARMA",
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "FEDEFARMA",
+      "proveedor_cif_comparable": null,
       "vencimiento_proximo": {
         "vencimiento_id": "90000000-0000-4000-8000-000000000008",
         "factura_id": "f0000000-0000-4000-8000-000000000006",
@@ -230,6 +236,9 @@
       "updated_at": "2026-10-28T08:00:00+00:00",
       "proveedor_grupo": "cif:A00000001",
       "proveedor_etiqueta": "COFARES",
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001",
       "vencimiento_proximo": {
         "vencimiento_id": "90000000-0000-4000-8000-000000000003",
         "factura_id": "f0000000-0000-4000-8000-000000000003",
@@ -322,6 +331,9 @@
       "updated_at": "2026-10-28T08:00:00+00:00",
       "proveedor_grupo": "cif:A00000001",
       "proveedor_etiqueta": "COFARES",
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001",
       "vencimiento_proximo": {
         "vencimiento_id": "90000000-0000-4000-8000-000000000005",
         "factura_id": "f0000000-0000-4000-8000-000000000004",
@@ -416,6 +428,9 @@
       "updated_at": "2026-10-28T08:00:00+00:00",
       "proveedor_grupo": "cif:B00000003",
       "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "Alliance Healthcare España",
+      "proveedor_cif_comparable": "B00000003",
       "vencimiento_proximo": {
         "vencimiento_id": "90000000-0000-4000-8000-000000000002",
         "factura_id": "f0000000-0000-4000-8000-000000000002",
@@ -463,9 +478,9 @@
       "proveedor_id": "a0000000-0000-4000-8000-000000000002",
       "proveedor_codigo": "HEFAME",
       "proveedor": "HEFAME",
-      "proveedor_literal": "HEFAME",
+      "proveedor_literal": "HDAD.FMCTCA.MEDIT.,S.C.L.",
       "proveedor_cif": null,
-      "proveedor_nif_documental": "B00000002",
+      "proveedor_nif_documental": "F30004444",
       "id_proveedor_albaranes": "0563",
       "base_imponible_total": 258.53,
       "iva_total": 25.85,
@@ -506,8 +521,11 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
-      "proveedor_grupo": "cif:B00000002",
-      "proveedor_etiqueta": "HEFAME",
+      "proveedor_grupo": "cif:F30004444",
+      "proveedor_etiqueta": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "proveedor_comercial": "HEFAME",
+      "proveedor_razon_social": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "proveedor_cif_comparable": "F30004444",
       "vencimiento_proximo": {
         "vencimiento_id": "90000000-0000-4000-8000-000000000007",
         "factura_id": "f0000000-0000-4000-8000-000000000005",
@@ -600,6 +618,9 @@
       "updated_at": "2026-10-28T08:00:00+00:00",
       "proveedor_grupo": "cif:B00000003",
       "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_cif_comparable": "B00000003",
       "vencimiento_proximo": {
         "vencimiento_id": "90000000-0000-4000-8000-000000000001",
         "factura_id": "f0000000-0000-4000-8000-000000000001",
@@ -674,6 +695,9 @@
       "updated_at": "2026-10-28T08:00:00+00:00",
       "proveedor_grupo": "cif:B00000003",
       "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_cif_comparable": "B00000003",
       "vencimiento_proximo": {
         "vencimiento_id": "90000000-0000-4000-8000-000000000010",
         "factura_id": "f0000000-0000-4000-8000-000000000008",
@@ -710,24 +734,28 @@
     {
       "clave": "cif:B00000003",
       "etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "comercial": "ALLIANCE",
       "sin_cif": false,
       "facturas": 3
     },
     {
       "clave": "cif:A00000001",
       "etiqueta": "COFARES",
+      "comercial": null,
       "sin_cif": false,
       "facturas": 3
     },
     {
-      "clave": "cif:B00000002",
-      "etiqueta": "HEFAME",
+      "clave": "cif:F30004444",
+      "etiqueta": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "comercial": "HEFAME",
       "sin_cif": false,
       "facturas": 1
     },
     {
       "clave": "id:4",
       "etiqueta": "FEDEFARMA",
+      "comercial": null,
       "sin_cif": true,
       "facturas": 1
     }

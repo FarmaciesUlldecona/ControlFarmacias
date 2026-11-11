@@ -242,4 +242,33 @@ Las líneas 3 a 5 de F07 son sin casar con `importe_aplicado` 0, así que el exp
 | EXACTO | F01 línea 1: `estado_matching` EXACTO, sin `clase_numero` | «Un único albarán; el motor anterior lo dio por número coincidente (versión anterior del motor)»; secundario «Versión anterior del motor: …». H5-6: texto neutro, nunca «mismo número» (hay líneas reales con prefijo o letra final, p. ej. 57517 ↔ 08C57517A). Casada (verde). Diagnóstico `estado_matching.exacto` (etiqueta fija) |
 | ECONOMICO_UNICO | F01 línea 2: `estado_matching` ECONOMICO_UNICO, sin `clase_numero`, Farmatic 08X10002B | «Un único albarán por importe; el número no es idéntico (versión anterior del motor)». Casada (verde). Diagnóstico `estado_matching.economico_unico` |
 
-Fuente: commit e18acf0, `pruebas/auditoria_2t/flujo_controlado.py:210-211,370` y `pruebas/auditoria_2v/conciliar_08009277.py:72-73,197` (EXACTO = MATCH_UNICO con número EXACTA; ECONOMICO_UNICO = MATCH_UNICO sin número exacto); `pruebas/auditoria_2t/resultado.md:36-40` (criterios del casado económico). Importes y conciliación de F01 sin cambios.
+Fuente (H5-5): commit e18acf0, `pruebas/auditoria_2t/flujo_controlado.py:210-211,370` y `pruebas/auditoria_2v/conciliar_08009277.py:72-73,197` (EXACTO = MATCH_UNICO con número EXACTA; ECONOMICO_UNICO = MATCH_UNICO sin número exacto); `pruebas/auditoria_2t/resultado.md:36-40` (criterios del casado económico). Importes y conciliación de F01 sin cambios.
+
+## H5-7: detalle por línea de la conciliación (migración 30)
+
+Las fixtures rellenan `importe_documental`, `importe_farmatic`, `diferencia` y `estado` de cada detalle como `cf_detalles_por_linea` (`sql/migrations/30_cf_detalle_por_linea.sql:43-70`; espejo en `conciliacion.py:695-730`). La web los muestra tal cual, sin recalcular.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| COINCIDE | F02 (diferencias de 0,01 €), F03 R17 (dos albaranes, una línea, diferencia 0,00 €) | Insignia verde «Coincide» |
+| DIFERENCIA en línea casada | F03 línea 1: el PDF trae 234,65 € y Farmatic 234,55 € (ajuste ficticio) | Diferencia 0,10 €, insignia roja «Diferencia» |
+| DIFERENCIA sin casar | F03 línea 4, F05 línea 4, F07 líneas 3 y 4 | Farmatic «no consta»; diferencia = importe del PDF |
+| NO_EVALUABLE con Farmatic | F02 línea 6: el PDF no trae importe (ajuste ficticio) | Gris «Sin importe del PDF para comparar»; PDF y diferencia «no consta» |
+| NO_EVALUABLE sin Farmatic | F07 línea 5: sin casar y el PDF sin importe (ajuste ficticio) | Gris «Sin contraparte en Farmatic»; los tres importes «no consta» |
+| Movimiento | F04 línea 4, F07 línea 2 | NO_EVALUABLE (sección Cargos y abonos); el de F07 sin importe aplicado queda null, nunca 0 |
+| Hefame | F05: el PDF trae la base neta y Farmatic el importe con IVA | Diferencias −14,86 / −9,07 / −3,15 €, todas DIFERENCIA, tal cual; nota visible y aviso arriba: «El motor compara la base neta del PDF (sin IVA) con el importe de Farmatic (con IVA): la diferencia incluye el IVA y el recargo» |
+| Aviso arriba | F03: «2 albaranes con diferencia · De ellos, 1 sin casar en Farmatic»; F05: 4 + advertencia Hefame; F07: 2; F02: sin aviso | Una línea R17 cuenta una vez |
+
+Diagnóstico `estado_linea` de la comprobación en modo REAL: `lineas`, `coincide`, `diferencia`, `no_evaluable`, `sin_valor`, `otros_valores`, `diferencia_null` (solo recuentos; falla cerrado si los estados no suman el total).
+
+## H5-8: nombre comercial de proveedor, búsqueda y fiscalidad sin tipo
+
+Proveedor = nombre comercial (principal) + razón social del PDF (secundaria, pequeña), igual en el listado, el filtro, el detalle, Inicio (vencimientos y «Necesita tu atención») y los grupos de Proveedores. Equivalencias en `app/server/proveedor_comercial.ts`, cada una con su fichero:línea de `src/`; sin equivalencia, el literal del PDF; si el CIF y el literal dan nombres distintos, null (falla cerrado). Los grupos siguen siendo por CIF (sin cambios).
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Hefame por CIF y razón social | F05: CIF F30004444 (`grupos_funcionales.py:41`, CIF de empresa que consta en el código) y razón social «HDAD.FMCTCA.MEDIT.,S.C.L.» (`hefame.py:92`) | «HEFAME» + «HDAD.FMCTCA.MEDIT.,S.C.L.» debajo; filtro «HEFAME · HDAD.FMCTCA.MEDIT.,S.C.L.»; CIF F30004444 en el detalle |
+| Alliance por alias del motor | F01/F08 «ALLIANCEHEALTHCARECENCORA», F02 «Alliance Healthcare España» (CIF ficticio B00000003) | «ALLIANCE» + razón social (`conciliacion.py:34-43`) |
+| Sin equivalencia | F03/F04/F07 «COFARES» (CIF ficticio), F06 «FEDEFARMA» (sin CIF) | Literal del PDF, sin línea secundaria. Cofares solo se reconoce por «GRUPO COFARES» (`cofares.py:211`) y Fedefarma por su CIF F-08-173395 (`fedefarma.py:37`) |
+| Búsqueda | «hefame», «Hefame», «HDAD», «F30004444», «F-30004444» → solo F05; «alliance» → F01, F02, F08; «ESPANA» → F02 | Sin mayúsculas ni acentos; CIF también con guiones o puntos |
+| Fiscalidad sin tipo | F05: tramo con `tipo_iva` y `tipo_recargo_equivalencia` null (Hefame no documenta tipos, `hefame.py:378`) | Columna Tipo «tipo no indicado» (antes «IVA —»); cuotas «25,85 €» y «3,62 €» sin nada delante. El «—» era `tipoPorcentaje(null)`, no un signo: los importes son positivos |

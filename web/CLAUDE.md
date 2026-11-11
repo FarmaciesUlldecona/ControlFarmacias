@@ -18,3 +18,5 @@
 - Prohibido leer o escribir .env* (incluido .env.web), logs\agentes, tmp, pruebas\facturas, .venv y cualquier ruta de C:\ControlFarmacias\Programa. Prohibida la clave del sistema (service_role).
 - Hook bloqueo_rutas: cualquier herramienta que nombre rutas prohibidas se bloquea; ante bloqueo, PARA.
 - Code nunca ejecuta dev:real, check:real, set-password ni iniciar_web; solo Pío. Riesgo aceptado: si node no está disponible el hook no bloquea; las reglas deny son segunda capa.
+- Edición de ficheros (norma permanente de Pío, H5-8): SIEMPRE con las herramientas Edit/Write, nunca con comandos de shell. El contenido puede incluir imports '../server/…' o nombres de órdenes en comentarios/documentación.
+- Comandos de shell: nunca '..', nunca órdenes reservadas, nunca rutas fuera de web\ (la lectura autorizada de src\ y sql\migrations, solo con herramientas de lectura). Ante cualquier otro bloqueo: PARA e informa.

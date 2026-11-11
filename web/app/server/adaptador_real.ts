@@ -113,7 +113,10 @@ const COLUMNAS_VENCIMIENTOS = ['vencimientos', 'vencimientos_importe_null', 'ven
   'vencimientos_tipo_documento_null', 'vencimientos_tipo_documental_null', 'vencimientos_tipo_otro',
   'vencimientos_sentido_no_documentado'];
 /** H5-4: diagnósticos de la comprobación REAL, en orden de impresión; cada uno en su propia transacción. */
-export const NOMBRES_DIAGNOSTICO = ['vencimientos', 'documentos', 'tipo_documento', 'sentido', 'casado', 'duplicados', 'par_08C66676'] as const;
+export const NOMBRES_DIAGNOSTICO = ['vencimientos', 'documentos', 'tipo_documento', 'sentido', 'casado', 'estado_linea', 'duplicados',
+  'par_08C66676'] as const;
+/** H5-7: líneas vigentes por estado de línea (migración 30) y con diferencia null. */
+export const COLUMNAS_ESTADO_LINEA = ['lineas', 'coincide', 'diferencia', 'no_evaluable', 'sin_valor', 'otros_valores', 'diferencia_null'];
 export type NombreDiagnostico = (typeof NOMBRES_DIAGNOSTICO)[number];
 
 /** H4d-3: casos de sentido por origen. */
@@ -129,6 +132,18 @@ function recuento(v: unknown, col: string): number {
   const n = Number(v);
   if (typeof v === 'boolean' || v === null || !Number.isSafeInteger(n) || n < 0) throw new Error(`DIAGNOSTICO_NO_ES_RECUENTO: ${col}`);
   return n;
+}
+
+/**
+ * H5-7: resumen del diagnóstico estado_linea (una fila de recuentos). Falla cerrado si algún valor no es un recuento o si
+ * los cinco grupos de estado no reparten exactamente todas las líneas.
+ */
+export function resumenEstadoLinea(fila: Record<string, unknown>): Record<string, number> {
+  const d: Record<string, number> = {};
+  for (const col of COLUMNAS_ESTADO_LINEA) d[col] = recuento(fila[col], col);
+  const suma = d.coincide + d.diferencia + d.no_evaluable + d.sin_valor + d.otros_valores;
+  if (suma !== d.lineas || d.diferencia_null > d.lineas) throw new Error('DIAGNOSTICO_RECUENTOS_INCOHERENTES: estado_linea');
+  return d;
 }
 
 /** Última barrera: un diagnóstico solo puede contener recuentos, sí/no o nombres de columna. */
@@ -237,6 +252,7 @@ export function crearAdaptadorReal(): AdaptadorReal {
           const r = await cliente.query<Fila>(CONSULTAS_CHECK.diagnostico_casado.sql, [FARMACIA]);
           return validarDiagnostico(resumenCasado(r.rows));
         }
+        case 'estado_linea': return validarDiagnostico(resumenEstadoLinea(await una(CONSULTAS_CHECK.diagnostico_estado_linea.sql)));
         case 'duplicados': {
           const r = await cliente.query<Fila>(CONSULTAS.alertas_duplicado_farmatic.sql, [FARMACIA]);
           return validarDiagnostico(resumenDuplicados(r.rows));

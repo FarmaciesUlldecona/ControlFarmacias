@@ -25,6 +25,7 @@
  *
  * Solo sintaxis TypeScript borrable (Node la ejecuta sin compilar).
  */
+import { nombreComercial, nombreComercialGrupo } from './proveedor_comercial.ts';
 
 export const FARMACIA = 'PIO';
 
@@ -281,8 +282,14 @@ export interface Alerta {
 }
 
 /** Vencimiento de Inicio: marca "posible duplicado" si la factura tiene esa incidencia o alerta (H4d). */
-export interface VencimientoInicio extends Vencimiento {
+export interface VencimientoInicio extends Vencimiento, NombreProveedor {
   posible_duplicado: boolean;
+}
+
+/** H5-8: nombre comercial (principal; null = sin equivalencia) y razón social del PDF (secundaria). */
+export interface NombreProveedor {
+  proveedor_comercial: string | null;
+  proveedor_razon_social: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -320,6 +327,12 @@ export interface FacturaListado extends FacturaResumen {
   proveedor_grupo: string;
   /** H5: etiqueta del grupo de proveedor (literal más frecuente del CIF). */
   proveedor_etiqueta: string;
+  /** H5-8: nombre comercial de la factura (proveedor_comercial.ts; null = sin equivalencia: se muestra el literal). */
+  proveedor_comercial: string | null;
+  /** H5-8: razón social del PDF (proveedor_literal; si falta, el nombre resuelto). */
+  proveedor_razon_social: string | null;
+  /** H5-8: CIF comparable de la factura (cifFactura), para la búsqueda. */
+  proveedor_cif_comparable: string | null;
   /**
    * H5: vencimiento que se muestra en el listado: el primero con fecha >= hoy; si todos han pasado, el último
    * (vencido); si ninguno tiene fecha, el primero por orden. null si la factura no documenta vencimientos.
@@ -364,6 +377,9 @@ export interface FacturaDetalleDTO extends Cabecera {
     proveedor_nif_documental: string | null;
     /** CIF del grupo (cifFactura). */
     cif: string | null;
+    /** H5-8: nombre comercial (null = sin equivalencia) y razón social del PDF. */
+    comercial: string | null;
+    razon_social: string | null;
     id_proveedor_albaranes: string | null;
     extractor_codigo: string | null;
     nivel_confianza: string | null;
@@ -480,6 +496,8 @@ export type OrigenMapa = 'FACTURAS' | 'CATALOGO' | 'SIN_PROVEEDOR';
 export interface FilaMapaDocumentos {
   clave: string;
   proveedor: string;
+  /** H5-8: nombre comercial del grupo (solo origen FACTURAS; null = sin equivalencia). */
+  comercial: string | null;
   sin_cif: boolean;
   origen: OrigenMapa;
   por_estado: Record<string, number>;
@@ -489,6 +507,8 @@ export interface FilaMapaDocumentos {
 export interface Proveedor extends GrupoProveedor {
   /** Literal más frecuente del grupo (empate: el primero en orden alfabético). */
   etiqueta: string;
+  /** H5-8: nombre comercial del grupo (el de todas sus facturas; null = sin equivalencia o distinto). */
+  comercial: string | null;
   /** Resto de literales del grupo. */
   alias: string[];
   facturas: number;
@@ -514,6 +534,8 @@ export interface ProveedoresDTO extends Cabecera {
 export interface OpcionFiltroProveedor {
   clave: string;
   etiqueta: string;
+  /** H5-8: nombre comercial del grupo (null = sin equivalencia). */
+  comercial: string | null;
   sin_cif: boolean;
   facturas: number;
 }
@@ -1247,6 +1269,33 @@ select 'clase_numero' as eje, l.clase as etiqueta, count(*) as n from l group by
 union all
 select 'estado_matching' as eje, l.estado as etiqueta, count(*) as n from l group by l.estado`,
   },
+  /**
+   * H5-7: líneas de conciliación vigentes por estado de LÍNEA (conciliacion_detalles.estado, columna text que desde la
+   * migración 30 es el estado de cada línea) y líneas con diferencia null. Solo recuentos; un valor no previsto suma en
+   * otros_valores y nunca se muestra.
+   */
+  diagnostico_estado_linea: {
+    objetos: ['conciliacion_detalles', 'conciliaciones', 'facturas', 'cf_configuracion'],
+    porFactura: false,
+    sql: `with ${HAB},
+v as (
+    select cd.estado::text as estado, cd.diferencia
+      from public.conciliacion_detalles cd
+      join public.conciliaciones c on c.id = cd.conciliacion_id and c.es_actual
+      join public.facturas f on f.id = c.factura_id
+      cross join hab
+     where f.farmacia = $1
+)
+select count(*) as lineas,
+       count(*) filter (where v.estado = 'COINCIDE') as coincide,
+       count(*) filter (where v.estado = 'DIFERENCIA') as diferencia,
+       count(*) filter (where v.estado = 'NO_EVALUABLE') as no_evaluable,
+       count(*) filter (where v.estado is null or btrim(v.estado) = '') as sin_valor,
+       count(*) filter (where v.estado is not null and btrim(v.estado) <> ''
+                          and v.estado not in ('COINCIDE', 'DIFERENCIA', 'NO_EVALUABLE')) as otros_valores,
+       count(*) filter (where v.diferencia is null) as diferencia_null
+from v`,
+  },
   diagnostico_par_08c66676: {
     objetos: ['albaranes', 'cf_configuracion'],
     porFactura: false,
@@ -1756,6 +1805,15 @@ function literalFactura(fa: FacturaResumen): string | null {
   return t ? t : null;
 }
 
+/**
+ * H5-8: nombre comercial y razón social de una factura. Razón social = el literal impreso (si falta, el nombre
+ * resuelto); nombre comercial = proveedor_comercial.ts con el CIF de la factura (cifFactura) y ese literal.
+ */
+export function nombreProveedorFactura(fa: Pick<FacturaResumen, 'proveedor_cif' | 'proveedor_nif_documental' | 'proveedor_literal' | 'proveedor'>): NombreProveedor {
+  const razon = (fa.proveedor_literal ?? fa.proveedor)?.trim() || null;
+  return { proveedor_comercial: nombreComercial(cifFactura(fa.proveedor_cif, fa.proveedor_nif_documental), razon), proveedor_razon_social: razon };
+}
+
 /** Etiqueta = literal más frecuente (empate: alfabético); resto = alias. */
 export function etiquetaYAlias(literales: (string | null)[]): { etiqueta: string; alias: string[] } {
   const n = new Map<string, number>();
@@ -1765,7 +1823,7 @@ export function etiquetaYAlias(literales: (string | null)[]): { etiqueta: string
   return { etiqueta: orden[0][0], alias: orden.slice(1).map(([l]) => l).sort((a, b) => a.localeCompare(b)) };
 }
 
-interface GrupoFacturas { grupo: GrupoProveedor; etiqueta: string; alias: string[]; facturas: FacturaResumen[] }
+interface GrupoFacturas { grupo: GrupoProveedor; etiqueta: string; comercial: string | null; alias: string[]; facturas: FacturaResumen[] }
 
 /**
  * Agrupa facturas por CIF (o id R9 si no tienen). Orden: con CIF, luego sin CIF con id, al final sin identificar.
@@ -1783,11 +1841,13 @@ export function agruparFacturasPorProveedor(facturas: FacturaResumen[]): GrupoFa
   return [...m.values()]
     .map((e) => {
       const ea = etiquetaYAlias(e.facturas.map(literalFactura));
+      // H5-8: "sin identificar" mezcla proveedores: nunca nombre comercial.
       return e.grupo.clave === 'sin_identificar'
-        ? { ...e, etiqueta: SIN_IDENTIFICAR, alias: [...new Set(e.facturas.map(literalFactura).filter((l): l is string => l !== null))].sort((a, b) => a.localeCompare(b)) }
-        : { ...e, ...ea };
+        ? { ...e, etiqueta: SIN_IDENTIFICAR, comercial: null, alias: [...new Set(e.facturas.map(literalFactura).filter((l): l is string => l !== null))].sort((a, b) => a.localeCompare(b)) }
+        : { ...e, ...ea, comercial: nombreComercialGrupo(e.facturas.map((fa) => nombreProveedorFactura(fa).proveedor_comercial)) };
     })
-    .sort((a, b) => rango(a.grupo) - rango(b.grupo) || a.etiqueta.localeCompare(b.etiqueta) || a.grupo.clave.localeCompare(b.grupo.clave));
+    .sort((a, b) => rango(a.grupo) - rango(b.grupo) || (a.comercial ?? a.etiqueta).localeCompare(b.comercial ?? b.etiqueta)
+      || a.grupo.clave.localeCompare(b.grupo.clave));
 }
 
 // ---------------------------------------------------------------------------
@@ -1917,6 +1977,9 @@ export interface CasoAtencion {
   /** Solo en duplicados en Farmatic: importe (PUC) de cada albarán. */
   importe_duplicado?: Importe;
   proveedor: string | null;
+  /** H5-8: solo en casos de una factura (si no, null). */
+  proveedor_comercial: string | null;
+  proveedor_razon_social: string | null;
   /** Número de factura, de albarán o archivo. */
   referencia: string;
   /** Código técnico (etiqueta pequeña secundaria). */
@@ -2029,8 +2092,11 @@ export function construirAtencion(facturas: FacturaResumen[], documentos: Docume
     g.casos.push(caso);
     grupos.set(clave, g);
   };
+  // H5-8: nombre comercial y razón social solo si el caso es de una factura.
+  const nombreDe = (fa: FacturaResumen | null): NombreProveedor => (fa ? nombreProveedorFactura(fa) : { proveedor_comercial: null, proveedor_razon_social: null });
+  const facturaPorId = (id: string | null) => (id ? facturas.find((x) => x.factura_id === id) ?? null : null);
   const factura = (fa: FacturaResumen, texto: string, codigo: string | null, fecha: string | null, extra: Partial<CasoAtencion> = {}): CasoAtencion => ({
-    texto, proveedor: fa.proveedor, referencia: fa.numero_factura ?? '(sin número)', codigo, fecha,
+    texto, proveedor: fa.proveedor, ...nombreDe(fa), referencia: fa.numero_factura ?? '(sin número)', codigo, fecha,
     factura_id: fa.factura_id, documento_id: fa.documento_id, enlace: enlaceFactura(fa.factura_id), ...extra,
   });
 
@@ -2056,7 +2122,7 @@ export function construirAtencion(facturas: FacturaResumen[], documentos: Docume
     const fa = i.factura_id ? facturas.find((x) => x.factura_id === i.factura_id) ?? null : null;
     const doc = !fa && i.documento_id ? documentos.find((d) => d.documento_id === i.documento_id) ?? null : null;
     const caso: CasoAtencion = {
-      texto: textoIncidencia(i), proveedor: fa?.proveedor ?? doc?.proveedor ?? null,
+      texto: textoIncidencia(i), proveedor: fa?.proveedor ?? doc?.proveedor ?? null, ...nombreDe(fa),
       referencia: i.numero_factura ?? i.archivo_nombre ?? '', codigo: i.codigo, fecha: i.created_at,
       factura_id: i.factura_id, documento_id: i.documento_id, enlace: enlaceFactura(i.factura_id),
     };
@@ -2070,7 +2136,7 @@ export function construirAtencion(facturas: FacturaResumen[], documentos: Docume
   for (const v of vencimientos.filter((x) => x.sentido === 'NO_DOCUMENTADO')) {
     const fa = facturas.find((x) => x.factura_id === v.factura_id) ?? null;
     anadir('VENCIMIENTO_SIN_SENTIDO', {
-      texto: TEXTO_VENCIMIENTO_SIN_SENTIDO, proveedor: fa?.proveedor ?? v.proveedor,
+      texto: TEXTO_VENCIMIENTO_SIN_SENTIDO, proveedor: fa?.proveedor ?? v.proveedor, ...nombreDe(fa),
       referencia: [v.numero_factura ?? '(sin número)', v.vencimientos_factura > 1 ? `vencimiento ${v.orden ?? '?'} de ${v.vencimientos_factura}` : null]
         .filter(Boolean).join(' · '),
       codigo: null, fecha: v.fecha_vencimiento, factura_id: v.factura_id, documento_id: fa?.documento_id ?? null,
@@ -2080,7 +2146,7 @@ export function construirAtencion(facturas: FacturaResumen[], documentos: Docume
 
   for (const d of documentos) {
     const caso: CasoAtencion = {
-      texto: '', proveedor: d.proveedor, referencia: d.archivo_nombre ?? '', codigo: d.ultimo_error_codigo ?? d.estado_lectura,
+      texto: '', proveedor: d.proveedor, ...nombreDe(null), referencia: d.archivo_nombre ?? '', codigo: d.ultimo_error_codigo ?? d.estado_lectura,
       fecha: d.fecha_importacion, factura_id: null, documento_id: d.documento_id, enlace: '/facturas',
     };
     // Los PROVEEDOR_NO_SOPORTADO no entran (H4d-2): contador "Sin automatizar" y mapa de Proveedores.
@@ -2091,7 +2157,7 @@ export function construirAtencion(facturas: FacturaResumen[], documentos: Docume
 
   for (const a of alertas) {
     const num = a.numero_albaran ?? '(sin número)';
-    const base = { proveedor: a.proveedor, codigo: null, fecha: a.fecha, factura_id: a.factura_id, documento_id: null,
+    const base = { proveedor: a.proveedor, ...nombreDe(facturaPorId(a.factura_id)), codigo: null, fecha: a.fecha, factura_id: a.factura_id, documento_id: null,
       enlace: a.factura_id ? enlaceFactura(a.factura_id) : '/conciliacion' };
     if (a.tipo === 'POSIBLE_DUPLICADO_FARMATIC') {
       const filasDup = (a.detalle.filas as AlbaranFarmatic[] | undefined) ?? [];
@@ -2181,7 +2247,11 @@ export const construir = {
         bloqueantes: inc.filter((i) => i.bloqueante).length,
       },
       proximos_vencimientos: venc.filter((v) => v.fecha_vencimiento !== null && v.fecha_vencimiento >= hoy).slice(0, 5)
-        .map((v) => ({ ...v, posible_duplicado: dup.has(v.factura_id) })),
+        .map((v) => {
+          const fa = facts.find((x) => x.factura_id === v.factura_id);
+          const n: NombreProveedor = fa ? nombreProveedorFactura(fa) : { proveedor_comercial: null, proveedor_razon_social: null };
+          return { ...v, ...n, posible_duplicado: dup.has(v.factura_id) };
+        }),
       atencion: { tipos: grupos.length, casos: grupos.reduce((a, g) => a + g.casos.length, 0), grupos },
       alertas,
       luna_mes: { ejecuciones: cuenta(luna.ejecuciones_luna), coste: importe(luna.coste_luna) },
@@ -2194,6 +2264,7 @@ export const construir = {
     const grupos = agruparFacturasPorProveedor(facts);
     const grupoDe = new Map<string, { clave: string; etiqueta: string }>();
     for (const g of grupos) for (const fa of g.facturas) grupoDe.set(fa.factura_id, { clave: g.grupo.clave, etiqueta: g.etiqueta });
+    // H5-8: proveedor_etiqueta sigue siendo el literal del grupo; lo mostrado es el nombre comercial de la factura.
     const hoy = generado_at.slice(0, 10);
     const vencDe = new Map<string, Vencimiento[]>();
     for (const v of filas(f, 'vencimientos').map(aVencimiento)) vencDe.set(v.factura_id, [...(vencDe.get(v.factura_id) ?? []), v]);
@@ -2207,13 +2278,14 @@ export const construir = {
         const vs = vencDe.get(fa.factura_id) ?? [];
         const { proximo, vencido } = vencimientoProximo(vs, hoy);
         return {
-          ...fa, proveedor_grupo: g.clave, proveedor_etiqueta: g.etiqueta,
+          ...fa, proveedor_grupo: g.clave, proveedor_etiqueta: g.etiqueta, ...nombreProveedorFactura(fa),
+          proveedor_cif_comparable: cifFactura(fa.proveedor_cif, fa.proveedor_nif_documental),
           vencimiento_proximo: proximo, vencimiento_vencido: vencido, vencimientos_total: vs.length,
           vencimientos_importes: [...vs].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)).map((v) => v.importe),
           posible_duplicado: dup.has(fa.factura_id),
         };
       }),
-      proveedores_filtro: grupos.map((g) => ({ clave: g.grupo.clave, etiqueta: g.etiqueta, sin_cif: g.grupo.sin_cif, facturas: g.facturas.length })),
+      proveedores_filtro: grupos.map((g) => ({ clave: g.grupo.clave, etiqueta: g.etiqueta, comercial: g.comercial, sin_cif: g.grupo.sin_cif, facturas: g.facturas.length })),
       documentos_sin_factura: filas(f, 'documentos').map(aDocumento).filter((d) => d.facturas === 0),
       pago: PAGO_SIN_DATOS,
     };
@@ -2242,6 +2314,7 @@ export const construir = {
         proveedor_cif: texto(r.proveedor_cif),
         proveedor_nif_documental: texto(r.proveedor_nif_documental),
         cif: cifFactura(texto(r.proveedor_cif), texto(r.proveedor_nif_documental)),
+        ...(({ proveedor_comercial, proveedor_razon_social }) => ({ comercial: proveedor_comercial, razon_social: proveedor_razon_social }))(nombreProveedorFactura(aFactura(r))),
         id_proveedor_albaranes: texto(r.id_proveedor_albaranes),
         extractor_codigo: texto(r.proveedor_extractor_codigo),
         nivel_confianza: texto(r.proveedor_nivel_confianza),
@@ -2354,12 +2427,13 @@ export const construir = {
     const facts = filas(f, 'facturas').map(aFactura);
     const docs = filas(f, 'documentos').map(aDocumento);
     const grupos = agruparFacturasPorProveedor(facts);
-    const proveedores: Proveedor[] = grupos.map(({ grupo, etiqueta, alias, facturas: fp }) => {
+    const proveedores: Proveedor[] = grupos.map(({ grupo, etiqueta, comercial, alias, facturas: fp }) => {
       const tot = sumaConocida(fp.map((x) => x.importe_total));
       const fechas = fp.map((x) => x.fecha_factura).filter((x): x is string => x !== null).sort();
       return {
         ...grupo,
         etiqueta,
+        comercial,
         alias,
         facturas: fp.length,
         norm_revision: fp.filter((x) => x.estado_normalizacion === 'REQUIERE_REVISION').length,
@@ -2376,16 +2450,17 @@ export const construir = {
     // normalizacion_ejecuciones.proveedor_id del catálogo si lo hay; si no, una fila solo por estado. Nunca el
     // nombre de archivo (R13).
     const etiquetas = new Map(proveedores.map((p) => [p.clave, p.etiqueta]));
+    const comerciales = new Map(proveedores.map((p) => [p.clave, p.comercial]));
     const mapa = new Map<string, FilaMapaDocumentos>();
     for (const d of docs) {
       let base: Omit<FilaMapaDocumentos, 'por_estado' | 'total'>;
       if (d.facturas > 0) {
         const g = grupoProveedor(d.proveedor_cif, d.id_proveedor_albaranes);
-        base = { clave: g.clave, proveedor: etiquetas.get(g.clave) ?? SIN_IDENTIFICAR, sin_cif: g.sin_cif, origen: 'FACTURAS' };
+        base = { clave: g.clave, proveedor: etiquetas.get(g.clave) ?? SIN_IDENTIFICAR, comercial: comerciales.get(g.clave) ?? null, sin_cif: g.sin_cif, origen: 'FACTURAS' };
       } else if (d.proveedor_id !== null && d.proveedor !== null && d.proveedor.trim() !== '') {
-        base = { clave: `catalogo:${d.proveedor_id}`, proveedor: d.proveedor.trim(), sin_cif: true, origen: 'CATALOGO' };
+        base = { clave: `catalogo:${d.proveedor_id}`, proveedor: d.proveedor.trim(), comercial: null, sin_cif: true, origen: 'CATALOGO' };
       } else {
-        base = { clave: 'sin_factura_sin_proveedor', proveedor: SIN_FACTURA_SIN_PROVEEDOR, sin_cif: true, origen: 'SIN_PROVEEDOR' };
+        base = { clave: 'sin_factura_sin_proveedor', proveedor: SIN_FACTURA_SIN_PROVEEDOR, comercial: null, sin_cif: true, origen: 'SIN_PROVEEDOR' };
       }
       const fila = mapa.get(base.clave) ?? { ...base, por_estado: contar([], ESTADOS_LECTURA), total: 0 };
       fila.por_estado[d.estado_lectura] = (fila.por_estado[d.estado_lectura] ?? 0) + 1;
@@ -2395,7 +2470,7 @@ export const construir = {
     const estados = [...new Set([...ESTADOS_LECTURA, ...docs.map((d) => d.estado_lectura)])];
     const rango = (x: FilaMapaDocumentos) =>
       x.origen === 'SIN_PROVEEDOR' ? 4 : x.origen === 'CATALOGO' ? 3 : x.clave === 'sin_identificar' ? 2 : x.sin_cif ? 1 : 0;
-    const filasMapa = [...mapa.values()].sort((a, b) => rango(a) - rango(b) || a.proveedor.localeCompare(b.proveedor) || a.clave.localeCompare(b.clave));
+    const filasMapa = [...mapa.values()].sort((a, b) => rango(a) - rango(b) || (a.comercial ?? a.proveedor).localeCompare(b.comercial ?? b.proveedor) || a.clave.localeCompare(b.clave));
     return { farmacia: FARMACIA, generado_at, proveedores, mapa_documentos: { estados, filas: filasMapa } };
   },
 

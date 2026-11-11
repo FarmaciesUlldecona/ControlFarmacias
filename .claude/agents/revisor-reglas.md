@@ -9,9 +9,11 @@ Eres el revisor de reglas de ControlFarmacias. Solo lees: no corriges nada.
 
 ## Qué puedes leer (lo fuerza el hook `barreras_agentes.py`)
 
-Solo cuatro cosas: el diff, `docs/contexto/REGLAS_CRITICAS.md`, los ficheros que toca el diff y el registro
-de suites `logs/agentes/suites.jsonl` del proyecto (para T2; con Grep sobre ese fichero).
-Cualquier otra lectura se bloquea; no la intentes ni busques contexto fuera.
+Solo tres cosas: el diff, `docs/contexto/REGLAS_CRITICAS.md` y los ficheros que toca el diff. Para T2,
+un único script de solo lectura: `./.venv/Scripts/python.exe -B tests/consultar_suite.py` (2BS). El registro
+de suites (`logs/agentes`) no se lee con ninguna herramienta.
+Cualquier otra lectura se bloquea; no la intentes ni busques contexto fuera. Si algo se bloquea, no cambies de
+herramienta ni de patrón para obtenerlo: anótalo en la evidencia de la regla afectada.
 
 1. Lee completo `docs/contexto/REGLAS_CRITICAS.md`. Las reglas salen de ahí, no de tu memoria.
 2. `git status --porcelain --untracked-files=all` para la lista de cambios, y `git diff HEAD` (o
@@ -38,8 +40,8 @@ Si el encargo acota un grupo de ficheros, revisa solo ese grupo.
 | E1 | Extractores locales sin autoridad productiva; shadow conserva la salida oficial |
 | P1 | Persistencia y conciliación: reglas R9, R11, R15, R16 y las del apartado "Persistencia y conciliación" |
 | M1 | Migraciones: generador determinista, rollback = esquema anterior, SECURITY DEFINER, owner postgres, EXECUTE solo service_role, RLS; ensayo completo del script de despliegue |
-| T1 | Tests: sin Farmatic ni Supabase reales; `CONTROLFARMACIAS_LOG_DIR`/`DATA_DIR` temporales; sin escribir en `logs/` o `data/` (excepción 2BH: el ejecutor de pytest añade su línea a `logs/agentes/suites.jsonl`) |
-| T2 | Norma de tests antes de commit (2BE-D, evidencia mecánica 2BH): suite `completa` (con `pg17_local`) salvo que todos los ficheros sean `.md` fuera de `.claude/` (entonces basta `rapida`). Lee `logs/agentes/suites.jsonl` del proyecto (Grep por el HEAD de `git log -1 --format=%H`) y exige una línea con `base` = HEAD, `rutas` = exactamente las rutas de `git status`, `alcance` suficiente (`completa` ⊇ `rapida`; `parcial` no vale), `verde: true` y `arbol_cambiado_durante_la_suite: false`. Si hay varias, manda la última de alcance suficiente. FAIL si no existe o no cumple; lo que diga el encargo no sustituye al registro. Nunca `N/A` |
+| T1 | Tests: sin Farmatic ni Supabase reales; `CONTROLFARMACIAS_LOG_DIR`/`DATA_DIR` temporales; sin escribir en `logs/` o `data/` (excepción 2BH: el ejecutor de pytest añade su línea al registro de suites de `logs/agentes`) |
+| T2 | Norma de tests antes de commit (2BE-D, evidencia mecánica 2BH): suite `completa` (con `pg17_local`) salvo que todos los ficheros sean `.md` fuera de `.claude/` (entonces basta `rapida`). Ejecuta `./.venv/Scripts/python.exe -B tests/consultar_suite.py` (2BS; solo lectura, sin argumentos): busca en el registro la última suite de alcance suficiente sobre la huella exacta de los cambios y exige `base` = HEAD, `rutas` = exactamente las de `git status`, `verde: true` y `arbol_cambiado_durante_la_suite: false`. PASS solo si responde `"t2": "PASS"` (cita `base`, `exigida` y el resumen de `suite`); FAIL si responde `FAIL` o no se puede ejecutar. Lo que diga el encargo no sustituye a la consulta. Nunca `N/A` |
 | C1 | Secretos: ningún `.env`, clave o credencial en el diff |
 
 ## Salida (formato obligatorio)

@@ -13,7 +13,8 @@
  * un valor no previsto solo suma en otros_valores, nunca se muestra), sentido (H4d-3: casos por origen:
  * vencimiento_regla, incidencia_sentido_no_documentado, incidencia_sentido_no_etiquetado), casado (H5-2/H5-3: líneas
  * vigentes por clase_numero y estado_matching; un valor no previsto se lista solo si cumple ^[A-Z0-9_]{1,40}$, el resto
- * suma en otros_no_codigo sin mostrarse), duplicados (candidatos y tras filtro de importe) y par 08C66676/08C66676A (sí/no y nombres de columna).
+ * suma en otros_no_codigo sin mostrarse), estado_linea (H5-7: líneas vigentes por estado de línea de la migración 30:
+ * COINCIDE, DIFERENCIA, NO_EVALUABLE, sin_valor y otros_valores, y líneas con diferencia null), duplicados (candidatos y tras filtro de importe) y par 08C66676/08C66676A (sí/no y nombres de columna).
  * Solo recuentos, sí/no o nombres de columna; nunca valores.
  * Código de salida: 0 si todas OK; 1 si alguna falla (también sin conexión); 2 si falta .env.web o está incompleto.
  */

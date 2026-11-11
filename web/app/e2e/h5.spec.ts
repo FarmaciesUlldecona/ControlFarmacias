@@ -56,8 +56,9 @@ test.describe('Listado PC 1440', () => {
     await expect(fila(page, 7).locator('[data-insignia="abono"]')).toHaveText('abono');
     for (const n of [3, 5, 6]) await expect(fila(page, n).locator('[data-insignia="sentido-no-documentado"]')).toHaveText('sentido no documentado');
     await expect(page.locator('[data-insignia]')).toHaveCount(6);
-    // Proveedor por grupo CIF; F06 sin CIF.
-    await expect(fila(page, 2).locator('.celda-proveedor')).toContainText('ALLIANCEHEALTHCARECENCORA');
+    // Proveedor: nombre comercial + razón social del PDF (H5-8); F06 sin CIF.
+    await expect(fila(page, 2).locator('[data-proveedor-principal]')).toHaveAttribute('data-proveedor-principal', 'ALLIANCE');
+    await expect(fila(page, 2).locator('[data-razon-social]')).toHaveText('Alliance Healthcare España');
     await expect(fila(page, 6).locator('.celda-proveedor')).toContainText('sin CIF');
     // A 1440 px la tabla cabe entera (sin desplazamiento horizontal).
     const ancho = await page.locator('.tabla-desplazable').evaluate((e) => ({ s: e.scrollWidth, c: e.clientWidth }));
@@ -172,7 +173,34 @@ test.describe('Listado PC 1440', () => {
     await page.locator('[data-ordenar="vencimiento"]').click();
     await expect.poll(async () => (await numeros(page)).slice(0, 2)).toEqual(['AL-26-100231', 'AL-26-100231']);
     await page.locator('[data-ordenar="proveedor"]').click();
-    await expect(filas(page).first().locator('.celda-proveedor')).toContainText('ALLIANCEHEALTHCARECENCORA');
+    await expect(filas(page).first().locator('[data-proveedor-principal]')).toHaveAttribute('data-proveedor-principal', 'ALLIANCE');
+  });
+
+  // H5-8: búsqueda por nombre comercial, razón social o CIF, sin mayúsculas ni acentos.
+  test('búsqueda H5-8: hefame / Hefame / HDAD / F30004444 / F-30004444; nombre comercial + razón social', async ({ page }) => {
+    await abrirListado(page);
+    const q = page.getByRole('searchbox');
+    for (const consulta of ['hefame', 'Hefame', 'HEFAME', 'HDAD', 'hdad.fmctca', 'F30004444', 'f30004444', 'F-30004444']) {
+      await q.fill(consulta);
+      await expect.poll(() => numeros(page), consulta).toEqual(['HF-0563-889120']);
+    }
+    const p = fila(page, 5).locator('.celda-proveedor');
+    await expect(p.locator('[data-proveedor-principal]')).toHaveAttribute('data-proveedor-principal', 'HEFAME');
+    await expect(p.locator('[data-razon-social]')).toHaveText('HDAD.FMCTCA.MEDIT.,S.C.L.');
+    const tam = await p.locator('[data-razon-social]').evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+    expect(tam).toBeLessThan(13); // secundaria, pequeña
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_facturas_busqueda_hefame.png'), fullPage: true });
+    // Alliance por nombre comercial y por razón social con acento; Cofares sin equivalencia: literal, sin secundaria.
+    await q.fill('alliance');
+    await expect.poll(async () => (await numeros(page)).sort()).toEqual(['AL-26-100231', 'AL-26-100231', 'AL-26-100577']);
+    await q.fill('ESPANA');
+    await expect.poll(() => numeros(page)).toEqual(['AL-26-100577']);
+    await q.fill('');
+    await expect(fila(page, 7).locator('[data-proveedor-principal]')).toHaveAttribute('data-proveedor-principal', 'COFARES');
+    await expect(fila(page, 7).locator('[data-razon-social]')).toHaveCount(0);
+    // Filtro: mismo criterio (nombre comercial · razón social).
+    await expect(page.locator('select[name="proveedor"] option[value="cif:F30004444"]')).toHaveText('HEFAME · HDAD.FMCTCA.MEDIT.,S.C.L.');
+    await expect(page.locator('select[name="proveedor"] option[value="cif:A00000001"]')).toHaveText('COFARES');
   });
 
   test('paginación si hay más de 50 facturas (120 ficticias por intercepción)', async ({ page }) => {
@@ -237,17 +265,25 @@ test.describe('Detalle PC 1440', () => {
     await expect(alb.locator('[data-relacion="UNO_A_UNO"]')).toHaveCount(1);
     await expect(alb).toContainText('Q039904/2026');
     await expect(alb.locator('[data-casado="SIN:SIN_COINCIDENCIA"]')).toHaveText('Albarán no localizado en Farmatic');
-    // H5-2: bases rotuladas; el motor no guarda diferencia por línea (sin columna).
-    await expect(alb.locator('[data-encabezado="total"]')).toHaveText(/con IVA y RE · se compara/);
-    await expect(alb.locator('[data-encabezado="aplicado"]')).toHaveText(/con IVA y RE · PUC o PVP/);
+    // H5-7: bases rotuladas y detalle por línea del motor (migración 30), tal cual.
+    await expect(alb.locator('[data-encabezado="pdf"]')).toHaveText(/Importe PDF\s*con IVA y RE/);
+    await expect(alb.locator('[data-encabezado="farmatic"]')).toHaveText(/Importe Farmatic\s*con IVA y RE · PUC o PVP/);
+    await expect(alb.locator('[data-encabezado="diferencia"]')).toHaveText(/la del motor/);
     await expect(alb.locator('[data-encabezado="base"]')).toHaveText(/sin IVA · no se compara/);
-    await expect(alb.locator('[data-diferencia-linea]')).toHaveCount(0);
-    await expect(alb.locator('thead')).not.toContainText('Diferencia');
-    await expect(alb.locator('[data-total-pdf]').first()).toHaveText('234,55 €');
+    await expect(alb.locator('[data-importe-linea="pdf"]').first()).toHaveText('234,65 €');
     await expect(alb.locator('[data-base-pdf]').first()).toHaveText('210,55 €');
     await expect(alb.locator('[data-explicado]')).toHaveText('333,25 €');
-    await expect(alb.locator('[data-nota-bases]')).toContainText('No guarda una diferencia por línea');
-    await expect(alb.locator('[data-insignia-seccion]')).toHaveText('1 sin casar');
+    await expect(alb.locator('[data-nota-bases]')).not.toContainText('No guarda');
+    await expect(alb.locator('[data-nota-bases]')).toContainText('La diferencia total de la factura, con su tolerancia, está en Conciliación');
+    await expect(alb.locator('[data-insignia-seccion]')).toHaveText('2 con diferencia');
+    // Línea 1 casada con 0,10 € de diferencia; R17 (dos albaranes, una línea) coincide; sin casar: diferencia = PDF.
+    await expect(alb.locator('[data-diferencia-linea]')).toHaveText(['0,10 €', '0,00 €', '41,90 €']);
+    await expect(alb.locator('[data-estado-linea]')).toHaveText(['Diferencia', 'Coincide', 'Diferencia']);
+    await expect(alb.locator('[data-estado-linea="DIFERENCIA"]').first()).toHaveClass(/\br\b/); // rojo
+    await expect(alb.locator('[data-estado-linea="COINCIDE"]')).toHaveClass(/\bg\b/); // verde
+    await expect(alb.locator('[data-no-consta="farmatic"]')).toHaveCount(1); // sin casar: Farmatic no consta, nunca 0
+    await expect(page.locator('[data-aviso-detalle="lineas-con-diferencia"]')).toContainText('2 albaranes con diferencia');
+    await expect(page.locator('[data-aviso-detalle="lineas-con-diferencia"]')).toContainText('De ellos, 1 sin casar en Farmatic');
     // Conciliación: resultado, diferencia exacta, tolerancia R11 y último intento, tal cual.
     const con = page.locator('[data-seccion="conciliacion"]');
     await expect(con.locator('[data-resultado-motor]')).toHaveText('No cuadra con sus albaranes');
@@ -281,9 +317,15 @@ test.describe('Detalle PC 1440', () => {
 
     await abrirDetalle(page, 5);
     await expect(page.locator('[data-casado="HEFAME:EXACTO_ECONOMICO"]')).toHaveCount(3);
-    // Hefame: el PDF trae la base neta; el importe con IVA que compara el motor no se guarda → no consta.
-    await expect(page.locator('[data-total-pdf="no-consta"]')).toHaveCount(4);
-    await expect(page.locator('[data-nota-bases]')).toContainText('Hefame: el PDF trae la base neta');
+    // H5-7 Hefame: importe del PDF = base neta (rotulado); estado y diferencia del motor tal cual, con advertencia visible.
+    const HEFAME = 'El motor compara la base neta del PDF (sin IVA) con el importe de Farmatic (con IVA): la diferencia incluye el IVA y el recargo';
+    await expect(page.locator('[data-encabezado="pdf"]')).toHaveText(/base neta sin IVA \(Hefame\)/);
+    await expect(page.locator('[data-seccion="albaranes"] [data-diferencia-linea]')).toHaveText(['-14,86 €', '-9,07 €', '-3,15 €', '21,05 €']);
+    await expect(page.locator('[data-seccion="albaranes"] [data-estado-linea="DIFERENCIA"]')).toHaveCount(4);
+    await expect(page.locator('[data-aviso-hefame]')).toContainText(HEFAME);
+    await expect(page.locator('[data-aviso-detalle="lineas-con-diferencia"]')).toContainText('4 albaranes con diferencia');
+    await expect(page.locator('[data-aviso-detalle="lineas-con-diferencia"]')).toContainText(HEFAME);
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_detalle_F05_hefame_por_linea.png'), fullPage: true });
     await expect(page.locator('[data-casado="SIN:AMBIGUO"]')).toHaveText('Varios albaranes posibles: no se elige ninguno');
     await expect(page.locator('[data-aviso-detalle="revision-conciliacion"]')).toContainText('Se han agotado los intentos');
 
@@ -307,6 +349,31 @@ test.describe('Detalle PC 1440', () => {
     await expect(alb.locator('[data-casado="ESTADO:SIN_DESCRIPCION"]')).toHaveCount(0);
     await expect(page.locator('[data-aviso-detalle="lineas-ESTADO:SIN_DESCRIPCION"]')).toHaveCount(0);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_detalle_F01_version_anterior.png'), fullPage: true });
+  });
+
+  test('H5-7: NO_EVALUABLE gris (sin contraparte / sin importe del PDF) y null = «no consta», nunca 0', async ({ page }) => {
+    // F02 línea 6: casada, el PDF sin importe → «Sin importe del PDF para comparar»; diferencia no consta.
+    await abrirDetalle(page, 2);
+    const alb = page.locator('[data-seccion="albaranes"]');
+    const sinPdf = alb.locator('[data-estado-linea="NO_EVALUABLE_SIN_PDF"]');
+    await expect(sinPdf).toHaveText('Sin importe del PDF para comparar');
+    await expect(sinPdf).toHaveClass(/\bn\b/); // gris
+    await expect(alb.locator('[data-no-consta="pdf"]')).toHaveCount(1);
+    await expect(alb.locator('[data-no-consta="diferencia"]')).toHaveCount(1);
+    await expect(alb.locator('[data-estado-linea="COINCIDE"]')).toHaveCount(7);
+    await expect(page.locator('[data-aviso-detalle="lineas-con-diferencia"]')).toHaveCount(0);
+    // F07 línea 5: sin casar y el PDF sin importe → «Sin contraparte en Farmatic»; tres importes no consta.
+    await abrirDetalle(page, 7);
+    const sinFar = alb.locator('[data-estado-linea="NO_EVALUABLE"]');
+    await expect(sinFar).toHaveText('Sin contraparte en Farmatic');
+    await expect(sinFar).toHaveClass(/\bn\b/);
+    const fila = alb.locator('tr:has([data-estado-linea="NO_EVALUABLE"])');
+    await expect(fila).toHaveCount(1);
+    await expect(fila.locator('[data-no-consta]')).toHaveCount(3);
+    await expect(fila).not.toContainText('0,00');
+    await expect(alb.locator('[data-estado-linea="DIFERENCIA"]')).toHaveCount(2);
+    await expect(page.locator('[data-aviso-detalle="lineas-con-diferencia"]')).toContainText('2 albaranes con diferencia');
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_detalle_F07_por_linea.png'), fullPage: true });
   });
 
   test('H5-3: estados del motor: sin número, ya conciliado, y valores no previstos → "sin descripción" con el código en evidencia', async ({ page }) => {
@@ -356,6 +423,27 @@ test.describe('Detalle PC 1440', () => {
     await page.locator('[data-seccion="evidencia"] summary').click();
     await expect(page.locator('[data-seccion="evidencia"]')).toContainText('sí · ');
   });
+
+  test('H5-8: F05 Hefame: cabecera con nombre comercial + razón social y CIF; fiscalidad sin tipo («tipo no indicado», sin guion)', async ({ page }) => {
+    await abrirDetalle(page, 5);
+    const cab = page.locator('.cf-proveedor');
+    await expect(cab.locator('[data-proveedor-principal]')).toHaveAttribute('data-proveedor-principal', 'HEFAME');
+    await expect(cab.locator('[data-razon-social]')).toHaveText('HDAD.FMCTCA.MEDIT.,S.C.L.');
+    await expect(cab.locator('[data-cif]')).toHaveText('· CIF F30004444');
+    const fis = page.locator('[data-seccion="fiscalidad"]');
+    const t = fis.locator('[data-impuesto]');
+    await expect(t.locator('[data-tipo-impuesto]')).toHaveText('tipo no indicado');
+    await expect(t).not.toContainText('IVA —');
+    // Importes sin nada delante: el "—" era el tipo ausente (tipoPorcentaje(null)), no un signo; los importes son positivos.
+    await expect(t.locator('[data-cuota="iva"]')).toHaveText('25,85 €');
+    await expect(t.locator('[data-cuota="re"]')).toHaveText('3,62 €');
+    expect(await t.textContent()).not.toMatch(/[—–−-]/);
+    await fis.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_detalle_F05_fiscalidad_sin_tipo.png'), fullPage: true });
+    // F01 con tipo: sigue "10 %" delante de la cuota.
+    await abrirDetalle(page, 1);
+    await expect(page.locator('[data-seccion="fiscalidad"] [data-cuota="iva"]')).toHaveText('10 % 13,68 €');
+  });
 });
 
 test.describe('Inicio: IA del mes', () => {
@@ -397,6 +485,9 @@ test.describe('Móvil 390', () => {
     await page.screenshot({ path: join(CAPTURAS, 'movil390_detalle_resumen.png'), fullPage: true });
     await page.getByRole('tab', { name: 'Detalle' }).click();
     await expect(page.locator('[data-seccion="albaranes"] [data-casado="NUMERO:INTERNO"]')).toBeVisible();
+    // H5-7: en móvil, diferencia y estado del motor por línea (R17: una vez por línea del PDF).
+    await expect(page.locator('[data-seccion="albaranes"] [data-diferencia-linea]')).toHaveText(['0,10 €', '0,00 €', '41,90 €']);
+    await expect(page.locator('[data-seccion="albaranes"] [data-estado-linea]')).toHaveText(['Diferencia', 'Coincide', 'Diferencia']);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     await page.screenshot({ path: join(CAPTURAS, 'movil390_detalle_detalle.png'), fullPage: true });
     await page.getByRole('tab', { name: 'PDF' }).click();

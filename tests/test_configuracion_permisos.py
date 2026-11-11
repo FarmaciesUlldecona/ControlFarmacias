@@ -479,6 +479,21 @@ def test_deny_original_conservado():
     assert DENY_ORIGINAL <= set(PERMISOS["deny"])
 
 
+def test_registro_de_agentes_sin_lectura_ni_edicion():
+    """2BS: logs/agentes no se lee (Read cubre también Glob y Grep) ni se edita; además lo bloquea el hook."""
+
+    assert {"Read(/logs/agentes/**)", "Edit(/logs/agentes/**)"} <= set(PERMISOS["deny"])
+
+
+def test_allow_exacto_de_la_consulta_de_suite():
+    """2BS: el revisor consulta T2 con tests/consultar_suite.py, sin argumentos."""
+
+    assert f"Bash({PY_BASH} -B tests/consultar_suite.py)" in PERMISOS["allow"]
+    assert f"PowerShell({PY_BASH} -B tests/consultar_suite.py)" in PERMISOS["allow"]
+    assert f"PowerShell({PY_PS} -B tests\\consultar_suite.py)" in PERMISOS["allow"]
+    assert decidir_comando("Bash", f"{PY_BASH} -B tests/consultar_suite.py --todo") is None
+
+
 def test_hook_de_identidad_conservado():
     """El hook de identidad sigue siendo el primer grupo; el segundo (piloto de
     subagentes, 2026-10-23) es barreras_agentes.py para todas las herramientas."""

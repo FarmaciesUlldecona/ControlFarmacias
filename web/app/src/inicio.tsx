@@ -3,6 +3,7 @@
 import { Link } from 'react-router-dom';
 import type { CasoAtencion, Color, Importe, InicioDTO, VencimientoInicio } from '../server/contrato.ts';
 import { useApiRecargable } from './api.ts';
+import { NombreProveedor } from './ui.tsx';
 import { euros, fechaCorta, fechaLarga, hora, plural, porcentaje } from './formato.ts';
 
 const CLASE: Record<Color, string> = { verde: 'g', azul: 'b', naranja: 'o', rojo: 'r', gris: 'n' };
@@ -100,11 +101,6 @@ function notaVencimiento(v: VencimientoInicio): string[] {
   return notas;
 }
 
-/** H4d: nombre de proveedor en una línea; si no cabe, "…" y el nombre completo en title (nunca cortado a mitad). */
-function NombreProveedor({ nombre }: { nombre: string | null }) {
-  const n = nombre ?? 'Proveedor sin identificar';
-  return <span className="nombre-truncado" title={n}>{n}</span>;
-}
 
 function Vencimientos({ d }: { d: InicioDTO }) {
   const vs = d.proximos_vencimientos;
@@ -125,7 +121,7 @@ function Vencimientos({ d }: { d: InicioDTO }) {
               <tr key={v.vencimiento_id} data-vencimiento={v.vencimiento_id}>
                 <td className="fecha">{fechaCorta(v.fecha_vencimiento)}</td>
                 <td className="proveedor">
-                  <Link to={`/facturas/${v.factura_id}`}><NombreProveedor nombre={v.proveedor} /></Link>
+                  <Link to={`/facturas/${v.factura_id}`}><NombreProveedor comercial={v.proveedor_comercial} razon={v.proveedor_razon_social} respaldo={v.proveedor} /></Link>
                   {notaVencimiento(v).map((n) => <span key={n} className="nota">{n}</span>)}
                   {v.posible_duplicado && <span className="insignia o insignia-mini" data-posible-duplicado>posible duplicado</span>}
                 </td>
@@ -163,7 +159,8 @@ function Caso({ c }: { c: CasoAtencion }) {
         <span className="caso-texto">{c.texto}</span>
         {detalle && <span className="aviso-detalle">{detalle}</span>}
         <span className="caso-ref tenue">
-          {c.proveedor !== null && <NombreProveedor nombre={c.proveedor} />}
+          {(c.proveedor !== null || c.proveedor_comercial !== null || c.proveedor_razon_social !== null)
+            && <NombreProveedor comercial={c.proveedor_comercial} razon={c.proveedor_razon_social} respaldo={c.proveedor} />}
           {c.referencia && <span className="caso-referencia">{c.referencia}</span>}
           {c.fecha && <span className="caso-fecha">{fechaCorta(c.fecha)}</span>}
           {c.codigo && <code className="codigo">{c.codigo}</code>}

@@ -185,7 +185,9 @@ test.describe('Necesita tu atención móvil 390', () => {
 
   test('nombres largos truncados con "…" y completos en title; sin desbordamiento', async ({ page }) => {
     await abrirInicio(page);
-    const nombre = page.locator('[data-vencimiento] .nombre-truncado').first();
+    // H5-8: el nombre comercial (ALLIANCE) cabe; la razón social larga (secundaria) se trunca.
+    await expect(page.locator('[data-vencimiento] [data-proveedor-principal]').first()).toHaveAttribute('data-proveedor-principal', 'ALLIANCE');
+    const nombre = page.locator('[data-vencimiento] [data-razon-social]').first();
     await expect(nombre).toHaveAttribute('title', 'ALLIANCEHEALTHCARECENCORA');
     const m = await nombre.evaluate((e) => ({ scroll: e.scrollWidth, client: e.clientWidth, ws: getComputedStyle(e).whiteSpace, to: getComputedStyle(e).textOverflow }));
     expect(m.ws).toBe('nowrap');
