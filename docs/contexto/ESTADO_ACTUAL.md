@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-12 (TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-12 (TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -79,7 +79,7 @@ RESPALDO REMOTO`.
 
 - PIO es la única farmacia autorizada. RITA está bloqueada salvo en el módulo de
   Trabajadores, el único donde está habilitada (decisión de Pio, 2026-11-12; módulo
-  no implementado).
+  implementado y desplegado en producción el 2026-11-12, hito TRAB-D).
 - Valores seguros por defecto: `normalizacion_automatica=false`,
   `conciliacion_automatica=false`, `luna_habilitada=false`.
 - Estos valores describen el contrato y la última certificación. El estado remoto
@@ -328,6 +328,37 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito TRAB-D: migración 31 desplegada en producción (2026-11-12)
+
+Con confirmación expresa de Pio. `CONFIRMADO EN PRODUCCIÓN`. Evidencias y scripts de lectura en
+`C:\ControlFarmacias\evidencias_trab_d` (con `SHA256SUMS.txt`).
+
+- **READ_ONLY previo** (tras el push de Pio):
+  - Puerta: HEAD = `origin/main` = `28b3972`, árbol limpio; SHA LF de la 31 `ee7129ed…`.
+  - Noche del 11/11 y día (desde las 17:41 UTC del 11/11): tareas con resultado 0; 22 albaranes nuevos de PIO; 7
+    actualizados (los de las aprobaciones R18); 46 conciliaciones (serie 2BP); 0 documentos nuevos, 0 NORMALIZANDO,
+    0 claims; revisiones pendientes 275128 y 275125. Desde el final de la serie (10:28 UTC): 0 cambios.
+  - Precondiciones 7/7 (17:36 UTC). Captura pre `CAPTURA_OK`: marcas 28, 29 y 30 presentes; objetos, funciones y
+    rol de la 31 ausentes; puertas de tareas y operación en verde.
+- **Despliegue** (`desplegar_31.py 28b3972 ee7129ed…`, 17:37 UTC, una vez): **APLICADA**. Precondiciones 7/7 y
+  postcondiciones 6/6 (datos sin cambios, rol, privilegios de la web, ACL, RLS y módulo, propietarios).
+- **Captura post `CAPTURA_OK`**: objetos, funciones y rol de la 31 presentes; huella de datos idéntica a la pre.
+- **Postcheck 2AX `POSTCHECK_OK`:**
+  - Alcance derivado de las referencias locales 30 y 31: 48 objetos (7 tablas, vista, secuencia, 4 funciones, 17
+    políticas, 17 triggers y la ACL de `public`).
+  - Pre→post solo cambian esos 48, iguales a la referencia 31; en la pre, iguales a la 30.
+  - Fuera del alcance, todo idéntico; ninguna fila cambiada; configuración, operación, reservas, aprobaciones y
+    privilegios por defecto idénticos.
+- **Aislamiento `AISLAMIENTO_OK`** (READ_ONLY):
+  - `farmacias_habilitadas` = `{PIO}`; automáticos y Luna en `false`; permiso por módulo solo `TRABAJADORES =
+    {PIO,RITA}`.
+  - Facturas, documentos, albaranes, cambios y aprobaciones: solo PIO.
+  - `cf_trabajadores_web`: ningún privilegio (tabla, columna, secuencia ni función sensible) fuera de los objetos de
+    la 31; en ninguna de las 15 tablas de facturas, albaranes, conciliación y configuración; sin pertenencias ni
+    atributos privilegiados; 5 conexiones, tiempos de 60 s.
+- **Contraseña** de `cf_trabajadores_web` fijada por Pio fuera del repositorio.
+- `PENDIENTE`: prueba de acceso de Pio por el pooler con `cf_trabajadores_web`.
+
 ### Hito TRAB: esquema de Trabajadores (migración 31, solo local, 2026-11-12)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local). Commit local, sin push. Producción no tocada. Diseño con OK final de Pio
@@ -357,8 +388,8 @@ en `pruebas/auditoria_trab/DISENO.md`; reglas en REGLAS_CRITICAS («Trabajadores
   - el segundo intento se revierte;
   - el rollback, con la imitación, devuelve el esquema 30.
 - **Tests:** `test_integracion_pg17_31_trabajadores.py` (73). Plantillas `31` y `31_rollback` en `pg17_local`.
-- `PENDIENTE` (con confirmación de Pio): push y despliegue (hito TRAB-D: preflight READ_ONLY, `desplegar_31.py` y
-  contraseña del rol fijada por Pio).
+- ~~`PENDIENTE` (con confirmación de Pio): push y despliegue (hito TRAB-D: preflight READ_ONLY, `desplegar_31.py` y
+  contraseña del rol fijada por Pio)~~: hecho (ver «Hito TRAB-D»).
 
 ### Hito 2BP en producción: serie de conciliación cerrada, 57 de 59 (2026-11-12)
 

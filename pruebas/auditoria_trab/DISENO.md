@@ -1,7 +1,8 @@
 # Hito TRAB: esquema de Trabajadores (migración 31)
 
-Diseño con **OK final de Pio** (2026-11-12). Implementado **solo en local** (`CONFIRMADO POR TEST` en PostgreSQL 17
-local; migración 31, tests y `desplegar_31.py` ensayado); producción no tocada. Parte del esquema propuesto por la
+Diseño con **OK final de Pio** (2026-11-12). Implementado (`CONFIRMADO POR TEST` en PostgreSQL 17 local; migración
+31, tests y `desplegar_31.py` ensayado) y **desplegado en producción** el 2026-11-12 (hito TRAB-D, `APLICADA`; ver
+ESTADO_ACTUAL). Parte del esquema propuesto por la
 web y de las decisiones de Pio del 2026-11-12 (REGLAS_CRITICAS, «Trabajadores» y excepción por módulo de «Seguridad
 y operación»), con sus respuestas a las 10 preguntas (§8).
 
@@ -15,8 +16,8 @@ y operación»), con sus respuestas a las 10 preguntas (§8).
 - **Historial solo de inserción**, escrito por trigger, con el autor que indica la web.
 - **Sin DNI ni datos de salud.** Nota de evento de 200 caracteres como máximo, comprobado en la BD.
 - **Fichajes de Farmatic pospuestos:** las horas se confirman a mano; este hito no lee Farmatic.
-- Falla cerrado: farmacia fuera del módulo, autor ausente, valor fuera de dominio o franja incompatible → excepción y
-  nada se escribe.
+- Falla cerrado: farmacia fuera del módulo, autor ausente, valor fuera de dominio o evento fuera del alta o la baja →
+  excepción y nada se escribe. La franja contraria a una media jornada **no se bloquea** (§2.4): la web avisa.
 
 ## 2. Tablas
 
@@ -190,7 +191,7 @@ RLS de quien la consulta. La leen `cf_trabajadores_web` y `cf_lectura`.
    - el rol del sistema no tiene privilegios sobre las tablas nuevas;
    - nota de 200 caracteres aceptada y de 201 rechazada;
    - un evento duplicado `(trabajadora, fecha, franja)` se rechaza;
-   - franja incompatible con media jornada y evento fuera del alta o la baja se rechazan;
+   - un evento fuera del alta o la baja se rechaza;
    - `ON CONFLICT DO NOTHING` no pisa un evento existente.
 6. **Historial:**
    - una fila por cada `INSERT`/`UPDATE`, con autor y antes/después;
