@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-12 (Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-12 (contraseñas de roles siempre con SCRAM, decisión de Pio; Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -13,6 +13,10 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   `EXECUTE` con efectos laterales ni escrituras directas o indirectas.
 - Supabase productivo, flags, workers, Task Scheduler y documentos reales requieren
   preflight, alcance explícito y confirmación de Pio.
+- **Contraseñas de roles de base de datos (DECISIÓN DE PIO, 2026-11-12, TRAB-D):** se fijan **siempre** con SCRAM
+  (`set password_encryption = 'scram-sha-256'` en la misma sesión, antes del `alter role … password`); el pooler
+  de Supabase rechaza otro formato. Las fija Pio, fuera del repositorio; nunca en el repositorio, en argumentos,
+  en el chat ni en salidas. Tras fijarla o cambiarla, prueba de acceso por el pooler.
 - Solo PIO está autorizada. Una identidad de farmacia ausente, contradictoria o no
   demostrable bloquea la persistencia.
   **Excepción por módulo (DECISIÓN DE PIO, 2026-11-12, Trabajadores):** RITA está habilitada **SOLO** para el
@@ -402,7 +406,7 @@ producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTAD
 - **Cómputo (DECISIÓN DE PIO, 2026-11-12):** `TURNO_GUARDIA` (también el festivo trabajado) y `LOCALIZADA` **no
   computan**: se registran, no suman horas.
 - **Rol de escritura de la web:** `cf_trabajadores_web` (migración 31). Contraseña fijada por Pio fuera del
-  repositorio; nunca en el repositorio, en argumentos ni en salidas.
+  repositorio, con SCRAM (ver «Seguridad y operación»); prueba de acceso `ACCESO_OK` (2026-11-12).
 - **Franja contraria a una media jornada:** no se bloquea en la BD (cambios de turno); la web avisa.
 - **Rol del sistema sin privilegios** sobre las tablas del módulo: la migración 31 le revoca los privilegios por
   defecto de Supabase. **AUTORIZACIÓN EXPRESA DE PIO (2026-11-12):** nombrar el rol del sistema **solo** en

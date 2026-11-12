@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-12 (TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-12 (TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio con SCRAM; prueba de acceso de Pio ACCESO_OK; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -356,8 +356,16 @@ Con confirmación expresa de Pio. `CONFIRMADO EN PRODUCCIÓN`. Evidencias y scri
   - `cf_trabajadores_web`: ningún privilegio (tabla, columna, secuencia ni función sensible) fuera de los objetos de
     la 31; en ninguna de las 15 tablas de facturas, albaranes, conciliación y configuración; sin pertenencias ni
     atributos privilegiados; 5 conexiones, tiempos de 60 s.
-- **Contraseña** de `cf_trabajadores_web` fijada por Pio fuera del repositorio.
-- `PENDIENTE`: prueba de acceso de Pio por el pooler con `cf_trabajadores_web`.
+- **Contraseña** de `cf_trabajadores_web` fijada por Pio fuera del repositorio, con
+  `password_encryption = 'scram-sha-256'` (el pooler rechaza otro formato; regla en REGLAS_CRITICAS).
+- **Prueba de acceso** (`pruebas/auditoria_trab/probar_acceso_cf_trabajadores_web.py`, patrón de la de
+  `cf_lectura`; ensayada contra PostgreSQL 17 local en `test_integracion_pg17_31_trabajadores.py`): host y puerto
+  del pooler como argumentos, usuario `cf_trabajadores_web.vklaiuytvegkelgyspxc`, contraseña solo desde
+  `CF_TRAB_PASSWORD` (nunca argumento ni impresa). Comprueba: conecta; lee las tablas, la vista y los permisos del
+  módulo; un INSERT de prueba con autor escribe su historial y se deshace (rollback, sin filas residuales; solo
+  consume un valor de la secuencia del historial); sin autor falla (`AUTOR_AUSENTE`); `DELETE` y leer facturas
+  fallan (42501).
+- **Prueba de acceso de Pio por el pooler (2026-11-12): `ACCESO_OK`.** **TRAB-D cerrado.**
 
 ### Hito TRAB: esquema de Trabajadores (migración 31, solo local, 2026-11-12)
 
