@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-12 (contraseñas de roles siempre con SCRAM, decisión de Pio; Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-12 (D1 de AUTO-ALLIANCE: autoridad Alliance certificada en la ruta automática, decisión de Pio, no implementada; contraseñas de roles siempre con SCRAM, decisión de Pio; Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -80,6 +80,15 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   multifactura certificado. Solo se usa con `ejecutar_una_manual()`; ningún
   scheduler ni la ruta automática lo referencian. Cualquier otro proveedor falla
   cerrado.
+  **Ampliación (DECISIÓN DE PIO, 2026-11-12, D1 del Hito AUTO-ALLIANCE; diseño en
+  `pruebas/auditoria_auto_alliance/DISENO.md`):** la ruta automática puede tener
+  autoridad de extracción **solo para Alliance** y **solo su versión certificada**
+  (`alliance-local` con puente multifactura certificado), mediante un compositor
+  automático que reutiliza esa misma autoridad; cualquier otro proveedor, layout o
+  versión falla cerrado (R2). **NO IMPLEMENTADA:** hasta que el hito AUTO-A esté
+  certificado y AUTO-ON activado con confirmación de Pio, sigue vigente que ningún
+  scheduler ni la ruta automática referencian el compositor; los flags
+  `normalizacion_automatica` y `conciliacion_automatica` siguen en `false`.
 - LÍMITE CONOCIDO aceptado por Pio (Hito 2AQ, 2026-09-25): la omisión de una
   factura Alliance **entera** dentro de un PDF multifactura no es detectable por
   contenido. Alliance solo pagina por factura (`PAGINA 01 DE 03`) y no declara
