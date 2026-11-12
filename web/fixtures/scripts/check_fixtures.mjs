@@ -18,6 +18,8 @@ import {
   ESTADOS_MATCHING, ESTADOS_VERSION_ANTERIOR, ESTADO_LINEA, TEXTO_HEFAME_BASES, claveEstadoLinea, estadoSinDescripcion, coincideImporte, esEco360, insigniasFactura, origenAplicado, rangoImporteBuscado, textoEstadoMatching, textoEvento,
 } from '../../app/server/detalle.ts';
 import { COLUMNAS_SENTIDO, validarDiagnostico } from '../../app/server/adaptador_real.ts';
+import { CONVENIO_ANUAL, objetivosAnuales, validarTrabajadora } from '../../app/server/rrhh/contrato.ts';
+import { crearAdaptadorRrhhFixtures, leerSemilla } from '../../app/server/rrhh/adaptador_fixtures.ts';
 import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
 import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
 
@@ -847,6 +849,57 @@ comprobar('H5-8: fiscalidad Hefame (F05) sin tipo de IVA: tramo con tipos null, 
   const otros = Object.entries(facturaDetalle).filter(([id]) => id !== F(5)).flatMap(([, d]) => d.impuestos);
   return si(x.length === 1 && x[0].tipo_iva === null && x[0].tipo_recargo_equivalencia === null && x[0].concepto === null
     && x[0].cuota_iva > 0 && x[0].cuota_recargo_equivalencia > 0 && otros.every((t) => t.tipo_iva !== null), JSON.stringify(x));
+});
+
+// --- Casos TA1 (Trabajadores, datos de ejemplo en memoria) --------------------------
+comprobar('TA1: fichas de ejemplo: PIO 3 completas + 1 media mañana (técnicas); RITA 5 completas + 1 media mañana + 1 media tarde (1 farmacéutica); titular en ambas', () => {
+  const s = leerSemilla();
+  const de = (f) => s.filter((t) => t.farmacia === f && !t.es_titular);
+  const pio = de('PIO');
+  const rita = de('RITA');
+  const tit = s.filter((t) => t.es_titular);
+  const cuenta = (ts, j) => ts.filter((t) => t.jornada === j).length;
+  const ok = pio.length === 4 && cuenta(pio, 'COMPLETA') === 3 && cuenta(pio, 'MEDIA_MANANA') === 1 && pio.every((t) => t.categoria === 'TECNICO')
+    && rita.length === 7 && cuenta(rita, 'COMPLETA') === 5 && cuenta(rita, 'MEDIA_MANANA') === 1 && cuenta(rita, 'MEDIA_TARDE') === 1
+    && cuenta(pio, 'MEDIA_TARDE') === 0
+    && rita.filter((t) => t.categoria === 'FARMACEUTICO').length === 1 && rita.filter((t) => t.categoria === 'TECNICO').length === 6
+    && tit.length === 2 && new Set(tit.map((t) => t.farmacia)).size === 2 && new Set(tit.map((t) => t.nombre)).size === 1
+    // TA1-2: jornada en horas diarias (lunes a viernes): completa 8 h; media mañana 4,5 h (también el titular).
+    && [...pio, ...rita].filter((t) => t.jornada === 'COMPLETA').every((t) => t.horas_diarias === 8)
+    && [...pio, ...rita, ...tit].filter((t) => t.jornada === 'MEDIA_MANANA').every((t) => t.horas_diarias === 4.5)
+    // TA1-3: media tarde 3,5 h (17:00–20:30).
+    && s.filter((t) => t.jornada === 'MEDIA_TARDE').every((t) => t.horas_diarias === 3.5)
+    && s.every((t) => !('porcentaje_jornada' in t));
+  return si(ok, JSON.stringify({ pio: pio.length, rita: rita.length, tit: tit.length }));
+});
+comprobar('TA1: solo nombre (sin DNI ni más datos personales); cada ficha pasa la validación de alta; ids únicos', () => {
+  const s = leerSemilla();
+  const permitidos = ['id', 'farmacia', 'nombre', 'categoria', 'jornada', 'horas_diarias', 'es_titular'];
+  const extra = s.flatMap((t) => Object.keys(t).filter((k) => !permitidos.includes(k)));
+  const invalidas = s.filter(({ id, ...t }) => !validarTrabajadora(t, 'alta').ok); // eslint-disable-line no-unused-vars
+  const sinDni = !JSON.stringify(s).match(/\b\d{8}[A-Z]\b|dni|nif/i);
+  return si(extra.length === 0 && invalidas.length === 0 && sinDni && new Set(s.map((t) => t.id)).size === s.length,
+    JSON.stringify({ extra, invalidas: invalidas.map((t) => t.nombre) }));
+});
+comprobar('TA1-2: convenio por año (referencia 40 h/sem provisional) y objetivo = jornada máxima × horas semanales / referencia', () => {
+  const conv = CONVENIO_ANUAL.map((c) => [c.anio, c.jornada_maxima_horas, c.horas_semanales_referencia, c.asuntos_propios_dias, c.permiso_medico_horas, c.estado].join());
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const ficha = (id) => a.trabajadora(id);
+  const obj = (id) => ficha(id).objetivos.map((o) => o.objetivo_horas);
+  const casos = [
+    [obj('e0000000-0000-4000-8000-000000000001'), [1767, 1752, 1752]], // completa 8 h/día = 40 h/sem = 100 %
+    [obj('e0000000-0000-4000-8000-000000000004'), [993.9, 985.5, 985.5]], // PIO media mañana 4,5 h/día (ejemplo de Pío: 993,9 h)
+    [obj('e0000000-0000-4000-8000-000000000016'), [993.9, 985.5, 985.5]], // RITA media mañana 4,5 h/día
+    [obj('e0000000-0000-4000-8000-000000000017'), [773.1, 766.5, 766.5]], // TA1-3: RITA media tarde 3,5 h/día (17,5 h/sem)
+    [ficha('e0000000-0000-4000-8000-000000000017').objetivos.map((o) => o.porcentaje_derivado), [43.75, 43.75, 43.75]],
+    [obj('e0000000-0000-4000-8000-000000000021'), [null, null, null]], // titular PIO
+    [obj('e0000000-0000-4000-8000-000000000022'), [null, null, null]], // titular RITA
+    [ficha('e0000000-0000-4000-8000-000000000004').objetivos.map((o) => o.porcentaje_derivado), [56.25, 56.25, 56.25]],
+    [objetivosAnuales({ horas_diarias: 6, computa_convenio: true }).map((o) => o.objetivo_horas), [1325.3, 1314, 1314]],
+  ];
+  const malos = casos.filter(([x, e]) => !isDeepStrictEqual(x, e));
+  return si(isDeepStrictEqual(conv, ['2026,1767,40,1,24,FIRMADO_PENDIENTE_PUBLICACION', '2027,1752,40,0,24,FIRMADO_PENDIENTE_PUBLICACION',
+    '2028,1752,40,0,24,FIRMADO_PENDIENTE_PUBLICACION']) && malos.length === 0, JSON.stringify(malos));
 });
 
 // --- Informe ----------------------------------------------------------------------

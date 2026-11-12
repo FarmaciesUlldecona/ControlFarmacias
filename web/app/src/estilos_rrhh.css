@@ -1,0 +1,164 @@
+/* TA1 Trabajadores. Mismos tokens que estilos.css; la barra de jornada es el único elemento propio del módulo. */
+.rrhh { display: flex; flex-direction: column; gap: 18px; }
+
+/* Banner fijo de datos de ejemplo (naranja = revisar: los cambios no se guardan) */
+.rrhh-banner {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border-radius: 10px; background: var(--naranja-fondo); color: #6e3500; font-size: 14px; font-weight: 600;
+  border: 1px solid #f0cfa8;
+}
+.rrhh-banner-marca {
+  flex: none; padding: 2px 9px; border-radius: 6px; background: var(--naranja); color: #fff; font-size: 12px; font-weight: 700;
+}
+.rrhh-pendiente { padding: 22px; display: flex; flex-direction: column; gap: 8px; max-width: 760px; border-left: 4px solid var(--gris); }
+.rrhh-pendiente h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.rrhh-pendiente p { margin: 0; font-size: 14px; }
+
+/* Secciones del módulo */
+.rrhh-secciones { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--borde); }
+.rrhh-seccion {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 14px; margin-bottom: -1px;
+  border-bottom: 3px solid transparent; color: #6b7671; font-size: 15px; font-weight: 600; text-decoration: none;
+}
+.rrhh-seccion.activa { color: var(--primario); border-bottom-color: var(--primario); }
+span.rrhh-seccion { cursor: default; }
+
+/* Barra de herramientas: selector de farmacia, bajas, nueva ficha */
+.rrhh-fichas { display: flex; flex-direction: column; gap: 14px; }
+.rrhh-barra-herramientas { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.rrhh-barra-herramientas .boton-primario { margin-left: auto; }
+.rrhh-selector { display: inline-flex; padding: 3px; border: 1px solid var(--borde); border-radius: 10px; background: var(--superficie); }
+.rrhh-selector button {
+  min-height: 38px; min-width: 76px; padding: 0 14px; border: 0; border-radius: 7px; background: none;
+  font: inherit; font-size: 14px; font-weight: 700; color: #3e4a46; cursor: pointer;
+}
+.rrhh-selector button:hover { background: #f1f3f0; }
+.rrhh-selector button.activa { background: var(--primario); color: #fff; }
+.rrhh-resumen { margin: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+/* Farmacia: PIO relleno, RITA contorno (identidad, no estado) */
+.rrhh-farmacia {
+  display: inline-flex; align-items: center; min-width: 42px; justify-content: center; padding: 1px 8px; border-radius: 6px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.02em; border: 1.5px solid var(--primario);
+}
+.rrhh-farmacia.f-pio { background: var(--primario); color: #fff; }
+.rrhh-farmacia.f-rita { background: var(--superficie); color: var(--primario); }
+
+/* Jornada: texto + barra del porcentaje sobre la jornada completa */
+.rrhh-jornada { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
+.rrhh-jornada-texto { font-size: 14px; font-variant-numeric: tabular-nums; }
+/* TA1-2: porcentaje DERIVADO (calculado, no editable): texto pequeño y tenue, nunca como campo */
+.rrhh-jornada-calculo { font-size: 12px; color: var(--tenue); font-variant-numeric: tabular-nums; }
+.rrhh-campo-pista { font-weight: 500; font-size: 12px; color: #7a8580; }
+.rrhh-calculado {
+  display: flex; align-items: center; min-height: 42px; padding: 0 10px; border: 1px dashed #c9d0cb; border-radius: 8px;
+  background: #fafaf8; color: var(--texto); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.rrhh-objetivo-estado { display: block; }
+.rrhh-barra { display: block; height: 6px; border-radius: 3px; background: var(--borde-suave); overflow: hidden; max-width: 160px; }
+.rrhh-barra span { display: block; height: 100%; background: var(--primario); border-radius: 3px; }
+.de-baja .rrhh-barra span { background: var(--gris); }
+
+/* Tabla de fichas */
+.rrhh-tabla-marco { padding: 6px 18px; overflow-x: auto; }
+.rrhh-tabla td { vertical-align: middle; }
+.rrhh-tabla tbody tr { cursor: pointer; }
+.rrhh-tabla tbody tr:hover td { background: #fafbf9; }
+.rrhh-nombre { font-weight: 700; text-decoration: none; color: var(--texto); }
+.rrhh-nombre:hover { text-decoration: underline; color: var(--primario); }
+.rrhh-titular { margin: 0 0 0 8px; }
+.de-baja .rrhh-nombre, .de-baja td { color: var(--tenue); }
+.rrhh-vacio { margin: 0; padding: 18px; font-size: 14px; }
+
+/* Tarjetas (móvil) */
+.rrhh-tarjetas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rrhh-tarjeta { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.rrhh-tarjeta-cabecera, .rrhh-tarjeta-linea { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; }
+.rrhh-tarjeta .rrhh-nombre { overflow-wrap: anywhere; }
+
+/* Formularios */
+.rrhh-formulario { padding: 20px; display: flex; flex-direction: column; gap: 14px; border-top: 3px solid var(--primario); }
+.rrhh-formulario h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.rrhh-formulario p { margin: 0; font-size: 14px; }
+.rrhh-formulario-baja { border-top-color: var(--rojo); max-width: 520px; }
+.rrhh-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px 16px; }
+.rrhh-campo { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--tenue); }
+.rrhh-campo-ancho { grid-column: span 2; }
+.rrhh-campo input, .rrhh-campo select {
+  min-height: 42px; padding: 0 10px; border: 1px solid #cbd1cc; border-radius: 8px; font: inherit; font-size: 15px;
+  font-weight: 500; color: var(--texto); background: var(--superficie); width: 100%;
+}
+.rrhh-campo input[aria-invalid='true'] { border-color: var(--rojo); }
+.rrhh-campo-error { color: var(--rojo-texto); font-size: 13px; font-weight: 600; }
+.rrhh-sufijo { display: flex; align-items: center; gap: 8px; color: var(--texto); font-size: 15px; }
+.rrhh-sufijo input { max-width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
+.rrhh-fijo { display: flex; align-items: center; gap: 8px; min-height: 42px; font-weight: 500; }
+.rrhh-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--texto); }
+.rrhh-check input { width: 18px; height: 18px; accent-color: var(--primario); }
+.rrhh-campos .rrhh-check { grid-column: 1 / -1; }
+.rrhh-botones { display: flex; flex-wrap: wrap; gap: 10px; }
+.boton-primario {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid var(--primario);
+  background: var(--primario); color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.boton-primario:hover:not(:disabled) { background: #163039; }
+.boton-primario:disabled { opacity: 0.6; cursor: progress; }
+.boton-peligro, .boton-peligro-suave {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid var(--rojo);
+  font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.boton-peligro { background: var(--rojo); color: #fff; }
+.boton-peligro-suave { background: var(--superficie); color: var(--rojo-texto); }
+.boton-peligro-suave:hover { background: var(--rojo-fondo); }
+.rrhh-error { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--rojo-fondo); color: var(--rojo-texto); font-weight: 600; font-size: 14px; }
+.rrhh-aviso-ok { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--verde-fondo); color: var(--verde-texto); font-weight: 600; font-size: 14px; }
+
+/* Detalle */
+.rrhh-detalle { display: flex; flex-direction: column; gap: 16px; }
+.rrhh-detalle .migas { margin: 0; }
+.rrhh-ficha { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.rrhh-ficha-arriba { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; align-items: flex-start; }
+.rrhh-ficha-titulo { min-width: 0; }
+.rrhh-ficha h2 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.rrhh-ficha-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; font-size: 14px; }
+.rrhh-kv { grid-template-columns: repeat(auto-fit, minmax(200px, 260px)); }
+.rrhh-kv .rrhh-barra { max-width: 220px; height: 8px; }
+
+/* Objetivo anual: una columna por año del convenio */
+.rrhh-objetivos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.rrhh-objetivo { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--borde); border-radius: 10px; }
+.rrhh-objetivo.actual { border-color: var(--primario); box-shadow: inset 0 3px 0 var(--primario); }
+.rrhh-objetivo-anio { font-size: 13px; font-weight: 700; color: var(--tenue); font-variant-numeric: tabular-nums; }
+.rrhh-objetivo-horas { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.rrhh-objetivo-calculo { font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* Horas: huecos rotulados hasta el motor de horas (T5) */
+.rrhh-horas { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.rrhh-hueco { padding: 12px 14px; border: 1px dashed #b9c1bc; border-radius: 10px; background: #fafaf8; }
+.rrhh-hueco dt { font-size: 13px; font-weight: 700; }
+.rrhh-hueco dd { margin: 4px 0 0; font-size: 13px; color: var(--tenue); }
+
+/* Historial */
+.rrhh-historial { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rrhh-cambio { padding: 10px 0; border-bottom: 1px solid var(--borde-suave); display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.rrhh-cambio:last-child { border-bottom: 0; }
+.rrhh-cambio-cabecera { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.rrhh-cambio-campos { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 2px solid var(--borde); display: flex; flex-direction: column; gap: 2px; }
+.rrhh-antes { text-decoration: line-through; color: var(--tenue); }
+.rrhh-despues { font-weight: 600; }
+
+@media (max-width: 900px) {
+  .rrhh-banner { top: 0; font-size: 13px; padding: 9px 12px; align-items: flex-start; }
+  .rrhh-barra-herramientas .boton-primario { margin-left: 0; width: 100%; justify-content: center; }
+  .rrhh-selector { width: 100%; }
+  .rrhh-selector button { flex: 1; min-width: 0; }
+  .rrhh-campo-ancho { grid-column: auto; }
+  .rrhh-campos { grid-template-columns: minmax(0, 1fr); }
+  .rrhh-ficha { padding: 16px; }
+  .rrhh-ficha h2 { font-size: 22px; }
+  .rrhh-objetivos { grid-template-columns: minmax(0, 1fr); }
+  .rrhh-objetivo { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  .rrhh-objetivo-horas { font-size: 22px; }
+  .rrhh-objetivo-calculo { flex-basis: 100%; }
+  .rrhh-botones button { flex: 1; justify-content: center; }
+}

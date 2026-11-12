@@ -10,6 +10,7 @@ import '@fontsource/figtree/800.css';
 import App from './App.tsx';
 import './estilos.css';
 import './estilos_facturas.css';
+import './estilos_rrhh.css';
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>

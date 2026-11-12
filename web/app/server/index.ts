@@ -6,7 +6,8 @@
  *   Puerto fijo 4747. CF_PUERTO solo se admite en FIXTURES (Playwright); en REAL, si no es 4747, no arranca.
  *
  * Acceso con contraseña (H4b, server/acceso.ts): sin sesión, cualquier ruta devuelve la pantalla de acceso
- * (HTML autónomo) y cualquier /api/* devuelve 401. Solo POST /api/login y /api/logout admiten POST.
+ * (HTML autónomo) y cualquier /api/* devuelve 401. Solo POST /api/login y /api/logout admiten POST, salvo la
+ * escritura del módulo Trabajadores (TA1: POST/PUT en /api/rrhh/trabajadoras…, con sesión y Origin).
  *
  * Sirve la API /api/* y, si existe, el front compilado (dist/).
  */
@@ -21,6 +22,8 @@ import {
   CLAVE_FIXTURES, CSP_ACCESO, USUARIO, cookieBorrada, cookieSesion, crearAcceso, crearHash, destinoSeguro,
   leerHash, paginaAcceso, tokenDeCookie, verificarClave, type Acceso, type AvisoAcceso, type FuentesAcceso,
 } from './acceso.ts';
+import { esEscrituraRrhh, registrarRrhh } from './rrhh/rutas.ts';
+import { AUTOR_HISTORIAL } from './rrhh/contrato.ts';
 
 const HOST = '127.0.0.1';
 export const PUERTO_FIJO = 4747;
@@ -112,9 +115,12 @@ export async function crearServidor(modo: Modo) {
     if (host !== '127.0.0.1' && host !== 'localhost') return reply.code(403).send({ error: 'HOST_NO_LOCAL' });
   });
   // Solo lectura: GET/HEAD; POST únicamente en /api/login y /api/logout, y solo desde el mismo origen.
+  // TA1: única excepción, la escritura del módulo Trabajadores (esEscrituraRrhh: POST/PUT en /api/rrhh/trabajadoras…),
+  // con sesión, Origin obligatorio y JSON (server/rrhh/rutas.ts).
   app.addHook('onRequest', async (req, reply) => {
     if (req.method === 'GET' || req.method === 'HEAD') return;
-    if (req.method !== 'POST' || !POST_PERMITIDOS.has(ruta(req))) return reply.code(405).send({ error: 'SOLO_LECTURA' });
+    const escrituraRrhh = esEscrituraRrhh(req.method, ruta(req));
+    if (!escrituraRrhh && (req.method !== 'POST' || !POST_PERMITIDOS.has(ruta(req)))) return reply.code(405).send({ error: 'SOLO_LECTURA' });
     const origen = req.headers.origin;
     if (origen !== undefined && origen !== `http://${req.headers.host}`) return reply.code(403).send({ error: 'ORIGEN_NO_PERMITIDO' });
     const sitio = req.headers['sec-fetch-site'];
@@ -128,7 +134,7 @@ export async function crearServidor(modo: Modo) {
   // Sesión obligatoria salvo login, logout y las fuentes de la pantalla de acceso.
   app.addHook('onRequest', async (req, reply) => {
     const r = ruta(req);
-    if (req.method === 'POST') return; // login/logout (el hook anterior ya filtró)
+    if (req.method === 'POST' && POST_PERMITIDOS.has(r)) return; // login/logout; la escritura RRHH sí exige sesión
     if (publicas.has(r)) return;
     if (acceso.sesionValida(tokenDeCookie(req.headers.cookie))) return;
     if (r.startsWith('/api/') || r.startsWith('/assets/')) {
@@ -167,6 +173,9 @@ export async function crearServidor(modo: Modo) {
   app.get('/api/cashflow', () => contrato.cashflowSemanas());
   app.get('/api/proveedores', () => contrato.proveedores());
   app.get('/api/configuracion', () => contrato.configuracion());
+  // TA1: módulo Trabajadores (FIXTURES: datos de ejemplo en memoria; REAL: "Módulo pendiente de conexión (T1)").
+  // TA1-2 (decisión de Pío): autor del historial "Marc".
+  registrarRrhh(app, { modo, quien: AUTOR_HISTORIAL, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
 
   // Errores: mensaje genérico al cliente; nunca filas ni datos de conexión.
   app.setErrorHandler((err, _req, reply) => {

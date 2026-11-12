@@ -35,6 +35,37 @@ export async function obtener<T>(ruta: string, señal?: AbortSignal): Promise<T>
   return (await r.json()) as T;
 }
 
+/** Error de la API con su código y, si la validación falla, los errores por campo. */
+export class ErrorApi extends Error {
+  codigo: string;
+  errores: Record<string, string>;
+  constructor(codigo: string, errores: Record<string, string> = {}) {
+    super(codigo);
+    this.codigo = codigo;
+    this.errores = errores;
+  }
+}
+
+/**
+ * TA1: escritura JSON, solo en /api/rrhh/* (el servidor rechaza cualquier otra). El navegador envía Origin y
+ * Sec-Fetch-Site, que el servidor comprueba.
+ */
+export async function enviar<T>(ruta: string, metodo: 'POST' | 'PUT', cuerpo: unknown): Promise<T> {
+  if (!ruta.startsWith('/api/rrhh/')) throw new Error('ESCRITURA_SOLO_RRHH');
+  const r = await fetch(ruta, {
+    method: metodo, credentials: 'same-origin',
+    headers: { accept: 'application/json', 'content-type': 'application/json' },
+    body: JSON.stringify(cuerpo),
+  });
+  if (r.status === 401) {
+    sesionCaducada();
+    throw new ErrorApi('NO_AUTENTICADO');
+  }
+  const datos = (await r.json().catch(() => ({}))) as { error?: string; errores?: Record<string, string> };
+  if (!r.ok) throw new ErrorApi(datos.error ?? `HTTP ${r.status}`, datos.errores ?? {});
+  return datos as T;
+}
+
 export interface CargaRecargable<T> {
   carga: Carga<T>;
   /** true mientras se relee con datos anteriores todavía en pantalla. */

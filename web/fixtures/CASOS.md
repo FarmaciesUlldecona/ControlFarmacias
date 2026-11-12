@@ -272,3 +272,21 @@ Proveedor = nombre comercial (principal) + razón social del PDF (secundaria, pe
 | Sin equivalencia | F03/F04/F07 «COFARES» (CIF ficticio), F06 «FEDEFARMA» (sin CIF) | Literal del PDF, sin línea secundaria. Cofares solo se reconoce por «GRUPO COFARES» (`cofares.py:211`) y Fedefarma por su CIF F-08-173395 (`fedefarma.py:37`) |
 | Búsqueda | «hefame», «Hefame», «HDAD», «F30004444», «F-30004444» → solo F05; «alliance» → F01, F02, F08; «ESPANA» → F02 | Sin mayúsculas ni acentos; CIF también con guiones o puntos |
 | Fiscalidad sin tipo | F05: tramo con `tipo_iva` y `tipo_recargo_equivalencia` null (Hefame no documenta tipos, `hefame.py:378`) | Columna Tipo «tipo no indicado» (antes «IVA —»); cuotas «25,85 €» y «3,62 €» sin nada delante. El «—» era `tipoPorcentaje(null)`, no un signo: los importes son positivos |
+
+## TA1: Trabajadores (fichas con datos de ejemplo en memoria)
+
+Fichas ficticias en `fixtures/rrhh/trabajadoras.json` (nombres inventados; solo nombre, sin DNI ni otros datos personales). El servidor FIXTURES las carga en memoria (`app/server/rrhh/adaptador_fixtures.ts`); alta, edición y baja cambian solo esa memoria y se pierden al reiniciar. Cada cambio queda en el historial (quién, cuándo, antes/después). En modo REAL, `/api/rrhh/*` responde 503 «Módulo pendiente de conexión (T1)» sin datos; las tablas reales las creará el circuito en T1.
+
+TA1-2 (decisiones de Pío): la jornada se guarda en **horas diarias** (lunes a viernes): completa = 8 h/día; media mañana = menos de 8 h/día, siempre de mañana; TA1-3: media tarde = menos de 8 h/día, por defecto 3,5 h (17:00–20:30). El **porcentaje es derivado** (horas semanales / 40 h de referencia; la referencia está en `convenio_anual.horas_semanales_referencia`, rotulada «provisional») y nunca se edita. Objetivo anual = jornada máxima del año × horas semanales / referencia, redondeado a 0,1 h al final. Autor del historial: «Marc».
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| PIO | 3 técnicas completas (8 h/día) + Elena Mas Garriga, media mañana 4,5 h/día | Elena: 22,5 h/sem = 56,25 %; objetivo 2026: 1767 × 22,5 / 40 = 993,9 h; 2027–2028: 985,5 h |
+| RITA | Laura Serra Coll (farmacéutica) + 4 técnicas completas + Paula Riera Bover, media mañana 4,5 h/día | Paula: igual que Elena (993,9 h en 2026) |
+| Media tarde (TA1-3) | RITA: Irene Gual Torrent, técnica, media tarde 3,5 h/día (17:00–20:30; por defecto 3,5 h, editable) | 17,5 h/sem = 43,75 %; objetivo 2026: 1767 × 17,5 / 40 = 773,1 h; 2027–2028: 766,5 h. Validación igual que la media mañana (> 0 y < 8 h) |
+| Completa | 8 h/día × 5 = 40 h/sem | 100 %; objetivo = jornada máxima (1767 h en 2026; 1752 h en 2027–2028) |
+| Titular | «Titular de ejemplo», dos fichas (PIO y RITA), media mañana 4,5 h/día en cada una | Computa «No · titular»; objetivo «fuera del cómputo» en todos los años; sus horas se registrarán (T5) |
+| Convenio | 2026: 1767 h, 1 día de asuntos propios; 2027–2028: 1752 h, 0 días; permiso médico 24 h/año; referencia 40 h/sem; firmado, pendiente de publicación oficial | Objetivo rotulado «provisional: convenio pendiente de publicación»; referencia «provisional» |
+| Validación | Nombre vacío; campo `dni`, `porcentaje_jornada` u otro no admitido; horas ≤ 0, > 8 o con más de 2 decimales; completa distinta de 8; media mañana de 8 h | 400 con error por campo; la pantalla lo muestra junto al campo y lo retira al corregirlo |
+| Escritura | POST `/api/rrhh/trabajadoras`; PUT `/api/rrhh/trabajadoras/:id` y `/:id/baja` | Solo con sesión, Origin del mismo sitio (obligatorio) y JSON. El resto de la API sigue de solo lectura (405) |
+| Horas | Planificadas, confirmadas y pendientes | Huecos rotulados «pendiente motor de horas (T5)» |

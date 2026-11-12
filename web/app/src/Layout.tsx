@@ -19,7 +19,8 @@ const MENU: Grupo[] = [
     proximamente: [],
   },
   { titulo: 'Negocio', enlaces: [], proximamente: ['Compras', 'Stock', 'Ventas', 'Clientes'] },
-  { titulo: 'Equipo', enlaces: [], proximamente: ['Trabajadores'] },
+  // TA1: Trabajadores activo (datos de ejemplo hasta T1).
+  { titulo: 'Equipo', enlaces: [{ a: '/trabajadores', texto: 'Trabajadores' }], proximamente: [] },
   {
     titulo: 'General',
     enlaces: [
@@ -59,7 +60,8 @@ export default function Layout() {
           <div className="farmacia">
             <span className="tenue">Farmacia</span>
             <strong>PIO</strong>
-            <span className="tenue">RITA: no habilitada</span>
+            {/* TA1 (decisión T0): RITA solo en el módulo Trabajadores. */}
+            <span className="tenue" data-rita>{pathname.startsWith('/trabajadores') ? 'RITA: solo en Trabajadores' : 'RITA: no habilitada'}</span>
           </div>
           <nav id="menu-principal" className="menu" aria-label="Menú principal">
             {MENU.map((g) => (

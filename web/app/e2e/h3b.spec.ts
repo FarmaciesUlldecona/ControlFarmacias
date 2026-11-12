@@ -47,8 +47,10 @@ test.describe('PC 1440', () => {
     await expect(page.getByRole('heading', { level: 1 })).not.toBeEmpty();
     await expect(page.locator('[data-contrato-ok="facturaDetalle"]')).toBeVisible();
     // "Próximamente" en gris, no navegable.
-    await expect(menu.getByText('Próximamente')).toHaveCount(5);
-    await expect(menu.getByRole('link', { name: /Compras|Stock|Ventas|Clientes|Trabajadores/ })).toHaveCount(0);
+    await expect(menu.getByText('Próximamente')).toHaveCount(4);
+    await expect(menu.getByRole('link', { name: /Compras|Stock|Ventas|Clientes/ })).toHaveCount(0);
+    // TA1: Trabajadores ya es un enlace activo (e2e/ta1.spec.ts).
+    await expect(menu.getByRole('link', { name: 'Trabajadores', exact: true })).toHaveAttribute('href', '/trabajadores');
   });
 
   test('cero recursos externos y Figtree local', async ({ page }) => {

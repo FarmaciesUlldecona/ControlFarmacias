@@ -1,0 +1,18 @@
+{
+  "_nota": "TA1/TA1-2: fichas FICTICIAS (nombres inventados) para el adaptador RRHH_FIXTURES en memoria. Jornada en horas diarias de lunes a viernes (completa 8 h; media mañana 4,5 h; media tarde 3,5 h, 17:00–20:30). Nunca datos reales.",
+  "trabajadoras": [
+    { "id": "e0000000-0000-4000-8000-000000000001", "farmacia": "PIO", "nombre": "Aina Bosch Ferrer", "categoria": "TECNICO", "jornada": "COMPLETA", "horas_diarias": 8, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000002", "farmacia": "PIO", "nombre": "Clara Roig Pujol", "categoria": "TECNICO", "jornada": "COMPLETA", "horas_diarias": 8, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000003", "farmacia": "PIO", "nombre": "Núria Pons Valls", "categoria": "TECNICO", "jornada": "COMPLETA", "horas_diarias": 8, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000004", "farmacia": "PIO", "nombre": "Elena Mas Garriga", "categoria": "TECNICO", "jornada": "MEDIA_MANANA", "horas_diarias": 4.5, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000011", "farmacia": "RITA", "nombre": "Laura Serra Coll", "categoria": "FARMACEUTICO", "jornada": "COMPLETA", "horas_diarias": 8, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000012", "farmacia": "RITA", "nombre": "Marta Vila Soler", "categoria": "TECNICO", "jornada": "COMPLETA", "horas_diarias": 8, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000013", "farmacia": "RITA", "nombre": "Sílvia Font Rius", "categoria": "TECNICO", "jornada": "COMPLETA", "horas_diarias": 8, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000014", "farmacia": "RITA", "nombre": "Judit Prat Casals", "categoria": "TECNICO", "jornada": "COMPLETA", "horas_diarias": 8, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000015", "farmacia": "RITA", "nombre": "Rosa Camps Oliver", "categoria": "TECNICO", "jornada": "COMPLETA", "horas_diarias": 8, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000016", "farmacia": "RITA", "nombre": "Paula Riera Bover", "categoria": "TECNICO", "jornada": "MEDIA_MANANA", "horas_diarias": 4.5, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000017", "farmacia": "RITA", "nombre": "Irene Gual Torrent", "categoria": "TECNICO", "jornada": "MEDIA_TARDE", "horas_diarias": 3.5, "es_titular": false },
+    { "id": "e0000000-0000-4000-8000-000000000021", "farmacia": "PIO", "nombre": "Titular de ejemplo", "categoria": "FARMACEUTICO", "jornada": "MEDIA_MANANA", "horas_diarias": 4.5, "es_titular": true },
+    { "id": "e0000000-0000-4000-8000-000000000022", "farmacia": "RITA", "nombre": "Titular de ejemplo", "categoria": "FARMACEUTICO", "jornada": "MEDIA_MANANA", "horas_diarias": 4.5, "es_titular": true }
+  ]
+}
