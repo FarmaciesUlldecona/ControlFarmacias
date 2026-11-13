@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-12 (AUTO-A: automatización Alliance solo local, compositor automático, orquestador nocturno, migración 32 y desplegar_32 ensayado; TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio con SCRAM; prueba de acceso de Pio ACCESO_OK; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-13 (AUTO-32-D: migración 32 desplegada en producción, APLICADA, postcheck aceptado por Pio; AUTO-COLA: tandas 2BJ 1–3 y conciliación de 08013055–58; 2026-11-12, AUTO-A: automatización Alliance solo local, compositor automático, orquestador nocturno, migración 32 y desplegar_32 ensayado; TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio con SCRAM; prueba de acceso de Pio ACCESO_OK; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -328,6 +328,55 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito AUTO-32-D: migración 32 desplegada en producción (2026-11-13)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación expresa de Pio; despliegue ejecutado por Claude como `Usuari`, una vez,
+sin reintento. Evidencias en `C:\ControlFarmacias\evidencias_auto_32_d` (`SHA256SUMS.txt`; scripts READ_ONLY
+adaptados de TRAB-D en `scripts/`).
+
+- **Puerta:** árbol limpio, HEAD = `origin/main` = `416c7c4`; la 32 del commit `136e1db`, SHA (LF)
+  `f5ab7572…df009`, igual en disco y en la versión.
+- **Precondiciones** 7/7 y **captura pre** `CAPTURA_OK` (16:50 UTC): 28–31 presentes, 32 ausente, flags apagados,
+  Luna apagada, solo PIO, 0 locks, claims ni `NORMALIZANDO`, tareas con código 0.
+- **`desplegar_32.py 136e1db f5ab7572…`: `APLICADA`** (17:13:12–17:13:15 UTC). Postcondiciones: datos sin cambios
+  dentro de la transacción, tabla, lectura y ACL, configuración global.
+- **Captura post** `CAPTURA_OK`. **Privilegios** `PRIVILEGIOS_OK` (READ_ONLY, sin nombrar el rol del sistema): RLS
+  activa; `cf_lectura` con `SELECT` y sin escritura, única política (`cf_noches_automaticas_lectura_select`); el único
+  beneficiario además del propietario y `cf_lectura` tiene `SELECT`, `INSERT` y `UPDATE`, sin `DELETE`, `TRUNCATE`,
+  `REFERENCES` ni `TRIGGER`, y no es miembro del propietario ni superusuario (no puede borrar ni vaciar la tabla);
+  nada para `anon`, `authenticated` ni PUBLIC. Tabla vacía.
+- **Postcheck 2AX** frente a las referencias locales 31 y 32: solo cambian la tabla y su política, iguales a la
+  referencia; fuera del alcance, idéntico (privilegios por defecto, `cf_configuracion`, filas, reservas, operación,
+  aprobaciones). Veredicto estricto `POSTCHECK_CON_DIFERENCIAS` por una única diferencia: `trabajadoras` 7 → 12,
+  altas hechas por Pio desde la web entre la captura pre y el despliegue (16:59–17:01 UTC). **DECISIÓN DE PIO
+  (2026-11-13): postcheck aceptado.**
+- **Mejora aprobada por Pio** (`PENDIENTE` del próximo commit con código, con los 3 textos desfasados del revisor de
+  AUTO-A): en los postchecks, las tablas de Trabajadores se informan aparte y no hacen fallar el veredicto.
+- `PENDIENTE` (con confirmación de Pio): AUTO-S (tarea de las 22:15 en modo `SOMBRA`), AUTO-ON y AUTO-R.
+
+### Hito AUTO-COLA: series 2BJ y 2BP antes de la automatización (2026-11-13)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación expresa de Pio por tanda. Evidencias en
+`C:\ControlFarmacias\evidencias_auto_cola` (`SHA256SUMS.txt`).
+
+- **Noche del 12 al 13/11** (READ_ONLY): tareas con código 0; 16 albaranes nuevos (PIO), 0 actualizados; 0
+  documentos nuevos; revisiones R18 pendientes, las mismas (275128 y 275125).
+- **Plan 2BJ** (READ_ONLY, 32 documentos): 12 `ERROR` (todos defectos de extracción) y 20 `PENDIENTE` (1 Alliance,
+  16 no soportados, 3 defectos); ninguno sin predicción.
+- **D3 ajustada (DECISIÓN DE PIO):** la serie no resuelve un defecto, solo le consume un intento (R3); los defectos se
+  agotan con tandas antes de AUTO-ON (ese día y una pequeña cada día de AUTO-S).
+- **Tandas 1–3 (5, 14 y 13):** `TANDA_OK` y postcheck 2AX OK; todo como el plan. 2 defectos a `REVISION` (4 de 4),
+  13 en `ERROR`; 16 `PROVEEDOR_NO_SOPORTADO`. El Alliance de la posición 19 (08013055–58), `NORMALIZADA`: números
+  y totales iguales al plan, fecha y n.º de albaranes iguales a la referencia local; persistencia 6,65 s.
+- **Plan 2BP:** 08013055 simulaba `DIFERENCIA` 45,02 → PARADA. Diagnóstico READ_ONLY: el albarán 08D60064 (22/10,
+  45,05) no estaba en Supabase; el resto era una línea R17 (08N16348 = 08N16348 + Q041105/2026, −0,01), redondeos
+  de 1 a 1 (+0,03) y el PDF (−0,05). Pio lo corrigió en Farmatic y lanzó la sincronización manual (16:59): 08D60064
+  como contador 298432.
+- **Nuevo plan 2BP:** las 4 `CONCILIADA` (08013055 −0,03). **Tanda de 4:** `TANDA_OK`, postcheck 2AX OK; las 4
+  `CONCILIADA`, como el plan.
+- Cola: ningún `PENDIENTE`; 13 defectos en `ERROR` para agotar en AUTO-S. Siguen fuera de la conciliación
+  0563834757 y 08012619 (`TOTAL_NO_EXPLICADO`).
+
 ### Hito AUTO-A: automatización Alliance, solo local (2026-11-12)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local). Sin producción, sin flags y sin tarea programada. Diseño, decisiones de
@@ -357,7 +406,7 @@ D1, y «Automatización Alliance»).
   ajena → parada; fase saltada con su flag apagado). Plantillas `32` y `32_rollback` en `pg17_local`.
 - **Hallazgo del ensayo:** con los privilegios por defecto de Supabase, el acceso del rol del sistema a la tabla
   dependía del rol que la crea y conservaba `DELETE` y `TRUNCATE`; resuelto con la opción A de Pio (grants explícitos).
-- `PENDIENTE` (con confirmación de Pio): push; AUTO-COLA (series para los 12 `ERROR` y los `PENDIENTE`); AUTO-32-D;
+- ~~push; AUTO-COLA; AUTO-32-D~~: hechos el 2026-11-13 (ver arriba). `PENDIENTE` (con confirmación de Pio):
   AUTO-S; AUTO-ON; AUTO-R. Credencial de la sincronización: comprobar desde una sesión de `ControlFarmaciasRO` (baja
   prioridad).
 

@@ -431,7 +431,8 @@ producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTAD
 ## Automatización Alliance
 
 Decisiones de Pio (2026-11-12) en `pruebas/auditoria_auto_alliance/DISENO.md` (D1–D7 y plan de hitos). Hito AUTO-A
-**solo local** (`CONFIRMADO POR TEST`); migración 32 **no desplegada**; nada activado en producción.
+**solo local** (`CONFIRMADO POR TEST`); migración 32 **desplegada en producción** (AUTO-32-D, 2026-11-13); nada activado
+en producción (ninguna tarea ejecuta el orquestador; flags apagados).
 
 - **Orquestador nocturno** (`runtime_supabase/noche_automatica.py`, tarea de las 22:15 como `Usuari` con
   `ejecutar_automatizacion_alliance.bat`): modos `SOMBRA` (flags apagados; su única escritura es la fila de resumen

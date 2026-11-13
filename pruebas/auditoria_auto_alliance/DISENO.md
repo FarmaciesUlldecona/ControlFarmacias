@@ -271,3 +271,6 @@ código, con su suite completa):
    defecto»; la 32 concede los privilegios explícitamente (opción A).
 3. Comentario de `src/facturas/runtime_supabase/noche_automatica.py` que cita «(R10)» por el riesgo del diseño; se
    confunde con la regla R10 de REGLAS_CRITICAS.
+
+Mejora aprobada por Pio (2026-11-13, tras AUTO-32-D), en el mismo commit: en los postchecks, las tablas de Trabajadores
+se informan aparte y no hacen fallar el veredicto.
