@@ -601,3 +601,64 @@ def test_el_despliegue_rechaza_un_sql_distinto_del_commit(tmp_path, repo_corto):
     copia.write_text(copia.read_text(encoding="utf-8") + "\n-- cambio\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="MIGRACION_31_NO_COINCIDE_CON_COMMIT"):
         despliegue.main(commit, sha, tmp_path / "x.json")
+
+
+# --------------------------------------------------------------------------- prueba de acceso (TRAB-D)
+# Al final del modulo: usan contenedor_tcp despues del ensayo de despliegue (que exige el rol ausente al empezar).
+
+SCRIPT_ACCESO = ROOT / "pruebas/auditoria_trab/probar_acceso_cf_trabajadores_web.py"
+
+
+def _cargar_acceso():
+    spec = importlib.util.spec_from_file_location(f"acceso_trabd_{uuid.uuid4().hex[:6]}", SCRIPT_ACCESO)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+def test_prueba_de_acceso_contra_pg17_local(contenedor_tcp):
+    nombre, puerto, _plantilla = contenedor_tcp
+    pg = base_desde(nombre, pgl.construir_plantilla(nombre, "31"))
+    # Regla: las contrasenas de roles se fijan siempre con SCRAM (el pooler rechaza otro formato).
+    pg.sql(f"set password_encryption = 'scram-sha-256'; alter role {ROL} password 'local-only'")
+    assert pg.sql(f"select left(rolpassword, 14) from pg_authid where rolname = '{ROL}'") == "SCRAM-SHA-256$"
+    filas = ("select (select count(*) from public.trabajadoras)||'|'||"
+             "(select count(*) from public.trabajadores_historial)")
+    antes = pg.sql(filas)
+    try:
+        resultado = _cargar_acceso().probar("127.0.0.1", puerto, ROL, "local-only", dbname=pg.db, sslmode="disable")
+    finally:
+        pg.sql(f"alter role {ROL} password null")
+    assert resultado["veredicto"] == "ACCESO_OK", resultado
+    assert set(resultado["lee_trabajadores"]) == set(DESPLIEGUE.OBJETOS)
+    assert resultado["insert_con_autor"] | {"nombre_prueba": None} == {
+        "nombre_prueba": None, "inserta": True, "historial_con_autor": True, "deshecho": True}
+    assert resultado["insert_sin_autor"]["mensaje"] == "AUTOR_AUSENTE"
+    assert resultado["delete"]["sqlstate"] == "42501" and resultado["leer_facturas"]["sqlstate"] == "42501"
+    # Todo se deshace: ni trabajadoras ni historial.
+    assert pg.sql(filas) == antes
+
+
+def test_prueba_de_acceso_sin_contrasena_no_conecta(monkeypatch):
+    acceso = _cargar_acceso()
+    monkeypatch.delenv(acceso.VARIABLE, raising=False)
+    monkeypatch.setattr(acceso, "probar", lambda *a, **k: pytest.fail("no debe conectar"))
+    assert acceso.main(["host", "5432"]) == 2
+    with pytest.raises(SystemExit):
+        acceso.main(["host", "5432", "contrasena-como-argumento"])
+
+
+def test_prueba_de_acceso_no_imprime_la_contrasena(monkeypatch, capsys):
+    acceso = _cargar_acceso()
+    secreto = "secreto-" + uuid.uuid4().hex
+    monkeypatch.setenv(acceso.VARIABLE, secreto)
+    recibidos = []
+
+    def falla(host, puerto, usuario, contrasena, **_k):
+        recibidos.append((usuario, contrasena))
+        raise RuntimeError("conexion rechazada")
+
+    monkeypatch.setattr(acceso, "probar", falla)
+    assert acceso.main(["host", "5432"]) == 2
+    assert recibidos == [(f"cf_trabajadores_web.{acceso.PROJECT_REF}", secreto)]
+    assert secreto not in capsys.readouterr().out

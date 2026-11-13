@@ -221,7 +221,7 @@ A fecha 2026-09-24, el estado canónico es `NO ENCONTRADO` en código implementa
 - Telegram: **NO IMPLEMENTADO**;
 - interfaz web: **PARCIALMENTE IMPLEMENTADA** (Pio, 2026-11-12): fuera de este
   repositorio, solo lectura con `cf_lectura`; su única escritura prevista es el módulo
-  de Trabajadores (rol propio, no desplegado);
+  de Trabajadores (rol propio `cf_trabajadores_web`, desplegado el 2026-11-12);
 - extractor de Beiersdorf: **SIN EXTRACTOR IMPLEMENTADO**.
 
 No deben describirse como módulos parciales (salvo la interfaz web, parcial desde el

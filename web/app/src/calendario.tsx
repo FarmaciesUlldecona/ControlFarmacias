@@ -6,15 +6,20 @@
 // completo: sus franjas); rellenar el año completo; nota opcional por evento (sin datos de salud); historial plegado.
 // TA2-4: mensajes en días laborables × personas; «Añadir nota» en la barra de selección (una franja: su editor; varias:
 // la misma nota, omitiendo vacías y confirmadas); campo Nota siempre visible en el detalle del día.
+// TA-REAL: horas = horas_efectivas (vacías = las de la ficha); 11 tipos (FESTIVO, TURNO_GUARDIA y LOCALIZADA se ven, se
+// pintan desde TA3; guardia y localizada no suman horas); fuera del alta o la baja de la persona no se pinta; en REAL,
+// goma y deshacer de pintados nuevos desactivados con aviso; recuadro «Notas próximas» (de hoy en adelante).
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as EventoPuntero, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  CATEGORIAS, TEXTO_CATEGORIA, TEXTO_JORNADA, filtroFarmacia, type FarmaciaRrhh, type Trabajadora,
+  CATEGORIAS, TEXTO_CATEGORIA, TEXTO_JORNADA, esTitular, filtroFarmacia, type FarmaciaRrhh, type Trabajadora,
 } from '../server/rrhh/contrato.ts';
 import {
-  AVISO_NOTA, AVISO_NOTA_VACIA, CODIGO_TIPO_EVENTO, COLOR_TIPO_EVENTO, FECHA_MAX, FECHA_MIN, FRANJAS, FRANJAS_DE_JORNADA, LARGO_NOTA, TEXTO_ESTADO_EVENTO, TEXTO_FRANJA,
-  TEXTO_TIPO_EVENTO, TIPOS_EVENTO, describirCambio, diaSemana, esFecha, lunesDe, primeroDeMes, rangoFechas, sumarDias, sumarMeses, ultimoDeMes,
-  type CalendarioDTO, type CambioCalendario, type Celda, type EventoCalendario, type Franja, type ResultadoCambioDTO, type TipoEvento, type TrazaEvento,
+  AVISO_ANULAR_PENDIENTE, AVISO_NOTA, AVISO_NOTA_VACIA, CODIGO_TIPO_EVENTO, COLOR_TIPO_EVENTO, FECHA_MAX, FECHA_MIN, FRANJAS, FRANJAS_DE_JORNADA, LARGO_NOTA,
+  HORAS_EVENTO_MAX, TEXTO_ESTADO_EVENTO, TEXTO_FRANJA, TEXTO_TIPO_EVENTO, TIPOS_EVENTO, TIPOS_PINTABLES, TIPOS_SIN_HORAS, deAltaEl, describirCambio, diaSemana,
+  esFecha, horasQueSuman, lunesDe, primeroDeMes, rangoFechas, sumarDias, sumarMeses, ultimoDeMes,
+  type CalendarioDTO, type CambioCalendario, type Celda, type EventoCalendario, type Franja, type NotaProxima, type ResultadoCambioDTO, type TipoEvento,
+  type TrazaEvento,
 } from '../server/rrhh/eventos.ts';
 import { ErrorApi, enviar, useApiRecargable } from './api.ts';
 import { fechaHora } from './formato.ts';
@@ -79,9 +84,9 @@ const deClave = (k: string): Celda => {
 const eventosDe = (m: Map<string, EventoCalendario>, c: Celda) => (c.franja ? [c.franja] : FRANJAS)
   .map((f) => m.get(claveEv(c.trabajadora_id, c.fecha, f))).filter((e): e is EventoCalendario => !!e);
 const textoEvento = (e: EventoCalendario | null) => (e === null ? '—'
-  : `${TEXTO_TIPO_EVENTO[e.tipo]} ${horasTxt(e.horas)}${e.estado === 'CONFIRMADO' ? ' (confirmado)' : ''}${e.nota ? ` · nota: «${e.nota}»` : ''}`);
+  : `${TEXTO_TIPO_EVENTO[e.tipo]} ${horasTxt(e.horas_efectivas)}${e.estado === 'CONFIRMADO' ? ' (confirmado)' : ''}${e.nota ? ` · nota: «${e.nota}»` : ''}`);
 const descripcionEvento = (e: EventoCalendario, conFranja = true) =>
-  `${conFranja ? `${TEXTO_FRANJA[e.franja]}: ` : ''}${TEXTO_TIPO_EVENTO[e.tipo]}, ${horasTxt(e.horas)}, ${TEXTO_ESTADO_EVENTO[e.estado]}${e.nota ? `. Nota: ${e.nota}` : ''}`;
+  `${conFranja ? `${TEXTO_FRANJA[e.franja]}: ` : ''}${TEXTO_TIPO_EVENTO[e.tipo]}, ${horasTxt(e.horas_efectivas)}, ${TEXTO_ESTADO_EVENTO[e.estado]}${e.nota ? `. Nota: ${e.nota}` : ''}`;
 
 // ---------------------------------------------------------------------------
 // Colores (configurables en la leyenda; solo en este navegador)
@@ -145,11 +150,15 @@ const ERRORES: Readonly<Record<string, string>> = {
   NO_ES_EL_ULTIMO: 'Hay un cambio más reciente: recarga y vuelve a deshacer.',
   ESTADO_CAMBIADO: 'Los días de ese cambio ya no están como los dejó: no se ha deshecho nada.',
   DATOS_NO_VALIDOS: 'Datos no válidos: no se ha cambiado nada.',
+  EVENTO_FUERA_DEL_ALTA: 'Ese día está fuera del alta o la baja de la persona: no se ha cambiado nada.',
+  ANULAR_EVENTOS_PENDIENTE: `${AVISO_ANULAR_PENDIENTE}: no se ha cambiado nada.`,
 };
 function textoError(e: unknown): string {
   if (!(e instanceof ErrorApi)) return 'No se ha podido guardar.';
   if (e.codigo === 'DATOS_NO_VALIDOS' && e.errores.nota) return `${e.errores.nota}: no se ha cambiado nada.`;
-  return ERRORES[e.codigo] ?? `No se ha podido guardar (${e.codigo}).`;
+  if (ERRORES[e.codigo]) return ERRORES[e.codigo];
+  // TA-REAL: errores de la base de datos con su mensaje llano (la transacción ya está deshecha).
+  return e.mensaje ?? `No se ha podido guardar (${e.codigo}).`;
 }
 function textoResultado(r: ResultadoCambioDTO): Aviso {
   const o = r.omitidas_confirmadas;
@@ -178,6 +187,8 @@ function Calendario() {
 
   const cal = useApiRecargable<CalendarioDTO>(`/api/rrhh/eventos?farmacia=${farmacia}&desde=${dq}&hasta=${hq}`);
   const hist = useApiRecargable<CambioCalendario[]>(`/api/rrhh/eventos/historial?farmacia=${farmacia}`);
+  // TA-REAL «Notas próximas»: desde hoy (reloj del navegador); al pasar el día salen del recuadro.
+  const notas = useApiRecargable<NotaProxima[]>(`/api/rrhh/eventos/notas?farmacia=${farmacia}&desde=${hoy()}`);
   const [herr, setHerr] = useState<Herramienta>({ k: 'seleccion' });
   const [sel, setSel] = useState<Set<string>>(() => new Set());
   const [aviso, setAviso] = useState<Aviso>(null);
@@ -196,14 +207,21 @@ function Calendario() {
 
   /** Las escrituras van en cola: ningún trazo se pierde ni se cruza con otro. */
   const ejecutar = (tarea: () => Promise<void>) => { cola.current = cola.current.then(tarea).catch(() => undefined); };
-  const recargar = () => { cal.recargar(); hist.recargar(); };
+  const recargar = () => { cal.recargar(); hist.recargar(); notas.recargar(); };
   const escribir = (ruta: string, cuerpo: object) => ejecutar(async () => {
     try { setAviso(textoResultado(await enviar<ResultadoCambioDTO>(ruta, 'POST', cuerpo))); } catch (e) { setAviso({ ok: false, texto: textoError(e) }); }
     recargar();
   });
   const cambioEventos = (cuerpo: object) => escribir('/api/rrhh/eventos', cuerpo);
   const ultimo = datos?.ultimo_cambio ?? null;
-  const deshacer = () => { if (ultimo) escribir('/api/rrhh/eventos/deshacer', { cambio_id: ultimo.id }); };
+  // TA-REAL: sin anular eventos (REAL), ni goma ni deshacer de un cambio que creó eventos.
+  const anular = datos?.anular_eventos ?? true;
+  const deshacible = ultimo !== null && (anular || ultimo.creados === 0);
+  const deshacer = () => {
+    if (!ultimo) return;
+    if (!deshacible) { setAviso({ ok: false, texto: `${AVISO_ANULAR_PENDIENTE}: ese cambio creó eventos y no se puede deshacer todavía.` }); return; }
+    escribir('/api/rrhh/eventos/deshacer', { cambio_id: ultimo.id });
+  };
 
   // Ctrl+Z / Cmd+Z deshace el último cambio (fuera de los campos de texto).
   const deshacerRef = useRef(deshacer);
@@ -230,6 +248,7 @@ function Calendario() {
       });
       return;
     }
+    if (herr.k === 'goma' && !anular) { setAviso({ ok: false, texto: `${AVISO_ANULAR_PENDIENTE}: la goma está desactivada.` }); return; }
     cambioEventos(herr.k === 'goma' ? { accion: 'BORRAR', celdas } : { accion: 'PINTAR', tipo: herr.tipo, celdas });
   };
 
@@ -289,7 +308,7 @@ function Calendario() {
         </label>
       </div>
 
-      {vista !== 'anio' && <Paleta herr={herr} onHerr={setHerr} colores={colores} onColor={cambiarColor} semana={vista === 'semana'} />}
+      {vista !== 'anio' && <Paleta herr={herr} onHerr={setHerr} colores={colores} onColor={cambiarColor} semana={vista === 'semana'} anular={anular} />}
 
       <div className="cal-acciones">
         {rango && (
@@ -305,11 +324,14 @@ function Calendario() {
           <button type="button" className="boton-secundario" disabled={idsAnio.length === 0} data-accion="rellenar-anio"
             aria-expanded={confirmarAnio} onClick={() => setConfirmarAnio(true)}>Rellenar año completo</button>
         )}
-        <button type="button" className="boton-secundario cal-deshacer" disabled={!ultimo} onClick={deshacer} data-accion="deshacer"
-          title={ultimo ? `Deshacer: ${describirCambio(ultimo)} (Ctrl+Z)` : 'No hay cambios que deshacer'}>
+        <button type="button" className="boton-secundario cal-deshacer" disabled={!deshacible} onClick={deshacer} data-accion="deshacer"
+          title={!ultimo ? 'No hay cambios que deshacer' : deshacible ? `Deshacer: ${describirCambio(ultimo)} (Ctrl+Z)` : `${AVISO_ANULAR_PENDIENTE}: ese cambio creó eventos`}>
           Deshacer{ultimo && <span className="cal-deshacer-que" data-deshacer-que>{describirCambio(ultimo)}</span>}
         </button>
+        {ultimo && !deshacible && <span className="tenue cal-aviso-anular" data-aviso-anular-deshacer>{AVISO_ANULAR_PENDIENTE}</span>}
       </div>
+
+      <NotasProximas carga={notas.carga} farmacia={farmacia} onDia={(f, persona) => cambiar({ vista: null, fecha: f, persona })} />
 
       {anioVacio && !confirmarAnio && (
         <div className="tarjeta cal-oferta" role="status" data-anio-vacio>
@@ -352,7 +374,7 @@ function Calendario() {
         : <p className="tarjeta rrhh-vacio">No hay personas en esta farmacia.</p>)}
 
       {sel.size > 0 && vista !== 'anio' && (
-        <BarraSeleccion sel={sel} eventos={eventos} colores={colores} fichas={new Map(todas.map((t) => [t.id, t]))}
+        <BarraSeleccion sel={sel} eventos={eventos} colores={colores} fichas={new Map(todas.map((t) => [t.id, t]))} anular={anular}
           onLimpiar={() => setSel(new Set())} onCambio={cambioEventos} />
       )}
 
@@ -365,8 +387,8 @@ function Calendario() {
 // Paleta (también leyenda) y colores
 // ---------------------------------------------------------------------------
 
-function Paleta({ herr, onHerr, colores, onColor, semana }: {
-  herr: Herramienta; onHerr: (h: Herramienta) => void; colores: Colores; onColor: (t: TipoEvento | null, c?: string) => void; semana: boolean;
+function Paleta({ herr, onHerr, colores, onColor, semana, anular }: {
+  herr: Herramienta; onHerr: (h: Herramienta) => void; colores: Colores; onColor: (t: TipoEvento | null, c?: string) => void; semana: boolean; anular: boolean;
 }) {
   const [editar, setEditar] = useState(false);
   const activa = (h: Herramienta) => (h.k === herr.k && (h.k !== 'tipo' || (herr.k === 'tipo' && herr.tipo === h.tipo)));
@@ -376,15 +398,20 @@ function Paleta({ herr, onHerr, colores, onColor, semana }: {
       <div className="cal-paleta" role="toolbar" aria-label="Herramienta">
         <button type="button" className="cal-herr cal-herr-sel" aria-pressed={activa({ k: 'seleccion' })} data-herramienta="seleccion"
           onClick={() => onHerr({ k: 'seleccion' })}><span className="cal-muestra-sel" aria-hidden="true" />Seleccionar</button>
-        {TIPOS_EVENTO.map((t) => (
+        {TIPOS_PINTABLES.map((t) => (
           <button key={t} type="button" className="cal-herr" aria-pressed={activa({ k: 'tipo', tipo: t })} data-herramienta={t} style={estiloColor(colores[t])}
             onClick={() => onHerr({ k: 'tipo', tipo: t })}>
             <span className="cal-muestra" aria-hidden="true">{CODIGO_TIPO_EVENTO[t]}</span>{TEXTO_TIPO_EVENTO[t]}
           </button>
         ))}
-        <button type="button" className="cal-herr cal-herr-goma" aria-pressed={activa({ k: 'goma' })} data-herramienta="goma"
-          onClick={() => onHerr({ k: 'goma' })}><span className="cal-muestra-goma" aria-hidden="true" />Goma</button>
+        <button type="button" className="cal-herr cal-herr-goma" aria-pressed={activa({ k: 'goma' })} data-herramienta="goma" disabled={!anular}
+          title={anular ? 'Borrar eventos' : AVISO_ANULAR_PENDIENTE} onClick={() => onHerr({ k: 'goma' })}><span className="cal-muestra-goma" aria-hidden="true" />Goma</button>
+        {!anular && <span className="tenue cal-aviso-anular" data-aviso-goma>Goma: {AVISO_ANULAR_PENDIENTE.charAt(0).toLowerCase()}{AVISO_ANULAR_PENDIENTE.slice(1)}</span>}
       </div>
+      <p className="tenue cal-tipos-ta3" data-tipos-ta3>
+        {TIPOS_EVENTO.filter((t) => !TIPOS_PINTABLES.includes(t)).map((t) => TEXTO_TIPO_EVENTO[t]).join(', ')}: se verán si existen; se pintan desde Guardias y festivos (TA3).
+        {' '}{TIPOS_SIN_HORAS.map((t) => TEXTO_TIPO_EVENTO[t]).join(' y ')} no suman horas.
+      </p>
       <div className="cal-leyenda">
         <span className="cal-leyenda-estado"><span className="cal-mini e-planificado" aria-hidden="true" /> claro: planificado</span>
         <span className="cal-leyenda-estado"><span className="cal-mini e-confirmado" aria-hidden="true">✓</span> sólido: confirmado</span>
@@ -441,7 +468,7 @@ function Evento({ ev, color, atenuado, compacto }: { ev: EventoCalendario; color
   return (
     <span className={`cal-ev e-${ev.estado.toLowerCase()}${atenuado ? ' atenuado' : ''}`} style={estiloColor(color)} data-ev-franja={ev.franja} data-ev-tipo={ev.tipo}>
       <span className="cal-ev-cod">{CODIGO_TIPO_EVENTO[ev.tipo]}</span>
-      {!compacto && <span className="cal-ev-horas">{horasTxt(ev.horas)}</span>}
+      {!compacto && <span className="cal-ev-horas">{horasTxt(ev.horas_efectivas)}</span>}
       {!compacto && ev.estado === 'CONFIRMADO' && <span className="cal-ev-ok" aria-hidden="true">✓</span>}
       {ev.nota && <span className="cal-ev-nota" aria-hidden="true" data-con-nota>✎</span>}
     </span>
@@ -551,7 +578,7 @@ function Rejilla({ variante, columnas, filas, nombres, eventos, sel, herr, color
                     <button type="button" className={`cal-celda${c.franja ? ' de-franja' : ' de-dia'}${sel.has(k) ? ' sel' : ''}${enTrazo?.has(k) ? ' trazo' : ''}`}
                       data-celda={k}
                       {...(c.franja
-                        ? { 'data-tipo': unico?.tipo ?? '', 'data-estado': unico?.estado ?? '', 'data-horas': unico?.horas ?? '', 'data-nota': unico?.nota ?? '' }
+                        ? { 'data-tipo': unico?.tipo ?? '', 'data-estado': unico?.estado ?? '', 'data-horas': unico?.horas_efectivas ?? '', 'data-nota': unico?.nota ?? '' }
                         : { 'data-tipo-manana': manana?.tipo ?? '', 'data-tipo-tarde': tarde?.tipo ?? '' })}
                       aria-pressed={herr.k === 'seleccion' ? sel.has(k) : undefined} aria-label={etiqueta} title={etiqueta}
                       onPointerDown={(e) => abajo(e, [i, j])} onPointerEnter={() => encima([i, j])} onPointerUp={(e) => arriba(e, [i, j])}
@@ -590,7 +617,7 @@ function CabeceraPersona({ t, compacto }: { t: Trabajadora; compacto: boolean })
       <Link to={`/trabajadores/${t.id}`} className="rrhh-nombre" draggable={false}>{t.nombre}</Link>
       {!compacto && (
         <span className="cal-persona-jornada tenue">
-          {TEXTO_JORNADA[t.jornada]} · {horasTxt(t.horas_diarias)}{t.es_titular ? ' · titular' : ''}
+          {TEXTO_JORNADA[t.tipo_jornada]} · {horasTxt(t.horas_diarias)}{esTitular(t) ? ' · titular' : ''}
         </span>
       )}
     </span>
@@ -619,19 +646,19 @@ function RejillaPeriodo({ vista, desde, hasta, hoyF, trabajadoras, agrupar, even
   for (const t of trabajadoras) {
     if (agrupar && t.farmacia !== grupo) { grupo = t.farmacia; filas.push({ clave: `g-${grupo}`, grupo, celdas: [] }); }
     if (semana) {
-      // Dos subfilas por persona: mañana y tarde (la franja que no trabaja queda rayada).
-      const propias = FRANJAS_DE_JORNADA[t.jornada];
+      // Dos subfilas por persona: mañana y tarde (la franja que no trabaja, o fuera de su alta, queda rayada).
+      const propias = FRANJAS_DE_JORNADA[t.tipo_jornada];
       for (const franja of FRANJAS) {
         filas.push({
           clave: `${t.id}|${franja}`, franja, nombre: t.nombre, titulo: t.nombre,
           ...(franja === 'MANANA' ? { cabecera: <CabeceraPersona t={t} compacto={false} />, span: 2 } : {}),
-          celdas: dias.map((f) => (dentro(f) && propias.includes(franja) ? { trabajadora_id: t.id, fecha: f, franja } : null)),
+          celdas: dias.map((f) => (dentro(f) && deAltaEl(t, f) && propias.includes(franja) ? { trabajadora_id: t.id, fecha: f, franja } : null)),
         });
       }
     } else {
       filas.push({
         clave: t.id, titulo: t.nombre, nombre: t.nombre, cabecera: <CabeceraPersona t={t} compacto />,
-        celdas: dias.map((f) => (dentro(f) ? { trabajadora_id: t.id, fecha: f } : null)),
+        celdas: dias.map((f) => (dentro(f) && deAltaEl(t, f) ? { trabajadora_id: t.id, fecha: f } : null)),
       });
     }
   }
@@ -657,24 +684,31 @@ function VistaPersona({ t, anio, hoyF, eventos, sel, herr, colores, tipoFiltro, 
     const mes = mayuscula(F_MES_SOLO.format(dia(primero)));
     return {
       clave: primero.slice(0, 7), titulo: mes, cabecera: <span className="cal-mes-nombre">{mes}</span>,
-      celdas: columnas.map((_, d) => (d < ultimo ? { trabajadora_id: t.id, fecha: `${primero.slice(0, 8)}${String(d + 1).padStart(2, '0')}` } : null)),
+      celdas: columnas.map((_, d) => {
+        const f = `${primero.slice(0, 8)}${String(d + 1).padStart(2, '0')}`;
+        return d < ultimo && deAltaEl(t, f) ? { trabajadora_id: t.id, fecha: f } : null;
+      }),
     };
   });
   const delAnio = [...eventos.values()].filter((e) => e.trabajadora_id === t.id && e.fecha.startsWith(anio));
+  // TA-REAL: horas por tipo (horas_efectivas); turno de guardia y localizada no suman.
+  const horasDe = (tipo: TipoEvento) => delAnio.filter((e) => e.tipo === tipo).reduce((s, e) => s + horasQueSuman(e), 0);
   return (
     <section className="cal-persona-vista" data-vista-persona={t.id}>
       <div className="cal-persona-cabecera">
         <h3><Link to={`/trabajadores/${t.id}`} className="rrhh-nombre">{t.nombre}</Link></h3>
         <EtiquetaFarmacia f={t.farmacia} />
-        <span className="tenue">{TEXTO_CATEGORIA[t.categoria]} · {TEXTO_JORNADA[t.jornada]} · {horasTxt(t.horas_diarias)}/día</span>
+        <span className="tenue">{TEXTO_CATEGORIA[t.categoria]} · {TEXTO_JORNADA[t.tipo_jornada]} · {horasTxt(t.horas_diarias)}/día</span>
       </div>
       <dl className="cal-totales" aria-label={`Días por tipo en ${anio}`}>
         {TIPOS_EVENTO.map((tipo) => {
           const n = new Set(delAnio.filter((e) => e.tipo === tipo).map((e) => e.fecha)).size;
+          // Los tipos de TA3 solo salen si hay alguno.
+          if (n === 0 && !TIPOS_PINTABLES.includes(tipo)) return null;
           return (
             <div key={tipo} className="cal-total" data-total-tipo={tipo} style={estiloColor(colores[tipo])}>
               <dt><span className="cal-muestra" aria-hidden="true">{CODIGO_TIPO_EVENTO[tipo]}</span>{TEXTO_TIPO_EVENTO[tipo]}</dt>
-              <dd>{n} {n === 1 ? 'día' : 'días'}</dd>
+              <dd>{n} {n === 1 ? 'día' : 'días'}{n > 0 && <span className="tenue" data-total-horas> · {TIPOS_SIN_HORAS.includes(tipo) ? 'no suma horas' : horasTxt(horasDe(tipo))}</span>}</dd>
             </div>
           );
         })}
@@ -764,16 +798,18 @@ function CampoNota({ valor, onValor, deshabilitado, error, nombre = 'nota_evento
 }
 
 function EditorEvento({ ev, onCambio }: { ev: EventoCalendario; onCambio: (cuerpo: object) => void }) {
-  const [horas, setHoras] = useState(NUM.format(ev.horas));
+  const inicial = NUM.format(ev.horas_efectivas);
+  const [horas, setHoras] = useState(inicial);
   const [nota, setNota] = useState(ev.nota ?? '');
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => { setHoras(NUM.format(ev.horas)); setNota(ev.nota ?? ''); setError(null); }, [ev.id, ev.horas, ev.nota]);
+  useEffect(() => { setHoras(NUM.format(ev.horas_efectivas)); setNota(ev.nota ?? ''); setError(null); }, [ev.id, ev.horas_efectivas, ev.nota]);
   const bloqueado = ev.estado === 'CONFIRMADO';
   const guardar = () => {
     const h = Number(horas.trim().replace(',', '.'));
-    if (!Number.isFinite(h) || h <= 0 || h > 12) { setError('Horas: más de 0 y como máximo 12'); return; }
+    if (!Number.isFinite(h) || h <= 0 || h > HORAS_EVENTO_MAX) { setError(`Horas: más de 0 y como máximo ${HORAS_EVENTO_MAX}`); return; }
     setError(null);
-    onCambio({ accion: 'EDITAR', evento_id: ev.id, horas: h, nota: nota.trim() === '' ? null : nota });
+    // TA-REAL: las horas solo se envían si cambian (si no, el evento sigue con las de la ficha: horas vacías).
+    onCambio({ accion: 'EDITAR', evento_id: ev.id, ...(horas.trim() !== inicial ? { horas: h } : {}), nota: nota.trim() === '' ? null : nota });
   };
   return (
     <div className="cal-editor" data-editor-evento={ev.franja}>
@@ -802,8 +838,8 @@ function EditorVacio({ franja }: { franja: Franja }) {
   );
 }
 
-function BarraSeleccion({ sel, eventos, colores, fichas, onLimpiar, onCambio }: {
-  sel: Set<string>; eventos: Map<string, EventoCalendario>; colores: Colores; fichas: Map<string, Trabajadora>;
+function BarraSeleccion({ sel, eventos, colores, fichas, anular, onLimpiar, onCambio }: {
+  sel: Set<string>; eventos: Map<string, EventoCalendario>; colores: Colores; fichas: Map<string, Trabajadora>; anular: boolean;
   onLimpiar: () => void; onCambio: (cuerpo: object) => void;
 }) {
   const celdas = [...sel].map(deClave);
@@ -816,7 +852,7 @@ function BarraSeleccion({ sel, eventos, colores, fichas, onLimpiar, onCambio }: 
   useEffect(() => { setAnotar(false); setNotaSel(''); setMensaje(null); }, [claveSel]);
 
   // Franjas de la selección: la de la celda o, en un día completo, las de la ficha.
-  const franjasDe = (c: Celda): readonly Franja[] => (c.franja ? [c.franja] : FRANJAS_DE_JORNADA[fichas.get(c.trabajadora_id)?.jornada ?? 'COMPLETA']);
+  const franjasDe = (c: Celda): readonly Franja[] => (c.franja ? [c.franja] : FRANJAS_DE_JORNADA[fichas.get(c.trabajadora_id)?.tipo_jornada ?? 'COMPLETA']);
   const huecos = celdas.flatMap((c) => franjasDe(c).map((f) => eventos.get(claveEv(c.trabajadora_id, c.fecha, f)) ?? null));
   const conEvento = huecos.filter((e): e is EventoCalendario => e !== null);
   const anotables = conEvento.filter((e) => e.estado !== 'CONFIRMADO');
@@ -848,7 +884,7 @@ function BarraSeleccion({ sel, eventos, colores, fichas, onLimpiar, onCambio }: 
         <span className="cal-pintar-como">
           <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoEvento)} aria-label="Tipo para pintar la selección" data-tipo-seleccion
             style={estiloColor(colores[tipo])}>
-            {TIPOS_EVENTO.map((t) => <option key={t} value={t}>{TEXTO_TIPO_EVENTO[t]}</option>)}
+            {TIPOS_PINTABLES.map((t) => <option key={t} value={t}>{TEXTO_TIPO_EVENTO[t]}</option>)}
           </select>
           <button type="button" className="boton-secundario" onClick={() => onCambio({ accion: 'PINTAR', tipo, celdas })} data-sel="pintar">Pintar</button>
         </span>
@@ -857,7 +893,8 @@ function BarraSeleccion({ sel, eventos, colores, fichas, onLimpiar, onCambio }: 
         </button>
         <button type="button" className="boton-primario" onClick={() => onCambio({ accion: 'CONFIRMAR', celdas })} data-sel="confirmar">Confirmar</button>
         <button type="button" className="boton-secundario" onClick={() => onCambio({ accion: 'DESCONFIRMAR', celdas })} data-sel="desconfirmar">Quitar confirmación</button>
-        <button type="button" className="boton-peligro-suave" onClick={() => onCambio({ accion: 'BORRAR', celdas })} data-sel="borrar">Borrar</button>
+        <button type="button" className="boton-peligro-suave" disabled={!anular} title={anular ? undefined : AVISO_ANULAR_PENDIENTE}
+          onClick={() => onCambio({ accion: 'BORRAR', celdas })} data-sel="borrar">Borrar</button>
         <button type="button" className="cal-enlace" onClick={onLimpiar} data-sel="limpiar">Quitar selección</button>
       </div>
       {mensaje && <p className="rrhh-error" role="alert" data-aviso-anotar>{mensaje}.</p>}
@@ -890,7 +927,7 @@ function BarraSeleccion({ sel, eventos, colores, fichas, onLimpiar, onCambio }: 
               <div key={ev.id} className="cal-detalle-ev" data-detalle-ev={ev.franja}>
                 <span className="cal-detalle-que" style={estiloColor(colores[ev.tipo])}>
                   <span className="cal-muestra" aria-hidden="true">{CODIGO_TIPO_EVENTO[ev.tipo]}</span>
-                  <span>{mayuscula(TEXTO_FRANJA[ev.franja])}: {TEXTO_TIPO_EVENTO[ev.tipo]} · {horasTxt(ev.horas)} · {TEXTO_ESTADO_EVENTO[ev.estado]}</span>
+                  <span>{mayuscula(TEXTO_FRANJA[ev.franja])}: {TEXTO_TIPO_EVENTO[ev.tipo]} · {horasTxt(ev.horas_efectivas)}{ev.horas === null ? ' (de la ficha)' : ''} · {TEXTO_ESTADO_EVENTO[ev.estado]}</span>
                 </span>
                 {ev.nota && <span className="cal-detalle-nota" data-nota-detalle>Nota: {ev.nota}</span>}
                 <EditorEvento ev={ev} onCambio={onCambio} />
@@ -904,6 +941,46 @@ function BarraSeleccion({ sel, eventos, colores, fichas, onLimpiar, onCambio }: 
           })}
         </div>
       )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TA-REAL «Notas próximas» (pedido por Pío): notas de hoy en adelante, por fecha
+// ---------------------------------------------------------------------------
+
+const MAX_NOTAS_VISIBLES = 6;
+
+function NotasProximas({ carga, farmacia, onDia }: {
+  carga: { estado: 'cargando' } | { estado: 'ok'; datos: NotaProxima[] } | { estado: 'error'; mensaje: string };
+  farmacia: string; onDia: (fecha: string, persona: string) => void;
+}) {
+  const [todas, setTodas] = useState(false);
+  if (carga.estado === 'cargando') return null;
+  const linea = (n: NotaProxima) => (
+    <li key={`${n.trabajadora_id}|${n.fecha}|${n.nota}`} data-nota-proxima={n.fecha}>
+      <button type="button" className="cal-nota-proxima" onClick={() => onDia(n.fecha, n.trabajadora_id)}
+        title="Abrir la semana de esa persona">
+        <strong>{n.nombre}</strong>{farmacia === 'AMBAS' ? <> <EtiquetaFarmacia f={n.farmacia} /></> : null} — <span className="cal-nota-fecha">{F_CORTA.format(dia(n.fecha))}</span>: {n.nota}
+      </button>
+    </li>
+  );
+  return (
+    <section className="tarjeta cal-notas" aria-labelledby="t-notas-proximas" data-notas-proximas>
+      <h2 id="t-notas-proximas"><span className="cal-nota-marca" aria-hidden="true">✎</span> Notas próximas</h2>
+      {carga.estado === 'error' && <p className="rrhh-error" role="alert">No se han podido leer las notas ({carga.mensaje}).</p>}
+      {carga.estado === 'ok' && (carga.datos.length === 0
+        ? <p className="tenue" data-notas-vacio>Sin notas de hoy en adelante.</p>
+        : (
+          <>
+            <ul className="cal-notas-lista">{(todas ? carga.datos : carga.datos.slice(0, MAX_NOTAS_VISIBLES)).map(linea)}</ul>
+            {carga.datos.length > MAX_NOTAS_VISIBLES && (
+              <button type="button" className="cal-enlace" onClick={() => setTodas(!todas)} data-notas-todas>
+                {todas ? 'Ver menos' : `Ver las ${carga.datos.length} notas`}
+              </button>
+            )}
+          </>
+        ))}
     </section>
   );
 }

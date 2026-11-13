@@ -1,17 +1,22 @@
 // TA2/TA2-2/TA2-4 Trabajadores: calendario. Fechas, semilla de ejemplo, validación, eventos por franja (mañana / tarde),
 // pintar, goma, rellenar jornada habitual (semana, mes y año), confirmar, editar horas y nota, deshacer e historial
-// (autor "Marc"); API con el servidor FIXTURES (inyección). Uso: npm run test:unit
+// (autor "Marc"); API con el servidor FIXTURES (inyección). TA-REAL: 11 tipos, horas_efectivas, alta/baja de la
+// ficha, goma y deshacer sin anular eventos, notas próximas y origen deducido del historial. Uso: npm run test:unit
 import assert from 'node:assert/strict';
 import { after, describe, test } from 'node:test';
 import { CLAVE_FIXTURES, USUARIO } from '../acceso.ts';
 import { crearServidor } from '../index.ts';
-import { AUTOR_HISTORIAL, FRANJA_JORNADA, HORARIO_COMPLETA, HORAS_COMPLETA } from '../rrhh/contrato.ts';
-import { crearAdaptadorRrhhFixtures, leerSemillaEventos, type AdaptadorRrhh } from '../rrhh/adaptador_fixtures.ts';
+import { AUTOR_HISTORIAL, FRANJA_JORNADA, HORARIO_COMPLETA, HORAS_COMPLETA, HORAS_VISTA_COMPLETA, type DatosTrabajadora } from '../rrhh/contrato.ts';
+import { crearAdaptadorRrhhFixtures, leerSemillaEventos, type AdaptadorRrhhFixtures } from '../rrhh/adaptador_fixtures.ts';
 import {
-  AVISO_NOTA, AVISO_NOTA_VACIA, describirCambio, diaSemana, esFecha, esLaborable, horasFranja, leerNota, lunesDe, rangoFechas, sumarMeses, textoPeriodoCambio, ultimoDeMes,
+  AVISO_NOTA, AVISO_NOTA_VACIA, TIPOS_EVENTO, TIPOS_PINTABLES, TIPOS_SIN_HORAS, describirCambio, diaSemana, esFecha, esLaborable, horasEfectivas, horasFranja,
+  horasQueSuman, inferirOrigen, leerNota, lunesDe, rangoFechas, sumarMeses, textoPeriodoCambio, ultimoDeMes,
   validarDeshacer, validarPeticionEventos,
   type EventoCalendario, type Franja, type PeticionEventos, type ResultadoCambioDTO,
 } from '../rrhh/eventos.ts';
+
+type AdaptadorRrhh = AdaptadorRrhhFixtures;
+const DATOS_AINA: DatosTrabajadora = { nombre: 'Aina Bosch Ferrer', categoria: 'TECNICA', tipo_jornada: 'COMPLETA', horas_diarias: 8, fecha_alta: '2026-01-01' };
 
 const ID = (n: number) => `e0000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const AINA = ID(1); const CLARA = ID(2); const NURIA = ID(3); const ELENA = ID(4);
@@ -19,11 +24,12 @@ const MARTA = ID(12); const JUDIT = ID(14); const ROSA = ID(15); const IRENE = I
 /** Orden del calendario: por nombre, titular al final. */
 const PIO = [AINA, CLARA, ELENA, NURIA, TITULAR_PIO];
 
-function nuevo(): AdaptadorRrhh {
+function nuevo(anularEventos = true): AdaptadorRrhh {
   let n = 0; let t = 0;
   return crearAdaptadorRrhhFixtures({
     nuevoId: () => `f2000000-0000-4000-8000-${String(++n).padStart(12, '0')}`,
     ahora: () => new Date(Date.UTC(2026, 10, 12, 10, 0, 0, t++)).toISOString(),
+    anularEventos,
   });
 }
 /** Aplica una petición ya validada (como la API). */
@@ -53,11 +59,13 @@ describe('fechas (UTC, lunes = 0)', () => {
     for (const f of ['2026-02-30', '2026-1-01', '', null, 20261101]) assert.equal(esFecha(f), false, String(f));
   });
   test('TA2-3: horas por franja: completa = mañana 4,5 h (9:00–13:30) + tarde 3,5 h (17:00–20:30); media jornada, todas en su franja', () => {
-    assert.equal(horasFranja({ jornada: 'COMPLETA', horas_diarias: 8 }, 'MANANA'), 4.5);
-    assert.equal(horasFranja({ jornada: 'COMPLETA', horas_diarias: 8 }, 'TARDE'), 3.5);
-    assert.equal(horasFranja({ jornada: 'MEDIA_MANANA', horas_diarias: 4.5 }, 'MANANA'), 4.5);
-    assert.equal(horasFranja({ jornada: 'MEDIA_TARDE', horas_diarias: 3.5 }, 'TARDE'), 3.5);
-    assert.equal(horasFranja({ jornada: 'MEDIA_MANANA', horas_diarias: 5 }, 'MANANA'), 5); // media editada: sus horas
+    assert.equal(horasFranja({ tipo_jornada: 'COMPLETA', horas_diarias: 8 }, 'MANANA'), 4.5);
+    assert.equal(horasFranja({ tipo_jornada: 'COMPLETA', horas_diarias: 8 }, 'TARDE'), 3.5);
+    assert.equal(horasFranja({ tipo_jornada: 'MEDIA_MANANA', horas_diarias: 4.5 }, 'MANANA'), 4.5);
+    assert.equal(horasFranja({ tipo_jornada: 'MEDIA_TARDE', horas_diarias: 3.5 }, 'TARDE'), 3.5);
+    assert.equal(horasFranja({ tipo_jornada: 'MEDIA_MANANA', horas_diarias: 5 }, 'MANANA'), 5); // media editada: sus horas
+    // TA-REAL: la vista v_eventos_calendario_horas repite el reparto (4,50 / 3,50): debe coincidir con HORARIO_COMPLETA.
+    assert.deepEqual(HORAS_VISTA_COMPLETA, { MANANA: HORARIO_COMPLETA.MANANA.horas, TARDE: HORARIO_COMPLETA.TARDE.horas });
     // Único punto de configuración, con la suma comprobada.
     assert.deepEqual(HORARIO_COMPLETA, { MANANA: { horas: 4.5, desde: '9:00', hasta: '13:30' }, TARDE: { horas: 3.5, desde: '17:00', hasta: '20:30' } });
     assert.equal(HORARIO_COMPLETA.MANANA.horas + HORARIO_COMPLETA.TARDE.horas, HORAS_COMPLETA);
@@ -81,17 +89,19 @@ describe('semilla de ejemplo (fixtures/rrhh/eventos.json)', () => {
   });
   test('franjas de la ficha: completa mañana 4,5 h y tarde 3,5 h (TA2-3); media mañana solo mañana; media tarde solo tarde', () => {
     assert.deepEqual(delDia(a, AINA, '2026-11-09'), [['MANANA', 'JORNADA'], ['TARDE', 'JORNADA']]);
-    assert.equal(en(a, AINA, '2026-11-09', 'MANANA')?.horas, 4.5);
-    assert.equal(en(a, AINA, '2026-11-09', 'TARDE')?.horas, 3.5);
+    assert.equal(en(a, AINA, '2026-11-09', 'MANANA')?.horas_efectivas, 4.5);
+    assert.equal(en(a, AINA, '2026-11-09', 'TARDE')?.horas_efectivas, 3.5);
+    // TA-REAL: las horas de la ficha no se guardan en el evento (horas null = las de la ficha, como la vista).
+    assert.ok(evs.every((e) => e.horas === null));
     // Cada ficha completa suma 8 h al día; cada media, sus horas diarias.
     const porDia = new Map<string, number>();
-    for (const e of evs) porDia.set(`${e.trabajadora_id}|${e.fecha}`, (porDia.get(`${e.trabajadora_id}|${e.fecha}`) ?? 0) + e.horas);
+    for (const e of evs) porDia.set(`${e.trabajadora_id}|${e.fecha}`, (porDia.get(`${e.trabajadora_id}|${e.fecha}`) ?? 0) + e.horas_efectivas);
     assert.equal(porDia.get(`${AINA}|2026-11-09`), 8);
     assert.equal(porDia.get(`${ELENA}|2026-11-09`), 4.5);
     assert.deepEqual(delDia(a, ELENA, '2026-11-09'), [['MANANA', 'JORNADA']]);
-    assert.equal(en(a, ELENA, '2026-11-09', 'MANANA')?.horas, 4.5);
+    assert.equal(en(a, ELENA, '2026-11-09', 'MANANA')?.horas_efectivas, 4.5);
     assert.deepEqual(delDia(a, IRENE, '2026-11-09'), [['TARDE', 'JORNADA']]);
-    assert.equal(en(a, IRENE, '2026-11-09', 'TARDE')?.horas, 3.5);
+    assert.equal(en(a, IRENE, '2026-11-09', 'TARDE')?.horas_efectivas, 3.5);
     assert.equal(en(a, IRENE, '2026-11-09', 'TARDE')?.farmacia, 'RITA');
   });
   test('TA2-2: mañana y tarde distintas el mismo día', () => {
@@ -144,7 +154,8 @@ describe('validación de peticiones (falla cerrado)', () => {
   });
   test('rechazos', () => {
     assert.ok(errores({ accion: 'BORRAR_TODO', celdas: c }).accion);
-    assert.ok(errores({ accion: 'PINTAR', tipo: 'GUARDIA', celdas: c }).tipo); // guardias: TA3
+    assert.ok(errores({ accion: 'PINTAR', tipo: 'GUARDIA', celdas: c }).tipo);
+    for (const t of ['FESTIVO', 'TURNO_GUARDIA', 'LOCALIZADA']) assert.ok(errores({ accion: 'PINTAR', tipo: t, celdas: c }).tipo, t); // TA-REAL: se pintan en TA3
     assert.ok(errores({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [] }).celdas);
     assert.ok(errores({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ ...c[0], franja: 'NOCHE' }] }).celdas);
     assert.ok(errores({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ ...c[0], franja: 'COMPLETA' }] }).celdas);
@@ -155,7 +166,7 @@ describe('validación de peticiones (falla cerrado)', () => {
     assert.ok(errores({ accion: 'RELLENAR', trabajadora_ids: [AINA], desde: '2026-01-01', hasta: '2027-01-02' }).hasta); // 367 días: > 366
     assert.ok(errores({ accion: 'RELLENAR', trabajadora_ids: [AINA], desde: '2026-12-10', hasta: '2026-12-01' }).hasta);
     assert.ok(errores({ accion: 'RELLENAR', trabajadora_ids: [AINA, AINA], desde: '2026-12-01', hasta: '2026-12-07' }).trabajadora_ids);
-    for (const h of [0, -1, 12.5, '8', 7.333, Number.NaN]) assert.ok(errores({ accion: 'EDITAR', evento_id: AINA, horas: h }).horas, String(h));
+    for (const h of [0, -1, 8.5, 12, '8', 7.333, Number.NaN]) assert.ok(errores({ accion: 'EDITAR', evento_id: AINA, horas: h }).horas, String(h)); // TA-REAL: la tabla admite ≤ 8
     assert.ok(errores({ accion: 'EDITAR', evento_id: AINA })._); // ni horas ni nota
     assert.equal(errores({ accion: 'EDITAR', evento_id: AINA, nota: 'x'.repeat(201) }).nota, 'La nota tiene como máximo 200 caracteres');
     assert.ok(errores({ accion: 'EDITAR', evento_id: AINA, nota: '<b>x</b>' }).nota);
@@ -190,8 +201,8 @@ describe('pintar y goma por franja', () => {
     assert.equal(describirCambio(r.cambio!), 'Pintado Vacaciones 7–11 dic 2026: 5 días laborables × 1 persona');
     assert.deepEqual(delDia(a, AINA, '2026-12-09'), [['MANANA', 'VACACIONES'], ['TARDE', 'VACACIONES']]);
     const e = en(a, AINA, '2026-12-09', 'TARDE');
-    assert.deepEqual([e?.horas, e?.estado, e?.farmacia, e?.nota], [3.5, 'PLANIFICADO', 'PIO', null]);
-    assert.equal(en(a, AINA, '2026-12-09', 'MANANA')?.horas, 4.5);
+    assert.deepEqual([e?.horas, e?.horas_efectivas, e?.estado, e?.farmacia, e?.nota], [null, 3.5, 'PLANIFICADO', 'PIO', null]);
+    assert.equal(en(a, AINA, '2026-12-09', 'MANANA')?.horas_efectivas, 4.5);
     const t = ok(aplicar(a, { accion: 'PINTAR', tipo: 'PERMISO_MEDICO', celdas: [{ trabajadora_id: CLARA, fecha: '2026-12-07', franja: 'TARDE' }] }));
     assert.deepEqual([t.cambio?.n, t.cambio?.dias], [1, 1]);
     assert.deepEqual(delDia(a, CLARA, '2026-12-07'), [['TARDE', 'PERMISO_MEDICO']]);
@@ -206,7 +217,7 @@ describe('pintar y goma por franja', () => {
     ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: ELENA, fecha: '2026-12-07' }, { trabajadora_id: IRENE, fecha: '2026-12-07' }] }));
     assert.deepEqual(delDia(a, ELENA, '2026-12-07'), [['MANANA', 'VACACIONES']]);
     assert.deepEqual(delDia(a, IRENE, '2026-12-07'), [['TARDE', 'VACACIONES']]);
-    assert.equal(en(a, ELENA, '2026-12-07', 'MANANA')?.horas, 4.5);
+    assert.equal(en(a, ELENA, '2026-12-07', 'MANANA')?.horas_efectivas, 4.5);
     const antes = foto(a);
     const cuerpo = { accion: 'PINTAR', tipo: 'BAJA', celdas: [{ trabajadora_id: AINA, fecha: '2026-12-08' }, { trabajadora_id: ELENA, fecha: '2026-12-08', franja: 'TARDE' }] };
     assert.equal(aplicar(a, cuerpo), 'FRANJA_NO_VALIDA');
@@ -232,15 +243,31 @@ describe('pintar y goma por franja', () => {
     assert.deepEqual(delDia(a, AINA, '2026-11-09'), [['MANANA', 'BAJA']]); // la goma de la tarde deja la mañana
     assert.equal(describirCambio(g.cambio!), 'Borrado 7–10 nov 2026: 4 días × 1 persona · 4 franjas'); // con fin de semana: «días»; solo tardes: franjas
   });
-  test('persona de baja o inexistente: no se aplica nada (todo o nada)', () => {
+  test('TA-REAL: tras la baja, fuera del alta (como el trigger); anulada o inexistente, persona no válida (todo o nada)', () => {
     const a = nuevo();
     a.darDeBaja(CLARA, '2026-11-30', AUTOR_HISTORIAL);
     const antes = foto(a);
     const cuerpo = { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: AINA, fecha: '2026-12-07' }, { trabajadora_id: CLARA, fecha: '2026-12-07' }] };
-    assert.equal(aplicar(a, cuerpo), 'TRABAJADORA_NO_VALIDA');
+    assert.equal(aplicar(a, cuerpo), 'EVENTO_FUERA_DEL_ALTA');
     assert.equal(aplicar(a, { ...cuerpo, celdas: [{ trabajadora_id: 'f9999999-0000-4000-8000-000000000000', fecha: '2026-12-07' }] }), 'TRABAJADORA_NO_VALIDA');
     assert.equal(foto(a), antes);
-    assert.ok(!a.calendario('PIO', '2026-11-30', '2026-12-06').trabajadoras.some((t) => t.id === CLARA));
+    // Hasta su fecha de baja sigue en el calendario (y se puede pintar); después, no.
+    assert.ok(a.calendario('PIO', '2026-11-30', '2026-12-06').trabajadoras.some((t) => t.id === CLARA));
+    assert.ok(!a.calendario('PIO', '2026-12-07', '2026-12-13').trabajadoras.some((t) => t.id === CLARA));
+    ok(aplicar(a, { ...cuerpo, celdas: [{ trabajadora_id: CLARA, fecha: '2026-11-30' }] }));
+    a.anular(NURIA, AUTOR_HISTORIAL);
+    assert.equal(aplicar(a, { ...cuerpo, celdas: [{ trabajadora_id: NURIA, fecha: '2026-11-30' }] }), 'TRABAJADORA_NO_VALIDA');
+    assert.ok(!a.calendario('PIO', '2026-11-30', '2026-12-06').trabajadoras.some((t) => t.id === NURIA));
+  });
+  test('TA-REAL: antes de la fecha de alta no se pinta ni se rellena', () => {
+    const a = nuevo();
+    const nueva = a.crear({ farmacia: 'PIO', nombre: 'Nueva Prueba', categoria: 'AUXILIAR', tipo_jornada: 'MEDIA_MANANA', horas_diarias: 4.5, fecha_alta: '2026-12-10' }, AUTOR_HISTORIAL);
+    assert.equal(typeof nueva, 'object');
+    const id = (nueva as { id: string }).id;
+    assert.equal(aplicar(a, { accion: 'PINTAR', tipo: 'JORNADA', celdas: [{ trabajadora_id: id, fecha: '2026-12-09' }] }), 'EVENTO_FUERA_DEL_ALTA');
+    const r = ok(aplicar(a, { accion: 'RELLENAR', trabajadora_ids: [id], desde: '2026-12-01', hasta: '2026-12-31' }));
+    assert.equal(describirCambio(r.cambio!), 'Rellenado diciembre de 2026: 16 días laborables × 1 persona'); // del 10 al 31
+    assert.equal(a.calendario('PIO', '2026-11-30', '2026-12-06').trabajadoras.some((t) => t.id === id), false);
   });
 });
 
@@ -254,7 +281,7 @@ describe('rellenar jornada habitual (semana, mes y año)', () => {
     assert.deepEqual(delDia(a, AINA, '2026-12-09'), [['MANANA', 'JORNADA'], ['TARDE', 'VACACIONES']]);
     assert.deepEqual(delDia(a, AINA, '2026-12-12'), []); // sábado
     assert.deepEqual(delDia(a, ELENA, '2026-12-07'), [['MANANA', 'JORNADA']]);
-    assert.deepEqual([en(a, CLARA, '2026-12-07', 'MANANA')?.horas, en(a, CLARA, '2026-12-07', 'TARDE')?.horas], [4.5, 3.5]); // TA2-3
+    assert.deepEqual([en(a, CLARA, '2026-12-07', 'MANANA')?.horas_efectivas, en(a, CLARA, '2026-12-07', 'TARDE')?.horas_efectivas], [4.5, 3.5]); // TA2-3
     assert.equal(ok(aplicar(a, { accion: 'RELLENAR', trabajadora_ids: PIO, desde: '2026-12-07', hasta: '2026-12-13' })).cambio, null);
   });
   test('un mes (RITA, media tarde a 3,5 h de tarde)', () => {
@@ -262,7 +289,7 @@ describe('rellenar jornada habitual (semana, mes y año)', () => {
     const r = ok(aplicar(a, { accion: 'RELLENAR', trabajadora_ids: [IRENE], desde: '2026-12-01', hasta: '2026-12-31' }));
     assert.equal(r.cambio?.dias, 23);
     assert.equal(describirCambio(r.cambio!), 'Rellenado diciembre de 2026: 23 días laborables × 1 persona');
-    assert.ok(a.eventos().filter((e) => e.trabajadora_id === IRENE && e.fecha >= '2026-12-01').every((e) => e.franja === 'TARDE' && e.horas === 3.5));
+    assert.ok(a.eventos().filter((e) => e.trabajadora_id === IRENE && e.fecha >= '2026-12-01').every((e) => e.franja === 'TARDE' && e.horas_efectivas === 3.5));
   });
   test('TA2-2: año completo sin tocar lo pintado ni lo confirmado; se deshace de una vez', () => {
     const a = nuevo();
@@ -302,9 +329,11 @@ describe('rellenar jornada habitual (semana, mes y año)', () => {
   });
   test('la jornada usa la ficha vigente (tras editarla)', () => {
     const a = nuevo();
-    a.editar(AINA, { nombre: 'Aina Bosch Ferrer', categoria: 'TECNICO', jornada: 'MEDIA_TARDE', horas_diarias: 3.5, es_titular: false }, AUTOR_HISTORIAL);
+    a.editar(AINA, { ...DATOS_AINA, tipo_jornada: 'MEDIA_TARDE', horas_diarias: 3.5 }, AUTOR_HISTORIAL);
     ok(aplicar(a, { accion: 'RELLENAR', trabajadora_ids: [AINA], desde: '2026-12-07', hasta: '2026-12-07' }));
     assert.deepEqual(delDia(a, AINA, '2026-12-07'), [['TARDE', 'JORNADA']]);
+    // TA-REAL: las horas vacías siguen a la ficha (como la vista): la tarde de 3,5 h es ahora toda su jornada.
+    assert.equal(en(a, AINA, '2026-12-07', 'TARDE')?.horas_efectivas, 3.5);
   });
 });
 
@@ -324,9 +353,10 @@ describe('confirmar, editar horas y nota', () => {
     const e = en(a, AINA, '2026-11-11', 'TARDE') as EventoCalendario;
     const r = ok(aplicar(a, { accion: 'EDITAR', evento_id: e.id, horas: 2.5, nota: 'Sale antes para cubrir a Clara' }));
     assert.equal(describirCambio(r.cambio!), 'Editado 11 nov 2026: 1 día laborable × 1 persona · 1 franja');
-    assert.deepEqual([en(a, AINA, '2026-11-11', 'TARDE')?.horas, en(a, AINA, '2026-11-11', 'TARDE')?.nota], [2.5, 'Sale antes para cubrir a Clara']);
+    assert.deepEqual([en(a, AINA, '2026-11-11', 'TARDE')?.horas, en(a, AINA, '2026-11-11', 'TARDE')?.horas_efectivas, en(a, AINA, '2026-11-11', 'TARDE')?.nota],
+      [2.5, 2.5, 'Sale antes para cubrir a Clara']);
     const t = a.historialEventos('PIO')[0].trazas[0];
-    assert.deepEqual([t.antes?.horas, t.antes?.nota, t.despues?.horas, t.despues?.nota], [3.5, null, 2.5, 'Sale antes para cubrir a Clara']);
+    assert.deepEqual([t.antes?.horas, t.antes?.horas_efectivas, t.antes?.nota, t.despues?.horas, t.despues?.nota], [null, 3.5, null, 2.5, 'Sale antes para cubrir a Clara']);
     ok(aplicar(a, { accion: 'EDITAR', evento_id: e.id, nota: '' }));
     assert.equal(en(a, AINA, '2026-11-11', 'TARDE')?.nota, null); // vaciar la nota la quita
     assert.equal(ok(aplicar(a, { accion: 'EDITAR', evento_id: e.id, horas: 2.5 })).cambio, null);
@@ -408,6 +438,76 @@ describe('deshacer e historial', () => {
   });
 });
 
+describe('TA-REAL: tipos, horas, anular eventos, notas próximas e historial', () => {
+  test('11 tipos del esquema; 8 se pintan (FESTIVO, TURNO_GUARDIA y LOCALIZADA, en TA3); guardia y localizada no suman horas', () => {
+    assert.deepEqual([...TIPOS_EVENTO], ['JORNADA', 'VACACIONES', 'ASUNTOS_PROPIOS', 'PERMISO_RETRIBUIDO', 'PERMISO_NO_RETRIBUIDO', 'PERMISO_MEDICO',
+      'DESCANSO_COMPENSATORIO', 'BAJA', 'FESTIVO', 'TURNO_GUARDIA', 'LOCALIZADA']);
+    assert.deepEqual(TIPOS_EVENTO.filter((t) => !TIPOS_PINTABLES.includes(t)), ['FESTIVO', 'TURNO_GUARDIA', 'LOCALIZADA']);
+    assert.deepEqual([...TIPOS_SIN_HORAS], ['TURNO_GUARDIA', 'LOCALIZADA']);
+    assert.equal(horasQueSuman({ tipo: 'JORNADA', horas_efectivas: 4.5 }), 4.5);
+    assert.equal(horasQueSuman({ tipo: 'TURNO_GUARDIA', horas_efectivas: 4.5 }), 0);
+    assert.equal(horasQueSuman({ tipo: 'LOCALIZADA', horas_efectivas: 3.5 }), 0);
+  });
+  test('horas_efectivas = coalesce(horas, las de la ficha), como la vista', () => {
+    const completa = { tipo_jornada: 'COMPLETA', horas_diarias: 8 } as const;
+    assert.equal(horasEfectivas({ horas: null, franja: 'MANANA' }, completa), 4.5);
+    assert.equal(horasEfectivas({ horas: null, franja: 'TARDE' }, completa), 3.5);
+    assert.equal(horasEfectivas({ horas: 2, franja: 'TARDE' }, completa), 2);
+    assert.equal(horasEfectivas({ horas: null, franja: 'MANANA' }, { tipo_jornada: 'MEDIA_MANANA', horas_diarias: 5 }), 5);
+  });
+  test('pintar otro tipo devuelve las horas a las de la ficha (null)', () => {
+    const a = nuevo();
+    const e = en(a, AINA, '2026-11-11', 'TARDE') as EventoCalendario;
+    ok(aplicar(a, { accion: 'EDITAR', evento_id: e.id, horas: 2 }));
+    ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: AINA, fecha: '2026-11-11', franja: 'TARDE' }] }));
+    assert.deepEqual([en(a, AINA, '2026-11-11', 'TARDE')?.horas, en(a, AINA, '2026-11-11', 'TARDE')?.horas_efectivas], [null, 3.5]);
+  });
+  test('sin anular eventos (como REAL): goma y deshacer de pintados nuevos desactivados; deshacer de tipo/nota/estado sí', () => {
+    const a = nuevo(false);
+    assert.equal(a.calendario('PIO', '2026-11-09', '2026-11-15').anular_eventos, false);
+    const antes = foto(a);
+    assert.equal(aplicar(a, { accion: 'BORRAR', celdas: celdas(AINA, '2026-11-09', '2026-11-09') }), 'ANULAR_EVENTOS_PENDIENTE');
+    assert.equal(foto(a), antes);
+    const p = ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: celdas(AINA, '2026-12-07', '2026-12-07') })).cambio!;
+    assert.equal(p.creados, 2);
+    assert.equal(a.deshacerEventos(p.id, AUTOR_HISTORIAL), 'ANULAR_EVENTOS_PENDIENTE');
+    const c = ok(aplicar(a, { accion: 'CONFIRMAR', celdas: celdas(AINA, '2026-11-09', '2026-11-09') })).cambio!;
+    assert.equal(c.creados, 0);
+    const conPintado = foto(a);
+    ok(aplicar(a, { accion: 'PINTAR', tipo: 'BAJA', celdas: celdas(CLARA, '2026-11-10', '2026-11-10') })); // cambia el tipo (EDITAR)
+    const u = a.calendario('PIO', '2026-11-09', '2026-11-15').ultimo_cambio!;
+    ok(a.deshacerEventos(u.id, AUTOR_HISTORIAL) as ResultadoCambioDTO);
+    assert.equal(foto(a), conPintado);
+    ok(a.deshacerEventos(c.id, AUTOR_HISTORIAL) as ResultadoCambioDTO);
+    assert.equal(en(a, AINA, '2026-11-09', 'MANANA')?.estado, 'PLANIFICADO');
+  });
+  test('notas próximas: de hoy en adelante, por fecha; la misma nota del día una vez; las pasadas no salen', () => {
+    const a = nuevo();
+    assert.deepEqual(a.notasProximas('AMBAS', '2026-11-13').map((n) => `${n.nombre} — ${n.fecha}: ${n.nota}`), [
+      'Rosa Camps Oliver — 2026-11-18: Gestión en el ayuntamiento',
+      'Elena Mas Garriga — 2026-11-25: Traslado de domicilio',
+      'Elena Mas Garriga — 2026-11-26: Traslado de domicilio',
+    ]);
+    assert.deepEqual(a.notasProximas('PIO', '2026-11-13').map((n) => n.fecha), ['2026-11-25', '2026-11-26']);
+    // Judit 6 nov: misma nota en mañana y tarde → una línea.
+    assert.deepEqual(a.notasProximas('RITA', '2026-11-06').map((n) => [n.nombre, n.fecha]), [['Judit Prat Casals', '2026-11-06'], ['Rosa Camps Oliver', '2026-11-18']]);
+    assert.deepEqual(a.notasProximas('AMBAS', '2026-11-27'), []);
+  });
+  test('origen deducido de trabajadores_historial (sin la marca de la sesión)', () => {
+    const ev = (x: Partial<EventoCalendario>): EventoCalendario => ({
+      id: 'x', farmacia: 'PIO', trabajadora_id: AINA, fecha: '2026-12-07', franja: 'MANANA', tipo: 'JORNADA', horas: null, horas_efectivas: 4.5,
+      estado: 'PLANIFICADO', nota: null, created_at: '', updated_at: '', ...x,
+    });
+    assert.deepEqual(inferirOrigen([{ accion: 'CREAR', antes: null, despues: ev({}) }, { accion: 'CREAR', antes: null, despues: ev({ fecha: '2026-12-08' }) }]), { origen: 'RELLENAR', tipo: null });
+    assert.deepEqual(inferirOrigen([{ accion: 'CREAR', antes: null, despues: ev({ tipo: 'VACACIONES' }) }]), { origen: 'PINTAR', tipo: 'VACACIONES' });
+    assert.deepEqual(inferirOrigen([{ accion: 'EDITAR', antes: ev({}), despues: ev({ estado: 'CONFIRMADO' }) }]), { origen: 'CONFIRMAR', tipo: null });
+    assert.deepEqual(inferirOrigen([{ accion: 'EDITAR', antes: ev({ estado: 'CONFIRMADO' }), despues: ev({}) }]), { origen: 'DESCONFIRMAR', tipo: null });
+    assert.deepEqual(inferirOrigen([{ accion: 'EDITAR', antes: ev({}), despues: ev({ nota: 'x' }) }]), { origen: 'ANOTAR', tipo: null });
+    assert.deepEqual(inferirOrigen([{ accion: 'EDITAR', antes: ev({}), despues: ev({ tipo: 'BAJA' }) }]), { origen: 'PINTAR', tipo: 'BAJA' });
+    assert.deepEqual(inferirOrigen([{ accion: 'EDITAR', antes: ev({}), despues: ev({ horas: 2, nota: 'y' }) }]), { origen: 'EDITAR', tipo: null });
+  });
+});
+
 describe('API /api/rrhh/eventos en el servidor FIXTURES (inyección)', async () => {
   const app = await crearServidor('FIXTURES');
   after(() => app.close());
@@ -463,6 +563,10 @@ describe('API /api/rrhh/eventos en el servidor FIXTURES (inyección)', async () 
     // TA2-4: ANOTAR sobre franjas vacías: 200 sin cambio y con las vacías contadas.
     const vacia = await post('/api/rrhh/eventos', { cookie, ...ORIGEN }, { accion: 'ANOTAR', celdas: celdas(AINA, '2026-12-14', '2026-12-14'), nota: 'x' });
     assert.deepEqual([vacia.statusCode, vacia.json().cambio, vacia.json().omitidas_vacias], [200, null, 2]);
+    // TA-REAL: notas próximas (desde la fecha del navegador; fecha mal formada → 400).
+    const n = await app.inject({ method: 'GET', url: '/api/rrhh/eventos/notas?farmacia=AMBAS&desde=2026-11-13', headers: { ...H, cookie } });
+    assert.deepEqual([n.statusCode, n.json().length], [200, 3]);
+    assert.equal((await app.inject({ method: 'GET', url: '/api/rrhh/eventos/notas?desde=13-11-2026', headers: { ...H, cookie } })).statusCode, 400);
   });
   test('sin DELETE ni PATCH ni PUT en eventos: 405', async () => {
     for (const [method, url] of [['DELETE', `/api/rrhh/eventos/${AINA}`], ['PUT', '/api/rrhh/eventos'], ['PATCH', '/api/rrhh/eventos'], ['DELETE', '/api/rrhh/eventos']] as const) {

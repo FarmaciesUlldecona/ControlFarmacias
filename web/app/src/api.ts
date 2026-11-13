@@ -29,8 +29,9 @@ export async function obtener<T>(ruta: string, señal?: AbortSignal): Promise<T>
     throw new Error('NO_AUTENTICADO');
   }
   if (!r.ok) {
-    const cuerpo = (await r.json().catch(() => ({}))) as { error?: string };
-    throw new Error(cuerpo.error ?? `HTTP ${r.status}`);
+    // TA-REAL: si el servidor da un mensaje llano (p. ej. error de la base de datos de Trabajadores), se muestra ese.
+    const cuerpo = (await r.json().catch(() => ({}))) as { error?: string; mensaje?: string };
+    throw new Error(cuerpo.mensaje ?? cuerpo.error ?? `HTTP ${r.status}`);
   }
   return (await r.json()) as T;
 }
@@ -39,10 +40,13 @@ export async function obtener<T>(ruta: string, señal?: AbortSignal): Promise<T>
 export class ErrorApi extends Error {
   codigo: string;
   errores: Record<string, string>;
-  constructor(codigo: string, errores: Record<string, string> = {}) {
+  /** TA-REAL: mensaje llano del servidor (errores de la base de datos, aviso de anular eventos…). */
+  mensaje: string | null;
+  constructor(codigo: string, errores: Record<string, string> = {}, mensaje: string | null = null) {
     super(codigo);
     this.codigo = codigo;
     this.errores = errores;
+    this.mensaje = mensaje;
   }
 }
 
@@ -61,8 +65,8 @@ export async function enviar<T>(ruta: string, metodo: 'POST' | 'PUT', cuerpo: un
     sesionCaducada();
     throw new ErrorApi('NO_AUTENTICADO');
   }
-  const datos = (await r.json().catch(() => ({}))) as { error?: string; errores?: Record<string, string> };
-  if (!r.ok) throw new ErrorApi(datos.error ?? `HTTP ${r.status}`, datos.errores ?? {});
+  const datos = (await r.json().catch(() => ({}))) as { error?: string; errores?: Record<string, string>; mensaje?: string };
+  if (!r.ok) throw new ErrorApi(datos.error ?? `HTTP ${r.status}`, datos.errores ?? {}, datos.mensaje ?? null);
   return datos as T;
 }
 

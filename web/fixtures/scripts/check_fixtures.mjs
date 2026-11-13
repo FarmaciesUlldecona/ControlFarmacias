@@ -18,11 +18,15 @@ import {
   ESTADOS_MATCHING, ESTADOS_VERSION_ANTERIOR, ESTADO_LINEA, TEXTO_HEFAME_BASES, claveEstadoLinea, estadoSinDescripcion, coincideImporte, esEco360, insigniasFactura, origenAplicado, rangoImporteBuscado, textoEstadoMatching, textoEvento,
 } from '../../app/server/detalle.ts';
 import { COLUMNAS_SENTIDO, validarDiagnostico } from '../../app/server/adaptador_real.ts';
-import { CONVENIO_ANUAL, HORARIO_COMPLETA, objetivosAnuales, validarTrabajadora } from '../../app/server/rrhh/contrato.ts';
+import {
+  CATEGORIAS, CONVENIO_ANUAL, HORARIO_COMPLETA, HORAS_VISTA_COMPLETA, JORNADAS, esTitular, objetivosAnuales, validarTrabajadora,
+} from '../../app/server/rrhh/contrato.ts';
 import { crearAdaptadorRrhhFixtures, leerSemilla, leerSemillaEventos } from '../../app/server/rrhh/adaptador_fixtures.ts';
 import {
-  AVISO_NOTA_VACIA, COLOR_TIPO_EVENTO, FRANJAS_DE_JORNADA, LARGO_NOTA, TIPOS_EVENTO, describirCambio, esLaborable, horasFranja, leerNota, validarPeticionEventos,
+  AVISO_NOTA_VACIA, COLOR_TIPO_EVENTO, FRANJAS_DE_JORNADA, LARGO_NOTA, TIPOS_EVENTO, TIPOS_PINTABLES, TIPOS_SIN_HORAS, describirCambio, esLaborable, horasFranja,
+  horasQueSuman, leerNota, validarPeticionEventos,
 } from '../../app/server/rrhh/eventos.ts';
+import { traducirErrorBd } from '../../app/server/rrhh/errores_bd.ts';
 import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
 import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
 
@@ -855,29 +859,31 @@ comprobar('H5-8: fiscalidad Hefame (F05) sin tipo de IVA: tramo con tipos null, 
 });
 
 // --- Casos TA1 (Trabajadores, datos de ejemplo en memoria) --------------------------
-comprobar('TA1: fichas de ejemplo: PIO 3 completas + 1 media mañana (técnicas); RITA 5 completas + 1 media mañana + 1 media tarde (1 farmacéutica); titular en ambas', () => {
+comprobar('TA1/TA-REAL: fichas de ejemplo: PIO 3 completas + 1 media mañana (técnicas); RITA 5 completas + 1 media mañana + 1 media tarde (1 farmacéutica adjunta); titular (FARMACEUTICA_TITULAR) en ambas', () => {
   const s = leerSemilla();
-  const de = (f) => s.filter((t) => t.farmacia === f && !t.es_titular);
+  const de = (f) => s.filter((t) => t.farmacia === f && !esTitular(t));
   const pio = de('PIO');
   const rita = de('RITA');
-  const tit = s.filter((t) => t.es_titular);
-  const cuenta = (ts, j) => ts.filter((t) => t.jornada === j).length;
-  const ok = pio.length === 4 && cuenta(pio, 'COMPLETA') === 3 && cuenta(pio, 'MEDIA_MANANA') === 1 && pio.every((t) => t.categoria === 'TECNICO')
+  const tit = s.filter(esTitular);
+  const cuenta = (ts, j) => ts.filter((t) => t.tipo_jornada === j).length;
+  const ok = pio.length === 4 && cuenta(pio, 'COMPLETA') === 3 && cuenta(pio, 'MEDIA_MANANA') === 1 && pio.every((t) => t.categoria === 'TECNICA')
     && rita.length === 7 && cuenta(rita, 'COMPLETA') === 5 && cuenta(rita, 'MEDIA_MANANA') === 1 && cuenta(rita, 'MEDIA_TARDE') === 1
     && cuenta(pio, 'MEDIA_TARDE') === 0
-    && rita.filter((t) => t.categoria === 'FARMACEUTICO').length === 1 && rita.filter((t) => t.categoria === 'TECNICO').length === 6
+    && rita.filter((t) => t.categoria === 'FARMACEUTICA_ADJUNTA').length === 1 && rita.filter((t) => t.categoria === 'TECNICA').length === 6
     && tit.length === 2 && new Set(tit.map((t) => t.farmacia)).size === 2 && new Set(tit.map((t) => t.nombre)).size === 1
+    // TA-REAL: valores del esquema (migración 31) y fecha de alta obligatoria.
+    && s.every((t) => CATEGORIAS.includes(t.categoria) && JORNADAS.includes(t.tipo_jornada) && t.fecha_alta === '2026-01-01')
     // TA1-2: jornada en horas diarias (lunes a viernes): completa 8 h; media mañana 4,5 h (también el titular).
-    && [...pio, ...rita].filter((t) => t.jornada === 'COMPLETA').every((t) => t.horas_diarias === 8)
-    && [...pio, ...rita, ...tit].filter((t) => t.jornada === 'MEDIA_MANANA').every((t) => t.horas_diarias === 4.5)
+    && [...pio, ...rita].filter((t) => t.tipo_jornada === 'COMPLETA').every((t) => t.horas_diarias === 8)
+    && [...pio, ...rita, ...tit].filter((t) => t.tipo_jornada === 'MEDIA_MANANA').every((t) => t.horas_diarias === 4.5)
     // TA1-3: media tarde 3,5 h (17:00–20:30).
-    && s.filter((t) => t.jornada === 'MEDIA_TARDE').every((t) => t.horas_diarias === 3.5)
+    && s.filter((t) => t.tipo_jornada === 'MEDIA_TARDE').every((t) => t.horas_diarias === 3.5)
     && s.every((t) => !('porcentaje_jornada' in t));
   return si(ok, JSON.stringify({ pio: pio.length, rita: rita.length, tit: tit.length }));
 });
 comprobar('TA1: solo nombre (sin DNI ni más datos personales); cada ficha pasa la validación de alta; ids únicos', () => {
   const s = leerSemilla();
-  const permitidos = ['id', 'farmacia', 'nombre', 'categoria', 'jornada', 'horas_diarias', 'es_titular'];
+  const permitidos = ['id', 'farmacia', 'nombre', 'categoria', 'tipo_jornada', 'horas_diarias', 'fecha_alta'];
   const extra = s.flatMap((t) => Object.keys(t).filter((k) => !permitidos.includes(k)));
   const invalidas = s.filter(({ id, ...t }) => !validarTrabajadora(t, 'alta').ok); // eslint-disable-line no-unused-vars
   const sinDni = !JSON.stringify(s).match(/\b\d{8}[A-Z]\b|dni|nif/i);
@@ -885,7 +891,7 @@ comprobar('TA1: solo nombre (sin DNI ni más datos personales); cada ficha pasa 
     JSON.stringify({ extra, invalidas: invalidas.map((t) => t.nombre) }));
 });
 comprobar('TA1-2: convenio por año (referencia 40 h/sem provisional) y objetivo = jornada máxima × horas semanales / referencia', () => {
-  const conv = CONVENIO_ANUAL.map((c) => [c.anio, c.jornada_maxima_horas, c.horas_semanales_referencia, c.asuntos_propios_dias, c.permiso_medico_horas, c.estado].join());
+  const conv = CONVENIO_ANUAL.map((c) => [c.anio, c.jornada_max_horas, c.horas_semanales_referencia, c.asuntos_propios_dias, c.permiso_medico_horas, c.estado].join());
   const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
   const ficha = (id) => a.trabajadora(id);
   const obj = (id) => ficha(id).objetivos.map((o) => o.objetivo_horas);
@@ -911,7 +917,7 @@ comprobar('TA2: semilla de eventos: solo fichas de ejemplo, tipos de TA2 sin JOR
   const fichas = new Map(leerSemilla().map((t) => [t.id, t]));
   const malos = s.ausencias.filter((a) => !fichas.has(a.trabajadora_id) || !TIPOS_EVENTO.includes(a.tipo) || a.tipo === 'JORNADA'
     || a.hasta < a.desde || !a.desde.startsWith('2026-11') || !a.hasta.startsWith('2026-11')
-    || (a.franja !== undefined && !FRANJAS_DE_JORNADA[fichas.get(a.trabajadora_id).jornada].includes(a.franja))
+    || (a.franja !== undefined && !FRANJAS_DE_JORNADA[fichas.get(a.trabajadora_id).tipo_jornada].includes(a.franja))
     || (a.nota !== undefined && !(leerNota(a.nota).ok && leerNota(a.nota).nota === a.nota)));
   const permitidos = ['trabajadora_id', 'tipo', 'desde', 'hasta', 'franja', 'nota'];
   const extra = s.ausencias.flatMap((a) => Object.keys(a).filter((k) => !permitidos.includes(k)));
@@ -926,7 +932,7 @@ comprobar('TA2-2: carga por franja: 21 franjas/día (8 completas × 2 + 5 medias
   const aus = evs.filter((e) => e.tipo !== 'JORNADA');
   const tipos = new Set(evs.map((e) => e.tipo));
   const ok = evs.length === 420 && aus.length === 41 && new Set(aus.map((e) => `${e.trabajadora_id}|${e.fecha}`)).size === 23
-    && TIPOS_EVENTO.every((t) => tipos.has(t)) && aus.some((e) => e.farmacia === 'PIO') && aus.some((e) => e.farmacia === 'RITA')
+    && TIPOS_PINTABLES.every((t) => tipos.has(t)) && aus.some((e) => e.farmacia === 'PIO') && aus.some((e) => e.farmacia === 'RITA')
     && evs.filter((e) => e.estado === 'CONFIRMADO').length === 105 && evs.every((e) => esLaborable(e.fecha))
     && new Set(evs.map((e) => `${e.trabajadora_id}|${e.fecha}|${e.franja}`)).size === evs.length; // uno por persona, día y franja
   return si(ok, JSON.stringify({ n: evs.length, aus: aus.length }));
@@ -936,16 +942,18 @@ comprobar('TA2-3: franjas y horas de la ficha (completa mañana 4,5 h + tarde 3,
   const fichas = new Map(a.trabajadoras('AMBAS', false).trabajadoras.map((t) => [t.id, t]));
   const malos = a.eventos().filter((e) => {
     const t = fichas.get(e.trabajadora_id);
-    return !t || e.horas !== horasFranja(t, e.franja) || !FRANJAS_DE_JORNADA[t.jornada].includes(e.franja) || e.farmacia !== t.farmacia;
+    // TA-REAL: horas null (las de la ficha) y horas_efectivas como la vista.
+    return !t || e.horas !== null || e.horas_efectivas !== horasFranja(t, e.franja) || !FRANJAS_DE_JORNADA[t.tipo_jornada].includes(e.franja) || e.farmacia !== t.farmacia;
   });
   // Cada persona suma al día sus horas diarias (completa: 4,5 + 3,5 = 8).
   const porDia = new Map();
-  for (const e of a.eventos()) porDia.set(`${e.trabajadora_id}|${e.fecha}`, (porDia.get(`${e.trabajadora_id}|${e.fecha}`) ?? 0) + e.horas);
+  for (const e of a.eventos()) porDia.set(`${e.trabajadora_id}|${e.fecha}`, (porDia.get(`${e.trabajadora_id}|${e.fecha}`) ?? 0) + e.horas_efectivas);
   const sumaMal = [...porDia].filter(([k, h]) => fichas.get(k.split('|')[0]).horas_diarias !== h);
-  const aina = (fr) => a.eventos().find((e) => e.trabajadora_id === 'e0000000-0000-4000-8000-000000000001' && e.franja === fr).horas;
+  const aina = (fr) => a.eventos().find((e) => e.trabajadora_id === 'e0000000-0000-4000-8000-000000000001' && e.franja === fr).horas_efectivas;
   const irene = a.eventos().find((e) => e.trabajadora_id === 'e0000000-0000-4000-8000-000000000017');
-  const conf = isDeepStrictEqual(HORARIO_COMPLETA, { MANANA: { horas: 4.5, desde: '9:00', hasta: '13:30' }, TARDE: { horas: 3.5, desde: '17:00', hasta: '20:30' } });
-  return si(malos.length === 0 && sumaMal.length === 0 && conf && aina('MANANA') === 4.5 && aina('TARDE') === 3.5 && irene.franja === 'TARDE' && irene.horas === 3.5
+  const conf = isDeepStrictEqual(HORARIO_COMPLETA, { MANANA: { horas: 4.5, desde: '9:00', hasta: '13:30' }, TARDE: { horas: 3.5, desde: '17:00', hasta: '20:30' } })
+    && HORAS_VISTA_COMPLETA.MANANA === HORARIO_COMPLETA.MANANA.horas && HORAS_VISTA_COMPLETA.TARDE === HORARIO_COMPLETA.TARDE.horas;
+  return si(malos.length === 0 && sumaMal.length === 0 && conf && aina('MANANA') === 4.5 && aina('TARDE') === 3.5 && irene.franja === 'TARDE' && irene.horas_efectivas === 3.5
     && a.historialEventos('AMBAS').length === 0, JSON.stringify({ malos: malos.slice(0, 3), sumaMal: sumaMal.slice(0, 3) }));
 });
 comprobar('TA2-2: días con mañana y tarde distintas (Núria 10 nov, Rosa 18 nov) y notas de ejemplo (≤ 200, sin datos de salud)', () => {
@@ -975,6 +983,53 @@ comprobar('TA2: colores orientativos de Pío (jornada azul, vacaciones amarillo,
   const c = COLOR_TIPO_EVENTO;
   return si(c.JORNADA === '#2f6fd0' && c.VACACIONES === '#e3b505' && c.ASUNTOS_PROPIOS === '#8a55c9' && c.DESCANSO_COMPENSATORIO === '#1a9e96'
     && c.BAJA === '#8a9590' && Object.keys(c).length === TIPOS_EVENTO.length, JSON.stringify(c));
+});
+
+// --- Casos TA-REAL (contrato = migración 31; adaptador FIXTURES con las mismas reglas) --------------
+comprobar('TA-REAL: 11 tipos (FESTIVO, TURNO_GUARDIA y LOCALIZADA para TA3, no se pintan); guardia y localizada no suman horas', () => {
+  const ta3 = TIPOS_EVENTO.filter((t) => !TIPOS_PINTABLES.includes(t));
+  const pintarTa3 = ta3.map((tipo) => validarPeticionEventos({ accion: 'PINTAR', tipo, celdas: [{ trabajadora_id: 'e0000000-0000-4000-8000-000000000001', fecha: '2026-12-07' }] }).ok);
+  return si(TIPOS_EVENTO.length === 11 && isDeepStrictEqual(ta3, ['FESTIVO', 'TURNO_GUARDIA', 'LOCALIZADA']) && pintarTa3.every((x) => x === false)
+    && isDeepStrictEqual([...TIPOS_SIN_HORAS], ['TURNO_GUARDIA', 'LOCALIZADA']) && horasQueSuman({ tipo: 'LOCALIZADA', horas_efectivas: 4.5 }) === 0
+    && horasQueSuman({ tipo: 'JORNADA', horas_efectivas: 4.5 }) === 4.5, JSON.stringify({ ta3, pintarTa3 }));
+});
+comprobar('TA-REAL: titular = FARMACEUTICA_TITULAR (fuera del cómputo); anular no borra; baja no anterior al alta; eventos solo dentro del alta', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const tit = a.trabajadoras('AMBAS', false).trabajadoras.filter(esTitular);
+  const clara = 'e0000000-0000-4000-8000-000000000002';
+  const antesAlta = a.darDeBaja(clara, '2025-12-31', 'Marc');
+  a.darDeBaja(clara, '2026-11-30', 'Marc');
+  const v = validarPeticionEventos({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: clara, fecha: '2026-12-07' }] });
+  const fuera = a.cambiarEventos(v.peticion, 'Marc');
+  const an = a.anular('e0000000-0000-4000-8000-000000000003', 'Marc');
+  const sigue = a.trabajadoras('PIO', true).trabajadoras.some((t) => t.id === an.id && t.anulada);
+  return si(tit.length === 2 && tit.every((t) => !t.computa_convenio) && antesAlta === 'BAJA_ANTES_DEL_ALTA' && fuera === 'EVENTO_FUERA_DEL_ALTA'
+    && an.anulada === true && sigue && a.trabajadora(an.id).historial[0].accion === 'ANULACION', JSON.stringify({ antesAlta, fuera }));
+});
+comprobar('TA-REAL: sin anular eventos (REAL): goma y deshacer de pintados nuevos desactivados; deshacer de estado sí', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026, anularEventos: false });
+  const aina = 'e0000000-0000-4000-8000-000000000001';
+  const pedir = (b) => { const v = validarPeticionEventos(b); if (!v.ok) throw new Error(JSON.stringify(v.errores)); return a.cambiarEventos(v.peticion, 'Marc'); };
+  const goma = pedir({ accion: 'BORRAR', celdas: [{ trabajadora_id: aina, fecha: '2026-11-09' }] });
+  const p = pedir({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: aina, fecha: '2026-12-07' }] });
+  const dp = a.deshacerEventos(p.cambio.id, 'Marc');
+  const c = pedir({ accion: 'CONFIRMAR', celdas: [{ trabajadora_id: aina, fecha: '2026-11-09' }] });
+  const dc = a.deshacerEventos(c.cambio.id, 'Marc');
+  return si(goma === 'ANULAR_EVENTOS_PENDIENTE' && dp === 'ANULAR_EVENTOS_PENDIENTE' && typeof dc === 'object' && dc.cambio.origen === 'DESHACER'
+    && a.calendario('PIO', '2026-11-09', '2026-11-15').anular_eventos === false, JSON.stringify({ goma, dp }));
+});
+comprobar('TA-REAL: notas próximas de ejemplo desde el 13 nov (Rosa 18, Elena 25 y 26; la misma nota del día una vez)', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const n = a.notasProximas('AMBAS', '2026-11-13').map((x) => `${x.nombre}|${x.fecha}`);
+  return si(isDeepStrictEqual(n, ['Rosa Camps Oliver|2026-11-18', 'Elena Mas Garriga|2026-11-25', 'Elena Mas Garriga|2026-11-26'])
+    && a.notasProximas('RITA', '2026-11-06').length === 2, JSON.stringify(n));
+});
+comprobar('TA-REAL: errores de la BD → código y mensaje llano (P0001, 42501, 23505, 23514, 23503, 57014/25P03, 53300)', () => {
+  const caso = (code, message = 'x') => traducirErrorBd(Object.assign(new Error(message), { code })).codigo;
+  const r = [caso('P0001', 'AUTOR_AUSENTE'), caso('P0001', 'FARMACIA_NO_HABILITADA_EN_MODULO:X'), caso('P0001', 'EVENTO_FUERA_DEL_ALTA:a:b'), caso('42501'),
+    caso('23505'), caso('23514'), caso('23503'), caso('57014'), caso('25P03'), caso('53300')];
+  return si(isDeepStrictEqual(r, ['AUTOR_AUSENTE', 'FARMACIA_NO_HABILITADA_EN_MODULO', 'EVENTO_FUERA_DEL_ALTA', 'PERMISO_DENEGADO', 'DUPLICADO', 'REGLA_TABLA',
+    'REGISTRO_RELACIONADO', 'TIEMPO_AGOTADO', 'TIEMPO_AGOTADO', 'SIN_CONEXIONES']), JSON.stringify(r));
 });
 
 // --- Informe ----------------------------------------------------------------------

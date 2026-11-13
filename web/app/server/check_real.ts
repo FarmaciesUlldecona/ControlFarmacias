@@ -15,11 +15,14 @@
  * vigentes por clase_numero y estado_matching; un valor no previsto se lista solo si cumple ^[A-Z0-9_]{1,40}$, el resto
  * suma en otros_no_codigo sin mostrarse), estado_linea (H5-7: líneas vigentes por estado de línea de la migración 30:
  * COINCIDE, DIFERENCIA, NO_EVALUABLE, sin_valor y otros_valores, y líneas con diferencia null), duplicados (candidatos y tras filtro de importe) y par 08C66676/08C66676A (sí/no y nombres de columna).
+ * TA-REAL: DIAGNOSTICO trabajadores con cf_trabajadores_web (solo lectura): recuentos por tabla del módulo, módulo
+ * TRABAJADORES = PIO/RITA (sí/no) y años de convenio_anual (y los que faltan de 2026–2028).
  * Solo recuentos, sí/no o nombres de columna; nunca valores.
  * Código de salida: 0 si todas OK; 1 si alguna falla (también sin conexión); 2 si falta .env.web o está incompleto.
  */
 import { CONSULTAS, type NombreConsulta } from './contrato.ts';
 import { NOMBRES_DIAGNOSTICO, crearAdaptadorReal, type AdaptadorReal } from './adaptador_real.ts';
+import { configuracionRrhh, crearAdaptadorRrhhReal, crearPoolRrhh, leerEnvWeb } from './rrhh/adaptador_real.ts';
 
 function primeraLinea(e: unknown): string {
   const m = e instanceof Error ? e.message : String(e);
@@ -72,5 +75,24 @@ for (const nombre of NOMBRES_DIAGNOSTICO) {
 }
 
 await real.cerrar();
-console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + ${1 + NOMBRES_DIAGNOSTICO.length} diagnósticos, ${fallos} con error`);
+
+// TA-REAL: Trabajadores con su propia credencial (cf_trabajadores_web), transacción READ ONLY y ROLLBACK. Sin escrituras.
+// Solo recuentos por tabla, sí/no del módulo TRABAJADORES = PIO/RITA y años del convenio (y los que faltan de 2026–2028).
+const cfgTrab = configuracionRrhh(leerEnvWeb());
+if (!cfgTrab.ok) {
+  fallos += 1;
+  console.log(`DIAGNOSTICO trabajadores SIN_CONFIGURACION ${cfgTrab.codigo}: ${cfgTrab.mensaje}`);
+} else {
+  const trab = crearAdaptadorRrhhReal({ pool: crearPoolRrhh(cfgTrab.config) });
+  try {
+    const d = await trab.diagnostico();
+    console.log(`DIAGNOSTICO trabajadores ${Object.entries(d).map(([k, v]) => `${k}=${formato(v)}`).join(' ')}`);
+  } catch (e) {
+    fallos += 1;
+    console.log(`DIAGNOSTICO trabajadores ${error(e)}`);
+  }
+  await trab.cerrar?.();
+}
+
+console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + ${2 + NOMBRES_DIAGNOSTICO.length} diagnósticos, ${fallos} con error`);
 process.exit(fallos ? 1 : 0);

@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-12 (Trabajadores: migración 31 solo local, LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-13 (excepción existente y cerrada de `pg17_local.py` para emular la API de Supabase en la base local de tests, decisión de Pio; 2026-11-12, AUTO-A: automatización Alliance solo local, migración 32 y autorización de Pio para nombrar el rol del sistema solo en la 32 y su rollback; D1 de AUTO-ALLIANCE implementada solo en local, no activada; contraseñas de roles siempre con SCRAM, decisión de Pio; Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -13,6 +13,10 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   `EXECUTE` con efectos laterales ni escrituras directas o indirectas.
 - Supabase productivo, flags, workers, Task Scheduler y documentos reales requieren
   preflight, alcance explícito y confirmación de Pio.
+- **Contraseñas de roles de base de datos (DECISIÓN DE PIO, 2026-11-12, TRAB-D):** se fijan **siempre** con SCRAM
+  (`set password_encryption = 'scram-sha-256'` en la misma sesión, antes del `alter role … password`); el pooler
+  de Supabase rechaza otro formato. Las fija Pio, fuera del repositorio; nunca en el repositorio, en argumentos,
+  en el chat ni en salidas. Tras fijarla o cambiarla, prueba de acceso por el pooler.
 - Solo PIO está autorizada. Una identidad de farmacia ausente, contradictoria o no
   demostrable bloquea la persistencia.
   **Excepción por módulo (DECISIÓN DE PIO, 2026-11-12, Trabajadores):** RITA está habilitada **SOLO** para el
@@ -56,6 +60,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   **Regla permanente (Pio, 2026-11-10, 2BS):** el mantenimiento de la barrera puede nombrar el rol del sistema
   SOLO en `.claude/hooks/barreras_agentes.py` y `tests/test_hook_barreras_agentes.py`, y SOLO si la orden de
   Pio lo indica expresamente. Cualquier otro fichero: autorización nueva.
+  **Excepción existente (DECISIÓN DE PIO, 2026-11-13):** `tests/facturas/runtime_supabase/pg17_local.py` usa el rol
+  del sistema para emular la API de Supabase en la base local de tests. Es imprescindible y queda cerrada: cualquier
+  mención nueva del rol, en ese fichero o en otro, requiere autorización nueva.
   **Regla permanente (Pio, 2026-11-10, 2BS):** la documentación (`docs/*.md`) puede nombrar `logs/agentes` y el
   registro de suites como TEXTO para documentar la barrera. Buscarlos en comandos de shell sigue bloqueado y
   nada se lee ni se escribe dentro de `logs/`.
@@ -76,6 +83,18 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   multifactura certificado. Solo se usa con `ejecutar_una_manual()`; ningún
   scheduler ni la ruta automática lo referencian. Cualquier otro proveedor falla
   cerrado.
+  **Ampliación (DECISIÓN DE PIO, 2026-11-12, D1 del Hito AUTO-ALLIANCE; diseño en
+  `pruebas/auditoria_auto_alliance/DISENO.md`):** la ruta automática puede tener
+  autoridad de extracción **solo para Alliance** y **solo su versión certificada**
+  (`alliance-local` con puente multifactura certificado), mediante un compositor
+  automático que reutiliza esa misma autoridad; cualquier otro proveedor, layout o
+  versión falla cerrado (R2). **IMPLEMENTADA SOLO EN LOCAL** (Hito AUTO-A,
+  2026-11-12, `CONFIRMADO POR TEST` en PostgreSQL 17 local:
+  `runtime_supabase/compositor_automatico.py`, autoridad `alliance-local` 1.3.0, y
+  el orquestador `runtime_supabase/noche_automatica.py`). **NO ACTIVADA:** hasta
+  AUTO-ON, con confirmación de Pio, ninguna tarea ejecuta el orquestador en modo
+  `REAL` y los flags `normalizacion_automatica` y `conciliacion_automatica` siguen
+  en `false` (ver «Automatización Alliance»).
 - LÍMITE CONOCIDO aceptado por Pio (Hito 2AQ, 2026-09-25): la omisión de una
   factura Alliance **entera** dentro de un PDF multifactura no es detectable por
   contenido. Alliance solo pagina por factura (`PAGINA 01 DE 03`) y no declara
@@ -386,8 +405,8 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 ## Trabajadores
 
 Decisiones de Pio (2026-11-12, chat de la web, y respuestas a las 10 preguntas del diseño). Diseño en
-`pruebas/auditoria_trab/DISENO.md` (OK final de Pio; migración 31 **solo local**, `CONFIRMADO POR TEST`; **no
-desplegada**).
+`pruebas/auditoria_trab/DISENO.md` (OK final de Pio; migración 31 `CONFIRMADO POR TEST` y **desplegada en
+producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTADO_ACTUAL).
 
 - **Farmacias:** PIO y RITA, solo en este módulo (excepción por módulo de «Seguridad y operación»). Los tests
   demuestran que facturas, albaranes y conciliación siguen solo PIO.
@@ -401,11 +420,38 @@ desplegada**).
 - **Fichajes de Farmatic: POSPUESTOS.** Las horas se confirman a mano en la web; no se lee Farmatic para este módulo.
 - **Cómputo (DECISIÓN DE PIO, 2026-11-12):** `TURNO_GUARDIA` (también el festivo trabajado) y `LOCALIZADA` **no
   computan**: se registran, no suman horas.
-- **Rol de escritura de la web:** `cf_trabajadores_web` (migración 31).
+- **Rol de escritura de la web:** `cf_trabajadores_web` (migración 31). Contraseña fijada por Pio fuera del
+  repositorio, con SCRAM (ver «Seguridad y operación»); prueba de acceso `ACCESO_OK` (2026-11-12).
+- **Franja contraria a una media jornada:** no se bloquea en la BD (cambios de turno); la web avisa.
 - **Rol del sistema sin privilegios** sobre las tablas del módulo: la migración 31 le revoca los privilegios por
   defecto de Supabase. **AUTORIZACIÓN EXPRESA DE PIO (2026-11-12):** nombrar el rol del sistema **solo** en
   `sql/migrations/31_cf_trabajadores.sql` y su rollback (excepción a la regla permanente del 2BS). Tests, scripts de
   despliegue y documentación no lo nombran; cualquier otro fichero, autorización nueva.
+
+## Automatización Alliance
+
+Decisiones de Pio (2026-11-12) en `pruebas/auditoria_auto_alliance/DISENO.md` (D1–D7 y plan de hitos). Hito AUTO-A
+**solo local** (`CONFIRMADO POR TEST`); migración 32 **no desplegada**; nada activado en producción.
+
+- **Orquestador nocturno** (`runtime_supabase/noche_automatica.py`, tarea de las 22:15 como `Usuari` con
+  `ejecutar_automatizacion_alliance.bat`): modos `SOMBRA` (flags apagados; su única escritura es la fila de resumen
+  nocturno, decisión de Pio) y `REAL` (claims `AUTOMATICO`, que exigen los flags en la BD; cada fase solo con su flag).
+- **Puertas:** las dos tareas de esta noche terminadas con código 0; flags según el modo; Luna `false`; solo PIO;
+  tolerancias R11 certificadas; 0 locks, claims y NORMALIZANDO; migraciones presentes; puerta git; ninguna noche
+  anterior `EN_CURSO`.
+- **Paradas** (cortan la noche): puerta fallida, excepción, huérfano o claim vivo, documento o factura reclamados
+  distintos del previsto, resultado real distinto del simulado, fila ajena cambiada (postcheck 2AX por fila).
+- **Para revisar** (fin de la conciliación de esa noche, sin reclamar): n.º 1 que simula un resultado distinto de
+  `CONCILIADA` (D2, revisión tras un mes de uso), que no es Alliance (R19) o con una revisión R18 pendiente.
+- **Límites (D5):** 5 + 5 hasta 3 noches `REAL` buenas seguidas; después 20 + 20; una `PARADA` reinicia la cuenta;
+  60 minutos; una sola noche por fecha (fila de `cf_noches_automaticas`).
+- **Migración 32** (`cf_noches_automaticas`): lectura para `cf_lectura`; nada para anon, authenticated ni PUBLIC.
+  **AUTORIZACIÓN EXPRESA DE PIO (2026-11-12):** nombrar el rol del sistema **solo** en
+  `sql/migrations/32_cf_noches_automaticas.sql` y su rollback (excepción a la regla permanente del 2BS) para darle
+  `SELECT`, `INSERT` y `UPDATE` sobre la tabla y quitarle `DELETE`, `TRUNCATE`, `REFERENCES` y `TRIGGER`.
+  `desplegar_32.py` lo comprueba sin nombrarlo (un único beneficiario además del propietario y `cf_lectura`, con
+  lectura y escritura y sin borrado). Tests, scripts y documentación no lo nombran; cualquier otro fichero,
+  autorización nueva.
 
 ## Capacidades no implementadas
 
@@ -414,7 +460,7 @@ desplegada**).
 - Telegram: **NO IMPLEMENTADO**.
 - Interfaz web: **PARCIALMENTE IMPLEMENTADA** (Pio, 2026-11-12). Vive fuera de este repositorio. Hoy solo lee
   Supabase con `cf_lectura` (R9 de lectura); su única escritura prevista es el módulo de Trabajadores, con un rol
-  propio que no está desplegado (ver «Trabajadores»).
+  propio, `cf_trabajadores_web`, desplegado el 2026-11-12 (ver «Trabajadores»).
 - Beiersdorf: **SIN EXTRACTOR IMPLEMENTADO**.
 
 Estado a 2026-09-24: `NO ENCONTRADO` en el código vigente. No se presentan como

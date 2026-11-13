@@ -24,6 +24,7 @@ import {
 } from './acceso.ts';
 import { esEscrituraRrhh, registrarRrhh } from './rrhh/rutas.ts';
 import { AUTOR_HISTORIAL } from './rrhh/contrato.ts';
+import type { AdaptadorRrhh } from './rrhh/adaptador_fixtures.ts';
 
 const HOST = '127.0.0.1';
 export const PUERTO_FIJO = 4747;
@@ -93,14 +94,31 @@ function ruta(req: FastifyRequest): string {
   return req.url.split('?')[0];
 }
 
+/**
+ * TA-REAL: módulo Trabajadores en REAL. Credencial propia (CF_TRAB_USER / CF_TRAB_PASSWORD de .env.web, rol
+ * cf_trabajadores_web) y pool propio de 2 conexiones. Si falta o no vale, el resto de la web arranca igual y el módulo
+ * muestra el motivo («Falta configurar la credencial de Trabajadores»). FIXTURES: datos de ejemplo en memoria.
+ */
+async function crearRrhh(modo: Modo): Promise<{ adaptador?: AdaptadorRrhh; sinConexion?: { codigo: string; mensaje: string } }> {
+  if (modo === 'FIXTURES') return {};
+  const { configuracionRrhh, crearAdaptadorRrhhReal, crearPoolRrhh, leerEnvWeb } = await import('./rrhh/adaptador_real.ts');
+  const c = configuracionRrhh(leerEnvWeb());
+  if (!c.ok) {
+    console.warn(`Trabajadores sin conexión: ${c.codigo}`);
+    return { sinConexion: { codigo: c.codigo, mensaje: c.mensaje } };
+  }
+  return { adaptador: crearAdaptadorRrhhReal({ pool: crearPoolRrhh(c.config) }) };
+}
+
 export async function crearServidor(modo: Modo) {
   const { contrato, cerrar } = await crearContrato(modo);
+  const rrhh = await crearRrhh(modo);
   const acceso = await crearGestorAcceso(modo);
   const dist = join(import.meta.dirname, '..', 'dist');
   const { fuentes, publicas } = fuentesAcceso(dist);
 
   const app = Fastify({ logger: { level: 'warn' }, bodyLimit: 4096 });
-  app.addHook('onClose', async () => cerrar());
+  app.addHook('onClose', async () => { await cerrar(); await rrhh.adaptador?.cerrar?.(); });
 
   const enviarAcceso = (reply: FastifyReply, codigo: number, aviso: AvisoAcceso, destino: string) =>
     reply.code(codigo)
@@ -174,9 +192,9 @@ export async function crearServidor(modo: Modo) {
   app.get('/api/cashflow', () => contrato.cashflowSemanas());
   app.get('/api/proveedores', () => contrato.proveedores());
   app.get('/api/configuracion', () => contrato.configuracion());
-  // TA1: módulo Trabajadores (FIXTURES: datos de ejemplo en memoria; REAL: "Módulo pendiente de conexión (T1)").
-  // TA1-2 (decisión de Pío): autor del historial "Marc".
-  registrarRrhh(app, { modo, quien: AUTOR_HISTORIAL, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
+  // TA1: módulo Trabajadores (FIXTURES: datos de ejemplo en memoria; TA-REAL: tablas reales con cf_trabajadores_web).
+  // TA1-2 (decisión de Pío): autor del historial "Marc" (en REAL, cf.autor de cada transacción).
+  registrarRrhh(app, { modo, quien: AUTOR_HISTORIAL, ...rrhh, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
 
   // Errores: mensaje genérico al cliente; nunca filas ni datos de conexión.
   app.setErrorHandler((err, _req, reply) => {

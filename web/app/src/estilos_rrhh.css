@@ -10,6 +10,14 @@
 .rrhh-banner-marca {
   flex: none; padding: 2px 9px; border-radius: 6px; background: var(--naranja); color: #fff; font-size: 12px; font-weight: 700;
 }
+/* TA-REAL: banner de datos reales (azul neutro: informa de que los cambios se guardan, no pide revisar) */
+.rrhh-banner-real { background: var(--azul-fondo); color: var(--azul-texto); border-color: #c4d6f0; }
+.rrhh-banner-real .rrhh-banner-marca { background: var(--azul-texto); }
+/* TA-REAL: convenio que falta en la base de datos */
+.rrhh-convenio-falta { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid var(--azul-texto); }
+.rrhh-convenio-falta p { margin: 0; font-size: 14px; }
+.rrhh-convenio-falta .boton-primario { align-self: flex-start; }
+.rrhh-convenio-valores { margin: 6px 0 10px; padding-left: 18px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
 .rrhh-pendiente { padding: 22px; display: flex; flex-direction: column; gap: 8px; max-width: 760px; border-left: 4px solid var(--gris); }
 .rrhh-pendiente h2 { margin: 0; font-size: 18px; font-weight: 700; }
 .rrhh-pendiente p { margin: 0; font-size: 14px; }

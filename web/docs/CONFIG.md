@@ -16,8 +16,30 @@ Fichero gitignored que crea y edita **solo Pío**. Lo leen únicamente el modo R
 | `CF_LECTURA_PASSWORD` | sí | Contraseña del rol `cf_lectura` |
 | `CF_LECTURA_CA` | no | Ruta del certificado CA (absoluta o relativa a `web\app`). Por defecto, el de `certs\` |
 | `CF_WEB_PASSWORD_HASH` | sí (modo REAL) | Hash scrypt de la contraseña de acceso a la web. Lo crea o sustituye `npm run set-password`; nunca se escribe a mano ni se guarda la contraseña en claro |
+| `CF_TRAB_USER` | sí, para Trabajadores | TA-REAL: `cf_trabajadores_web` o `cf_trabajadores_web.<project_ref>` (pooler). Cualquier otro usuario: el módulo no conecta |
+| `CF_TRAB_PASSWORD` | sí, para Trabajadores | TA-REAL: contraseña del rol `cf_trabajadores_web` (la fija Pío fuera del repositorio) |
 
 Si falta el fichero o alguna variable obligatoria, no se conecta (`ENV_WEB_AUSENTE` / `ENV_WEB_INCOMPLETO`).
+
+### Módulo Trabajadores en REAL (TA-REAL)
+
+- **Credencial propia.** `CF_TRAB_USER` y `CF_TRAB_PASSWORD`, solo para el rol `cf_trabajadores_web` (migración 31: SELECT, INSERT y UPDATE en las tablas del módulo; sin DELETE). Nunca `cf_lectura` ni la clave del sistema.
+- **Compartido con `cf_lectura`.** Host, puerto, base y CA: `CF_LECTURA_HOST`, `CF_LECTURA_PORT`, `CF_LECTURA_DB` y `CF_LECTURA_CA`.
+  - Valores del circuito: `aws-0-eu-west-1.pooler.supabase.com`, `5432`, `postgres`.
+  - El usuario del pooler lleva el sufijo del proyecto: `cf_trabajadores_web.<project_ref>`.
+- **Si falta la credencial**, el resto de la web arranca igual y Trabajadores muestra «Falta configurar la credencial de Trabajadores», sin ningún dato. Con un usuario que no sea `cf_trabajadores_web`, o sin CA válida, tampoco conecta, y muestra el motivo.
+- **Conexión.**
+  - Pool propio de 2 conexiones; el rol admite 5.
+  - TLS con verificación de la CA (verify-full).
+  - El rol tiene 60 s por consulta y por transacción inactiva.
+- **Escrituras.**
+  - Cada una en su transacción, con `select set_config('cf.autor', 'Marc', true)` dentro, nunca a nivel de sesión.
+  - Ante error, ROLLBACK y mensaje llano, sin reintentar.
+  - Nada se borra: las fichas se dan de baja (`fecha_baja`) o se anulan (`anulada`).
+  - Rellenar usa INSERT … ON CONFLICT DO NOTHING por lotes de 500.
+- **Goma y deshacer de pintados nuevos.** Desactivados hasta que exista `eventos_calendario.anulado`.
+- **Lecturas.** Transacción READ ONLY y ROLLBACK. Las horas salen de `v_eventos_calendario_horas`.
+- **Code** nunca lee, crea ni edita `.env.web`: añadir estas dos líneas es cosa de Pío.
 Sin `CF_WEB_PASSWORD_HASH` válido el modo REAL no arranca (`HASH_ACCESO_NO_VALIDO`). El hash se lee del
 propio `.env.web`, no del entorno del proceso.
 
@@ -81,6 +103,7 @@ Diagnósticos de `check:real` (solo recuentos, sí/no o nombres de columna; nunc
 | `DIAGNOSTICO vencimientos` | total, con importe null, null con/sin incidencia `IMPORTE_VENCIMIENTO_NO_DOCUMENTADO`, facturas e incidencias con ese código, null sin CIF y `nulls_por_grupo_cif` (lista de recuentos por grupo de CIF, sin CIF ni nombres) |
 | `DIAGNOSTICO duplicados` | candidatos (mismo proveedor R9 + número sin letra final), albaranes candidatos, grupos tras el filtro de importe, si se alcanzó el límite de 200 |
 | `DIAGNOSTICO casado` | Líneas de conciliación vigentes por `clase_numero` y por `estado_matching` (provenance): `clase_numero.<etiqueta>` y `estado_matching.<etiqueta>` con etiquetas fijas y `sin_valor`. Un valor no previsto sale como `<eje>.no_previsto.<VALOR>=n` solo si es un código (`^[A-Z0-9_]{1,40}$`); cualquier otro suma en `otros_no_codigo` sin mostrarse |
+| `DIAGNOSTICO trabajadores` | TA-REAL, con `cf_trabajadores_web` y solo lectura: recuentos de `trabajadoras`, `convenio_anual`, `eventos_calendario`, `guardias_farmacia`, `festivos` y `trabajadores_historial`; `modulo_pio_rita` (sí/no: módulo TRABAJADORES = PIO y RITA); `anios_convenio` y `anios_convenio_faltan` (de 2026–2028). Sin credencial: `SIN_CONFIGURACION` (cuenta como error) |
 | `DIAGNOSTICO par_08C66676` | filas de cada número, existen ambos, mismo proveedor R9, mismo `importe_puc` y nombres de las otras columnas numéricas de `albaranes` que coinciden |
 
 Otros: `npm run typecheck`, `npm run fixtures:gen`, `npm run fixtures:check`, `npm run test:unit`

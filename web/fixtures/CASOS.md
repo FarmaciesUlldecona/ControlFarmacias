@@ -275,17 +275,17 @@ Proveedor = nombre comercial (principal) + razón social del PDF (secundaria, pe
 
 ## TA1: Trabajadores (fichas con datos de ejemplo en memoria)
 
-Fichas ficticias en `fixtures/rrhh/trabajadoras.json` (nombres inventados; solo nombre, sin DNI ni otros datos personales). El servidor FIXTURES las carga en memoria (`app/server/rrhh/adaptador_fixtures.ts`); alta, edición y baja cambian solo esa memoria y se pierden al reiniciar. Cada cambio queda en el historial (quién, cuándo, antes/después). En modo REAL, `/api/rrhh/*` responde 503 «Módulo pendiente de conexión (T1)» sin datos; las tablas reales las creará el circuito en T1.
+Fichas ficticias en `fixtures/rrhh/trabajadoras.json` (nombres inventados; solo nombre, sin DNI ni otros datos personales). El servidor FIXTURES las carga en memoria (`app/server/rrhh/adaptador_fixtures.ts`); alta, edición y baja cambian solo esa memoria y se pierden al reiniciar. Cada cambio queda en el historial (quién, cuándo, antes/después). Modo REAL: ver la sección TA-REAL (tablas reales de la migración 31).
 
 TA1-2 (decisiones de Pío): la jornada se guarda en **horas diarias** (lunes a viernes): completa = 8 h/día; media mañana = menos de 8 h/día, siempre de mañana; TA1-3: media tarde = menos de 8 h/día, por defecto 3,5 h (17:00–20:30). El **porcentaje es derivado** (horas semanales / 40 h de referencia; la referencia está en `convenio_anual.horas_semanales_referencia`, rotulada «provisional») y nunca se edita. Objetivo anual = jornada máxima del año × horas semanales / referencia, redondeado a 0,1 h al final. Autor del historial: «Marc».
 
 | Caso | Datos | Efecto |
 |---|---|---|
 | PIO | 3 técnicas completas (8 h/día) + Elena Mas Garriga, media mañana 4,5 h/día | Elena: 22,5 h/sem = 56,25 %; objetivo 2026: 1767 × 22,5 / 40 = 993,9 h; 2027–2028: 985,5 h |
-| RITA | Laura Serra Coll (farmacéutica) + 4 técnicas completas + Paula Riera Bover, media mañana 4,5 h/día | Paula: igual que Elena (993,9 h en 2026) |
+| RITA | Laura Serra Coll (farmacéutica adjunta) + 4 técnicas completas + Paula Riera Bover, media mañana 4,5 h/día | Paula: igual que Elena (993,9 h en 2026) |
 | Media tarde (TA1-3) | RITA: Irene Gual Torrent, técnica, media tarde 3,5 h/día (17:00–20:30; por defecto 3,5 h, editable) | 17,5 h/sem = 43,75 %; objetivo 2026: 1767 × 17,5 / 40 = 773,1 h; 2027–2028: 766,5 h. Validación igual que la media mañana (> 0 y < 8 h) |
 | Completa | 8 h/día × 5 = 40 h/sem | 100 %; objetivo = jornada máxima (1767 h en 2026; 1752 h en 2027–2028) |
-| Titular | «Titular de ejemplo», dos fichas (PIO y RITA), media mañana 4,5 h/día en cada una | Computa «No · titular»; objetivo «fuera del cómputo» en todos los años; sus horas se registrarán (T5) |
+| Titular | «Titular de ejemplo», categoría Farmacéutica titular (FARMACEUTICA_TITULAR), dos fichas (PIO y RITA), media mañana 4,5 h/día en cada una | Computa «No · titular»; objetivo «fuera del cómputo» en todos los años; sus horas se registrarán (T5) |
 | Convenio | 2026: 1767 h, 1 día de asuntos propios; 2027–2028: 1752 h, 0 días; permiso médico 24 h/año; referencia 40 h/sem; firmado, pendiente de publicación oficial | Objetivo rotulado «provisional: convenio pendiente de publicación»; referencia «provisional» |
 | Validación | Nombre vacío; campo `dni`, `porcentaje_jornada` u otro no admitido; horas ≤ 0, > 8 o con más de 2 decimales; completa distinta de 8; media mañana de 8 h | 400 con error por campo; la pantalla lo muestra junto al campo y lo retira al corregirlo |
 | Escritura | POST `/api/rrhh/trabajadoras`; PUT `/api/rrhh/trabajadoras/:id` y `/:id/baja` | Solo con sesión, Origin del mismo sitio (obligatorio) y JSON. El resto de la API sigue de solo lectura (405) |
@@ -293,7 +293,7 @@ TA1-2 (decisiones de Pío): la jornada se guarda en **horas diarias** (lunes a v
 
 ## TA2: Trabajadores · calendario (datos de ejemplo en memoria)
 
-Semilla ficticia en `fixtures/rrhh/eventos.json`; contrato, validación y almacén en `app/server/rrhh/eventos.ts`. Al arrancar, el servidor FIXTURES carga las ausencias de ejemplo, rellena la jornada habitual de todas las fichas activas del 2 al 29 de noviembre de 2026 sin pisarlas, y deja confirmada la semana del 2 al 8. La carga no deja historial. Los cambios solo viven en memoria. En modo REAL, `/api/rrhh/eventos*` responde 503 «Módulo pendiente de conexión (T1)».
+Semilla ficticia en `fixtures/rrhh/eventos.json`; contrato, validación y almacén en `app/server/rrhh/eventos.ts`. Al arrancar, el servidor FIXTURES carga las ausencias de ejemplo, rellena la jornada habitual de todas las fichas activas del 2 al 29 de noviembre de 2026 sin pisarlas, y deja confirmada la semana del 2 al 8. La carga no deja historial. Los cambios solo viven en memoria. Modo REAL: ver la sección TA-REAL.
 
 Reglas:
 - **TA2-2: un evento por persona, día y franja** (mañana o tarde). Por ejemplo, mañana JORNADA y tarde PERMISO_MEDICO.
@@ -326,9 +326,68 @@ Reglas:
 | Rellenar jornada habitual | Semana o mes visible; **año completo** (TA2-2) en las vistas año y por persona, con confirmación | JORNADA de lunes a viernes por franja según la ficha vigente; no pisa lo pintado ni lo confirmado; repetirlo no crea nada; se deshace de una vez |
 | Año vacío | Al abrir un año sin eventos para las personas visibles | Se ofrece «Rellenar AAAA…», con confirmación (Cancelar no crea nada). 2027 en PIO: «Rellenado 2027: 261 días laborables × 5 personas» |
 | Confirmar | «Confirmar semana / mes» o selección | PLANIFICADO → CONFIRMADO; «Quitar confirmación» lo revierte |
-| Detalle del día | Una celda seleccionada (franja o día completo) | Cada franja de la persona con tipo, horas, estado y nota, o «libre». **TA2-4: el campo Nota siempre está a la vista** (bloqueado en lo confirmado; en lo libre, «Pinta primero un evento para poder anotarlo»). En lo planificado se editan las horas realizadas (> 0 y ≤ 12 h) y la nota |
+| Detalle del día | Una celda seleccionada (franja o día completo) | Cada franja de la persona con tipo, horas, estado y nota, o «libre». **TA2-4: el campo Nota siempre está a la vista** (bloqueado en lo confirmado; en lo libre, «Pinta primero un evento para poder anotarlo»). En lo planificado se editan las horas realizadas (> 0 y ≤ 8 h, el límite de la tabla) y la nota |
 | Añadir nota (TA2-4) | Botón en la barra de selección | Sin franjas con evento: «Pinta primero un evento para poder anotarlo». Con una: su editor. Con varias: misma nota para todas, omitiendo vacías y confirmadas con aviso. Ej.: 28 dic, Aina M y T y Clara M con vacaciones y Clara T libre → «Anotado 28 dic 2026: 1 día laborable × 2 personas · 3 franjas. 1 franja vacía no se ha anotado…» |
 | Deshacer | Botón (dice qué deshace) o Ctrl+Z | Revierte el último cambio y luego el anterior; restaura exactamente (franjas y notas); falla cerrado si el estado ya no es el que dejó el cambio |
 | Historial | **Plegado por defecto** (también el de cada ficha); un clic lo despliega. Cada cambio: qué, días, personas, cuándo y quién («Marc»); detalle franja a franja (antes → después, con la nota) | Los deshechos llevan la marca «deshecho» |
 | Colores | Configurables en la leyenda | Solo en el navegador de quien los cambia; «Restablecer colores» |
-| Escritura | Solo POST `/api/rrhh/eventos` (PINTAR, BORRAR, RELLENAR, CONFIRMAR, DESCONFIRMAR, EDITAR horas y nota, ANOTAR) y POST `/api/rrhh/eventos/deshacer` | Con sesión, Origin del mismo sitio y JSON. Persona de baja o inexistente, o franja ajena: no se aplica nada. DELETE, PUT y PATCH: 405 |
+| Escritura | Solo POST `/api/rrhh/eventos` (PINTAR, BORRAR, RELLENAR, CONFIRMAR, DESCONFIRMAR, EDITAR horas y nota, ANOTAR) y POST `/api/rrhh/eventos/deshacer` | Con sesión, Origin del mismo sitio y JSON. Persona anulada o inexistente, día fuera de su alta o franja ajena: no se aplica nada. DELETE, PUT y PATCH: 405 |
+
+## TA-REAL: Trabajadores conectado a las tablas reales (migración 31)
+
+El contrato de la web usa los nombres y valores de `sql/migrations/31_cf_trabajadores.sql`. Dos adaptadores con la misma interfaz:
+- **RRHH_FIXTURES** (`app/server/rrhh/adaptador_fixtures.ts`): datos de ejemplo en memoria, para las pruebas. Mismas reglas que las tablas.
+- **RRHH_REAL** (`app/server/rrhh/adaptador_real.ts`): rol `cf_trabajadores_web`, credencial propia en `.env.web` (ver `docs/CONFIG.md`), pool de 2 conexiones, TLS con la CA.
+
+Reglas:
+- **Fichas (`trabajadoras`).**
+  - Categorías FARMACEUTICA_TITULAR, FARMACEUTICA_ADJUNTA, TECNICA, AUXILIAR y OTRA.
+  - Titular = FARMACEUTICA_TITULAR, con `computa_convenio` false (se guarda en la tabla).
+  - `tipo_jornada` (COMPLETA, MEDIA_MANANA, MEDIA_TARDE) y `horas_diarias`.
+  - **`fecha_alta` obligatoria**: por defecto hoy, editable.
+- **Baja y anulación.**
+  - «Dar de baja» = `fecha_baja`, que no puede ser anterior al alta (check de la tabla).
+  - **«Anular»** es una acción aparte, con confirmación, para registros erróneos (`anulada`).
+  - Nada se borra.
+  - Una ficha anulada sale del listado (salvo «Incluir bajas y anuladas») y del calendario, y libera su nombre.
+- **Calendario.**
+  - Salen las fichas sin anular que están de alta algún día del periodo.
+  - Fuera del alta o la baja, la celda no se pinta. Por petición, falla cerrado (`EVENTO_FUERA_DEL_ALTA`, como el trigger).
+  - Rellenar solo crea los días de alta.
+- **11 tipos de evento.**
+  - FESTIVO, TURNO_GUARDIA y LOCALIZADA se ven si existen, pero se pintan desde TA3.
+  - TURNO_GUARDIA y LOCALIZADA no suman horas.
+- **Horas.**
+  - Vacías (`horas` null) = las de la ficha. Se leen de `v_eventos_calendario_horas.horas_efectivas`.
+  - La vista repite el reparto 4,5 h + 3,5 h de `HORARIO_COMPLETA`; si este cambia, hay que cambiar la vista.
+  - Pintar otro tipo devuelve las horas a las de la ficha.
+- **Goma y deshacer en REAL.**
+  - Desactivados con el aviso «Pendiente de que la base de datos permita anular eventos» hasta que exista `eventos_calendario.anulado`.
+  - El deshacer de cambios de tipo, nota o estado sí funciona (UPDATE al valor anterior), pero solo para los cambios de la sesión del servidor.
+- **Escritura en REAL.**
+  - Cada una en su transacción con `set_config('cf.autor', 'Marc', true)`.
+  - Ante error, ROLLBACK y mensaje llano, sin reintentar.
+  - Rellenar: INSERT … ON CONFLICT DO NOTHING por lotes de 500.
+- **Historial en REAL.** Sale de `trabajadores_historial`: un cambio por transacción (mismo `created_at`). El origen lo da la sesión o se deduce de las filas.
+- **Notas próximas.**
+  - Recuadro en Calendario con las notas de hoy (reloj del navegador) en adelante, por fecha: «Persona — fecha: nota».
+  - La misma nota en las dos franjas de un día sale una vez.
+  - Al pasar el día desaparecen del recuadro, pero siguen en el día y en el historial.
+  - Un clic abre la semana de esa persona.
+- **Banner.** En FIXTURES, «Datos de ejemplo…». En REAL conectado, «Datos reales: cada cambio se guarda en la base de datos con autor Marc». En REAL sin credencial, «Falta configurar la credencial de Trabajadores», sin ningún dato.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Fichas de ejemplo | Columnas de `trabajadoras`; alta 1 ene 2026; Laura, FARMACEUTICA_ADJUNTA; titulares, FARMACEUTICA_TITULAR | Mismos totales y objetivos que en TA1 |
+| Baja antes del alta | Baja con fecha anterior a `fecha_alta` | 400 «La fecha de baja no puede ser anterior a la de alta.» |
+| Baja en el calendario | Clara de baja el 30 nov | Sale hasta el 30 nov; pintar el 7 dic → `EVENTO_FUERA_DEL_ALTA` |
+| Alta en el calendario | Ficha con alta el 10 dic 2026 | Antes del 10 no se pinta; «Rellenado diciembre de 2026: 16 días laborables × 1 persona» |
+| Anular | «Anular» → confirmación → `{ "confirmar": true }` | Ficha anulada (no se edita; historial «Anulación: Anulada No → Sí»). Repetirlo: 409 |
+| Nombre duplicado | Misma farmacia y nombre (sin distinguir mayúsculas) que otra ficha sin anular | 409 (en REAL, 23505 → «Ya existe un registro igual…») |
+| Convenio que falta | `convenio_anual` sin alguno de 2026–2028 | «Crear convenio 2026–2028 con los valores firmados», con confirmación que enseña los valores; POST `/api/rrhh/convenio` `{ "anios": [...] }`; los años existentes no se tocan |
+| Goma sin anular eventos | REAL (`anular_eventos` false) | Goma y «Borrar» desactivados con aviso; BORRAR → 409 `ANULAR_EVENTOS_PENDIENTE` |
+| Deshacer sin anular eventos | Último cambio que creó eventos (pintar en vacío, rellenar) | Deshacer desactivado con aviso. Si el cambio solo editó (confirmar, anotar, cambiar tipo), se deshace |
+| Notas próximas | Desde el 13 nov (ejemplo) | Rosa 18 nov, Elena 25 y 26 nov; la de Judit (6 nov) ya no sale. RITA: solo las suyas |
+| Errores de la BD | P0001 AUTOR_AUSENTE / FARMACIA_NO_HABILITADA_EN_MODULO / EVENTO_FUERA_DEL_ALTA; 42501; 23505; 23514; 23503; 57014/25P03; 53300 | Código propio, HTTP (500/403/409/403/409/400/409/504/503) y mensaje llano. ROLLBACK, nunca se reintenta |
+| REAL simulado | `server/pruebas/rrhh_real.test.ts`: pool inyectado, sin conexión | Autor por transacción, ROLLBACK, lotes, mapeo de filas, historial, deshacer |
+| check:real | Rol `cf_trabajadores_web`, solo lectura | `DIAGNOSTICO trabajadores`: recuentos por tabla, `modulo_pio_rita` y años del convenio (y los que faltan) |

@@ -101,8 +101,12 @@ test.describe('Calendario PC 1440', () => {
     await expect(franja(page, ROSA, '2026-11-18', 'TARDE')).toHaveAttribute('data-tipo', 'JORNADA');
 
     // Filtros: categoría, persona y tipo (los otros tipos se atenúan, nunca se ocultan).
-    await page.locator('[data-filtro="categoria"]').selectOption('FARMACEUTICO');
-    await expect(page.locator('tbody tr[data-fila]')).toHaveCount(6); // Laura + titular de cada farmacia
+    // TA-REAL: categorías del esquema (la titular es su propia categoría).
+    await expect(page.locator('[data-filtro="categoria"] option')).toHaveText(['Todas las categorías', 'Farmacéutica titular', 'Farmacéutica adjunta', 'Técnica', 'Auxiliar', 'Otra']);
+    await page.locator('[data-filtro="categoria"]').selectOption('FARMACEUTICA_ADJUNTA');
+    await expect(page.locator('tbody tr[data-fila]')).toHaveCount(2); // Laura (mañana y tarde)
+    await page.locator('[data-filtro="categoria"]').selectOption('FARMACEUTICA_TITULAR');
+    await expect(page.locator('tbody tr[data-fila]')).toHaveCount(4); // titular de cada farmacia
     await page.locator('[data-filtro="categoria"]').selectOption('');
     await page.locator('[data-filtro="persona"]').selectOption(AINA);
     await expect(page.locator('tbody tr[data-fila]')).toHaveCount(2);
@@ -148,8 +152,10 @@ test.describe('Calendario PC 1440', () => {
 
     await abrir(page, `?vista=persona&fecha=2026-11-09&persona=${AINA}`);
     await expect(page.locator('[data-rejilla="persona"] tbody tr[data-fila]')).toHaveCount(12);
-    await expect(page.locator('[data-total-tipo="VACACIONES"] dd')).toHaveText('5 días');
-    await expect(page.locator('[data-total-tipo="JORNADA"] dd')).toHaveText('15 días');
+    // TA-REAL: días y horas (horas_efectivas) por tipo.
+    await expect(page.locator('[data-total-tipo="VACACIONES"] dd')).toHaveText('5 días · 40 h');
+    await expect(page.locator('[data-total-tipo="JORNADA"] dd')).toHaveText('15 días · 120 h');
+    await expect(page.locator('[data-total-tipo="TURNO_GUARDIA"]')).toHaveCount(0); // tipos de TA3: solo si hay alguno
     await expect(diaCompleto(page, AINA, '2026-11-18')).toHaveAttribute('data-tipo-tarde', 'VACACIONES');
     await expect(page.locator(`[data-celda="${AINA}|2026-02-30"]`)).toHaveCount(0);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_persona.png'), fullPage: true });
@@ -325,7 +331,7 @@ test.describe('Calendario PC 1440', () => {
     await expect(page.locator('[data-confirmar-anio]')).toContainText('1 persona en todo 2028');
     await page.locator('[data-confirmar-anio-si]').click();
     await expect(aviso(page)).toHaveText('Rellenado 2028: 260 días laborables × 1 persona.');
-    await expect(page.locator('[data-total-tipo="JORNADA"] dd')).toHaveText('260 días');
+    await expect(page.locator('[data-total-tipo="JORNADA"] dd')).toHaveText('260 días · 910 h'); // 260 × 3,5 h
     await expect(diaCompleto(page, IRENE, '2028-02-29')).toHaveAttribute('data-tipo-tarde', 'JORNADA');
   });
 
@@ -374,6 +380,28 @@ test.describe('Calendario PC 1440', () => {
     await expect(franja(page, AINA, '2026-12-28', 'TARDE')).toHaveAttribute('data-nota', '');
   });
 
+  test('TA-REAL: «Notas próximas»: de hoy en adelante, por fecha («Persona — fecha: nota»); las pasadas no salen', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-11-13T10:00:00'));
+    await abrir(page, '?fecha=2026-11-09');
+    const caja = page.locator('[data-notas-proximas]');
+    await expect(caja.locator('h2')).toHaveText('✎ Notas próximas');
+    const lineas = caja.locator('[data-nota-proxima]');
+    // Las de ejemplo desde el 13 nov (la de Judit, del 6, ya pasó). Otras pruebas pueden añadir notas de diciembre detrás.
+    await expect(lineas.nth(0)).toHaveText(/^Rosa Camps Oliver RITA — mié, 18 nov: Gestión en el ayuntamiento$/);
+    await expect(lineas.nth(1)).toHaveText(/^Elena Mas Garriga PIO — mié, 25 nov: Traslado de domicilio$/);
+    await expect(lineas.nth(2)).toHaveText(/^Elena Mas Garriga PIO — jue, 26 nov: Traslado de domicilio$/);
+    await expect(caja).not.toContainText('Compensa el sábado 31 de octubre');
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_notas_proximas.png') });
+    // Un clic lleva a la semana de esa persona.
+    await lineas.nth(1).click();
+    await expect(page.locator('[data-periodo]')).toHaveText('23–29 nov 2026');
+    await expect(page.locator('tbody tr[data-fila]')).toHaveCount(2); // filtro: solo Elena (media mañana: dos subfilas)
+    // Por farmacia: RITA solo ve las suyas.
+    await abrir(page, '?farmacia=RITA&fecha=2026-11-09');
+    await expect(page.locator('[data-notas-proximas] [data-nota-proxima]').first()).toContainText('Rosa Camps Oliver');
+    await expect(page.locator('[data-notas-proximas]')).not.toContainText('Elena Mas Garriga');
+  });
+
   test('colores configurables en la leyenda (solo en este navegador)', async ({ page }) => {
     await abrir(page, '?fecha=2026-11-16');
     const vac = page.locator('[data-herramienta="VACACIONES"]');
@@ -400,17 +428,47 @@ test.describe('Calendario PC 1440', () => {
 test.describe('Modo REAL simulado (intercepción): sin datos de ejemplo', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('calendario: «Módulo pendiente de conexión (T1)»; no pide eventos', async ({ page }) => {
+  test('TA-REAL: conectado: banner real; goma y deshacer de pintados nuevos desactivados con aviso', async ({ page }) => {
+    const AVISO = 'Pendiente de que la base de datos permita anular eventos';
+    await page.route('**/api/rrhh/estado', (r) => r.fulfill({ json: {
+      modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc', anular_eventos: false } }));
+    // Calendario de ejemplo como si viniera de REAL: sin anular eventos y con un último cambio que creó eventos.
+    await page.route('**/api/rrhh/eventos?**', async (r) => {
+      const resp = await r.fetch();
+      const d = await resp.json();
+      r.fulfill({ response: resp, json: { ...d, anular_eventos: false, ultimo_cambio: {
+        id: 'f9999999-0000-4000-8000-000000000001', origen: 'PINTAR', tipo: 'VACACIONES', quien: 'Marc', cuando: '2026-11-13T09:00:00.000Z', farmacias: ['PIO'],
+        n: 1, dias: 1, fechas: 1, laborables: true, parcial: true, creados: 1, personas: ['Aina Bosch Ferrer'], desde: '2026-12-07', hasta: '2026-12-07',
+        periodo: { desde: '2026-12-07', hasta: '2026-12-07' }, omitidas_confirmadas: 0, deshecho: false, deshace: null } } });
+    });
+    await abrir(page, '?farmacia=PIO&fecha=2026-11-09');
+    await expect(page.locator('[data-banner-real]')).toBeVisible();
+    await expect(page.locator('[data-banner-ejemplo]')).toHaveCount(0);
+    await expect(page.locator('[data-herramienta="goma"]')).toBeDisabled();
+    await expect(page.locator('[data-aviso-goma]')).toHaveText(`Goma: ${AVISO.charAt(0).toLowerCase()}${AVISO.slice(1)}`);
+    await expect(page.locator('[data-accion="deshacer"]')).toBeDisabled();
+    await expect(page.locator('[data-aviso-anular-deshacer]')).toHaveText(AVISO);
+    await franja(page, AINA, '2026-11-10', 'MANANA').click();
+    await expect(page.locator('[data-sel="borrar"]')).toBeDisabled();
+    await expect(page.locator('[data-sel="borrar"]')).toHaveAttribute('title', AVISO);
+    // FESTIVO, TURNO_GUARDIA y LOCALIZADA no están en la paleta (TA3).
+    for (const t of ['FESTIVO', 'TURNO_GUARDIA', 'LOCALIZADA']) await expect(page.locator(`[data-herramienta="${t}"]`)).toHaveCount(0);
+    await expect(page.locator('[data-tipos-ta3]')).toContainText('Turno de guardia y Localizada no suman horas');
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_real_goma_desactivada.png'), fullPage: true });
+  });
+
+  test('TA-REAL: sin credencial: «Falta configurar la credencial de Trabajadores»; no pide eventos', async ({ page }) => {
     const pedidas: string[] = [];
+    const AVISO = 'Falta configurar la credencial de Trabajadores';
     await page.route('**/api/estado', (r) => r.fulfill({ json: { modo: 'REAL', farmacia: 'PIO', solo_lectura: true, usuario: 'Pío' } }));
     await page.route('**/api/rrhh/**', (r) => {
       pedidas.push(new URL(r.request().url()).pathname);
       return new URL(r.request().url()).pathname === '/api/rrhh/estado'
-        ? r.fulfill({ json: { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: 'Módulo pendiente de conexión (T1)' } })
-        : r.fulfill({ status: 503, json: { error: 'MODULO_PENDIENTE_T1', mensaje: 'Módulo pendiente de conexión (T1)' } });
+        ? r.fulfill({ json: { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: AVISO, anular_eventos: false } })
+        : r.fulfill({ status: 503, json: { error: 'CREDENCIAL_TRABAJADORES_AUSENTE', mensaje: AVISO } });
     });
     await page.goto('/trabajadores/calendario?fecha=2026-11-09');
-    await expect(page.locator('[data-rrhh-pendiente]')).toContainText('Módulo pendiente de conexión (T1)');
+    await expect(page.locator('[data-rrhh-pendiente]')).toContainText(AVISO);
     await expect(page.locator('[data-banner-ejemplo], [data-calendario]')).toHaveCount(0);
     for (const n of ['Aina Bosch Ferrer', 'Marta Vila Soler']) await expect(page.getByText(n)).toHaveCount(0);
     expect(pedidas.every((p) => p === '/api/rrhh/estado')).toBe(true);

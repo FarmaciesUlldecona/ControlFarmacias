@@ -38,6 +38,23 @@
 .cal-muestra-sel { width: 16px; height: 16px; border: 2px dashed var(--primario); border-radius: 4px; }
 .cal-muestra-goma { width: 18px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, #f3b8b3 0 55%, #fff 55%); border: 1.5px solid var(--rojo); }
 .cal-herr-goma[aria-pressed='true'] { --c: var(--rojo); }
+/* TA-REAL: goma desactivada en REAL (hasta que la base de datos permita anular eventos) */
+.cal-herr:disabled { opacity: 0.5; cursor: not-allowed; }
+.cal-aviso-anular { align-self: center; font-size: 13px; }
+.cal-tipos-ta3 { margin: 0; font-size: 12.5px; }
+/* TA-REAL: «Notas próximas» */
+.cal-notas { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; border-left: 4px solid var(--azul-texto); }
+.cal-notas h2 { margin: 0; font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.cal-notas p { margin: 0; font-size: 14px; }
+.cal-notas-lista { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.cal-nota-proxima {
+  display: block; width: 100%; padding: 4px 6px; border: 0; border-radius: 6px; background: none; text-align: left;
+  font: inherit; font-size: 14px; color: var(--texto); cursor: pointer; overflow-wrap: anywhere;
+}
+.cal-nota-proxima:hover { background: #f1f3f0; }
+.cal-nota-proxima:focus-visible { outline: 2px solid var(--primario); outline-offset: 1px; }
+.cal-nota-fecha { font-variant-numeric: tabular-nums; }
+.cal-notas .cal-enlace { align-self: flex-start; }
 .cal-leyenda { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; }
 .cal-leyenda-estado { display: inline-flex; align-items: center; gap: 6px; }
 .cal-mini { display: inline-grid; place-items: center; width: 22px; height: 16px; border-radius: 4px; font-size: 10px; font-weight: 800; --c: var(--azul); }

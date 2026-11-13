@@ -82,16 +82,24 @@ test.describe('Fichas PC 1440', () => {
     await form.getByRole('button', { name: 'Crear ficha' }).click();
     await expect(form.locator('[data-error-campo="nombre"]')).toHaveText('Escribe el nombre');
     await form.getByLabel('Nombre').fill('Prueba Alta Ejemplo');
+    // TA-REAL: categorías del esquema; fecha de alta obligatoria (por defecto hoy, editable); sin casilla de titular.
+    await expect(form.locator('select[name="categoria"] option')).toHaveText(['Farmacéutica titular', 'Farmacéutica adjunta', 'Técnica', 'Auxiliar', 'Otra']);
+    await expect(form.locator('input[name="es_titular"]')).toHaveCount(0);
+    await expect(form.locator('input[name="fecha_alta"]')).toHaveValue(/^\d{4}-\d{2}-\d{2}$/);
+    await form.locator('select[name="categoria"]').selectOption('FARMACEUTICA_TITULAR');
+    await expect(form.locator('[data-pista-titular]')).toHaveText('fuera del cómputo del convenio; se registran sus horas');
+    await form.locator('select[name="categoria"]').selectOption('TECNICA');
+    await form.locator('input[name="fecha_alta"]').fill('2026-11-02');
     // TA1-3: selector Completa / Media mañana / Media tarde; media tarde por defecto 3,5 h (17:00–20:30).
-    await expect(form.locator('select[name="jornada"] option')).toHaveText(['Completa', 'Media mañana', 'Media tarde']);
-    await form.locator('select[name="jornada"]').selectOption('MEDIA_TARDE');
+    await expect(form.locator('select[name="tipo_jornada"] option')).toHaveText(['Completa', 'Media mañana', 'Media tarde']);
+    await form.locator('select[name="tipo_jornada"]').selectOption('MEDIA_TARDE');
     await expect(form.locator('input[name="horas_diarias"]')).toHaveValue('3,5');
     await expect(form.locator('[data-franja]')).toHaveText('de lunes a viernes, de tarde (17:00–20:30)');
     await expect(form.locator('[data-porcentaje-formulario]')).toHaveText('43,75 % · 17,5 h de 40 h/sem');
     await form.locator('input[name="horas_diarias"]').fill('8');
     await form.getByRole('button', { name: 'Crear ficha' }).click();
     await expect(form.locator('[data-error-campo="horas_diarias"]')).toHaveText('La media tarde es menos de 8 h al día');
-    await form.locator('select[name="jornada"]').selectOption('MEDIA_MANANA');
+    await form.locator('select[name="tipo_jornada"]').selectOption('MEDIA_MANANA');
     await expect(form.locator('input[name="horas_diarias"]')).toHaveValue('4,5');
     await expect(form.locator('[data-porcentaje-formulario]')).toHaveText('56,25 % · 22,5 h de 40 h/sem');
     await form.locator('input[name="horas_diarias"]').fill('8');
@@ -115,6 +123,8 @@ test.describe('Fichas PC 1440', () => {
     await expect(page.locator('[data-objetivo="2026"] [data-objetivo-horas]')).toHaveText('1325,3 h'); // 1767 × 30 / 40
     await expect(page.locator('[data-historial="ALTA"]')).toContainText('Marc'); // TA1-2: autor del historial
     await expect(page.locator('[data-historial="ALTA"]')).toContainText('Horas al día: 6 h/día');
+    await expect(page.locator('[data-historial="ALTA"]')).toContainText('Fecha de alta: 02/11/2026');
+    await expect(page.locator('[data-fecha-alta]')).toHaveText('02/11/2026');
     await page.getByRole('button', { name: 'Editar ficha' }).click();
     const ed = page.locator('[data-formulario-ficha="edicion"]');
     await expect(ed.locator('select[name="farmacia"]')).toHaveCount(0); // no se cambia de farmacia
@@ -137,10 +147,14 @@ test.describe('Fichas PC 1440', () => {
     const baja = page.locator('[data-formulario-baja]');
     await baja.getByRole('button', { name: 'Confirmar baja' }).click();
     await expect(baja.locator('[data-error-campo="fecha_baja"]')).toHaveText('Indica la fecha de baja');
-    await baja.getByLabel('Fecha de baja').fill('2026-12-31');
+    // TA-REAL: la baja no puede ser anterior al alta (2/11); en el calendario sale hasta su fecha de baja.
+    await baja.getByLabel('Fecha de baja').fill('2026-11-01');
     await baja.getByRole('button', { name: 'Confirmar baja' }).click();
-    await expect(page.locator('[data-baja]')).toHaveText('Baja desde 31/12/2026');
-    await expect(page.locator('[data-historial="BAJA"]')).toContainText('Fecha de baja: — → 31/12/2026');
+    await expect(baja.getByRole('alert').or(baja.locator('[data-error-campo="fecha_baja"]'))).toHaveText('La fecha de baja no puede ser anterior a la de alta.');
+    await baja.getByLabel('Fecha de baja').fill('2026-11-06');
+    await baja.getByRole('button', { name: 'Confirmar baja' }).click();
+    await expect(page.locator('[data-baja]')).toHaveText('Baja desde 06/11/2026');
+    await expect(page.locator('[data-historial="BAJA"]')).toContainText('Fecha de baja: — → 06/11/2026');
     await expect(page.getByRole('button', { name: 'Dar de baja' })).toHaveCount(0);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_detalle_historial.png'), fullPage: true });
     await page.getByRole('link', { name: '← Fichas' }).click();
@@ -150,7 +164,7 @@ test.describe('Fichas PC 1440', () => {
     await expect(page).toHaveURL(/bajas=1/);
     await expect(page.getByLabel('Incluir bajas')).toBeChecked();
     await expect.poll(() => nombres(page)).toContain('Prueba Editada Ejemplo');
-    await expect(page.locator('tr.de-baja', { has: page.getByText('Prueba Editada Ejemplo') })).toContainText('baja 31/12/2026');
+    await expect(page.locator('tr.de-baja', { has: page.getByText('Prueba Editada Ejemplo') })).toContainText('baja 06/11/2026');
   });
 
   test('detalle: objetivo anual provisional, titular fuera del cómputo y huecos de horas (T5)', async ({ page }) => {
@@ -178,7 +192,7 @@ test.describe('Fichas PC 1440', () => {
     // Edición: el formulario muestra la media tarde con sus horas.
     await page.getByRole('button', { name: 'Editar ficha' }).click();
     const ed = page.locator('[data-formulario-ficha="edicion"]');
-    await expect(ed.locator('select[name="jornada"]')).toHaveValue('MEDIA_TARDE');
+    await expect(ed.locator('select[name="tipo_jornada"]')).toHaveValue('MEDIA_TARDE');
     await expect(ed.locator('input[name="horas_diarias"]')).toHaveValue('3,5');
     await ed.getByRole('button', { name: 'Cancelar' }).click();
     await page.goto(`/trabajadores/${ID_TITULAR_PIO}`);
@@ -188,30 +202,89 @@ test.describe('Fichas PC 1440', () => {
   });
 
   test('escritura solo con sesión y mismo origen; el resto de la API sigue de solo lectura', async ({ page }) => {
-    const cuerpo = { farmacia: 'PIO', nombre: 'X', categoria: 'TECNICO', jornada: 'COMPLETA', horas_diarias: 8, es_titular: false };
+    const cuerpo = { farmacia: 'PIO', nombre: 'X', categoria: 'TECNICA', tipo_jornada: 'COMPLETA', horas_diarias: 8, fecha_alta: '2026-11-02' };
     const ajeno = await page.request.post('/api/rrhh/trabajadoras', { data: cuerpo, headers: { origin: 'http://evil.example' } });
     expect(ajeno.status()).toBe(403);
     expect((await page.request.post('/api/inicio', { data: {} })).status()).toBe(405);
     expect((await page.request.put('/api/facturas', { data: {} })).status()).toBe(405);
     expect((await page.request.delete(`/api/rrhh/trabajadoras/${ID_ELENA}`)).status()).toBe(405);
   });
+
+  test('TA-REAL: «Anular» (registro erróneo) con confirmación: no se borra, sale del listado y queda en el historial', async ({ page }) => {
+    await abrirFichas(page, '?farmacia=PIO');
+    await page.getByRole('button', { name: 'Nueva ficha' }).click();
+    const form = page.locator('[data-formulario-ficha="alta"]');
+    await form.getByLabel('Nombre').fill('Ficha Creada Por Error');
+    await form.locator('input[name="fecha_alta"]').fill('2026-11-02');
+    await form.getByRole('button', { name: 'Crear ficha' }).click();
+    await page.locator('tr', { has: page.getByText('Ficha Creada Por Error') }).locator('.rrhh-nombre').click();
+    await page.locator('[data-anular]').click();
+    const dialogo = page.locator('[data-formulario-anular]');
+    await expect(dialogo).toContainText('Anular es solo para fichas creadas por error');
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_anular.png'), fullPage: true });
+    await dialogo.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(page.locator('[data-anulada]')).toHaveCount(0); // cancelar no cambia nada
+    await page.locator('[data-anular]').click();
+    await page.locator('[data-anular-si]').click();
+    await expect(page.locator('[data-aviso-rrhh]')).toHaveText('Ficha anulada.');
+    await expect(page.locator('[data-anulada]')).toHaveText('anulada');
+    await expect(page.getByRole('button', { name: 'Editar ficha' })).toHaveCount(0);
+    await expect(page.locator('[data-historial="ANULACION"]')).toContainText('Anulada: No → Sí');
+    await page.getByRole('link', { name: '← Fichas' }).click();
+    await expect.poll(() => nombres(page)).not.toContain('Ficha Creada Por Error');
+    await page.getByLabel('Incluir bajas y anuladas').click();
+    await expect.poll(() => nombres(page)).toContain('Ficha Creada Por Error');
+  });
+
+  test('TA-REAL: si faltan años del convenio, «Crear convenio 2026–2028 con los valores firmados» con confirmación', async ({ page }) => {
+    // Simula una base de datos recién conectada sin convenio (el resto de datos, los de ejemplo).
+    await page.route('**/api/rrhh/trabajadoras?**', async (r) => {
+      const resp = await r.fetch();
+      r.fulfill({ response: resp, json: { ...(await resp.json()), convenio: [] } });
+    });
+    await abrirFichas(page);
+    const caja = page.locator('[data-convenio-falta]');
+    await expect(caja).toHaveAttribute('data-convenio-falta', '2026,2027,2028');
+    await expect(page.locator('[data-referencia-semanal]')).toHaveCount(0);
+    await page.locator('[data-crear-convenio]').click();
+    await expect(page.locator('[data-confirmar-convenio]')).toContainText('2026: jornada máxima 1767 h · 1 día de asuntos propios · permiso médico 24 h · referencia 40 h/sem');
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_convenio_falta.png'), fullPage: true });
+    await page.unroute('**/api/rrhh/trabajadoras?**');
+    const crear = page.waitForRequest((q) => q.url().endsWith('/api/rrhh/convenio') && q.method() === 'POST');
+    await page.locator('[data-crear-convenio-si]').click();
+    expect((await crear).postDataJSON()).toEqual({ anios: [2026, 2027, 2028] });
+    await expect(page.locator('[data-aviso-rrhh]')).toHaveText('Convenio creado con los valores firmados.');
+    await expect(page.locator('[data-convenio-falta]')).toHaveCount(0);
+  });
 });
 
 test.describe('Modo REAL simulado (intercepción): sin datos de ejemplo', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('«Módulo pendiente de conexión (T1)»; ni banner de ejemplo ni fichas', async ({ page }) => {
+  test('TA-REAL: conectado: banner de datos reales, nunca «Datos de ejemplo»', async ({ page }) => {
+    await page.route('**/api/rrhh/estado', (r) => r.fulfill({ json: {
+      modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc', anular_eventos: false } }));
+    await abrirFichas(page);
+    await expect(page.locator('[data-banner-real]')).toHaveText('RealDatos reales: cada cambio se guarda en la base de datos con autor Marc');
+    await expect(page.locator('[data-banner-ejemplo]')).toHaveCount(0);
+    await expect(page.getByText(/datos de ejemplo/i)).toHaveCount(0);
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_real_banner.png') });
+  });
+
+  test('TA-REAL: sin credencial: «Falta configurar la credencial de Trabajadores»; ni banner de ejemplo ni fichas', async ({ page }) => {
     const pedidas: string[] = [];
+    const AVISO = 'Falta configurar la credencial de Trabajadores';
     await page.route('**/api/estado', (r) => r.fulfill({ json: { modo: 'REAL', farmacia: 'PIO', solo_lectura: true, usuario: 'Pío' } }));
     await page.route('**/api/rrhh/**', (r) => {
       pedidas.push(new URL(r.request().url()).pathname);
       return new URL(r.request().url()).pathname === '/api/rrhh/estado'
-        ? r.fulfill({ json: { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: 'Módulo pendiente de conexión (T1)' } })
-        : r.fulfill({ status: 503, json: { error: 'MODULO_PENDIENTE_T1', mensaje: 'Módulo pendiente de conexión (T1)' } });
+        ? r.fulfill({ json: { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: AVISO, anular_eventos: false } })
+        : r.fulfill({ status: 503, json: { error: 'CREDENCIAL_TRABAJADORES_AUSENTE', mensaje: AVISO } });
     });
     for (const ruta of ['/trabajadores', `/trabajadores/${ID_ELENA}`]) {
       await page.goto(ruta);
-      await expect(page.locator('[data-rrhh-pendiente]')).toContainText('Módulo pendiente de conexión (T1)');
+      await expect(page.locator('[data-rrhh-pendiente]')).toContainText(AVISO);
+      await expect(page.locator('[data-banner-real]')).toHaveCount(0);
       await expect(page.locator('[data-banner-ejemplo]')).toHaveCount(0);
       await expect(page.locator('[data-rrhh-fichas], [data-detalle-ficha]')).toHaveCount(0);
       for (const n of ['Aina Bosch Ferrer', 'Elena Mas Garriga', 'Titular de ejemplo']) await expect(page.getByText(n)).toHaveCount(0);

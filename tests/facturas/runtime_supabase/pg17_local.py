@@ -203,6 +203,8 @@ MIGRACION_30 = MIG / "30_cf_detalle_por_linea.sql"
 ROLLBACK_30 = MIG / "30_cf_detalle_por_linea.rollback.sql"
 MIGRACION_31 = MIG / "31_cf_trabajadores.sql"
 ROLLBACK_31 = MIG / "31_cf_trabajadores.rollback.sql"
+MIGRACION_32 = MIG / "32_cf_noches_automaticas.sql"
+ROLLBACK_32 = MIG / "32_cf_noches_automaticas.rollback.sql"
 
 
 # Norma de Pio (2BN-D): todo ensayo de despliegue se hace con un rol que imita al postgres de Supabase. Alli postgres
@@ -331,6 +333,11 @@ class _Tabla:
         self.fila = fila
         return self
 
+    def update(self, cambios: dict):
+        """AUTO-A: update con filtros eq (resumen nocturno); mismo rol que el resto de sentencias."""
+        self.cambios = cambios
+        return self
+
     def _consulta(self, consulta: str):
         if self.rol is None:
             return self.pg.json(consulta)
@@ -349,9 +356,21 @@ class _Tabla:
             f"{prefijo}with t as ({sentencia}) select coalesce(json_agg(t),'[]'::json)::text from t;")
         return _Respuesta(json.loads(salida))
 
+    def _actualizar(self):
+        asignaciones = ", ".join(
+            f"{c} = " + (_lit(json.dumps(v, ensure_ascii=False)) if isinstance(v, (dict, list)) else _lit(v))
+            for c, v in self.cambios.items())
+        where = " where " + " and ".join(self.filtros) if self.filtros else ""
+        prefijo = f"set role {self.rol}; " if self.rol else ""
+        salida = self.pg.sql(f"{prefijo}with t as (update public.{self.tabla} set {asignaciones}{where} returning *) "
+                             "select coalesce(json_agg(t),'[]'::json)::text from t;")
+        return _Respuesta(json.loads(salida))
+
     def execute(self):
         if self.fila is not None:
             return self._insertar()
+        if getattr(self, "cambios", None) is not None:
+            return self._actualizar()
         where = " where " + " and ".join(self.filtros) if self.filtros else ""
         orden = " order by " + ", ".join(self.orden) if self.orden else ""
         limite = f" limit {self.limite}" if self.limite else ""
@@ -527,7 +546,7 @@ def _ejecuciones(pg: _Pg, documento_id: str):
 
 VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback", "19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback",
              "23", "23_rollback", "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback", "28", "28_rollback", "29", "29_rollback",
-             "30", "30_rollback", "31", "31_rollback")
+             "30", "30_rollback", "31", "31_rollback", "32", "32_rollback")
 
 
 def construir_plantilla(contenedor: str, variante: str) -> str:
@@ -549,6 +568,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     30 (2BR): 29 + migracion 30 aplicada dos veces; 30_rollback: 30 + rollback de la 30. Como postgres, propietario de
     los objetos nuevos como en Supabase; el ensayo de ``desplegar_30.py`` usa la imitacion (test 2BR).
     31 (TRAB): 30 + migracion 31 aplicada dos veces (como postgres, igual que la 30); 31_rollback: 31 + rollback.
+    32 (AUTO-A): 31 + migracion 32 aplicada dos veces (como postgres); 32_rollback: 32 + rollback.
     Idempotente: si la plantilla ya existe en el contenedor, se reutiliza.
     """
     assert variante in VARIANTES
@@ -558,7 +578,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         return f"cf_plantilla_{variante}"
     if variante in ("19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback", "23", "23_rollback",
                     "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback", "28", "28_rollback", "29", "29_rollback", "30", "30_rollback", "31",
-                    "31_rollback"):
+                    "31_rollback", "32", "32_rollback"):
         nombre = f"cf_plantilla_{variante}"
         base = construir_plantilla(contenedor, {"19": "18", "20": "19", "20_rollback": "20",
                                                  "21": "20", "21_rollback": "21",
@@ -571,7 +591,8 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
                                                  "28": "27", "28_rollback": "28",
                                                  "29": "28", "29_rollback": "29",
                                                  "30": "29", "30_rollback": "30",
-                                                 "31": "30", "31_rollback": "31"}[variante])
+                                                 "31": "30", "31_rollback": "31",
+                                                 "32": "31", "32_rollback": "32"}[variante])
         cerrar_sesiones(contenedor, base)  # createdb -T exige que nadie este conectado al origen
         _docker("exec", contenedor, "createdb", "-U", "postgres", "-T", base, nombre)
         pg = _Pg(contenedor, nombre)
@@ -637,8 +658,13 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         elif variante == "31":
             pg.sql(MIGRACION_31.read_text(encoding="utf-8"))
             pg.sql(MIGRACION_31.read_text(encoding="utf-8"))
-        else:
+        elif variante == "31_rollback":
             pg.sql(ROLLBACK_31.read_text(encoding="utf-8"))
+        elif variante == "32":
+            pg.sql(MIGRACION_32.read_text(encoding="utf-8"))
+            pg.sql(MIGRACION_32.read_text(encoding="utf-8"))
+        else:
+            pg.sql(ROLLBACK_32.read_text(encoding="utf-8"))
         cerrar_sesiones(contenedor, nombre)
         return nombre
     assert variante in VARIANTES
