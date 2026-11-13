@@ -1,6 +1,7 @@
 # Hito AUTO-ALLIANCE: normalización y conciliación nocturnas automáticas, solo Alliance (diseño)
 
-**Estado:** diseño con las decisiones de Pio del 2026-11-12 (§7) y plan de hitos aprobado (§8). Sin producción.
+**Estado:** diseño con las decisiones de Pio del 2026-11-12 (§7) y plan de hitos aprobado (§8). **AUTO-A implementado
+solo en local** (`CONFIRMADO POR TEST`, ver ESTADO_ACTUAL). Sin producción.
 
 **Objetivo:** cada noche, después de la importación de facturas y de la sincronización de albaranes, el sistema
 normaliza y concilia **solo** las facturas Alliance nuevas, sin intervención. Pio revisa por la mañana únicamente lo
@@ -142,8 +143,10 @@ Nunca se arregla nada ni se reintenta.
 Reglas de la tabla:
 
 - Una fila por fecha: el guard de la noche es un `INSERT` con clave única.
-- La escribe solo el orquestador, con la credencial del sistema y los privilegios por defecto de Supabase. **La 32 no
-  nombra el rol del sistema.**
+- La escribe solo el orquestador, con la credencial del sistema. **AUTORIZACIÓN EXPRESA DE PIO (2026-11-12):** la 32 y
+  su rollback nombran el rol del sistema (solo esos dos ficheros) para darle `SELECT`, `INSERT` y `UPDATE` y quitarle
+  `DELETE`, `TRUNCATE`, `REFERENCES` y `TRIGGER`. Motivo (ensayo de AUTO-A): con los privilegios por defecto de
+  Supabase, el resultado dependía de quién crea la tabla y el rol del sistema conservaba `DELETE` y `TRUNCATE`.
 - **Lectura:**
   - `cf_lectura`: `SELECT` y política RLS de lectura;
   - `anon` y `authenticated`: sin privilegios (se revocan los que Supabase da por defecto);
@@ -202,7 +205,9 @@ Reglas de la tabla:
 3. Migración 32 con su rollback y `desplegar_32.py`.
 4. Puertas adaptadas a la noche. La normalización no tiene plan previo: se sustituye por la comprobación posterior
    de facturas, totales y filas cambiadas.
-5. `.bat` versionado. La tarea la crea Pio, como `Usuari`.
+5. `.bat` versionado (`ejecutar_automatizacion_alliance.bat`, escrito sin mirar el de importación, decisión de Pio).
+   La tarea la crea Pio, como `Usuari`. **`PENDIENTE` de AUTO-S:** Pio lo compara con el `.bat` de importación antes de
+   crear la tarea.
 6. Vista «última noche» en la web, fuera de este repositorio.
 7. Documentación: REGLAS_CRITICAS (D1 ya anotada; paradas y límites al implementar), ESTADO_ACTUAL y el
    procedimiento de apagado.

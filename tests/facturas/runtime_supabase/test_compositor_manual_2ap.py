@@ -608,7 +608,9 @@ def test_aislamiento_compositor_sin_scheduler_ni_ruta_automatica():
             continue
         if "compositor_manual" in archivo.read_text(encoding="utf-8", errors="ignore"):
             referencias.append(archivo)
-    assert referencias == []
+    # D1 (Pio, AUTO-ALLIANCE, 2026-11-12): la unica referencia autorizada es el compositor automatico, que reutiliza
+    # la autoridad Alliance certificada; ningun scheduler (.bat/.cmd/.ps1/.xml) referencia el compositor manual.
+    assert referencias == [ROOT / "src/facturas/runtime_supabase/compositor_automatico.py"]
     fuente = inspect.getsource(cm)
     assert "obtener_cliente_supabase" not in fuente and "create_client" not in fuente
     assert "__main__" not in fuente
