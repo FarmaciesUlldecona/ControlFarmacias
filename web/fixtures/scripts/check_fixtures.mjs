@@ -18,8 +18,11 @@ import {
   ESTADOS_MATCHING, ESTADOS_VERSION_ANTERIOR, ESTADO_LINEA, TEXTO_HEFAME_BASES, claveEstadoLinea, estadoSinDescripcion, coincideImporte, esEco360, insigniasFactura, origenAplicado, rangoImporteBuscado, textoEstadoMatching, textoEvento,
 } from '../../app/server/detalle.ts';
 import { COLUMNAS_SENTIDO, validarDiagnostico } from '../../app/server/adaptador_real.ts';
-import { CONVENIO_ANUAL, objetivosAnuales, validarTrabajadora } from '../../app/server/rrhh/contrato.ts';
-import { crearAdaptadorRrhhFixtures, leerSemilla } from '../../app/server/rrhh/adaptador_fixtures.ts';
+import { CONVENIO_ANUAL, HORARIO_COMPLETA, objetivosAnuales, validarTrabajadora } from '../../app/server/rrhh/contrato.ts';
+import { crearAdaptadorRrhhFixtures, leerSemilla, leerSemillaEventos } from '../../app/server/rrhh/adaptador_fixtures.ts';
+import {
+  AVISO_NOTA_VACIA, COLOR_TIPO_EVENTO, FRANJAS_DE_JORNADA, LARGO_NOTA, TIPOS_EVENTO, describirCambio, esLaborable, horasFranja, leerNota, validarPeticionEventos,
+} from '../../app/server/rrhh/eventos.ts';
 import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
 import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
 
@@ -900,6 +903,78 @@ comprobar('TA1-2: convenio por año (referencia 40 h/sem provisional) y objetivo
   const malos = casos.filter(([x, e]) => !isDeepStrictEqual(x, e));
   return si(isDeepStrictEqual(conv, ['2026,1767,40,1,24,FIRMADO_PENDIENTE_PUBLICACION', '2027,1752,40,0,24,FIRMADO_PENDIENTE_PUBLICACION',
     '2028,1752,40,0,24,FIRMADO_PENDIENTE_PUBLICACION']) && malos.length === 0, JSON.stringify(malos));
+});
+
+// --- Casos TA2 (calendario, datos de ejemplo en memoria) ---------------------------
+comprobar('TA2: semilla de eventos: solo fichas de ejemplo, tipos de TA2 sin JORNADA, franjas propias, notas válidas, noviembre de 2026', () => {
+  const s = leerSemillaEventos();
+  const fichas = new Map(leerSemilla().map((t) => [t.id, t]));
+  const malos = s.ausencias.filter((a) => !fichas.has(a.trabajadora_id) || !TIPOS_EVENTO.includes(a.tipo) || a.tipo === 'JORNADA'
+    || a.hasta < a.desde || !a.desde.startsWith('2026-11') || !a.hasta.startsWith('2026-11')
+    || (a.franja !== undefined && !FRANJAS_DE_JORNADA[fichas.get(a.trabajadora_id).jornada].includes(a.franja))
+    || (a.nota !== undefined && !(leerNota(a.nota).ok && leerNota(a.nota).nota === a.nota)));
+  const permitidos = ['trabajadora_id', 'tipo', 'desde', 'hasta', 'franja', 'nota'];
+  const extra = s.ausencias.flatMap((a) => Object.keys(a).filter((k) => !permitidos.includes(k)));
+  // TA2-2: notas de ejemplo sin datos de salud: nunca en permisos médicos ni bajas.
+  const notaSalud = s.ausencias.filter((a) => a.nota !== undefined && (a.tipo === 'PERMISO_MEDICO' || a.tipo === 'BAJA' || /m[eé]dic|diagn|enferm|salud/i.test(a.nota)));
+  return si(malos.length === 0 && extra.length === 0 && notaSalud.length === 0 && s.jornada_habitual.desde === '2026-11-02' && s.jornada_habitual.hasta === '2026-11-29'
+    && s.confirmado.desde === '2026-11-02' && s.confirmado.hasta === '2026-11-08', JSON.stringify({ malos, extra, notaSalud }));
+});
+comprobar('TA2-2: carga por franja: 21 franjas/día (8 completas × 2 + 5 medias) × 20 laborables = 420; 41 de ausencia (23 días de persona); 105 confirmados', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const evs = a.eventos();
+  const aus = evs.filter((e) => e.tipo !== 'JORNADA');
+  const tipos = new Set(evs.map((e) => e.tipo));
+  const ok = evs.length === 420 && aus.length === 41 && new Set(aus.map((e) => `${e.trabajadora_id}|${e.fecha}`)).size === 23
+    && TIPOS_EVENTO.every((t) => tipos.has(t)) && aus.some((e) => e.farmacia === 'PIO') && aus.some((e) => e.farmacia === 'RITA')
+    && evs.filter((e) => e.estado === 'CONFIRMADO').length === 105 && evs.every((e) => esLaborable(e.fecha))
+    && new Set(evs.map((e) => `${e.trabajadora_id}|${e.fecha}|${e.franja}`)).size === evs.length; // uno por persona, día y franja
+  return si(ok, JSON.stringify({ n: evs.length, aus: aus.length }));
+});
+comprobar('TA2-3: franjas y horas de la ficha (completa mañana 4,5 h + tarde 3,5 h = 8 h; medias, todas sus horas en su franja); farmacia de la ficha; sin historial de la carga', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const fichas = new Map(a.trabajadoras('AMBAS', false).trabajadoras.map((t) => [t.id, t]));
+  const malos = a.eventos().filter((e) => {
+    const t = fichas.get(e.trabajadora_id);
+    return !t || e.horas !== horasFranja(t, e.franja) || !FRANJAS_DE_JORNADA[t.jornada].includes(e.franja) || e.farmacia !== t.farmacia;
+  });
+  // Cada persona suma al día sus horas diarias (completa: 4,5 + 3,5 = 8).
+  const porDia = new Map();
+  for (const e of a.eventos()) porDia.set(`${e.trabajadora_id}|${e.fecha}`, (porDia.get(`${e.trabajadora_id}|${e.fecha}`) ?? 0) + e.horas);
+  const sumaMal = [...porDia].filter(([k, h]) => fichas.get(k.split('|')[0]).horas_diarias !== h);
+  const aina = (fr) => a.eventos().find((e) => e.trabajadora_id === 'e0000000-0000-4000-8000-000000000001' && e.franja === fr).horas;
+  const irene = a.eventos().find((e) => e.trabajadora_id === 'e0000000-0000-4000-8000-000000000017');
+  const conf = isDeepStrictEqual(HORARIO_COMPLETA, { MANANA: { horas: 4.5, desde: '9:00', hasta: '13:30' }, TARDE: { horas: 3.5, desde: '17:00', hasta: '20:30' } });
+  return si(malos.length === 0 && sumaMal.length === 0 && conf && aina('MANANA') === 4.5 && aina('TARDE') === 3.5 && irene.franja === 'TARDE' && irene.horas === 3.5
+    && a.historialEventos('AMBAS').length === 0, JSON.stringify({ malos: malos.slice(0, 3), sumaMal: sumaMal.slice(0, 3) }));
+});
+comprobar('TA2-2: días con mañana y tarde distintas (Núria 10 nov, Rosa 18 nov) y notas de ejemplo (≤ 200, sin datos de salud)', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const dia = (n, f) => a.eventos().filter((e) => e.trabajadora_id === `e0000000-0000-4000-8000-0000000000${n}` && e.fecha === f)
+    .sort((x, y) => x.franja.localeCompare(y.franja)).map((e) => `${e.franja}:${e.tipo}`).join();
+  const notas = a.eventos().filter((e) => e.nota !== null);
+  return si(dia('03', '2026-11-10') === 'MANANA:JORNADA,TARDE:PERMISO_MEDICO' && dia('15', '2026-11-18') === 'MANANA:ASUNTOS_PROPIOS,TARDE:JORNADA'
+    && notas.length === 5 && notas.every((e) => e.nota.length <= LARGO_NOTA && e.tipo !== 'PERMISO_MEDICO' && e.tipo !== 'BAJA'),
+  JSON.stringify({ n: notas.length, nuria: dia('03', '2026-11-10'), rosa: dia('15', '2026-11-18') }));
+});
+comprobar('TA2-4: mensajes en días laborables × personas (Rellenado 2027: 261 × 5) y ANOTAR omite vacías y confirmadas contándolas', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const pio = a.trabajadoras('PIO', false).trabajadoras.map((t) => t.id);
+  const pedir = (b) => { const v = validarPeticionEventos(b); if (!v.ok) throw new Error(JSON.stringify(v.errores)); return a.cambiarEventos(v.peticion, 'Marc'); };
+  const r = pedir({ accion: 'RELLENAR', trabajadora_ids: pio, desde: '2027-01-01', hasta: '2027-12-31' });
+  const d = a.deshacerEventos(r.cambio.id, 'Marc');
+  const aina = 'e0000000-0000-4000-8000-000000000001';
+  // Aina 6-8 nov: 6 confirmado (2 franjas), 7-8 fin de semana (4 vacías) → nada que anotar.
+  const n = pedir({ accion: 'ANOTAR', celdas: ['2026-11-06', '2026-11-07', '2026-11-08'].map((fecha) => ({ trabajadora_id: aina, fecha })), nota: 'Formación' });
+  const textos = [describirCambio(r.cambio), describirCambio(d.cambio)];
+  return si(pio.length === 5 && isDeepStrictEqual(textos, ['Rellenado 2027: 261 días laborables × 5 personas', 'Deshecho «Rellenado 2027»: 261 días laborables × 5 personas'])
+    && n.cambio === null && n.omitidas_vacias === 4 && n.omitidas_confirmadas === 2 && AVISO_NOTA_VACIA === 'Pinta primero un evento para poder anotarlo',
+  JSON.stringify({ textos, n }));
+});
+comprobar('TA2: colores orientativos de Pío (jornada azul, vacaciones amarillo, asuntos propios violeta, descanso turquesa, baja gris)', () => {
+  const c = COLOR_TIPO_EVENTO;
+  return si(c.JORNADA === '#2f6fd0' && c.VACACIONES === '#e3b505' && c.ASUNTOS_PROPIOS === '#8a55c9' && c.DESCANSO_COMPENSATORIO === '#1a9e96'
+    && c.BAJA === '#8a9590' && Object.keys(c).length === TIPOS_EVENTO.length, JSON.stringify(c));
 });
 
 // --- Informe ----------------------------------------------------------------------

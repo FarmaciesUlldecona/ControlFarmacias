@@ -1,4 +1,5 @@
 // TA1 Trabajadores: fichas (listado, alta, edición, baja) y detalle con objetivo anual provisional e historial.
+// TA2: el calendario está en calendario.tsx (usa Modulo, SelectorFarmacia y EtiquetaFarmacia de aquí).
 // Solo datos de ejemplo en memoria del servidor (modo FIXTURES). En modo REAL: "Módulo pendiente de conexión (T1)".
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -33,35 +34,37 @@ function Pendiente() {
   return (
     <section className="tarjeta rrhh-pendiente" data-rrhh-pendiente>
       <h2>{MENSAJE_PENDIENTE_T1}</h2>
-      <p className="tenue">Las fichas de trabajadoras se verán aquí cuando el circuito cree las tablas del módulo. Hasta entonces no se muestra ningún dato.</p>
+      <p className="tenue">Las fichas y el calendario se verán aquí cuando el circuito cree las tablas del módulo. Hasta entonces no se muestra ningún dato.</p>
     </section>
   );
 }
 
+type Seccion = 'fichas' | 'calendario';
 const SECCIONES = [
   { clave: 'fichas', texto: 'Fichas', a: '/trabajadores' },
-  { clave: 'calendario', texto: 'Calendario', hito: 'TA2' },
+  { clave: 'calendario', texto: 'Calendario', a: '/trabajadores/calendario' },
   { clave: 'guardias', texto: 'Guardias y festivos', hito: 'TA3' },
 ] as const;
 
-function Secciones() {
+function Secciones({ activa }: { activa: Seccion }) {
   return (
     <nav className="rrhh-secciones" aria-label="Secciones de Trabajadores">
       {SECCIONES.map((s) => ('a' in s
-        ? <Link key={s.clave} to={s.a} className="rrhh-seccion activa" aria-current="page">{s.texto}</Link>
+        ? <Link key={s.clave} to={s.a} className={`rrhh-seccion${s.clave === activa ? ' activa' : ''}`} aria-current={s.clave === activa ? 'page' : undefined}
+          data-seccion={s.clave}>{s.texto}</Link>
         : <span key={s.clave} className="rrhh-seccion" aria-disabled="true">{s.texto}<span className="chip-proximamente">{s.hito}</span></span>))}
     </nav>
   );
 }
 
 /** Marco común: en FIXTURES, banner fijo + contenido; en REAL, solo el aviso (nunca datos de ejemplo). */
-function Modulo({ subtitulo, children }: { subtitulo: string; children: ReactNode }) {
+export function Modulo({ subtitulo, seccion = 'fichas', children }: { subtitulo: string; seccion?: Seccion; children: ReactNode }) {
   const estado = useApi<EstadoRrhhDTO>('/api/rrhh/estado');
   return (
     <div className="rrhh">
       <Cabecera titulo="Trabajadores" subtitulo={subtitulo} />
       {estado.estado === 'ok' && estado.datos.datos_ejemplo && <Banner />}
-      <Secciones />
+      <Secciones activa={seccion} />
       {estado.estado === 'cargando' && <p className="tenue">Cargando…</p>}
       {estado.estado === 'error' && <p className="rrhh-error" role="alert">No se ha podido leer el módulo ({estado.mensaje}).</p>}
       {estado.estado === 'ok' && (estado.datos.datos_ejemplo ? children : <Pendiente />)}
@@ -104,7 +107,7 @@ function Computa({ t }: { t: Trabajadora }) {
     : <span className="tenue" data-computa="no">No · titular</span>;
 }
 
-function SelectorFarmacia({ valor, onChange }: { valor: FiltroFarmacia; onChange: (v: FiltroFarmacia) => void }) {
+export function SelectorFarmacia({ valor, onChange }: { valor: FiltroFarmacia; onChange: (v: FiltroFarmacia) => void }) {
   const opciones: { v: FiltroFarmacia; texto: string }[] = [{ v: 'PIO', texto: 'PIO' }, { v: 'RITA', texto: 'RITA' }, { v: 'AMBAS', texto: 'Ambas' }];
   return (
     <div className="rrhh-selector" role="radiogroup" aria-label="Farmacia">
@@ -483,12 +486,16 @@ function Detalle() {
         </dl>
       </section>
 
-      <section className="tarjeta bloque" aria-labelledby="t-historial">
-        <h2 id="t-historial">Historial de cambios</h2>
+      {/* TA2-2: historial plegado por defecto; se despliega con un clic. */}
+      <details className="tarjeta bloque rrhh-plegable" data-historial-ficha>
+        <summary>
+          <h2 id="t-historial">Historial de cambios</h2>
+          <span className="tenue">{historial.length === 0 ? 'sin cambios' : `${historial.length} ${historial.length === 1 ? 'cambio' : 'cambios'}`}</span>
+        </summary>
         {historial.length === 0
           ? <p className="tenue vacio" data-historial-vacio>Sin cambios desde la carga de ejemplo.</p>
           : <ul className="rrhh-historial">{historial.map((h) => <Cambio key={h.id} h={h} />)}</ul>}
-      </section>
+      </details>
     </div>
   );
 }

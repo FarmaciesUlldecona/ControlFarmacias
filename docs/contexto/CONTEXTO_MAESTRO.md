@@ -1,6 +1,6 @@
 # Contexto maestro de ControlFarmacias
 
-Actualizado: 2026-10-30 (Hito 2BI-D: migración 25 desplegada; 2BG: regla R19 en conciliación, sin migración). Repositorio operativo:
+Actualizado: 2026-11-12 (Trabajadores: RITA solo en ese módulo; interfaz web parcialmente implementada; 2026-10-30, Hito 2BI-D: migración 25 desplegada; 2BG: regla R19 en conciliación, sin migración). Repositorio operativo:
 `C:\ControlFarmacias\Programa`.
 
 ControlFarmacias ingiere y trata documentos de compra de farmacia. Su flujo
@@ -57,7 +57,9 @@ obligan a actualizar los documentos canónicos en el mismo cambio. Los artefacto
   con efectos laterales y cualquier bypass de los wrappers.
 - No tocar Supabase productivo, flags, workers, Task Scheduler ni documentos reales
   sin preflight, alcance explícito y confirmación de Pio.
-- La única farmacia productiva autorizada es PIO. RITA permanece bloqueada.
+- La única farmacia productiva autorizada es PIO. RITA permanece bloqueada salvo en el
+  módulo de Trabajadores, el único donde está habilitada (decisión de Pio, 2026-11-12;
+  ver `REGLAS_CRITICAS`).
 - Ante duda de completitud, identidad, farmacia, evidencia o permisos, el sistema
   falla cerrado y deriva a revisión.
 - Los extractores locales no tienen autoridad productiva. Su registro o ejecución
@@ -217,7 +219,10 @@ A fecha 2026-09-24, el estado canónico es `NO ENCONTRADO` en código implementa
 - conciliación bancaria: **NO IMPLEMENTADA**;
 - Norma 43: **NO IMPLEMENTADA**;
 - Telegram: **NO IMPLEMENTADO**;
-- interfaz web: **NO IMPLEMENTADA**;
+- interfaz web: **PARCIALMENTE IMPLEMENTADA** (Pio, 2026-11-12): fuera de este
+  repositorio, solo lectura con `cf_lectura`; su única escritura prevista es el módulo
+  de Trabajadores (rol propio, no desplegado);
 - extractor de Beiersdorf: **SIN EXTRACTOR IMPLEMENTADO**.
 
-No deben describirse como módulos parciales.
+No deben describirse como módulos parciales (salvo la interfaz web, parcial desde el
+2026-11-12).

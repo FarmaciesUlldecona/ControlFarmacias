@@ -41,7 +41,9 @@ alcance explícito y confirmación de Pio.
 
 El flujo es factura -> extracción -> normalización -> conciliación -> Supabase.
 Ante cualquier duda de identidad, completitud, farmacia o permisos, falla cerrado.
-Solo PIO está habilitada; RITA permanece bloqueada. La autoridad productiva de
+Solo PIO está habilitada; RITA permanece bloqueada salvo en el módulo de
+Trabajadores, el único donde está habilitada (decisión de Pio, 2026-11-12; ver
+`REGLAS_CRITICAS`). La autoridad productiva de
 todos los extractores locales está desactivada.
 
 ## Ejecución de pytest

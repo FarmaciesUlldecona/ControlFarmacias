@@ -1,0 +1,241 @@
+/* TA2 Trabajadores: calendario. Mismos tokens que estilos.css. El elemento propio es la rejilla: cada día partido en
+   mañana (arriba) y tarde (abajo); planificado = color claro con filo; confirmado = color sólido con ✓. */
+.cal { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.cal .boton-secundario:disabled { cursor: not-allowed; }
+
+/* Barra: farmacia, vista y periodo */
+.cal-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.cal-vistas { display: inline-flex; padding: 3px; border: 1px solid var(--borde); border-radius: 10px; background: var(--superficie); }
+.cal-vistas button {
+  min-height: 38px; padding: 0 14px; border: 0; border-radius: 7px; background: none;
+  font: inherit; font-size: 14px; font-weight: 700; color: #3e4a46; cursor: pointer;
+}
+.cal-vistas button:hover { background: #f1f3f0; }
+.cal-vistas button.activa { background: var(--primario-fondo); color: var(--primario); box-shadow: inset 0 0 0 1.5px var(--primario); }
+.cal-navegar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.cal-navegar .boton-secundario { min-height: 38px; padding: 0 12px; font-size: 14px; }
+.cal-periodo { margin: 0 0 0 6px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; min-width: 9ch; }
+
+/* Filtros */
+.cal-filtros { display: grid; grid-template-columns: repeat(3, minmax(0, 220px)); gap: 12px 16px; }
+.cal-filtros .rrhh-campo select { min-height: 38px; font-size: 14px; }
+
+/* Paleta = leyenda: cada tipo es una muestra de color con su código */
+.cal-paleta-marco { display: flex; flex-direction: column; gap: 8px; }
+.cal-paleta { display: flex; flex-wrap: wrap; gap: 6px; }
+.cal-herr {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px 0 5px; border-radius: 9px;
+  border: 1px solid var(--borde); background: var(--superficie); color: var(--texto);
+  font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.cal-herr:hover { border-color: #c4cbc6; background: #fafbf9; }
+.cal-herr[aria-pressed='true'] { border-color: var(--c, var(--primario)); box-shadow: 0 0 0 2px var(--c, var(--primario)); background: var(--superficie); }
+.cal-herr-sel, .cal-herr-goma { padding-left: 8px; }
+.cal-muestra {
+  display: inline-grid; place-items: center; min-width: 28px; height: 26px; padding: 0 4px; border-radius: 6px;
+  background: var(--c); color: var(--t); font-size: 11.5px; font-weight: 800; letter-spacing: 0.02em;
+}
+.cal-muestra-sel { width: 16px; height: 16px; border: 2px dashed var(--primario); border-radius: 4px; }
+.cal-muestra-goma { width: 18px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, #f3b8b3 0 55%, #fff 55%); border: 1.5px solid var(--rojo); }
+.cal-herr-goma[aria-pressed='true'] { --c: var(--rojo); }
+.cal-leyenda { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; }
+.cal-leyenda-estado { display: inline-flex; align-items: center; gap: 6px; }
+.cal-mini { display: inline-grid; place-items: center; width: 22px; height: 16px; border-radius: 4px; font-size: 10px; font-weight: 800; --c: var(--azul); }
+.cal-mini.e-planificado { background: color-mix(in srgb, var(--c) 16%, white); box-shadow: inset 3px 0 0 var(--c); }
+.cal-mini.e-confirmado { background: var(--c); color: #fff; }
+.cal-enlace {
+  border: 0; background: none; padding: 4px 2px; font: inherit; font-size: 13px; font-weight: 700; color: var(--primario);
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.cal-colores { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 14px; border: 1px dashed #c9d0cb; border-radius: 10px; background: #fafaf8; }
+.cal-colores p { margin: 0; flex-basis: 100%; font-size: 12px; }
+.cal-color { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.cal-color input { width: 34px; height: 28px; padding: 0; border: 1px solid var(--borde); border-radius: 6px; background: none; cursor: pointer; }
+
+/* Acciones del periodo */
+.cal-acciones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cal-acciones .boton-secundario { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.cal-deshacer { gap: 8px; }
+.cal-deshacer-que { font-weight: 500; font-size: 12.5px; color: var(--tenue); max-width: 28ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Rejilla */
+.cal-marco { overflow-x: auto; padding: 4px 0 0; overscroll-behavior-x: contain; }
+.cal-rejilla { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; font-size: 13px; user-select: none; }
+.cal-rejilla th, .cal-rejilla td { padding: 0; border-bottom: 1px solid var(--borde-suave); }
+.cal-marco { --ancho-fila: 200px; }
+.cal-c-nombre { width: var(--ancho-fila); }
+.cal-c-franja { width: 26px; }
+.cal-esquina, .cal-fila {
+  position: sticky; left: 0; z-index: 2; background: var(--superficie); text-align: left; font-weight: 600;
+  border-right: 1px solid var(--borde);
+}
+.cal-esquina { padding: 8px 12px !important; font-size: 12px; color: var(--tenue); }
+.cal-fila { padding: 6px 12px !important; }
+/* TA2-2: columna M / T de la semana (pegada a la de nombres) */
+.cal-franja {
+  position: sticky; left: var(--ancho-fila); z-index: 2; background: var(--superficie); border-right: 1px solid var(--borde);
+  font-size: 10.5px; font-weight: 700; color: var(--tenue); text-align: center;
+}
+.cal-sub.s-manana > td, .cal-sub.s-manana > .cal-franja { border-bottom: 1px dashed var(--borde-suave); }
+.cal-sub.s-manana > .cal-fila { border-bottom: 1px solid var(--borde-suave); }
+/* Franja que la persona no trabaja: rayada, sin botón */
+td.cal-sin-franja { background: repeating-linear-gradient(135deg, transparent 0 5px, #eceeea 5px 6px); }
+.cal-persona { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cal-persona .rrhh-nombre { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-persona-jornada { font-size: 11.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-col { padding: 6px 2px !important; font-weight: 600; color: var(--tenue); text-align: center; }
+.cal-col-boton {
+  display: flex; flex-direction: column; align-items: center; width: 100%; gap: 0; padding: 2px 0; border: 0; border-radius: 6px;
+  background: none; font: inherit; color: inherit; cursor: pointer;
+}
+.cal-col-boton:hover { background: #f1f3f0; }
+.cal-dsem { font-size: 11.5px; font-weight: 600; text-transform: lowercase; }
+.cal-dnum { font-size: 16px; font-weight: 800; color: var(--texto); font-variant-numeric: tabular-nums; }
+.cal-col.hoy .cal-dnum { display: inline-grid; place-items: center; min-width: 28px; height: 28px; border-radius: 999px; background: var(--primario); color: #fff; }
+.cal-col.finde, td.finde { background: #f6f7f4; }
+.cal-grupo th { padding: 8px 12px !important; background: #f7f8f6; text-align: left; position: sticky; left: 0; }
+
+.cal-celda {
+  position: relative; display: block; width: 100%; height: 50px; padding: 0; border: 0; background: none; cursor: crosshair;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  /* línea de media jornada: arriba mañana, abajo tarde */
+  background-image: linear-gradient(to bottom, transparent calc(50% - 0.5px), var(--borde-suave) calc(50% - 0.5px), var(--borde-suave) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+}
+.cal-rejilla td + td, .cal-rejilla td.cal-vacia { border-left: 1px solid var(--borde-suave); }
+.cal-celda:hover { background-color: #f3f5f2; }
+.cal-celda:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; z-index: 1; }
+.cal-celda.trazo { box-shadow: inset 0 0 0 2px var(--herr); background-color: color-mix(in srgb, var(--herr) 10%, white); }
+.cal-celda.sel { box-shadow: inset 0 0 0 2px var(--primario); background-color: var(--primario-fondo); }
+.cal-celda.sel::after { content: ''; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px; border-radius: 999px; background: var(--primario); }
+
+.cal-ev {
+  position: absolute; left: 3px; right: 3px; top: 2px; bottom: 2px; display: flex; align-items: center; justify-content: center; gap: 4px;
+  border-radius: 5px; font-weight: 800; font-size: 11.5px; line-height: 1; overflow: hidden; pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+/* TA2-2: semana, una celda por franja; mes y por persona, el día partido en mañana (arriba) y tarde (abajo) */
+.cal-celda.de-franja { height: 27px; background-image: none; }
+.cal-mitad { position: absolute; left: 0; right: 0; pointer-events: none; }
+.cal-mitad.m-manana { top: 2px; bottom: calc(50% + 1px); }
+.cal-mitad.m-tarde { top: calc(50% + 1px); bottom: 2px; }
+.cal-mitad .cal-ev { top: 0; bottom: 0; }
+.cal-ev-nota { font-size: 10px; font-weight: 700; opacity: 0.85; }
+.cal-mitad .cal-ev-nota { position: absolute; right: 1px; top: -2px; font-size: 8px; }
+.cal-nota-marca { font-size: 12px; color: var(--primario); }
+.cal-ev.e-planificado { background: color-mix(in srgb, var(--c) 16%, white); color: color-mix(in srgb, var(--c) 62%, black); box-shadow: inset 3px 0 0 var(--c); }
+.cal-ev.e-confirmado { background: var(--c); color: var(--t); }
+.cal-ev-horas { font-weight: 600; font-size: 11px; opacity: 0.9; }
+.cal-ev-ok { font-size: 11px; }
+.cal-ev.atenuado { opacity: 0.22; }
+.cal-ev.atenuado > * { visibility: hidden; }
+
+.cal-pie { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; padding: 6px 0 !important; color: var(--tenue); }
+tfoot .cal-fila { font-size: 12px; color: var(--tenue); }
+tfoot th, tfoot td { border-bottom: 0 !important; }
+
+/* Mes y por persona: columnas estrechas, solo el código */
+.v-mes { --ancho-fila: 168px; }
+.v-mes .cal-celda, .v-persona .cal-celda { height: 38px; }
+.v-mes .cal-ev, .v-persona .cal-ev { left: 2px; right: 2px; font-size: 10px; border-radius: 4px; }
+.v-mes .cal-ev-ok, .v-persona .cal-ev-ok { display: none; }
+.v-mes .cal-dnum, .v-persona .cal-col { font-size: 12.5px; }
+.v-mes .cal-dsem { font-size: 10px; }
+.v-mes .cal-col.hoy .cal-dnum { min-width: 22px; height: 22px; }
+.v-mes .cal-rejilla, .v-persona .cal-rejilla { min-width: 1080px; }
+.v-persona { --ancho-fila: 112px; }
+.cal-mes-nombre { font-size: 13px; }
+/* Hoy: tinte suave de la columna (la cabecera lleva el número en círculo). */
+.cal-rejilla td.hoy, .cal-col.hoy { background: color-mix(in srgb, var(--primario) 6%, white); }
+
+/* Por persona */
+.cal-persona-vista { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.cal-persona-cabecera { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.cal-persona-cabecera h3 { margin: 0; font-size: 20px; font-weight: 800; }
+.cal-totales { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.cal-total { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border: 1px solid var(--borde); border-radius: 9px; background: var(--superficie); }
+.cal-total dt { display: inline-flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; font-weight: 600; }
+.cal-total dd { margin: 0; flex: none; white-space: nowrap; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Año: 12 meses, resumen por día */
+.cal-anio { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.cal-mes { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+.cal-mes h3 { margin: 0; font-size: 15px; font-weight: 800; display: flex; justify-content: space-between; gap: 8px; }
+.cal-mes h3 .tenue { font-size: 12px; font-weight: 600; }
+.cal-mes-rejilla { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.cal-mes-dsem { font-size: 10.5px; font-weight: 700; color: var(--tenue); text-align: center; }
+.cal-dia {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px;
+  height: 34px; padding: 3px 0 0; border: 0; border-radius: 6px; background: #f7f8f6; font: inherit; cursor: pointer;
+}
+.cal-dia.con-jornada { background: color-mix(in srgb, var(--azul) 9%, white); }
+.cal-dia.finde { background: transparent; }
+.cal-dia:hover { outline: 1.5px solid var(--primario); }
+.cal-dia.hoy .cal-dia-num { background: var(--primario); color: #fff; border-radius: 999px; padding: 0 5px; }
+.cal-dia-num { font-size: 11.5px; font-weight: 700; color: var(--texto); font-variant-numeric: tabular-nums; }
+.cal-dia-marcas { display: flex; gap: 2px; align-items: center; }
+.cal-dia-marca { width: 7px; height: 7px; border-radius: 2px; background: var(--c); }
+.cal-dia-mas { font-size: 9px; font-weight: 800; color: var(--tenue); }
+
+/* Selección */
+.cal-seleccion {
+  position: sticky; bottom: 12px; z-index: 6; padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  border: 1.5px solid var(--primario); box-shadow: 0 6px 24px rgba(29, 59, 71, 0.14);
+  /* TA2-2: con el detalle del día no tapa la rejilla: como mucho el 45 % de la pantalla, con desplazamiento propio */
+  max-height: 45vh; overflow-y: auto; overscroll-behavior: contain;
+}
+.cal-seleccion-acciones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cal-seleccion .boton-primario, .cal-seleccion .boton-secundario, .cal-seleccion .boton-peligro-suave { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.cal-pintar-como { display: inline-flex; gap: 6px; align-items: center; }
+.cal-pintar-como select {
+  min-height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--borde); font: inherit; font-size: 14px; font-weight: 600;
+  box-shadow: inset 4px 0 0 var(--c); background: var(--superficie);
+}
+/* TA2-2: detalle del día (una celda seleccionada): eventos por franja, horas realizadas y nota */
+.cal-detalle { flex-basis: 100%; display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--borde-suave); font-size: 13.5px; }
+.cal-detalle p { margin: 0; }
+.cal-detalle-ev { display: flex; flex-direction: column; gap: 6px; }
+.cal-detalle-que { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.cal-detalle-nota { padding: 4px 10px; border-left: 3px solid var(--borde); background: #fafaf8; border-radius: 0 6px 6px 0; overflow-wrap: anywhere; }
+.cal-editor { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; }
+.cal-editor-nota { flex: 1 1 320px; max-width: 520px; }
+.cal-editor-nota input { min-height: 40px; }
+.cal-editor .rrhh-sufijo input { min-height: 40px; }
+.cal-aviso-nota { display: inline-flex; align-items: center; gap: 6px; color: var(--naranja-texto); font-size: 12.5px; font-weight: 700; }
+.cal-aviso-nota::before { content: '!'; display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 999px; background: var(--naranja); color: #fff; font-size: 11px; }
+/* TA2-4: franja libre en el detalle, campos bloqueados de lo confirmado y nota para toda la selección */
+.cal-detalle-libre { font-weight: 600; color: var(--texto-tenue, #5d6b66); }
+.cal-editor input:disabled { background: #f1f2ef; color: #5d6b66; cursor: not-allowed; }
+.cal-editor-bloqueo { align-self: center; font-size: 12.5px; }
+.cal-anotar { flex-basis: 100%; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-left: 4px solid var(--azul); background: #f6f8fb; border-radius: 0 8px 8px 0; }
+.cal-anotar-titulo { margin: 0; font-weight: 600; font-size: 13.5px; }
+.cal-anotar .cal-editor-nota { flex: none; max-width: 520px; }
+[data-sel="anotar"] .cal-nota-marca { margin-right: 4px; }
+.cal-seleccion [data-aviso-anotar] { flex-basis: 100%; margin: 0; }
+/* TA2-2: oferta y confirmación de rellenar el año */
+.cal-oferta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 14px 16px; border-left: 4px solid var(--azul); }
+.cal-oferta p { margin: 0; font-size: 14px; max-width: 70ch; }
+.cal-confirmar { border-left-color: var(--primario); background: var(--primario-fondo); }
+
+/* Historial */
+.cal-trazas summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--primario); width: fit-content; }
+.cal-trazas ul { margin-top: 6px; }
+
+@media (max-width: 900px) {
+  .cal-barra { gap: 10px; }
+  .cal-vistas { width: 100%; }
+  .cal-vistas button { flex: 1; min-width: 0; padding: 0 6px; font-size: 13px; }
+  .cal-navegar { margin-left: 0; width: 100%; }
+  .cal-periodo { flex-basis: 100%; margin: 2px 0 0; font-size: 18px; order: -1; }
+  .cal-filtros { grid-template-columns: minmax(0, 1fr); }
+  .cal-paleta { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; margin: 0 -2px; }
+  .cal-herr { flex: none; }
+  .cal-acciones .boton-secundario { flex: 1 1 auto; justify-content: center; }
+  .cal-deshacer-que { display: none; }
+  .cal-marco, .v-mes { --ancho-fila: 112px; }
+  .cal-persona-jornada { display: none; }
+  .v-semana .cal-rejilla { min-width: 640px; }
+  .cal-celda { height: 54px; }
+  .cal-celda.de-franja { height: 30px; }
+  .cal-seleccion { bottom: 8px; padding: 10px 12px; }
+  .cal-seleccion-acciones { width: 100%; }
+}

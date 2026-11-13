@@ -9,11 +9,17 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   CONVENIO_ANUAL, diferencias, objetivosAnuales,
-  type ConvenioAnual, type DatosTrabajadora, type EventoCalendario, type EventoHistorial, type FarmaciaRrhh, type Festivo,
+  type ConvenioAnual, type DatosTrabajadora, type EventoHistorial, type FarmaciaRrhh, type Festivo,
   type FiltroFarmacia, type GuardiaFarmacia, type Trabajadora, type TrabajadoraDetalleDTO, type TrabajadorasDTO,
 } from './contrato.ts';
+import {
+  crearAlmacenEventos, type CalendarioDTO, type CambioCalendario, type ErrorCambio, type ErrorDeshacer, type EventoCalendario,
+  type PeticionEventos, type ResultadoCambioDTO, type SemillaEventos,
+} from './eventos.ts';
 
 export const RUTA_SEMILLA = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'trabajadoras.json');
+/** TA2: semanas de ejemplo del calendario (ausencias, jornada habitual y una semana confirmada). */
+export const RUTA_SEMILLA_EVENTOS = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'eventos.json');
 /** Instante fijo de la carga de ejemplo (las fichas de ejemplo no tienen fecha real). */
 export const CARGA_EJEMPLO_AT = '2026-11-01T08:00:00.000Z';
 
@@ -28,14 +34,24 @@ export interface AdaptadorRrhh {
   crear(datos: DatosTrabajadora, quien: string): Trabajadora;
   editar(id: string, datos: DatosTrabajadora, quien: string): Trabajadora | null;
   darDeBaja(id: string, fecha: string, quien: string): Trabajadora | 'YA_DE_BAJA' | null;
-  // TA2–TA3: interfaz preparada; sin datos en TA1.
-  eventos(farmacia: FiltroFarmacia): EventoCalendario[];
+  // TA2: calendario (eventos con traza y deshacer).
+  calendario(farmacia: FiltroFarmacia, desde: string, hasta: string): CalendarioDTO;
+  cambiarEventos(p: PeticionEventos, quien: string): ResultadoCambioDTO | ErrorCambio;
+  deshacerEventos(cambioId: string, quien: string): ResultadoCambioDTO | ErrorDeshacer;
+  historialEventos(farmacia: FiltroFarmacia): CambioCalendario[];
+  eventos(): EventoCalendario[];
+  // TA3: interfaz preparada; sin datos.
   guardias(farmacia: FiltroFarmacia): GuardiaFarmacia[];
   festivos(farmacia: FiltroFarmacia): Festivo[];
 }
 
 export function leerSemilla(ruta: string = RUTA_SEMILLA): SemillaTrabajadora[] {
   return (JSON.parse(readFileSync(ruta, 'utf8')) as { trabajadoras: SemillaTrabajadora[] }).trabajadoras;
+}
+
+export function leerSemillaEventos(ruta: string = RUTA_SEMILLA_EVENTOS): SemillaEventos {
+  const { ausencias, jornada_habitual, confirmado } = JSON.parse(readFileSync(ruta, 'utf8')) as SemillaEventos;
+  return { ausencias, jornada_habitual, confirmado };
 }
 
 const enFiltro = (f: FiltroFarmacia, farmacia: FarmaciaRrhh | null) => f === 'AMBAS' || farmacia === null || farmacia === f;
@@ -49,7 +65,7 @@ const ordenNombre = (a: Trabajadora, b: Trabajadora) => a.farmacia.localeCompare
 
 /** `ahora` y `nuevoId` inyectables para pruebas. */
 export function crearAdaptadorRrhhFixtures(opciones: {
-  semilla?: SemillaTrabajadora[]; ahora?: () => string; nuevoId?: () => string; anioReferencia?: number;
+  semilla?: SemillaTrabajadora[]; semillaEventos?: SemillaEventos | null; ahora?: () => string; nuevoId?: () => string; anioReferencia?: number;
 } = {}): AdaptadorRrhh {
   const ahora = opciones.ahora ?? (() => new Date().toISOString());
   const nuevoId = opciones.nuevoId ?? randomUUID;
@@ -63,6 +79,10 @@ export function crearAdaptadorRrhhFixtures(opciones: {
     historial.push({ id: nuevoId(), farmacia: t.farmacia, entidad: 'trabajadora', entidad_id: t.id, accion, quien, cuando: ahora(), antes, despues });
   };
   const copia = (t: Trabajadora): Trabajadora => ({ ...t });
+  // TA2: calendario sobre las mismas fichas (siempre las vigentes: altas, ediciones y bajas cuentan al momento).
+  const almacen = crearAlmacenEventos({ fichas: () => [...fichas.values()], ahora, nuevoId });
+  const semillaEventos = opciones.semillaEventos === undefined ? leerSemillaEventos() : opciones.semillaEventos;
+  if (semillaEventos) almacen.cargarEjemplo(semillaEventos, CARGA_EJEMPLO_AT);
 
   return {
     trabajadoras(farmacia, incluirBajas) {
@@ -118,7 +138,11 @@ export function crearAdaptadorRrhhFixtures(opciones: {
       registrar(nuevo, 'BAJA', quien, d.antes, d.despues);
       return copia(nuevo);
     },
-    eventos: () => [],
+    calendario: (farmacia, desde, hasta) => almacen.calendario(farmacia, desde, hasta),
+    cambiarEventos: (p, quien) => almacen.aplicar(p, quien),
+    deshacerEventos: (id, quien) => almacen.deshacer(id, quien),
+    historialEventos: (farmacia) => almacen.historial(farmacia),
+    eventos: () => almacen.todos(),
     guardias: () => [],
     festivos: () => [],
   };

@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-10 (2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-12 (Trabajadores: migración 31 solo local, LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -15,6 +15,10 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   preflight, alcance explícito y confirmación de Pio.
 - Solo PIO está autorizada. Una identidad de farmacia ausente, contradictoria o no
   demostrable bloquea la persistencia.
+  **Excepción por módulo (DECISIÓN DE PIO, 2026-11-12, Trabajadores):** RITA está habilitada **SOLO** para el
+  esquema de Trabajadores (trabajadoras, convenio, calendario, guardias y festivos). Facturas, albaranes,
+  normalización y conciliación siguen **solo PIO**: `cf_configuracion.farmacias_habilitadas` no cambia
+  (`{PIO}`) y el permiso de farmacia de Trabajadores es propio del módulo, nunca global. Ver «Trabajadores».
 - Los nombres de archivo, rutas, hashes, carpetas y gold son metadatos técnicos; no
   prueban proveedor, farmacia, obligación económica ni sentido contable.
 - Los valores documentales necesitan evidencia trazable. No se inventan importes,
@@ -329,8 +333,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - Los defectos de extracción previstos por el plan consumen intentos (R3) y no son parada.
   - Conciliación posterior: un n.º 1 que simula DIFERENCIA → PARADA y Pio decide caso a caso (serie de
     conciliación **no implementada**).
-- Diseño del Hito 2BR (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 30 **no desplegada**;
-  diseño en `pruebas/auditoria_2br/DISENO.md`):
+- Diseño del Hito 2BR (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 30 **desplegada en
+  producción** el 2026-11-10, 2BR-D, `APLICADA` con postcheck 2AX OK, ver ESTADO_ACTUAL; diseño en
+  `pruebas/auditoria_2br/DISENO.md`):
   - **Detalle por línea:** cada detalle guarda el importe del PDF (con signo), el de Farmatic (el aplicado), la
     diferencia y el estado de **su línea**; tolerancia por línea 0,05. Sin coincidencia → `DIFERENCIA`; sin importe
     documental o movimiento sin contraparte en Farmatic → `NO_EVALUABLE` (**DECISIÓN DE PIO, 2026-11-09:** los
@@ -378,12 +383,38 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   funcional autorizado. `CONFIRMADO POR CÓDIGO` y `CONFIRMADO POR TEST`,
   2026-09-24. Esto no crea un extractor SAFA: **extracción ≠ conciliación**.
 
+## Trabajadores
+
+Decisiones de Pio (2026-11-12, chat de la web, y respuestas a las 10 preguntas del diseño). Diseño en
+`pruebas/auditoria_trab/DISENO.md` (OK final de Pio; migración 31 **solo local**, `CONFIRMADO POR TEST`; **no
+desplegada**).
+
+- **Farmacias:** PIO y RITA, solo en este módulo (excepción por módulo de «Seguridad y operación»). Los tests
+  demuestran que facturas, albaranes y conciliación siguen solo PIO.
+- **Rol de escritura de la web limitado EXCLUSIVAMENTE a Trabajadores:** credencial propia (nunca la del sistema ni
+  la de `cf_lectura`); `SELECT`, `INSERT` y `UPDATE` solo sobre las tablas del módulo; **sin `DELETE`** (un registro
+  se anula y la anulación queda en el historial); ningún privilegio sobre el resto del esquema.
+- **Historial solo de inserción**, escrito por trigger; el autor lo indica la web (por ahora «Marc») y sin autor la
+  escritura falla.
+- **Sin datos de salud ni DNI:** las trabajadoras no guardan DNI; la nota de un evento tiene como máximo 200
+  caracteres (comprobado en la BD) y la web avisa de no anotar datos de salud.
+- **Fichajes de Farmatic: POSPUESTOS.** Las horas se confirman a mano en la web; no se lee Farmatic para este módulo.
+- **Cómputo (DECISIÓN DE PIO, 2026-11-12):** `TURNO_GUARDIA` (también el festivo trabajado) y `LOCALIZADA` **no
+  computan**: se registran, no suman horas.
+- **Rol de escritura de la web:** `cf_trabajadores_web` (migración 31).
+- **Rol del sistema sin privilegios** sobre las tablas del módulo: la migración 31 le revoca los privilegios por
+  defecto de Supabase. **AUTORIZACIÓN EXPRESA DE PIO (2026-11-12):** nombrar el rol del sistema **solo** en
+  `sql/migrations/31_cf_trabajadores.sql` y su rollback (excepción a la regla permanente del 2BS). Tests, scripts de
+  despliegue y documentación no lo nombran; cualquier otro fichero, autorización nueva.
+
 ## Capacidades no implementadas
 
 - Conciliación bancaria: **NO IMPLEMENTADA**.
 - Norma 43: **NO IMPLEMENTADA**.
 - Telegram: **NO IMPLEMENTADO**.
-- Interfaz web: **NO IMPLEMENTADA**.
+- Interfaz web: **PARCIALMENTE IMPLEMENTADA** (Pio, 2026-11-12). Vive fuera de este repositorio. Hoy solo lee
+  Supabase con `cf_lectura` (R9 de lectura); su única escritura prevista es el módulo de Trabajadores, con un rol
+  propio que no está desplegado (ver «Trabajadores»).
 - Beiersdorf: **SIN EXTRACTOR IMPLEMENTADO**.
 
 Estado a 2026-09-24: `NO ENCONTRADO` en el código vigente. No se presentan como

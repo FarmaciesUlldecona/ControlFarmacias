@@ -180,19 +180,24 @@ describe('adaptador RRHH_FIXTURES e historial', () => {
     assert.deepEqual(b.trabajadora(x.id)?.historial.map((h) => h.accion), ['BAJA', 'EDICION', 'ALTA']);
     assert.deepEqual(b.historial('PIO').map((h) => h.accion), ['BAJA', 'EDICION', 'ALTA']);
   });
-  test('interfaz TA2–TA3 preparada y vacía', () => {
-    assert.deepEqual([a.eventos('AMBAS'), a.guardias('PIO'), a.festivos('RITA')], [[], [], []]);
+  test('interfaz TA3 preparada y vacía (guardias y festivos); TA2 con eventos de ejemplo', () => {
+    assert.deepEqual([a.guardias('PIO'), a.festivos('RITA')], [[], []]);
+    assert.ok(a.eventos().length > 0);
   });
 });
 
 describe('rutas de escritura admitidas', () => {
-  test('solo POST /api/rrhh/trabajadoras y PUT /api/rrhh/trabajadoras/:id(/baja)', () => {
+  test('solo POST /api/rrhh/trabajadoras, PUT /api/rrhh/trabajadoras/:id(/baja) y (TA2) POST /api/rrhh/eventos(/deshacer)', () => {
     const id = 'e0000000-0000-4000-8000-000000000001';
     assert.equal(esEscrituraRrhh('POST', '/api/rrhh/trabajadoras'), true);
     assert.equal(esEscrituraRrhh('PUT', `/api/rrhh/trabajadoras/${id}`), true);
     assert.equal(esEscrituraRrhh('PUT', `/api/rrhh/trabajadoras/${id}/baja`), true);
+    assert.equal(esEscrituraRrhh('POST', '/api/rrhh/eventos'), true);
+    assert.equal(esEscrituraRrhh('POST', '/api/rrhh/eventos/deshacer'), true);
     for (const [m, r] of [['DELETE', `/api/rrhh/trabajadoras/${id}`], ['POST', `/api/rrhh/trabajadoras/${id}`], ['PUT', '/api/rrhh/trabajadoras'],
-      ['POST', '/api/rrhh/convenio'], ['PATCH', `/api/rrhh/trabajadoras/${id}`], ['POST', '/api/inicio'], ['PUT', '/api/facturas']] as const) {
+      ['POST', '/api/rrhh/convenio'], ['PATCH', `/api/rrhh/trabajadoras/${id}`], ['POST', '/api/inicio'], ['PUT', '/api/facturas'],
+      ['DELETE', `/api/rrhh/eventos/${id}`], ['PUT', '/api/rrhh/eventos'], ['PATCH', '/api/rrhh/eventos'], ['POST', '/api/rrhh/eventos/historial'],
+      ['POST', `/api/rrhh/eventos/${id}`], ['DELETE', '/api/rrhh/eventos']] as const) {
       assert.equal(esEscrituraRrhh(m, r), false, `${m} ${r}`);
     }
   });
@@ -247,7 +252,8 @@ describe('API /api/rrhh en el servidor FIXTURES (inyección)', async () => {
   });
   test('el resto sigue de solo lectura: 405 fuera de las rutas de escritura RRHH', async () => {
     for (const [method, url] of [['POST', '/api/inicio'], ['PUT', '/api/facturas'], ['DELETE', '/api/rrhh/trabajadoras/e0000000-0000-4000-8000-000000000001'],
-      ['POST', '/api/rrhh/convenio'], ['PATCH', '/api/rrhh/trabajadoras']] as const) {
+      ['POST', '/api/rrhh/convenio'], ['PATCH', '/api/rrhh/trabajadoras'], ['DELETE', '/api/rrhh/eventos/e0000000-0000-4000-8000-000000000001'],
+      ['PUT', '/api/rrhh/eventos'], ['POST', '/api/rrhh/eventos/historial']] as const) {
       assert.equal((await app.inject({ method, url, headers: { ...H, cookie, ...ORIGEN }, payload: {} })).statusCode, 405, `${method} ${url}`);
     }
   });
@@ -263,7 +269,7 @@ describe('modo REAL (instancia propia de Fastify, sin BD): «Módulo pendiente d
 
   test('todas las rutas de datos: 503 con el aviso y sin ningún nombre de ejemplo', async () => {
     for (const url of ['/api/rrhh/trabajadoras', '/api/rrhh/trabajadoras?farmacia=PIO', '/api/rrhh/trabajadoras/e0000000-0000-4000-8000-000000000001',
-      '/api/rrhh/convenio', '/api/rrhh/historial']) {
+      '/api/rrhh/convenio', '/api/rrhh/historial', '/api/rrhh/eventos?farmacia=PIO&desde=2026-11-09&hasta=2026-11-15', '/api/rrhh/eventos/historial']) {
       const r = await app.inject({ method: 'GET', url, headers: H });
       assert.equal(r.statusCode, 503, url);
       assert.deepEqual(r.json(), { error: 'MODULO_PENDIENTE_T1', mensaje: MENSAJE_PENDIENTE_T1 }, url);
@@ -279,5 +285,14 @@ describe('modo REAL (instancia propia de Fastify, sin BD): «Módulo pendiente d
     const r = await app.inject({ method: 'POST', url: '/api/rrhh/trabajadoras', headers: W, payload: valido });
     assert.equal(r.statusCode, 503);
     assert.equal(r.json().mensaje, MENSAJE_PENDIENTE_T1);
+    // TA2: calendario igual: sesión y origen primero; luego 503.
+    const pintar = { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: 'e0000000-0000-4000-8000-000000000001', fecha: '2026-12-07' }] };
+    assert.equal((await app.inject({ method: 'POST', url: '/api/rrhh/eventos', headers: { ...W, cookie: '' }, payload: pintar })).statusCode, 401);
+    assert.equal((await app.inject({ method: 'POST', url: '/api/rrhh/eventos', headers: { ...W, origin: 'http://x' }, payload: pintar })).statusCode, 403);
+    for (const [url, payload] of [['/api/rrhh/eventos', pintar], ['/api/rrhh/eventos/deshacer', { cambio_id: 'f1000000-0000-4000-8000-000000000001' }]] as const) {
+      const e = await app.inject({ method: 'POST', url, headers: W, payload });
+      assert.equal(e.statusCode, 503, url);
+      assert.deepEqual(e.json(), { error: 'MODULO_PENDIENTE_T1', mensaje: MENSAJE_PENDIENTE_T1 });
+    }
   });
 });

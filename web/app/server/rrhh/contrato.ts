@@ -3,7 +3,7 @@
  * las pruebas y check_fixtures.
  *
  * Esquema propuesto al circuito para T1 (tablas reales, que creará el circuito): trabajadoras, convenio_anual,
- * eventos_calendario, guardias_farmacia, festivos, historial. En TA1 solo hay datos de ejemplo en memoria
+ * eventos_calendario (TA2, ./eventos.ts, con su traza), guardias_farmacia, festivos, historial. En TA1 solo hay datos de ejemplo en memoria
  * (adaptador RRHH_FIXTURES); en modo REAL el módulo responde "Módulo pendiente de conexión (T1)".
  *
  * Decisiones de Pío (T0):
@@ -43,8 +43,21 @@ export const HORAS_MEDIA_MANANA = 4.5;
 export const HORAS_MEDIA_TARDE = 3.5;
 /** Horas por defecto de cada jornada. */
 export const HORAS_POR_DEFECTO: Readonly<Record<Jornada, number>> = { COMPLETA: HORAS_COMPLETA, MEDIA_MANANA: HORAS_MEDIA_MANANA, MEDIA_TARDE: HORAS_MEDIA_TARDE };
-/** Franja de cada media jornada (pista del formulario). */
-export const FRANJA_JORNADA: Readonly<Record<Jornada, string>> = { COMPLETA: 'de lunes a viernes', MEDIA_MANANA: 'de lunes a viernes, de mañana', MEDIA_TARDE: 'de lunes a viernes, de tarde (17:00–20:30)' };
+/**
+ * TA2-3: ÚNICO PUNTO del reparto por franja de la jornada completa (horario real de Pío): mañana 4,5 h (9:00–13:30) +
+ * tarde 3,5 h (17:00–20:30) = 8 h. Para un cambio de horario se toca solo esto; el rellenado, las horas de cada
+ * franja y los textos lo leen de aquí. Falla al cargar si la suma no es la jornada completa.
+ */
+export const HORARIO_COMPLETA = {
+  MANANA: { horas: 4.5, desde: '9:00', hasta: '13:30' },
+  TARDE: { horas: 3.5, desde: '17:00', hasta: '20:30' },
+} as const satisfies Record<'MANANA' | 'TARDE', { horas: number; desde: string; hasta: string }>;
+if (HORARIO_COMPLETA.MANANA.horas + HORARIO_COMPLETA.TARDE.horas !== HORAS_COMPLETA) throw new Error('HORARIO_COMPLETA: la suma no es la jornada completa');
+const tramo = (f: 'MANANA' | 'TARDE') => `${HORARIO_COMPLETA[f].desde}–${HORARIO_COMPLETA[f].hasta}`;
+/** Franja de cada jornada (pista del formulario). */
+export const FRANJA_JORNADA: Readonly<Record<Jornada, string>> = {
+  COMPLETA: `de lunes a viernes, ${tramo('MANANA')} y ${tramo('TARDE')}`, MEDIA_MANANA: 'de lunes a viernes, de mañana', MEDIA_TARDE: 'de lunes a viernes, de tarde (17:00–20:30)',
+};
 export const DIAS_SEMANA = 5;
 /** Autor que figura en el historial (decisión de Pío, TA1-2). */
 export const AUTOR_HISTORIAL = 'Marc';
@@ -124,21 +137,8 @@ export interface EventoHistorial {
   despues: Partial<Trabajadora> | null;
 }
 
-// --- Preparado para TA2–TA3 (sin pantalla ni datos en TA1) ---------------------
+// --- TA2: eventos_calendario en ./eventos.ts. Preparado para TA3 (sin pantalla ni datos) ---------------------
 
-export const TIPOS_EVENTO = ['VACACIONES', 'ASUNTO_PROPIO', 'PERMISO_MEDICO', 'BAJA_MEDICA', 'OTRO'] as const;
-export type TipoEvento = (typeof TIPOS_EVENTO)[number];
-/** eventos_calendario (TA2). */
-export interface EventoCalendario {
-  id: string;
-  farmacia: FarmaciaRrhh;
-  trabajadora_id: string;
-  fecha: string;
-  tipo: TipoEvento;
-  /** null = día completo. */
-  horas: number | null;
-  nota: string | null;
-}
 /** guardias_farmacia (TA3): días de guardia de la farmacia. */
 export interface GuardiaFarmacia {
   id: string;

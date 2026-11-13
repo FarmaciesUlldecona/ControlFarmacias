@@ -11,6 +11,7 @@ import App from './App.tsx';
 import './estilos.css';
 import './estilos_facturas.css';
 import './estilos_rrhh.css';
+import './estilos_calendario.css';
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>

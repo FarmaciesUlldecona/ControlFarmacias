@@ -1,0 +1,17 @@
+{
+  "_nota": "TA2/TA2-2: calendario FICTICIO para el adaptador RRHH_FIXTURES en memoria. Un evento por persona, día y franja (mañana / tarde). Ausencias de ejemplo (de lunes a viernes entre desde y hasta; sin franja, todas las de la ficha), jornada habitual de todas las fichas activas del 2 al 29 de noviembre de 2026 sin pisar las ausencias, y la semana del 2 al 8 de noviembre ya confirmada. Notas inventadas, sin datos de salud. Nunca datos reales.",
+  "ausencias": [
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000001", "tipo": "VACACIONES", "desde": "2026-11-16", "hasta": "2026-11-20" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000002", "tipo": "ASUNTOS_PROPIOS", "desde": "2026-11-13", "hasta": "2026-11-13" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000003", "tipo": "PERMISO_MEDICO", "desde": "2026-11-10", "hasta": "2026-11-10", "franja": "TARDE" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000004", "tipo": "PERMISO_RETRIBUIDO", "desde": "2026-11-25", "hasta": "2026-11-26", "nota": "Traslado de domicilio" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000011", "tipo": "PERMISO_MEDICO", "desde": "2026-11-24", "hasta": "2026-11-24" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000012", "tipo": "BAJA", "desde": "2026-11-09", "hasta": "2026-11-13" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000013", "tipo": "VACACIONES", "desde": "2026-11-23", "hasta": "2026-11-27" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000014", "tipo": "DESCANSO_COMPENSATORIO", "desde": "2026-11-06", "hasta": "2026-11-06", "nota": "Compensa el sábado 31 de octubre" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000015", "tipo": "ASUNTOS_PROPIOS", "desde": "2026-11-18", "hasta": "2026-11-18", "franja": "MANANA", "nota": "Gestión en el ayuntamiento" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000016", "tipo": "PERMISO_NO_RETRIBUIDO", "desde": "2026-11-19", "hasta": "2026-11-19" }
+  ],
+  "jornada_habitual": { "desde": "2026-11-02", "hasta": "2026-11-29" },
+  "confirmado": { "desde": "2026-11-02", "hasta": "2026-11-08" }
+}

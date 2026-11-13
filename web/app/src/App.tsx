@@ -5,6 +5,7 @@ import { PaginaDetalle } from './detalle.tsx';
 import { PaginaFacturas } from './facturas.tsx';
 import { PaginaEnConstruccion, PaginaNoEncontrada } from './paginas.tsx';
 import { PaginaTrabajadora, PaginaTrabajadores } from './trabajadores.tsx';
+import { PaginaCalendario } from './calendario.tsx';
 
 /** Pantallas de la fase 1. En H3b: cabecera + "En construcción". */
 export const PANTALLAS = [
@@ -34,6 +35,8 @@ export default function App() {
         <Route path="/facturas/:id" element={<PaginaDetalle />} />
         {/* TA1: módulo Trabajadores (datos de ejemplo en memoria; REAL: pendiente de conexión T1). */}
         <Route path="/trabajadores" element={<PaginaTrabajadores />} />
+        {/* TA2: calendario (ruta fija: tiene prioridad sobre /trabajadores/:id). */}
+        <Route path="/trabajadores/calendario" element={<PaginaCalendario />} />
         <Route path="/trabajadores/:id" element={<PaginaTrabajadora />} />
         <Route path="*" element={<PaginaNoEncontrada />} />
       </Route>

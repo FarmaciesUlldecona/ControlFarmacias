@@ -115,7 +115,8 @@ export async function crearServidor(modo: Modo) {
     if (host !== '127.0.0.1' && host !== 'localhost') return reply.code(403).send({ error: 'HOST_NO_LOCAL' });
   });
   // Solo lectura: GET/HEAD; POST únicamente en /api/login y /api/logout, y solo desde el mismo origen.
-  // TA1: única excepción, la escritura del módulo Trabajadores (esEscrituraRrhh: POST/PUT en /api/rrhh/trabajadoras…),
+  // TA1/TA2: única excepción, la escritura del módulo Trabajadores (esEscrituraRrhh: POST/PUT en /api/rrhh/trabajadoras…
+  // y, TA2, POST /api/rrhh/eventos y /api/rrhh/eventos/deshacer),
   // con sesión, Origin obligatorio y JSON (server/rrhh/rutas.ts).
   app.addHook('onRequest', async (req, reply) => {
     if (req.method === 'GET' || req.method === 'HEAD') return;

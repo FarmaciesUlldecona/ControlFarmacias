@@ -290,3 +290,45 @@ TA1-2 (decisiones de Pío): la jornada se guarda en **horas diarias** (lunes a v
 | Validación | Nombre vacío; campo `dni`, `porcentaje_jornada` u otro no admitido; horas ≤ 0, > 8 o con más de 2 decimales; completa distinta de 8; media mañana de 8 h | 400 con error por campo; la pantalla lo muestra junto al campo y lo retira al corregirlo |
 | Escritura | POST `/api/rrhh/trabajadoras`; PUT `/api/rrhh/trabajadoras/:id` y `/:id/baja` | Solo con sesión, Origin del mismo sitio (obligatorio) y JSON. El resto de la API sigue de solo lectura (405) |
 | Horas | Planificadas, confirmadas y pendientes | Huecos rotulados «pendiente motor de horas (T5)» |
+
+## TA2: Trabajadores · calendario (datos de ejemplo en memoria)
+
+Semilla ficticia en `fixtures/rrhh/eventos.json`; contrato, validación y almacén en `app/server/rrhh/eventos.ts`. Al arrancar, el servidor FIXTURES carga las ausencias de ejemplo, rellena la jornada habitual de todas las fichas activas del 2 al 29 de noviembre de 2026 sin pisarlas, y deja confirmada la semana del 2 al 8. La carga no deja historial. Los cambios solo viven en memoria. En modo REAL, `/api/rrhh/eventos*` responde 503 «Módulo pendiente de conexión (T1)».
+
+Reglas:
+- **TA2-2: un evento por persona, día y franja** (mañana o tarde). Por ejemplo, mañana JORNADA y tarde PERMISO_MEDICO.
+- Las franjas salen de la ficha: completa, mañana y tarde; media mañana, solo mañana; media tarde, solo tarde (con todas sus horas).
+- **TA2-3: la jornada completa es mañana 4,5 h (9:00–13:30) + tarde 3,5 h (17:00–20:30) = 8 h**, el horario real de Pío. El reparto se configura en un único punto, `HORARIO_COMPLETA` en `app/server/rrhh/contrato.ts`, que falla al cargar si no suma 8 h. Las medias jornadas no cambian (mañana 4,5 h; tarde 3,5 h por defecto). Pintar una franja que la persona no tiene falla cerrado (`FRANJA_NO_VALIDA`) y no se aplica nada.
+- La farmacia es la de la ficha, nunca la que mande el cliente.
+- Todo nace PLANIFICADO. CONFIRMADO se marca a mano: una franja confirmada no se pinta, no se borra ni se le editan horas o nota sin quitar antes la confirmación.
+- **TA2-2: nota opcional por evento**, de 200 caracteres como máximo, con el aviso «No anotes datos de salud ni diagnósticos». Se ve al pasar el ratón (marca ✎) y en el detalle del día, y queda en el historial. Al pintar otro tipo encima, la nota anterior se quita (sigue en la traza).
+- Fechas admitidas: solo los años del convenio (2026–2028). Rellenar y confirmar por periodo, hasta 366 días.
+- **TA2-4: los mensajes cuentan días × personas**, no días de persona. El formato es `<qué> <periodo>: N días laborables × P personas`, por ejemplo «Rellenado 2027: 261 días laborables × 5 personas», nunca «1305 días».
+  - **Periodo:** el pedido al rellenar o confirmar un rango (semana, mes o año, también al deshacerlo). Si no hay rango pedido, el afectado («10 nov 2026», «2–8 nov 2026», «diciembre de 2026», «2027»).
+  - **«días» sin «laborables»:** cuando entra algún fin de semana.
+  - **Franjas:** se añade «· N franjas» cuando alguna persona-día se tocó solo en parte (p. ej., solo la tarde de una completa).
+  - **Deshacer:** «Deshecho «Rellenado 2027»: 261 días laborables × 5 personas».
+- **TA2-4: notas más visibles.**
+  - **Botón «Añadir nota» en la barra de selección.**
+    - Con una franja con evento en el detalle, lleva a su campo Nota.
+    - Con varias, abre «Misma nota para las N franjas con evento» y aplica la misma nota a todas (acción `ANOTAR`, un solo cambio, deshacible). Las vacías y las confirmadas se omiten, y se avisa de cuántas.
+  - **Detalle del día:** el campo Nota se ve siempre con su aviso de salud. En lo confirmado aparece bloqueado y en una franja libre también se ve.
+  - **Franja vacía:** intentar anotarla da «Pinta primero un evento para poder anotarlo» y no se crea nada.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Carga | 21 franjas por día (8 completas × 2 + 5 medias) × 20 laborables | 420 eventos; 41 de ausencia (23 días de persona); 105 confirmados (semana del 2 al 8); nada en fin de semana |
+| PIO | Aina, vacaciones 16–20 nov; Clara, asuntos propios 13 nov; Núria, permiso médico la **tarde** del 10 nov (mañana: jornada); Elena, permiso retribuido 25–26 nov (nota «Traslado de domicilio») | Semana del 9 al 15: trabajan 12, 12, 12, 12 y 11 (en Ambas) |
+| RITA | Marta, baja 9–13 nov; Sílvia, vacaciones 23–27 nov; Judit, descanso compensatorio 6 nov (confirmado; nota «Compensa el sábado 31 de octubre»); Rosa, asuntos propios la **mañana** del 18 nov (tarde: jornada; nota «Gestión en el ayuntamiento»); Paula, permiso no retribuido 19 nov; Laura, permiso médico 24 nov | Irene (media tarde): solo tardes de 3,5 h |
+| Vistas | Semana: dos subfilas por persona (M y T; la franja que no trabaja, rayada). Mes y por persona: cada día partido en mañana (arriba) y tarde (abajo). Año: resumen por día (personas ausentes y cuántas trabajan) | Filtros: persona, categoría y tipo de evento; los demás tipos se atenúan, nunca se ocultan |
+| Pintar | Paleta de tipos (también es la leyenda). Semana: clic en una franja, o arrastre sobre las dos para el día. Mes y por persona: un clic aplica al día completo (las franjas de la persona). Toque en móvil; clic en la cabecera de un día aplica a todas las personas | Pintar sobre otro tipo lo sustituye (EDITAR con antes/después); el mismo tipo no cambia nada; las franjas confirmadas se omiten y se avisa |
+| Goma | Clic o arrastre, por franja o día | Borra lo planificado; lo confirmado se omite |
+| Rellenar jornada habitual | Semana o mes visible; **año completo** (TA2-2) en las vistas año y por persona, con confirmación | JORNADA de lunes a viernes por franja según la ficha vigente; no pisa lo pintado ni lo confirmado; repetirlo no crea nada; se deshace de una vez |
+| Año vacío | Al abrir un año sin eventos para las personas visibles | Se ofrece «Rellenar AAAA…», con confirmación (Cancelar no crea nada). 2027 en PIO: «Rellenado 2027: 261 días laborables × 5 personas» |
+| Confirmar | «Confirmar semana / mes» o selección | PLANIFICADO → CONFIRMADO; «Quitar confirmación» lo revierte |
+| Detalle del día | Una celda seleccionada (franja o día completo) | Cada franja de la persona con tipo, horas, estado y nota, o «libre». **TA2-4: el campo Nota siempre está a la vista** (bloqueado en lo confirmado; en lo libre, «Pinta primero un evento para poder anotarlo»). En lo planificado se editan las horas realizadas (> 0 y ≤ 12 h) y la nota |
+| Añadir nota (TA2-4) | Botón en la barra de selección | Sin franjas con evento: «Pinta primero un evento para poder anotarlo». Con una: su editor. Con varias: misma nota para todas, omitiendo vacías y confirmadas con aviso. Ej.: 28 dic, Aina M y T y Clara M con vacaciones y Clara T libre → «Anotado 28 dic 2026: 1 día laborable × 2 personas · 3 franjas. 1 franja vacía no se ha anotado…» |
+| Deshacer | Botón (dice qué deshace) o Ctrl+Z | Revierte el último cambio y luego el anterior; restaura exactamente (franjas y notas); falla cerrado si el estado ya no es el que dejó el cambio |
+| Historial | **Plegado por defecto** (también el de cada ficha); un clic lo despliega. Cada cambio: qué, días, personas, cuándo y quién («Marc»); detalle franja a franja (antes → después, con la nota) | Los deshechos llevan la marca «deshecho» |
+| Colores | Configurables en la leyenda | Solo en el navegador de quien los cambia; «Restablecer colores» |
+| Escritura | Solo POST `/api/rrhh/eventos` (PINTAR, BORRAR, RELLENAR, CONFIRMAR, DESCONFIRMAR, EDITAR horas y nota, ANOTAR) y POST `/api/rrhh/eventos/deshacer` | Con sesión, Origin del mismo sitio y JSON. Persona de baja o inexistente, o franja ajena: no se aplica nada. DELETE, PUT y PATCH: 405 |
