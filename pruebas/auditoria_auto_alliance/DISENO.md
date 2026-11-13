@@ -89,6 +89,9 @@ que no cuadra.
       estado que dejó la serie en 135 documentos.
     - **Defecto en un Alliance** → `ERROR` con backoff y, al 4.º intento, `REVISION` (R3).
   - Los 12 `ERROR` actuales se resuelven **antes**, con la serie 2BJ (D3). Así la noche solo ve lo nuevo.
+    **D3 ajustada (DECISIÓN DE PIO, 2026-11-13):** la serie no resuelve un defecto de extracción, solo le consume
+    un intento (R3). Los defectos se agotan con tandas antes de AUTO-ON (el 2026-11-13 y una tanda pequeña cada
+    día de la fase de sombra), para que no ocupen los huecos de la noche.
 - **Conciliación.**
   - Antes de cada claim, el orquestador simula en READ_ONLY el n.º 1 del orden oficial (R5).
   - Si el n.º 1 no es Alliance, no se reclama y se para la conciliación de esa noche. «Alliance» = el grupo
@@ -235,7 +238,7 @@ Reglas de la tabla:
 |---|---|
 | D1 | **Sí:** autoridad Alliance en la ruta automática, solo Alliance y solo su versión certificada. Regla actualizada en REGLAS_CRITICAS («Extractores locales»). |
 | D2 | El n.º 1 que simula `DIFERENCIA` para la conciliación de esa noche (regla de las series). **Revisar tras un mes de uso.** |
-| D3 | Resolver antes los 12 `ERROR` con la serie 2BJ. |
+| D3 | Resolver antes los 12 `ERROR` con la serie 2BJ. **Ajustada (2026-11-13):** los defectos se agotan con tandas antes de AUTO-ON (ese día y una pequeña cada día de la fase de sombra). |
 | D4 | **Sí:** tabla de resumen nocturno (migración 32), con lectura para `cf_lectura`. |
 | D5 | 5 + 5 la primera noche, después 20 + 20, máximo 60 minutos. |
 | D6 | El orquestador vive en `src/`. |
@@ -248,7 +251,7 @@ Cada hito tiene su propia confirmación de Pio. Producción solo con preflight, 
 | Hito | Qué | Dónde | Cierre |
 |---|---|---|---|
 | **AUTO-A** (local) | Compositor automático Alliance; orquestador en `src/` (modos `SOMBRA`/`REAL`, límites, puertas, paradas, informe); migración 32, rollback y `desplegar_32.py`; `.bat`; tests en PostgreSQL 17 local (casos de §3 y §6, ensayo de despliegue y rollback de la 32 con la imitación del `postgres` de Supabase); REGLAS_CRITICAS y ESTADO_ACTUAL | local | suite completa (aviso previo por Docker), revisor PASS, commit; push de Pio |
-| **AUTO-COLA** (producción, con las series) | Serie 2BJ para los 12 `ERROR` y los `PENDIENTE` (D3); serie 2BP para las facturas que salgan | producción, tandas confirmadas | cola sin `PENDIENTE` ni `ERROR` reclamables; la noche solo verá lo nuevo. Puede ir en paralelo a AUTO-A |
+| **AUTO-COLA** (producción, con las series) | Serie 2BJ para los 12 `ERROR` y los `PENDIENTE` (D3); serie 2BP para las facturas que salgan | producción, tandas confirmadas | cola sin `PENDIENTE` ni `ERROR` reclamables; la noche solo verá lo nuevo. Puede ir en paralelo a AUTO-A. Los defectos que queden en `ERROR` se agotan con una tanda pequeña cada día de AUTO-S (D3 ajustada) |
 | **AUTO-32-D** (despliegue) | Puerta, noche, precondiciones y captura pre; `desplegar_32.py`, una vez; captura post, postcheck 2AX y comprobación de lectura con `cf_lectura` | producción | 32 `APLICADA`; la web puede leer la tabla |
 | **AUTO-S** (modo sombra) | Pio crea la tarea de las 22:15 como `Usuari` con el `.bat` en modo `SOMBRA`; flags apagados. Cada noche: puertas, la fila `SOMBRA` (única escritura) y lo que *haría* (documentos y conciliaciones simuladas). Revisión READ_ONLY cada mañana | producción | 3 a 5 noches `SOMBRA` coherentes con lo que hacen después las series; OK de Pio |
 | **AUTO-ON** (activación) | Pio cambia el `.bat` a `REAL` (commit) y enciende los dos flags. Primera noche 5 + 5; revisión de la mañana (informe, postcheck y noche READ_ONLY); 20 + 20 automático tras 3 noches buenas | producción | primera noche `NOCHE_OK` o `FIN_LIMITE` |
@@ -256,3 +259,15 @@ Cada hito tiene su propia confirmación de Pio. Producción solo con preflight, 
 
 **DECISIÓN DE PIO (2026-11-12):** en el modo `SOMBRA` el orquestador **sí** escribe su fila en la tabla de resumen
 nocturno, que es su **única escritura**. Plan de hitos aprobado por Pio el 2026-11-12.
+
+## 9. `PENDIENTE` para el próximo commit con código (observaciones del revisor en AUTO-A)
+
+Textos desfasados, sin regla incumplida (decisión de Pio, 2026-11-13: corregirlos en el próximo commit que toque
+código, con su suite completa):
+
+1. REGLAS_CRITICAS, regla del 2AP: «ningún scheduler ni la ruta automática lo referencian» ya está matizada por D1;
+   ajustar la frase.
+2. Docstring de `tests/facturas/runtime_supabase/test_integracion_pg17_32_auto_alliance.py`: habla de «privilegios por
+   defecto»; la 32 concede los privilegios explícitamente (opción A).
+3. Comentario de `src/facturas/runtime_supabase/noche_automatica.py` que cita «(R10)» por el riesgo del diseño; se
+   confunde con la regla R10 de REGLAS_CRITICAS.
