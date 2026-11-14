@@ -147,6 +147,32 @@ def test_postcheck_fila_ajena_es_parada(tabla, fila):
     assert informe["filas_ajenas"][0]["tabla"] == tabla
 
 
+def test_trabajadores_fuera_del_2ax_y_comparados_aparte():
+    """Mejora aprobada por Pio (2026-11-13): Trabajadores se informa aparte y nunca hace fallar el postcheck."""
+    assert na.TABLAS_TRABAJADORES <= na.TABLAS_FUERA_DEL_SNAPSHOT
+    pre = {"tablas": {"trabajadoras": {"t1": "h1"}, "festivos": {}}}
+    post = {"tablas": {"trabajadoras": {"t1": "h1b", "t2": "h2"}, "festivos": {}}}
+    assert na.cambios_trabajadores(pre, post) == {"afecta_al_veredicto": False,
+                                                  "filas_cambiadas_por_tabla": {"trabajadoras": 2}}
+    # Sin lectura (p. ej. sin privilegio) solo se anota; no hay veredicto.
+    informe = na.cambios_trabajadores(pre, {"error": "InsufficientPrivilege"})
+    assert informe == {"afecta_al_veredicto": False, "no_comparable": {"pre": None, "post": "InsufficientPrivilege"}}
+
+
+class _LectorRoto:
+    def __enter__(self):
+        raise RuntimeError("sin privilegio")
+
+    def __exit__(self, *_):
+        return False
+
+
+def test_snapshot_trabajadores_no_corta_la_noche():
+    entorno = na.Entorno(abrir_lectura=_LectorRoto, cliente=None, tareas=dict, puerta_git=lambda: (None, []),
+                         construir_worker=lambda cfg: None, directorio_informes=Path("."))
+    assert na.snapshot_trabajadores(entorno) == {"error": "RuntimeError"}
+
+
 # --------------------------------------------------------------------------- criterios
 
 
@@ -169,12 +195,14 @@ def test_numeros_de_un_cambio_r18():
 
 def test_autoridad_automatica_solo_alliance_certificada():
     assert dict(AUTORIDAD_COMPOSITOR_AUTOMATICO) and all(
-        v == ("alliance-local", "1.3.0") for v in AUTORIDAD_COMPOSITOR_AUTOMATICO.values())
-    assert autoridad_automatica_habilitada("alliance-local", "1.3.0") is True
+        v == ("alliance-local", "1.3.1") for v in AUTORIDAD_COMPOSITOR_AUTOMATICO.values())
+    assert autoridad_automatica_habilitada("alliance-local", "1.3.1") is True
+    # Pio, 2026-11-14: la 1.3.0 (sin "ENCARGO") deja de estar certificada para la ruta automatica.
+    assert autoridad_automatica_habilitada("alliance-local", "1.3.0") is False
     assert autoridad_automatica_habilitada("alliance-local", "1.2.0") is False
     assert autoridad_automatica_habilitada("alliance-local", None) is False
     for layout in ("hefame-local", "cofares-local", "fedefarma-local", None, "inventado"):
-        assert autoridad_automatica_habilitada(layout, "1.3.0") is False
+        assert autoridad_automatica_habilitada(layout, "1.3.1") is False
     # El compositor manual no cambia.
     assert autoridad_manual_habilitada("alliance-local") is True
 
@@ -186,7 +214,8 @@ class _Local:
         self.incidencias, self.facturas, self.documento_completo_demostrado = [], [], True
 
 
-@pytest.mark.parametrize("layout, version", [("alliance-local", "1.2.0"), ("hefame-local", "1.0.0")])
+@pytest.mark.parametrize("layout, version", [("alliance-local", "1.2.0"), ("alliance-local", "1.3.0"),
+                                             ("hefame-local", "1.0.0")])
 def test_extractor_automatico_sin_autoridad_es_no_soportado(layout, version):
     extractor = ExtractorDocumentalAutorizadoAutomatico(crear_motor=lambda: type(
         "M", (), {"extraer": lambda self, ruta: _Local(layout, version)})())
@@ -298,5 +327,14 @@ def test_main_rechaza_modo_e_informes_dentro_del_repositorio():
 
 def test_bat_lanza_el_orquestador_en_sombra():
     bat = (na.ROOT / "ejecutar_automatizacion_alliance.bat").read_text(encoding="utf-8")
-    assert ".venv\\Scripts\\python.exe -m src.facturas.runtime_supabase.noche_automatica SOMBRA " in bat
-    assert "exit /b %ERRORLEVEL%" in bat
+    # Decision de Pio (2026-11-13): registro como el .bat de importacion, con la ruta completa de Python.
+    log = "logs\\automatizacion_alliance.log"
+    assert ("C:\\ControlFarmacias\\Programa\\.venv\\Scripts\\python.exe -m src.facturas.runtime_supabase."
+            f"noche_automatica SOMBRA C:\\ControlFarmacias\\noches_auto >> {log} 2>&1") in bat
+    assert "if not exist logs mkdir logs" in bat
+    assert f"echo INICIO: %date% %time% >> {log}" in bat
+    assert "set CODIGO_SALIDA=%ERRORLEVEL%" in bat
+    assert f"echo CODIGO DE SALIDA: %CODIGO_SALIDA% >> {log}" in bat
+    assert f"echo FIN: %date% %time% >> {log}" in bat
+    assert bat.rstrip().endswith("exit /b %CODIGO_SALIDA%")
+    assert "noche_automatica REAL" not in bat

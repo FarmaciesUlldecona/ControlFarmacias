@@ -6,9 +6,10 @@ con fecha, tipo de agente, modelo, tarea (inicio del encargo), tokens reales
 subagente), número de llamadas a herramientas, herramientas bloqueadas y
 resultado (inicio de la respuesta final).
 
-Para ``revisor-reglas`` registra además el veredicto (``PASS``/``FAIL``, leído
-de la línea ``VEREDICTO:`` de su respuesta), las reglas con ``FAIL`` de su tabla
-(``reglas_fail``) y la huella de los cambios en ese momento;
+Para ``revisor-reglas`` registra además el veredicto (``PASS``/``FAIL``/``INCONCLUSO``,
+leído de la línea ``VEREDICTO:`` de su respuesta y contrastado con su tabla), las
+reglas con ``FAIL`` y con ``INCONCLUSO`` de su tabla (``reglas_fail``,
+``reglas_inconclusas``) y la huella de los cambios en ese momento;
 ``barreras_agentes.py`` exige ese PASS con la misma huella antes de permitir
 ``git commit``.
 
@@ -81,17 +82,18 @@ def cargar_metricas(ruta: str = RUTA_POLITICA) -> dict:
         return json.load(archivo).get("metricas", {})
 
 
-RE_VEREDICTO = re.compile(r"^\s*\**\s*VEREDICTO\s*:?\s*\**\s*:?\s*(PASS|FAIL)\b", re.IGNORECASE | re.MULTILINE)
+RE_VEREDICTO = re.compile(r"^\s*\**\s*VEREDICTO\s*:?\s*\**\s*:?\s*(PASS|FAIL|INCONCLUSO)\b",
+                          re.IGNORECASE | re.MULTILINE)
 # Fila de la tabla del revisor: ``| T2 | FAIL | ...`` (Id, Resultado). Primera celda: cualquier texto.
 RE_FILA_REGLA = re.compile(r"^\s*\|([^|\n]*)\|([^|\n]*)\|", re.MULTILINE)
 RE_ID_REGLA = re.compile(r"^[\s*`]*([A-Za-z]\d+)[\s*`]*$")
-RE_RESULTADO = re.compile(r"^[\s*`]*(PASS|FAIL|N/A)[\s*`]*$", re.IGNORECASE)
+RE_RESULTADO = re.compile(r"^[\s*`]*(PASS|FAIL|N/A|INCONCLUSO)[\s*`]*$", re.IGNORECASE)
 # Reglas de la tabla obligatoria de .claude/agents/revisor-reglas.md.
 REGLAS_REVISOR = frozenset({"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "E1", "P1", "M1", "T1", "T2", "C1"})
 
 
-def reglas_fail(respuesta: str) -> list[str] | None:
-    """Ids de las reglas con resultado FAIL en la tabla del revisor.
+def resultados_tabla(respuesta: str) -> dict[str, str] | None:
+    """Resultado de cada regla en la tabla del revisor (``PASS``, ``FAIL``, ``N/A`` o ``INCONCLUSO``).
 
     Fallo cerrado: None (sin detalle) si alguna fila de regla no tiene un resultado reconocido, si una regla
     aparece dos veces o si falta alguna de ``REGLAS_REVISOR``; así un FAIL mal escrito nunca se pierde.
@@ -108,7 +110,37 @@ def reglas_fail(respuesta: str) -> list[str] | None:
         resultados[regla] = resultado.group(1).upper()
     if set(resultados) != REGLAS_REVISOR:
         return None
+    return resultados
+
+
+def reglas_fail(respuesta: str) -> list[str] | None:
+    """Ids de las reglas con resultado FAIL en la tabla del revisor (None si la tabla no es fiable)."""
+    resultados = resultados_tabla(respuesta)
+    if resultados is None:
+        return None
     return sorted(regla for regla, resultado in resultados.items() if resultado == "FAIL")
+
+
+def veredicto_revisor(respuesta: str) -> str:
+    """``PASS``, ``INCONCLUSO`` o ``FAIL`` (DECISIÓN DE PIO, 2026-11-14).
+
+    ``INCONCLUSO``: un bloqueo impidió comprobar alguna regla. Solo vale con la tabla completa y fiable, al menos
+    una regla ``INCONCLUSO`` y ninguna ``FAIL``. Fallo cerrado: varios veredictos, ninguno, una tabla con algún
+    ``FAIL`` o un ``INCONCLUSO`` sin tabla fiable cuentan como ``FAIL``; un ``PASS`` cuya tabla fiable trae alguna
+    regla ``INCONCLUSO`` cuenta como ``INCONCLUSO``.
+    """
+    veredictos = {c.upper() for c in RE_VEREDICTO.findall(respuesta)}
+    if len(veredictos) != 1:
+        return "FAIL"
+    [declarado] = veredictos
+    resultados = resultados_tabla(respuesta)
+    if resultados is not None and "FAIL" in resultados.values():
+        return "FAIL"
+    if declarado == "INCONCLUSO":
+        return "INCONCLUSO" if resultados is not None and "INCONCLUSO" in resultados.values() else "FAIL"
+    if declarado == "PASS" and resultados is not None and "INCONCLUSO" in resultados.values():
+        return "INCONCLUSO"
+    return declarado
 
 
 def texto_de(contenido) -> str:
@@ -260,13 +292,12 @@ def construir_registro(entrada: dict, huella=estado_git.huella_cambios, coste=co
     })
 
     if agente == estado_git.AGENTE_REVISOR:
-        coincidencias = RE_VEREDICTO.findall(respuesta)
         # Una respuesta con varios veredictos, o sin ninguno, cuenta como FAIL.
-        veredictos = {c.upper() for c in coincidencias}
-        registro["veredicto"] = "PASS" if veredictos == {"PASS"} else "FAIL"
-        detalle = reglas_fail(respuesta)
-        if detalle is not None:
-            registro["reglas_fail"] = detalle
+        registro["veredicto"] = veredicto_revisor(respuesta)
+        resultados = resultados_tabla(respuesta)
+        if resultados is not None:
+            registro["reglas_fail"] = sorted(r for r, v in resultados.items() if v == "FAIL")
+            registro["reglas_inconclusas"] = sorted(r for r, v in resultados.items() if v == "INCONCLUSO")
         # La huella es la del repositorio que revisó el subagente (puede ser un
         # worktree temporal), nunca la del proyecto por defecto.
         raiz = estado_git.raiz_repositorio(entrada.get("cwd") or estado_git.DIRECTORIO_PROYECTO)

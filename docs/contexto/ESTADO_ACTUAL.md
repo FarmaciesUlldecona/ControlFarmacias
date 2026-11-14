@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-13 (AUTO-32-D: migración 32 desplegada en producción, APLICADA, postcheck aceptado por Pio; AUTO-COLA: tandas 2BJ 1–3 y conciliación de 08013055–58; 2026-11-12, AUTO-A: automatización Alliance solo local, compositor automático, orquestador nocturno, migración 32 y desplegar_32 ensayado; TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio con SCRAM; prueba de acceso de Pio ACCESO_OK; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
+Actualizado: 2026-11-14 (ENCARGO: R10 con `ENCARGO`, adaptador Alliance 1.3.1, banco completo, R12 de 08012619
+diseñado sin ejecutar, pendientes de AUTO-A y veredicto INCONCLUSO del revisor, solo local; 2026-11-13, AUTO-32-D: migración 32 desplegada en producción, APLICADA, postcheck aceptado por Pio; AUTO-COLA: tandas 2BJ 1–3 y conciliación de 08013055–58; 2026-11-12, AUTO-A: automatización Alliance solo local, compositor automático, orquestador nocturno, migración 32 y desplegar_32 ensayado; TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio con SCRAM; prueba de acceso de Pio ACCESO_OK; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
 noche del 4/11; 2BM-D: migración 28 desplegada en producción y noche del 3/11; 2BM: migración 28, persistencia
@@ -328,6 +329,27 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito ENCARGO: R10 con `ENCARGO`, adaptador Alliance 1.3.1 y pendientes de AUTO-A, solo local (2026-11-14)
+
+`CONFIRMADO POR TEST`. Sin producción. Decisiones de Pio del 2026-11-14 (R10, D1 en 1.3.1, veredicto INCONCLUSO del
+revisor) y del 2026-11-13 (pendientes del §9 del diseño AUTO-ALLIANCE). Diseño y banco en
+`pruebas/auditoria_encargo/DISENO.md`; evidencias en `C:\ControlFarmacias\evidencias_encargo\` (`SHA256SUMS.txt`).
+
+- **R10:** `ENCARGO` a secas es mercancía en CARGOS. Adaptador `alliance-local` **1.3.1**; autoridad del compositor
+  automático en **1.3.1** (la 1.3.0 ya no la tiene).
+- **Banco Alliance completo** (91 PDF del espejo, 78 `alliance-local`): solo cambian 2 filas `ENCARGO`, nada más:
+  08D50803 (08012619, 7,42) y **08E58484 (08016545, 4,29)**, esta última no prevista. Las otras 3 facturas del
+  documento de 08012619, idénticas.
+- **R12 de 08012619: diseñado, NO ejecutado** (solo la línea 08D50803; payload exacto exigido: 1 albarán, 0
+  movimientos y 0 vencimientos). `PENDIENTE` de confirmación de Pio. 08016545: `PENDIENTE` de decisión.
+- **Pendientes de AUTO-A, hechos:** los tres textos desfasados; postchecks con Trabajadores aparte (noche: lectura
+  propia e informativa en `postcheck.trabajadores`; series 2BJ/2BP: fuera del criterio 2AX e informado); `.bat`
+  con registro en `logs\automatizacion_alliance.log` y ruta completa de Python, todavía en `SOMBRA`.
+- **Barrera del revisor:** veredicto `INCONCLUSO` cuando un bloqueo impide comprobar una regla; INCONCLUSO + PASS
+  posterior sobre la misma huella no bloquea; un FAIL real sigue bloqueando (REGLAS_CRITICAS, «Pruebas»).
+- **Efecto en la noche:** desde el push, la tarea de sombra usa la 1.3.1 y el `.bat` nuevo. Si el commit no está en
+  `origin/main` a las 22:15, la puerta git para la noche (commit con código por delante de `origin/main`).
+
 ### Hito AUTO-32-D: migración 32 desplegada en producción (2026-11-13)
 
 `CONFIRMADO EN PRODUCCIÓN`, con confirmación expresa de Pio; despliegue ejecutado por Claude como `Usuari`, una vez,
@@ -383,8 +405,8 @@ adaptados de TRAB-D en `scripts/`).
 Pio y plan de hitos en `pruebas/auditoria_auto_alliance/DISENO.md`; reglas en REGLAS_CRITICAS («Extractores locales»,
 D1, y «Automatización Alliance»).
 
-- **Compositor automático** (`runtime_supabase/compositor_automatico.py`): autoridad solo `alliance-local` 1.3.0 con
-  puente certificado; otro proveedor, layout o versión → `PROVEEDOR_NO_SOPORTADO_AUTOMATICO` (clase `NO_SOPORTADO`,
+- **Compositor automático** (`runtime_supabase/compositor_automatico.py`): autoridad solo `alliance-local` 1.3.0
+  (**1.3.1** desde el Hito ENCARGO, 2026-11-14) con puente certificado; otro proveedor, layout o versión → `PROVEEDOR_NO_SOPORTADO_AUTOMATICO` (clase `NO_SOPORTADO`,
   R2). Sin Luna, solo PIO, tolerancia R11 certificada.
 - **Lectura READ_ONLY** (`runtime_supabase/lectura_readonly.py`): copia en `src/` del lector, el cliente sustituto y
   la simulación de conciliación del 2AT (disparador `AUTOMATICO`); las series de `pruebas/` no cambian.

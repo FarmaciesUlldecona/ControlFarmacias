@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-11-13 (excepción existente y cerrada de `pg17_local.py` para emular la API de Supabase en la base local de tests, decisión de Pio; 2026-11-12, AUTO-A: automatización Alliance solo local, migración 32 y autorización de Pio para nombrar el rol del sistema solo en la 32 y su rollback; D1 de AUTO-ALLIANCE implementada solo en local, no activada; contraseñas de roles siempre con SCRAM, decisión de Pio; Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
+Actualizado: 2026-11-14 (decisiones de Pio: R10 ampliada con `ENCARGO`, adaptador Alliance 1.3.1 y autoridad D1
+en 1.3.1; veredicto INCONCLUSO del revisor; 2026-11-13: excepción existente y cerrada de `pg17_local.py` para emular la API de Supabase en la base local de tests, decisión de Pio; 2026-11-12, AUTO-A: automatización Alliance solo local, migración 32 y autorización de Pio para nombrar el rol del sistema solo en la 32 y su rollback; D1 de AUTO-ALLIANCE implementada solo en local, no activada; contraseñas de roles siempre con SCRAM, decisión de Pio; Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
 desplegada; 2BI: claims huérfanos de normalización; 2BH: evidencia mecánica
@@ -80,8 +81,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   `CONFIRMADO POR TEST`, sin ejecución productiva): el compositor manual
   `runtime_supabase/compositor_manual.py` concede autoridad solo a Alliance
   (`alliance-local`) mediante `AUTORIDAD_COMPOSITOR_MANUAL`, que exige puente
-  multifactura certificado. Solo se usa con `ejecutar_una_manual()`; ningún
-  scheduler ni la ruta automática lo referencian. Cualquier otro proveedor falla
+  multifactura certificado. Solo se usa con `ejecutar_una_manual()` y ningún
+  scheduler lo ejecuta; la ruta automática reutiliza sus piezas solo a través del
+  compositor automático (ampliación D1, debajo). Cualquier otro proveedor falla
   cerrado.
   **Ampliación (DECISIÓN DE PIO, 2026-11-12, D1 del Hito AUTO-ALLIANCE; diseño en
   `pruebas/auditoria_auto_alliance/DISENO.md`):** la ruta automática puede tener
@@ -91,7 +93,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   versión falla cerrado (R2). **IMPLEMENTADA SOLO EN LOCAL** (Hito AUTO-A,
   2026-11-12, `CONFIRMADO POR TEST` en PostgreSQL 17 local:
   `runtime_supabase/compositor_automatico.py`, autoridad `alliance-local` 1.3.0, y
-  el orquestador `runtime_supabase/noche_automatica.py`). **NO ACTIVADA:** hasta
+  el orquestador `runtime_supabase/noche_automatica.py`). **Versión certificada
+  actualizada (DECISIÓN DE PIO, 2026-11-14):** `alliance-local` **1.3.1** (R10 con
+  `ENCARGO`); la 1.3.0 ya no tiene autoridad en la ruta automática. **NO ACTIVADA:** hasta
   AUTO-ON, con confirmación de Pio, ninguna tarea ejecuta el orquestador en modo
   `REAL` y los flags `normalizacion_automatica` y `conciliacion_automatica` siguen
   en `false` (ver «Automatización Alliance»).
@@ -196,11 +200,16 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   PostgreSQL 17 local; migración 20 `CONFIRMADO EN PRODUCCIÓN`, desplegada en el
   Hito 2AZ-D el 2026-10-08; diseño en
   `pruebas/auditoria_2az/DISENO.md`):
-  - **R10 tipos de pedido Alliance** (adaptador 1.3.0):
+  - **R10 tipos de pedido Alliance** (adaptador 1.3.0; **1.3.1** desde el 2026-11-14):
     - Mercancía (se promueve; la prueba de recepción es el cruce con
       `Supabase.albaranes`): `DIRECTO`, `ENCARGO VACUNAS`, `MIS RESERVAS`,
       `TELEVENTA 2`, `COSTO TELEVENTA` y `SERVICIO COVID19`, además de los ya
       certificados.
+    - **Ampliación (DECISIÓN DE PIO, 2026-11-14; adaptador 1.3.1):** `ENCARGO` a secas (literal exacto) es
+      mercancía en el bloque CARGOS (caso 08012619 / 08D50803). En ABONOS no está certificado. Banco Alliance
+      completo 1.3.0 frente a 1.3.1: solo cambian las filas `ENCARGO` (08D50803 en 08012619 y 08E58484 en 08016545);
+      diseño y evidencias en `pruebas/auditoria_encargo/DISENO.md`. Los documentos ya persistidos no se vuelven a
+      normalizar: el camino es R12, con confirmación de Pio por factura.
     - `ECOCEUTICS` en el bloque ABONOS → ABONO (resta).
     - Filas de importe 0,00 → informativas: se registran, no se promueven y no
       bloquean.
@@ -523,6 +532,14 @@ módulos parciales.
       Cualquier otro FAIL, o un FAIL sin el detalle de reglas registrado (solo se registra si la tabla trae
       las 14 reglas, cada una una vez y con un resultado reconocido), sigue bloqueando. Hooks:
       `registrar_uso_agente.py` (`reglas_fail`) y `estado_git.py` (`_veredicto_grupo`).
+    - **INCONCLUSO (DECISIÓN DE PIO, 2026-11-14):** cuando un bloqueo (hook o denegación) impide a
+      `revisor-reglas` comprobar una regla, la marca `INCONCLUSO`, no `FAIL`, y su veredicto es
+      `VEREDICTO: INCONCLUSO` si no hay ningún `FAIL`. Un INCONCLUSO **más un PASS posterior sobre la misma
+      huella** no bloquea el commit; sin ese PASS, bloquea (`commit_revisor_inconcluso`). Un **FAIL real sigue
+      bloqueando** siempre. Fallo cerrado: un INCONCLUSO sin la tabla completa y fiable, o con algún `FAIL` en la
+      tabla, cuenta como FAIL; un PASS cuya tabla trae alguna regla INCONCLUSO cuenta como INCONCLUSO. Hooks:
+      `registrar_uso_agente.py` (`veredicto_revisor`, `reglas_inconclusas`), `estado_git.py`
+      (`_veredicto_grupo`) y `barreras_agentes.py` (`barrera_commit`).
 - Pytest debe usar directorios temporales mediante `CONTROLFARMACIAS_LOG_DIR` y
   `CONTROLFARMACIAS_DATA_DIR`.
 - Los tests no pueden conectarse a Farmatic/Supabase reales ni escribir en

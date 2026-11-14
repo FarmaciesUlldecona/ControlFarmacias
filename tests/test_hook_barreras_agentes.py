@@ -342,6 +342,49 @@ def test_otros_fail_siguen_bloqueando(tmp_path, registros):
         "commit_revisor_fail"
 
 
+def test_inconcluso_con_pass_posterior_no_bloquea(tmp_path):
+    """Pio, 2026-11-14: INCONCLUSO + PASS posterior sobre la misma huella no bloquea."""
+    ruta = _uso(tmp_path, _revision("a", "INCONCLUSO", []), _revision("b", "PASS", []))
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suite_completa_verde(tmp_path)).codigo == 0
+
+
+def test_inconcluso_con_pass_posterior_sigue_exigiendo_la_suite(tmp_path):
+    ruta = _uso(tmp_path, _revision("a", "INCONCLUSO", []), _revision("b", "PASS", []))
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suites(tmp_path)).motivo == "commit_sin_suite"
+
+
+@pytest.mark.parametrize(
+    "registros",
+    [
+        # Sin PASS posterior.
+        [_revision("a", "INCONCLUSO", [])],
+        [_revision("b", "PASS", []), _revision("a", "INCONCLUSO", [])],
+        # El PASS posterior de otra huella no vale.
+        [_revision("a", "INCONCLUSO", []), _revision("b", "PASS", [], huella="h2")],
+    ],
+)
+def test_inconcluso_sin_pass_posterior_bloquea(tmp_path, registros):
+    ruta = _uso(tmp_path, *registros)
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suite_completa_verde(tmp_path)).motivo == \
+        "commit_revisor_inconcluso"
+
+
+@pytest.mark.parametrize(
+    "registros",
+    [
+        # Un INCONCLUSO excusado no excusa un FAIL real, antes o después.
+        [_revision("a", "INCONCLUSO", []), _revision("c", "FAIL", ["S2"]), _revision("b", "PASS", [])],
+        [_revision("c", "FAIL", ["S2"]), _revision("a", "INCONCLUSO", []), _revision("b", "PASS", [])],
+        # El FAIL real manda sobre un INCONCLUSO sin PASS posterior.
+        [_revision("c", "FAIL", ["M1"]), _revision("a", "INCONCLUSO", [])],
+    ],
+)
+def test_fail_real_sigue_bloqueando_con_inconcluso(tmp_path, registros):
+    ruta = _uso(tmp_path, *registros)
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], _suite_completa_verde(tmp_path)).motivo == \
+        "commit_revisor_fail"
+
+
 def test_commit_con_pass_de_la_huella_aunque_haya_otra_despues(tmp_path):
     ruta = _uso(
         tmp_path,
@@ -1006,6 +1049,44 @@ def test_reglas_fail_sin_detalle_fiable_no_se_registra(tmp_path, respuesta):
     entrada = {"agent_type": "revisor-reglas", "agent_transcript_path": _transcript(tmp_path, respuesta)}
     registro = registro_uso.construir_registro(entrada, huella=lambda raiz: "h1", coste=lambda m, t: None)
     assert "reglas_fail" not in registro and registro["veredicto"] == "FAIL"
+
+
+@pytest.mark.parametrize(
+    ("respuesta", "veredicto", "inconclusas"),
+    [
+        # Bloqueo que impide comprobar T2: INCONCLUSO, no FAIL.
+        (_tabla(T2="INCONCLUSO") + "\nVEREDICTO: INCONCLUSO", "INCONCLUSO", ["T2"]),
+        (_tabla(S1="**inconcluso**", T2="INCONCLUSO") + "\nVEREDICTO: INCONCLUSO", "INCONCLUSO", ["S1", "T2"]),
+        # Un PASS declarado con alguna regla INCONCLUSO en la tabla no es PASS.
+        (_tabla(T2="INCONCLUSO") + "\nVEREDICTO: PASS", "INCONCLUSO", ["T2"]),
+        # Un FAIL real en la tabla manda, diga lo que diga la línea de veredicto.
+        (_tabla(S2="FAIL", T2="INCONCLUSO") + "\nVEREDICTO: INCONCLUSO", "FAIL", ["T2"]),
+        (_tabla(S2="FAIL") + "\nVEREDICTO: PASS", "FAIL", []),
+        # INCONCLUSO declarado sin ninguna regla INCONCLUSO en la tabla: FAIL.
+        (_tabla() + "\nVEREDICTO: INCONCLUSO", "FAIL", []),
+    ],
+)
+def test_veredicto_inconcluso_del_revisor(tmp_path, respuesta, veredicto, inconclusas):
+    entrada = {"agent_type": "revisor-reglas", "agent_transcript_path": _transcript(tmp_path, respuesta)}
+    registro = registro_uso.construir_registro(entrada, huella=lambda raiz: "h1", coste=lambda m, t: None)
+    assert (registro["veredicto"], registro["reglas_inconclusas"]) == (veredicto, inconclusas)
+
+
+@pytest.mark.parametrize(
+    "respuesta",
+    [
+        # Sin tabla fiable un INCONCLUSO no se acepta (fallo cerrado).
+        "VEREDICTO: INCONCLUSO",
+        "\n".join(l for l in _tabla(T2="INCONCLUSO").splitlines() if not l.startswith("| S2 "))
+        + "\nVEREDICTO: INCONCLUSO",
+        # Dos veredictos.
+        _tabla(T2="INCONCLUSO") + "\nVEREDICTO: INCONCLUSO\nVEREDICTO: PASS",
+    ],
+)
+def test_inconcluso_sin_tabla_fiable_es_fail(tmp_path, respuesta):
+    entrada = {"agent_type": "revisor-reglas", "agent_transcript_path": _transcript(tmp_path, respuesta)}
+    registro = registro_uso.construir_registro(entrada, huella=lambda raiz: "h1", coste=lambda m, t: None)
+    assert registro["veredicto"] == "FAIL"
 
 
 def test_veredicto_leido_del_handback(tmp_path):

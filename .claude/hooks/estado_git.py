@@ -185,14 +185,25 @@ def _sumar_coste(ejecuciones: list[dict]) -> dict | None:
 
 
 def _veredicto_grupo(lineas: list[dict]) -> str:
-    """PASS si cada línea es PASS o es un FAIL solo por T2 seguido de un PASS (ver ``agrupar_revisiones``)."""
+    """Veredicto de una huella (ver ``agrupar_revisiones``).
+
+    PASS si cada línea es PASS, o es un FAIL solo por T2 seguido de un PASS, o es un INCONCLUSO seguido de un PASS
+    (DECISIÓN DE PIO, 2026-11-14). Cualquier otro FAIL manda (``FAIL``); si no lo hay, un INCONCLUSO sin PASS
+    posterior deja la huella ``INCONCLUSO``. Ambos bloquean el commit.
+    """
     pases = [i for i, r in enumerate(lineas) if r.get("veredicto") == "PASS"]
+    inconcluso = False
     for i, registro in enumerate(lineas):
-        if registro.get("veredicto") == "PASS":
+        veredicto = registro.get("veredicto")
+        if veredicto == "PASS":
             continue
-        if not (registro.get("reglas_fail") == ["T2"] and pases and pases[-1] > i):
+        pase_posterior = bool(pases) and pases[-1] > i
+        if veredicto == "INCONCLUSO":
+            inconcluso = inconcluso or not pase_posterior
+            continue
+        if not (registro.get("reglas_fail") == ["T2"] and pase_posterior):
             return "FAIL"
-    return "PASS"
+    return "INCONCLUSO" if inconcluso else "PASS"
 
 
 def agrupar_revisiones(registros: list[dict], repositorio_por_defecto: str = DIRECTORIO_PROYECTO) -> list[dict]:
@@ -208,7 +219,9 @@ def agrupar_revisiones(registros: list[dict], repositorio_por_defecto: str = DIR
     FAIL cuya única regla fallida es T2 (``reglas_fail == ["T2"]``) no cuenta si
     hay un PASS posterior de la misma huella. La suite registrada la sigue
     exigiendo ``barrera_commit``. Cualquier otro FAIL, o uno sin
-    ``reglas_fail`` (registros anteriores), sigue contando.
+    ``reglas_fail`` (registros anteriores), sigue contando. Un INCONCLUSO
+    (un bloqueo impidió comprobar alguna regla; Pio, 2026-11-14) tampoco
+    cuenta si hay un PASS posterior de la misma huella.
 
     Las líneas sin huella (p. ej. transcript no disponible) no forman grupo.
     Orden: por la última línea de cada grupo.

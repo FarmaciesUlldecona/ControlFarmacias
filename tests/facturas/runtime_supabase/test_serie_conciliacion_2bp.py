@@ -47,6 +47,18 @@ def test_puerta_git(git, esperado):
     assert _modulo().puerta_git(git) == esperado
 
 
+def test_postcheck_informa_trabajadores_aparte_sin_veredicto():
+    """Mejora aprobada por Pio (2026-11-13): Trabajadores se informa aparte y no hace fallar el postcheck."""
+    m = _modulo()
+    antes = {"guardias_farmacia": {"g1": ["h1", None]}, "albaranes": {"a1": ["ha", None]}}
+    despues = {"guardias_farmacia": {}, "trabajadores_historial": {"x": ["hx", None]},
+               "albaranes": {"a1": ["ha", None]}}
+    assert m.diferencias_filas(antes, despues, set()) == []
+    assert m.cambios_trabajadores(antes, despues) == {"guardias_farmacia": 1, "trabajadores_historial": 1}
+    despues["albaranes"] = {}
+    assert m.diferencias_filas(antes, despues, set()) == ["FILA_BORRADA:albaranes:a1"]
+
+
 def _prev(**kw):
     base = {"camino": "PERSISTIR", "resultado": "CONCILIADA", "importe_factura": "10.0000",
             "importe_explicado": "10.0000", "diferencia": "0.0000", "tolerancia": "0.0500",
@@ -214,7 +226,8 @@ def test_para_si_el_numero_1_simula_diferencia(serie_diferencia):
     registro = _leer(serie.raiz / "t01" / "tanda.json")
     assert registro["motivos"] == [f"NUMERO_1_SIMULA_DIFERENCIA:{serie.ids['08007969']}:08007969:504.0900"]
     assert registro["ejecuciones"][0]["no_ejecutada"] is True and "retorno" not in registro["ejecuciones"][0]
-    assert registro["postcheck"] == {"veredicto": "POSTCHECK_OK", "problemas": [], "facturas": []}
+    assert registro["postcheck"] == {"veredicto": "POSTCHECK_OK", "problemas": [], "facturas": [],
+                                     "trabajadores": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
     assert _huella(serie.pg) == antes
 
 

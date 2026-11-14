@@ -67,10 +67,13 @@ FUNCIONES_REQUERIDAS = ("cf_reclamar_documento_normalizacion", "cf_reclamar_fact
                         "cf_persistir_conciliacion", "cf_recuperar_claim_huerfano_normalizacion",
                         "cf_detalles_por_linea")
 TABLAS_REQUERIDAS = ("conciliacion_albaranes_reservados", "cf_modulos_farmacias", TABLA_RESUMEN)
-# Fuera del snapshot: la propia tabla de resumen y el modulo de Trabajadores (lo escribe la web; ajeno a la noche).
-TABLAS_FUERA_DEL_SNAPSHOT = frozenset({
-    TABLA_RESUMEN, "cf_modulos_farmacias", "trabajadoras", "convenio_anual", "eventos_calendario",
-    "guardias_farmacia", "festivos", "trabajadores_historial"})
+# Modulo de Trabajadores (migracion 31): lo escribe la web y es ajeno a facturas. Mejora aprobada por Pio
+# (2026-11-13): en los postchecks se informa aparte y no hace fallar el veredicto. Tambien lo usan las series 2BJ/2BP.
+TABLAS_TRABAJADORES = frozenset({
+    "cf_modulos_farmacias", "trabajadoras", "convenio_anual", "eventos_calendario", "guardias_farmacia", "festivos",
+    "trabajadores_historial"})
+# Fuera del snapshot 2AX: la propia tabla de resumen y Trabajadores (este se lee aparte, ``snapshot_trabajadores``).
+TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES
 
 CODIGO_OK, CODIGO_PARADA, CODIGO_YA_EJECUTADA = 0, 3, 4
 
@@ -291,6 +294,41 @@ def snapshot_por_fila(lector: LectorReadOnly) -> dict[str, dict[str, list]]:
             f'from public."{tabla}" t')
         out[tabla] = {k: [h, d, f] for k, h, d, f in filas}
     return out
+
+
+def snapshot_trabajadores(entorno: Entorno) -> dict:
+    """Huella por fila de las tablas de Trabajadores, en su propia sesion READ_ONLY.
+
+    Solo informativo: si no se puede leer (por ejemplo, sin privilegio de lectura) se anota el error y la noche sigue;
+    nunca comparte la transaccion del snapshot 2AX.
+    """
+    try:
+        with entorno.abrir_lectura() as lector:
+            existentes = {r[0] for r in lector.filas(
+                "select table_name::text from information_schema.tables where table_schema = 'public' "
+                "and table_type = 'BASE TABLE'")}
+            return {"tablas": {tabla: dict(lector.filas(
+                f'select coalesce(to_jsonb(t)->>\'id\', md5(to_jsonb(t)::text)), md5(to_jsonb(t)::text) '
+                f'from public."{tabla}" t')) for tabla in sorted(TABLAS_TRABAJADORES & existentes)}}
+    except Exception as exc:  # noqa: BLE001 - informativo: no afecta a la noche
+        return {"error": f"{type(exc).__name__}"}
+
+
+def cambios_trabajadores(pre: dict | None, post: dict | None) -> dict:
+    """Filas de Trabajadores cambiadas, nuevas o desaparecidas por tabla. Se informa aparte; no es veredicto."""
+    informe: dict = {"afecta_al_veredicto": False}
+    if not pre or not post or "error" in pre or "error" in post:
+        informe["no_comparable"] = {"pre": (pre or {}).get("error", "AUSENTE" if not pre else None),
+                                    "post": (post or {}).get("error", "AUSENTE" if not post else None)}
+        return informe
+    cambios = {}
+    for tabla in sorted(set(pre["tablas"]) | set(post["tablas"])):
+        a, b = pre["tablas"].get(tabla, {}), post["tablas"].get(tabla, {})
+        distintas = sum(1 for k in set(a) | set(b) if a.get(k) != b.get(k))
+        if distintas:
+            cambios[tabla] = distintas
+    informe["filas_cambiadas_por_tabla"] = cambios
+    return informe
 
 
 def postcheck_por_fila(pre: dict, post: dict, documentos: set[str], facturas: set[str]) -> dict:
@@ -545,6 +583,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
         return CODIGO_YA_EJECUTADA
 
     pre: dict | None = None
+    pre_trabajadores: dict | None = None
     try:
         with entorno.abrir_lectura() as lector:
             cfg, op, marcas = _configuracion(lector), _operacion(lector), _marcas(lector)
@@ -553,6 +592,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
             raise Parada("PUERTAS:" + ";".join(noche.puertas))
         with entorno.abrir_lectura() as lector:
             pre = snapshot_por_fila(lector)
+        pre_trabajadores = snapshot_trabajadores(entorno)
         fin = inicio + dt.timedelta(minutes=MINUTOS_MAXIMOS)
         if modo == "SOMBRA":
             _fase_sombra(entorno, noche, docs, conc)
@@ -589,6 +629,9 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
                     "facturas_conciliables": len(_cola_conciliacion(lector, "MANUAL_ONE_SHOT"))}
         except Exception as exc:  # noqa: BLE001
             noche.postcheck = {"veredicto": "POSTCHECK_NO_EJECUTADO", "error": f"{type(exc).__name__}: {exc}"}
+        if pre is not None and noche.postcheck is not None:
+            # Despues de cerrar la sesion anterior: las sesiones comparten conexion y no se anidan.
+            noche.postcheck["trabajadores"] = cambios_trabajadores(pre_trabajadores, snapshot_trabajadores(entorno))
         if noche.postcheck and noche.postcheck.get("veredicto") != "POSTCHECK_OK":
             noche.resultado = "PARADA"
             noche.motivo = ((noche.motivo + "; ") if noche.motivo else "") + noche.postcheck["veredicto"]
@@ -596,7 +639,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
     try:
         entorno.cliente.table(TABLA_RESUMEN).update(_fila_resumen(noche, sha)).eq(
             "fecha", noche.fecha.isoformat()).execute()
-    except Exception:  # noqa: BLE001 - la fila queda EN_CURSO: la noche siguiente se para (R10)
+    except Exception:  # noqa: BLE001 - la fila queda EN_CURSO: la noche siguiente se para (DISENO §6, fila no escribible)
         return CODIGO_PARADA
     return CODIGO_PARADA if noche.resultado == "PARADA" else CODIGO_OK
 
