@@ -325,6 +325,46 @@ def test_main_rechaza_modo_e_informes_dentro_del_repositorio():
         na.main(["SOMBRA", str(na.ROOT / "informes")])
 
 
+# Claves FICTICIAS con el formato real de Supabase (no son credenciales; nunca se lee el fichero de credenciales).
+CLAVE_SECRETA_FICTICIA = "sb_secret_" + "F1ct1c1aNoValida0123456789ab"
+CLAVE_PUBLICABLE_FICTICIA = "sb_publishable_" + "F1ct1c1aNoValida0123456789ab"
+TOKEN_FICTICIO = "eyJhbGciOiJIUzI1NiJ9.eyJmaWN0aWNpYSI6dHJ1ZX0.ZmljdGljaWE"
+
+
+@pytest.mark.parametrize("clave, servicio", [
+    (CLAVE_SECRETA_FICTICIA, True),          # sb_secret_ = clave de servicio
+    (CLAVE_PUBLICABLE_FICTICIA, False),      # sb_publishable_ = anon: rechazada
+    (TOKEN_FICTICIO, False),                 # otro formato (token): rechazado
+    ("sb_secret_", False), (" " + CLAVE_SECRETA_FICTICIA, False), ("", False), (None, False),
+    ("SB_SECRET_" + "x" * 20, False), ("clave-cualquiera", False),
+])
+def test_solo_sb_secret_es_clave_de_servicio(clave, servicio):
+    """DECISION DE PIO (2026-11-14): causa de la parada de la primera noche de sombra (CLIENTE_NO_DEMOSTRADO)."""
+    assert na._es_clave_de_servicio(clave) is servicio
+
+
+@pytest.mark.parametrize("clave, acepta", [
+    (CLAVE_SECRETA_FICTICIA, True), (CLAVE_PUBLICABLE_FICTICIA, False), (TOKEN_FICTICIO, False)])
+def test_cliente_productivo_con_claves_ficticias(monkeypatch, clave, acepta):
+    """Sin red ni fichero de credenciales: dotenv y la fabrica de clientes, sustituidos."""
+    import dotenv
+    import src.supabase_client.conexion_supabase as conexion_supabase
+
+    entorno = {"SUPABASE_URL": f"https://{na.PROJECT_REF}.supabase.co", "SUPABASE_KEY": clave}
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: True)
+    monkeypatch.setattr(dotenv, "dotenv_values", lambda *a, **k: dict(entorno))
+    monkeypatch.setattr(conexion_supabase, "obtener_cliente_supabase", lambda: "CLIENTE_FICTICIO")
+    if acepta:
+        assert na._cliente_productivo() == "CLIENTE_FICTICIO"
+    else:
+        with pytest.raises(SystemExit, match="CLIENTE_NO_DEMOSTRADO"):
+            na._cliente_productivo()
+    # Otro proyecto: rechazado aunque la clave sea secreta.
+    entorno.update(SUPABASE_URL="https://otroproyecto.supabase.co", SUPABASE_KEY=CLAVE_SECRETA_FICTICIA)
+    with pytest.raises(SystemExit, match="CLIENTE_NO_DEMOSTRADO"):
+        na._cliente_productivo()
+
+
 def test_bat_lanza_el_orquestador_en_sombra():
     bat = (na.ROOT / "ejecutar_automatizacion_alliance.bat").read_text(encoding="utf-8")
     # Decision de Pio (2026-11-13): registro como el .bat de importacion, con la ruta completa de Python.

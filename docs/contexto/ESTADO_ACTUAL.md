@@ -329,6 +329,23 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito AUTO-S: primera noche de sombra (13→14/11) sin ejecutar y corrección de la clave (2026-11-14)
+
+Revisión READ_ONLY (evidencias en `C:\ControlFarmacias\evidencias_auto_s\`, `SHA256SUMS.txt`):
+
+- Tarea «ControlFarmacias - Automatizacion Alliance»: 13/11 22:15:00 → 22:15:02,75, **código 1**; las dos anteriores,
+  código 0. Sin informe (`C:\ControlFarmacias\noches_auto` no existe), `cf_noches_automaticas` vacía y ninguna fila de
+  `public` con marca de tiempo entre 22:10 y 22:45: **la noche no escribió nada**.
+- **Causa** (reproducida READ_ONLY con los pasos previos al alta de la fila): `_cliente_productivo` salía con
+  `CLIENTE_NO_DEMOSTRADO` porque solo entendía claves con formato de token; las series 2BJ/2BP ya aceptaban el formato
+  `sb_secret_`.
+- **Corrección (DECISIÓN DE PIO, 2026-11-14), solo local:** `_es_clave_de_servicio` en `noche_automatica.py`:
+  `sb_secret_` = clave de servicio; `sb_publishable_` (anon) y cualquier otro formato, rechazados. Tests con claves
+  ficticias del formato real, sin leer el fichero de credenciales. Tras la corrección, los pasos previos pasan con la
+  clave real (`pasos_previos_tras_correccion.json`).
+- Sin noche no hubo comparación con los planes 2BJ/2BP. La primera noche de sombra efectiva será la primera con este
+  commit en `origin/main`.
+
 ### Hito ENCARGO: R10 con `ENCARGO`, adaptador Alliance 1.3.1 y pendientes de AUTO-A, solo local (2026-11-14)
 
 `CONFIRMADO POR TEST`. Sin producción. Decisiones de Pio del 2026-11-14 (R10, D1 en 1.3.1, veredicto INCONCLUSO del

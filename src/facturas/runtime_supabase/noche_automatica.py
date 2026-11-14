@@ -666,12 +666,18 @@ def _conexion_lectura_productiva():
     return psycopg2.connect(dsn, sslmode="require", connect_timeout=10, application_name="cf_auto_alliance_lectura")
 
 
-def _rol_de_clave(clave: str) -> str | None:
-    try:
-        carga = clave.split(".")[1]
-        return json.loads(base64.urlsafe_b64decode(carga + "=" * (-len(carga) % 4))).get("role")
-    except Exception:  # noqa: BLE001
-        return None
+PREFIJO_CLAVE_SERVICIO = "sb_secret_"
+
+
+def _es_clave_de_servicio(clave: str) -> bool:
+    """DECISION DE PIO (2026-11-14, AUTO-S): solo el formato de clave secreta de Supabase (``sb_secret_...``) es clave
+    de servicio. ``sb_publishable_`` (anon) y cualquier otro formato se rechazan (falla cerrado).
+
+    Causa: la primera noche de sombra (13/11) salio con codigo 1 en ``CLIENTE_NO_DEMOSTRADO`` porque la comprobacion
+    anterior solo entendia claves con formato de token.
+    """
+    return (isinstance(clave, str) and clave.startswith(PREFIJO_CLAVE_SERVICIO)
+            and len(clave) > len(PREFIJO_CLAVE_SERVICIO) and clave.strip() == clave)
 
 
 def _cliente_productivo():
@@ -684,7 +690,7 @@ def _cliente_productivo():
     env = dotenv_values(ROOT / ".env")
     ref = (urlparse(env.get("SUPABASE_URL", "")).hostname or "").split(".")[0]
     clave = env.get("SUPABASE_KEY", "") or ""
-    if ref != PROJECT_REF or _rol_de_clave(clave) in (None, "anon", "authenticated"):
+    if ref != PROJECT_REF or not _es_clave_de_servicio(clave):
         raise SystemExit("CLIENTE_NO_DEMOSTRADO")
     return obtener_cliente_supabase()
 
