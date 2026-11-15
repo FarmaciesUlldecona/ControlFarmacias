@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-11-14 (decisiones de Pio: R10 ampliada con `ENCARGO`, adaptador Alliance 1.3.1 y autoridad D1
+Actualizado: 2026-11-14 (migración 33 de Trabajadores, solo local, y autorización de Pio para nombrar el rol del
+sistema solo en la 33 y su rollback; decisiones de Pio: R10 ampliada con `ENCARGO`, adaptador Alliance 1.3.1 y autoridad D1
 en 1.3.1; veredicto INCONCLUSO del revisor; 2026-11-13: excepción existente y cerrada de `pg17_local.py` para emular la API de Supabase en la base local de tests, decisión de Pio; 2026-11-12, AUTO-A: automatización Alliance solo local, migración 32 y autorización de Pio para nombrar el rol del sistema solo en la 32 y su rollback; D1 de AUTO-ALLIANCE implementada solo en local, no activada; contraseñas de roles siempre con SCRAM, decisión de Pio; Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
 FAIL solo por T2; 2BK: norma de parada ante hooks, denegaciones y clasificador; 2BJ: serie
 supervisada de normalización, solo local; 2BI-D: migración 25
@@ -436,6 +437,14 @@ producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTAD
   defecto de Supabase. **AUTORIZACIÓN EXPRESA DE PIO (2026-11-12):** nombrar el rol del sistema **solo** en
   `sql/migrations/31_cf_trabajadores.sql` y su rollback (excepción a la regla permanente del 2BS). Tests, scripts de
   despliegue y documentación no lo nombran; cualquier otro fichero, autorización nueva.
+
+- **Migración 33 (petición de la web, OK de Pio, 2026-11-14; `CONFIRMADO POR TEST`, solo local, NO desplegada):**
+  eventos anulados (unicidad solo entre no anulados; la web debe usar
+  `ON CONFLICT (trabajadora_id, fecha, franja) WHERE NOT anulado`), vacaciones del convenio (30 días en 2026–2028,
+  decisión de Pio pendiente de texto publicado) y `trabajadoras_ajustes_anuales` (mismas reglas que el resto del
+  módulo: RLS por farmacia, sin DELETE, autor e historial). Diseño en `pruebas/auditoria_trab/DISENO_33.md`.
+  **AUTORIZACIÓN EXPRESA DE PIO (2026-11-14):** nombrar el rol del sistema **solo** en
+  `sql/migrations/33_cf_trabajadores_ajustes.sql` y su rollback; tests, scripts y documentación no lo nombran.
 
 ## Automatización Alliance
 

@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-14 (ENCARGO: R10 con `ENCARGO`, adaptador Alliance 1.3.1, banco completo, R12 de 08012619
+Actualizado: 2026-11-14 (TRAB-33: migración 33 de Trabajadores, solo local; AUTO-S: noche del 13/11 sin ejecutar y
+corrección de la clave; ENCARGO: R10 con `ENCARGO`, adaptador Alliance 1.3.1, banco completo, R12 de 08012619
 diseñado sin ejecutar, pendientes de AUTO-A y veredicto INCONCLUSO del revisor, solo local; 2026-11-13, AUTO-32-D: migración 32 desplegada en producción, APLICADA, postcheck aceptado por Pio; AUTO-COLA: tandas 2BJ 1–3 y conciliación de 08013055–58; 2026-11-12, AUTO-A: automatización Alliance solo local, compositor automático, orquestador nocturno, migración 32 y desplegar_32 ensayado; TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio con SCRAM; prueba de acceso de Pio ACCESO_OK; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
 persistidos, parada tras la posición 166; 48 facturas pendientes de conciliar; puerta git con excepción documental, decisión de Pio; 2BO: límite de 20 s para el rol del sistema, aplicado por Pio; decisión de Pio sobre el documento 84;
@@ -328,6 +329,24 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito TRAB-33: migración 33 de Trabajadores, solo local (2026-11-14)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local). **NO desplegada**. Petición de la web con OK de Pio; diseño en
+`pruebas/auditoria_trab/DISENO_33.md`.
+
+- `eventos_calendario.anulado` con unicidad solo entre no anulados. **La web debe cambiar su ON CONFLICT** a
+  `on conflict (trabajadora_id, fecha, franja) where not anulado do nothing` (el anterior falla con la 33).
+  `v_eventos_calendario_horas` excluye los anulados (decisión de Pio: un anulado nunca suma horas).
+- `convenio_anual.vacaciones_dias_naturales` (+ `vacaciones_fuente`): 30 en las filas existentes de 2026–2028.
+- Tabla `trabajadoras_ajustes_anuales` (días extra de vacaciones por trabajadora y año), con RLS por farmacia,
+  escritura de `cf_trabajadores_web` sin DELETE, autor e historial, y lectura de `cf_lectura`.
+- Rollback exacto al esquema 32 (falla cerrado con eventos anulados duplicados) y `desplegar_33.py` ensayado con la
+  imitación del `postgres` de Supabase. `PENDIENTE`: TRAB-33-D (despliegue), con confirmación de Pio, y el cambio de la
+  web.
+- Base local de tests (2026-11-15): la suite completa agotaba el tmpfs del contenedor PostgreSQL («No space left on
+  device») al sumarse las plantillas de la 33; `pg17_nueva_base` borra ahora sus bases al terminar cada test. Suite
+  completa: 2957 tests en verde.
 
 ### Hito AUTO-S: primera noche de sombra (13→14/11) sin ejecutar y corrección de la clave (2026-11-14)
 
