@@ -7,7 +7,8 @@
  *
  * Acceso con contraseña (H4b, server/acceso.ts): sin sesión, cualquier ruta devuelve la pantalla de acceso
  * (HTML autónomo) y cualquier /api/* devuelve 401. Solo POST /api/login y /api/logout admiten POST, salvo la
- * escritura del módulo Trabajadores (TA1: POST/PUT en /api/rrhh/trabajadoras…, con sesión y Origin).
+ * escritura del módulo Trabajadores (TA1: POST/PUT en /api/rrhh/trabajadoras…, con sesión y Origin) y, H6, las marcas
+ * de pago y la forma de pago por proveedor (/api/pagos/…, mismas condiciones; en REAL, 503 hasta tener tablas).
  *
  * Sirve la API /api/* y, si existe, el front compilado (dist/).
  */
@@ -25,6 +26,7 @@ import {
 import { esEscrituraRrhh, registrarRrhh } from './rrhh/rutas.ts';
 import { AUTOR_HISTORIAL } from './rrhh/contrato.ts';
 import type { AdaptadorRrhh } from './rrhh/adaptador_fixtures.ts';
+import { esEscrituraPagos, registrarPagos } from './pagos/rutas.ts';
 
 const HOST = '127.0.0.1';
 export const PUERTO_FIJO = 4747;
@@ -136,9 +138,11 @@ export async function crearServidor(modo: Modo) {
   // TA1/TA2: única excepción, la escritura del módulo Trabajadores (esEscrituraRrhh: POST/PUT en /api/rrhh/trabajadoras…
   // y, TA2, POST /api/rrhh/eventos y /api/rrhh/eventos/deshacer),
   // con sesión, Origin obligatorio y JSON (server/rrhh/rutas.ts).
+  // H6 (excepción autorizada por Marc): marcas de pago y forma de pago por proveedor (esEscrituraPagos, /api/pagos/…;
+  // solo FIXTURES: en REAL responden 503 «Pendiente de tablas en Supabase»). Nunca facturas, vencimientos ni conciliación.
   app.addHook('onRequest', async (req, reply) => {
     if (req.method === 'GET' || req.method === 'HEAD') return;
-    const escrituraRrhh = esEscrituraRrhh(req.method, ruta(req));
+    const escrituraRrhh = esEscrituraRrhh(req.method, ruta(req)) || esEscrituraPagos(req.method, ruta(req));
     if (!escrituraRrhh && (req.method !== 'POST' || !POST_PERMITIDOS.has(ruta(req)))) return reply.code(405).send({ error: 'SOLO_LECTURA' });
     const origen = req.headers.origin;
     if (origen !== undefined && origen !== `http://${req.headers.host}`) return reply.code(403).send({ error: 'ORIGEN_NO_PERMITIDO' });
@@ -195,6 +199,8 @@ export async function crearServidor(modo: Modo) {
   // TA1: módulo Trabajadores (FIXTURES: datos de ejemplo en memoria; TA-REAL: tablas reales con cf_trabajadores_web).
   // TA1-2 (decisión de Pío): autor del historial "Marc" (en REAL, cf.autor de cada transacción).
   registrarRrhh(app, { modo, quien: AUTOR_HISTORIAL, ...rrhh, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
+  // H6: pantalla Vencimientos (FIXTURES: marcas y formas en memoria; REAL: solo lectura, escritura 503).
+  registrarPagos(app, { modo, contrato, quien: AUTOR_HISTORIAL, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
 
   // Errores: mensaje genérico al cliente; nunca filas ni datos de conexión.
   app.setErrorHandler((err, _req, reply) => {

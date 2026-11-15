@@ -46,8 +46,9 @@ test.describe('Inicio PC 1440', () => {
     await abrirInicio(page);
     const filas = page.locator('[data-vencimiento]');
     await expect(filas).toHaveCount(5);
-    await expect(filas.nth(3)).toContainText('2 de 3');
-    await expect(filas.nth(4)).toContainText('3 de 3');
+    // H6-3: CF-2026-55811 tiene 4 vencimientos (el 4.º, negativo «a cuenta» del 31/10, ya pasado: no sale aquí).
+    await expect(filas.nth(3)).toContainText('2 de 4');
+    await expect(filas.nth(4)).toContainText('3 de 4');
     await expect(filas.nth(4)).toContainText('importe pendiente');
     await expect(filas.nth(4)).not.toContainText('desconocido');
     await expect(filas.nth(4)).not.toContainText('0,00 €');

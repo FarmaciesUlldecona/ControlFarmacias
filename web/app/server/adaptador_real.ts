@@ -111,7 +111,10 @@ const COLUMNAS_DIAGNOSTICO = ['facturas', 'facturas_sin_proveedor_id', 'grupos_p
 const COLUMNAS_VENCIMIENTOS = ['vencimientos', 'vencimientos_importe_null', 'vencimientos_null_con_incidencia',
   'vencimientos_null_sin_incidencia', 'facturas_con_incidencia', 'incidencias_importe_vencimiento', 'vencimientos_null_sin_cif',
   'vencimientos_tipo_documento_null', 'vencimientos_tipo_documental_null', 'vencimientos_tipo_otro',
-  'vencimientos_sentido_no_documentado'];
+  'vencimientos_sentido_no_documentado',
+  // H6-3: solo recuentos.
+  'vencimientos_cargo_importe_negativo', 'vencimientos_abono', 'vencimientos_abono_vencidos', 'vencimientos_abono_no_vencidos',
+  'vencimientos_abono_sin_fecha'];
 /** H5-4: diagnósticos de la comprobación REAL, en orden de impresión; cada uno en su propia transacción. */
 export const NOMBRES_DIAGNOSTICO = ['vencimientos', 'documentos', 'tipo_documento', 'sentido', 'casado', 'estado_linea', 'duplicados',
   'par_08C66676'] as const;

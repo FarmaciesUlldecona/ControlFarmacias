@@ -279,10 +279,30 @@ const documentos = [
 const facturas = detalle.map(filaFactura)
   .sort((a, b) => (b.fecha_factura ?? '').localeCompare(a.fecha_factura ?? '') || a.factura_id.localeCompare(b.factura_id));
 const facturaDe = new Map(detalle.map((r) => [r.factura_id, r]));
-const vencimientos = vencimientosH3a.map(({ farmacia, importe_conocido, estado_pago, provenance, ...r }) => ({ // eslint-disable-line no-unused-vars
+/**
+ * H6-3 (todo ficticio): fechas anteriores al 02/11/2026 (generado_at) para no cambiar el «próximo vencimiento» de
+ * Facturas ni los próximos de Inicio.
+ *  - V11: F04 (CF-2026-55811, FACTURA → CARGO) con un vencimiento negativo «a cuenta» (−25,00 €, 31/10): cargo negativo.
+ *  - V12: F07 (CF-AB-2026-0912, ABONO) con un segundo vencimiento ya vencido (−20,00 €, 29/10): abono vencido.
+ * vencimientos_factura se recalcula (F04: 4; F07: 2).
+ */
+const copiaH3a = (n, cambios) => ({ ...vencimientosH3a.find((v) => v.vencimiento_id === `90000000-0000-4000-8000-0000000000${n}`), ...cambios });
+export const VENCIMIENTOS_H6_3 = [
+  copiaH3a('04', { vencimiento_id: '90000000-0000-4000-8000-000000000011', orden: 4, fecha_vencimiento: '2026-10-31', importe: -25,
+    literal: '31/10/2026  -25,00 A CUENTA' }),
+  copiaH3a('09', { vencimiento_id: '90000000-0000-4000-8000-000000000012', orden: 2, fecha_vencimiento: '2026-10-29', importe: -20,
+    literal: 'VTO. 29/10/2026  -20,00' }),
+];
+const vencimientosBase = [...vencimientosH3a, ...VENCIMIENTOS_H6_3];
+const vencimientos = vencimientosBase.map(({ farmacia, importe_conocido, estado_pago, provenance, ...r }) => ({ // eslint-disable-line no-unused-vars
   ...r,
+  vencimientos_factura: vencimientosBase.filter((x) => x.factura_id === r.factura_id).length,
   tipo_documento: facturaDe.get(r.factura_id).tipo_documento,
   tipo_documento_documental: facturaDe.get(r.factura_id).tipo_documento_documental,
+  // H6: CIF (columna y datos_extraidos) y literal de la factura, como la consulta `vencimientos` del contrato.
+  proveedor_cif: facturaDe.get(r.factura_id).proveedor_cif,
+  proveedor_nif_documental: facturaDe.get(r.factura_id).proveedor_nif_documental,
+  proveedor_literal: facturaDe.get(r.factura_id).proveedor_literal,
 }));
 // ---------------------------------------------------------------------------
 // Casos H5: tipos de casado del detalle (todo ficticio; mismos importes que H3a, la conciliación no cambia)

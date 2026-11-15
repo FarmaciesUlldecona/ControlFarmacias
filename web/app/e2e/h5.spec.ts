@@ -36,9 +36,9 @@ test.describe('Listado PC 1440', () => {
     expect(cab.map((t) => t.replace(/[↑↓↕]/g, '').trim())).toEqual(['Proveedor', 'Nº factura', 'Fecha', 'Total', 'Vencimiento', 'Normalización', 'Conciliación', 'Revisión Pío', 'Pago']);
     // Orden por defecto: fecha descendente.
     await expect.poll(async () => (await numeros(page))[0]).toBe('CF-AB-2026-0912');
-    // F04: 30/10 ya pasó (hoy 02/11) → próximo 15/11, "+2".
+    // F04: 30/10 y 31/10 ya pasaron (hoy 02/11) → próximo 15/11, "+3" (H6-3: 4 vencimientos con el negativo «a cuenta»).
     await expect(fila(page, 4).locator('[data-vencimiento-listado]')).toContainText('15/11/2026');
-    await expect(fila(page, 4).locator('[data-mas]')).toHaveText('+2');
+    await expect(fila(page, 4).locator('[data-mas]')).toHaveText('+3');
     // F06: vencimiento sin importe → "importe pendiente"; total desconocido.
     await expect(fila(page, 6).locator('[data-importe-pendiente]')).toHaveText('importe pendiente');
     await expect(fila(page, 6).locator('[data-importe-desconocido]')).toHaveText('desconocido');
@@ -471,7 +471,7 @@ test.describe('Móvil 390', () => {
     await abrirListado(page);
     await expect(page.locator('.tarjeta-factura')).toHaveCount(8);
     await expect(page.locator('.tabla-facturas')).toHaveCount(0);
-    await expect(page.locator(`.tarjeta-factura[data-factura="${F(4)}"] [data-mas]`)).toHaveText('+2');
+    await expect(page.locator(`.tarjeta-factura[data-factura="${F(4)}"] [data-mas]`)).toHaveText('+3'); // H6-3: 4 vencimientos
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     await page.screenshot({ path: join(CAPTURAS, 'movil390_facturas.png'), fullPage: true });
   });

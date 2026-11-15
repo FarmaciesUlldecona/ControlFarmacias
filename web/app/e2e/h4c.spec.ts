@@ -23,7 +23,8 @@ test.describe('Detalle de factura PC 1440', () => {
   test('F04: vencimiento sin importe = "importe pendiente" y total factura como referencia separada', async ({ page }) => {
     await abrirDetalle(page, F(4));
     const filas = page.locator('[data-vencimiento]');
-    await expect(filas).toHaveCount(3);
+    await expect(filas).toHaveCount(4); // H6-3: + vencimiento negativo «a cuenta» (−25,00 €)
+    await expect(filas.nth(3)).toContainText('-25,00 €');
     await expect(filas.nth(0)).toContainText('400,00 €');
     await expect(filas.nth(0).locator('[data-total-factura]')).toHaveCount(0);
     const pendiente = filas.nth(2);
@@ -46,7 +47,8 @@ test.describe('Detalle de factura PC 1440', () => {
 
   test('F07: abono documentado', async ({ page }) => {
     await abrirDetalle(page, F(7));
-    await expect(page.locator('[data-vencimiento] [data-sentido="ABONO"]')).toHaveText('abono');
+    // H6-3: el abono tiene dos vencimientos (−45,30 € y −20,00 € ya vencido); los dos, sentido abono.
+    await expect(page.locator('[data-vencimiento] [data-sentido="ABONO"]')).toHaveText(['abono', 'abono']);
   });
 
   // H4c-2: regla de Pío (solo el tipo documental).

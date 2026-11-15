@@ -436,8 +436,16 @@ export interface ConciliacionBandejaDTO extends Cabecera {
   alertas: Alerta[];
 }
 
+/**
+ * H6: vencimiento de la pantalla Vencimientos: nombre comercial (como en Facturas) y CIF comparable de su factura
+ * (cifFactura; null = factura sin CIF), que decide la forma de pago por proveedor.
+ */
+export interface VencimientoListado extends Vencimiento, NombreProveedor {
+  proveedor_cif_comparable: string | null;
+}
+
 export interface VencimientosDTO extends Cabecera {
-  vencimientos: Vencimiento[];
+  vencimientos: VencimientoListado[];
   totales: {
     vencimientos: number;
     sin_importe: number;
@@ -745,7 +753,8 @@ select
     v.orden, v.fecha_vencimiento, v.importe, v.literal,
     f.importe_total as importe_factura,
     count(*) over (partition by v.factura_id) as vencimientos_factura,
-    f.estado_normalizacion, f.estado_conciliacion_cf, f.estado_revision
+    f.estado_normalizacion, f.estado_conciliacion_cf, f.estado_revision,
+    f.proveedor_cif, f.datos_extraidos ${SQL_NIF_DOCUMENTAL} as proveedor_nif_documental, f.proveedor_literal
 from public.facturas_vencimientos v
 join public.facturas f on f.id = v.factura_id
 cross join hab
@@ -1211,7 +1220,7 @@ from d`,
     porFactura: false,
     sql: `with ${HAB},
 v as (
-    select v.importe, f.id as factura_id, ${SQL_CIF_FACTURA('f')} as cif,
+    select v.importe, v.fecha_vencimiento, f.id as factura_id, ${SQL_CIF_FACTURA('f')} as cif,
            f.tipo_documento, nullif(btrim(f.datos_extraidos #>> '{tipo_documento,valor}'), '') as tipo_documental,
            ${SQL_SENTIDO('f')} as sentido,
            exists (select 1 from public.facturas_incidencias fi
@@ -1234,6 +1243,12 @@ select count(*) as vencimientos,
        count(*) filter (where v.tipo_documental is null) as vencimientos_tipo_documental_null,
        count(*) filter (where v.tipo_documento = 'OTRO') as vencimientos_tipo_otro,
        count(*) filter (where v.sentido = 'NO_DOCUMENTADO') as vencimientos_sentido_no_documentado,
+       -- H6-3: cargos con importe negativo (fuera de los totales de Vencimientos) y abonos vencidos / no vencidos / sin fecha.
+       count(*) filter (where v.sentido = 'CARGO' and v.importe < 0) as vencimientos_cargo_importe_negativo,
+       count(*) filter (where v.sentido = 'ABONO') as vencimientos_abono,
+       count(*) filter (where v.sentido = 'ABONO' and v.fecha_vencimiento < current_date) as vencimientos_abono_vencidos,
+       count(*) filter (where v.sentido = 'ABONO' and v.fecha_vencimiento >= current_date) as vencimientos_abono_no_vencidos,
+       count(*) filter (where v.sentido = 'ABONO' and v.fecha_vencimiento is null) as vencimientos_abono_sin_fecha,
        (select coalesce(json_agg(g.n order by g.n desc), '[]'::json)
           from (select count(*) as n from v v2 where v2.importe is null and v2.cif is not null group by v2.cif) g) as nulls_por_grupo_cif
 from v`,
@@ -2380,7 +2395,13 @@ export const construir = {
   },
 
   vencimientos(f: Filas, generado_at: string = ahora()): VencimientosDTO {
-    const v = filas(f, 'vencimientos').map(aVencimiento);
+    // H6: nombre comercial y CIF de la factura (columnas proveedor_cif, nif documental y literal de la consulta).
+    const v: VencimientoListado[] = filas(f, 'vencimientos').map((r) => {
+      const base = aVencimiento(r);
+      const fa = { proveedor_cif: texto(r.proveedor_cif), proveedor_nif_documental: texto(r.proveedor_nif_documental),
+        proveedor_literal: texto(r.proveedor_literal), proveedor: base.proveedor };
+      return { ...base, ...nombreProveedorFactura(fa), proveedor_cif_comparable: cifFactura(fa.proveedor_cif, fa.proveedor_nif_documental) };
+    });
     const cargos = sumaConocida(v.filter((x) => x.sentido === 'CARGO' && x.importe !== null).map((x) => x.importe));
     const abonos = sumaConocida(v.filter((x) => x.sentido === 'ABONO' && x.importe !== null).map((x) => x.importe));
     return {

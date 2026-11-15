@@ -33,7 +33,11 @@ import { COLOR_FARMACIA_GUARDIA, FARMACIAS_GUARDIA, HORAS_SERVICIO, reglasSemana
 import { leerSemillaFichaAnual } from '../../app/server/rrhh/adaptador_fixtures.ts';
 import { AVISO_VACACIONES_DESDE, REDONDEO_PROPORCIONAL, TIPOS_HORAS_COMPUTAN, calcularFichaAnual, resumenPlantilla } from '../../app/server/rrhh/ficha_anual.ts';
 import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
-import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
+import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, VENCIMIENTOS_H6_3, generar } from './gen_fixtures.mjs';
+import {
+  DICCIONARIO_ESTADOS, ESTADOS_IMPLEMENTADOS, construirPantalla, crearAlmacenPagos, totalesPorPeriodo,
+} from '../../app/server/pagos/pagos.ts';
+import { leerSemillaPagos } from '../../app/server/pagos/rutas.ts';
 
 const RAIZ = join(import.meta.dirname, '..');
 const DTO = join(RAIZ, 'dto');
@@ -129,9 +133,10 @@ comprobar('F06: importe_total null en facturas, detalle y bandeja', () => {
   const f06 = [facturas.facturas.find((f) => f.factura_id === F(6)), facturaDetalle[F(6)]?.factura, conciliacionBandeja.facturas.find((f) => f.factura_id === F(6))];
   return si(f06.every((f) => f && f.importe_total === null), JSON.stringify(f06.map((f) => f?.importe_total)));
 });
-comprobar('F04: 3 vencimientos, el 3.º sin importe (null) y importe_conocido=false', () => {
+comprobar('F04: 3 vencimientos de H3a (el 3.º sin importe, importe_conocido=false) + 1 negativo «a cuenta» de H6-3', () => {
   const v = vencimientos.vencimientos.filter((x) => x.factura_id === F(4)).sort((a, b) => a.orden - b.orden);
-  return si(v.length === 3 && v[0].importe === 400 && v[1].importe === 150 && v[2].importe === null && v[2].importe_conocido === false, JSON.stringify(v.map((x) => x.importe)));
+  return si(v.length === 4 && v[0].importe === 400 && v[1].importe === 150 && v[2].importe === null && v[2].importe_conocido === false
+    && v[3].importe === -25 && v.every((x) => x.vencimientos_factura === 4), JSON.stringify(v.map((x) => x.importe)));
 });
 comprobar('vencimientos: totales con nulls contados aparte', () => {
   const t = vencimientos.totales;
@@ -153,6 +158,15 @@ comprobar('cashflow: igual a v_web_cashflow_semanal de H3a salvo los vencimiento
       vencimientos_sentido_no_documentado: nd.length,
     };
   }).sort((a, b) => String(a.semana).localeCompare(String(b.semana)));
+  // H6-3: los dos vencimientos nuevos (cargo negativo de F04 y abono vencido de F07) suman en su semana como cargo y abono.
+  const r4 = (x) => Math.round(x * 10000) / 10000;
+  for (const v of VENCIMIENTOS_H6_3) {
+    const s = esperado.find((x) => x.semana === lunes(v.fecha_vencimiento));
+    s.vencimientos += 1;
+    if (v.tipo_documento === 'ABONO') s.importe_abonos_conocido = r4((s.importe_abonos_conocido ?? 0) + v.importe);
+    else s.importe_cargos_conocido = r4((s.importe_cargos_conocido ?? 0) + v.importe);
+    if (v.estado_revision !== 'VALIDADA_PIO') s.vencimientos_sin_validar += 1;
+  }
   const obtenido = cashflowSemanas.semanas.map(({ semana_fin, ...r }) => r); // eslint-disable-line no-unused-vars
   const orden = (o) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
   return si(isDeepStrictEqual(obtenido.map(orden), esperado.map(orden)), `obtenido ${JSON.stringify(obtenido)}`);
@@ -417,8 +431,9 @@ comprobar('H4c: F05 sin tipo documental → sentido no documentado; nunca suma c
   JSON.stringify([t, s]));
 });
 comprobar('H4c: abono F07 sigue sumando como abono (tipo documental ABONO)', () => {
-  const v = vencimientos.vencimientos.find((x) => x.factura_id === F(7));
-  return si(v.sentido === 'ABONO' && vencimientos.totales.importe_abonos_conocido === -45.3, JSON.stringify(v));
+  // H6-3: F07 tiene dos vencimientos (−45,30 de H3a y −20,00 vencido): los dos suman como abono.
+  const vs = vencimientos.vencimientos.filter((x) => x.factura_id === F(7));
+  return si(vs.length === 2 && vs.every((v) => v.sentido === 'ABONO') && vencimientos.totales.importe_abonos_conocido === -65.3, JSON.stringify(vs));
 });
 comprobar('H4c: mapa — PDF con factura por su grupo; sin factura por proveedor_id del catálogo o solo por estado', () => {
   const m = proveedores.mapa_documentos.filas;
@@ -684,7 +699,7 @@ comprobar('H5-2: búsqueda por importe (sin coma = de N,00 a N,99; con coma = ex
   ];
   const malos = casos.map(([a, b], i) => (a === b ? null : `#${i}: ${a}≠${b}`)).filter(Boolean);
   const f4 = facturas.facturas.find((x) => x.factura_id === F(4));
-  return si(malos.length === 0 && isDeepStrictEqual(f4.vencimientos_importes, [400, 150, null]), malos.join(', ') || JSON.stringify(f4.vencimientos_importes));
+  return si(malos.length === 0 && isDeepStrictEqual(f4.vencimientos_importes, [400, 150, null, -25]), malos.join(', ') || JSON.stringify(f4.vencimientos_importes));
 });
 comprobar('H5-3: diagnóstico de casado (etiquetas fijas; no previstos listados solo si son código; el resto en otros_no_codigo)', () => {
   const PAT = /^[A-Z0-9_]{1,40}$/;
@@ -778,7 +793,8 @@ comprobar('H5: R17 en F03: dos detalles UNO_A_VARIOS con el mismo albarán docum
 comprobar('H5: listado: hoy, vencimiento próximo y "+N", importe pendiente, posible duplicado', () => {
   const f = (n) => facturas.facturas.find((x) => x.factura_id === F(n));
   const ok = facturas.hoy === '2026-11-02'
-    && f(4).vencimiento_proximo.fecha_vencimiento === '2026-11-15' && f(4).vencimientos_total === 3 && !f(4).vencimiento_vencido
+    && f(4).vencimiento_proximo.fecha_vencimiento === '2026-11-15' && f(4).vencimientos_total === 4 && !f(4).vencimiento_vencido
+    && f(7).vencimiento_proximo.fecha_vencimiento === '2026-11-21' && f(7).vencimientos_total === 2
     && f(6).vencimiento_proximo.importe === null && f(6).importe_total === null
     && facturas.facturas.filter((x) => x.posible_duplicado).map((x) => x.factura_id).sort().join() === [F(1), F(8)].join()
     && facturas.facturas.every((x) => x.proveedor_etiqueta && x.proveedor_grupo);
@@ -1186,6 +1202,76 @@ comprobar('TA3: propuesta SQL (docs/propuesta_tablas_ta3.sql) sin aplicar: autor
   return si(/NO APLICAR/.test(s) && /cf\.autor/.test(s) && tablas.length >= 2 && tablas.every((t) => !/\bautor\b/.test(t))
     && /enable row level security/.test(s) && /grant select, insert, update on [^;]*to cf_trabajadores_web/.test(s) && /grant select on [^;]*to cf_lectura/.test(s)
     && /ROLLBACK/.test(s) && /DECISIONES PARA EL CIRCUITO/.test(s) && !/^grant [^;]*\bdelete\b/im.test(s), 'faltan elementos');
+});
+
+// --- H6: Vencimientos (estados de pago, forma por proveedor, marcas) ---------------------------------------------
+const semillaPagos = leerSemillaPagos();
+const pantallaH6 = construirPantalla(vencimientos, crearAlmacenPagos(semillaPagos).fuente(), { hoy: semillaPagos.hoy, modo: 'FIXTURES' });
+comprobar('H6: vencimientos con nombre comercial (como Facturas) y CIF comparable de su factura; FEDEFARMA sin CIF', () => {
+  const vs = vencimientos.vencimientos;
+  const fact = new Map(facturas.facturas.map((f) => [f.factura_id, f]));
+  const igual = vs.every((v) => v.proveedor_comercial === fact.get(v.factura_id).proveedor_comercial && v.proveedor_cif_comparable === fact.get(v.factura_id).proveedor_cif_comparable);
+  const sinCif = vs.filter((v) => v.proveedor_cif_comparable === null).map((v) => v.numero_factura);
+  return si(igual && isDeepStrictEqual(sinCif, ['FD-26/04471']) && CONSULTAS.vencimientos.sql.includes('f.proveedor_literal')
+    && CONSULTAS.vencimientos.objetos.every((o) => OBJETOS_PERMITIDOS.includes(o)), JSON.stringify({ igual, sinCif }));
+});
+comprobar('H6: semilla de pagos coherente (hoy 16/11/2026; una marca vigente por vencimiento y una forma por CIF; claves que existen)', () => {
+  const ids = new Set(vencimientos.vencimientos.map((v) => v.vencimiento_id));
+  const cifs = new Set(vencimientos.vencimientos.map((v) => v.proveedor_cif_comparable).filter(Boolean));
+  const vig = semillaPagos.marcas.filter((m) => !m.anulada);
+  const fvig = semillaPagos.formas.filter((f) => !f.anulada);
+  return si(semillaPagos.hoy === '2026-11-16' && semillaPagos.marcas.every((m) => ids.has(m.vencimiento_id)) && semillaPagos.formas.every((f) => cifs.has(f.cif))
+    && new Set(vig.map((m) => m.vencimiento_id)).size === vig.length && new Set(fvig.map((f) => f.cif)).size === fvig.length
+    && semillaPagos.marcas.some((m) => m.anulada) && semillaPagos.marcas.every((m) => m.fecha_pago <= semillaPagos.hoy), 'semilla incoherente');
+});
+comprobar('H6/H6-3: los fixtures cubren los 5 estados implementados (3 pendientes, 3 rojos, 4 domiciliados previstos, 1 abono pendiente de compensar, 1 pagado a mano); PAGADO_BANCO solo reservado', () => {
+  const n = Object.fromEntries(ESTADOS_IMPLEMENTADOS.map((e) => [e, pantallaH6.filas.filter((f) => f.estado_pago === e).length]));
+  return si(isDeepStrictEqual(n, { PENDIENTE: 3, VENCIDO_SIN_PAGAR: 3, DOMICILIADO_PREVISTO: 4, ABONO_PENDIENTE_COMPENSAR: 1, PAGADO_MANUAL: 1 })
+    && !pantallaH6.filas.some((f) => f.estado_pago === 'PAGADO_BANCO') && DICCIONARIO_ESTADOS.PAGADO_BANCO.implementado === false
+    && DICCIONARIO_ESTADOS.DOMICILIADO_PREVISTO.color !== 'rojo', JSON.stringify(n));
+});
+comprobar('H6: sin CIF = forma sin determinar con aviso; sin configurar = domiciliación por defecto', () => {
+  const f8 = pantallaH6.filas.find((f) => f.numero_factura === 'FD-26/04471');
+  const cof = pantallaH6.proveedores.find((p) => p.cif === 'A00000001');
+  return si(f8.forma_pago === 'SIN_DETERMINAR' && f8.sin_cif && pantallaH6.sin_cif.vencimientos === 1 && cof.forma === 'DOMICILIACION' && cof.por_defecto,
+    JSON.stringify({ f8: f8.forma_pago, cof }));
+});
+comprobar('H6: totales por mes (noviembre: por pagar 776,96; domiciliado 150 − 45,30 = 104,70; octubre: 400 − 20 = 380 y el cargo negativo fuera)', () => {
+  const nov = totalesPorPeriodo(pantallaH6.filas, 'mes').find((t) => t.clave === '2026-11');
+  const oct = totalesPorPeriodo(pantallaH6.filas, 'mes').find((t) => t.clave === '2026-10');
+  return si(nov.por_pagar.neto === 776.96 && nov.domiciliado.neto === 104.7 && nov.domiciliado.abonos === -45.3 && nov.sin_importe === 2
+    && nov.sentido_no_documentado === 2 && nov.cargo_negativo === 0 && oct.domiciliado.neto === 380 && oct.domiciliado.cargos === 400
+    && oct.cargo_negativo === 1 && oct.por_pagar.neto === null, JSON.stringify({ nov, oct }));
+});
+comprobar('H6-3: abono vencido = «Abono pendiente de compensar» (azul); cargo negativo con aviso y fuera de totales; check:real cuenta ambos (solo números)', () => {
+  const v = (n) => pantallaH6.filas.find((f) => f.vencimiento_id === `90000000-0000-4000-8000-0000000000${n}`);
+  const sql = CONSULTAS_CHECK.diagnostico_vencimientos.sql;
+  const cols = ['vencimientos_cargo_importe_negativo', 'vencimientos_abono', 'vencimientos_abono_vencidos', 'vencimientos_abono_no_vencidos', 'vencimientos_abono_sin_fecha'];
+  return si(v('12').estado_pago === 'ABONO_PENDIENTE_COMPENSAR' && DICCIONARIO_ESTADOS.ABONO_PENDIENTE_COMPENSAR.color === 'azul'
+    && v('09').estado_pago === 'PENDIENTE' && v('11').cargo_negativo && v('11').sentido === 'CARGO'
+    && pantallaH6.filas.filter((f) => f.cargo_negativo).length === 1 && cols.every((c) => sql.includes(`as ${c}`)),
+  JSON.stringify({ v12: v('12').estado_pago, v11: v('11').cargo_negativo }));
+});
+comprobar('H6: REAL (sin tablas): sin marcas ni formas, lo vencido con CIF figura como domiciliado previsto (el abono, pendiente de compensar); escritura «Pendiente de tablas en Supabase»', () => {
+  const p = construirPantalla(vencimientos, null, { hoy: semillaPagos.hoy, modo: 'REAL' });
+  const vencidos = p.filas.filter((f) => f.vencido);
+  return si(!p.marcas_disponibles && p.mensaje_pendiente === 'Pendiente de tablas en Supabase' && p.historial.length === 0
+    && vencidos.length === 9 && vencidos.filter((f) => f.estado_pago === 'DOMICILIADO_PREVISTO').length === 8
+    && vencidos.filter((f) => f.estado_pago === 'ABONO_PENDIENTE_COMPENSAR').length === 1 && p.filas.every((f) => f.marca === null), JSON.stringify(vencidos.map((f) => f.estado_pago)));
+});
+comprobar('H6: propuesta SQL (docs/propuesta_tablas_h6_pagos.sql) sin aplicar: autor por cf.autor sin columna, una vigente por clave, anular en vez de DELETE, RLS PIO, historial por trigger, rol propio, rollback', () => {
+  const ruta = join(RAIZ, '..', 'docs', 'propuesta_tablas_h6_pagos.sql');
+  if (!existsSync(ruta)) return 'falta la propuesta';
+  const s = readFileSync(ruta, 'utf8');
+  const tablas = (s.match(/create table public\.\w+ \([^;]*\);/g) ?? []).filter((t) => /vencimientos_marcas_pago|proveedores_forma_pago/.test(t.split('(')[0]));
+  return si(/NO APLICAR/.test(s) && /cf\.autor/.test(s) && tablas.length === 2 && tablas.every((t) => !/\bautor\b/.test(t) && /anulada boolean/.test(t))
+    && /vencimiento_id, fecha_pago|vencimiento_id uuid not null/.test(s) && /cif text not null/.test(s)
+    && /\(farmacia, vencimiento_id\) where not anulada/.test(s) && /\(farmacia, cif\) where not anulada/.test(s)
+    && /enable row level security/.test(s) && /farmacia = 'PIO'/.test(s) && /BORRADO_NO_PERMITIDO/.test(s) && /cf_h6_historial/.test(s)
+    && /grant select, insert, update on public\.vencimientos_marcas_pago, public\.proveedores_forma_pago to cf_pagos_web/.test(s)
+    && /grant select on [^;]*vencimientos_marcas_pago[^;]*to cf_lectura/.test(s) && !/^grant [^;]*\bdelete\b/im.test(s)
+    && /ROLLBACK/.test(s) && /A CONFIRMAR/.test(s) && /DECISIONES PARA EL CIRCUITO/.test(s)
+    && !/facturas_vencimientos[^;\n]*to cf_pagos_web/.test(s), 'faltan elementos');
 });
 
 // --- Informe ----------------------------------------------------------------------

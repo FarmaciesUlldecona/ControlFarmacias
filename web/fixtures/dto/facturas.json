@@ -81,7 +81,7 @@
         "importe_conocido": true,
         "literal": "VTO. 21/11/2026  -45,30",
         "importe_factura": -45.3,
-        "vencimientos_factura": 1,
+        "vencimientos_factura": 2,
         "estado_normalizacion": "NORMALIZADA",
         "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
         "estado_revision": "NO_REQUERIDA",
@@ -92,9 +92,10 @@
         }
       },
       "vencimiento_vencido": false,
-      "vencimientos_total": 1,
+      "vencimientos_total": 2,
       "vencimientos_importes": [
-        -45.3
+        -45.3,
+        -20
       ],
       "posible_duplicado": false
     },
@@ -348,7 +349,7 @@
         "importe_conocido": true,
         "literal": "15/11/2026  150,00",
         "importe_factura": 568.05,
-        "vencimientos_factura": 3,
+        "vencimientos_factura": 4,
         "estado_normalizacion": "NORMALIZADA",
         "estado_conciliacion_cf": "CONCILIADA",
         "estado_revision": "VALIDADA_PIO",
@@ -359,11 +360,12 @@
         }
       },
       "vencimiento_vencido": false,
-      "vencimientos_total": 3,
+      "vencimientos_total": 4,
       "vencimientos_importes": [
         400,
         150,
-        null
+        null,
+        -25
       ],
       "posible_duplicado": false
     },

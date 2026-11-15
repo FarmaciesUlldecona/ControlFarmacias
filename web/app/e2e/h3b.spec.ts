@@ -34,8 +34,8 @@ test.describe('PC 1440', () => {
       await menu.getByRole('link', { name: m.texto, exact: true }).click();
       await expect(page).toHaveURL(m.ruta);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(m.titulo);
-      // Inicio está construida desde H4 (e2e/h4.spec.ts) y Facturas desde H5 (e2e/h5.spec.ts).
-      if (m.ruta !== '/' && m.ruta !== '/facturas') await expect(page.getByText('En construcción')).toBeVisible();
+      // Inicio está construida desde H4 (e2e/h4.spec.ts), Facturas desde H5 (e2e/h5.spec.ts) y Vencimientos desde H6.
+      if (!['/', '/facturas', '/vencimientos'].includes(m.ruta)) await expect(page.getByText('En construcción')).toBeVisible();
       await expect(page.locator(`[data-contrato-ok="${m.bloque}"]`)).toBeVisible();
       await expect(menu.getByRole('link', { name: m.texto, exact: true })).toHaveClass(/activo/);
     }

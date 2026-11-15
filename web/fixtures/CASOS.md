@@ -519,4 +519,58 @@ TA3-2 (decisiones de Marc): se aceptan los tres criterios (el festivo sustituye 
 | Sin festivo | Mismas fechas sin festivo de alta (o dado de baja) | Dos periodos: 1 + 1 = 2 días (regla anterior) |
 | Festivo al borde | Vacaciones 9–11 dic, 8 festivo | No amplía: 3 días |
 | Otros tipos | Baja y demás ausencias | No cambian (solo vacaciones) |
-| Ficha (Playwright) | Irene: vacaciones 24 y 28 dic 2026 | «5 días» en un solo periodo; tras dar de baja el festivo del 25, 2 periodos |
+| Ficha (Playwright) | Irene: vacaciones 18 y 22 mar 2027, 19 festivo de ejemplo | «5 días» en un solo periodo; tras dar de baja el festivo, 2 periodos |
+
+## H6: pantalla Vencimientos (estados de pago; marcas solo en FIXTURES)
+
+Excepción autorizada por Marc: la web podrá escribir solo en tablas nuevas de marcas de pago y de forma de pago por proveedor (rol propio). Nunca en facturas, vencimientos ni conciliación. Modelo en `app/server/pagos/pagos.ts`; API `/api/pagos/*` en `app/server/pagos/rutas.ts`.
+- **Vencimientos:** los 10 de siempre (`dto/vencimientos.json`). Añaden el nombre comercial y el CIF comparable de su factura (consulta `vencimientos`: columnas `proveedor_cif`, nif documental y `proveedor_literal` de `facturas`, sin objetos nuevos). FEDEFARMA (FD-26/04471) no tiene CIF.
+- **Semilla** (`fixtures/pagos/pagos.json`):
+  - Fecha de referencia de los estados: lunes 16/11/2026. Es propia de esta pantalla; el resto de pantallas sigue con el 02/11/2026 de `generado_at`.
+  - Alliance (B00000003): transferencia.
+  - Hefame (F30004444): efectivo, cambiado a transferencia el 15/10.
+  - Cofares (A00000001): sin configurar, así que domiciliación por defecto.
+  - Marca vigente de Hefame (pagada el 09/11, por transferencia).
+  - Marca anulada de AL-26-100231 (historial).
+- **Estados:** PENDIENTE · VENCIDO_SIN_PAGAR (rojo) · DOMICILIADO_PREVISTO (violeta propio) · PAGADO_MANUAL · PAGADO_BANCO (reservado, sin lógica). Vencido = fecha anterior a hoy.
+- **Totales:** cargos menos abonos, en tres grupos:
+  - por pagar: sin marca y forma no domiciliada;
+  - domiciliado previsto: sin marca y con domiciliación;
+  - pagado.
+
+  Los importes pendientes (null) y los de sentido no documentado no suman: se cuentan aparte.
+- **REAL:** solo lectura con cf_lectura, sin marcas ni formas. Lo vencido con CIF figura como domiciliado previsto. La escritura responde 503 `H6_PENDIENTE` «Pendiente de tablas en Supabase». Propuesta sin aplicar: `web/docs/propuesta_tablas_h6_pagos.sql`.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Estados (hoy 16/11) | 10 vencimientos | 3 pendientes, 3 vencidos sin pagar (Alliance), 3 domiciliados previstos (Cofares), 1 pagado a mano (Hefame) |
+| Sin CIF | FD-26/04471 (19/11) | Forma sin determinar, aviso «sin CIF»; para marcarlo hay que elegir la forma; vencido sería rojo |
+| Totales noviembre | Por pagar / domiciliado | 776,96 € / 150 − 45,30 = 104,70 €; 2 importes pendientes y 2 de sentido no documentado fuera |
+| Marcar varios | Los 3 vencidos de Alliance | Pagado a mano con la fecha elegida y la forma del proveedor; si alguno ya tiene marca, 409 y no se marca ninguno |
+| Confirmar domiciliados | Los 3 de Cofares | Fecha = la de vencimiento, forma domiciliación; solo DOMICILIADO_PREVISTO (otro estado: 409) |
+| Anular | Marca de Hefame | Con confirmación; queda anulada en el historial con autor; vuelve a vencido sin pagar |
+| Forma por proveedor | Cofares a transferencia | Sus vencidos pasan a rojo; «Volver a por defecto» los devuelve a domiciliado previsto |
+| REAL simulado | Sin almacén | 8 domiciliados previstos y 1 abono pendiente de compensar (tras H6-3); botones deshabilitados con «Pendiente de tablas en Supabase» |
+
+H6-3 (decisiones de Marc): abonos y cargos negativos.
+- **Abono vencido sin marca:** estado ABONO_PENDIENTE_COMPENSAR («Abono pendiente de compensar», azul), nunca rojo ni domiciliado previsto.
+  - Al marcarlo: «compensado / cobrado (marcado a mano)», con COMPENSACION_ABONO por defecto (también sin CIF).
+  - «Confirmar domiciliados» no lo incluye.
+- **Cargo con importe negativo:** el sentido sigue siendo «Cargo» (regla de Pío). Lleva el aviso «importe negativo: revisar» y queda fuera de los totales, contado aparte con el recuento a la vista.
+- **check:real** (solo números): vencimientos de cargo con importe negativo, y abonos (total, vencidos, no vencidos y sin fecha).
+- **Fixtures nuevos** (`gen_fixtures.mjs`, `VENCIMIENTOS_H6_3`), con fechas anteriores al 02/11 para no cambiar el «próximo vencimiento» de Facturas ni los próximos de Inicio:
+  - V11: CF-2026-55811, −25,00 € «a cuenta» el 31/10 (4.º vencimiento).
+  - V12: CF-AB-2026-0912, −20,00 € el 29/10 (2.º vencimiento, ya vencido).
+- **Efecto en otras pantallas** (pruebas ajustadas):
+  - Inicio: «2 de 4» y «3 de 4».
+  - Facturas: F04 «+3».
+  - Detalle F04: 4 vencimientos.
+  - Detalle F07: 2 abonos.
+  - Cashflow: semana del 26/10 con 375 € de cargos y −20 € de abonos.
+  - Contrato: abonos −65,30 €.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Abono vencido | V12 (29/10, −20,00 €) | «Abono pendiente de compensar» en azul; no entra en «Confirmar domiciliados» |
+| Marcar compensado | V12, forma «la de cada proveedor» | Compensación con abono; «compensado / cobrado (marcado a mano)»; historial «marcó compensado / cobrado» |
+| Cargo negativo | V11 (31/10, −25,00 €, Cofares) | Sentido «Cargo», aviso «importe negativo: revisar»; semana del 26/10 y octubre: domiciliado 400 − 20 = 380 €; «1 cargo con importe negativo» |

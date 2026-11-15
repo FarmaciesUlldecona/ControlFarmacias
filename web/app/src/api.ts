@@ -51,11 +51,11 @@ export class ErrorApi extends Error {
 }
 
 /**
- * TA1: escritura JSON, solo en /api/rrhh/* (el servidor rechaza cualquier otra). El navegador envía Origin y
- * Sec-Fetch-Site, que el servidor comprueba.
+ * TA1: escritura JSON, solo en /api/rrhh/* y, H6, /api/pagos/* (el servidor rechaza cualquier otra). El navegador
+ * envía Origin y Sec-Fetch-Site, que el servidor comprueba.
  */
 export async function enviar<T>(ruta: string, metodo: 'POST' | 'PUT', cuerpo: unknown): Promise<T> {
-  if (!ruta.startsWith('/api/rrhh/')) throw new Error('ESCRITURA_SOLO_RRHH');
+  if (!ruta.startsWith('/api/rrhh/') && !ruta.startsWith('/api/pagos/')) throw new Error('ESCRITURA_SOLO_RRHH_O_PAGOS');
   const r = await fetch(ruta, {
     method: metodo, credentials: 'same-origin',
     headers: { accept: 'application/json', 'content-type': 'application/json' },

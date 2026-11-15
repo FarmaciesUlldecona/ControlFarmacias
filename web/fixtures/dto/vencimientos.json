@@ -24,7 +24,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_cif_comparable": "B00000003"
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000002",
@@ -48,7 +51,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "Alliance Healthcare España",
+      "proveedor_cif_comparable": "B00000003"
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000003",
@@ -72,7 +78,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001"
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000004",
@@ -88,7 +97,7 @@
       "importe_conocido": true,
       "literal": "30/10/2026  400,00",
       "importe_factura": 568.05,
-      "vencimientos_factura": 3,
+      "vencimientos_factura": 4,
       "estado_normalizacion": "NORMALIZADA",
       "estado_conciliacion_cf": "CONCILIADA",
       "estado_revision": "VALIDADA_PIO",
@@ -96,7 +105,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001"
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000005",
@@ -112,7 +124,7 @@
       "importe_conocido": true,
       "literal": "15/11/2026  150,00",
       "importe_factura": 568.05,
-      "vencimientos_factura": 3,
+      "vencimientos_factura": 4,
       "estado_normalizacion": "NORMALIZADA",
       "estado_conciliacion_cf": "CONCILIADA",
       "estado_revision": "VALIDADA_PIO",
@@ -120,7 +132,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001"
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000006",
@@ -136,7 +151,7 @@
       "importe_conocido": false,
       "literal": "30/11/2026",
       "importe_factura": 568.05,
-      "vencimientos_factura": 3,
+      "vencimientos_factura": 4,
       "estado_normalizacion": "NORMALIZADA",
       "estado_conciliacion_cf": "CONCILIADA",
       "estado_revision": "VALIDADA_PIO",
@@ -144,7 +159,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001"
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000007",
@@ -168,7 +186,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": "HEFAME",
+      "proveedor_razon_social": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "proveedor_cif_comparable": "F30004444"
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000008",
@@ -192,7 +213,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "FEDEFARMA",
+      "proveedor_cif_comparable": null
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000009",
@@ -208,7 +232,7 @@
       "importe_conocido": true,
       "literal": "VTO. 21/11/2026  -45,30",
       "importe_factura": -45.3,
-      "vencimientos_factura": 1,
+      "vencimientos_factura": 2,
       "estado_normalizacion": "NORMALIZADA",
       "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
       "estado_revision": "NO_REQUERIDA",
@@ -216,7 +240,10 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001"
     },
     {
       "vencimiento_id": "90000000-0000-4000-8000-000000000010",
@@ -240,15 +267,72 @@
         "estado": "SIN_DATOS_BANCARIOS",
         "texto": "sin datos bancarios",
         "color": "gris"
-      }
+      },
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
+      "proveedor_cif_comparable": "B00000003"
+    },
+    {
+      "vencimiento_id": "90000000-0000-4000-8000-000000000011",
+      "factura_id": "f0000000-0000-4000-8000-000000000004",
+      "numero_factura": "CF-2026-55811",
+      "tipo_documento": "FACTURA",
+      "tipo_documento_documental": "FACTURA",
+      "sentido": "CARGO",
+      "proveedor": "COFARES",
+      "orden": 4,
+      "fecha_vencimiento": "2026-10-31",
+      "importe": -25,
+      "importe_conocido": true,
+      "literal": "31/10/2026  -25,00 A CUENTA",
+      "importe_factura": 568.05,
+      "vencimientos_factura": 4,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "CONCILIADA",
+      "estado_revision": "VALIDADA_PIO",
+      "pago": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris"
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001"
+    },
+    {
+      "vencimiento_id": "90000000-0000-4000-8000-000000000012",
+      "factura_id": "f0000000-0000-4000-8000-000000000007",
+      "numero_factura": "CF-AB-2026-0912",
+      "tipo_documento": "ABONO",
+      "tipo_documento_documental": "ABONO",
+      "sentido": "ABONO",
+      "proveedor": "COFARES",
+      "orden": 2,
+      "fecha_vencimiento": "2026-10-29",
+      "importe": -20,
+      "importe_conocido": true,
+      "literal": "VTO. 29/10/2026  -20,00",
+      "importe_factura": -45.3,
+      "vencimientos_factura": 2,
+      "estado_normalizacion": "NORMALIZADA",
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+      "estado_revision": "NO_REQUERIDA",
+      "pago": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris"
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
+      "proveedor_cif_comparable": "A00000001"
     }
   ],
   "totales": {
-    "vencimientos": 10,
+    "vencimientos": 12,
     "sin_importe": 2,
     "sin_fecha": 0,
-    "importe_cargos_conocido": 1326.96,
-    "importe_abonos_conocido": -45.3,
+    "importe_cargos_conocido": 1301.96,
+    "importe_abonos_conocido": -65.3,
     "sentido_no_documentado": 3
   },
   "pago": {

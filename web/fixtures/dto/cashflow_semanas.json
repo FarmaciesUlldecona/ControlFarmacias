@@ -5,12 +5,12 @@
     {
       "semana": "2026-10-26",
       "semana_fin": "2026-11-01",
-      "vencimientos": 1,
+      "vencimientos": 3,
       "vencimientos_sin_importe": 0,
-      "importe_cargos_conocido": 400,
-      "importe_abonos_conocido": null,
+      "importe_cargos_conocido": 375,
+      "importe_abonos_conocido": -20,
       "vencimientos_sentido_no_documentado": 0,
-      "vencimientos_sin_validar": 0
+      "vencimientos_sin_validar": 1
     },
     {
       "semana": "2026-11-02",

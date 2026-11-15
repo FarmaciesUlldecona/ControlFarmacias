@@ -1,0 +1,186 @@
+/* H6 Vencimientos. Mismos tokens que estilos.css; único color propio: «domiciliado previsto» (violeta, no rojo:
+   lo vencido por domiciliación no es una incidencia, solo falta confirmarlo). */
+:root {
+  --domiciliado: #6a4fb3; --domiciliado-fondo: #eeeafa; --domiciliado-texto: #4b3593;
+}
+.vencimientos { display: flex; flex-direction: column; gap: 16px; transition: opacity 0.15s; }
+.vencimientos[aria-busy='true'] { opacity: 0.6; }
+.insignia.d { background: var(--domiciliado-fondo); color: var(--domiciliado-texto); }
+.vencimientos .rrhh-banner { position: static; }
+.ve-banner-real { background: var(--gris-fondo); color: var(--gris-texto); border-color: var(--borde); }
+.ve-banner-real .rrhh-banner-marca { background: var(--gris-texto); }
+.visualmente-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Estados: recuento grande + nombre; cada uno filtra la lista. El borde izquierdo lleva el color del estado. */
+.ve-estados { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.ve-estado-boton {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px 12px 18px;
+  border: 1px solid var(--borde); border-radius: 12px; background: var(--superficie); font: inherit; color: var(--texto);
+  text-align: left; cursor: pointer; overflow: hidden;
+}
+.ve-estado-boton::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; }
+.ve-estado-boton.c-azul::before { background: var(--azul); } .ve-estado-boton.c-rojo::before { background: var(--rojo); }
+.ve-estado-boton.c-domiciliado::before { background: var(--domiciliado); } .ve-estado-boton.c-verde::before { background: var(--verde); }
+.ve-estado-boton.c-gris::before { background: var(--gris); }
+.ve-estado-boton:hover:not(.reservado) { border-color: #c9d0cb; }
+.ve-estado-boton.activo { border-color: var(--primario); box-shadow: inset 0 0 0 1px var(--primario); background: #fafbfa; }
+.ve-estado-boton:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+.ve-estado-n { font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ve-estado-boton.c-rojo .ve-estado-n { color: var(--rojo-texto); }
+.ve-estado-boton.c-domiciliado .ve-estado-n { color: var(--domiciliado-texto); }
+.ve-estado-texto { display: flex; flex-direction: column; font-size: 13.5px; font-weight: 600; }
+.ve-estado-boton.reservado { cursor: default; color: var(--tenue); background: #fafaf8; border-style: dashed; }
+.ve-estado-boton.reservado .ve-estado-n { color: var(--gris); }
+.ve-estado-sub { font-size: 12px; font-weight: 500; color: var(--gris-texto); }
+
+/* Filtros: fecha y búsqueda con la misma caja que los selectores de Facturas */
+.filtro input {
+  min-height: 40px; padding: 0 8px; border: 1px solid #cbd1cc; border-radius: 8px; font: inherit; font-size: 14px;
+  font-weight: 500; color: var(--texto); background: var(--superficie); max-width: 100%;
+}
+.ve-buscar { max-width: 340px; flex-basis: 240px; }
+
+/* Totales */
+.ve-totales { display: flex; flex-direction: column; gap: 12px; }
+.ve-totales h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.ve-totales .rrhh-selector button { min-height: 32px; min-width: 64px; font-size: 13px; }
+.ve-total-general { padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; }
+.ve-total-titulo, .ve-periodo-titulo { font-size: 13px; font-weight: 700; }
+.ve-total-general .ve-cifras { flex: 1 1 360px; min-width: 0; }
+.ve-periodos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.ve-periodo { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+/* H6-2: la cifra nunca se corta ni se sale. Las dos cifras van lado a lado si cada una tiene al menos 8,5rem y, si no,
+   una debajo de otra. Cada cifra mide su propio ancho (container) y la letra se adapta a él (clamp con cqi): un importe de
+   12–14 caracteres («2.999.999,97 €») ocupa ~7,5em, así que 12,5cqi siempre cabe. Sin puntos suspensivos. */
+.ve-cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)); gap: 10px; }
+.ve-cifra {
+  display: flex; flex-direction: column; gap: 1px; padding-left: 10px; border-left: 3px solid var(--borde); min-width: 0;
+  container-type: inline-size;
+}
+.ve-cifra.por-pagar { border-left-color: var(--primario); }
+.ve-cifra.domiciliado { border-left-color: var(--domiciliado); }
+.ve-cifra-etiqueta { font-size: 12px; font-weight: 600; color: var(--tenue); }
+.ve-cifra-n {
+  font-size: clamp(12px, 12.5cqi, 19px); line-height: 1.2; font-weight: 800; letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums; white-space: nowrap; text-align: left;
+}
+.ve-total-general .ve-cifra-n { font-size: clamp(12px, 12.5cqi, 24px); }
+.ve-cifra-nota { font-size: 11.5px; color: var(--tenue); font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+.ve-total-notas { font-size: 12px; color: var(--gris-texto); font-variant-numeric: tabular-nums; }
+
+/* Lista */
+.ve-lista-cabecera { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
+.ve-tabla { min-width: 1040px; }
+.ve-tabla th, .ve-tabla td { padding-left: 8px; padding-right: 8px; vertical-align: middle; }
+.ve-tabla th:first-child, .ve-tabla td:first-child { padding-left: 14px; }
+.ve-tabla th:last-child, .ve-tabla td:last-child { padding-right: 16px; }
+.ve-tabla .proveedor { max-width: 190px; font-weight: 600; }
+.ve-tabla .num { font-weight: 700; }
+.ve-col-casilla { width: 34px; }
+.ve-casilla { width: 18px; height: 18px; accent-color: var(--primario); cursor: pointer; margin: 0; vertical-align: middle; }
+.ve-tabla tr.e-VENCIDO_SIN_PAGAR td:first-child { box-shadow: inset 3px 0 0 var(--rojo); }
+.ve-tabla tr.e-DOMICILIADO_PREVISTO td:first-child { box-shadow: inset 3px 0 0 var(--domiciliado); }
+.ve-tabla tr.elegida td { background: var(--primario-fondo); }
+.ve-factura { display: flex; flex-direction: column; gap: 2px; }
+.ve-factura .enlace-factura { white-space: nowrap; }
+.ve-sentido { font-size: 13px; font-weight: 600; color: var(--gris-texto); }
+.ve-tabla [data-sentido], .ve-tarjeta [data-sentido] { white-space: nowrap; }
+.ve-sentido.abono { color: var(--azul-texto); }
+.ve-forma { display: flex; flex-direction: column; font-size: 14px; }
+.ve-sin-cif { color: var(--rojo-texto); font-weight: 600; }
+.ve-importe-negativo { display: inline-flex; flex-direction: column; align-items: flex-end; }
+.ve-aviso-negativo { color: var(--naranja-texto); font-weight: 700; white-space: nowrap; }
+.ve-estado { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.ve-estado .insignia { white-space: nowrap; }
+.ve-enlace-boton {
+  padding: 0; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--rojo-texto);
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer; min-height: 24px;
+}
+.ve-enlace-boton:disabled { color: var(--gris); text-decoration: none; cursor: not-allowed; }
+.ve-confirmar {
+  display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 8px; background: var(--rojo-fondo);
+  font-size: 13px; color: var(--rojo-texto); max-width: 260px;
+}
+.ve-confirmar-botones { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Barra de selección: fija abajo mientras haya selección */
+.ve-barra {
+  position: sticky; bottom: 12px; z-index: 6; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px;
+  border-radius: 12px; background: var(--primario); color: #fff; box-shadow: 0 6px 20px rgba(29, 59, 71, 0.25);
+}
+.ve-barra-linea { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.ve-barra-linea strong { font-size: 15px; margin-right: 4px; }
+.ve-boton-claro {
+  min-height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #fff; background: #fff; color: var(--primario);
+  font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.ve-boton-claro.domiciliado { background: var(--domiciliado-fondo); border-color: var(--domiciliado-fondo); color: var(--domiciliado-texto); }
+.ve-boton-claro:disabled { opacity: 0.55; cursor: not-allowed; }
+.ve-boton-texto {
+  margin-left: auto; min-height: 40px; padding: 0 6px; border: 0; background: none; color: #dbe6ea; font: inherit; font-size: 14px;
+  font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+.ve-barra:focus-within { outline: none; }
+.ve-barra button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.ve-barra-pendiente { margin: 0; font-size: 13px; font-weight: 600; color: #e8eef0; }
+.ve-barra-pendiente.gris { color: var(--gris-texto); background: var(--gris-fondo); padding: 8px 12px; border-radius: 8px; }
+.ve-marcar {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 12px; border-radius: 10px; background: var(--superficie); color: var(--texto);
+}
+.ve-marcar .rrhh-campo { min-width: 180px; }
+.ve-aviso-campo { flex-basis: 100%; margin: 0; font-size: 13px; font-weight: 600; color: var(--rojo-texto); }
+
+/* Tarjetas (móvil) */
+.ve-tarjetas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ve-tarjeta { padding: 12px 14px 12px 16px; display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
+.ve-tarjeta.e-VENCIDO_SIN_PAGAR { box-shadow: inset 4px 0 0 var(--rojo); }
+.ve-tarjeta.e-DOMICILIADO_PREVISTO { box-shadow: inset 4px 0 0 var(--domiciliado); }
+.ve-tarjeta.elegida { border-color: var(--primario); background: #f6f9fa; }
+.ve-tarjeta-cabecera { display: flex; align-items: center; gap: 10px; }
+.ve-tarjeta-fecha { font-weight: 700; font-variant-numeric: tabular-nums; }
+.ve-tarjeta-importe { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ve-tarjeta-linea { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; font-size: 14px; }
+.ve-tarjeta .ve-forma { align-items: flex-end; text-align: right; }
+
+/* Forma de pago por proveedor */
+.ve-formas-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ve-forma-fila {
+  display: grid; grid-template-columns: minmax(0, 1fr) 230px 104px 280px; align-items: center; gap: 10px 14px;
+  padding: 10px 0; border-bottom: 1px solid var(--borde-suave);
+}
+.ve-forma-fila:last-child { border-bottom: 0; }
+.ve-forma-nombre { display: flex; flex-direction: column; min-width: 0; font-weight: 700; }
+.ve-cif { font-size: 12.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.ve-forma-campo select {
+  width: 100%; min-height: 38px; padding: 0 8px; border: 1px solid #cbd1cc; border-radius: 8px; font: inherit; font-size: 14px; background: var(--superficie);
+}
+.ve-forma-botones { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.ve-formas-sin-cif { margin: 0; font-size: 13px; }
+
+/* Historial */
+.ve-historial { padding: 0; }
+.ve-historial summary { display: flex; align-items: center; gap: 10px; padding: 16px 20px; cursor: pointer; list-style: none; }
+.ve-historial summary::-webkit-details-marker { display: none; }
+.ve-historial summary::after { content: '▸'; color: var(--tenue); margin-left: auto; transition: transform 0.15s; }
+.ve-historial[open] summary::after { transform: rotate(90deg); }
+.ve-historial summary:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; }
+.ve-historial h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.ve-historial-lista { list-style: none; margin: 0; padding: 0 20px 14px; display: flex; flex-direction: column; }
+.ve-historial-lista li { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 12px; padding: 8px 0; border-top: 1px solid var(--borde-suave); font-size: 14px; }
+.ve-historial-fecha { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 13px; }
+.ve-historial-vacio { margin: 0; padding: 0 20px 16px; font-size: 14px; }
+
+@media (max-width: 900px) {
+  .ve-estados { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ve-estado-n { font-size: 24px; }
+  .ve-forma-fila { grid-template-columns: minmax(0, 1fr) auto; }
+  .ve-forma-campo { grid-column: 1 / -1; grid-row: 2; }
+  .ve-forma-botones { grid-column: 1 / -1; justify-content: flex-start; }
+  .ve-historial-lista li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .ve-barra { bottom: 8px; padding: 10px 12px; }
+  .ve-boton-texto { margin-left: 0; }
+  .ve-buscar { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vencimientos, .ve-historial summary::after { transition: none; }
+}
