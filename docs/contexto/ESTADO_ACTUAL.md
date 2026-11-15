@@ -1,6 +1,8 @@
 # Estado actual
 
-Actualizado: 2026-11-14 (TRAB-33: migración 33 de Trabajadores, solo local; AUTO-S: noche del 13/11 sin ejecutar y
+Actualizado: 2026-11-15 (R12-08012619: enriquecimiento y conciliación de 08012619 en producción, 62 de 63
+facturas conciliadas; AUTO-S: primera noche de sombra efectiva 14→15/11, NOCHE_OK; 2026-11-14, TRAB-33: migración 33
+de Trabajadores, solo local; AUTO-S: noche del 13/11 sin ejecutar y
 corrección de la clave; ENCARGO: R10 con `ENCARGO`, adaptador Alliance 1.3.1, banco completo, R12 de 08012619
 diseñado sin ejecutar, pendientes de AUTO-A y veredicto INCONCLUSO del revisor, solo local; 2026-11-13, AUTO-32-D: migración 32 desplegada en producción, APLICADA, postcheck aceptado por Pio; AUTO-COLA: tandas 2BJ 1–3 y conciliación de 08013055–58; 2026-11-12, AUTO-A: automatización Alliance solo local, compositor automático, orquestador nocturno, migración 32 y desplegar_32 ensayado; TRAB-D: migración 31 desplegada en producción, APLICADA, postcheck 2AX OK, solo PIO en facturas, albaranes y conciliación, cf_trabajadores_web sin acceso a facturas, contraseña fijada por Pio con SCRAM; prueba de acceso de Pio ACCESO_OK; TRAB: migración 31, esquema de Trabajadores, solo local; rol de escritura de la web cf_trabajadores_web; 2BP en producción: serie de conciliación cerrada, 57 de 59 facturas conciliadas; R18 del 12/11: 7 aprobaciones de identidad aplicadas, 275128 excluida y ausencia de 275125 abierta como mejora futura; 2026-11-10, 2BS: huecos en barreras_agentes, solo local; 2BR-D: migración 30 desplegada en producción, APLICADA, postcheck 2AX OK y relleno igual al previsto; 2BR-D: preflight READ_ONLY de la 30 parado en la precondición 3 y opción A de Pio, relleno de las 17 conciliaciones con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: migración 30, detalle por línea en la conciliación, solo local; 2BQ: base local de tests alineada con Supabase, 0 diferencias y 0 excepciones frente a la última captura, solo local; 2BN cerrado con ACCESO_OK; 2BN-D: migración 29 desplegada en producción al tercer intento, rol cf_lectura, excepción de Pio en el postcheck; dos intentos previos REVERTIDOS sin cambios; Hito 2BN: migración 29, rol de solo lectura, solo local; serie 2BJ completada para los
 Alliance: tandas 10–18 con la 28, los 12 Alliance del plan
@@ -330,6 +332,44 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito R12-08012619: enriquecimiento y conciliación de 08012619, 62 de 63 (2026-11-15)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación expresa de Pio y con 11e846f en `origin/main`. Dos escrituras, cada
+una lanzada una sola vez y sin reintento. Diseño en `pruebas/auditoria_encargo/DISENO.md` §3; evidencias en
+`C:\ControlFarmacias\evidencias_r12_08012619\` (`SHA256SUMS.txt`).
+
+- **Preflight READ_ONLY** (`enriquecimiento_readonly.py`, 07:52 y 12:30 UTC, idénticos): `PREFLIGHT_OK`; PDF del
+  espejo con el SHA registrado; extracción autorizada con la 1.3.1 e identidad económica igual; payload exacto: 1
+  albarán (08D50803), 0 movimientos y 0 vencimientos; 08D50803 = contador 294483 (SAFA, 14/10, PUC 7,42), sin reserva.
+- **Snapshot por fila** (2AX, el de la noche): dos capturas previas idénticas (21 tablas, 23.495 filas).
+- **R12** (`enriquecer_una_vez.py`, 12:32 UTC): `RETORNO`, clave idempotente igual a la prevista, 1 albarán añadido,
+  0 movimientos y 0 vencimientos. **Postcheck por fila `POSTCHECK_OK`:** solo 2 filas nuevas, ambas de 08012619
+  (08D50803, `ENCARGO`, `CARGO`, 7,10/7,42, de 117 a 118 albaranes, y el evento `FACTURA_ENRIQUECIDA`); ninguna
+  cambiada, borrada ni ajena; 08012620–22, configuración, operación y Trabajadores idénticos. Elegibilidad:
+  `TOTAL_NO_EXPLICADO` → `APTA_MIXTA`.
+- **Plan 2BP:** solo 08012619, simula `CONCILIADA` −0,01. **Tanda de 1** (12:33 UTC): `TANDA_OK`; importe 12.867,73,
+  explicado 12.867,74, diferencia −0,01 (tolerancia 0,50); 117 de 118 albaranes casados 1:1, 1 línea R17 y 3
+  movimientos; clave igual a la del plan; postcheck 2AX OK, Trabajadores sin cambios.
+- **Estado tras la tanda** (READ_ONLY, 13:20 UTC): facturas **62 `CONCILIADA` de 63**; solo queda HEFAME 0563834757
+  (`PENDIENTE_CONCILIAR`). 68 conciliaciones.
+- 08016545 (segundo documento con `ENCARGO`): sigue `PENDIENTE` de decisión de Pio.
+
+### Hito AUTO-S: primera noche de sombra efectiva (14→15/11) (2026-11-15)
+
+Revisión READ_ONLY (evidencias en `C:\ControlFarmacias\evidencias_noche_1411\`, `SHA256SUMS.txt`).
+
+- Tareas: importación (21:00) y sincronización (21:30) con código 0; automatización Alliance 22:15:15 → 22:15:23,
+  **código 0**.
+- Informe `C:\ControlFarmacias\noches_auto\2026-11-14\`: SHA de `informe.json` y `resumen.txt` iguales a su
+  `SHA256SUMS.txt`; `NOCHE_OK`, sin puertas fallidas, commit 5e7493b, límites 5 + 5; postcheck OK (0 filas cambiadas,
+  0 ajenas; Trabajadores sin cambios).
+- Fila `SOMBRA` en `cf_noches_automaticas` con contadores a 0 e `informe_sha256` igual al del fichero. **Solo escribió
+  su fila:** en las 58 columnas de fecha de `public`, entre las 21:00 y las 22:00 UTC solo aparecen marcas de esa fila.
+  Flags apagados.
+- **Coherencia con los planes:** las 13 que reclamaría para normalizar son exactamente los 13 defectos en `ERROR` que
+  dejaron las tandas 2BJ del 13/11 (10 con 2 intentos y 3 con 1; listadas las 5 primeras por el límite); conciliación:
+  ninguna apta, como tras la tanda 2BP.
+
 ### Hito TRAB-33: migración 33 de Trabajadores, solo local (2026-11-14)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local). **NO desplegada**. Petición de la web con OK de Pio; diseño en
@@ -378,6 +418,7 @@ revisor) y del 2026-11-13 (pendientes del §9 del diseño AUTO-ALLIANCE). Diseñ
   documento de 08012619, idénticas.
 - **R12 de 08012619: diseñado, NO ejecutado** (solo la línea 08D50803; payload exacto exigido: 1 albarán, 0
   movimientos y 0 vencimientos). `PENDIENTE` de confirmación de Pio. 08016545: `PENDIENTE` de decisión.
+  *(Ejecutado el 2026-11-15: ver «Hito R12-08012619».)*
 - **Pendientes de AUTO-A, hechos:** los tres textos desfasados; postchecks con Trabajadores aparte (noche: lectura
   propia e informativa en `postcheck.trabajadores`; series 2BJ/2BP: fuera del criterio 2AX e informado); `.bat`
   con registro en `logs\automatizacion_alliance.log` y ruta completa de Python, todavía en `SOMBRA`.
