@@ -385,8 +385,8 @@ Reglas:
 | Anular | «Anular» → confirmación → `{ "confirmar": true }` | Ficha anulada (no se edita; historial «Anulación: Anulada No → Sí»). Repetirlo: 409 |
 | Nombre duplicado | Misma farmacia y nombre (sin distinguir mayúsculas) que otra ficha sin anular | 409 (en REAL, 23505 → «Ya existe un registro igual…») |
 | Convenio que falta | `convenio_anual` sin alguno de 2026–2028 | «Crear convenio 2026–2028 con los valores firmados», con confirmación que enseña los valores; POST `/api/rrhh/convenio` `{ "anios": [...] }`; los años existentes no se tocan |
-| Goma sin anular eventos | REAL (`anular_eventos` false) | Goma y «Borrar» desactivados con aviso; BORRAR → 409 `ANULAR_EVENTOS_PENDIENTE` |
-| Deshacer sin anular eventos | Último cambio que creó eventos (pintar en vacío, rellenar) | Deshacer desactivado con aviso. Si el cambio solo editó (confirmar, anotar, cambiar tipo), se deshace |
+| Goma (TA-REAL-2) | REAL y FIXTURES | Ver TA-REAL-2: la goma anula; ya no hay aviso de «pendiente» ni error `ANULAR_EVENTOS_PENDIENTE` |
+| Deshacer (TA-REAL-2) | Último cambio, también si creó eventos | Se deshace siempre: lo creado se anula y lo borrado se vuelve a crear |
 | Notas próximas | Desde el 13 nov (ejemplo) | Rosa 18 nov, Elena 25 y 26 nov; la de Judit (6 nov) ya no sale. RITA: solo las suyas |
 | Errores de la BD | P0001 AUTOR_AUSENTE / FARMACIA_NO_HABILITADA_EN_MODULO / EVENTO_FUERA_DEL_ALTA; 42501; 23505; 23514; 23503; 57014/25P03; 53300 | Código propio, HTTP (500/403/409/403/409/400/409/504/503) y mensaje llano. ROLLBACK, nunca se reintenta |
 | REAL simulado | `server/pruebas/rrhh_real.test.ts`: pool inyectado, sin conexión | Autor por transacción, ROLLBACK, lotes, mapeo de filas, historial, deshacer |
@@ -403,11 +403,11 @@ API (solo GET, con sesión):
 - `hoy` es el día del reloj del navegador; si falta, el del servidor.
 
 Reglas de Pío:
-- **Vacaciones: 30 días naturales al año.**
-  - Es la constante provisional `VACACIONES_DIAS_NATURALES`, en un único punto; vendrá de `convenio_anual.vacaciones_dias_naturales`.
-  - La media jornada tiene los mismos 30.
+- **Vacaciones: los días naturales del año salen de `convenio_anual.vacaciones_dias_naturales`** (TA-REAL-2; 30 en 2026–2028).
+  - Si el año no tiene el dato, la ficha muestra «pendiente»: derecho y pendientes null, nunca 30 inventados.
+  - La media jornada tiene los mismos días.
   - Con alta o baja dentro del año, el derecho es proporcional a los días en alta y se redondea al entero hacia arriba (`REDONDEO_PROPORCIONAL`, configurable).
-- **Días extra:** campo visible y desactivado, con «pendiente de habilitar», hasta que exista `trabajadoras_ajustes_anuales`.
+- **Días extra (TA-REAL-2):** `trabajadoras_ajustes_anuales`, editables por persona y año. Derecho = base (proporcional si procede) + extra; el extra no se prorratea.
 - **Días naturales.**
   - Un periodo va del primer al último día laborable seguidos de VACACIONES y cuenta todos los días naturales entre ambos.
   - Un fin de semana intermedio no corta el periodo. Tampoco un festivo, si la persona tiene un evento FESTIVO ese día.
@@ -443,3 +443,40 @@ Reglas de Pío:
 | Aviso de octubre | Reloj del navegador el 30 sep / el 1 oct | Sin aviso / «Quedan 12,5 días de vacaciones sin planificar» |
 | Resumen de plantilla | Pestaña Fichas, encima del listado; mismo selector PIO / RITA / Ambas; selector de año | Una fila por persona de alta en el año. Columnas ordenables (las cifras empiezan de más a menos). En móvil, tarjetas con «Ordenar por» |
 | REAL simulado | `rrhh_real.test.ts` | El resumen solo hace transacciones READ ONLY + ROLLBACK, sin autor ni COMMIT |
+
+## TA-REAL-2: migración 33 (eventos anulados, vacaciones del convenio y días extra)
+
+Esquema nuevo (migración 33, ya en producción):
+- `eventos_calendario.anulado` (por defecto false). La unicidad de persona, día y franja solo cuenta los no anulados. La vista de horas ya los excluye.
+- `convenio_anual`: `vacaciones_dias_naturales` y `vacaciones_fuente` (obligatoria si hay días).
+- `trabajadoras_ajustes_anuales` (TA-REAL-2b, columnas de producción): `id`, `trabajadora_id`, `farmacia`, `anio`, `vacaciones_dias_extra` (≥ 0), `nota`, `anulada`, `created_at`, `updated_at`. **Sin columna autor**: el autor va solo por transacción (`cf.autor`) y un trigger lo lleva a `trabajadores_historial.autor`. Enviar una columna `autor` hace fallar la sentencia; sin `cf.autor`, AUTOR_AUSENTE. Una no anulada por persona y año. Se escribe con `cf_trabajadores_web` (SELECT, INSERT, UPDATE; sin DELETE).
+
+Reglas en la web:
+- **Inserción de eventos:** `ON CONFLICT (trabajadora_id, fecha, franja) WHERE NOT anulado DO NOTHING`, en todas las rutas.
+- **Goma y deshacer:** anulan (`UPDATE … SET anulado = true`), nunca DELETE. Deshacer un borrado inserta una fila nueva igual a la anulada. Lo confirmado sigue sin tocarse.
+- **Lecturas:** toda consulta de eventos excluye los anulados (la de la vista no se filtra: ya los excluye).
+- **Convenio:** al crear 2026–2028, 30 días y fuente «decisión de Pío, pendiente de texto publicado». Para las filas ya existentes sin esos datos, «Completar vacaciones del convenio»: `POST /api/rrhh/convenio/vacaciones { "anios": [...] }`, que guarda solo esos dos campos y solo donde faltan.
+- **Días extra:** `PUT /api/rrhh/trabajadoras/:id/ajustes/:anio { vacaciones_dias_extra, nota? }` (entero 0–365; nota opcional, máx. 200, sin datos de salud) y `PUT …/ajustes/:anio/anular { "confirmar": true }`. La farmacia es la de la ficha (leída en la misma transacción); el autor, solo `cf.autor` de la transacción. Si la ficha está anulada o no tiene alta ese año: 409. Sin `cf.autor`: AUTOR_AUSENTE con mensaje llano, ROLLBACK y nada guardado.
+
+Fixtures:
+- `fixtures/rrhh/ajustes_anuales.json`: Rosa, 2 días extra en 2026; Clara, un ajuste de 2026 anulado.
+- `fixtures/rrhh/ficha_anual.json`: unas vacaciones de Rosa (14–18 sep) con `"anulado": true`.
+- El convenio de ejemplo trae `vacaciones_dias_naturales` 30 y su fuente en los tres años.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Goma | Aina 9 nov, día completo | 2 franjas anuladas: no se leen y la franja se puede volver a pintar |
+| Goma sobre confirmado | Aina 3 nov (semana confirmada) | Sin cambios: 2 franjas confirmadas no se tocan |
+| Deshacer un pintado | Pintar en vacío y deshacer | Lo creado queda anulado |
+| Deshacer la goma | Borrar una franja y deshacer | Vuelve la franja (en REAL, fila nueva). Si alguien la ha ocupado entre medias: `ESTADO_CAMBIADO`, sin cambios |
+| Historial | UPDATE con `anulado` false → true | «Borrado …» |
+| Deshacer encadenado (TA-REAL-2c) | Pintar V (4 oct 2027, M) → goma → deshacer → deshacer | Queda vacío. Deshacer la goma crea una fila nueva y la pila de cambios se reasigna a su id (`reasignarIds`), así el deshacer del pintado la encuentra. Igual con 3 niveles mezclando pintar y goma |
+| ESTADO_CAMBIADO (TA-REAL-2c) | Tras restaurar, otra sesión cambia el día (otro tipo, confirmado o vacío) | 409, sin cambios. Si el día sigue igual, se deshace |
+| Pie de fichas (TA-REAL-2c) | Año 2027 en el selector | «jornada máxima 2027: 1752 h» y la referencia de 2027; en el detalle se resalta el objetivo del año elegido |
+| Ausencia anulada de ejemplo | Rosa 14–18 sep | 10 franjas anuladas; ninguna se lee ni cuenta |
+| Días extra de ejemplo | Rosa 2026 | 30 del convenio + 2 extra = 32; 32 sin planificar. Resumen: «32 de 32 (2 extra)» |
+| Ajuste anulado | Clara 2026 | No cuenta: 30 |
+| Editar días extra | Irene: 3 con nota → 1 sin nota → anular | 33 → 31 → 30 |
+| Convenio sin vacaciones | Año sin `vacaciones_dias_naturales` | Vacaciones «pendiente», sin regla; aviso gris «Vacaciones de 2026 pendientes: el convenio no tiene los días» |
+| Completar vacaciones | Filas 2026 y 2027 sin el dato | Confirmación con los dos datos → POST `{ "anios": [2026, 2027] }`; el resto del convenio no cambia |
+| REAL simulado | `rrhh_real.test.ts` con el esquema de la migración 33 en memoria | SQL con `NOT anulado`, ON CONFLICT parcial, sin DELETE, `cf.autor` en cada escritura y ninguna columna `autor`; la base simulada rechaza esa columna (42703) y la falta de `cf.autor` (AUTOR_AUSENTE) |

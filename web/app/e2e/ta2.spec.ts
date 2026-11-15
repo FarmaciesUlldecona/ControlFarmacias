@@ -416,6 +416,47 @@ test.describe('Calendario PC 1440', () => {
     await expect(page.locator('[data-herramienta="VACACIONES"]')).toHaveAttribute('style', /--c: #e3b505/);
   });
 
+  test('TA-REAL-2c: deshacer encadenado: pintar → goma → deshacer → deshacer queda vacío; 3 niveles mezclando pintar y goma', async ({ page }) => {
+    await abrir(page, '?farmacia=PIO&fecha=2027-10-04');
+    const deshacer = async (texto: string) => {
+      await page.locator('[data-accion="deshacer"]').click();
+      await expect(aviso(page)).toHaveText(texto);
+    };
+    // 2 niveles: el caso visto en REAL (4 oct 2027, mañana).
+    await page.locator('[data-herramienta="VACACIONES"]').click();
+    await franja(page, AINA, '2027-10-04', 'MANANA').click();
+    await expect(aviso(page)).toHaveText('Pintado Vacaciones 4 oct 2027: 1 día laborable × 1 persona · 1 franja.');
+    await page.locator('[data-herramienta="goma"]').click();
+    await franja(page, AINA, '2027-10-04', 'MANANA').click();
+    await expect(franja(page, AINA, '2027-10-04', 'MANANA')).toHaveAttribute('data-tipo', '');
+    await deshacer('Deshecho «Borrado 4 oct 2027»: 1 día laborable × 1 persona · 1 franja.');
+    await expect(franja(page, AINA, '2027-10-04', 'MANANA')).toHaveAttribute('data-tipo', 'VACACIONES');
+    await deshacer('Deshecho «Pintado Vacaciones 4 oct 2027»: 1 día laborable × 1 persona · 1 franja.'); // antes: «ya no están como los dejó»
+    await expect(franja(page, AINA, '2027-10-04', 'MANANA')).toHaveAttribute('data-tipo', '');
+
+    // 3 niveles: pintar 5–6 oct → goma tarde del 5 → baja el 6 → goma mañana del 6; se deshace todo.
+    await page.locator('[data-herramienta="VACACIONES"]').click();
+    await arrastrar(page, franja(page, CLARA, '2027-10-05', 'MANANA'), franja(page, CLARA, '2027-10-06', 'TARDE'));
+    await expect(aviso(page)).toHaveText('Pintado Vacaciones 5–6 oct 2027: 2 días laborables × 1 persona.');
+    await page.locator('[data-herramienta="goma"]').click();
+    await franja(page, CLARA, '2027-10-05', 'TARDE').click();
+    await page.locator('[data-herramienta="BAJA"]').click();
+    await arrastrar(page, franja(page, CLARA, '2027-10-06', 'MANANA'), franja(page, CLARA, '2027-10-06', 'TARDE'));
+    await page.locator('[data-herramienta="goma"]').click();
+    await franja(page, CLARA, '2027-10-06', 'MANANA').click();
+    await deshacer('Deshecho «Borrado 6 oct 2027»: 1 día laborable × 1 persona · 1 franja.');
+    await expect(franja(page, CLARA, '2027-10-06', 'MANANA')).toHaveAttribute('data-tipo', 'BAJA');
+    await deshacer('Deshecho «Pintado Baja 6 oct 2027»: 1 día laborable × 1 persona.');
+    await expect(franja(page, CLARA, '2027-10-06', 'MANANA')).toHaveAttribute('data-tipo', 'VACACIONES');
+    await deshacer('Deshecho «Borrado 5 oct 2027»: 1 día laborable × 1 persona · 1 franja.');
+    await expect(franja(page, CLARA, '2027-10-05', 'TARDE')).toHaveAttribute('data-tipo', 'VACACIONES');
+    await deshacer('Deshecho «Pintado Vacaciones 5–6 oct 2027»: 2 días laborables × 1 persona.');
+    for (const [f, fr] of [['2027-10-05', 'MANANA'], ['2027-10-05', 'TARDE'], ['2027-10-06', 'MANANA'], ['2027-10-06', 'TARDE']] as const) {
+      await expect(franja(page, CLARA, f, fr)).toHaveAttribute('data-tipo', '');
+    }
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_deshacer_encadenado.png'), fullPage: true });
+  });
+
   test('escritura solo en /api/rrhh/eventos con sesión y mismo origen; DELETE y PUT siguen en 405', async ({ page }) => {
     const cuerpo = { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: TITULAR_PIO, fecha: '2026-12-28' }] };
     expect((await page.request.post('/api/rrhh/eventos', { data: cuerpo, headers: { origin: 'http://evil.example' } })).status()).toBe(403);
@@ -428,33 +469,49 @@ test.describe('Calendario PC 1440', () => {
 test.describe('Modo REAL simulado (intercepción): sin datos de ejemplo', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('TA-REAL: conectado: banner real; goma y deshacer de pintados nuevos desactivados con aviso', async ({ page }) => {
-    const AVISO = 'Pendiente de que la base de datos permita anular eventos';
+  test('TA-REAL-2: conectado: banner real; goma y deshacer habilitados (anulan), sin aviso de «pendiente»; lo confirmado no se toca', async ({ page }) => {
     await page.route('**/api/rrhh/estado', (r) => r.fulfill({ json: {
-      modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc', anular_eventos: false } }));
-    // Calendario de ejemplo como si viniera de REAL: sin anular eventos y con un último cambio que creó eventos.
-    await page.route('**/api/rrhh/eventos?**', async (r) => {
-      const resp = await r.fetch();
-      const d = await resp.json();
-      r.fulfill({ response: resp, json: { ...d, anular_eventos: false, ultimo_cambio: {
-        id: 'f9999999-0000-4000-8000-000000000001', origen: 'PINTAR', tipo: 'VACACIONES', quien: 'Marc', cuando: '2026-11-13T09:00:00.000Z', farmacias: ['PIO'],
-        n: 1, dias: 1, fechas: 1, laborables: true, parcial: true, creados: 1, personas: ['Aina Bosch Ferrer'], desde: '2026-12-07', hasta: '2026-12-07',
-        periodo: { desde: '2026-12-07', hasta: '2026-12-07' }, omitidas_confirmadas: 0, deshecho: false, deshace: null } } });
-    });
-    await abrir(page, '?farmacia=PIO&fecha=2026-11-09');
+      modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc' } }));
+    // Semana de 2028 (fuera de la semilla y de las demás pruebas); al final se deshace todo.
+    await abrir(page, '?farmacia=PIO&fecha=2028-01-10');
     await expect(page.locator('[data-banner-real]')).toBeVisible();
     await expect(page.locator('[data-banner-ejemplo]')).toHaveCount(0);
-    await expect(page.locator('[data-herramienta="goma"]')).toBeDisabled();
-    await expect(page.locator('[data-aviso-goma]')).toHaveText(`Goma: ${AVISO.charAt(0).toLowerCase()}${AVISO.slice(1)}`);
-    await expect(page.locator('[data-accion="deshacer"]')).toBeDisabled();
-    await expect(page.locator('[data-aviso-anular-deshacer]')).toHaveText(AVISO);
-    await franja(page, AINA, '2026-11-10', 'MANANA').click();
-    await expect(page.locator('[data-sel="borrar"]')).toBeDisabled();
-    await expect(page.locator('[data-sel="borrar"]')).toHaveAttribute('title', AVISO);
+    await expect(page.getByText('Pendiente de que la base de datos permita anular eventos')).toHaveCount(0);
+    await expect(page.locator('[data-aviso-goma], [data-aviso-anular-deshacer]')).toHaveCount(0);
+    await expect(page.locator('[data-herramienta="goma"]')).toBeEnabled();
+    // Pintar y borrar con la goma (anula: la franja queda vacía).
+    await page.locator('[data-herramienta="VACACIONES"]').click();
+    await arrastrar(page, franja(page, AINA, '2028-01-10', 'MANANA'), franja(page, AINA, '2028-01-12', 'MANANA'));
+    await expect(aviso(page)).toHaveText('Pintado Vacaciones 10–12 ene 2028: 3 días laborables × 1 persona · 3 franjas.');
+    await page.locator('[data-herramienta="goma"]').click();
+    await franja(page, AINA, '2028-01-11', 'MANANA').click();
+    await expect(aviso(page)).toHaveText('Borrado 11 ene 2028: 1 día laborable × 1 persona · 1 franja.');
+    await expect(franja(page, AINA, '2028-01-11', 'MANANA')).toHaveAttribute('data-tipo', '');
+    await expect(page.locator('[data-accion="deshacer"]')).toBeEnabled();
+    await expect(page.locator('[data-deshacer-que]')).toHaveText('Borrado 11 ene 2028: 1 día laborable × 1 persona · 1 franja');
+    // Selección: «Borrar» habilitado; confirmado (12 ene) no se toca.
+    await page.locator('[data-herramienta="seleccion"]').click();
+    await franja(page, AINA, '2028-01-12', 'MANANA').click();
+    await page.locator('[data-sel="confirmar"]').click();
+    await expect(aviso(page)).toHaveText('Confirmado 12 ene 2028: 1 día laborable × 1 persona · 1 franja.');
+    await expect(page.locator('[data-sel="borrar"]')).toBeEnabled();
+    await page.locator('[data-sel="borrar"]').click();
+    await expect(aviso(page)).toHaveText('Sin cambios: esos días ya estaban así. 1 franja confirmada no se ha tocado (quita antes la confirmación).');
+    await expect(franja(page, AINA, '2028-01-12', 'MANANA')).toHaveAttribute('data-estado', 'CONFIRMADO');
+    await page.locator('[data-sel="limpiar"]').click();
     // FESTIVO, TURNO_GUARDIA y LOCALIZADA no están en la paleta (TA3).
     for (const t of ['FESTIVO', 'TURNO_GUARDIA', 'LOCALIZADA']) await expect(page.locator(`[data-herramienta="${t}"]`)).toHaveCount(0);
     await expect(page.locator('[data-tipos-ta3]')).toContainText('Turno de guardia y Localizada no suman horas');
-    await page.screenshot({ path: join(CAPTURAS, 'pc1440_real_goma_desactivada.png'), fullPage: true });
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_real_goma.png'), fullPage: true });
+    // Deshacer todo: confirmación, goma (vuelve la franja) y pintado (se anula).
+    await page.locator('[data-accion="deshacer"]').click();
+    await expect(aviso(page)).toHaveText('Deshecho «Confirmado 12 ene 2028»: 1 día laborable × 1 persona · 1 franja.');
+    await page.locator('[data-accion="deshacer"]').click();
+    await expect(aviso(page)).toHaveText('Deshecho «Borrado 11 ene 2028»: 1 día laborable × 1 persona · 1 franja.');
+    await expect(franja(page, AINA, '2028-01-11', 'MANANA')).toHaveAttribute('data-tipo', 'VACACIONES');
+    await page.locator('[data-accion="deshacer"]').click();
+    await expect(aviso(page)).toHaveText('Deshecho «Pintado Vacaciones 10–12 ene 2028»: 3 días laborables × 1 persona · 3 franjas.');
+    for (const f of ['2028-01-10', '2028-01-11', '2028-01-12']) await expect(franja(page, AINA, f, 'MANANA')).toHaveAttribute('data-tipo', '');
   });
 
   test('TA-REAL: sin credencial: «Falta configurar la credencial de Trabajadores»; no pide eventos', async ({ page }) => {
@@ -464,7 +521,7 @@ test.describe('Modo REAL simulado (intercepción): sin datos de ejemplo', () => 
     await page.route('**/api/rrhh/**', (r) => {
       pedidas.push(new URL(r.request().url()).pathname);
       return new URL(r.request().url()).pathname === '/api/rrhh/estado'
-        ? r.fulfill({ json: { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: AVISO, anular_eventos: false } })
+        ? r.fulfill({ json: { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: AVISO } })
         : r.fulfill({ status: 503, json: { error: 'CREDENCIAL_TRABAJADORES_AUSENTE', mensaje: AVISO } });
     });
     await page.goto('/trabajadores/calendario?fecha=2026-11-09');

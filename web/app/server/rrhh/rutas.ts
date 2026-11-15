@@ -12,19 +12,23 @@
  * TA-FICHA: GET /api/rrhh/fichas (resumen de plantilla) y GET /api/rrhh/trabajadoras/:id/anual (ficha anual), solo
  * lectura, con los cálculos puros de ficha_anual.ts sobre las lecturas existentes (calendario del año y convenio).
  *
+ * TA-REAL-2 (migración 33): POST /api/rrhh/convenio/vacaciones (completar solo vacaciones_dias_naturales y
+ * vacaciones_fuente de los años que no los tienen); PUT /api/rrhh/trabajadoras/:id/ajustes/:anio (días extra de
+ * vacaciones y nota) y PUT …/ajustes/:anio/anular (con confirmación). La ficha anual suma los días extra.
+ *
  * Se registra sobre cualquier instancia de Fastify (pruebas con instancia propia, sin BD).
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import {
-  ERROR_FALTA_CREDENCIAL, MENSAJE_FALTA_CREDENCIAL, TEXTO_BANNER_REAL, filtroFarmacia, validarAnulacion, validarCrearConvenio,
-  validarFechaBaja, validarTrabajadora, type EstadoRrhhDTO,
+  ERROR_FALTA_CREDENCIAL, MENSAJE_FALTA_CREDENCIAL, TEXTO_BANNER_REAL, filtroFarmacia, validarAjuste, validarAnulacion, validarCompletarVacaciones,
+  validarCrearConvenio, validarFechaBaja, validarTrabajadora, type EstadoRrhhDTO,
 } from './contrato.ts';
 import { crearAdaptadorRrhhFixtures, type AdaptadorRrhh } from './adaptador_fixtures.ts';
 import {
-  AVISO_ANULAR_PENDIENTE, FECHA_MAX, FECHA_MIN, MAX_DIAS_LECTURA, diasEntre, enAniosConvenio, esFecha, validarDeshacer, validarPeticionEventos,
+  FECHA_MAX, FECHA_MIN, MAX_DIAS_LECTURA, diasEntre, enAniosConvenio, esFecha, validarDeshacer, validarPeticionEventos,
 } from './eventos.ts';
 import { ErrorRrhhBd, MENSAJES_BD } from './errores_bd.ts';
-import { anioFicha, calcularFichaAnual, reglasFicha, resumenPlantilla, type FichaAnualDTO, type ResumenPlantillaDTO } from './ficha_anual.ts';
+import { anioFicha, calcularFichaAnual, diasEnAlta, reglasFicha, resumenPlantilla, type FichaAnualDTO, type ResumenPlantillaDTO } from './ficha_anual.ts';
 
 /** Hoy en el reloj del servidor (fecha local), si el navegador no manda el suyo. */
 function hoyServidor(): string {
@@ -35,11 +39,14 @@ function hoyServidor(): string {
 /** Código HTTP de cada error del módulo (y mensaje llano de los que lo necesitan). */
 const HTTP_ERROR: Readonly<Record<string, number>> = {
   TRABAJADORA_NO_VALIDA: 400, FRANJA_NO_VALIDA: 400, EVENTO_NO_ENCONTRADO: 404, EVENTO_CONFIRMADO: 409, EVENTO_FUERA_DEL_ALTA: 409,
-  ANULAR_EVENTOS_PENDIENTE: 409, NADA_QUE_DESHACER: 409, NO_ES_EL_ULTIMO: 409, ESTADO_CAMBIADO: 409,
+  NADA_QUE_DESHACER: 409, NO_ES_EL_ULTIMO: 409, ESTADO_CAMBIADO: 409,
   YA_DE_BAJA: 409, YA_ANULADA: 409, BAJA_ANTES_DEL_ALTA: 400, NOMBRE_DUPLICADO: 409,
+  SIN_AJUSTE: 409, SIN_ALTA_EN_EL_ANIO: 409, TRABAJADORA_ANULADA: 409,
 };
 const MENSAJE_ERROR: Readonly<Record<string, string>> = {
-  ANULAR_EVENTOS_PENDIENTE: AVISO_ANULAR_PENDIENTE,
+  SIN_AJUSTE: 'Esa persona no tiene días extra ese año.',
+  SIN_ALTA_EN_EL_ANIO: 'Esa persona no está de alta ningún día de ese año.',
+  TRABAJADORA_ANULADA: 'Esa ficha está anulada.',
   EVENTO_FUERA_DEL_ALTA: MENSAJES_BD.EVENTO_FUERA_DEL_ALTA.mensaje,
   BAJA_ANTES_DEL_ALTA: 'La fecha de baja no puede ser anterior a la de alta.',
   NOMBRE_DUPLICADO: 'Ya hay otra ficha con ese nombre en esa farmacia.',
@@ -51,11 +58,15 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /**
  * Rutas de escritura del módulo (método + patrón): las únicas que el servidor admite fuera de login/logout.
  * TA1: fichas (POST alta; PUT edición y baja; TA-REAL: PUT anulación). TA-REAL: POST /api/rrhh/convenio (crear los
- * años firmados que falten). TA2: POST /api/rrhh/eventos y POST /api/rrhh/eventos/deshacer. Nunca DELETE ni PATCH.
+ * años firmados que falten). TA2: POST /api/rrhh/eventos y POST /api/rrhh/eventos/deshacer. TA-REAL-2: POST
+ * /api/rrhh/convenio/vacaciones; PUT /api/rrhh/trabajadoras/:id/ajustes/:anio(/anular). Nunca DELETE ni PATCH.
  */
 export function esEscrituraRrhh(metodo: string, ruta: string): boolean {
-  if (metodo === 'POST') return ruta === '/api/rrhh/trabajadoras' || ruta === '/api/rrhh/convenio' || ruta === '/api/rrhh/eventos' || ruta === '/api/rrhh/eventos/deshacer';
-  if (metodo === 'PUT') return /^\/api\/rrhh\/trabajadoras\/[0-9a-fA-F-]{36}(\/baja|\/anular)?$/.test(ruta);
+  if (metodo === 'POST') {
+    return ruta === '/api/rrhh/trabajadoras' || ruta === '/api/rrhh/convenio' || ruta === '/api/rrhh/convenio/vacaciones'
+      || ruta === '/api/rrhh/eventos' || ruta === '/api/rrhh/eventos/deshacer';
+  }
+  if (metodo === 'PUT') return /^\/api\/rrhh\/trabajadoras\/[0-9a-fA-F-]{36}(\/baja|\/anular|\/ajustes\/\d{4}(\/anular)?)?$/.test(ruta);
   return false;
 }
 
@@ -114,9 +125,9 @@ export function registrarRrhh(app: FastifyInstance, opciones: OpcionesRrhh): voi
   });
 
   app.get('/api/rrhh/estado', async (): Promise<EstadoRrhhDTO> => {
-    if (modo === 'FIXTURES') return { modo, conectado: false, datos_ejemplo: true, mensaje: 'Datos de ejemplo en memoria', anular_eventos: datos?.anularEventos ?? true };
-    if (datos === null) return { modo, conectado: false, datos_ejemplo: false, mensaje: sin.mensaje, anular_eventos: false };
-    return { modo, conectado: true, datos_ejemplo: false, mensaje: TEXTO_BANNER_REAL, anular_eventos: datos.anularEventos };
+    if (modo === 'FIXTURES') return { modo, conectado: false, datos_ejemplo: true, mensaje: 'Datos de ejemplo en memoria' };
+    if (datos === null) return { modo, conectado: false, datos_ejemplo: false, mensaje: sin.mensaje };
+    return { modo, conectado: true, datos_ejemplo: false, mensaje: TEXTO_BANNER_REAL };
   });
 
   const farmacia = (v: string | undefined) => filtroFarmacia(v ?? 'AMBAS');
@@ -143,8 +154,9 @@ export function registrarRrhh(app: FastifyInstance, opciones: OpcionesRrhh): voi
     if (ah === null) return reply.code(400).send({ error: 'ANIO_NO_VALIDO' });
     return con(reply, async (d): Promise<ResumenPlantillaDTO> => {
       const cal = await d.calendario(f, `${ah.anio}-01-01`, `${ah.anio}-12-31`);
-      const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, await d.convenio(), ah.anio, ah.hoy);
-      return { farmacia: f, anio: ah.anio, hoy: ah.hoy, filas, reglas: reglasFicha() };
+      const convenio = await d.convenio();
+      const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, convenio, ah.anio, ah.hoy, { ajustes: await d.ajustes(f, ah.anio) });
+      return { farmacia: f, anio: ah.anio, hoy: ah.hoy, filas, reglas: reglasFicha(convenio, ah.anio) };
     });
   });
   app.get<{ Params: { id: string }; Querystring: { anio?: string; hoy?: string } }>('/api/rrhh/trabajadoras/:id/anual', async (req, reply) => {
@@ -156,12 +168,47 @@ export function registrarRrhh(app: FastifyInstance, opciones: OpcionesRrhh): voi
     return con(reply, async (d) => {
       const det = await d.trabajadora(id);
       if (!det) return reply.code(404).send({ error: 'TRABAJADORA_NO_ENCONTRADA' });
-      const base = { anio: ah.anio, hoy: ah.hoy, reglas: reglasFicha() };
+      const convenio = await d.convenio();
+      const base = { anio: ah.anio, hoy: ah.hoy, reglas: reglasFicha(convenio, ah.anio) };
       if (det.trabajadora.anulada) return { ...base, ficha: null, motivo: 'ANULADA' } satisfies FichaAnualDTO;
       const cal = await d.calendario(det.trabajadora.farmacia, `${ah.anio}-01-01`, `${ah.anio}-12-31`);
       const t = cal.trabajadoras.find((x) => x.id === id);
       if (!t) return { ...base, ficha: null, motivo: 'SIN_ALTA_EN_EL_ANIO' } satisfies FichaAnualDTO;
-      return { ...base, ficha: calcularFichaAnual(t, cal.eventos, await d.convenio(), ah.anio, ah.hoy), motivo: null } satisfies FichaAnualDTO;
+      const ajustes = await d.ajustes(t.farmacia, ah.anio);
+      return { ...base, ficha: calcularFichaAnual(t, cal.eventos, convenio, ah.anio, ah.hoy, { ajustes }), motivo: null } satisfies FichaAnualDTO;
+    });
+  });
+
+  // --- TA-REAL-2: días extra de vacaciones por persona y año (trabajadoras_ajustes_anuales) -------------------------
+  /** Id, año y ficha (sin anular y con algún día de alta en el año); si no, la respuesta de error. */
+  const fichaParaAjuste = async (d: AdaptadorRrhh, reply: FastifyReply, p: { id: string; anio: string }) => {
+    const anio = anioFicha(p.anio);
+    if (!UUID.test(p.id) || anio === null) return { r: reply.code(400).send({ error: !UUID.test(p.id) ? 'ID_NO_VALIDO' : 'ANIO_NO_VALIDO' }) };
+    const det = await d.trabajadora(p.id.toLowerCase());
+    if (!det) return { r: reply.code(404).send({ error: 'TRABAJADORA_NO_ENCONTRADA' }) };
+    if (det.trabajadora.anulada) return { r: error(reply, 'TRABAJADORA_ANULADA') };
+    if (diasEnAlta(det.trabajadora, anio) === 0) return { r: error(reply, 'SIN_ALTA_EN_EL_ANIO') };
+    return { id: det.trabajadora.id, anio };
+  };
+  app.put<{ Params: { id: string; anio: string } }>('/api/rrhh/trabajadoras/:id/ajustes/:anio', async (req, reply) => {
+    if (datos === null) return pendiente(reply);
+    const v = validarAjuste(req.body);
+    if (!v.ok) return reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores: v.errores });
+    return con(reply, async (d) => {
+      const f = await fichaParaAjuste(d, reply, req.params);
+      if ('r' in f) return f.r;
+      return d.guardarAjuste(f.id, f.anio, v.dias, v.nota, quien);
+    });
+  });
+  app.put<{ Params: { id: string; anio: string } }>('/api/rrhh/trabajadoras/:id/ajustes/:anio/anular', async (req, reply) => {
+    if (datos === null) return pendiente(reply);
+    const v = validarAnulacion(req.body);
+    if (!v.ok) return reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores: v.errores });
+    return con(reply, async (d) => {
+      const f = await fichaParaAjuste(d, reply, req.params);
+      if ('r' in f) return f.r;
+      const r = await d.anularAjuste(f.id, f.anio, quien);
+      return typeof r === 'string' ? error(reply, r) : r;
     });
   });
 
@@ -175,6 +222,13 @@ export function registrarRrhh(app: FastifyInstance, opciones: OpcionesRrhh): voi
     const v = validarCrearConvenio(req.body);
     if (!v.ok) return reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores: v.errores });
     return con(reply, async (d) => ({ creados: await d.crearConvenio(v.anios, quien), convenio: await d.convenio() }));
+  });
+  /** TA-REAL-2: completa solo vacaciones_dias_naturales (30) y vacaciones_fuente de los años que no los tienen. */
+  app.post('/api/rrhh/convenio/vacaciones', async (req, reply) => {
+    if (datos === null) return pendiente(reply);
+    const v = validarCompletarVacaciones(req.body);
+    if (!v.ok) return reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores: v.errores });
+    return con(reply, async (d) => ({ completados: await d.completarVacacionesConvenio(v.anios, quien), convenio: await d.convenio() }));
   });
   app.get<{ Querystring: { farmacia?: string } }>('/api/rrhh/historial', async (req, reply) => {
     const f = farmacia(req.query.farmacia);

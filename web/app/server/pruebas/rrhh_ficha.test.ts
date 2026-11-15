@@ -1,16 +1,21 @@
 // TA-FICHA Trabajadores: ficha anual y resumen de plantilla. Cada regla de cálculo con casos límite (derecho
 // proporcional y redondeo, días naturales por periodo, medias franjas, libre disposición, permiso médico, horas y
 // exceso, aviso de octubre, próximas ausencias y días de baja), la semilla de ejemplo y la API (solo lectura).
-// Uso: npm run test:unit
+// TA-REAL-2: vacaciones del convenio (sin el dato, «pendiente»), días extra por persona y año (base + extra; editar,
+// anular; farmacia de la ficha y sin columna autor, TA-REAL-2b) y completar las vacaciones del convenio. Uso: npm run test:unit
 import assert from 'node:assert/strict';
 import { after, describe, test } from 'node:test';
 import { CLAVE_FIXTURES, USUARIO } from '../acceso.ts';
 import { crearServidor } from '../index.ts';
-import { CONVENIO_ANUAL, type ConvenioAnual, type Trabajadora } from '../rrhh/contrato.ts';
-import { crearAdaptadorRrhhFixtures, leerSemillaFichaAnual } from '../rrhh/adaptador_fixtures.ts';
+import {
+  CONVENIO_ANUAL, FUENTE_VACACIONES, VACACIONES_DIAS_NATURALES, aniosSinVacaciones, validarAjuste,
+  type AjusteAnual, type ConvenioAnual, type Trabajadora,
+} from '../rrhh/contrato.ts';
+import { crearAdaptadorRrhhFixtures, leerSemillaAjustes, leerSemillaFichaAnual } from '../rrhh/adaptador_fixtures.ts';
+import { esEscrituraRrhh } from '../rrhh/rutas.ts';
 import { rangoFechas, esLaborable, type EventoCalendario, type Franja, type TipoEvento } from '../rrhh/eventos.ts';
 import {
-  AVISO_VACACIONES_DESDE, MAX_PROXIMAS_AUSENCIAS, REDONDEO_PROPORCIONAL, TIPOS_HORAS_COMPUTAN, VACACIONES_DIAS_NATURALES, anioFicha,
+  AVISO_VACACIONES_DESDE, MAX_PROXIMAS_AUSENCIAS, REDONDEO_PROPORCIONAL, TIPOS_HORAS_COMPUTAN, anioFicha,
   calcularFichaAnual, derechoVacaciones, diasDelAnio, diasEnAlta, partirEnHoy, periodos, redondear, resumenPlantilla, valoresPorDia,
   type FichaAnual,
 } from '../rrhh/ficha_anual.ts';
@@ -46,6 +51,8 @@ const MEDIA = ficha({ id: 'a0000000-0000-4000-8000-000000000002', tipo_jornada: 
 describe('constantes (un único punto por regla)', () => {
   test('30 días naturales, redondeo hacia arriba, aviso desde el 1 de octubre, tipos que computan horas', () => {
     assert.equal(VACACIONES_DIAS_NATURALES, 30);
+    assert.equal(FUENTE_VACACIONES, 'decisión de Pío, pendiente de texto publicado');
+    assert.ok(CONVENIO_ANUAL.every((c) => c.vacaciones_dias_naturales === 30 && c.vacaciones_fuente === FUENTE_VACACIONES));
     assert.equal(REDONDEO_PROPORCIONAL, 'ENTERO_ARRIBA');
     assert.equal(AVISO_VACACIONES_DESDE, '10-01');
     assert.deepEqual([...TIPOS_HORAS_COMPUTAN], ['JORNADA', 'ASUNTOS_PROPIOS', 'PERMISO_RETRIBUIDO', 'PERMISO_MEDICO', 'BAJA', 'DESCANSO_COMPENSATORIO']);
@@ -59,37 +66,39 @@ describe('constantes (un único punto por regla)', () => {
 
 describe('derecho de vacaciones (proporcional a los días en alta, entero hacia arriba)', () => {
   test('año completo: 30 días, también media jornada', () => {
-    assert.equal(derechoVacaciones(COMPLETA, 2026).derecho, 30);
-    assert.equal(derechoVacaciones(MEDIA, 2026).derecho, 30);
-    assert.equal(derechoVacaciones(COMPLETA, 2026).proporcional, false);
+    assert.equal(derechoVacaciones(COMPLETA, 2026, 30).derecho, 30);
+    assert.equal(derechoVacaciones(MEDIA, 2026, 30).derecho, 30);
+    assert.equal(derechoVacaciones(COMPLETA, 2026, 30).proporcional, false);
   });
   test('alta a mitad de año: 1 jul 2026 → 184 de 365 días → 15,12 → 16', () => {
-    const d = derechoVacaciones(ficha({ fecha_alta: '2026-07-01' }), 2026);
+    const d = derechoVacaciones(ficha({ fecha_alta: '2026-07-01' }), 2026, 30);
     assert.deepEqual([d.dias_en_alta, d.dias_anio, d.proporcional, d.derecho], [184, 365, true, 16]);
   });
   test('baja dentro del año: hasta el 31 mar → 90 días → 7,4 → 8; alta y baja el mismo año', () => {
-    assert.equal(derechoVacaciones(ficha({ fecha_baja: '2026-03-31' }), 2026).derecho, 8);
+    assert.equal(derechoVacaciones(ficha({ fecha_baja: '2026-03-31' }), 2026, 30).derecho, 8);
     assert.equal(diasEnAlta(ficha({ fecha_alta: '2026-03-01', fecha_baja: '2026-03-31' }), 2026), 31);
   });
   test('límites: un solo día → 1; múltiplo exacto (73 días = 6,0) no sube; bisiesto 2028 (366 días)', () => {
-    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2026-12-31' }), 2026).derecho, 1);
-    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2026-10-20' }), 2026).derecho, 6);
+    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2026-12-31' }), 2026, 30).derecho, 1);
+    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2026-10-20' }), 2026, 30).derecho, 6);
     assert.equal(diasDelAnio(2028), 366);
-    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2028-07-01' }), 2028).derecho, 16); // 184/366 × 30 = 15,08
-    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2025-03-01' }), 2026).derecho, 30); // alta anterior al año
+    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2028-07-01' }), 2028, 30).derecho, 16); // 184/366 × 30 = 15,08
+    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2025-03-01' }), 2026, 30).derecho, 30); // alta anterior al año
   });
   test('sin días de alta en el año: 0 (alta posterior, baja anterior o anulada)', () => {
     assert.equal(diasEnAlta(ficha({ fecha_alta: '2027-02-01' }), 2026), 0);
     assert.equal(diasEnAlta(ficha({ fecha_alta: '2025-01-01', fecha_baja: '2025-12-31' }), 2026), 0);
     assert.equal(diasEnAlta(ficha({ anulada: true }), 2026), 0);
-    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2027-02-01' }), 2026).derecho, 0);
+    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2027-02-01' }), 2026, 30).derecho, 0);
   });
-  test('redondeo configurable: medio día hacia arriba; base configurable', () => {
+  test('redondeo configurable: medio día hacia arriba; base del convenio; sin base, pendiente (null)', () => {
     assert.equal(redondear(15.12, 'MEDIO_DIA_ARRIBA'), 15.5);
     assert.equal(redondear(15.5, 'MEDIO_DIA_ARRIBA'), 15.5);
     assert.equal(redondear(6.0000000001, 'ENTERO_ARRIBA'), 6); // ruido de coma flotante
-    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2026-07-01' }), 2026, { redondeo: 'MEDIO_DIA_ARRIBA' }).derecho, 15.5);
-    assert.equal(derechoVacaciones(COMPLETA, 2026, { vacacionesDias: 31 }).derecho, 31);
+    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2026-07-01' }), 2026, 30, { redondeo: 'MEDIO_DIA_ARRIBA' }).derecho, 15.5);
+    assert.equal(derechoVacaciones(COMPLETA, 2026, 31).derecho, 31);
+    assert.equal(derechoVacaciones(COMPLETA, 2026, null).derecho, null);
+    assert.equal(derechoVacaciones(ficha({ fecha_alta: '2026-07-01' }), 2026, null).derecho, null);
   });
 });
 
@@ -134,7 +143,8 @@ describe('días naturales por periodo y medias franjas', () => {
 describe('ficha anual: vacaciones, libre disposición, permiso médico, horas, ausencias, baja y avisos', () => {
   test('vacaciones: derecho − disfrutadas − planificadas; por encima del derecho, aviso', () => {
     const f = calcularFichaAnual(COMPLETA, dias(COMPLETA, '2026-08-03', '2026-08-14', 'VACACIONES'), CONVENIO_ANUAL, 2026, '2026-08-07');
-    assert.deepEqual([f.vacaciones.derecho, f.vacaciones.disfrutadas, f.vacaciones.planificadas, f.vacaciones.pendientes, f.vacaciones.dias_extra], [30, 5, 7, 18, null]);
+    assert.deepEqual([f.vacaciones.derecho, f.vacaciones.disfrutadas, f.vacaciones.planificadas, f.vacaciones.pendientes, f.vacaciones.dias_extra], [30, 5, 7, 18, 0]);
+    assert.deepEqual([f.vacaciones.base, f.vacaciones.fuente, f.vacaciones.ajuste], [30, FUENTE_VACACIONES, null]);
     const mucho = calcularFichaAnual(COMPLETA, dias(COMPLETA, '2026-06-01', '2026-07-10', 'VACACIONES'), CONVENIO_ANUAL, 2026, HOY);
     assert.equal(mucho.vacaciones.pendientes, -10); // 1 jun – 10 jul = 40 días naturales
     assert.deepEqual(mucho.avisos.map((a) => a.codigo), ['VACACIONES_DE_MAS']);
@@ -207,8 +217,41 @@ describe('ficha anual: vacaciones, libre disposición, permiso médico, horas, a
   });
   test('sin convenio del año: libre disposición, permiso médico y objetivo sin valor; aviso', () => {
     const f = calcularFichaAnual(COMPLETA, [], [], 2026, HOY);
-    assert.deepEqual([f.convenio_anio, f.libre_disposicion.derecho, f.permiso_medico.horas, f.horas.objetivo, f.vacaciones.derecho], [false, null, null, null, 30]);
-    assert.equal(f.avisos[0].codigo, 'SIN_CONVENIO');
+    assert.deepEqual([f.convenio_anio, f.libre_disposicion.derecho, f.permiso_medico.horas, f.horas.objetivo, f.vacaciones.derecho], [false, null, null, null, null]);
+    assert.deepEqual(f.avisos.map((a) => a.codigo), ['SIN_CONVENIO']);
+  });
+  test('TA-REAL-2: vacaciones del convenio; año sin el dato → «pendiente» (derecho y pendientes null), aviso y sin aviso de octubre', () => {
+    const sin: ConvenioAnual[] = [{ ...CONVENIO_ANUAL[0], vacaciones_dias_naturales: null, vacaciones_fuente: null }];
+    const f = calcularFichaAnual(COMPLETA, dias(COMPLETA, '2026-08-03', '2026-08-07', 'VACACIONES'), sin, 2026, HOY);
+    assert.deepEqual([f.vacaciones.base, f.vacaciones.derecho_base, f.vacaciones.derecho, f.vacaciones.pendientes, f.vacaciones.disfrutadas], [null, null, null, null, 5]);
+    assert.deepEqual(f.avisos.map((a) => [a.codigo, a.texto]), [['VACACIONES_SIN_DATO', 'Vacaciones de 2026 pendientes: el convenio no tiene los días']]);
+    // Otro valor del convenio: se usa tal cual.
+    assert.equal(calcularFichaAnual(COMPLETA, [], [{ ...CONVENIO_ANUAL[0], vacaciones_dias_naturales: 31 }], 2026, HOY).vacaciones.derecho, 31);
+    assert.deepEqual(aniosSinVacaciones([...sin, CONVENIO_ANUAL[1]]), [2026]);
+  });
+  test('TA-REAL-2: días extra (ajuste no anulado de la persona y el año): derecho = base (proporcional) + extra', () => {
+    const aj = (o: Partial<AjusteAnual>): AjusteAnual => ({ id: 'c1', trabajadora_id: COMPLETA.id, farmacia: 'PIO', anio: 2026, vacaciones_dias_extra: 3, nota: 'x', anulada: false, ...o });
+    const f = calcularFichaAnual(COMPLETA, dias(COMPLETA, '2026-08-03', '2026-08-14', 'VACACIONES'), CONVENIO_ANUAL, 2026, HOY, { ajustes: [aj({})] });
+    assert.deepEqual([f.vacaciones.derecho_base, f.vacaciones.dias_extra, f.vacaciones.derecho, f.vacaciones.pendientes, f.vacaciones.ajuste?.nota], [30, 3, 33, 21, 'x']);
+    // Alta a mitad de año: 16 proporcionales + 2 extra (el extra no se prorratea).
+    const p = calcularFichaAnual(ficha({ fecha_alta: '2026-07-01' }), [], CONVENIO_ANUAL, 2026, HOY, { ajustes: [aj({ vacaciones_dias_extra: 2 })] });
+    assert.deepEqual([p.vacaciones.derecho_base, p.vacaciones.derecho], [16, 18]);
+    // Anulado, de otro año o de otra persona: no cuenta.
+    for (const o of [{ anulada: true }, { anio: 2027 }, { trabajadora_id: 'otra' }]) {
+      assert.equal(calcularFichaAnual(COMPLETA, [], CONVENIO_ANUAL, 2026, HOY, { ajustes: [aj(o)] }).vacaciones.derecho, 30, JSON.stringify(o));
+    }
+    // Sin el dato del convenio: el derecho sigue pendiente aunque haya extra.
+    const sin = calcularFichaAnual(COMPLETA, [], [{ ...CONVENIO_ANUAL[0], vacaciones_dias_naturales: null, vacaciones_fuente: null }], 2026, HOY, { ajustes: [aj({})] });
+    assert.deepEqual([sin.vacaciones.derecho, sin.vacaciones.dias_extra], [null, 3]);
+  });
+  test('TA-REAL-2: validación de los días extra (entero de 0 a 365, nota opcional ≤ 200; nada más)', () => {
+    assert.deepEqual(validarAjuste({ vacaciones_dias_extra: 0 }), { ok: true, dias: 0, nota: null });
+    assert.deepEqual(validarAjuste({ vacaciones_dias_extra: 2, nota: '  Acuerdo   x ' }), { ok: true, dias: 2, nota: 'Acuerdo x' });
+    assert.deepEqual(validarAjuste({ vacaciones_dias_extra: 2, nota: '   ' }), { ok: true, dias: 2, nota: null });
+    for (const b of [{ vacaciones_dias_extra: -1 }, { vacaciones_dias_extra: 1.5 }, { vacaciones_dias_extra: '2' }, { vacaciones_dias_extra: 366 }, {},
+      { vacaciones_dias_extra: 1, nota: 'x'.repeat(201) }, { vacaciones_dias_extra: 1, nota: '<b>' }, { vacaciones_dias_extra: 1, autor: 'otro' }, null, []]) {
+      assert.equal(validarAjuste(b).ok, false, JSON.stringify(b));
+    }
   });
   test('aviso de octubre: desde el 1 de octubre del año (configurable), solo dentro del año y si quedan días', () => {
     const cod = (hoy: string, anio = 2026, o = {}) => calcularFichaAnual(COMPLETA, [], CONVENIO_ANUAL, anio, hoy, o).avisos.map((a) => a.codigo);
@@ -252,7 +295,7 @@ describe('ficha anual: vacaciones, libre disposición, permiso médico, horas, a
 describe('semilla de ejemplo (fixtures/rrhh/ficha_anual.json) y resumen de plantilla', () => {
   const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
   const cal = a.calendario('AMBAS', '2026-01-01', '2026-12-31');
-  const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, a.convenio(), 2026, HOY);
+  const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, a.convenio(), 2026, HOY, { ajustes: a.ajustes('AMBAS', 2026) });
   const de = (id: string) => filas.find((f) => f.trabajadora.id === id) as FichaAnual;
   const cods = (id: string) => de(id).avisos.map((x) => x.codigo);
 
@@ -289,6 +332,14 @@ describe('semilla de ejemplo (fixtures/rrhh/ficha_anual.json) y resumen de plant
     assert.deepEqual(de(CLARA).libre_disposicion, { derecho: 1, usadas: 1, restantes: 0 });
     assert.deepEqual(de(ROSA).libre_disposicion, { derecho: 1, usadas: 0.5, restantes: 0.5 });
     assert.equal(de(NURIA).permiso_medico.usadas, 3.5);
+  });
+  test('TA-REAL-2: Rosa 2 días extra (30 + 2 = 32, sin vacaciones: 32 pendientes); Clara, ajuste anulado: 30; vacaciones anuladas de Rosa no cuentan', () => {
+    assert.deepEqual([de(ROSA).vacaciones.dias_extra, de(ROSA).vacaciones.derecho, de(ROSA).vacaciones.pendientes, de(ROSA).vacaciones.disfrutadas], [2, 32, 32, 0]);
+    assert.equal(de(ROSA).vacaciones.ajuste?.nota, 'Acuerdo de ejemplo por antigüedad');
+    assert.deepEqual([de(CLARA).vacaciones.dias_extra, de(CLARA).vacaciones.derecho, de(CLARA).vacaciones.ajuste], [0, 30, null]);
+    const s = leerSemillaAjustes();
+    assert.deepEqual(s.map((x) => [x.trabajadora_id, x.anio, x.vacaciones_dias_extra, x.anulada]), [[ROSA, 2026, 2, false], [CLARA, 2026, 3, true]]);
+    assert.deepEqual(a.ajustes('PIO', 2026), []); // el de Clara está anulado
   });
   test('Aina: 16–20 nov planificadas (5) → 25 pendientes; próxima ausencia sus vacaciones', () => {
     assert.deepEqual([de(AINA).vacaciones.planificadas, de(AINA).vacaciones.pendientes], [5, 25]);
@@ -343,5 +394,47 @@ describe('API /api/rrhh/fichas y /api/rrhh/trabajadoras/:id/anual (solo lectura)
     await app.inject({ method: 'PUT', url: `/api/rrhh/trabajadoras/${id}/anular`, headers: { ...H, cookie, ...ORIGEN }, payload: { confirmar: true } });
     const an = (await get(`/api/rrhh/trabajadoras/${id}/anual?anio=2027`)).json();
     assert.deepEqual([an.ficha, an.motivo], [null, 'ANULADA']);
+    // TA-REAL-2: días extra de una ficha anulada o sin alta en el año: 409.
+    const put = (tid: string, anio: number | string, payload: unknown) =>
+      app.inject({ method: 'PUT', url: `/api/rrhh/trabajadoras/${tid}/ajustes/${anio}`, headers: { ...H, cookie, ...ORIGEN }, payload: payload as object });
+    assert.deepEqual([(await put(id, 2027, { vacaciones_dias_extra: 1 })).statusCode, (await put(id, 2027, { vacaciones_dias_extra: 1 })).json().error], [409, 'TRABAJADORA_ANULADA']);
+    assert.equal((await put(PAULA, 2026, { vacaciones_dias_extra: 1 })).statusCode, 200);
+  });
+  test('TA-REAL-2: días extra por API: guardar (farmacia de la ficha, sin columna autor), editar, la ficha suma base + extra, anular con confirmación', async () => {
+    const url = `/api/rrhh/trabajadoras/${LAURA}/ajustes/2026`;
+    const put = (u: string, payload: unknown, h: Record<string, string> = { ...H, cookie, ...ORIGEN }) => app.inject({ method: 'PUT', url: u, headers: h, payload: payload as object });
+    assert.equal(esEscrituraRrhh('PUT', url), true);
+    assert.equal(esEscrituraRrhh('PUT', `${url}/anular`), true);
+    assert.equal(esEscrituraRrhh('POST', url), false);
+    assert.equal(esEscrituraRrhh('DELETE', url), false);
+    assert.equal((await put(url, { vacaciones_dias_extra: 1 }, { ...H, cookie })).statusCode, 403); // sin Origin
+    assert.equal((await put(url, { vacaciones_dias_extra: -1 })).statusCode, 400);
+    assert.equal((await put(`/api/rrhh/trabajadoras/${LAURA}/ajustes/2025`, { vacaciones_dias_extra: 1 })).statusCode, 400);
+    assert.equal((await put(`${url}/anular`, { confirmar: true })).json().error, 'SIN_AJUSTE');
+    const g = await put(url, { vacaciones_dias_extra: 3, nota: 'Acuerdo' });
+    assert.equal(g.statusCode, 200);
+    assert.deepEqual([g.json().vacaciones_dias_extra, g.json().nota, g.json().farmacia, g.json().anulada], [3, 'Acuerdo', 'RITA', false]);
+    assert.ok(!('autor' in g.json()));
+    const e = await put(url, { vacaciones_dias_extra: 4, nota: null });
+    assert.equal(e.json().id, g.json().id); // un único ajuste no anulado: se actualiza
+    const f = (await get(`/api/rrhh/trabajadoras/${LAURA}/anual?anio=2026&hoy=2026-11-13`)).json().ficha.vacaciones;
+    assert.deepEqual([f.derecho_base, f.dias_extra, f.derecho, f.pendientes], [30, 4, 34, 4]);
+    const fila = (await get('/api/rrhh/fichas?farmacia=RITA&anio=2026&hoy=2026-11-13')).json().filas.find((x: FichaAnual) => x.trabajadora.id === LAURA);
+    assert.equal(fila.vacaciones.derecho, 34);
+    assert.equal((await put(`${url}/anular`, {})).statusCode, 400); // sin confirmación
+    const an = await put(`${url}/anular`, { confirmar: true });
+    assert.deepEqual([an.statusCode, an.json().anulada], [200, true]);
+    assert.equal((await get(`/api/rrhh/trabajadoras/${LAURA}/anual?anio=2026&hoy=2026-11-13`)).json().ficha.vacaciones.derecho, 30);
+  });
+  test('TA-REAL-2: completar vacaciones del convenio: solo los años sin el dato y solo esos dos campos', async () => {
+    const a = crearAdaptadorRrhhFixtures({ convenio: [{ ...CONVENIO_ANUAL[0], vacaciones_dias_naturales: null, vacaciones_fuente: null }, CONVENIO_ANUAL[1]] });
+    const hechos = a.completarVacacionesConvenio([2026, 2027], 'Marc');
+    assert.deepEqual(hechos.map((c) => [c.anio, c.vacaciones_dias_naturales, c.vacaciones_fuente]), [[2026, 30, FUENTE_VACACIONES]]);
+    assert.deepEqual(a.convenio()[0], { ...CONVENIO_ANUAL[0] }); // el resto, igual
+    assert.deepEqual(a.completarVacacionesConvenio([2026], 'Marc'), []); // ya completo
+    const r = await app.inject({ method: 'POST', url: '/api/rrhh/convenio/vacaciones', headers: { ...H, cookie, ...ORIGEN }, payload: { anios: [2026] } });
+    assert.deepEqual([r.statusCode, r.json().completados], [200, []]); // FIXTURES ya tiene los tres años completos
+    assert.equal((await app.inject({ method: 'POST', url: '/api/rrhh/convenio/vacaciones', headers: { ...H, cookie, ...ORIGEN }, payload: { anios: [2030] } })).statusCode, 400);
+    assert.equal(esEscrituraRrhh('POST', '/api/rrhh/convenio/vacaciones'), true);
   });
 });

@@ -3,21 +3,22 @@
 // TA-REAL: modo FIXTURES = datos de ejemplo (banner «Datos de ejemplo»); modo REAL = tablas reales (banner de datos
 // reales; sin credencial, «Falta configurar la credencial de Trabajadores» y ningún dato). Categorías del esquema
 // (titular = Farmacéutica titular, fuera del cómputo); fecha de alta obligatoria; «Anular» aparte, con confirmación;
-// si faltan años del convenio, botón para crearlos con los valores firmados.
+// si faltan años del convenio, botón para crearlos con los valores firmados. TA-REAL-2: si a algún año le faltan las
+// vacaciones, botón para completar solo esos dos campos.
 // TA-FICHA: resumen de plantilla encima del listado y ficha anual en el detalle (ficha_anual.tsx).
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   CATEGORIAS, CONVENIO_ANUAL, FRANJA_JORNADA, HORAS_COMPLETA, HORAS_POR_DEFECTO, JORNADAS, LARGO_NOMBRE, TEXTO_ACCION, TEXTO_BANNER_EJEMPLO,
   TEXTO_BANNER_REAL, TEXTO_CAMPO, TEXTO_CATEGORIA, TEXTO_ESTADO_CONVENIO, TEXTO_FUERA_COMPUTO, TEXTO_JORNADA, TEXTO_PROVISIONAL,
-  TEXTO_REFERENCIA_PROVISIONAL, aniosConvenioQueFaltan, esTitular, filtroFarmacia, horasSemanales, porcentajeDerivado,
+  TEXTO_REFERENCIA_PROVISIONAL, FUENTE_VACACIONES, VACACIONES_DIAS_NATURALES, aniosConvenioQueFaltan, aniosSinVacaciones, esTitular, filtroFarmacia, horasSemanales, porcentajeDerivado,
   type Categoria, type ConvenioAnual, type EstadoRrhhDTO, type EventoHistorial, type FarmaciaRrhh, type FiltroFarmacia, type Jornada, type Trabajadora,
   type TrabajadoraDetalleDTO, type TrabajadorasDTO,
 } from '../server/rrhh/contrato.ts';
 import { ErrorApi, enviar, useApi, useApiRecargable } from './api.ts';
 import { fechaCorta, fechaHora } from './formato.ts';
 import { Cabecera, MOVIL, useMedia } from './ui.tsx';
-import { FichaAnualSeccion, ResumenPlantilla } from './ficha_anual.tsx';
+import { FichaAnualSeccion, ResumenPlantilla, useAnio } from './ficha_anual.tsx';
 
 const HORAS = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 const horas = (h: number) => `${HORAS.format(h)} h`;
@@ -176,11 +177,56 @@ function ConvenioQueFalta({ convenio, onCreado }: { convenio: ConvenioAnual[]; o
           <p id="t-conf-convenio">Se crearán estos años (los que ya existen no se tocan):</p>
           <ul className="rrhh-convenio-valores">
             {valores.map((c) => (
-              <li key={c.anio}>{c.anio}: jornada máxima {horas(c.jornada_max_horas)} · {c.asuntos_propios_dias} {c.asuntos_propios_dias === 1 ? 'día' : 'días'} de asuntos propios · permiso médico {horas(c.permiso_medico_horas)} · referencia {horas(c.horas_semanales_referencia)}/sem · {TEXTO_ESTADO_CONVENIO[c.estado].toLowerCase()}</li>
+              <li key={c.anio}>{c.anio}: jornada máxima {horas(c.jornada_max_horas)} · {c.asuntos_propios_dias} {c.asuntos_propios_dias === 1 ? 'día' : 'días'} de asuntos propios · permiso médico {horas(c.permiso_medico_horas)} · referencia {horas(c.horas_semanales_referencia)}/sem · vacaciones {c.vacaciones_dias_naturales} días naturales ({c.vacaciones_fuente}) · {TEXTO_ESTADO_CONVENIO[c.estado].toLowerCase()}</li>
             ))}
           </ul>
           <div className="rrhh-botones">
             <button type="button" className="boton-primario" onClick={crear} data-crear-convenio-si>Sí, crear el convenio</button>
+            <button type="button" className="boton-secundario" onClick={() => setConfirmar(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+      {error && <p className="rrhh-error" role="alert">{error}</p>}
+    </section>
+  );
+}
+
+/**
+ * TA-REAL-2: años del convenio ya existentes sin días de vacaciones (filas anteriores a la migración 33). La acción
+ * completa SOLO vacaciones_dias_naturales y vacaciones_fuente; el resto del convenio no se toca.
+ */
+function ConvenioSinVacaciones({ convenio, onCompletado }: { convenio: ConvenioAnual[]; onCompletado: () => void }) {
+  const sin = aniosSinVacaciones(convenio);
+  const [confirmar, setConfirmar] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (sin.length === 0) return null;
+  const completar = async () => {
+    try {
+      await enviar('/api/rrhh/convenio/vacaciones', 'POST', { anios: sin });
+      setConfirmar(false);
+      onCompletado();
+    } catch (e) {
+      setError(textoErrorApi(e, 'No se han podido completar las vacaciones del convenio.'));
+    }
+  };
+  return (
+    <section className="tarjeta rrhh-convenio-falta" data-convenio-sin-vacaciones={sin.join(',')}>
+      <p><strong>El convenio de {sin.join(', ')} no tiene los días de vacaciones.</strong> Hasta completarlos, las vacaciones de la ficha anual salen como «pendiente».</p>
+      {!confirmar ? (
+        <button type="button" className="boton-primario" onClick={() => { setConfirmar(true); setError(null); }} data-completar-vacaciones>
+          Completar vacaciones del convenio
+        </button>
+      ) : (
+        <div role="alertdialog" aria-labelledby="t-conf-vacaciones" data-confirmar-vacaciones>
+          <p id="t-conf-vacaciones">
+            Se guardarán solo estos dos datos en {sin.length === 1 ? 'el año' : 'los años'} {sin.join(', ')}; el resto del convenio no cambia:
+          </p>
+          <ul className="rrhh-convenio-valores">
+            <li>Vacaciones: {VACACIONES_DIAS_NATURALES} días naturales</li>
+            <li>Fuente: {FUENTE_VACACIONES}</li>
+          </ul>
+          <div className="rrhh-botones">
+            <button type="button" className="boton-primario" onClick={completar} data-completar-vacaciones-si>Sí, completar</button>
             <button type="button" className="boton-secundario" onClick={() => setConfirmar(false)}>Cancelar</button>
           </div>
         </div>
@@ -327,6 +373,8 @@ function Fichas() {
   const [version, setVersion] = useState(0);
   const movil = useMedia(MOVIL);
   const navegar = useNavigate();
+  /** TA-REAL-2c: año elegido en el resumen de plantilla (parámetro anio): el pie usa su convenio, no uno fijo. */
+  const [anioSel] = useAnio();
 
   const cambiar = (x: Record<string, string | null>) => {
     const p = new URLSearchParams(params);
@@ -339,11 +387,12 @@ function Fichas() {
   const d = carga.datos;
   const activas = d.trabajadoras.filter((t) => t.activa);
   const computan = activas.filter((t) => t.computa_convenio).length;
-  const c = d.convenio.find((x) => x.anio === d.anio_referencia);
+  const c = d.convenio.find((x) => x.anio === anioSel);
 
   return (
     <div className="rrhh-fichas" data-rrhh-fichas>
       <ConvenioQueFalta convenio={d.convenio} onCreado={() => { setAviso('Convenio creado con los valores firmados.'); recargar(); setVersion((v) => v + 1); }} />
+      <ConvenioSinVacaciones convenio={d.convenio} onCompletado={() => { setAviso('Vacaciones del convenio completadas.'); recargar(); setVersion((v) => v + 1); }} />
       <div className="rrhh-barra-herramientas">
         <SelectorFarmacia valor={farmacia} onChange={(v) => cambiar({ farmacia: v === 'AMBAS' ? null : v })} />
         <label className="rrhh-check rrhh-bajas">
@@ -363,7 +412,8 @@ function Fichas() {
       <ResumenPlantilla key={version} farmacia={farmacia} />
       <p className="rrhh-resumen" data-resumen-fichas>
         {activas.length} {activas.length === 1 ? 'ficha activa' : 'fichas activas'} · {computan} en el cómputo del convenio
-        {c && <> · jornada máxima {c.anio}: <strong>{horas(c.jornada_max_horas)}</strong> · jornada completa de referencia: <strong data-referencia-semanal>{horas(c.horas_semanales_referencia)}/sem</strong> <span className="tenue">({TEXTO_PROVISIONAL})</span></>}
+        {!c && <span className="tenue" data-pie-sin-convenio> · sin convenio de {anioSel} en la base de datos</span>}
+        {c && <> · jornada máxima {c.anio}: <strong data-jornada-maxima={c.anio}>{horas(c.jornada_max_horas)}</strong> · jornada completa de referencia: <strong data-referencia-semanal>{horas(c.horas_semanales_referencia)}/sem</strong> <span className="tenue">({TEXTO_PROVISIONAL})</span></>}
       </p>
       {d.trabajadoras.length === 0 ? (
         <p className="tarjeta rrhh-vacio">No hay fichas en esta farmacia. Crea la primera con «Nueva ficha».</p>
@@ -509,6 +559,8 @@ function Detalle() {
   const { carga, recargar } = useApiRecargable<TrabajadoraDetalleDTO>(`/api/rrhh/trabajadoras/${id}`);
   const [modo, setModo] = useState<'ver' | 'editar' | 'baja' | 'anular'>('ver');
   const [aviso, setAviso] = useState<string | null>(null);
+  /** TA-REAL-2c: el año elegido en la ficha anual (parámetro anio; por defecto, el de hoy), no uno fijo. */
+  const [anio] = useAnio();
   useEffect(() => { setModo('ver'); setAviso(null); }, [id]);
 
   if (carga.estado === 'cargando') return <p className="tenue">Cargando ficha…</p>;
@@ -516,8 +568,7 @@ function Detalle() {
     return <p className="rrhh-error" role="alert">{carga.mensaje === 'TRABAJADORA_NO_ENCONTRADA' ? 'No existe esta ficha.' : `No se ha podido leer la ficha (${carga.mensaje}).`} <Link to="/trabajadores">Volver a fichas</Link></p>;
   }
   const { trabajadora: t, objetivos, historial } = carga.datos;
-  const anio = Number(new Date().toISOString().slice(0, 4));
-  // Referencia semanal del año en curso (o la del primer año del convenio).
+  // Referencia semanal del año elegido (o la del primer año del convenio).
   const ref = (objetivos.find((o) => o.anio === anio) ?? objetivos[0])?.horas_semanales_referencia ?? null;
   const ir = (m: typeof modo) => { setModo(m); setAviso(null); };
 

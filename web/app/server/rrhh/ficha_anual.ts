@@ -4,10 +4,11 @@
  * pruebas y check_fixtures. En REAL todo esto es solo lectura.
  *
  * Reglas de Pío (TA-FICHA):
- *  - Vacaciones: 30 días naturales al año (VACACIONES_DIAS_NATURALES, constante provisional en un único punto; vendrá de
- *    convenio_anual.vacaciones_dias_naturales cuando exista). Media jornada: los mismos 30 días. Alta o baja dentro del
- *    año: proporcional a los días en alta, redondeado al entero hacia arriba (REDONDEO_PROPORCIONAL, configurable).
- *  - Días extra por persona y año: «pendiente de habilitar» hasta que exista trabajadoras_ajustes_anuales (null).
+ *  - Vacaciones: TA-REAL-2, los días naturales del año salen de convenio_anual.vacaciones_dias_naturales (30 al crear o
+ *    completar 2026–2028); sin el dato, «pendiente» (derecho null). Media jornada: los mismos días. Alta o baja dentro
+ *    del año: proporcional a los días en alta, redondeado al entero hacia arriba (REDONDEO_PROPORCIONAL, configurable).
+ *  - TA-REAL-2: días extra por persona y año (trabajadoras_ajustes_anuales, la fila no anulada): derecho = base
+ *    (proporcional si procede) + extra.
  *  - Conteo en días naturales: un periodo de vacaciones va del primer al último día laborable seguidos de VACACIONES y
  *    cuentan todos los días naturales entre ambos (fines de semana y festivos intermedios incluidos). Una sola franja de
  *    una jornada completa = 0,5 días; la franja única de una media jornada = 1 día.
@@ -21,15 +22,13 @@
  *
  * Solo sintaxis TypeScript borrable.
  */
-import { ANIOS_CONVENIO, objetivoAnual, ordenFichas, type ConvenioAnual, type FiltroFarmacia, type Trabajadora } from './contrato.ts';
+import { ANIOS_CONVENIO, objetivoAnual, ordenFichas, type AjusteAnual, type ConvenioAnual, type FiltroFarmacia, type Trabajadora } from './contrato.ts';
 import { FRANJAS_DE_JORNADA, aDia, deDia, esLaborable, horasQueSuman, type EventoCalendario, type TipoEvento } from './eventos.ts';
 
 // ---------------------------------------------------------------------------
 // Constantes (únicos puntos de cada regla)
 // ---------------------------------------------------------------------------
 
-/** Provisional (regla de Pío): vendrá de convenio_anual.vacaciones_dias_naturales cuando exista la columna. */
-export const VACACIONES_DIAS_NATURALES = 30;
 export type Redondeo = 'ENTERO_ARRIBA' | 'MEDIO_DIA_ARRIBA';
 /** Redondeo del derecho proporcional (alta o baja dentro del año). Regla de Pío: entero hacia arriba. */
 export const REDONDEO_PROPORCIONAL: Redondeo = 'ENTERO_ARRIBA';
@@ -47,11 +46,12 @@ export const TIPOS_AUSENCIA: readonly TipoEvento[] = [
   'VACACIONES', 'ASUNTOS_PROPIOS', 'PERMISO_RETRIBUIDO', 'PERMISO_NO_RETRIBUIDO', 'PERMISO_MEDICO', 'DESCANSO_COMPENSATORIO', 'BAJA',
 ];
 export const MAX_PROXIMAS_AUSENCIAS = 3;
-export const TEXTO_DIAS_EXTRA_PENDIENTE = 'pendiente de habilitar';
 export const TEXTO_FESTIVOS_PENDIENTES = 'Festivos aún no descontados (TA3)';
-export const TEXTO_VACACIONES_PROVISIONAL = 'provisional: 30 días naturales hasta que el convenio lo recoja';
+/** TA-REAL-2: vacaciones sin dato en convenio_anual. */
+export const TEXTO_VACACIONES_PENDIENTE = 'pendiente';
 
-export interface OpcionesFicha { vacacionesDias?: number; redondeo?: Redondeo; avisoDesde?: string }
+/** `ajustes`: filas de trabajadoras_ajustes_anuales (se usa la no anulada de la persona y el año). */
+export interface OpcionesFicha { redondeo?: Redondeo; avisoDesde?: string; ajustes?: readonly AjusteAnual[] }
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -61,7 +61,7 @@ export interface OpcionesFicha { vacacionesDias?: number; redondeo?: Redondeo; a
 export interface Periodo { tipo: TipoEvento; desde: string; hasta: string; dias: number; parcial: boolean }
 
 export type CodigoAviso = 'VACACIONES_SIN_PLANIFICAR' | 'VACACIONES_DE_MAS' | 'EXCESO_HORAS' | 'LIBRE_DISPOSICION_DE_MAS'
-  | 'PERMISO_MEDICO_DE_MAS' | 'SIN_CONVENIO';
+  | 'PERMISO_MEDICO_DE_MAS' | 'SIN_CONVENIO' | 'VACACIONES_SIN_DATO';
 export interface AvisoFicha { codigo: CodigoAviso; texto: string }
 
 export interface FichaAnual {
@@ -73,12 +73,20 @@ export interface FichaAnual {
   /** true si convenio_anual tiene el año. */
   convenio_anio: boolean;
   vacaciones: {
-    base: number; proporcional: boolean; derecho: number;
-    /** Días extra del año: null = pendiente de habilitar (trabajadoras_ajustes_anuales). */
-    dias_extra: number | null;
+    /** convenio_anual.vacaciones_dias_naturales del año; null = pendiente. */
+    base: number | null;
+    fuente: string | null;
+    proporcional: boolean;
+    /** Base, proporcional y redondeada si hay alta o baja en el año; null = pendiente. */
+    derecho_base: number | null;
+    /** Días extra del ajuste no anulado (0 sin ajuste). */
+    dias_extra: number;
+    ajuste: AjusteAnual | null;
+    /** derecho_base + dias_extra; null = pendiente. */
+    derecho: number | null;
     disfrutadas: number; planificadas: number;
-    /** derecho − disfrutadas − planificadas (negativo = por encima del derecho). */
-    pendientes: number;
+    /** derecho − disfrutadas − planificadas (negativo = por encima del derecho); null = pendiente. */
+    pendientes: number | null;
     periodos: Periodo[];
   };
   libre_disposicion: { derecho: number | null; usadas: number; restantes: number | null };
@@ -101,7 +109,9 @@ export interface FichaAnual {
 }
 
 export interface ReglasFichaDTO {
-  vacaciones_dias: number; redondeo: Redondeo; aviso_desde: string; anios: number[]; tipos_horas: TipoEvento[];
+  /** Del convenio del año (null = pendiente). */
+  vacaciones_dias: number | null; vacaciones_fuente: string | null;
+  redondeo: Redondeo; aviso_desde: string; anios: number[]; tipos_horas: TipoEvento[];
 }
 export interface ResumenPlantillaDTO { farmacia: FiltroFarmacia; anio: number; hoy: string; filas: FichaAnual[]; reglas: ReglasFichaDTO }
 export interface FichaAnualDTO {
@@ -111,10 +121,16 @@ export interface FichaAnualDTO {
   motivo: 'ANULADA' | 'SIN_ALTA_EN_EL_ANIO' | null;
 }
 
-export const reglasFicha = (o: OpcionesFicha = {}): ReglasFichaDTO => ({
-  vacaciones_dias: o.vacacionesDias ?? VACACIONES_DIAS_NATURALES, redondeo: o.redondeo ?? REDONDEO_PROPORCIONAL,
-  aviso_desde: o.avisoDesde ?? AVISO_VACACIONES_DESDE, anios: [...ANIOS_CONVENIO], tipos_horas: [...TIPOS_HORAS_COMPUTAN],
-});
+export const reglasFicha = (convenio: readonly ConvenioAnual[], anio: number, o: OpcionesFicha = {}): ReglasFichaDTO => {
+  const c = convenio.find((x) => x.anio === anio) ?? null;
+  return {
+    vacaciones_dias: c?.vacaciones_dias_naturales ?? null, vacaciones_fuente: c?.vacaciones_fuente ?? null, redondeo: o.redondeo ?? REDONDEO_PROPORCIONAL,
+    aviso_desde: o.avisoDesde ?? AVISO_VACACIONES_DESDE, anios: [...ANIOS_CONVENIO], tipos_horas: [...TIPOS_HORAS_COMPUTAN],
+  };
+};
+/** Ajuste no anulado de una persona y un año. */
+export const ajusteDe = (ajustes: readonly AjusteAnual[] | undefined, trabajadoraId: string, anio: number): AjusteAnual | null =>
+  (ajustes ?? []).find((a) => a.trabajadora_id === trabajadoraId && a.anio === anio && !a.anulada) ?? null;
 
 // ---------------------------------------------------------------------------
 // Reglas
@@ -142,13 +158,16 @@ export function redondear(x: number, modo: Redondeo): number {
   return r === 0 ? 0 : r; // sin -0
 }
 
-/** Derecho de vacaciones: 30 días (también media jornada); alta o baja en el año, proporcional y redondeado. */
-export function derechoVacaciones(t: Pick<Trabajadora, 'fecha_alta' | 'fecha_baja' | 'anulada'>, anio: number, o: OpcionesFicha = {}) {
-  const base = o.vacacionesDias ?? VACACIONES_DIAS_NATURALES;
+/**
+ * Derecho de vacaciones del convenio (`base`, días naturales; también media jornada); alta o baja en el año,
+ * proporcional y redondeado. Sin base (convenio sin el dato): derecho null («pendiente»).
+ */
+export function derechoVacaciones(t: Pick<Trabajadora, 'fecha_alta' | 'fecha_baja' | 'anulada'>, anio: number, base: number | null, o: OpcionesFicha = {}) {
   const enAlta = diasEnAlta(t, anio);
   const total = diasDelAnio(anio);
   const proporcional = enAlta < total;
-  return { base, dias_en_alta: enAlta, dias_anio: total, proporcional, derecho: proporcional ? redondear(base * enAlta / total, o.redondeo ?? REDONDEO_PROPORCIONAL) : base };
+  const derecho = base === null ? null : proporcional ? redondear(base * enAlta / total, o.redondeo ?? REDONDEO_PROPORCIONAL) : base;
+  return { base, dias_en_alta: enAlta, dias_anio: total, proporcional, derecho };
 }
 
 /**
@@ -210,11 +229,14 @@ export function calcularFichaAnual(t: Trabajadora, eventos: readonly EventoCalen
   const festivos = new Set(evs.filter((e) => e.tipo === 'FESTIVO').map((e) => e.fecha));
   const puente = (f: string) => !esLaborable(f) || festivos.has(f);
 
-  // Vacaciones.
-  const der = derechoVacaciones(t, anio, o);
+  // Vacaciones: base del convenio (o pendiente) + días extra del ajuste.
+  const der = derechoVacaciones(t, anio, c?.vacaciones_dias_naturales ?? null, o);
+  const ajuste = ajusteDe(o.ajustes, t.id, anio);
+  const extra = ajuste?.vacaciones_dias_extra ?? 0;
+  const derechoVac = der.derecho === null ? null : der.derecho + extra;
   const pv = periodos(evs, t, 'VACACIONES', puente);
   const vac = partirEnHoy(pv, hoy);
-  const pendientesVac = der.derecho - vac.hasta_hoy - vac.desde_manana;
+  const pendientesVac = derechoVac === null ? null : derechoVac - vac.hasta_hoy - vac.desde_manana;
 
   // Libre disposición y permiso médico.
   const usadasLd = [...valoresPorDia(evs, t, 'ASUNTOS_PROPIOS').values()].reduce((s, v) => s + v, 0);
@@ -237,7 +259,8 @@ export function calcularFichaAnual(t: Trabajadora, eventos: readonly EventoCalen
   const ficha: FichaAnual = {
     trabajadora: { ...t }, anio, hoy, dias_en_alta: der.dias_en_alta, dias_anio: der.dias_anio, convenio_anio: c !== null,
     vacaciones: {
-      base: der.base, proporcional: der.proporcional, derecho: der.derecho, dias_extra: null,
+      base: der.base, fuente: c?.vacaciones_fuente ?? null, proporcional: der.proporcional, derecho_base: der.derecho, dias_extra: extra,
+      ajuste: ajuste ? { ...ajuste } : null, derecho: derechoVac,
       disfrutadas: vac.hasta_hoy, planificadas: vac.desde_manana, pendientes: pendientesVac, periodos: pv,
     },
     libre_disposicion: { derecho: c ? c.asuntos_propios_dias : null, usadas: usadasLd, restantes: c ? c.asuntos_propios_dias - usadasLd : null },
@@ -260,11 +283,13 @@ export function calcularFichaAnual(t: Trabajadora, eventos: readonly EventoCalen
 export function avisosDe(f: FichaAnual, o: OpcionesFicha = {}): AvisoFicha[] {
   const a: AvisoFicha[] = [];
   if (!f.convenio_anio) a.push({ codigo: 'SIN_CONVENIO', texto: `Sin convenio de ${f.anio} en la base de datos` });
+  else if (f.vacaciones.base === null) a.push({ codigo: 'VACACIONES_SIN_DATO', texto: `Vacaciones de ${f.anio} pendientes: el convenio no tiene los días` });
   const desde = `${f.anio}-${o.avisoDesde ?? AVISO_VACACIONES_DESDE}`;
-  if (f.vacaciones.pendientes > EPS && f.hoy >= desde && f.hoy <= `${f.anio}-12-31` && f.dias_en_alta > 0) {
-    a.push({ codigo: 'VACACIONES_SIN_PLANIFICAR', texto: `Quedan ${dias(f.vacaciones.pendientes)} de vacaciones sin planificar` });
+  const pend = f.vacaciones.pendientes;
+  if (pend !== null && pend > EPS && f.hoy >= desde && f.hoy <= `${f.anio}-12-31` && f.dias_en_alta > 0) {
+    a.push({ codigo: 'VACACIONES_SIN_PLANIFICAR', texto: `Quedan ${dias(pend)} de vacaciones sin planificar` });
   }
-  if (f.vacaciones.pendientes < -EPS) a.push({ codigo: 'VACACIONES_DE_MAS', texto: `${dias(-f.vacaciones.pendientes)} de vacaciones por encima del derecho` });
+  if (pend !== null && pend < -EPS) a.push({ codigo: 'VACACIONES_DE_MAS', texto: `${dias(-pend)} de vacaciones por encima del derecho` });
   if (f.horas.exceso !== null) {
     a.push({ codigo: 'EXCESO_HORAS', texto: `Exceso de ${n(f.horas.exceso)} h ≈ ${dias(f.horas.exceso_dias as number)} que podrían ser vacaciones (estimación)` });
   }

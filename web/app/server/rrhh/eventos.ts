@@ -19,8 +19,10 @@
  *  - TA-REAL (migración 31): 11 tipos (FESTIVO, TURNO_GUARDIA y LOCALIZADA se ven, pero se pintan desde TA3);
  *    horas null = las de la ficha (horas_efectivas, como la vista v_eventos_calendario_horas); TURNO_GUARDIA y
  *    LOCALIZADA no suman horas; un evento fuera del alta o la baja de la persona falla cerrado (EVENTO_FUERA_DEL_ALTA,
- *    como el trigger); goma y deshacer de pintados nuevos solo si el adaptador puede anular eventos (en REAL no, hasta
- *    que exista eventos_calendario.anulado).
+ *    como el trigger).
+ *  - TA-REAL-2 (migración 33): nada se borra. La goma y el deshacer de un pintado nuevo ANULAN el evento
+ *    (eventos_calendario.anulado = true); los anulados no se leen nunca y dejan libre su franja (la unicidad de
+ *    persona, día y franja solo cuenta los no anulados). Lo confirmado sigue sin tocarse.
  *
  * Solo sintaxis TypeScript borrable.
  */
@@ -134,8 +136,6 @@ export const TEXTO_ORIGEN: Readonly<Record<OrigenCambio, string>> = {
 };
 /** TA2-4: mensaje al intentar anotar una franja sin evento. */
 export const AVISO_NOTA_VACIA = 'Pinta primero un evento para poder anotarlo';
-/** TA-REAL: goma y deshacer de pintados nuevos en REAL, hasta que exista eventos_calendario.anulado. */
-export const AVISO_ANULAR_PENDIENTE = 'Pendiente de que la base de datos permita anular eventos';
 
 /** Un día de una persona; con franja, solo esa franja; sin franja, todas las franjas de su ficha. */
 export interface Celda { trabajadora_id: string; fecha: string; franja?: Franja }
@@ -149,6 +149,7 @@ export type PeticionEventos =
   | { accion: 'EDITAR'; evento_id: string; horas?: number; nota?: string | null }
   | { accion: 'ANOTAR'; celdas: Celda[]; nota: string | null };
 
+/** BORRAR = en REAL, anular (anulado = true); nunca DELETE. */
 export type AccionTraza = 'CREAR' | 'EDITAR' | 'BORRAR';
 /** Traza de un evento dentro de un cambio: antes/después completos (incluida la nota). */
 export interface TrazaEvento {
@@ -184,7 +185,7 @@ export interface CambioCalendario {
   laborables: boolean;
   /** TA2-4: true si en algún día de persona solo se tocó parte de sus franjas (el texto cuenta entonces las franjas). */
   parcial: boolean;
-  /** TA-REAL: eventos creados (deshacerlos exige anular eventos). */
+  /** TA-REAL: eventos creados (deshacerlos los anula). */
   creados: number;
   /** Personas afectadas (una por ficha). */
   personas: string[];
@@ -211,8 +212,6 @@ export interface CalendarioDTO {
   eventos: EventoCalendario[];
   /** Último cambio que se puede deshacer (de cualquier farmacia); null si no hay. */
   ultimo_cambio: ResumenCambio | null;
-  /** TA-REAL: false si la goma y el deshacer de pintados nuevos están desactivados (REAL). */
-  anular_eventos: boolean;
 }
 /** TA2-4: omitidas_vacias = franjas sin evento que ANOTAR no ha podido anotar (0 en el resto). */
 export interface ResultadoCambioDTO { cambio: ResumenCambio | null; omitidas_confirmadas: number; omitidas_vacias: number }
@@ -414,8 +413,8 @@ export function describirCambio(c: Pick<ResumenCambio, 'origen' | 'tipo' | 'n' |
 // ---------------------------------------------------------------------------
 
 export type ErrorCambio = 'TRABAJADORA_NO_VALIDA' | 'FRANJA_NO_VALIDA' | 'EVENTO_NO_ENCONTRADO' | 'EVENTO_CONFIRMADO'
-  | 'EVENTO_FUERA_DEL_ALTA' | 'ANULAR_EVENTOS_PENDIENTE';
-export type ErrorDeshacer = 'NADA_QUE_DESHACER' | 'NO_ES_EL_ULTIMO' | 'ESTADO_CAMBIADO' | 'ANULAR_EVENTOS_PENDIENTE';
+  | 'EVENTO_FUERA_DEL_ALTA';
+export type ErrorDeshacer = 'NADA_QUE_DESHACER' | 'NO_ES_EL_ULTIMO' | 'ESTADO_CAMBIADO';
 
 export type Operacion = { accion: AccionTraza; antes: EventoCalendario | null; despues: EventoCalendario | null };
 type Hueco = { t: Trabajadora; fecha: string; franja: Franja };
@@ -536,11 +535,10 @@ export function mismoEvento(a: EventoCalendario | null | undefined, b: EventoCal
 
 /**
  * Plan del deshacer de un cambio: comprueba que cada evento sigue como lo dejó (si no, ESTADO_CAMBIADO) y devuelve las
- * operaciones inversas. Sin anular eventos (REAL), un cambio que creó o borró eventos no se deshace.
+ * operaciones inversas: lo creado se borra (se anula) y lo borrado se vuelve a crear (una fila nueva: reasignarIds).
  */
 export function planDeshacer(u: CambioCalendario, actual: (id: string) => EventoCalendario | undefined,
-  enCelda: (tid: string, fecha: string, franja: Franja) => EventoCalendario | undefined, anularEventos: boolean): Operacion[] | ErrorDeshacer {
-  if (!anularEventos && u.trazas.some((t) => t.accion !== 'EDITAR')) return 'ANULAR_EVENTOS_PENDIENTE';
+  enCelda: (tid: string, fecha: string, franja: Franja) => EventoCalendario | undefined): Operacion[] | ErrorDeshacer {
   for (const t of u.trazas) {
     if (!mismoEvento(actual(t.evento_id), t.despues)) return 'ESTADO_CAMBIADO';
     if (t.accion === 'BORRAR' && enCelda(t.trabajadora_id, t.fecha, t.franja)) return 'ESTADO_CAMBIADO'; // la franja ya no está libre
@@ -549,6 +547,28 @@ export function planDeshacer(u: CambioCalendario, actual: (id: string) => Evento
     accion: t.accion === 'CREAR' ? 'BORRAR' : t.accion === 'BORRAR' ? 'CREAR' : 'EDITAR', antes: t.despues, despues: t.antes,
   }));
 }
+
+/**
+ * TA-REAL-2c: deshacer un borrado crea una fila NUEVA (id nuevo; la anulada se queda anulada). Para que el deshacer
+ * encadenado siga funcionando, la pila de cambios pasa a apuntar al id nuevo: cada traza (evento_id, antes y después)
+ * que nombra un id viejo se reescribe con el nuevo. Así la comprobación de planDeshacer sigue siendo exacta (mismo
+ * evento, mismos datos) y ESTADO_CAMBIADO solo salta si el día cambió de verdad. Se encadena: X → Y y luego Y → Z.
+ * Muta las trazas en su sitio (la pila es de la sesión del servidor).
+ */
+export function reasignarIds(cambios: readonly CambioCalendario[], mapa: ReadonlyMap<string, string>): void {
+  if (mapa.size === 0) return;
+  const r = (e: EventoCalendario | null) => (e && mapa.has(e.id) ? { ...e, id: mapa.get(e.id) as string } : e);
+  for (const c of cambios) {
+    for (const t of c.trazas) {
+      if (mapa.has(t.evento_id)) t.evento_id = mapa.get(t.evento_id) as string;
+      t.antes = r(t.antes);
+      t.despues = r(t.despues);
+    }
+  }
+}
+
+/** Celda de un evento (persona, día y franja): única entre los no anulados. */
+export const celdaDe = (e: Pick<EventoCalendario, 'trabajadora_id' | 'fecha' | 'franja'>) => `${e.trabajadora_id}|${e.fecha}|${e.franja}`;
 
 /** TA2-4: medidas de un cambio a partir de sus trazas (también al filtrar el historial por farmacia). */
 export function medidas(ts: TrazaEvento[], fichas: readonly Trabajadora[]) {
@@ -596,9 +616,11 @@ export const resumen = ({ trazas: _t, ...r }: CambioCalendario): ResumenCambio =
 /**
  * TA-REAL: origen de un cambio leído de trabajadores_historial sin la marca de la sesión (p. ej. tras reiniciar):
  * solo altas → Pintado (tipo único) o Rellenado (todo JORNADA en varios días); solo cambios de estado →
- * Confirmado / Quitada la confirmación; solo nota → Anotado; cambio de tipo → Pintado; el resto, Editado.
+ * Confirmado / Quitada la confirmación; solo nota → Anotado; cambio de tipo → Pintado; TA-REAL-2: solo anulaciones →
+ * Borrado; el resto, Editado.
  */
 export function inferirOrigen(ts: Pick<TrazaEvento, 'accion' | 'antes' | 'despues'>[]): { origen: OrigenCambio; tipo: TipoEvento | null } {
+  if (ts.length > 0 && ts.every((t) => t.accion === 'BORRAR')) return { origen: 'BORRAR', tipo: null };
   const tipos = [...new Set(ts.map((t) => t.despues?.tipo).filter((x): x is TipoEvento => !!x))];
   const tipoUnico = tipos.length === 1 ? tipos[0] : null;
   if (ts.every((t) => t.accion === 'CREAR')) {
@@ -649,7 +671,7 @@ export const ORDEN_FRANJA: Readonly<Record<Franja, number>> = { MANANA: 0, TARDE
 
 export interface SemillaEventos {
   /** Ausencias de ejemplo: de lunes a viernes entre desde y hasta; sin franja, todas las de la ficha. */
-  ausencias: { trabajadora_id: string; tipo: TipoEvento; desde: string; hasta: string; franja?: Franja; nota?: string }[];
+  ausencias: { trabajadora_id: string; tipo: TipoEvento; desde: string; hasta: string; franja?: Franja; nota?: string; anulado?: boolean }[];
   /** Jornada habitual de todas las fichas activas (sin pisar ausencias). */
   jornada_habitual: { desde: string; hasta: string };
   /** Días ya confirmados (todas las fichas). */
@@ -666,12 +688,13 @@ export interface AlmacenEventos {
   historial(farmacia: FiltroFarmacia): CambioCalendario[];
   notasProximas(farmacia: FiltroFarmacia, desde: string): NotaProxima[];
   todos(): EventoCalendario[];
+  /** TA-REAL-2: eventos anulados (goma, deshacer de un pintado o semilla). Ninguna lectura los devuelve. */
+  anulados(): (EventoCalendario & { anulado: true })[];
 }
 
 export function crearAlmacenEventos(o: {
-  fichas: () => Trabajadora[]; ahora: () => string; nuevoId: () => string; anularEventos?: boolean;
+  fichas: () => Trabajadora[]; ahora: () => string; nuevoId: () => string;
 }): AlmacenEventos {
-  const anularEventos = o.anularEventos ?? true;
   const eventos = new Map<string, EventoCalendario>();
   const porCelda = new Map<string, string>();
   const cambios: CambioCalendario[] = [];
@@ -679,6 +702,9 @@ export function crearAlmacenEventos(o: {
   const enCelda = (tid: string, fecha: string, franja: Franja) => { const id = porCelda.get(clave(tid, fecha, franja)); return id ? eventos.get(id) : undefined; };
   const poner = (e: EventoCalendario) => { eventos.set(e.id, { ...e }); porCelda.set(clave(e.trabajadora_id, e.fecha, e.franja), e.id); };
   const quitar = (e: EventoCalendario) => { eventos.delete(e.id); porCelda.delete(clave(e.trabajadora_id, e.fecha, e.franja)); };
+  /** TA-REAL-2: como en la tabla, lo borrado queda anulado (fuera de toda lectura; su franja queda libre). */
+  const anulados: (EventoCalendario & { anulado: true })[] = [];
+  const anular = (e: EventoCalendario, cuando: string) => { quitar(e); anulados.push({ ...e, updated_at: cuando, anulado: true }); };
   /** Horas efectivas con la ficha vigente (si se edita la jornada, cambian las de los eventos sin horas a mano). */
   const conHoras = (e: EventoCalendario): EventoCalendario => {
     const t = o.fichas().find((x) => x.id === e.trabajadora_id);
@@ -689,7 +715,10 @@ export function crearAlmacenEventos(o: {
   function registrar(ops: Operacion[], origen: OrigenCambio, tipo: TipoEvento | null, quien: string, cuando: string,
     omitidas: number, deshace: CambioCalendario | null, periodo: { desde: string; hasta: string } | null = null, vacias = 0): ResultadoCambioDTO {
     if (ops.length === 0) return { cambio: null, omitidas_confirmadas: omitidas, omitidas_vacias: vacias };
-    for (const op of ops) { if (op.antes) quitar(op.antes); if (op.despues) poner(op.despues); }
+    for (const op of ops) {
+      if (op.accion === 'BORRAR') anular(op.antes as EventoCalendario, cuando);
+      else { if (op.antes) quitar(op.antes); if (op.despues) poner(op.despues); }
+    }
     const c = construirCambio({ id: o.nuevoId(), ops, origen, tipo, quien, cuando, omitidas, deshace, periodo, fichas: o.fichas(), nuevoId: o.nuevoId });
     if (deshace) deshace.deshecho = true;
     cambios.push(c);
@@ -717,7 +746,12 @@ export function crearAlmacenEventos(o: {
         if (nota !== null && !nota.ok) throw new Error(`SEMILLA_EVENTOS: nota ${a.trabajadora_id}`);
         for (const f of rangoFechas(a.desde, a.hasta)) {
           if (!esLaborable(f)) continue;
-          for (const franja of a.franja ? [a.franja] : FRANJAS_DE_JORNADA[t.tipo_jornada]) crear(t, f, franja, a.tipo, nota && nota.ok ? nota.nota : null);
+          for (const franja of a.franja ? [a.franja] : FRANJAS_DE_JORNADA[t.tipo_jornada]) {
+            const n = nota && nota.ok ? nota.nota : null;
+            // TA-REAL-2: ausencia anulada de ejemplo: no ocupa la franja ni se lee.
+            if (a.anulado) { if (deAltaEl(t, f)) anulados.push({ ...nuevoEvento({ t, fecha: f, franja }, a.tipo, cuando, o.nuevoId(), n), anulado: true }); }
+            else crear(t, f, franja, a.tipo, n);
+          }
         }
       }
       for (const j of s.jornada_extra ?? []) {
@@ -748,11 +782,10 @@ export function crearAlmacenEventos(o: {
         .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.trabajadora_id.localeCompare(b.trabajadora_id) || ORDEN_FRANJA[a.franja] - ORDEN_FRANJA[b.franja])
         .map(conHoras);
       const u = ultimoDeshacible();
-      return { farmacia, desde, hasta, trabajadoras, eventos: evs, ultimo_cambio: u ? resumen(u) : null, anular_eventos: anularEventos };
+      return { farmacia, desde, hasta, trabajadoras, eventos: evs, ultimo_cambio: u ? resumen(u) : null };
     },
 
     aplicar(p, quien) {
-      if (p.accion === 'BORRAR' && !anularEventos) return 'ANULAR_EVENTOS_PENDIENTE';
       const cuando = o.ahora();
       const pl = planificar(p, contexto(cuando));
       if (typeof pl === 'string') return pl;
@@ -763,9 +796,19 @@ export function crearAlmacenEventos(o: {
       const u = ultimoDeshacible();
       if (!u) return 'NADA_QUE_DESHACER';
       if (u.id !== cambioId) return 'NO_ES_EL_ULTIMO';
-      const ops = planDeshacer(u, (id) => eventos.get(id), enCelda, anularEventos);
-      if (typeof ops === 'string') return ops;
-      return registrar(ops, 'DESHACER', null, quien, o.ahora(), 0, u);
+      const plan = planDeshacer(u, (id) => eventos.get(id), enCelda);
+      if (typeof plan === 'string') return plan;
+      // TA-REAL-2c: como en la tabla, lo borrado vuelve como fila nueva (id nuevo) y la pila se reasigna a ese id.
+      const mapa = new Map<string, string>();
+      const ops = plan.map((op) => {
+        if (op.accion !== 'CREAR' || !op.despues) return op;
+        const id = o.nuevoId();
+        mapa.set(op.despues.id, id);
+        return { ...op, despues: { ...op.despues, id } };
+      });
+      const r = registrar(ops, 'DESHACER', null, quien, o.ahora(), 0, u);
+      reasignarIds(cambios, mapa);
+      return r;
     },
 
     historial(farmacia) {
@@ -781,5 +824,6 @@ export function crearAlmacenEventos(o: {
     notasProximas: (farmacia, desde) => notasProximas([...eventos.values()], o.fichas(), farmacia, desde),
 
     todos: () => [...eventos.values()].map(conHoras),
+    anulados: () => anulados.map((e) => ({ ...e })),
   };
 }

@@ -7,15 +7,16 @@
 // TA2-4: mensajes en días laborables × personas; «Añadir nota» en la barra de selección (una franja: su editor; varias:
 // la misma nota, omitiendo vacías y confirmadas); campo Nota siempre visible en el detalle del día.
 // TA-REAL: horas = horas_efectivas (vacías = las de la ficha); 11 tipos (FESTIVO, TURNO_GUARDIA y LOCALIZADA se ven, se
-// pintan desde TA3; guardia y localizada no suman horas); fuera del alta o la baja de la persona no se pinta; en REAL,
-// goma y deshacer de pintados nuevos desactivados con aviso; recuadro «Notas próximas» (de hoy en adelante).
+// pintan desde TA3; guardia y localizada no suman horas); fuera del alta o la baja de la persona no se pinta; recuadro
+// «Notas próximas» (de hoy en adelante). TA-REAL-2 (migración 33): goma y deshacer también en REAL (anulan, nunca borran);
+// lo confirmado sigue bloqueado.
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as EventoPuntero, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   CATEGORIAS, TEXTO_CATEGORIA, TEXTO_JORNADA, esTitular, filtroFarmacia, type FarmaciaRrhh, type Trabajadora,
 } from '../server/rrhh/contrato.ts';
 import {
-  AVISO_ANULAR_PENDIENTE, AVISO_NOTA, AVISO_NOTA_VACIA, CODIGO_TIPO_EVENTO, COLOR_TIPO_EVENTO, FECHA_MAX, FECHA_MIN, FRANJAS, FRANJAS_DE_JORNADA, LARGO_NOTA,
+  AVISO_NOTA, AVISO_NOTA_VACIA, CODIGO_TIPO_EVENTO, COLOR_TIPO_EVENTO, FECHA_MAX, FECHA_MIN, FRANJAS, FRANJAS_DE_JORNADA, LARGO_NOTA,
   HORAS_EVENTO_MAX, TEXTO_ESTADO_EVENTO, TEXTO_FRANJA, TEXTO_TIPO_EVENTO, TIPOS_EVENTO, TIPOS_PINTABLES, TIPOS_SIN_HORAS, deAltaEl, describirCambio, diaSemana,
   esFecha, horasQueSuman, lunesDe, primeroDeMes, rangoFechas, sumarDias, sumarMeses, ultimoDeMes,
   type CalendarioDTO, type CambioCalendario, type Celda, type EventoCalendario, type Franja, type NotaProxima, type ResultadoCambioDTO, type TipoEvento,
@@ -151,7 +152,6 @@ const ERRORES: Readonly<Record<string, string>> = {
   ESTADO_CAMBIADO: 'Los días de ese cambio ya no están como los dejó: no se ha deshecho nada.',
   DATOS_NO_VALIDOS: 'Datos no válidos: no se ha cambiado nada.',
   EVENTO_FUERA_DEL_ALTA: 'Ese día está fuera del alta o la baja de la persona: no se ha cambiado nada.',
-  ANULAR_EVENTOS_PENDIENTE: `${AVISO_ANULAR_PENDIENTE}: no se ha cambiado nada.`,
 };
 function textoError(e: unknown): string {
   if (!(e instanceof ErrorApi)) return 'No se ha podido guardar.';
@@ -214,12 +214,9 @@ function Calendario() {
   });
   const cambioEventos = (cuerpo: object) => escribir('/api/rrhh/eventos', cuerpo);
   const ultimo = datos?.ultimo_cambio ?? null;
-  // TA-REAL: sin anular eventos (REAL), ni goma ni deshacer de un cambio que creó eventos.
-  const anular = datos?.anular_eventos ?? true;
-  const deshacible = ultimo !== null && (anular || ultimo.creados === 0);
+  const deshacible = ultimo !== null;
   const deshacer = () => {
     if (!ultimo) return;
-    if (!deshacible) { setAviso({ ok: false, texto: `${AVISO_ANULAR_PENDIENTE}: ese cambio creó eventos y no se puede deshacer todavía.` }); return; }
     escribir('/api/rrhh/eventos/deshacer', { cambio_id: ultimo.id });
   };
 
@@ -248,7 +245,6 @@ function Calendario() {
       });
       return;
     }
-    if (herr.k === 'goma' && !anular) { setAviso({ ok: false, texto: `${AVISO_ANULAR_PENDIENTE}: la goma está desactivada.` }); return; }
     cambioEventos(herr.k === 'goma' ? { accion: 'BORRAR', celdas } : { accion: 'PINTAR', tipo: herr.tipo, celdas });
   };
 
@@ -308,7 +304,7 @@ function Calendario() {
         </label>
       </div>
 
-      {vista !== 'anio' && <Paleta herr={herr} onHerr={setHerr} colores={colores} onColor={cambiarColor} semana={vista === 'semana'} anular={anular} />}
+      {vista !== 'anio' && <Paleta herr={herr} onHerr={setHerr} colores={colores} onColor={cambiarColor} semana={vista === 'semana'} />}
 
       <div className="cal-acciones">
         {rango && (
@@ -325,10 +321,9 @@ function Calendario() {
             aria-expanded={confirmarAnio} onClick={() => setConfirmarAnio(true)}>Rellenar año completo</button>
         )}
         <button type="button" className="boton-secundario cal-deshacer" disabled={!deshacible} onClick={deshacer} data-accion="deshacer"
-          title={!ultimo ? 'No hay cambios que deshacer' : deshacible ? `Deshacer: ${describirCambio(ultimo)} (Ctrl+Z)` : `${AVISO_ANULAR_PENDIENTE}: ese cambio creó eventos`}>
+          title={ultimo ? `Deshacer: ${describirCambio(ultimo)} (Ctrl+Z)` : 'No hay cambios que deshacer'}>
           Deshacer{ultimo && <span className="cal-deshacer-que" data-deshacer-que>{describirCambio(ultimo)}</span>}
         </button>
-        {ultimo && !deshacible && <span className="tenue cal-aviso-anular" data-aviso-anular-deshacer>{AVISO_ANULAR_PENDIENTE}</span>}
       </div>
 
       <NotasProximas carga={notas.carga} farmacia={farmacia} onDia={(f, persona) => cambiar({ vista: null, fecha: f, persona })} />
@@ -374,7 +369,7 @@ function Calendario() {
         : <p className="tarjeta rrhh-vacio">No hay personas en esta farmacia.</p>)}
 
       {sel.size > 0 && vista !== 'anio' && (
-        <BarraSeleccion sel={sel} eventos={eventos} colores={colores} fichas={new Map(todas.map((t) => [t.id, t]))} anular={anular}
+        <BarraSeleccion sel={sel} eventos={eventos} colores={colores} fichas={new Map(todas.map((t) => [t.id, t]))}
           onLimpiar={() => setSel(new Set())} onCambio={cambioEventos} />
       )}
 
@@ -387,8 +382,8 @@ function Calendario() {
 // Paleta (también leyenda) y colores
 // ---------------------------------------------------------------------------
 
-function Paleta({ herr, onHerr, colores, onColor, semana, anular }: {
-  herr: Herramienta; onHerr: (h: Herramienta) => void; colores: Colores; onColor: (t: TipoEvento | null, c?: string) => void; semana: boolean; anular: boolean;
+function Paleta({ herr, onHerr, colores, onColor, semana }: {
+  herr: Herramienta; onHerr: (h: Herramienta) => void; colores: Colores; onColor: (t: TipoEvento | null, c?: string) => void; semana: boolean;
 }) {
   const [editar, setEditar] = useState(false);
   const activa = (h: Herramienta) => (h.k === herr.k && (h.k !== 'tipo' || (herr.k === 'tipo' && herr.tipo === h.tipo)));
@@ -404,9 +399,8 @@ function Paleta({ herr, onHerr, colores, onColor, semana, anular }: {
             <span className="cal-muestra" aria-hidden="true">{CODIGO_TIPO_EVENTO[t]}</span>{TEXTO_TIPO_EVENTO[t]}
           </button>
         ))}
-        <button type="button" className="cal-herr cal-herr-goma" aria-pressed={activa({ k: 'goma' })} data-herramienta="goma" disabled={!anular}
-          title={anular ? 'Borrar eventos' : AVISO_ANULAR_PENDIENTE} onClick={() => onHerr({ k: 'goma' })}><span className="cal-muestra-goma" aria-hidden="true" />Goma</button>
-        {!anular && <span className="tenue cal-aviso-anular" data-aviso-goma>Goma: {AVISO_ANULAR_PENDIENTE.charAt(0).toLowerCase()}{AVISO_ANULAR_PENDIENTE.slice(1)}</span>}
+        <button type="button" className="cal-herr cal-herr-goma" aria-pressed={activa({ k: 'goma' })} data-herramienta="goma"
+          title="Quitar eventos (se anulan y quedan en el historial; lo confirmado no se toca)" onClick={() => onHerr({ k: 'goma' })}><span className="cal-muestra-goma" aria-hidden="true" />Goma</button>
       </div>
       <p className="tenue cal-tipos-ta3" data-tipos-ta3>
         {TIPOS_EVENTO.filter((t) => !TIPOS_PINTABLES.includes(t)).map((t) => TEXTO_TIPO_EVENTO[t]).join(', ')}: se verán si existen; se pintan desde Guardias y festivos (TA3).
@@ -838,8 +832,8 @@ function EditorVacio({ franja }: { franja: Franja }) {
   );
 }
 
-function BarraSeleccion({ sel, eventos, colores, fichas, anular, onLimpiar, onCambio }: {
-  sel: Set<string>; eventos: Map<string, EventoCalendario>; colores: Colores; fichas: Map<string, Trabajadora>; anular: boolean;
+function BarraSeleccion({ sel, eventos, colores, fichas, onLimpiar, onCambio }: {
+  sel: Set<string>; eventos: Map<string, EventoCalendario>; colores: Colores; fichas: Map<string, Trabajadora>;
   onLimpiar: () => void; onCambio: (cuerpo: object) => void;
 }) {
   const celdas = [...sel].map(deClave);
@@ -893,7 +887,7 @@ function BarraSeleccion({ sel, eventos, colores, fichas, anular, onLimpiar, onCa
         </button>
         <button type="button" className="boton-primario" onClick={() => onCambio({ accion: 'CONFIRMAR', celdas })} data-sel="confirmar">Confirmar</button>
         <button type="button" className="boton-secundario" onClick={() => onCambio({ accion: 'DESCONFIRMAR', celdas })} data-sel="desconfirmar">Quitar confirmación</button>
-        <button type="button" className="boton-peligro-suave" disabled={!anular} title={anular ? undefined : AVISO_ANULAR_PENDIENTE}
+        <button type="button" className="boton-peligro-suave" title="Se anulan y quedan en el historial; lo confirmado no se toca"
           onClick={() => onCambio({ accion: 'BORRAR', celdas })} data-sel="borrar">Borrar</button>
         <button type="button" className="cal-enlace" onClick={onLimpiar} data-sel="limpiar">Quitar selección</button>
       </div>

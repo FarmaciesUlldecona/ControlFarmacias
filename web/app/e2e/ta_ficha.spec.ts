@@ -1,13 +1,16 @@
 // TA-FICHA Trabajadores: ficha anual de cada persona y resumen de plantilla con los datos de ejemplo del servidor
 // FIXTURES (fixtures/rrhh/ficha_anual.json: solo fichas de RITA, que las pruebas de TA1/TA2 no tocan). Solo FIXTURES.
 // Reloj del navegador fijo (hoy = 13 nov 2026, salvo en la prueba del aviso de octubre).
+// TA-REAL-2: vacaciones del convenio, días extra (Rosa 2 de ejemplo; Irene se edita y se anula al final) y «pendiente».
 import { expect, test, type Page } from '@playwright/test';
 import { join } from 'node:path';
 import { entrar } from './sesion.ts';
 
 const CAPTURAS = join(import.meta.dirname, '..', '..', 'docs', 'capturas', 'ta_ficha');
+const CAPTURAS_TA_REAL_2 = join(import.meta.dirname, '..', '..', 'docs', 'capturas', 'ta_real_2');
 const ID = (n: number) => `e0000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
-const AINA = ID(1); const LAURA = ID(11); const MARTA = ID(12); const SILVIA = ID(13); const JUDIT = ID(14); const PAULA = ID(16);
+const AINA = ID(1); const LAURA = ID(11); const MARTA = ID(12); const SILVIA = ID(13); const JUDIT = ID(14); const ROSA = ID(15); const PAULA = ID(16);
+const IRENE = ID(17);
 const TITULAR_RITA = ID(22);
 
 async function preparar(page: Page, hoy = '2026-11-13T10:00:00') {
@@ -45,6 +48,8 @@ test.describe('TA-FICHA PC 1440', () => {
     })).toBe(true);
     await expect(page.locator('[data-resumen-pie]')).toContainText('calculado a 13/11/2026');
     await expect(page.locator('[data-resumen-pie]')).toContainText('festivos aún no descontados (TA3)');
+    await expect(page.locator('[data-resumen-pie]')).toContainText('vacaciones: 30 días naturales del convenio');
+    await expect(fila(page, ROSA).locator('[data-col="vacaciones"]')).toHaveText('32 de 32 (2 extra)'); // TA-REAL-2: 30 + 2 días extra
     // Una fila por persona de RITA, con sus cifras.
     await expect(fila(page, LAURA).locator('[data-col="vacaciones"]')).toHaveText('0 de 30');
     await expect(fila(page, LAURA).locator('[data-col="avisos"]')).toHaveText('—');
@@ -109,8 +114,12 @@ test.describe('TA-FICHA PC 1440', () => {
     await expect(regla.locator('.fa-dia[data-b="disfrutada"]')).toHaveCount(12); // la casilla 13 es media: disfrutada + planificada
     await expect(regla).toHaveClass(/avisar/);
     await expect(page.locator('[data-periodo-vacaciones]')).toHaveText(['3–14 ago 2026 · 12 días', '9 oct 2026 · media franja, 0,5 días', '23–27 nov 2026 · 5 días']);
-    await expect(page.locator('[data-dias-extra]')).toBeDisabled();
-    await expect(page.locator('[data-dias-extra]')).toHaveAttribute('placeholder', 'pendiente de habilitar');
+    // TA-REAL-2: días extra editables (ya no «pendiente de habilitar»); fuente de las vacaciones del convenio.
+    await expect(page.locator('[data-dias-extra]')).toBeEnabled();
+    await expect(page.locator('[data-dias-extra-actual]')).toHaveText('sin días extra');
+    await expect(page.getByText('pendiente de habilitar')).toHaveCount(0);
+    await expect(page.locator('[data-desglose-vacaciones]')).toHaveText(' · 30 del convenio');
+    await expect(page.locator('[data-fuente-vacaciones]')).toHaveText(' · fuente: decisión de Pío, pendiente de texto publicado');
     await expect(page.locator('[data-aviso="VACACIONES_SIN_PLANIFICAR"]')).toHaveText('Quedan 12,5 días de vacaciones sin planificar');
     // Libre disposición, permiso médico, baja, horas y próximas ausencias.
     await expect(page.locator('[data-libre-restantes]')).toHaveText('1 de 1 día restantes');
@@ -130,7 +139,8 @@ test.describe('TA-FICHA PC 1440', () => {
     await preparar(page);
     await abrirFicha(page, PAULA);
     await expect(page.locator('[data-derecho-vacaciones]')).toContainText('16 días naturales');
-    await expect(page.locator('[data-proporcional]')).toContainText('proporcional: 184 de 365 días en alta');
+    await expect(page.locator('[data-proporcional]')).toContainText('184 de 365 días en alta (30 × 184/365, redondeo hacia arriba)');
+    await expect(page.locator('[data-desglose-vacaciones]')).toHaveText(' · 16 proporcionales');
     await expect(page.locator('[data-regla-vacaciones] .fa-dia')).toHaveCount(16);
     await expect(cifra(page, 'disfrutadas')).toHaveText('5'); // 7–11 sep, su franja única = 1 día
     await expect(page.locator('[data-objetivo-anual]')).toContainText('objetivo 501 h');
@@ -173,6 +183,74 @@ test.describe('TA-FICHA PC 1440', () => {
     await page.clock.setFixedTime(new Date('2026-10-01T10:00:00'));
     await page.reload();
     await expect(page.locator('[data-aviso="VACACIONES_SIN_PLANIFICAR"]')).toHaveText('Quedan 12,5 días de vacaciones sin planificar');
+  });
+
+  test('TA-REAL-2: días extra: Rosa (2 de ejemplo); Irene: guardar, editar, validar y anular (base + extra)', async ({ page }) => {
+    await preparar(page);
+    await abrirFicha(page, ROSA);
+    await expect(page.locator('[data-derecho-vacaciones] strong')).toHaveText('32 días');
+    await expect(page.locator('[data-desglose-vacaciones]')).toHaveText(' · 30 del convenio + 2 extra');
+    await expect(page.locator('[data-dias-extra-actual]')).toHaveText('2 días · «Acuerdo de ejemplo por antigüedad»');
+    await expect(page.locator('[data-dias-extra]')).toHaveValue('2');
+    await expect(page.locator('[data-regla-vacaciones] .fa-dia')).toHaveCount(32);
+    await expect(cifra(page, 'pendientes')).toHaveText('32');
+    await expect(page.locator('[data-guardar-extra]')).toBeDisabled(); // sin cambios
+    await page.screenshot({ path: join(CAPTURAS_TA_REAL_2, 'pc1440_ficha_dias_extra.png'), fullPage: true });
+
+    await abrirFicha(page, IRENE);
+    await expect(page.locator('[data-dias-extra-actual]')).toHaveText('sin días extra');
+    await expect(page.locator('[data-anular-extra]')).toHaveCount(0);
+    // Validación: entero ≥ 0.
+    await page.locator('[data-dias-extra]').fill('-1');
+    await page.locator('[data-guardar-extra]').click();
+    await expect(page.locator('[data-aviso-extra]')).toHaveText('Días extra: un número entero de 0 a 365');
+    // Guardar 3 con nota.
+    await page.locator('[data-dias-extra]').fill('3');
+    await page.locator('[data-nota-extra]').fill('Acuerdo de ejemplo');
+    const guardar = page.waitForRequest((q) => q.url().endsWith(`/api/rrhh/trabajadoras/${IRENE}/ajustes/2026`) && q.method() === 'PUT');
+    await page.locator('[data-guardar-extra]').click();
+    expect((await guardar).postDataJSON()).toEqual({ vacaciones_dias_extra: 3, nota: 'Acuerdo de ejemplo' });
+    await expect(page.locator('[data-aviso-extra]')).toHaveText('Días extra de 2026 guardados: 3 días.');
+    await expect(page.locator('[data-derecho-vacaciones] strong')).toHaveText('33 días');
+    await expect(page.locator('[data-desglose-vacaciones]')).toHaveText(' · 30 del convenio + 3 extra');
+    await expect(page.locator('[data-dias-extra-actual]')).toHaveText('3 días · «Acuerdo de ejemplo»');
+    await expect(cifra(page, 'pendientes')).toHaveText('33');
+    // Editar a 1 sin nota.
+    await page.locator('[data-dias-extra]').fill('1');
+    await page.locator('[data-nota-extra]').fill('');
+    await page.locator('[data-guardar-extra]').click();
+    await expect(page.locator('[data-dias-extra-actual]')).toHaveText('1 día');
+    await expect(page.locator('[data-derecho-vacaciones] strong')).toHaveText('31 días');
+    // Anular con confirmación (no se borra).
+    await page.locator('[data-anular-extra]').click();
+    await expect(page.locator('[data-confirmar-anular-extra]')).toContainText('Se anularán los días extra de 2026 (1 día; quedan registrados, no se borran). El derecho vuelve a 30 días.');
+    await page.screenshot({ path: join(CAPTURAS_TA_REAL_2, 'pc1440_ficha_dias_extra_anular.png'), fullPage: true });
+    await page.locator('[data-anular-extra-si]').click();
+    await expect(page.locator('[data-aviso-extra]')).toHaveText('Días extra de 2026 anulados.');
+    await expect(page.locator('[data-dias-extra-actual]')).toHaveText('sin días extra');
+    await expect(page.locator('[data-derecho-vacaciones] strong')).toHaveText('30 días');
+    await expect(page.locator('[data-dias-extra]')).toHaveValue('');
+  });
+
+  test('TA-REAL-2: convenio sin días de vacaciones (como hoy en REAL): la ficha muestra «pendiente», sin regla ni cifra inventada', async ({ page }) => {
+    await preparar(page);
+    // La ficha de Laura como la calcularía el servidor con convenio_anual sin vacaciones_dias_naturales.
+    await page.route('**/api/rrhh/trabajadoras/*/anual?**', async (r) => {
+      const resp = await r.fetch();
+      const d = await resp.json();
+      const v = { ...d.ficha.vacaciones, base: null, fuente: null, derecho_base: null, derecho: null, pendientes: null };
+      const avisos = [{ codigo: 'VACACIONES_SIN_DATO', texto: 'Vacaciones de 2026 pendientes: el convenio no tiene los días' }];
+      r.fulfill({ response: resp, json: { ...d, reglas: { ...d.reglas, vacaciones_dias: null, vacaciones_fuente: null }, ficha: { ...d.ficha, vacaciones: v, avisos } } });
+    });
+    await abrirFicha(page, LAURA);
+    await expect(page.locator('[data-vacaciones-pendiente]')).toHaveText('pendiente');
+    await expect(page.locator('[data-derecho-vacaciones]')).toContainText('el convenio de 2026 no tiene los días');
+    await expect(page.locator('[data-regla-vacaciones]')).toHaveCount(0);
+    await expect(cifra(page, 'pendientes')).toHaveText('pendiente');
+    await expect(cifra(page, 'disfrutadas')).toHaveText('30'); // lo disfrutado sí se cuenta
+    await expect(page.locator('[data-aviso="VACACIONES_SIN_DATO"]')).toHaveText('Vacaciones de 2026 pendientes: el convenio no tiene los días');
+    await expect(page.locator('[data-aviso="VACACIONES_SIN_DATO"]')).toHaveClass(/gris/);
+    await page.screenshot({ path: join(CAPTURAS_TA_REAL_2, 'pc1440_ficha_vacaciones_pendiente.png'), fullPage: true });
   });
 });
 

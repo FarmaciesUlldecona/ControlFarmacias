@@ -27,9 +27,9 @@ describe('TA-REAL: contrato = esquema real (migración 31)', () => {
     assert.equal(esTitular({ categoria: 'FARMACEUTICA_ADJUNTA' }), false);
     assert.deepEqual(CATEGORIAS.map(computaConvenio), [false, true, true, true, true]);
   });
-  test('convenio_anual: columnas del esquema (jornada_max_horas, horas_semanales_referencia, estado, fuente); años que faltan', () => {
+  test('convenio_anual: columnas del esquema (jornada_max_horas, horas_semanales_referencia, estado, fuente; TA-REAL-2: vacaciones); años que faltan', () => {
     assert.deepEqual(Object.keys(CONVENIO_ANUAL[0]).sort(),
-      ['anio', 'asuntos_propios_dias', 'estado', 'fuente', 'horas_semanales_referencia', 'jornada_max_horas', 'permiso_medico_horas']);
+      ['anio', 'asuntos_propios_dias', 'estado', 'fuente', 'horas_semanales_referencia', 'jornada_max_horas', 'permiso_medico_horas', 'vacaciones_dias_naturales', 'vacaciones_fuente']);
     assert.ok(CONVENIO_ANUAL.every((c) => c.fuente.length >= 1 && c.fuente.length <= 200));
     assert.deepEqual(aniosConvenioQueFaltan([]), [2026, 2027, 2028]);
     assert.deepEqual(aniosConvenioQueFaltan([{ anio: 2027 }]), [2026, 2028]);
@@ -301,7 +301,7 @@ describe('API /api/rrhh en el servidor FIXTURES (inyección)', async () => {
     assert.equal(r.json().trabajadoras.length, 8); // RITA: 7 + titular (TA1-3: media tarde)
     assert.equal((await app.inject({ method: 'GET', url: '/api/rrhh/trabajadoras?farmacia=X', headers: { ...H, cookie } })).statusCode, 400);
     const e = await app.inject({ method: 'GET', url: '/api/rrhh/estado', headers: { ...H, cookie } });
-    assert.deepEqual(e.json(), { modo: 'FIXTURES', conectado: false, datos_ejemplo: true, mensaje: 'Datos de ejemplo en memoria', anular_eventos: true });
+    assert.deepEqual(e.json(), { modo: 'FIXTURES', conectado: false, datos_ejemplo: true, mensaje: 'Datos de ejemplo en memoria' });
   });
   test('escritura: Origin obligatorio y del mismo sitio; solo JSON; validación 400; anular con confirmación', async () => {
     const post = (headers: Record<string, string>, payload: unknown = valido) =>
@@ -370,7 +370,7 @@ describe('modo REAL sin credencial (instancia propia de Fastify, sin BD): «Falt
       for (const n of nombresEjemplo) assert.ok(!r.body.includes(n), `${url}: ${n}`);
     }
     const e = await app.inject({ method: 'GET', url: '/api/rrhh/estado', headers: H });
-    assert.deepEqual(e.json(), { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: MENSAJE_FALTA_CREDENCIAL, anular_eventos: false });
+    assert.deepEqual(e.json(), { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: MENSAJE_FALTA_CREDENCIAL });
   });
   test('escritura en REAL: sesión y origen primero; luego 503, sin crear nada', async () => {
     const W = { ...H, origin: 'http://127.0.0.1:4747', 'content-type': 'application/json' };

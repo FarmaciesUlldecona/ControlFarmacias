@@ -1,0 +1,7 @@
+{
+  "_nota": "TA-REAL-2/2b: ajustes anuales FICTICIOS con las columnas de producción de trabajadoras_ajustes_anuales (id, trabajadora_id, farmacia, anio, vacaciones_dias_extra, nota, anulada; sin columna autor: el autor va por transacción). Rosa: 2 días extra de vacaciones en 2026 (derecho 30 + 2 = 32). Clara: un ajuste de 2026 anulado (no cuenta). Notas inventadas, sin datos de salud. Nunca datos reales.",
+  "ajustes": [
+    { "id": "a0000000-0000-4000-8000-000000000001", "trabajadora_id": "e0000000-0000-4000-8000-000000000015", "farmacia": "RITA", "anio": 2026, "vacaciones_dias_extra": 2, "nota": "Acuerdo de ejemplo por antigüedad", "anulada": false },
+    { "id": "a0000000-0000-4000-8000-000000000002", "trabajadora_id": "e0000000-0000-4000-8000-000000000002", "farmacia": "PIO", "anio": 2026, "vacaciones_dias_extra": 3, "nota": "Ajuste de ejemplo anulado", "anulada": true }
+  ]
+}

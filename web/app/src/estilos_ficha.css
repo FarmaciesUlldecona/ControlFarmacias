@@ -62,11 +62,24 @@
 .fa-cifra-texto { font-size: 13px; color: var(--tenue); }
 
 /* Días extra: campo visible, desactivado hasta que exista la tabla */
-.fa-extra { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 14px; font-size: 12px; }
+/* TA-REAL-2: días extra de vacaciones (editables) */
+.fa-extra { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--borde-suave); border-radius: 10px; background: #fafaf8; }
+.fa-extra-titulo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.fa-extra-titulo h4 { margin: 0; font-size: 14px; }
+.fa-extra-titulo .tenue { font-size: 13px; }
+.fa-extra-campos { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 14px; }
 .fa-extra-campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--tenue); }
 .fa-extra-campo input {
-  min-height: 36px; width: 190px; padding: 0 10px; border: 1px dashed #c9d0cb; border-radius: 8px; background: #fafaf8; font: inherit; font-size: 14px;
+  min-height: 36px; width: 96px; padding: 0 10px; border: 1px solid #c9d0cb; border-radius: 8px; background: #fff; font: inherit; font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
+.fa-extra-nota { flex: 1 1 220px; }
+.fa-extra-nota input { width: 100%; }
+.fa-extra-campo input[aria-invalid="true"] { border-color: var(--rojo, #c0392b); }
+.fa-extra-pista { font-size: 12px; }
+.fa-extra .rrhh-botones { margin: 0; }
+.fa-extra-confirmar p { margin: 0 0 8px; font-size: 13px; }
+.fa-extra .rrhh-aviso-ok, .fa-extra .rrhh-error { margin: 0; }
 .fa-periodos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .fa-periodos li { padding: 3px 9px; border-radius: 999px; background: var(--borde-suave); font-size: 12px; font-variant-numeric: tabular-nums; }
 

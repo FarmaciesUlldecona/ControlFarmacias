@@ -236,6 +236,27 @@ test.describe('Fichas PC 1440', () => {
     await expect.poll(() => nombres(page)).toContain('Ficha Creada Por Error');
   });
 
+  test('TA-REAL-2c: el pie de fichas y el objetivo del detalle siguen al año seleccionado (2027: 1752 h), no a 2026', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-11-13T10:00:00'));
+    await abrirFichas(page);
+    const pie = page.locator('[data-resumen-fichas]');
+    await expect(pie).toContainText('jornada máxima 2026: 1767 h');
+    await page.locator('[data-selector-anio="2027"]').click();
+    await expect(page).toHaveURL(/anio=2027/);
+    await expect(pie).toContainText('jornada máxima 2027: 1752 h');
+    await expect(pie).not.toContainText('2026');
+    await page.locator('[data-selector-anio="2028"]').click();
+    await expect(pie).toContainText('jornada máxima 2028: 1752 h');
+    await page.locator('[data-selector-anio="2026"]').click();
+    await expect(pie).toContainText('jornada máxima 2026: 1767 h');
+    // Detalle: el objetivo resaltado es el del año elegido.
+    await page.goto(`/trabajadores/${ID_ELENA}?anio=2027`);
+    await expect(page.locator('[data-objetivo="2027"]')).toHaveClass(/actual/);
+    await expect(page.locator('[data-objetivo="2026"]')).not.toHaveClass(/actual/);
+    await page.locator('[data-selector-anio="2028"]').click();
+    await expect(page.locator('[data-objetivo="2028"]')).toHaveClass(/actual/);
+  });
+
   test('TA-REAL: si faltan años del convenio, «Crear convenio 2026–2028 con los valores firmados» con confirmación', async ({ page }) => {
     // Simula una base de datos recién conectada sin convenio (el resto de datos, los de ejemplo).
     await page.route('**/api/rrhh/trabajadoras?**', async (r) => {
@@ -256,6 +277,40 @@ test.describe('Fichas PC 1440', () => {
     await expect(page.locator('[data-aviso-rrhh]')).toHaveText('Convenio creado con los valores firmados.');
     await expect(page.locator('[data-convenio-falta]')).toHaveCount(0);
   });
+
+  test('TA-REAL-2: crear el convenio incluye las vacaciones; filas sin vacaciones: «Completar vacaciones del convenio» (solo esos dos campos)', async ({ page }) => {
+    // Simula convenio_anual como hoy en REAL tras la migración 33: filas existentes sin los dos campos nuevos.
+    await page.route('**/api/rrhh/trabajadoras?**', async (r) => {
+      const resp = await r.fetch();
+      const d = await resp.json();
+      r.fulfill({ response: resp, json: { ...d, convenio: d.convenio.map((c: { anio: number }) => (c.anio === 2028 ? c : { ...c, vacaciones_dias_naturales: null, vacaciones_fuente: null })) } });
+    });
+    await abrirFichas(page);
+    await expect(page.locator('[data-convenio-falta]')).toHaveCount(0);
+    const caja = page.locator('[data-convenio-sin-vacaciones]');
+    await expect(caja).toHaveAttribute('data-convenio-sin-vacaciones', '2026,2027');
+    await expect(caja).toContainText('El convenio de 2026, 2027 no tiene los días de vacaciones.');
+    await page.locator('[data-completar-vacaciones]').click();
+    const conf = page.locator('[data-confirmar-vacaciones]');
+    await expect(conf).toContainText('Se guardarán solo estos dos datos en los años 2026, 2027; el resto del convenio no cambia');
+    await expect(conf.locator('li')).toHaveText(['Vacaciones: 30 días naturales', 'Fuente: decisión de Pío, pendiente de texto publicado']);
+    await page.screenshot({ path: join(CAPTURAS, '..', 'ta_real_2', 'pc1440_convenio_completar_vacaciones.png'), fullPage: true });
+    await page.unroute('**/api/rrhh/trabajadoras?**');
+    const completar = page.waitForRequest((q) => q.url().endsWith('/api/rrhh/convenio/vacaciones') && q.method() === 'POST');
+    await page.locator('[data-completar-vacaciones-si]').click();
+    expect((await completar).postDataJSON()).toEqual({ anios: [2026, 2027] });
+    await expect(page.locator('[data-aviso-rrhh]')).toHaveText('Vacaciones del convenio completadas.');
+    await expect(caja).toHaveCount(0);
+    // Al crear años que faltan, la confirmación enseña también las vacaciones.
+    await page.route('**/api/rrhh/trabajadoras?**', async (r) => {
+      const resp = await r.fetch();
+      r.fulfill({ response: resp, json: { ...(await resp.json()), convenio: [] } });
+    });
+    await page.reload();
+    await page.locator('[data-crear-convenio]').click();
+    await expect(page.locator('[data-confirmar-convenio]')).toContainText('vacaciones 30 días naturales (decisión de Pío, pendiente de texto publicado)');
+    await page.screenshot({ path: join(CAPTURAS, '..', 'ta_real_2', 'pc1440_convenio_crear_con_vacaciones.png'), fullPage: true });
+  });
 });
 
 test.describe('Modo REAL simulado (intercepción): sin datos de ejemplo', () => {
@@ -263,7 +318,7 @@ test.describe('Modo REAL simulado (intercepción): sin datos de ejemplo', () => 
 
   test('TA-REAL: conectado: banner de datos reales, nunca «Datos de ejemplo»', async ({ page }) => {
     await page.route('**/api/rrhh/estado', (r) => r.fulfill({ json: {
-      modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc', anular_eventos: false } }));
+      modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc' } }));
     await abrirFichas(page);
     await expect(page.locator('[data-banner-real]')).toHaveText('RealDatos reales: cada cambio se guarda en la base de datos con autor Marc');
     await expect(page.locator('[data-banner-ejemplo]')).toHaveCount(0);
@@ -278,7 +333,7 @@ test.describe('Modo REAL simulado (intercepción): sin datos de ejemplo', () => 
     await page.route('**/api/rrhh/**', (r) => {
       pedidas.push(new URL(r.request().url()).pathname);
       return new URL(r.request().url()).pathname === '/api/rrhh/estado'
-        ? r.fulfill({ json: { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: AVISO, anular_eventos: false } })
+        ? r.fulfill({ json: { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: AVISO } })
         : r.fulfill({ status: 503, json: { error: 'CREDENCIAL_TRABAJADORES_AUSENTE', mensaje: AVISO } });
     });
     for (const ruta of ['/trabajadores', `/trabajadores/${ID_ELENA}`]) {

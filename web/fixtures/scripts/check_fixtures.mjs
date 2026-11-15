@@ -19,16 +19,18 @@ import {
 } from '../../app/server/detalle.ts';
 import { COLUMNAS_SENTIDO, validarDiagnostico } from '../../app/server/adaptador_real.ts';
 import {
-  CATEGORIAS, CONVENIO_ANUAL, HORARIO_COMPLETA, HORAS_VISTA_COMPLETA, JORNADAS, esTitular, objetivosAnuales, validarTrabajadora,
+  CATEGORIAS, CONVENIO_ANUAL, FUENTE_VACACIONES, HORARIO_COMPLETA, HORAS_VISTA_COMPLETA, JORNADAS, VACACIONES_DIAS_NATURALES, esTitular, objetivosAnuales,
+  validarAjuste, validarTrabajadora,
 } from '../../app/server/rrhh/contrato.ts';
-import { crearAdaptadorRrhhFixtures, leerSemilla, leerSemillaEventos } from '../../app/server/rrhh/adaptador_fixtures.ts';
+import { crearAdaptadorRrhhFixtures, leerSemilla, leerSemillaAjustes, leerSemillaEventos } from '../../app/server/rrhh/adaptador_fixtures.ts';
+import { SQL as SQL_RRHH } from '../../app/server/rrhh/adaptador_real.ts';
 import {
   AVISO_NOTA_VACIA, COLOR_TIPO_EVENTO, FRANJAS_DE_JORNADA, LARGO_NOTA, TIPOS_EVENTO, TIPOS_PINTABLES, TIPOS_SIN_HORAS, describirCambio, esLaborable, horasFranja,
   horasQueSuman, leerNota, validarPeticionEventos,
 } from '../../app/server/rrhh/eventos.ts';
 import { traducirErrorBd } from '../../app/server/rrhh/errores_bd.ts';
 import { leerSemillaFichaAnual } from '../../app/server/rrhh/adaptador_fixtures.ts';
-import { AVISO_VACACIONES_DESDE, REDONDEO_PROPORCIONAL, TIPOS_HORAS_COMPUTAN, VACACIONES_DIAS_NATURALES, calcularFichaAnual, resumenPlantilla } from '../../app/server/rrhh/ficha_anual.ts';
+import { AVISO_VACACIONES_DESDE, REDONDEO_PROPORCIONAL, TIPOS_HORAS_COMPUTAN, calcularFichaAnual, resumenPlantilla } from '../../app/server/rrhh/ficha_anual.ts';
 import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
 import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
 
@@ -1010,17 +1012,50 @@ comprobar('TA-REAL: titular = FARMACEUTICA_TITULAR (fuera del cómputo); anular 
   return si(tit.length === 2 && tit.every((t) => !t.computa_convenio) && antesAlta === 'BAJA_ANTES_DEL_ALTA' && fuera === 'EVENTO_FUERA_DEL_ALTA'
     && an.anulada === true && sigue && a.trabajadora(an.id).historial[0].accion === 'ANULACION', JSON.stringify({ antesAlta, fuera }));
 });
-comprobar('TA-REAL: sin anular eventos (REAL): goma y deshacer de pintados nuevos desactivados; deshacer de estado sí', () => {
-  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026, anularEventos: false });
+comprobar('TA-REAL-2: la goma anula (no borra; no se lee; la franja queda libre); deshacer un pintado lo anula; lo confirmado no se toca', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
   const aina = 'e0000000-0000-4000-8000-000000000001';
   const pedir = (b) => { const v = validarPeticionEventos(b); if (!v.ok) throw new Error(JSON.stringify(v.errores)); return a.cambiarEventos(v.peticion, 'Marc'); };
   const goma = pedir({ accion: 'BORRAR', celdas: [{ trabajadora_id: aina, fecha: '2026-11-09' }] });
-  const p = pedir({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: aina, fecha: '2026-12-07' }] });
-  const dp = a.deshacerEventos(p.cambio.id, 'Marc');
-  const c = pedir({ accion: 'CONFIRMAR', celdas: [{ trabajadora_id: aina, fecha: '2026-11-09' }] });
-  const dc = a.deshacerEventos(c.cambio.id, 'Marc');
-  return si(goma === 'ANULAR_EVENTOS_PENDIENTE' && dp === 'ANULAR_EVENTOS_PENDIENTE' && typeof dc === 'object' && dc.cambio.origen === 'DESHACER'
-    && a.calendario('PIO', '2026-11-09', '2026-11-15').anular_eventos === false, JSON.stringify({ goma, dp }));
+  const leidos = a.calendario('PIO', '2026-11-09', '2026-11-15').eventos.filter((e) => e.trabajadora_id === aina && e.fecha === '2026-11-09').length;
+  const anulados = a.eventosAnulados().filter((e) => e.trabajadora_id === aina && e.fecha === '2026-11-09' && e.anulado === true).length;
+  const repinta = pedir({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: aina, fecha: '2026-11-09' }] });
+  const dp = a.deshacerEventos(repinta.cambio.id, 'Marc');
+  const conf = pedir({ accion: 'BORRAR', celdas: [{ trabajadora_id: aina, fecha: '2026-11-03' }] });
+  return si(goma.cambio?.n === 2 && leidos === 0 && anulados === 2 && repinta.cambio?.creados === 2 && typeof dp === 'object' && dp.cambio.origen === 'DESHACER'
+    && a.eventos().filter((e) => e.trabajadora_id === aina && e.fecha === '2026-11-09').length === 0
+    && conf.cambio === null && conf.omitidas_confirmadas === 2, JSON.stringify({ goma: goma.cambio?.n, leidos, anulados, conf }));
+});
+comprobar('TA-REAL-2: SQL de eventos del adaptador REAL: inserción ON CONFLICT … WHERE NOT anulado; lecturas y actualizaciones solo de no anulados; nunca DELETE', () => {
+  const tabla = Object.entries(SQL_RRHH).filter(([, s]) => /from public\.eventos_calendario|update public\.eventos_calendario/.test(s));
+  const sinFiltro = tabla.filter(([, s]) => !/not (e\.)?anulado/.test(s)).map(([k]) => k);
+  const borra = Object.entries(SQL_RRHH).filter(([, s]) => /\bdelete\b/i.test(s)).map(([k]) => k);
+  return si(/on conflict \(trabajadora_id, fecha, franja\) where not anulado do nothing/.test(SQL_RRHH.insertarEventos) && tabla.length >= 6
+    && sinFiltro.length === 0 && borra.length === 0, JSON.stringify({ sinFiltro, borra }));
+});
+comprobar('TA-REAL-2: ausencia anulada de ejemplo (Rosa 14–18 sep): 10 franjas anuladas, ninguna se lee', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const rosa = 'e0000000-0000-4000-8000-000000000015';
+  const anul = a.eventosAnulados().filter((e) => e.trabajadora_id === rosa && e.fecha >= '2026-09-14' && e.fecha <= '2026-09-18');
+  const leidos = a.eventos().filter((e) => e.trabajadora_id === rosa && e.fecha >= '2026-09-14' && e.fecha <= '2026-09-18');
+  return si(anul.length === 10 && anul.every((e) => e.anulado === true && e.tipo === 'VACACIONES') && leidos.length === 0, JSON.stringify({ anul: anul.length, leidos: leidos.length }));
+});
+comprobar('TA-REAL-2: convenio con vacaciones (30 días, «decisión de Pío, pendiente de texto publicado») en 2026–2028; completar solo esos dos campos', () => {
+  const a = crearAdaptadorRrhhFixtures({ convenio: [{ ...CONVENIO_ANUAL[0], vacaciones_dias_naturales: null, vacaciones_fuente: null }] });
+  const hechos = a.completarVacacionesConvenio([2026], 'Marc');
+  return si(VACACIONES_DIAS_NATURALES === 30 && FUENTE_VACACIONES === 'decisión de Pío, pendiente de texto publicado'
+    && CONVENIO_ANUAL.every((c) => c.vacaciones_dias_naturales === 30 && c.vacaciones_fuente === FUENTE_VACACIONES)
+    && hechos.length === 1 && isDeepStrictEqual(a.convenio()[0], { ...CONVENIO_ANUAL[0] }) && a.completarVacacionesConvenio([2026], 'Marc').length === 0
+    && /^update public\.convenio_anual set vacaciones_dias_naturales = \$2, vacaciones_fuente = \$3 where /.test(SQL_RRHH.completarVacaciones), JSON.stringify(hechos));
+});
+comprobar('TA-REAL-2/2b: ajustes de ejemplo (Rosa 2 días extra en 2026; Clara anulado) con las columnas de producción (farmacia de la ficha, sin autor), notas sin datos de salud; uno no anulado por persona y año', () => {
+  const s = leerSemillaAjustes();
+  const fichas = new Map(leerSemilla().map((t) => [t.id, t]));
+  const malos = s.filter((x) => !fichas.has(x.trabajadora_id) || !validarAjuste({ vacaciones_dias_extra: x.vacaciones_dias_extra, nota: x.nota }).ok || 'autor' in x
+    || fichas.get(x.trabajadora_id)?.farmacia !== x.farmacia
+    || /salud|diagn|médic|medic|enferm/i.test(x.nota ?? ''));
+  const vivos = s.filter((x) => !x.anulada).map((x) => `${x.trabajadora_id}|${x.anio}`);
+  return si(malos.length === 0 && new Set(vivos).size === vivos.length && s.length === 2 && s.filter((x) => x.anulada).length === 1, JSON.stringify(malos));
 });
 comprobar('TA-REAL: notas próximas de ejemplo desde el 13 nov (Rosa 18, Elena 25 y 26; la misma nota del día una vez)', () => {
   const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
@@ -1040,10 +1075,20 @@ comprobar('TA-REAL: errores de la BD → código y mensaje llano (P0001, 42501, 
 const fichaEjemplo = (() => {
   const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
   const cal = a.calendario('AMBAS', '2026-01-01', '2026-12-31');
-  const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, a.convenio(), 2026, '2026-11-13');
+  const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, a.convenio(), 2026, '2026-11-13', { ajustes: a.ajustes('AMBAS', 2026) });
   return { a, cal, de: (n) => filas.find((f) => f.trabajadora.id === `e0000000-0000-4000-8000-0000000000${n}`), filas };
 })();
-comprobar('TA-FICHA: semilla solo de RITA y fuera de noviembre; reglas en un único punto (30 días, entero hacia arriba, 1 de octubre)', () => {
+comprobar('TA-REAL-2: ficha anual: base del convenio + días extra (Rosa 30 + 2 = 32, 32 pendientes; Clara, ajuste anulado: 30); sin dato del convenio, «pendiente»', () => {
+  const r = fichaEjemplo.de('15').vacaciones;
+  const c = fichaEjemplo.de('02').vacaciones;
+  const { a, cal } = fichaEjemplo;
+  const t = cal.trabajadoras.find((x) => x.id === 'e0000000-0000-4000-8000-000000000015');
+  const sin = calcularFichaAnual(t, cal.eventos, [{ ...a.convenio()[0], vacaciones_dias_naturales: null, vacaciones_fuente: null }], 2026, '2026-11-13',
+    { ajustes: a.ajustes('AMBAS', 2026) });
+  return si(r.derecho_base === 30 && r.dias_extra === 2 && r.derecho === 32 && r.pendientes === 32 && c.dias_extra === 0 && c.derecho === 30
+    && sin.vacaciones.derecho === null && sin.vacaciones.pendientes === null && sin.avisos.some((x) => x.codigo === 'VACACIONES_SIN_DATO'), JSON.stringify({ r, c }));
+});
+comprobar('TA-FICHA: semilla solo de RITA y fuera de noviembre; reglas en un único punto (30 días del convenio, entero hacia arriba, 1 de octubre)', () => {
   const s = leerSemillaFichaAnual();
   const fichas = new Map(leerSemilla().map((t) => [t.id, t]));
   const malos = [...s.ausencias, ...s.jornada_extra].filter((x) => fichas.get(x.trabajadora_id)?.farmacia !== 'RITA' || x.desde.startsWith('2026-11') || x.hasta.startsWith('2026-11'));

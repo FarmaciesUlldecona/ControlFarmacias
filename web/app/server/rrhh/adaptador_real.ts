@@ -9,11 +9,18 @@
  *  - Lectura: transacción READ ONLY que termina siempre en ROLLBACK.
  *  - Escritura: cada una en su transacción, con set_config('cf.autor', <autor>, true) dentro (nunca de sesión). Ante
  *    cualquier error, ROLLBACK y mensaje llano (errores_bd.ts). Nunca se reintenta solo.
- *  - Nada se borra: fichas con fecha_baja o anulada; eventos solo INSERT / UPDATE. Goma y deshacer de pintados
- *    nuevos desactivados (anularEventos = false) hasta que exista eventos_calendario.anulado.
- *  - Rellenar: INSERT … ON CONFLICT (trabajadora_id, fecha, franja) DO NOTHING, por lotes (cada sentencia muy por
- *    debajo de los 60 s de statement_timeout del rol). Confirmar y anotar: UPDATE por lotes.
+ *  - Nada se borra: fichas con fecha_baja o anulada; eventos solo INSERT / UPDATE. TA-REAL-2 (migración 33): la goma
+ *    y el deshacer de un pintado ANULAN (UPDATE anulado = true, solo filas no anuladas); deshacer un borrado inserta
+ *    una fila nueva igual a la anulada y (TA-REAL-2c) la pila de la sesión se reasigna a su id (reasignarIds), para que
+ *    el deshacer encadenado encuentre el evento vigente. Toda lectura de eventos excluye los anulados (la vista ya los excluye).
+ *  - Inserción de eventos: INSERT … ON CONFLICT (trabajadora_id, fecha, franja) WHERE NOT anulado DO NOTHING (la
+ *    unicidad solo cuenta los no anulados), por lotes (cada sentencia muy por debajo de los 60 s de statement_timeout
+ *    del rol). Confirmar y anotar: UPDATE por lotes.
  *  - Horas: se leen de v_eventos_calendario_horas (horas_efectivas).
+ *  - TA-REAL-2: convenio_anual con vacaciones_dias_naturales y vacaciones_fuente (al crear; completar solo esos dos
+ *    campos en las filas sin ellos). trabajadoras_ajustes_anuales: días extra por persona y año, con la farmacia de la
+ *    ficha; TA-REAL-2b: la tabla NO tiene columna autor (enviarla hace fallar la sentencia): el autor va solo por
+ *    transacción (cf.autor), como en el resto del módulo. Se anulan, nunca se borran.
  *  - Historial: trabajadores_historial (lo escribe el trigger). Las filas de una misma transacción comparten
  *    created_at: cada grupo es un cambio. El origen (Pintado, Rellenado…) lo aporta la sesión si el cambio se hizo en
  *    ella; si no, se deduce de las filas (inferirOrigen). Deshacer: solo los cambios de esta sesión del servidor.
@@ -29,14 +36,15 @@ import { RUTA_CA_DEFECTO, RUTA_ENV_WEB, leerCertificadoCA } from '../adaptador_r
 import {
   CATEGORIAS, CONVENIO_ANUAL, FARMACIAS_RRHH, JORNADAS, MENSAJE_FALTA_CREDENCIAL, accionActualizacion, aniosConvenioQueFaltan,
   camposAlta, computaConvenio, diferencias, farmaciasDe, objetivosAnuales, ordenFichas,
-  type ConvenioAnual, type EventoHistorial, type FarmaciaRrhh, type Festivo, type GuardiaFarmacia, type Trabajadora,
+  FUENTE_VACACIONES, VACACIONES_DIAS_NATURALES,
+  type AjusteAnual, type ConvenioAnual, type EventoHistorial, type FarmaciaRrhh, type Festivo, type GuardiaFarmacia, type Trabajadora,
 } from './contrato.ts';
 import {
-  ESTADOS_EVENTO, FECHA_MAX, FRANJAS, TIPOS_EVENTO, construirCambio, horasEfectivas, inferirOrigen, notasProximas, planDeshacer,
-  planificar, resumen,
+  ESTADOS_EVENTO, FECHA_MAX, FRANJAS, TIPOS_EVENTO, celdaDe, construirCambio, horasEfectivas, inferirOrigen, notasProximas, planDeshacer,
+  planificar, reasignarIds, resumen,
   type CambioCalendario, type EventoCalendario, type Franja, type Operacion, type ResultadoCambioDTO,
 } from './eventos.ts';
-import { traducirErrorBd } from './errores_bd.ts';
+import { ErrorRrhhBd, traducirErrorBd } from './errores_bd.ts';
 import type { AdaptadorRrhh } from './adaptador_fixtures.ts';
 
 // ---------------------------------------------------------------------------
@@ -138,29 +146,45 @@ export const SQL = {
   bajaFicha: 'update public.trabajadoras set fecha_baja = $2::date where id = $1::uuid returning *',
   anularFicha: 'update public.trabajadoras set anulada = true where id = $1::uuid returning *',
   convenio: 'select * from public.convenio_anual order by anio',
-  crearConvenio: 'insert into public.convenio_anual (anio, jornada_max_horas, asuntos_propios_dias, permiso_medico_horas, horas_semanales_referencia, estado, fuente) '
-    + 'select * from unnest($1::int[], $2::numeric[], $3::numeric[], $4::numeric[], $5::numeric[], $6::text[], $7::text[]) on conflict (anio) do nothing returning *',
+  crearConvenio: 'insert into public.convenio_anual (anio, jornada_max_horas, asuntos_propios_dias, permiso_medico_horas, horas_semanales_referencia, estado, fuente, '
+    + 'vacaciones_dias_naturales, vacaciones_fuente) '
+    + 'select * from unnest($1::int[], $2::numeric[], $3::numeric[], $4::numeric[], $5::numeric[], $6::text[], $7::text[], $8::int[], $9::text[]) '
+    + 'on conflict (anio) do nothing returning *',
+  /** TA-REAL-2: solo los dos campos de vacaciones y solo en las filas que no los tienen. */
+  completarVacaciones: 'update public.convenio_anual set vacaciones_dias_naturales = $2, vacaciones_fuente = $3 '
+    + 'where anio = any($1::int[]) and vacaciones_dias_naturales is null returning *',
+  ajustes: 'select a.* from public.trabajadoras_ajustes_anuales a join public.trabajadoras t on t.id = a.trabajadora_id '
+    + 'where t.farmacia = any($1::text[]) and a.anio = $2::int and not a.anulada',
+  ajusteBloqueo: 'select * from public.trabajadoras_ajustes_anuales where trabajadora_id = $1::uuid and anio = $2::int and not anulada for update',
+  // TA-REAL-2b: sin columna autor (va por cf.autor de la transacción).
+  insertarAjuste: 'insert into public.trabajadoras_ajustes_anuales (trabajadora_id, farmacia, anio, vacaciones_dias_extra, nota) '
+    + 'values ($1::uuid, $2, $3::int, $4, $5) returning *',
+  actualizarAjuste: 'update public.trabajadoras_ajustes_anuales set vacaciones_dias_extra = $2, nota = $3 where id = $1::uuid and not anulada returning *',
+  anularAjuste: 'update public.trabajadoras_ajustes_anuales set anulada = true where id = $1::uuid and not anulada returning *',
   historialFicha: "select * from public.trabajadores_historial where tabla = 'trabajadoras' and registro_id = $1 order by id desc",
   historialFichas: "select * from public.trabajadores_historial where tabla = 'trabajadoras' and farmacia = any($1::text[]) order by id desc limit 200",
   eventosPeriodo: 'select * from public.v_eventos_calendario_horas where trabajadora_id = any($1::uuid[]) and fecha between $2::date and $3::date order by fecha, trabajadora_id, franja',
   notas: 'select e.* from public.v_eventos_calendario_horas e join public.trabajadoras t on t.id = e.trabajadora_id '
     + 'where e.farmacia = any($1::text[]) and e.fecha between $2::date and $3::date and e.nota is not null and not t.anulada order by e.fecha limit 500',
-  eventoBloqueo: 'select * from public.eventos_calendario where id = $1::uuid for update',
-  eventosCeldasBloqueo: 'select * from public.eventos_calendario where trabajadora_id = any($1::uuid[]) and fecha = any($2::date[]) for update',
-  eventosRangoBloqueo: 'select * from public.eventos_calendario where trabajadora_id = any($1::uuid[]) and fecha between $2::date and $3::date for update',
-  eventosPorIdBloqueo: 'select * from public.eventos_calendario where id = any($1::uuid[]) for update',
+  // TA-REAL-2: toda lectura de la tabla excluye los anulados.
+  eventoBloqueo: 'select * from public.eventos_calendario where id = $1::uuid and not anulado for update',
+  eventosCeldasBloqueo: 'select * from public.eventos_calendario where trabajadora_id = any($1::uuid[]) and fecha = any($2::date[]) and not anulado for update',
+  eventosRangoBloqueo: 'select * from public.eventos_calendario where trabajadora_id = any($1::uuid[]) and fecha between $2::date and $3::date and not anulado for update',
+  eventosPorIdBloqueo: 'select * from public.eventos_calendario where id = any($1::uuid[]) and not anulado for update',
   insertarEventos: 'insert into public.eventos_calendario (trabajadora_id, farmacia, fecha, franja, tipo, estado, horas, nota) '
     + 'select * from unnest($1::uuid[], $2::text[], $3::date[], $4::text[], $5::text[], $6::text[], $7::numeric[], $8::text[]) '
-    + 'on conflict (trabajadora_id, fecha, franja) do nothing returning *',
+    + 'on conflict (trabajadora_id, fecha, franja) where not anulado do nothing returning *',
   actualizarEventos: 'update public.eventos_calendario e set tipo = v.tipo, estado = v.estado, horas = v.horas, nota = v.nota '
-    + 'from unnest($1::uuid[], $2::text[], $3::text[], $4::numeric[], $5::text[]) as v(id, tipo, estado, horas, nota) where e.id = v.id returning e.*',
+    + 'from unnest($1::uuid[], $2::text[], $3::text[], $4::numeric[], $5::text[]) as v(id, tipo, estado, horas, nota) where e.id = v.id and not e.anulado returning e.*',
+  /** TA-REAL-2: goma y deshacer de un pintado: anular (nunca DELETE); solo lo no anulado y no confirmado. */
+  anularEventos: "update public.eventos_calendario set anulado = true where id = any($1::uuid[]) and not anulado and estado <> 'CONFIRMADO' returning *",
   historialEventos: "with g as (select distinct created_at from public.trabajadores_historial where tabla = 'eventos_calendario' and farmacia = any($1::text[]) "
     + 'order by created_at desc limit 30) select h.*, h.created_at::text as grupo from public.trabajadores_historial h join g on g.created_at = h.created_at '
     + "where h.tabla = 'eventos_calendario' and h.farmacia = any($1::text[]) order by h.created_at desc, h.id",
   guardias: 'select * from public.guardias_farmacia where farmacia = any($1::text[]) and not anulada order by fecha',
   festivos: 'select * from public.festivos where (farmacia is null or farmacia = any($1::text[])) and not anulado order by fecha',
   diagnostico: 'select (select count(*) from public.trabajadoras) as trabajadoras, (select count(*) from public.convenio_anual) as convenio_anual, '
-    + '(select count(*) from public.eventos_calendario) as eventos_calendario, (select count(*) from public.guardias_farmacia) as guardias_farmacia, '
+    + '(select count(*) from public.eventos_calendario where not anulado) as eventos_calendario, (select count(*) from public.guardias_farmacia) as guardias_farmacia, '
     + '(select count(*) from public.festivos) as festivos, (select count(*) from public.trabajadores_historial) as trabajadores_historial, '
     + "(select farmacias from public.cf_modulos_farmacias where modulo = 'TRABAJADORES') as modulo, "
     + "(select coalesce(array_agg(anio order by anio), '{}') from public.convenio_anual) as anios",
@@ -213,6 +237,19 @@ export function filaAConvenio(r: Fila): ConvenioAnual {
     anio: num(r.anio), jornada_max_horas: num(r.jornada_max_horas), asuntos_propios_dias: num(r.asuntos_propios_dias),
     permiso_medico_horas: num(r.permiso_medico_horas), horas_semanales_referencia: num(r.horas_semanales_referencia),
     estado: deLista(['FIRMADO_PENDIENTE_PUBLICACION', 'PUBLICADO'] as const, r.estado, 'estado'), fuente: String(r.fuente),
+    // TA-REAL-2: sin dato (filas anteriores a la migración 33): null, nunca 0.
+    vacaciones_dias_naturales: r.vacaciones_dias_naturales === null || r.vacaciones_dias_naturales === undefined ? null : num(r.vacaciones_dias_naturales),
+    vacaciones_fuente: r.vacaciones_fuente === null || r.vacaciones_fuente === undefined ? null : String(r.vacaciones_fuente),
+  };
+}
+
+/** TA-REAL-2: fila de trabajadoras_ajustes_anuales. */
+export function filaAAjuste(r: Fila): AjusteAnual {
+  const dias = num(r.vacaciones_dias_extra);
+  if (!Number.isFinite(dias) || dias < 0) throw new Error('VALOR_NO_PREVISTO: vacaciones_dias_extra'); // falla cerrado
+  return {
+    id: String(r.id), trabajadora_id: String(r.trabajadora_id), farmacia: deLista(FARMACIAS_RRHH, r.farmacia, 'farmacia'), anio: num(r.anio),
+    vacaciones_dias_extra: dias, nota: r.nota === null || r.nota === undefined ? null : String(r.nota), anulada: r.anulada === true,
   };
 }
 
@@ -234,6 +271,7 @@ export function historialFichas(filas: Fila[]): EventoHistorial[] {
 /**
  * Cambios del calendario desde trabajadores_historial: un cambio por transacción (mismo created_at, columna `grupo`),
  * con la marca de la sesión si se hizo en ella (origen, periodo, deshecho) o el origen deducido de las filas.
+ * TA-REAL-2: un UPDATE que pone anulado = true es un borrado (goma o deshacer de un pintado).
  */
 export function cambiosDesdeHistorial(filas: Fila[], fichas: readonly Trabajadora[], sesion: ReadonlyMap<string, CambioCalendario>): CambioCalendario[] {
   const ficha = new Map(fichas.map((t) => [t.id, t]));
@@ -244,6 +282,7 @@ export function cambiosDesdeHistorial(filas: Fila[], fichas: readonly Trabajador
       const d = jsonb(h.despues) as Fila;
       const a = jsonb(h.antes);
       const t = ficha.get(String(d.trabajadora_id));
+      if (a && d.anulado === true && a.anulado !== true) return { accion: 'BORRAR', antes: filaAEvento(a, t), despues: null };
       return { accion: h.operacion === 'INSERT' ? 'CREAR' : 'EDITAR', antes: a ? filaAEvento(a, t) : null, despues: filaAEvento(d, t) };
     });
     const marca = sesion.get(g);
@@ -274,6 +313,9 @@ export interface DiagnosticoTrabajadores {
   trabajadores_historial: number; modulo_pio_rita: boolean; anios_convenio: number[]; anios_convenio_faltan: number[];
 }
 export type AdaptadorRrhhReal = AdaptadorRrhh & { diagnostico(): Promise<DiagnosticoTrabajadores> };
+
+/** TA-REAL-2: el estado cambió entre la lectura y la escritura (ROLLBACK; 409 como en FIXTURES). */
+const ESTADO_CAMBIADO = () => new ErrorRrhhBd('ESTADO_CAMBIADO', 409, 'Los días de ese cambio ya no están como los dejó: no se ha cambiado nada.');
 
 export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string; tamLote?: number; anio?: () => number }): AdaptadorRrhhReal {
   const { pool } = o;
@@ -321,10 +363,21 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
   const fichasDe = async (c: ClienteBd, ids: string[]) => (ids.length ? (await c.query(SQL.fichasPorId, [ids])).rows.map(filaATrabajadora) : []);
   const convenioDe = async (c: ClienteBd) => (await c.query(SQL.convenio)).rows.map(filaAConvenio);
 
-  /** Ejecuta las operaciones del plan por lotes; devuelve las realmente hechas (las altas en conflicto no cuentan). */
+  /**
+   * Ejecuta las operaciones del plan por lotes: primero las anulaciones (dejan libre la franja), luego las altas y las
+   * ediciones. Devuelve las realmente hechas (las altas en conflicto no cuentan). Una anulación que no encuentra su
+   * fila no anulada (o ya confirmada) falla cerrado: ROLLBACK de todo.
+   */
   async function ejecutar(c: ClienteBd, ops: Operacion[], fichas: Map<string, Trabajadora>): Promise<Operacion[]> {
-    if (ops.some((op) => op.accion === 'BORRAR')) throw new Error('BORRAR_SIN_ANULAR');
     const hechas: Operacion[] = [];
+    for (const lote of lotes(ops.filter((op) => op.accion === 'BORRAR'), tamLote)) {
+      const r = await c.query(SQL.anularEventos, [lote.map((op) => (op.antes as EventoCalendario).id)]);
+      const anulados = new Set(r.rows.map((f) => String(f.id)));
+      for (const op of lote) {
+        if (!anulados.has((op.antes as EventoCalendario).id)) throw ESTADO_CAMBIADO();
+        hechas.push({ accion: 'BORRAR', antes: op.antes, despues: null });
+      }
+    }
     for (const lote of lotes(ops.filter((op) => op.accion === 'CREAR').map((op) => op.despues as EventoCalendario), tamLote)) {
       const r = await c.query(SQL.insertarEventos, [
         lote.map((e) => e.trabajadora_id), lote.map((e) => e.farmacia), lote.map((e) => e.fecha), lote.map((e) => e.franja),
@@ -353,8 +406,6 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
   };
 
   return {
-    anularEventos: false,
-
     trabajadoras: (farmacia, incluirBajas) => leer(async (c) => {
       const ts = (await c.query(SQL.fichas, [farmaciasDe(farmacia), incluirBajas])).rows.map(filaATrabajadora).sort(ordenFichas);
       return { farmacia, trabajadoras: ts, convenio: await convenioDe(c), anio_referencia: anio() };
@@ -369,8 +420,34 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
     crearConvenio: (anios, quien) => escribir(quien, async (c) => {
       const cs = CONVENIO_ANUAL.filter((x) => anios.includes(x.anio));
       const r = await c.query(SQL.crearConvenio, [cs.map((x) => x.anio), cs.map((x) => x.jornada_max_horas), cs.map((x) => x.asuntos_propios_dias),
-        cs.map((x) => x.permiso_medico_horas), cs.map((x) => x.horas_semanales_referencia), cs.map((x) => x.estado), cs.map((x) => x.fuente)]);
+        cs.map((x) => x.permiso_medico_horas), cs.map((x) => x.horas_semanales_referencia), cs.map((x) => x.estado), cs.map((x) => x.fuente),
+        cs.map((x) => x.vacaciones_dias_naturales), cs.map((x) => x.vacaciones_fuente)]);
       return r.rows.map(filaAConvenio).sort((a, b) => a.anio - b.anio);
+    }),
+    completarVacacionesConvenio: (anios, quien) => escribir(quien, async (c) =>
+      (await c.query(SQL.completarVacaciones, [anios, VACACIONES_DIAS_NATURALES, FUENTE_VACACIONES])).rows.map(filaAConvenio).sort((a, b) => a.anio - b.anio)),
+
+    ajustes: (farmacia, anioAjuste) => leer(async (c) => (await c.query(SQL.ajustes, [farmaciasDe(farmacia), anioAjuste])).rows.map(filaAAjuste)),
+    guardarAjuste: (tid, anioAjuste, dias, nota, quien) => escribir(quien, async (c) => {
+      const previo = (await c.query(SQL.ajusteBloqueo, [tid, anioAjuste])).rows[0];
+      if (!previo) {
+        // Farmacia: la de la ficha, leída en la misma transacción (nunca la del cliente).
+        const [ficha] = await fichasDe(c, [tid]);
+        if (!ficha) throw new Error('TRABAJADORA_NO_VALIDA');
+        return filaAAjuste((await c.query(SQL.insertarAjuste, [tid, ficha.farmacia, anioAjuste, dias, nota])).rows[0]);
+      }
+      const p = filaAAjuste(previo);
+      if (p.vacaciones_dias_extra === dias && p.nota === nota) return p; // sin cambios: nada que escribir
+      const r = (await c.query(SQL.actualizarAjuste, [p.id, dias, nota])).rows[0];
+      if (!r) throw ESTADO_CAMBIADO();
+      return filaAAjuste(r);
+    }),
+    anularAjuste: (tid, anioAjuste, quien) => escribir(quien, async (c) => {
+      const previo = (await c.query(SQL.ajusteBloqueo, [tid, anioAjuste])).rows[0];
+      if (!previo) return 'SIN_AJUSTE' as const;
+      const r = (await c.query(SQL.anularAjuste, [String(previo.id)])).rows[0];
+      if (!r) throw ESTADO_CAMBIADO();
+      return filaAAjuste(r);
     }),
     historial: (farmacia) => leer(async (c) => historialFichas((await c.query(SQL.historialFichas, [farmaciasDe(farmacia)])).rows)),
 
@@ -413,7 +490,7 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
       const porId = new Map(ts.map((t) => [t.id, t]));
       const evs = ts.length ? (await c.query(SQL.eventosPeriodo, [ts.map((t) => t.id), desde, hasta])).rows.map((f) => filaAEvento(f, porId.get(String(f.trabajadora_id)))) : [];
       const u = ultimoDeshacible();
-      return { farmacia, desde, hasta, trabajadoras: ts, eventos: evs, ultimo_cambio: u ? resumen(u) : null, anular_eventos: false };
+      return { farmacia, desde, hasta, trabajadoras: ts, eventos: evs, ultimo_cambio: u ? resumen(u) : null };
     }),
     notasProximas: (farmacia, desde) => leer(async (c) => {
       const fs = farmaciasDe(farmacia);
@@ -424,7 +501,6 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
     }),
 
     async cambiarEventos(p, quien) {
-      if (p.accion === 'BORRAR') return 'ANULAR_EVENTOS_PENDIENTE';
       const r = await escribir(quien, async (c) => {
         const clave = String((await c.query(SQL.ahora)).rows[0]?.ahora);
         const cuando = instante(clave);
@@ -463,20 +539,40 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
       const u = ultimoDeshacible();
       if (!u) return 'NADA_QUE_DESHACER';
       if (u.id !== cambioId) return 'NO_ES_EL_ULTIMO';
-      if (u.trazas.some((t) => t.accion !== 'EDITAR')) return 'ANULAR_EVENTOS_PENDIENTE';
       const r = await escribir(quien, async (c) => {
         const clave = String((await c.query(SQL.ahora)).rows[0]?.ahora);
+        // Estado actual (solo no anulados) de los eventos del cambio y, si hay que recrear borrados, de sus franjas.
         const filas = (await c.query(SQL.eventosPorIdBloqueo, [[...new Set(u.trazas.map((t) => t.evento_id))]])).rows;
-        const fichas = await fichasDe(c, [...new Set(filas.map((f) => String(f.trabajadora_id)))]);
+        const borrados = u.trazas.filter((t) => t.accion === 'BORRAR');
+        const enCeldas = borrados.length
+          ? (await c.query(SQL.eventosCeldasBloqueo, [[...new Set(borrados.map((t) => t.trabajadora_id))], [...new Set(borrados.map((t) => t.fecha))]])).rows : [];
+        const ids = [...new Set([...filas, ...enCeldas].map((f) => String(f.trabajadora_id)).concat(u.trazas.map((t) => t.trabajadora_id)))];
+        const fichas = await fichasDe(c, ids);
         const fm = new Map(fichas.map((t) => [t.id, t]));
         const actual = new Map(filas.map((f) => [String(f.id), filaAEvento(f, fm.get(String(f.trabajadora_id)))]));
-        const ops = planDeshacer(u, (id) => actual.get(id), () => undefined, false);
+        const porCelda = new Map(enCeldas.map((f) => [`${String(f.trabajadora_id)}|${fecha(f.fecha)}|${String(f.franja)}`, String(f.id)]));
+        const ops = planDeshacer(u, (id) => actual.get(id), (tid, f, fr) => (porCelda.has(`${tid}|${f}|${fr}`) ? ({} as EventoCalendario) : undefined));
         if (typeof ops === 'string') return { r: ops };
         const hechas = await ejecutar(c, ops, fm);
+        // Todo o nada: si una franja que había que recrear se ha ocupado entre medias, no se deshace nada.
+        if (hechas.length !== ops.length) throw ESTADO_CAMBIADO();
+        // TA-REAL-2c: cada borrado recreado es una fila nueva; id viejo → id nuevo por su celda (única entre no anulados).
+        const nuevas = new Map(hechas.filter((h) => h.accion === 'CREAR').map((h) => [celdaDe(h.despues as EventoCalendario), (h.despues as EventoCalendario).id]));
+        const mapa = new Map<string, string>();
+        for (const op of ops) {
+          if (op.accion !== 'CREAR' || !op.despues) continue;
+          const id = nuevas.get(celdaDe(op.despues));
+          if (!id) throw ESTADO_CAMBIADO();
+          mapa.set(op.despues.id, id);
+        }
         const cambio = construirCambio({ id: nuevoId(), ops: hechas, origen: 'DESHACER', tipo: null, quien, cuando: instante(clave), omitidas: 0, deshace: u, periodo: null, fichas, nuevoId });
-        return { r: { cambio: resumen(cambio), omitidas_confirmadas: 0, omitidas_vacias: 0 } as ResultadoCambioDTO, nuevo: { clave, cambio } };
+        return { r: { cambio: resumen(cambio), omitidas_confirmadas: 0, omitidas_vacias: 0 } as ResultadoCambioDTO, nuevo: { clave, cambio }, mapa };
       });
-      if (r.nuevo) anotarSesion(r.nuevo.clave, r.nuevo.cambio, u);
+      if (r.nuevo) {
+        anotarSesion(r.nuevo.clave, r.nuevo.cambio, u);
+        // Tras el COMMIT: la pila de la sesión apunta a las filas nuevas (deshacer encadenado).
+        if (r.mapa) reasignarIds(cambiosSesion, r.mapa);
+      }
       return r.r;
     },
 

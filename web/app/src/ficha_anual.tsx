@@ -2,15 +2,19 @@
 // Los cálculos son del servidor (server/rrhh/ficha_anual.ts, comunes a FIXTURES y REAL); aquí solo se dibujan.
 // Pieza propia: la regla de vacaciones, un día natural por casilla (verde disfrutado, azul planificado, vacía sin
 // planificar; naranja si toca avisar; rojo por encima del derecho). Una media franja llena media casilla.
-import { useMemo, useState } from 'react';
+// TA-REAL-2: vacaciones del convenio (sin el dato, «pendiente»); días extra por persona y año editables (días ≥ 0,
+// nota opcional, anular), sumados al derecho.
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ANIOS_CONVENIO, TEXTO_CATEGORIA, type FiltroFarmacia } from '../server/rrhh/contrato.ts';
+import {
+  ANIOS_CONVENIO, AVISO_NOTA_AJUSTE, LARGO_NOTA_AJUSTE, MAX_DIAS_EXTRA, TEXTO_CATEGORIA, type AjusteAnual, type FiltroFarmacia,
+} from '../server/rrhh/contrato.ts';
 import { CODIGO_TIPO_EVENTO, COLOR_TIPO_EVENTO, TEXTO_TIPO_EVENTO, textoPeriodoCambio } from '../server/rrhh/eventos.ts';
 import {
-  TEXTO_DIAS_EXTRA_PENDIENTE, TEXTO_FESTIVOS_PENDIENTES,
+  TEXTO_FESTIVOS_PENDIENTES, TEXTO_VACACIONES_PENDIENTE,
   type AvisoFicha, type FichaAnual, type FichaAnualDTO, type Periodo, type ResumenPlantillaDTO,
 } from '../server/rrhh/ficha_anual.ts';
-import { useApiRecargable } from './api.ts';
+import { ErrorApi, enviar, useApiRecargable } from './api.ts';
 import { fechaCorta } from './formato.ts';
 import { MOVIL, useMedia } from './ui.tsx';
 import { EtiquetaFarmacia, hoyLocal } from './trabajadores.tsx';
@@ -25,7 +29,8 @@ function anioPorDefecto(hoy: string): number {
   const a = Number(hoy.slice(0, 4));
   return Math.min(Math.max(a, Math.min(...ANIOS_CONVENIO)), Math.max(...ANIOS_CONVENIO));
 }
-function useAnio(): [number, (a: number) => void, string] {
+/** Año elegido (parámetro anio de la URL; por defecto, el de hoy). Lo comparten el resumen, la ficha anual y los pies. */
+export function useAnio(): [number, (a: number) => void, string] {
   const [params, setParams] = useSearchParams();
   const hoy = hoyLocal();
   const v = Number(params.get('anio'));
@@ -53,7 +58,7 @@ function Avisos({ avisos }: { avisos: AvisoFicha[] }) {
   if (avisos.length === 0) return null;
   return (
     <ul className="fa-avisos" data-avisos-ficha>
-      {avisos.map((a) => <li key={a.codigo} className={`fa-aviso${a.codigo === 'SIN_CONVENIO' ? ' gris' : ''}`} data-aviso={a.codigo}>{a.texto}</li>)}
+      {avisos.map((a) => <li key={a.codigo} className={`fa-aviso${a.codigo === 'SIN_CONVENIO' || a.codigo === 'VACACIONES_SIN_DATO' ? ' gris' : ''}`} data-aviso={a.codigo}>{a.texto}</li>)}
     </ul>
   );
 }
@@ -65,7 +70,7 @@ function Avisos({ avisos }: { avisos: AvisoFicha[] }) {
 type Mitad = 'disfrutada' | 'planificada' | 'pendiente' | 'exceso' | 'nada';
 
 /** Estado de cada media casilla: primero lo disfrutado, después lo planificado y lo que falta hasta el derecho. */
-export function mitadesRegla(v: Pick<FichaAnual['vacaciones'], 'derecho' | 'disfrutadas' | 'planificadas'>): Mitad[] {
+export function mitadesRegla(v: { derecho: number; disfrutadas: number; planificadas: number }): Mitad[] {
   const usado = v.disfrutadas + v.planificadas;
   const total = Math.ceil(Math.max(v.derecho, usado));
   return Array.from({ length: total * 2 }, (_, k) => {
@@ -76,7 +81,7 @@ export function mitadesRegla(v: Pick<FichaAnual['vacaciones'], 'derecho' | 'disf
   });
 }
 
-function ReglaVacaciones({ v, avisar }: { v: FichaAnual['vacaciones']; avisar: boolean }) {
+function ReglaVacaciones({ v, avisar }: { v: FichaAnual['vacaciones'] & { derecho: number; pendientes: number }; avisar: boolean }) {
   const mitades = mitadesRegla(v);
   const casillas = Array.from({ length: mitades.length / 2 }, (_, i) => [mitades[2 * i], mitades[2 * i + 1]] as const);
   const etiqueta = `Vacaciones: ${dias(v.disfrutadas)} disfrutados, ${dias(v.planificadas)} planificados, ${dias(Math.max(v.pendientes, 0))} sin planificar de ${dias(v.derecho)}`;
@@ -99,34 +104,113 @@ function Cifra({ valor, texto, clase, dato }: { valor: string; texto: string; cl
   );
 }
 
-function BloqueVacaciones({ f }: { f: FichaAnual }) {
+/** Mensaje de un error de escritura: el llano del servidor si lo hay. */
+const textoError = (e: unknown, defecto: string) =>
+  (e instanceof ErrorApi ? (e.errores.vacaciones_dias_extra ?? e.errores.nota ?? e.mensaje ?? defecto) : defecto);
+
+/**
+ * TA-REAL-2: días extra de vacaciones de la persona en el año (trabajadoras_ajustes_anuales): entero ≥ 0, nota
+ * opcional (sin datos de salud) y anular con confirmación. Nunca se borra. TA-REAL-2b: la fila no tiene autor (va al
+ * historial de la base de datos por transacción), así que aquí no se muestra.
+ */
+function DiasExtra({ f, onCambio }: { f: FichaAnual; onCambio: () => void }) {
+  const a: AjusteAnual | null = f.vacaciones.ajuste;
+  const [dias_, setDias] = useState(a ? String(a.vacaciones_dias_extra) : '');
+  const [nota, setNota] = useState(a?.nota ?? '');
+  const [anular, setAnular] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  // Tras guardar o anular, los campos muestran lo guardado (el mensaje se mantiene).
+  useEffect(() => { setDias(a ? String(a.vacaciones_dias_extra) : ''); setNota(a?.nota ?? ''); }, [a?.id, a?.vacaciones_dias_extra, a?.nota]);
+  const ruta = `/api/rrhh/trabajadoras/${f.trabajadora.id}/ajustes/${f.anio}`;
+  const valor = dias_.trim() === '' ? NaN : Number(dias_.trim());
+  const valido = Number.isInteger(valor) && valor >= 0 && valor <= MAX_DIAS_EXTRA;
+  const sinCambios = a !== null && valor === a.vacaciones_dias_extra && (nota.trim() === '' ? null : nota.trim()) === a.nota;
+
+  const ejecutar = async (trabajo: () => Promise<unknown>, ok: string) => {
+    setEnviando(true);
+    setMsg(null);
+    try { await trabajo(); setMsg({ ok: true, texto: ok }); setAnular(false); onCambio(); } catch (e) { setMsg({ ok: false, texto: textoError(e, 'No se ha podido guardar. No se ha cambiado nada.') }); } finally { setEnviando(false); }
+  };
+  const guardar = (e: FormEvent) => {
+    e.preventDefault();
+    if (!valido) { setMsg({ ok: false, texto: `Días extra: un número entero de 0 a ${MAX_DIAS_EXTRA}` }); return; }
+    void ejecutar(() => enviar(ruta, 'PUT', { vacaciones_dias_extra: valor, nota: nota.trim() === '' ? null : nota }), `Días extra de ${f.anio} guardados: ${dias(valor)}.`);
+  };
+
+  return (
+    <form className="fa-extra" onSubmit={guardar} noValidate data-dias-extra-editor aria-labelledby="t-fa-extra">
+      <div className="fa-extra-titulo">
+        <h4 id="t-fa-extra">Días extra de {f.anio}</h4>
+        {a
+          ? <span className="tenue" data-dias-extra-actual>{dias(a.vacaciones_dias_extra)}{a.nota ? ` · «${a.nota}»` : ''}</span>
+          : <span className="tenue" data-dias-extra-actual>sin días extra</span>}
+      </div>
+      <div className="fa-extra-campos">
+        <label className="fa-extra-campo">Días
+          <input type="number" inputMode="numeric" min={0} max={MAX_DIAS_EXTRA} step={1} value={dias_} onChange={(e) => setDias(e.target.value)}
+            data-dias-extra aria-invalid={dias_ !== '' && !valido} />
+        </label>
+        <label className="fa-extra-campo fa-extra-nota">Nota (opcional)
+          <input type="text" maxLength={LARGO_NOTA_AJUSTE} value={nota} onChange={(e) => setNota(e.target.value)} aria-describedby="fa-extra-aviso" data-nota-extra />
+        </label>
+      </div>
+      <span id="fa-extra-aviso" className="tenue fa-extra-pista">{AVISO_NOTA_AJUSTE}. Se suman al derecho del año.</span>
+      <div className="rrhh-botones">
+        <button type="submit" className="boton-primario" disabled={enviando || sinCambios || dias_.trim() === ''} data-guardar-extra>Guardar días extra</button>
+        {a && !anular && <button type="button" className="boton-peligro-suave" disabled={enviando} onClick={() => { setAnular(true); setMsg(null); }} data-anular-extra>Anular días extra</button>}
+      </div>
+      {a && anular && (
+        <div className="fa-extra-confirmar" role="alertdialog" aria-labelledby="t-fa-extra-anular" data-confirmar-anular-extra>
+          <p id="t-fa-extra-anular">Se anularán los días extra de {f.anio} ({dias(a.vacaciones_dias_extra)}; quedan registrados, no se borran). El derecho vuelve a {f.vacaciones.derecho_base === null ? TEXTO_VACACIONES_PENDIENTE : dias(f.vacaciones.derecho_base)}.</p>
+          <div className="rrhh-botones">
+            <button type="button" className="boton-primario" disabled={enviando} data-anular-extra-si
+              onClick={() => void ejecutar(() => enviar(`${ruta}/anular`, 'PUT', { confirmar: true }), `Días extra de ${f.anio} anulados.`)}>Sí, anular</button>
+            <button type="button" className="boton-secundario" onClick={() => setAnular(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+      {msg && <p className={msg.ok ? 'rrhh-aviso-ok' : 'rrhh-error'} role={msg.ok ? 'status' : 'alert'} data-aviso-extra>{msg.texto}</p>}
+    </form>
+  );
+}
+
+function BloqueVacaciones({ f, onCambio }: { f: FichaAnual; onCambio: () => void }) {
   const v = f.vacaciones;
   const avisar = f.avisos.some((a) => a.codigo === 'VACACIONES_SIN_PLANIFICAR');
+  const desglose = v.base === null ? null
+    : `${v.proporcional ? `${num(v.derecho_base as number)} proporcionales` : `${num(v.base)} del convenio`}${v.dias_extra > 0 ? ` + ${num(v.dias_extra)} extra` : ''}`;
   return (
     <section className="fa-bloque fa-vacaciones" aria-labelledby="t-fa-vac" data-bloque="vacaciones">
       <div className="fa-bloque-cabecera">
         <h3 id="t-fa-vac">Vacaciones</h3>
-        <span className="fa-derecho" data-derecho-vacaciones>
-          <strong>{dias(v.derecho)}</strong> naturales
-          {v.proporcional
-            ? <span className="tenue" data-proporcional> · proporcional: {f.dias_en_alta} de {f.dias_anio} días en alta ({num(v.base)} × {f.dias_en_alta}/{f.dias_anio}, redondeo hacia arriba)</span>
-            : <span className="tenue"> · {num(v.base)} al año, también media jornada (provisional)</span>}
-        </span>
+        {v.derecho === null ? (
+          <span className="fa-derecho" data-derecho-vacaciones>
+            <strong data-vacaciones-pendiente>{TEXTO_VACACIONES_PENDIENTE}</strong>
+            <span className="tenue"> · el convenio de {f.anio} no tiene los días{v.dias_extra > 0 ? ` (días extra: ${num(v.dias_extra)})` : ''}</span>
+          </span>
+        ) : (
+          <span className="fa-derecho" data-derecho-vacaciones>
+            <strong>{dias(v.derecho)}</strong> naturales
+            <span className="tenue" data-desglose-vacaciones> · {desglose}</span>
+            {v.proporcional
+              ? <span className="tenue" data-proporcional> · {f.dias_en_alta} de {f.dias_anio} días en alta ({num(v.base as number)} × {f.dias_en_alta}/{f.dias_anio}, redondeo hacia arriba)</span>
+              : <span className="tenue"> · también media jornada</span>}
+            {v.fuente && <span className="tenue fa-fuente" data-fuente-vacaciones> · fuente: {v.fuente}</span>}
+          </span>
+        )}
       </div>
-      <ReglaVacaciones v={v} avisar={avisar} />
+      {v.derecho !== null && v.pendientes !== null && <ReglaVacaciones v={{ ...v, derecho: v.derecho, pendientes: v.pendientes }} avisar={avisar} />}
       <div className="fa-cifras">
         <Cifra valor={num(v.disfrutadas)} texto={`disfrutados hasta hoy`} clase="verde" dato="disfrutadas" />
         <Cifra valor={num(v.planificadas)} texto="planificados desde mañana" clase="azul" dato="planificadas" />
-        {v.pendientes >= 0
-          ? <Cifra valor={num(v.pendientes)} texto="sin planificar" clase={avisar ? 'naranja' : 'gris'} dato="pendientes" />
-          : <Cifra valor={num(-v.pendientes)} texto="por encima del derecho" clase="rojo" dato="pendientes" />}
+        {v.pendientes === null
+          ? <Cifra valor={TEXTO_VACACIONES_PENDIENTE} texto="sin planificar: falta el dato del convenio" clase="gris" dato="pendientes" />
+          : v.pendientes >= 0
+            ? <Cifra valor={num(v.pendientes)} texto="sin planificar" clase={avisar ? 'naranja' : 'gris'} dato="pendientes" />
+            : <Cifra valor={num(-v.pendientes)} texto="por encima del derecho" clase="rojo" dato="pendientes" />}
       </div>
-      <div className="fa-extra">
-        <label className="fa-extra-campo">Días extra del año
-          <input type="text" disabled value="" placeholder={TEXTO_DIAS_EXTRA_PENDIENTE} aria-describedby="fa-extra-nota" data-dias-extra />
-        </label>
-        <span id="fa-extra-nota" className="tenue">Se podrán anotar cuando exista la tabla de ajustes anuales.</span>
-      </div>
+      <DiasExtra key={f.anio} f={f} onCambio={onCambio} />
       {v.periodos.length > 0 && (
         <ul className="fa-periodos" data-periodos-vacaciones>
           {v.periodos.map((p) => (
@@ -261,7 +345,7 @@ function BloqueAusencias({ f }: { f: FichaAnual }) {
 /** Ficha anual de una persona (en el detalle), con selector de año. */
 export function FichaAnualSeccion({ id }: { id: string }) {
   const [anio, setAnio, hoy] = useAnio();
-  const { carga } = useApiRecargable<FichaAnualDTO>(`/api/rrhh/trabajadoras/${id}/anual?anio=${anio}&hoy=${hoy}`);
+  const { carga, recargar } = useApiRecargable<FichaAnualDTO>(`/api/rrhh/trabajadoras/${id}/anual?anio=${anio}&hoy=${hoy}`);
   return (
     <section className="tarjeta bloque fa-ficha" aria-labelledby="t-fa" data-ficha-anual={anio}>
       <div className="bloque-cabecera fa-cabecera">
@@ -275,19 +359,19 @@ export function FichaAnualSeccion({ id }: { id: string }) {
           {carga.datos.motivo === 'ANULADA' ? 'Ficha anulada: no tiene ficha anual.' : `Sin días de alta en ${carga.datos.anio}.`}
         </p>
       ) : (
-        <FichaAnualCuerpo f={carga.datos.ficha} />
+        <FichaAnualCuerpo f={carga.datos.ficha} onCambio={recargar} />
       ))}
     </section>
   );
 }
 
-function FichaAnualCuerpo({ f }: { f: FichaAnual }) {
+function FichaAnualCuerpo({ f, onCambio }: { f: FichaAnual; onCambio: () => void }) {
   return (
     <>
       <p className="fa-calculo tenue">Calculado a {fechaCorta(f.hoy)} · {f.dias_en_alta} de {f.dias_anio} días en alta en {f.anio}</p>
       <Avisos avisos={f.avisos} />
       <div className="fa-rejilla">
-        <BloqueVacaciones f={f} />
+        <BloqueVacaciones f={f} onCambio={onCambio} />
         <BloqueHoras f={f} />
         <BloqueLibre f={f} />
         <BloqueMedico f={f} />
@@ -313,7 +397,7 @@ function valorOrden(f: FichaAnual, c: Columna): number | string {
   switch (c) {
     case 'nombre': return f.trabajadora.nombre;
     case 'farmacia': return f.trabajadora.farmacia;
-    case 'vacaciones': return f.vacaciones.pendientes;
+    case 'vacaciones': return f.vacaciones.pendientes ?? Number.NEGATIVE_INFINITY;
     case 'libre': return f.libre_disposicion.restantes ?? Number.NEGATIVE_INFINITY;
     case 'horas': return f.horas.objetivo === null ? Number.NEGATIVE_INFINITY : f.horas.registradas - f.horas.objetivo;
     case 'baja': return f.dias_baja;
@@ -331,8 +415,12 @@ function TextoHoras({ f }: { f: FichaAnual }) {
 function TextoVacaciones({ f }: { f: FichaAnual }) {
   const p = f.vacaciones.pendientes;
   const avisar = f.avisos.some((a) => a.codigo === 'VACACIONES_SIN_PLANIFICAR');
+  if (p === null || f.vacaciones.derecho === null) return <span className="tenue" data-vacaciones-pendiente>{TEXTO_VACACIONES_PENDIENTE}</span>;
   if (p < 0) return <span className="fa-texto-rojo">{dias(-p)} de más</span>;
-  return <span className={avisar ? 'fa-texto-naranja' : undefined}>{num(p)} <span className="tenue">de {num(f.vacaciones.derecho)}</span></span>;
+  return (
+    <span className={avisar ? 'fa-texto-naranja' : undefined}>{num(p)} <span className="tenue">de {num(f.vacaciones.derecho)}
+      {f.vacaciones.dias_extra > 0 && <span data-extra-resumen> ({num(f.vacaciones.dias_extra)} extra)</span>}</span></span>
+  );
 }
 function TextoLibre({ f }: { f: FichaAnual }) {
   const l = f.libre_disposicion;
@@ -368,7 +456,7 @@ export function ResumenPlantilla({ farmacia }: { farmacia: FiltroFarmacia }) {
       {carga.estado === 'ok' && (
         <>
           <p className="fa-calculo tenue" data-resumen-pie>
-            {filas.length} {filas.length === 1 ? 'persona' : 'personas'} · {conAvisos} con avisos · calculado a {fechaCorta(carga.datos.hoy)} · vacaciones: {carga.datos.reglas.vacaciones_dias} días naturales (provisional) · festivos aún no descontados (TA3)
+            {filas.length} {filas.length === 1 ? 'persona' : 'personas'} · {conAvisos} con avisos · calculado a {fechaCorta(carga.datos.hoy)} · vacaciones: {carga.datos.reglas.vacaciones_dias === null ? `${TEXTO_VACACIONES_PENDIENTE} (el convenio de ${anio} no tiene los días)` : `${carga.datos.reglas.vacaciones_dias} días naturales del convenio`} · festivos aún no descontados (TA3)
           </p>
           {filas.length === 0 ? <p className="tenue">Nadie de alta en {anio} en esta farmacia.</p> : movil ? (
             <>

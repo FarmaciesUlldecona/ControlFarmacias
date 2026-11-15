@@ -3,6 +3,8 @@
  * TA-REAL: anulación y convenio); cada cambio queda en el historial (quién, cuándo, antes/después). Todo se pierde
  * al reiniciar. Nunca toca la BD. Mismas reglas que las tablas reales (migración 31): alta obligatoria, baja no
  * anterior al alta, eventos solo dentro del alta, nombre único por farmacia entre las fichas sin anular.
+ * TA-REAL-2 (migración 33): la goma anula eventos (no se leen); convenio con vacaciones; ajustes anuales (días extra)
+ * de ejemplo en fixtures/rrhh/ajustes_anuales.json, uno no anulado por persona y año.
  *
  * Solo sintaxis TypeScript borrable.
  */
@@ -10,8 +12,8 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  CONVENIO_ANUAL, accionActualizacion, camposAlta, computaConvenio, diferencias, objetivosAnuales, ordenFichas,
-  type ConvenioAnual, type DatosTrabajadora, type EventoHistorial, type FarmaciaRrhh, type Festivo,
+  CONVENIO_ANUAL, FUENTE_VACACIONES, VACACIONES_DIAS_NATURALES, accionActualizacion, camposAlta, computaConvenio, diferencias, objetivosAnuales, ordenFichas,
+  type AjusteAnual, type ConvenioAnual, type DatosTrabajadora, type EventoHistorial, type FarmaciaRrhh, type Festivo,
   type FiltroFarmacia, type GuardiaFarmacia, type Trabajadora, type TrabajadoraDetalleDTO, type TrabajadorasDTO,
 } from './contrato.ts';
 import {
@@ -24,6 +26,8 @@ export const RUTA_SEMILLA = join(import.meta.dirname, '..', '..', '..', 'fixture
 export const RUTA_SEMILLA_EVENTOS = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'eventos.json');
 /** TA-FICHA: eventos de 2026 fuera de noviembre (ficha anual y resumen de plantilla); se suman a los de TA2. */
 export const RUTA_SEMILLA_FICHA_ANUAL = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'ficha_anual.json');
+/** TA-REAL-2: ajustes anuales de ejemplo (trabajadoras_ajustes_anuales). */
+export const RUTA_SEMILLA_AJUSTES = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'ajustes_anuales.json');
 /** Instante fijo de la carga de ejemplo (las fichas de ejemplo no tienen fecha real). */
 export const CARGA_EJEMPLO_AT = '2026-11-01T08:00:00.000Z';
 
@@ -33,16 +37,22 @@ type Quizas<T> = T | Promise<T>;
 export type ResultadoEdicion = Trabajadora | 'BAJA_ANTES_DEL_ALTA' | 'NOMBRE_DUPLICADO' | null;
 export type ResultadoBaja = Trabajadora | 'YA_DE_BAJA' | 'BAJA_ANTES_DEL_ALTA' | null;
 export type ResultadoAnulacion = Trabajadora | 'YA_ANULADA' | null;
+export type ResultadoAnularAjuste = AjusteAnual | 'SIN_AJUSTE';
 
 /** Interfaz común del módulo: RRHH_FIXTURES (síncrono, en memoria) y RRHH_REAL (tablas reales, asíncrono). */
 export interface AdaptadorRrhh {
-  /** TA-REAL: false en REAL hasta que exista eventos_calendario.anulado. */
-  readonly anularEventos: boolean;
   trabajadoras(farmacia: FiltroFarmacia, incluirBajas: boolean): Quizas<TrabajadorasDTO>;
   trabajadora(id: string): Quizas<TrabajadoraDetalleDTO | null>;
   convenio(): Quizas<ConvenioAnual[]>;
   /** Crea los años firmados que falten (los que ya existen no se tocan). Devuelve los creados. */
   crearConvenio(anios: number[], quien: string): Quizas<ConvenioAnual[]>;
+  /** TA-REAL-2: completa SOLO vacaciones_dias_naturales y vacaciones_fuente de los años que no los tienen. Devuelve los completados. */
+  completarVacacionesConvenio(anios: number[], quien: string): Quizas<ConvenioAnual[]>;
+  /** TA-REAL-2: ajustes no anulados del año de las fichas de la farmacia. */
+  ajustes(farmacia: FiltroFarmacia, anio: number): Quizas<AjusteAnual[]>;
+  /** Crea o actualiza el ajuste no anulado de la persona y el año (farmacia = la de la ficha; autor solo por transacción). */
+  guardarAjuste(trabajadoraId: string, anio: number, dias: number, nota: string | null, quien: string): Quizas<AjusteAnual>;
+  anularAjuste(trabajadoraId: string, anio: number, quien: string): Quizas<ResultadoAnularAjuste>;
   historial(farmacia: FiltroFarmacia): Quizas<EventoHistorial[]>;
   crear(datos: DatosTrabajadora, quien: string): Quizas<Trabajadora | 'NOMBRE_DUPLICADO'>;
   editar(id: string, datos: DatosTrabajadora, quien: string): Quizas<ResultadoEdicion>;
@@ -66,6 +76,12 @@ export interface AdaptadorRrhhFixtures extends AdaptadorRrhh {
   trabajadora(id: string): TrabajadoraDetalleDTO | null;
   convenio(): ConvenioAnual[];
   crearConvenio(anios: number[], quien: string): ConvenioAnual[];
+  completarVacacionesConvenio(anios: number[], quien: string): ConvenioAnual[];
+  ajustes(farmacia: FiltroFarmacia, anio: number): AjusteAnual[];
+  guardarAjuste(trabajadoraId: string, anio: number, dias: number, nota: string | null, quien: string): AjusteAnual;
+  anularAjuste(trabajadoraId: string, anio: number, quien: string): ResultadoAnularAjuste;
+  /** Todos los ajustes, anulados incluidos (pruebas y check_fixtures). */
+  todosLosAjustes(): AjusteAnual[];
   historial(farmacia: FiltroFarmacia): EventoHistorial[];
   crear(datos: DatosTrabajadora, quien: string): Trabajadora | 'NOMBRE_DUPLICADO';
   editar(id: string, datos: DatosTrabajadora, quien: string): ResultadoEdicion;
@@ -79,6 +95,12 @@ export interface AdaptadorRrhhFixtures extends AdaptadorRrhh {
   guardias(farmacia: FiltroFarmacia): GuardiaFarmacia[];
   festivos(farmacia: FiltroFarmacia): Festivo[];
   eventos(): EventoCalendario[];
+  /** TA-REAL-2: eventos anulados (nunca salen en las lecturas). */
+  eventosAnulados(): EventoCalendario[];
+}
+
+export function leerSemillaAjustes(ruta: string = RUTA_SEMILLA_AJUSTES): AjusteAnual[] {
+  return (JSON.parse(readFileSync(ruta, 'utf8')) as { ajustes: AjusteAnual[] }).ajustes;
 }
 
 export function leerSemilla(ruta: string = RUTA_SEMILLA): SemillaTrabajadora[] {
@@ -114,12 +136,12 @@ const conActiva = (t: Trabajadora): Trabajadora => ({ ...t, activa: !t.anulada &
 /** `ahora` y `nuevoId` inyectables para pruebas; `convenio` permite empezar sin años (prueba del botón de crear). */
 export function crearAdaptadorRrhhFixtures(opciones: {
   semilla?: SemillaTrabajadora[]; semillaEventos?: SemillaEventos | null; ahora?: () => string; nuevoId?: () => string; anioReferencia?: number;
-  convenio?: readonly ConvenioAnual[]; anularEventos?: boolean;
+  convenio?: readonly ConvenioAnual[]; ajustes?: readonly AjusteAnual[];
 } = {}): AdaptadorRrhhFixtures {
   const ahora = opciones.ahora ?? (() => new Date().toISOString());
   const nuevoId = opciones.nuevoId ?? randomUUID;
   const anioReferencia = opciones.anioReferencia ?? Number(ahora().slice(0, 4));
-  const anularEventos = opciones.anularEventos ?? true;
+  let ajustes: AjusteAnual[] = (opciones.ajustes ?? leerSemillaAjustes()).map((a) => ({ ...a }));
   let convenio: ConvenioAnual[] = (opciones.convenio ?? CONVENIO_ANUAL).map((c) => ({ ...c }));
   const fichas = new Map<string, Trabajadora>();
   for (const s of opciones.semilla ?? leerSemilla()) {
@@ -137,7 +159,7 @@ export function crearAdaptadorRrhhFixtures(opciones: {
   const nombreOcupado = (farmacia: FarmaciaRrhh, nombre: string, salvo: string | null) =>
     [...fichas.values()].some((t) => !t.anulada && t.id !== salvo && t.farmacia === farmacia && t.nombre.toLowerCase() === nombre.toLowerCase());
   // TA2: calendario sobre las mismas fichas (siempre las vigentes: altas, ediciones, bajas y anulaciones cuentan al momento).
-  const almacen = crearAlmacenEventos({ fichas: () => [...fichas.values()], ahora, nuevoId, anularEventos });
+  const almacen = crearAlmacenEventos({ fichas: () => [...fichas.values()], ahora, nuevoId });
   const semillaEventos = opciones.semillaEventos === undefined ? semillaEjemplo() : opciones.semillaEventos;
   if (semillaEventos) almacen.cargarEjemplo(semillaEventos, CARGA_EJEMPLO_AT);
   /** Actualiza la ficha y registra el historial (anulación, baja o edición). */
@@ -149,8 +171,10 @@ export function crearAdaptadorRrhhFixtures(opciones: {
     return copia(n);
   };
 
+  /** Ajuste no anulado de una persona y un año (único, como el índice de la tabla). */
+  const ajusteVigente = (tid: string, anio: number) => ajustes.find((a) => a.trabajadora_id === tid && a.anio === anio && !a.anulada);
+
   return {
-    anularEventos,
     trabajadoras(farmacia, incluirBajas) {
       const ts = [...fichas.values()].filter((t) => enFiltro(farmacia, t.farmacia) && (incluirBajas || t.activa)).sort(ordenFichas).map(copia);
       return { farmacia, trabajadoras: ts, convenio: convenio.map((c) => ({ ...c })), anio_referencia: anioReferencia };
@@ -170,6 +194,44 @@ export function crearAdaptadorRrhhFixtures(opciones: {
       convenio = [...convenio, ...nuevos].sort((a, b) => a.anio - b.anio);
       return nuevos;
     },
+    completarVacacionesConvenio(anios) {
+      const hechos: ConvenioAnual[] = [];
+      convenio = convenio.map((c) => {
+        if (!anios.includes(c.anio) || c.vacaciones_dias_naturales !== null) return c;
+        const n = { ...c, vacaciones_dias_naturales: VACACIONES_DIAS_NATURALES, vacaciones_fuente: FUENTE_VACACIONES };
+        hechos.push({ ...n });
+        return n;
+      });
+      return hechos;
+    },
+    ajustes(farmacia, anio) {
+      return ajustes.filter((a) => {
+        const t = fichas.get(a.trabajadora_id);
+        return !a.anulada && a.anio === anio && t !== undefined && enFiltro(farmacia, t.farmacia);
+      }).map((a) => ({ ...a }));
+    },
+    guardarAjuste(tid, anio, dias, nota) {
+      const t = fichas.get(tid);
+      if (!t) throw new Error('TRABAJADORA_NO_VALIDA');
+      const previo = ajusteVigente(tid, anio);
+      if (previo) {
+        if (previo.vacaciones_dias_extra === dias && previo.nota === nota) return { ...previo };
+        const n = { ...previo, vacaciones_dias_extra: dias, nota };
+        ajustes = ajustes.map((a) => (a.id === previo.id ? n : a));
+        return { ...n };
+      }
+      const n: AjusteAnual = { id: nuevoId(), trabajadora_id: tid, farmacia: t.farmacia, anio, vacaciones_dias_extra: dias, nota, anulada: false };
+      ajustes = [...ajustes, n];
+      return { ...n };
+    },
+    anularAjuste(tid, anio) {
+      const previo = ajusteVigente(tid, anio);
+      if (!previo) return 'SIN_AJUSTE';
+      const n = { ...previo, anulada: true };
+      ajustes = ajustes.map((a) => (a.id === previo.id ? n : a));
+      return { ...n };
+    },
+    todosLosAjustes: () => ajustes.map((a) => ({ ...a })),
     historial: (farmacia) => masRecientePrimero(historial.filter((h) => enFiltro(farmacia, h.farmacia))),
     crear(datos, quien) {
       if (!datos.farmacia) throw new Error('FARMACIA_OBLIGATORIA');
@@ -214,6 +276,7 @@ export function crearAdaptadorRrhhFixtures(opciones: {
     deshacerEventos: (id, quien) => almacen.deshacer(id, quien),
     historialEventos: (farmacia) => almacen.historial(farmacia),
     eventos: () => almacen.todos(),
+    eventosAnulados: () => almacen.anulados(),
     guardias: () => [],
     festivos: () => [],
   };

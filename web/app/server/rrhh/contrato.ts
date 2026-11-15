@@ -18,6 +18,8 @@
  *    con confirmación, para registros erróneos (anulada). Nunca se borra nada.
  *  - Convenio por año (convenio_anual): firmado, pendiente de publicación oficial.
  *  - Autor del historial "Marc" (AUTOR_HISTORIAL): en REAL, set_config('cf.autor', …, true) en cada transacción.
+ *  - TA-REAL-2 (migración 33): convenio_anual.vacaciones_dias_naturales y vacaciones_fuente (30 días, «decisión de
+ *    Pío, pendiente de texto publicado»); trabajadoras_ajustes_anuales (días extra por persona y año, se anulan).
  *
  * Solo sintaxis TypeScript borrable (Node la ejecuta sin compilar).
  */
@@ -130,18 +132,76 @@ export interface ConvenioAnual {
   horas_semanales_referencia: number;
   estado: EstadoConvenio;
   fuente: string;
+  /** TA-REAL-2 (migración 33): días naturales de vacaciones del año; null = sin dato (la ficha muestra «pendiente»). */
+  vacaciones_dias_naturales: number | null;
+  /** Obligatoria si hay días. */
+  vacaciones_fuente: string | null;
 }
+
+/** TA-REAL-2: vacaciones al crear o completar el convenio 2026–2028 (decisión de Pío). */
+export const VACACIONES_DIAS_NATURALES = 30;
+export const FUENTE_VACACIONES = 'decisión de Pío, pendiente de texto publicado';
 
 /** Valores firmados (decisión de Pío, T0 y TA1-2). En REAL vienen de convenio_anual; si faltan, se crean con estos. */
 export const FUENTE_CONVENIO = 'Convenio firmado, pendiente de publicación oficial (valores confirmados por Pío)';
+const VAC = { vacaciones_dias_naturales: VACACIONES_DIAS_NATURALES, vacaciones_fuente: FUENTE_VACACIONES } as const;
 export const CONVENIO_ANUAL: readonly ConvenioAnual[] = [
-  { anio: 2026, jornada_max_horas: 1767, asuntos_propios_dias: 1, permiso_medico_horas: 24, horas_semanales_referencia: 40, estado: 'FIRMADO_PENDIENTE_PUBLICACION', fuente: FUENTE_CONVENIO },
-  { anio: 2027, jornada_max_horas: 1752, asuntos_propios_dias: 0, permiso_medico_horas: 24, horas_semanales_referencia: 40, estado: 'FIRMADO_PENDIENTE_PUBLICACION', fuente: FUENTE_CONVENIO },
-  { anio: 2028, jornada_max_horas: 1752, asuntos_propios_dias: 0, permiso_medico_horas: 24, horas_semanales_referencia: 40, estado: 'FIRMADO_PENDIENTE_PUBLICACION', fuente: FUENTE_CONVENIO },
+  { anio: 2026, jornada_max_horas: 1767, asuntos_propios_dias: 1, permiso_medico_horas: 24, horas_semanales_referencia: 40, estado: 'FIRMADO_PENDIENTE_PUBLICACION', fuente: FUENTE_CONVENIO, ...VAC },
+  { anio: 2027, jornada_max_horas: 1752, asuntos_propios_dias: 0, permiso_medico_horas: 24, horas_semanales_referencia: 40, estado: 'FIRMADO_PENDIENTE_PUBLICACION', fuente: FUENTE_CONVENIO, ...VAC },
+  { anio: 2028, jornada_max_horas: 1752, asuntos_propios_dias: 0, permiso_medico_horas: 24, horas_semanales_referencia: 40, estado: 'FIRMADO_PENDIENTE_PUBLICACION', fuente: FUENTE_CONVENIO, ...VAC },
 ];
 export const ANIOS_CONVENIO: readonly number[] = CONVENIO_ANUAL.map((c) => c.anio);
 /** Años firmados que faltan en un convenio leído. */
 export const aniosConvenioQueFaltan = (convenio: readonly Pick<ConvenioAnual, 'anio'>[]) => ANIOS_CONVENIO.filter((a) => !convenio.some((c) => c.anio === a));
+/** TA-REAL-2: años existentes sin días de vacaciones (filas anteriores a la migración 33). */
+export const aniosSinVacaciones = (convenio: readonly Pick<ConvenioAnual, 'anio' | 'vacaciones_dias_naturales'>[]) =>
+  convenio.filter((c) => c.vacaciones_dias_naturales === null).map((c) => c.anio).sort((a, b) => a - b);
+
+// ---------------------------------------------------------------------------
+// TA-REAL-2: trabajadoras_ajustes_anuales (días extra de vacaciones por persona y año)
+// ---------------------------------------------------------------------------
+
+/**
+ * Una fila por persona y año entre las no anuladas. Nunca se borra: se anula. TA-REAL-2b (producción): columnas id,
+ * trabajadora_id, farmacia, anio, vacaciones_dias_extra, nota, anulada, created_at, updated_at. SIN columna autor: el
+ * autor va solo por transacción (cf.autor) y un trigger lo lleva a trabajadores_historial.
+ */
+export interface AjusteAnual {
+  id: string;
+  trabajadora_id: string;
+  /** La de la ficha (PIO o RITA, habilitada en el módulo). */
+  farmacia: FarmaciaRrhh;
+  anio: number;
+  /** Días extra de vacaciones (entero ≥ 0). */
+  vacaciones_dias_extra: number;
+  nota: string | null;
+  anulada: boolean;
+}
+export const MAX_DIAS_EXTRA = 365;
+export const LARGO_NOTA_AJUSTE = 200;
+export const AVISO_NOTA_AJUSTE = 'No anotes datos de salud ni diagnósticos';
+
+/** Cuerpo de PUT /api/rrhh/trabajadoras/:id/ajustes/:anio: { vacaciones_dias_extra, nota? }. Falla cerrado. */
+export function validarAjuste(cuerpo: unknown): { ok: true; dias: number; nota: string | null } | { ok: false; errores: ErroresCampos } {
+  const b = cuerpo !== null && typeof cuerpo === 'object' && !Array.isArray(cuerpo) ? (cuerpo as Record<string, unknown>) : null;
+  if (b === null) return { ok: false, errores: { _: 'Datos no válidos' } };
+  const errores: ErroresCampos = {};
+  for (const k of Object.keys(b)) if (k !== 'vacaciones_dias_extra' && k !== 'nota') errores[k] = 'Campo no admitido';
+  const d = b.vacaciones_dias_extra;
+  if (typeof d !== 'number' || !Number.isInteger(d) || d < 0 || d > MAX_DIAS_EXTRA) errores.vacaciones_dias_extra = `Días extra: un número entero de 0 a ${MAX_DIAS_EXTRA}`;
+  let nota: string | null = null;
+  if (b.nota !== undefined && b.nota !== null) {
+    if (typeof b.nota !== 'string') errores.nota = 'Nota no válida';
+    else {
+      const n = b.nota.trim().replace(/\s+/g, ' ');
+      if (n.length > LARGO_NOTA_AJUSTE) errores.nota = `La nota tiene como máximo ${LARGO_NOTA_AJUSTE} caracteres`;
+      else if (/[\u0000-\u001f<>]/.test(n)) errores.nota = 'La nota tiene caracteres no válidos';
+      else nota = n === '' ? null : n;
+    }
+  }
+  if (Object.keys(errores).length > 0) return { ok: false, errores };
+  return { ok: true, dias: d as number, nota };
+}
 
 export type AccionHistorial = 'ALTA' | 'EDICION' | 'BAJA' | 'ANULACION';
 export const TEXTO_ACCION: Readonly<Record<AccionHistorial, string>> = { ALTA: 'Alta', EDICION: 'Edición', BAJA: 'Baja', ANULACION: 'Anulación' };
@@ -190,8 +250,6 @@ export interface EstadoRrhhDTO {
   conectado: boolean;
   datos_ejemplo: boolean;
   mensaje: string;
-  /** TA-REAL: false en REAL hasta que exista eventos_calendario.anulado (goma y deshacer de pintados nuevos). */
-  anular_eventos: boolean;
 }
 
 export interface TrabajadorasDTO {
@@ -367,6 +425,8 @@ export function validarCrearConvenio(cuerpo: unknown): { ok: true; anios: number
   }
   return { ok: true, anios: [...(anios as number[])].sort() };
 }
+/** TA-REAL-2: completar vacaciones del convenio: mismo cuerpo { "anios": [...] } (años firmados, sin repetir). */
+export const validarCompletarVacaciones = validarCrearConvenio;
 
 /** Campos de la ficha que se comparan en el historial (solo antes/después de lo cambiado). */
 const CLAVES_HISTORIAL = ['nombre', 'categoria', 'tipo_jornada', 'horas_diarias', 'computa_convenio', 'fecha_alta', 'fecha_baja', 'anulada'] as const;

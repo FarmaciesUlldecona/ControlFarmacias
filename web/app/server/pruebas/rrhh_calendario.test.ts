@@ -1,7 +1,8 @@
 // TA2/TA2-2/TA2-4 Trabajadores: calendario. Fechas, semilla de ejemplo, validación, eventos por franja (mañana / tarde),
 // pintar, goma, rellenar jornada habitual (semana, mes y año), confirmar, editar horas y nota, deshacer e historial
 // (autor "Marc"); API con el servidor FIXTURES (inyección). TA-REAL: 11 tipos, horas_efectivas, alta/baja de la
-// ficha, goma y deshacer sin anular eventos, notas próximas y origen deducido del historial. Uso: npm run test:unit
+// ficha, notas próximas y origen deducido del historial. TA-REAL-2: la goma y el deshacer de un pintado anulan (no se
+// leen, liberan la franja). Uso: npm run test:unit
 import assert from 'node:assert/strict';
 import { after, describe, test } from 'node:test';
 import { CLAVE_FIXTURES, USUARIO } from '../acceso.ts';
@@ -24,12 +25,11 @@ const MARTA = ID(12); const JUDIT = ID(14); const ROSA = ID(15); const IRENE = I
 /** Orden del calendario: por nombre, titular al final. */
 const PIO = [AINA, CLARA, ELENA, NURIA, TITULAR_PIO];
 
-function nuevo(anularEventos = true): AdaptadorRrhh {
+function nuevo(): AdaptadorRrhh {
   let n = 0; let t = 0;
   return crearAdaptadorRrhhFixtures({
     nuevoId: () => `f2000000-0000-4000-8000-${String(++n).padStart(12, '0')}`,
     ahora: () => new Date(Date.UTC(2026, 10, 12, 10, 0, 0, t++)).toISOString(),
-    anularEventos,
   });
 }
 /** Aplica una petición ya validada (como la API). */
@@ -44,7 +44,12 @@ const en = (a: AdaptadorRrhh, tid: string, fecha: string, franja: Franja): Event
 const delDia = (a: AdaptadorRrhh, tid: string, fecha: string) => a.eventos().filter((e) => e.trabajadora_id === tid && e.fecha === fecha)
   .sort((x, y) => x.franja.localeCompare(y.franja)).map((e) => [e.franja, e.tipo]);
 const celdas = (tid: string, desde: string, hasta: string, franja?: Franja) => rangoFechas(desde, hasta).map((fecha) => ({ trabajadora_id: tid, fecha, ...(franja ? { franja } : {}) }));
-const foto = (a: AdaptadorRrhh) => JSON.stringify(a.eventos().sort((x, y) => x.id.localeCompare(y.id)));
+/**
+ * Estado del calendario sin ids, por celda: TA-REAL-2c, deshacer un borrado lo restaura como fila NUEVA (id nuevo, como
+ * en la tabla real); se compara el contenido (tipo, estado, horas, nota, fechas de registro…).
+ */
+const foto = (a: AdaptadorRrhh) => JSON.stringify(a.eventos().map(({ id: _id, ...e }) => e)
+  .sort((x, y) => `${x.trabajadora_id}|${x.fecha}|${x.franja}`.localeCompare(`${y.trabajadora_id}|${y.fecha}|${y.franja}`)));
 
 describe('fechas (UTC, lunes = 0)', () => {
   test('semana, mes y validez', () => {
@@ -463,24 +468,73 @@ describe('TA-REAL: tipos, horas, anular eventos, notas próximas e historial', (
     ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: AINA, fecha: '2026-11-11', franja: 'TARDE' }] }));
     assert.deepEqual([en(a, AINA, '2026-11-11', 'TARDE')?.horas, en(a, AINA, '2026-11-11', 'TARDE')?.horas_efectivas], [null, 3.5]);
   });
-  test('sin anular eventos (como REAL): goma y deshacer de pintados nuevos desactivados; deshacer de tipo/nota/estado sí', () => {
-    const a = nuevo(false);
-    assert.equal(a.calendario('PIO', '2026-11-09', '2026-11-15').anular_eventos, false);
-    const antes = foto(a);
-    assert.equal(aplicar(a, { accion: 'BORRAR', celdas: celdas(AINA, '2026-11-09', '2026-11-09') }), 'ANULAR_EVENTOS_PENDIENTE');
-    assert.equal(foto(a), antes);
-    const p = ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: celdas(AINA, '2026-12-07', '2026-12-07') })).cambio!;
-    assert.equal(p.creados, 2);
-    assert.equal(a.deshacerEventos(p.id, AUTOR_HISTORIAL), 'ANULAR_EVENTOS_PENDIENTE');
-    const c = ok(aplicar(a, { accion: 'CONFIRMAR', celdas: celdas(AINA, '2026-11-09', '2026-11-09') })).cambio!;
-    assert.equal(c.creados, 0);
-    const conPintado = foto(a);
-    ok(aplicar(a, { accion: 'PINTAR', tipo: 'BAJA', celdas: celdas(CLARA, '2026-11-10', '2026-11-10') })); // cambia el tipo (EDITAR)
+  test('TA-REAL-2: la goma anula (no se lee; la franja queda libre); deshacer un pintado lo anula; lo confirmado no se toca', () => {
+    const a = nuevo();
+    const e9 = en(a, AINA, '2026-11-09', 'MANANA') as EventoCalendario;
+    const b = ok(aplicar(a, { accion: 'BORRAR', celdas: celdas(AINA, '2026-11-09', '2026-11-09') })).cambio!;
+    assert.equal(b.n, 2);
+    assert.deepEqual(delDia(a, AINA, '2026-11-09'), []);
+    assert.ok(!a.calendario('PIO', '2026-11-09', '2026-11-15').eventos.some((e) => e.trabajadora_id === AINA && e.fecha === '2026-11-09'));
+    const anulado = a.eventosAnulados().find((e) => e.id === e9.id) as EventoCalendario & { anulado?: boolean };
+    assert.equal(anulado?.anulado, true); // queda anulado, no borrado
+    // La franja anulada se puede volver a pintar (la unicidad solo cuenta los no anulados).
+    ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: celdas(AINA, '2026-11-09', '2026-11-09', 'MANANA') }));
+    assert.equal(en(a, AINA, '2026-11-09', 'MANANA')?.tipo, 'VACACIONES');
+    // Deshacer el pintado nuevo: anula lo creado.
     const u = a.calendario('PIO', '2026-11-09', '2026-11-15').ultimo_cambio!;
+    assert.equal(u.creados, 1);
     ok(a.deshacerEventos(u.id, AUTOR_HISTORIAL) as ResultadoCambioDTO);
-    assert.equal(foto(a), conPintado);
-    ok(a.deshacerEventos(c.id, AUTOR_HISTORIAL) as ResultadoCambioDTO);
-    assert.equal(en(a, AINA, '2026-11-09', 'MANANA')?.estado, 'PLANIFICADO');
+    assert.equal(en(a, AINA, '2026-11-09', 'MANANA'), undefined);
+    // Deshacer la goma: vuelve la jornada de las dos franjas.
+    ok(a.deshacerEventos(b.id, AUTOR_HISTORIAL) as ResultadoCambioDTO);
+    assert.deepEqual(delDia(a, AINA, '2026-11-09'), [['MANANA', 'JORNADA'], ['TARDE', 'JORNADA']]);
+    // Confirmado (semana del 2 al 8): la goma no lo toca.
+    const conf = aplicar(a, { accion: 'BORRAR', celdas: celdas(AINA, '2026-11-03', '2026-11-03') }) as ResultadoCambioDTO;
+    assert.deepEqual([conf.cambio, conf.omitidas_confirmadas], [null, 2]);
+    assert.deepEqual(delDia(a, AINA, '2026-11-03'), [['MANANA', 'JORNADA'], ['TARDE', 'JORNADA']]);
+  });
+  test('TA-REAL-2c: pintar → goma → deshacer → deshacer: queda vacío (la goma deshecha vuelve como fila nueva y la pila apunta a ella)', () => {
+    const a = nuevo();
+    const M = celdas(AINA, '2027-10-04', '2027-10-04', 'MANANA');
+    const p = ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: M })).cambio!;
+    const idPintado = (en(a, AINA, '2027-10-04', 'MANANA') as EventoCalendario).id;
+    const g = ok(aplicar(a, { accion: 'BORRAR', celdas: M })).cambio!;
+    assert.equal(en(a, AINA, '2027-10-04', 'MANANA'), undefined);
+    ok(a.deshacerEventos(g.id, AUTOR_HISTORIAL) as ResultadoCambioDTO);
+    const restaurado = en(a, AINA, '2027-10-04', 'MANANA') as EventoCalendario;
+    assert.equal(restaurado.tipo, 'VACACIONES');
+    assert.notEqual(restaurado.id, idPintado); // fila nueva, como en la tabla
+    assert.ok(a.eventosAnulados().some((e) => e.id === idPintado)); // la original sigue anulada
+    const d = a.deshacerEventos(p.id, AUTOR_HISTORIAL);
+    assert.equal(typeof d, 'object', String(d)); // antes: ESTADO_CAMBIADO
+    assert.equal(en(a, AINA, '2027-10-04', 'MANANA'), undefined);
+    assert.equal(a.deshacerEventos(p.id, AUTOR_HISTORIAL), 'NADA_QUE_DESHACER');
+  });
+  test('TA-REAL-2c: 3 niveles mezclando pintar y goma (pintar → goma → pintar otro tipo → goma) se deshacen todos y vuelve al inicio', () => {
+    const a = nuevo();
+    const inicio = foto(a);
+    const dia = celdas(CLARA, '2027-10-05', '2027-10-06');
+    const c1 = ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: dia })).cambio!;
+    const c2 = ok(aplicar(a, { accion: 'BORRAR', celdas: celdas(CLARA, '2027-10-05', '2027-10-05', 'TARDE') })).cambio!;
+    const c3 = ok(aplicar(a, { accion: 'PINTAR', tipo: 'BAJA', celdas: celdas(CLARA, '2027-10-06', '2027-10-06') })).cambio!; // cambia tipo (EDITAR)
+    const c4 = ok(aplicar(a, { accion: 'BORRAR', celdas: celdas(CLARA, '2027-10-06', '2027-10-06', 'MANANA') })).cambio!;
+    const tras2 = foto(a);
+    ok(a.deshacerEventos(c4.id, AUTOR_HISTORIAL) as ResultadoCambioDTO); // vuelve la mañana del 6 (BAJA), fila nueva
+    assert.equal(en(a, CLARA, '2027-10-06', 'MANANA')?.tipo, 'BAJA');
+    ok(a.deshacerEventos(c3.id, AUTOR_HISTORIAL) as ResultadoCambioDTO); // el 6 vuelve a VACACIONES, también la fila restaurada
+    assert.deepEqual(delDia(a, CLARA, '2027-10-06'), [['MANANA', 'VACACIONES'], ['TARDE', 'VACACIONES']]);
+    ok(a.deshacerEventos(c2.id, AUTOR_HISTORIAL) as ResultadoCambioDTO); // vuelve la tarde del 5
+    assert.deepEqual(delDia(a, CLARA, '2027-10-05'), [['MANANA', 'VACACIONES'], ['TARDE', 'VACACIONES']]);
+    ok(a.deshacerEventos(c1.id, AUTOR_HISTORIAL) as ResultadoCambioDTO); // anula las 4 franjas, 2 de ellas restauradas
+    assert.equal(foto(a), inicio);
+    assert.notEqual(tras2, inicio);
+  });
+  test('TA-REAL-2: semilla con una ausencia anulada (Rosa, 14–18 sep): no se lee ni ocupa la franja', () => {
+    const a = nuevo();
+    assert.equal(a.eventosAnulados().filter((e) => e.trabajadora_id === ROSA && e.fecha >= '2026-09-14' && e.fecha <= '2026-09-18').length, 10);
+    assert.ok(!a.calendario('RITA', '2026-09-14', '2026-09-18').eventos.some((e) => e.trabajadora_id === ROSA));
+    ok(aplicar(a, { accion: 'PINTAR', tipo: 'JORNADA', celdas: celdas(ROSA, '2026-09-14', '2026-09-14') }));
+    assert.deepEqual(delDia(a, ROSA, '2026-09-14'), [['MANANA', 'JORNADA'], ['TARDE', 'JORNADA']]);
   });
   test('notas próximas: de hoy en adelante, por fecha; la misma nota del día una vez; las pasadas no salen', () => {
     const a = nuevo();
@@ -506,6 +560,8 @@ describe('TA-REAL: tipos, horas, anular eventos, notas próximas e historial', (
     assert.deepEqual(inferirOrigen([{ accion: 'EDITAR', antes: ev({}), despues: ev({ nota: 'x' }) }]), { origen: 'ANOTAR', tipo: null });
     assert.deepEqual(inferirOrigen([{ accion: 'EDITAR', antes: ev({}), despues: ev({ tipo: 'BAJA' }) }]), { origen: 'PINTAR', tipo: 'BAJA' });
     assert.deepEqual(inferirOrigen([{ accion: 'EDITAR', antes: ev({}), despues: ev({ horas: 2, nota: 'y' }) }]), { origen: 'EDITAR', tipo: null });
+    // TA-REAL-2: solo anulaciones → Borrado.
+    assert.deepEqual(inferirOrigen([{ accion: 'BORRAR', antes: ev({}), despues: null }]), { origen: 'BORRAR', tipo: null });
   });
 });
 

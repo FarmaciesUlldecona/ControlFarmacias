@@ -40,7 +40,6 @@
 .cal-herr-goma[aria-pressed='true'] { --c: var(--rojo); }
 /* TA-REAL: goma desactivada en REAL (hasta que la base de datos permita anular eventos) */
 .cal-herr:disabled { opacity: 0.5; cursor: not-allowed; }
-.cal-aviso-anular { align-self: center; font-size: 13px; }
 .cal-tipos-ta3 { margin: 0; font-size: 12.5px; }
 /* TA-REAL: «Notas próximas» */
 .cal-notas { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; border-left: 4px solid var(--azul-texto); }

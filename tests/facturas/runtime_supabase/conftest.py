@@ -61,7 +61,17 @@ def pg17_plantilla(pg17_contenedor):
 
 @pytest.fixture
 def pg17_nueva_base(pg17_contenedor, pg17_plantilla):
-    def crear(variante: str) -> pgl._Pg:
-        return pgl.base_desde(pg17_contenedor, pg17_plantilla(variante))
+    """Cada base vive solo durante su test: el contenedor guarda los datos en tmpfs (memoria de la maquina de
+    Docker) y, sin borrarlas, la suite completa agotaba el espacio («No space left on device», 2026-11-15, al
+    sumarse las plantillas de la 33)."""
+    creadas: list[str] = []
 
-    return crear
+    def crear(variante: str) -> pgl._Pg:
+        pg = pgl.base_desde(pg17_contenedor, pg17_plantilla(variante))
+        creadas.append(pg.db)
+        return pg
+
+    yield crear
+    pgl.cerrar_sesiones()
+    for db in creadas:
+        pgl._docker("exec", pg17_contenedor, "dropdb", "-U", "postgres", "--force", "--if-exists", db)
