@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-15 (R12-08012619: enriquecimiento y conciliación de 08012619 en producción, 62 de 63
+Actualizado: 2026-11-15 (TRAB-33-D: migración 33 desplegada en producción, APLICADA, postcheck por fila OK;
+R12-08012619: enriquecimiento y conciliación de 08012619 en producción, 62 de 63
 facturas conciliadas; AUTO-S: primera noche de sombra efectiva 14→15/11, NOCHE_OK; 2026-11-14, TRAB-33: migración 33
 de Trabajadores, solo local; AUTO-S: noche del 13/11 sin ejecutar y
 corrección de la clave; ENCARGO: R10 con `ENCARGO`, adaptador Alliance 1.3.1, banco completo, R12 de 08012619
@@ -332,6 +333,29 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito TRAB-33-D: migración 33 desplegada en producción (2026-11-15)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación explícita de Pio. Evidencias en
+`C:\ControlFarmacias\evidencias_trab_33_d\` (`SHA256SUMS.txt`, scripts READ_ONLY incluidos).
+
+- **Puerta:** árbol limpio; migración idéntica a la de 11e846f (en `origin/main`), SHA LF
+  `aa209e19ac9546749181c2725608110abedc35cb74c0b7c479f8fe50d33a0d35`; fuera de la ventana de las tareas.
+- **Preflight READ_ONLY:** 7 precondiciones `PRECONDICIONES_OK`; captura pre `CAPTURA_OK` (marcas 28–32 presentes,
+  ninguna de la 33; 0 locks, claims y `NORMALIZANDO`; flags `f|f|f|{PIO}`; módulo Trabajadores `{PIO,RITA}`).
+- **Despliegue** (`desplegar_33.py`, una vez, 13:27:37–13:27:40 UTC): **`APLICADA`**; 7 precondiciones y 6
+  postcondiciones OK (datos sin cambios, privilegios de la web, lectura y ACL, estructura y RLS, vacaciones,
+  propietario).
+- **Captura post y postcheck por fila** (`POSTCHECK_OK`): facturas, albaranes y conciliación, 0 filas cambiadas;
+  Trabajadores, solo cambios de la 33: los 95 eventos reciben `anulado` = false (sin esa columna, idénticos al pre),
+  12 trabajadoras y 202 filas de historial idénticas; `convenio_anual` vacía (ningún 30 aplicado) y
+  `trabajadoras_ajustes_anuales` vacía. Esquema: solo la tabla nueva (94 → 95 objetos). La vista de horas excluye los
+  anulados y conserva su ACL.
+- **Decisiones de Pio (2026-11-15):** la web adapta su `ON CONFLICT` justo después del despliegue (Pio no crea
+  eventos mientras); las filas del convenio 2026–2028 las crea la web.
+- `PENDIENTE` (próximo commit con código): la puerta de tareas de los preflights de despliegue
+  (`pruebas/auditoria_2bn_d/preflight_readonly.py`, `_tareas`) no consulta «ControlFarmacias - Automatizacion
+  Alliance» (22:15); sin efecto en este despliegue.
+
 ### Hito R12-08012619: enriquecimiento y conciliación de 08012619, 62 de 63 (2026-11-15)
 
 `CONFIRMADO EN PRODUCCIÓN`, con confirmación expresa de Pio y con 11e846f en `origin/main`. Dos escrituras, cada
@@ -372,7 +396,8 @@ Revisión READ_ONLY (evidencias en `C:\ControlFarmacias\evidencias_noche_1411\`,
 
 ### Hito TRAB-33: migración 33 de Trabajadores, solo local (2026-11-14)
 
-`CONFIRMADO POR TEST` (PostgreSQL 17 local). **NO desplegada**. Petición de la web con OK de Pio; diseño en
+`CONFIRMADO POR TEST` (PostgreSQL 17 local). **Desplegada el 2026-11-15: ver «Hito TRAB-33-D».** Petición de la
+web con OK de Pio; diseño en
 `pruebas/auditoria_trab/DISENO_33.md`.
 
 - `eventos_calendario.anulado` con unicidad solo entre no anulados. **La web debe cambiar su ON CONFLICT** a
@@ -382,8 +407,8 @@ Revisión READ_ONLY (evidencias en `C:\ControlFarmacias\evidencias_noche_1411\`,
 - Tabla `trabajadoras_ajustes_anuales` (días extra de vacaciones por trabajadora y año), con RLS por farmacia,
   escritura de `cf_trabajadores_web` sin DELETE, autor e historial, y lectura de `cf_lectura`.
 - Rollback exacto al esquema 32 (falla cerrado con eventos anulados duplicados) y `desplegar_33.py` ensayado con la
-  imitación del `postgres` de Supabase. `PENDIENTE`: TRAB-33-D (despliegue), con confirmación de Pio, y el cambio de la
-  web.
+  imitación del `postgres` de Supabase. Despliegue hecho (TRAB-33-D, 2026-11-15). `PENDIENTE`: el cambio del
+  `ON CONFLICT` de la web.
 - Base local de tests (2026-11-15): la suite completa agotaba el tmpfs del contenedor PostgreSQL («No space left on
   device») al sumarse las plantillas de la 33; `pg17_nueva_base` borra ahora sus bases al terminar cada test. Suite
   completa: 2957 tests en verde.
