@@ -289,7 +289,7 @@ TA1-2 (decisiones de Pío): la jornada se guarda en **horas diarias** (lunes a v
 | Convenio | 2026: 1767 h, 1 día de asuntos propios; 2027–2028: 1752 h, 0 días; permiso médico 24 h/año; referencia 40 h/sem; firmado, pendiente de publicación oficial | Objetivo rotulado «provisional: convenio pendiente de publicación»; referencia «provisional» |
 | Validación | Nombre vacío; campo `dni`, `porcentaje_jornada` u otro no admitido; horas ≤ 0, > 8 o con más de 2 decimales; completa distinta de 8; media mañana de 8 h | 400 con error por campo; la pantalla lo muestra junto al campo y lo retira al corregirlo |
 | Escritura | POST `/api/rrhh/trabajadoras`; PUT `/api/rrhh/trabajadoras/:id` y `/:id/baja` | Solo con sesión, Origin del mismo sitio (obligatorio) y JSON. El resto de la API sigue de solo lectura (405) |
-| Horas | Planificadas, confirmadas y pendientes | Huecos rotulados «pendiente motor de horas (T5)» |
+| Horas | Planificadas, confirmadas y pendientes | TA-FICHA: sustituido por la ficha anual (ver la sección TA-FICHA) |
 
 ## TA2: Trabajadores · calendario (datos de ejemplo en memoria)
 
@@ -391,3 +391,55 @@ Reglas:
 | Errores de la BD | P0001 AUTOR_AUSENTE / FARMACIA_NO_HABILITADA_EN_MODULO / EVENTO_FUERA_DEL_ALTA; 42501; 23505; 23514; 23503; 57014/25P03; 53300 | Código propio, HTTP (500/403/409/403/409/400/409/504/503) y mensaje llano. ROLLBACK, nunca se reintenta |
 | REAL simulado | `server/pruebas/rrhh_real.test.ts`: pool inyectado, sin conexión | Autor por transacción, ROLLBACK, lotes, mapeo de filas, historial, deshacer |
 | check:real | Rol `cf_trabajadores_web`, solo lectura | `DIAGNOSTICO trabajadores`: recuentos por tabla, `modulo_pio_rita` y años del convenio (y los que faltan) |
+
+## TA-FICHA: ficha anual de cada persona y resumen de plantilla
+
+Cálculo puro en `app/server/rrhh/ficha_anual.ts`, común a FIXTURES y REAL. Usa las mismas lecturas que ya existían: fichas y eventos del año (`calendario`) y `convenio_anual`. En REAL es solo lectura (transacción READ ONLY). Semilla ficticia en `fixtures/rrhh/ficha_anual.json`: eventos de 2026 fuera de noviembre, solo de fichas de RITA. Se suma a la de TA2, que no cambia.
+
+API (solo GET, con sesión):
+- `GET /api/rrhh/fichas?farmacia&anio&hoy` devuelve el resumen de plantilla.
+- `GET /api/rrhh/trabajadoras/:id/anual?anio&hoy` devuelve la ficha anual.
+- `anio` admite 2026–2028; por defecto, el año de `hoy`.
+- `hoy` es el día del reloj del navegador; si falta, el del servidor.
+
+Reglas de Pío:
+- **Vacaciones: 30 días naturales al año.**
+  - Es la constante provisional `VACACIONES_DIAS_NATURALES`, en un único punto; vendrá de `convenio_anual.vacaciones_dias_naturales`.
+  - La media jornada tiene los mismos 30.
+  - Con alta o baja dentro del año, el derecho es proporcional a los días en alta y se redondea al entero hacia arriba (`REDONDEO_PROPORCIONAL`, configurable).
+- **Días extra:** campo visible y desactivado, con «pendiente de habilitar», hasta que exista `trabajadoras_ajustes_anuales`.
+- **Días naturales.**
+  - Un periodo va del primer al último día laborable seguidos de VACACIONES y cuenta todos los días naturales entre ambos.
+  - Un fin de semana intermedio no corta el periodo. Tampoco un festivo, si la persona tiene un evento FESTIVO ese día.
+  - Una sola franja de jornada completa = 0,5 días (cuenta suelta). La franja única de una media jornada = 1 día.
+- **Disfrutadas y planificadas:** disfrutadas son las de hasta hoy, incluido; planificadas, las de desde mañana. Pendientes = derecho − disfrutadas − planificadas.
+- **Libre disposición:** los `asuntos_propios_dias` del año, con las mismas medias franjas.
+- **Permiso médico:** `permiso_medico_horas` (24) frente a las `horas_efectivas` de PERMISO_MEDICO.
+- **Horas del año** (solo si la persona computa).
+  - Objetivo del convenio, proporcional si hay alta o baja en el año.
+  - Suman JORNADA, ASUNTOS_PROPIOS, PERMISO_RETRIBUIDO, PERMISO_MEDICO, BAJA y DESCANSO_COMPENSATORIO (`TIPOS_HORAS_COMPUTAN`, único punto). No suman VACACIONES ni PERMISO_NO_RETRIBUIDO.
+  - **TA-FICHA-2 (regla de Pío):** el descanso compensatorio (día libre tras la semana de guardia de 24 h) cuenta como trabajado, con sus `horas_efectivas`, que son las de la jornada normal de la persona.
+  - Se separan confirmadas (estado CONFIRMADO) y planificadas (PLANIFICADO).
+  - Si se pasa del objetivo: «Exceso de X h ≈ Y días que podrían ser vacaciones (estimación)», con Y = X / horas diarias.
+  - Siempre se avisa: «Festivos aún no descontados (TA3)».
+  - Titular: horas registradas, sin objetivo.
+- **Aviso de octubre:** desde el 1 de octubre del año (`AVISO_VACACIONES_DESDE`, configurable) y hasta el 31 de diciembre, si quedan vacaciones sin planificar.
+- **Otros avisos:** vacaciones por encima del derecho, libre disposición o permiso médico por encima del convenio, y año sin convenio.
+- **Días de baja:** días naturales de los periodos de BAJA. Solo el número, nunca el motivo.
+- **Próximas ausencias:** las 3 primeras desde hoy, incluida la que esté en curso. Jornada, guardia, localizada y festivo no cuentan.
+
+| Caso | Datos | Efecto (hoy = 13 nov 2026) |
+|---|---|---|
+| Vacaciones con fin de semana dentro | Sílvia: 3–14 ago (L–V × 2) | 12 días naturales |
+| Media franja | Sílvia: tarde del 9 oct (completa) | 0,5 días. Total: 12,5 disfrutadas + 5 planificadas (23–27 nov) → 12,5 sin planificar y aviso |
+| Media jornada | Paula: 7–11 sep, su franja única | 5 días |
+| Alta a mitad de año | Paula: alta 1 jul 2026, media mañana | Derecho 16 (30 × 184/365 = 15,12). Objetivo 501 h (993,9 × 184/365). En 2027: 30 y 985,5 h |
+| Sin aviso | Laura: 6 jul – 4 ago | 30 días naturales → 0 pendientes, sin avisos |
+| Exceso de horas | Judit: jornada confirmada de enero a octubre (217 días) + noviembre | 1776 h confirmadas + 120 planificadas → exceso de 129 h ≈ 16,1 días |
+| Descanso compensatorio que suma (TA-FICHA-2) | Judit: descanso compensatorio el 6 nov, confirmado (completa: 4,5 + 3,5 h) | Suma 8 h a las confirmadas (1768 → 1776) y el exceso pasa de 121 a 129 h. Vacaciones y permiso no retribuido siguen sin sumar |
+| Baja | Marta: 12–17 mar (jueves a martes) + 9–13 nov | 6 + 5 = 11 días |
+| Libre disposición | Clara: 13 nov completo; Rosa: mañana del 18 nov | 1 de 1 (0 restantes); 0,5 de 1 |
+| Permiso médico | Laura: 24 nov completo; Núria: tarde del 10 nov | 8 h de 24; 3,5 h de 24 |
+| Aviso de octubre | Reloj del navegador el 30 sep / el 1 oct | Sin aviso / «Quedan 12,5 días de vacaciones sin planificar» |
+| Resumen de plantilla | Pestaña Fichas, encima del listado; mismo selector PIO / RITA / Ambas; selector de año | Una fila por persona de alta en el año. Columnas ordenables (las cifras empiezan de más a menos). En móvil, tarjetas con «Ordenar por» |
+| REAL simulado | `rrhh_real.test.ts` | El resumen solo hace transacciones READ ONLY + ROLLBACK, sin autor ni COMMIT |

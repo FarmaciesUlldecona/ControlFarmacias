@@ -54,6 +54,19 @@ def test_defecto_previsto_pasa_a_revision_al_maximo_r3():
         "estado_lectura": "REVISION", "ultima_clase_fallo": "DEFECTO_DOCUMENTO", "intentos": 4, "facturas": []}
 
 
+def test_postcheck_informa_trabajadores_aparte_sin_veredicto():
+    """Mejora aprobada por Pio (2026-11-13): Trabajadores se informa aparte y no hace fallar el postcheck."""
+    m = _modulo()
+    antes = {"trabajadoras": {"t1": ["h1", None]}, "festivos": {}, "albaranes": {"a1": ["ha", None]}}
+    despues = {"trabajadoras": {"t1": ["h1b", None], "t2": ["h2", None]}, "festivos": {"f1": ["hf", None]},
+               "albaranes": {"a1": ["ha", None]}}
+    assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == []
+    assert m.cambios_trabajadores(antes, despues) == {"festivos": 1, "trabajadoras": 2}
+    # Fuera de Trabajadores el criterio 2AX no cambia.
+    despues["albaranes"] = {"a1": ["otra", None]}
+    assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == ["FILA_CAMBIADA_AJENA:albaranes:a1"]
+
+
 # --------------------------------------------------------------------------- PostgreSQL 17 local
 
 @pytest.fixture
@@ -147,7 +160,8 @@ def test_parada_por_resultado_distinto_del_plan(serie):
     assert _estado(serie.pg, serie.ids["roto"]) == "PENDIENTE"  # no siguio
     # 2BK: la parada tambien hace el postcheck 2AX por fila (solo cambio el documento ejecutado).
     assert registro["postcheck"] == {"veredicto": "POSTCHECK_OK", "problemas": [],
-                                     "documentos": [serie.ids["hefame"]], "corte_alliance": False}
+                                     "documentos": [serie.ids["hefame"]], "corte_alliance": False,
+                                     "trabajadores": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
     assert (serie.raiz / "t01" / "snapshot_post.json").exists()
 
 

@@ -75,7 +75,8 @@ describe('fechas (UTC, lunes = 0)', () => {
 
 describe('semilla de ejemplo (fixtures/rrhh/eventos.json)', () => {
   const a = nuevo();
-  const evs = a.eventos();
+  // TA-FICHA: la semilla suma eventos de 2026 fuera de noviembre (ficha_anual.json); los de TA2 son los de noviembre.
+  const evs = a.eventos().filter((e) => e.fecha.startsWith('2026-11'));
   test('noviembre 2026: 21 franjas por día (8 completas × 2 + 5 medias) × 20 laborables = 420; nada en fin de semana', () => {
     assert.equal(evs.length, 420);
     assert.equal(evs.filter((e) => e.tipo !== 'JORNADA').length, 41);

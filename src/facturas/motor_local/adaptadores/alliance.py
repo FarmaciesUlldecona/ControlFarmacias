@@ -33,6 +33,9 @@ TIPOS_PEDIDO_MERCANCIA_ALLIANCE = frozenset({
     "TELEVENTA 2",
     "COSTO TELEVENTA",
     "SERVICIO COVID19",
+    # R10 ampliada (DECISION DE PIO, 2026-11-14; version 1.3.1): "ENCARGO" a secas es mercancia
+    # (caso 08012619 / 08D50803). Mismo criterio: la recepcion se prueba en la conciliacion.
+    "ENCARGO",
 })
 # R10: tipo ECOCEUTICS dentro del bloque ABONOS -> abono (resta del total).
 TIPOS_PEDIDO_ABONO_ALLIANCE = frozenset({"ECOCEUTICS"})
@@ -289,7 +292,7 @@ class AdaptadorAlliance(AdaptadorBase):
     """
 
     id = "alliance-local"
-    version = "1.3.0"
+    version = "1.3.1"
     capacidades = {
         "segmentacion": "SOPORTADO_MULTIFACTURA_DETERMINISTA",
         "cabecera": "SOPORTADO_MONEDA_NULL_NO_DOCUMENTADA",

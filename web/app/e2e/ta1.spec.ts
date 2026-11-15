@@ -43,20 +43,20 @@ test.describe('Fichas PC 1440', () => {
     // Columnas, jornada, computa y titular fuera del cómputo.
     const cab = await page.locator('.rrhh-tabla thead th').allTextContents();
     expect(cab).toEqual(['Nombre', 'Farmacia', 'Categoría', 'Jornada', 'Computa']);
-    const laura = page.locator('tr', { has: page.getByText('Laura Serra Coll') });
+    const laura = page.locator('.rrhh-tabla tr', { has: page.getByText('Laura Serra Coll') });
     await expect(laura).toContainText('Farmacéutica');
-    const paula = page.locator('tr', { has: page.getByText('Paula Riera Bover') });
+    const paula = page.locator('.rrhh-tabla tr', { has: page.getByText('Paula Riera Bover') });
     // TA1-2: jornada en horas diarias; porcentaje derivado (calculado) sobre la referencia de 40 h/sem.
     await expect(paula.locator('[data-horas-diarias]')).toHaveText('Media mañana · 4,5 h/día');
     await expect(paula.locator('[data-porcentaje-derivado]')).toHaveText('56,25 % · 22,5 h/sem');
     // TA1-3: media tarde (3,5 h/día, 17:00–20:30): 17,5 h/sem = 43,75 %.
-    const irene = page.locator('tr', { has: page.getByText('Irene Gual Torrent') });
+    const irene = page.locator('.rrhh-tabla tr', { has: page.getByText('Irene Gual Torrent') });
     await expect(irene.locator('[data-horas-diarias]')).toHaveText('Media tarde · 3,5 h/día');
     await expect(irene.locator('[data-porcentaje-derivado]')).toHaveText('43,75 % · 17,5 h/sem');
-    const marta = page.locator('tr', { has: page.getByText('Marta Vila Soler') });
+    const marta = page.locator('.rrhh-tabla tr', { has: page.getByText('Marta Vila Soler') });
     await expect(marta.locator('[data-horas-diarias]')).toHaveText('Completa · 8 h/día');
     await expect(marta.locator('[data-porcentaje-derivado]')).toHaveText('100 % · 40 h/sem');
-    const titular = page.locator('tr', { has: page.getByText('Titular de ejemplo') });
+    const titular = page.locator('.rrhh-tabla tr', { has: page.getByText('Titular de ejemplo') });
     await expect(titular.locator('[data-computa]')).toHaveText('No · titular');
     await expect(page.locator('[data-resumen-fichas]')).toContainText('jornada máxima 2026: 1767 h');
     await expect(page.locator('[data-referencia-semanal]')).toHaveText('40 h/sem');
@@ -114,7 +114,7 @@ test.describe('Fichas PC 1440', () => {
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_alta.png'), fullPage: true });
     await form.getByRole('button', { name: 'Crear ficha' }).click();
     await expect(page.locator('[data-aviso-rrhh]')).toHaveText('Ficha creada: Prueba Alta Ejemplo (RITA).');
-    const fila = page.locator('tr', { has: page.getByText('Prueba Alta Ejemplo') });
+    const fila = page.locator('.rrhh-tabla tr', { has: page.getByText('Prueba Alta Ejemplo') });
     await expect(fila.locator('[data-horas-diarias]')).toHaveText('Media mañana · 6 h/día');
 
     // Detalle y edición.
@@ -167,7 +167,7 @@ test.describe('Fichas PC 1440', () => {
     await expect(page.locator('tr.de-baja', { has: page.getByText('Prueba Editada Ejemplo') })).toContainText('baja 06/11/2026');
   });
 
-  test('detalle: objetivo anual provisional, titular fuera del cómputo y huecos de horas (T5)', async ({ page }) => {
+  test('detalle: objetivo anual provisional, titular fuera del cómputo y horas del año (TA-FICHA)', async ({ page }) => {
     await page.goto(`/trabajadores/${ID_ELENA}`);
     await expect(page.locator('[data-nombre-ficha]')).toHaveText('Elena Mas Garriga');
     await expect(page.locator('[data-banner-ejemplo]')).toBeVisible();
@@ -179,9 +179,9 @@ test.describe('Fichas PC 1440', () => {
     await expect(page.locator('[data-objetivo="2026"]')).toContainText('1767 h × 22,5 h / 40 h (56,25 %)');
     await expect(page.locator('[data-objetivo="2026"]')).toContainText('referencia 40 h/sem provisional');
     await expect(page.locator('.rrhh-ficha [data-porcentaje-derivado]')).toHaveText('56,25 % · 22,5 h/sem');
-    for (const h of ['planificadas', 'confirmadas', 'pendientes']) {
-      await expect(page.locator(`[data-hueco-horas="${h}"] dd`)).toHaveText('pendiente motor de horas (T5)');
-    }
+    // TA-FICHA: los huecos «pendiente motor de horas (T5)» dan paso a las horas del año de la ficha anual.
+    await expect(page.locator('[data-hueco-horas]')).toHaveCount(0);
+    await expect(page.locator('[data-bloque="horas"]')).toBeVisible();
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_detalle.png'), fullPage: true });
     // TA1-3: detalle de una media tarde, misma fórmula.
     await page.goto(`/trabajadores/${ID_IRENE}`);
@@ -217,7 +217,7 @@ test.describe('Fichas PC 1440', () => {
     await form.getByLabel('Nombre').fill('Ficha Creada Por Error');
     await form.locator('input[name="fecha_alta"]').fill('2026-11-02');
     await form.getByRole('button', { name: 'Crear ficha' }).click();
-    await page.locator('tr', { has: page.getByText('Ficha Creada Por Error') }).locator('.rrhh-nombre').click();
+    await page.locator('.rrhh-tabla tr', { has: page.getByText('Ficha Creada Por Error') }).locator('.rrhh-nombre').click();
     await page.locator('[data-anular]').click();
     const dialogo = page.locator('[data-formulario-anular]');
     await expect(dialogo).toContainText('Anular es solo para fichas creadas por error');

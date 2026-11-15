@@ -12,6 +12,7 @@ import './estilos.css';
 import './estilos_facturas.css';
 import './estilos_rrhh.css';
 import './estilos_calendario.css';
+import './estilos_ficha.css';
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>

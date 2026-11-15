@@ -22,6 +22,8 @@ import {
 export const RUTA_SEMILLA = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'trabajadoras.json');
 /** TA2: semanas de ejemplo del calendario (ausencias, jornada habitual y una semana confirmada). */
 export const RUTA_SEMILLA_EVENTOS = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'eventos.json');
+/** TA-FICHA: eventos de 2026 fuera de noviembre (ficha anual y resumen de plantilla); se suman a los de TA2. */
+export const RUTA_SEMILLA_FICHA_ANUAL = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'ficha_anual.json');
 /** Instante fijo de la carga de ejemplo (las fichas de ejemplo no tienen fecha real). */
 export const CARGA_EJEMPLO_AT = '2026-11-01T08:00:00.000Z';
 
@@ -88,6 +90,18 @@ export function leerSemillaEventos(ruta: string = RUTA_SEMILLA_EVENTOS): Semilla
   return { ausencias, jornada_habitual, confirmado };
 }
 
+export type SemillaFichaAnual = Pick<SemillaEventos, 'ausencias'> & Required<Pick<SemillaEventos, 'jornada_extra'>>;
+export function leerSemillaFichaAnual(ruta: string = RUTA_SEMILLA_FICHA_ANUAL): SemillaFichaAnual {
+  const { ausencias, jornada_extra } = JSON.parse(readFileSync(ruta, 'utf8')) as SemillaFichaAnual;
+  return { ausencias, jornada_extra };
+}
+/** Semilla por defecto: la de TA2 (noviembre) más la de TA-FICHA (resto de 2026). */
+export function semillaEjemplo(): SemillaEventos {
+  const ta2 = leerSemillaEventos();
+  const ficha = leerSemillaFichaAnual();
+  return { ...ta2, ausencias: [...ta2.ausencias, ...ficha.ausencias], jornada_extra: ficha.jornada_extra };
+}
+
 const enFiltro = (f: FiltroFarmacia, farmacia: FarmaciaRrhh | null) => f === 'AMBAS' || farmacia === null || farmacia === f;
 /**
  * El historial solo crece (append): el orden de registro es el orden real. Más reciente primero sin ordenar por
@@ -124,7 +138,7 @@ export function crearAdaptadorRrhhFixtures(opciones: {
     [...fichas.values()].some((t) => !t.anulada && t.id !== salvo && t.farmacia === farmacia && t.nombre.toLowerCase() === nombre.toLowerCase());
   // TA2: calendario sobre las mismas fichas (siempre las vigentes: altas, ediciones, bajas y anulaciones cuentan al momento).
   const almacen = crearAlmacenEventos({ fichas: () => [...fichas.values()], ahora, nuevoId, anularEventos });
-  const semillaEventos = opciones.semillaEventos === undefined ? leerSemillaEventos() : opciones.semillaEventos;
+  const semillaEventos = opciones.semillaEventos === undefined ? semillaEjemplo() : opciones.semillaEventos;
   if (semillaEventos) almacen.cargarEjemplo(semillaEventos, CARGA_EJEMPLO_AT);
   /** Actualiza la ficha y registra el historial (anulación, baja o edición). */
   const actualizar = (previo: Trabajadora, nuevo: Trabajadora, quien: string): Trabajadora => {

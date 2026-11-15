@@ -1,0 +1,136 @@
+/* TA-FICHA Trabajadores: ficha anual y resumen de plantilla. Mismos tokens que estilos.css.
+   Colores de estado: verde hecho (disfrutado, confirmado), azul planificado, naranja revisar (aviso, exceso),
+   rojo por encima del derecho, gris sin planificar. La regla de vacaciones es la pieza propia: un día natural por casilla. */
+
+.fa-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.fa-cabecera h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.fa-selector-anio button { min-width: 64px; font-variant-numeric: tabular-nums; }
+.fa-calculo { margin: 0; font-size: 13px; }
+
+/* Avisos (naranja = revisar) */
+.fa-avisos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.fa-aviso {
+  display: flex; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 8px;
+  background: var(--naranja-fondo); color: var(--naranja-texto); font-size: 13px; font-weight: 600;
+}
+.fa-aviso::before { content: '!'; flex: none; display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--naranja); color: #fff; font-size: 11px; font-weight: 800; }
+.fa-aviso.gris { background: var(--gris-fondo); color: var(--gris-texto); }
+.fa-aviso.gris::before { background: var(--gris); }
+
+/* Rejilla de bloques: vacaciones y horas a lo ancho; el resto en columnas */
+.fa-ficha { display: flex; flex-direction: column; gap: 14px; }
+.fa-rejilla { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.fa-bloque { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1px solid var(--borde); border-radius: 12px; min-width: 0; }
+.fa-vacaciones, .fa-horas { grid-column: 1 / -1; }
+.fa-bloque h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.fa-bloque p { margin: 0; }
+.fa-bloque-cabecera { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; }
+.fa-derecho { font-size: 14px; font-variant-numeric: tabular-nums; }
+.fa-nota { font-size: 12px; }
+.fa-grande { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.fa-grande strong { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+.fa-grande span { font-size: 14px; color: var(--tenue); }
+
+/* Regla de vacaciones: una casilla por día natural; cada casilla, dos mitades (media franja = media casilla) */
+.fa-regla { display: grid; gap: 3px; }
+.fa-dia { display: flex; height: 30px; border-radius: 4px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--borde); }
+.fa-dia > span { flex: 1; }
+.fa-dia:nth-child(5n) { box-shadow: inset 0 0 0 1px var(--borde), 0 4px 0 -2px var(--borde); }
+.fa-dia[data-a='disfrutada'] > span:first-child, .fa-dia[data-b='disfrutada'] > span:last-child { background: var(--verde); }
+.fa-dia[data-a='planificada'] > span:first-child, .fa-dia[data-b='planificada'] > span:last-child { background: var(--azul); }
+.fa-dia[data-a='exceso'] > span:first-child, .fa-dia[data-b='exceso'] > span:last-child { background: var(--rojo); }
+.fa-dia[data-a='pendiente'] > span:first-child, .fa-dia[data-b='pendiente'] > span:last-child {
+  background: repeating-linear-gradient(135deg, #fff 0 3px, var(--gris-fondo) 3px 6px);
+}
+.fa-regla.avisar .fa-dia[data-a='pendiente'], .fa-regla.avisar .fa-dia[data-b='pendiente'] { box-shadow: inset 0 0 0 1.5px var(--naranja); }
+.fa-regla.avisar .fa-dia[data-a='pendiente'] > span:first-child, .fa-regla.avisar .fa-dia[data-b='pendiente'] > span:last-child {
+  background: repeating-linear-gradient(135deg, #fff 0 3px, var(--naranja-fondo) 3px 6px);
+}
+
+/* Cifras con su color de estado */
+.fa-cifras { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+.fa-cifra { display: flex; align-items: baseline; gap: 7px; font-variant-numeric: tabular-nums; }
+.fa-cifra::before { content: ''; align-self: center; width: 10px; height: 10px; border-radius: 3px; background: var(--gris); }
+.fa-cifra.verde::before { background: var(--verde); }
+.fa-cifra.azul::before { background: var(--azul); }
+.fa-cifra.naranja::before { background: var(--naranja); }
+.fa-cifra.rojo::before { background: var(--rojo); }
+.fa-cifra.gris::before { background: repeating-linear-gradient(135deg, #fff 0 2px, var(--gris) 2px 4px); box-shadow: inset 0 0 0 1px var(--gris); }
+.fa-cifra-valor { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.fa-cifra.naranja .fa-cifra-valor { color: var(--naranja-texto); }
+.fa-cifra.rojo .fa-cifra-valor { color: var(--rojo-texto); }
+.fa-cifra-texto { font-size: 13px; color: var(--tenue); }
+
+/* Días extra: campo visible, desactivado hasta que exista la tabla */
+.fa-extra { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 14px; font-size: 12px; }
+.fa-extra-campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--tenue); }
+.fa-extra-campo input {
+  min-height: 36px; width: 190px; padding: 0 10px; border: 1px dashed #c9d0cb; border-radius: 8px; background: #fafaf8; font: inherit; font-size: 14px;
+}
+.fa-periodos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.fa-periodos li { padding: 3px 9px; border-radius: 999px; background: var(--borde-suave); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* Medidor del permiso médico */
+.fa-medidor { display: block; height: 8px; border-radius: 4px; background: var(--borde-suave); overflow: hidden; }
+.fa-medidor span { display: block; height: 100%; background: var(--primario); }
+.fa-medidor.rojo span { background: var(--rojo); }
+
+/* Barra de horas: confirmadas, planificadas, exceso y sin planificar; la marca es el objetivo */
+.fa-barra-horas { position: relative; display: flex; height: 18px; border-radius: 5px; background: var(--borde-suave); }
+.fa-barra-horas > span:not(.fa-marca-objetivo) { height: 100%; }
+.fa-barra-horas > span:first-child { border-radius: 5px 0 0 5px; }
+.fa-barra-horas .verde { background: var(--verde); }
+.fa-barra-horas .azul { background: var(--azul); }
+.fa-barra-horas .naranja { background: var(--naranja); }
+.fa-barra-horas .pendiente { background: repeating-linear-gradient(135deg, #fff 0 3px, var(--gris-fondo) 3px 6px); }
+.fa-marca-objetivo { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--texto); border-radius: 1px; }
+.fa-exceso { padding: 8px 12px; border-radius: 8px; background: var(--naranja-fondo); color: var(--naranja-texto); font-size: 14px; font-weight: 600; }
+.fa-exceso .tenue { font-weight: 500; }
+
+/* Próximas ausencias */
+.fa-ausencias { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.fa-ausencias li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.fa-tipo { display: inline-grid; place-items: center; min-width: 26px; height: 20px; padding: 0 4px; border-radius: 5px; color: #fff; font-size: 11px; font-weight: 800; }
+.fa-ausencias a { font-weight: 700; color: var(--texto); }
+
+/* Resumen de plantilla */
+.fa-resumen { display: flex; flex-direction: column; gap: 10px; }
+.fa-tabla-marco { overflow-x: auto; margin: 0 -4px; }
+.fa-tabla th.num, .fa-tabla td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fa-tabla td { vertical-align: top; }
+.fa-tabla td .fa-avisos { min-width: 220px; }
+.fa-tabla .fa-aviso { padding: 3px 8px; font-size: 12px; }
+.fa-categoria { display: block; font-size: 12px; white-space: nowrap; }
+.fa-tabla td:first-child .rrhh-nombre { white-space: nowrap; }
+.fa-bloque p.tenue { font-size: 13px; }
+.fa-ordenar {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; border: 0; background: none; font: inherit; font-weight: 700; color: inherit; cursor: pointer; text-align: inherit;
+}
+.fa-ordenar:hover { color: var(--primario); }
+.fa-ordenar:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; border-radius: 4px; }
+.fa-flecha { font-size: 10px; color: var(--tenue); }
+th[aria-sort='ascending'] .fa-flecha, th[aria-sort='descending'] .fa-flecha { color: var(--primario); }
+.fa-texto-naranja { color: var(--naranja-texto); font-weight: 700; }
+.fa-texto-rojo { color: var(--rojo-texto); font-weight: 700; }
+
+.fa-ordenar-movil { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--tenue); }
+.fa-ordenar-movil select { min-height: 42px; padding: 0 10px; border: 1px solid #cbd1cc; border-radius: 8px; font: inherit; font-size: 15px; color: var(--texto); background: var(--superficie); }
+.fa-tarjetas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.fa-tarjeta { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--borde); border-radius: 10px; }
+.fa-tarjeta-datos { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+.fa-tarjeta-datos dt { font-size: 12px; color: var(--tenue); font-weight: 600; }
+.fa-tarjeta-datos dd { margin: 2px 0 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1100px) {
+  .fa-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .fa-rejilla { grid-template-columns: minmax(0, 1fr); }
+  .fa-selector-anio { width: 100%; }
+  .fa-dia { height: 24px; }
+  .fa-regla { gap: 2px; }
+  .fa-cifras { gap: 6px 18px; }
+  .fa-cifra-valor { font-size: 19px; }
+  .fa-extra-campo input { width: 100%; }
+  .fa-extra-campo { width: 100%; }
+}

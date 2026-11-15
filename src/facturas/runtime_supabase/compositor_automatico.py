@@ -1,7 +1,8 @@
 """Compositor productivo de la ruta AUTOMATICA (Hito AUTO-A, decision D1 de Pio, 2026-11-12).
 
-Autoridad de extraccion SOLO para Alliance y SOLO en su version certificada (``alliance-local`` 1.3.0, con el puente
-multifactura certificado). Reutiliza las piezas del compositor manual del 2AP (Storage privado, PDF verificado,
+Autoridad de extraccion SOLO para Alliance y SOLO en su version certificada (``alliance-local`` 1.3.1, con el puente
+multifactura certificado; DECISION DE PIO, 2026-11-14: R10 ampliada con "ENCARGO", banco Alliance 1.3.0 frente a
+1.3.1 sin otras diferencias). Reutiliza las piezas del compositor manual del 2AP (Storage privado, PDF verificado,
 motor local, puente multifactura, ensamblado) y anade la comprobacion de version. Cualquier otro proveedor, layout o
 version falla cerrado: el documento queda ``PROVEEDOR_NO_SOPORTADO`` (R2) o con su defecto (R3).
 
@@ -34,9 +35,9 @@ from .worker_conciliacion import construir_worker_conciliacion
 from .worker_normalizacion import WorkerNormalizacion
 
 
-# D1 (Pio, 2026-11-12): solo Alliance, solo su version certificada.
+# D1 (Pio, 2026-11-12): solo Alliance, solo su version certificada (1.3.1 desde el 2026-11-14).
 AUTORIDAD_COMPOSITOR_AUTOMATICO: Mapping[ProveedorLocal, tuple[str, str]] = MappingProxyType({
-    ProveedorLocal.ALLIANCE: ("alliance-local", "1.3.0"),
+    ProveedorLocal.ALLIANCE: ("alliance-local", "1.3.1"),
 })
 
 

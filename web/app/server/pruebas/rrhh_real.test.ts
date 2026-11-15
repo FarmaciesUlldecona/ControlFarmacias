@@ -322,6 +322,25 @@ describe('TA-REAL: API en modo REAL con el adaptador simulado', async () => {
     const goma = await app.inject({ method: 'POST', url: '/api/rrhh/eventos', headers: W, payload: { accion: 'BORRAR', celdas: [{ trabajadora_id: AINA, fecha: '2026-11-09' }] } });
     assert.deepEqual([goma.statusCode, goma.json()], [409, { error: 'ANULAR_EVENTOS_PENDIENTE', mensaje: AVISO_ANULAR_PENDIENTE }]);
   });
+  test('TA-FICHA: el resumen de plantilla en REAL solo lee (READ ONLY + ROLLBACK, sin autor) y usa los mismos cálculos', async () => {
+    const bdF = bdSimulada({ eventos: [evento({ fecha: '2026-11-16', tipo: 'VACACIONES' }), evento({ fecha: '2026-11-16', franja: 'TARDE', tipo: 'VACACIONES' })] });
+    const appF = Fastify();
+    registrarRrhh(appF, { modo: 'REAL', quien: 'Marc', adaptador: crearAdaptadorRrhhReal({ pool: bdF.pool }), sesionValida: () => true });
+    await appF.ready();
+    try {
+      const r = await appF.inject({ method: 'GET', url: '/api/rrhh/fichas?farmacia=PIO&anio=2026&hoy=2026-11-13', headers: { host: '127.0.0.1:4747' } });
+      assert.equal(r.statusCode, 200);
+      const aina = r.json().filas.find((f: { trabajadora: { id: string } }) => f.trabajadora.id === AINA);
+      // Sin convenio en la BD simulada: vacaciones sí (constante), libre disposición y objetivo sin valor, aviso.
+      assert.deepEqual([aina.vacaciones.planificadas, aina.vacaciones.pendientes, aina.libre_disposicion.derecho, aina.horas.objetivo, aina.avisos[0].codigo],
+        [1, 29, null, null, 'SIN_CONVENIO']);
+      const s = sqls(bdF.log);
+      assert.ok(s.every((q) => q === 'begin transaction read only' || q === 'rollback' || /^select /i.test(q)), JSON.stringify(s));
+      assert.ok(!s.includes(SQL.autor) && !s.includes('begin') && !s.includes('commit'));
+    } finally {
+      await appF.close();
+    }
+  });
   test('la franja contraria a la media jornada se sigue rechazando', async () => {
     const r = await app.inject({ method: 'POST', url: '/api/rrhh/eventos', headers: W,
       payload: { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: ELENA, fecha: '2026-12-07', franja: 'TARDE' }] } });

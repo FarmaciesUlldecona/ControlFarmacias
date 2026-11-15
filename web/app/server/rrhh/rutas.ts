@@ -9,6 +9,9 @@
  * de ejemplo como reales); solo /api/rrhh/estado responde 200 con el aviso, para que la pantalla lo muestre.
  * Errores de la base de datos: código, HTTP y mensaje llano (errores_bd.ts); nunca filas, SQL ni datos de conexión.
  *
+ * TA-FICHA: GET /api/rrhh/fichas (resumen de plantilla) y GET /api/rrhh/trabajadoras/:id/anual (ficha anual), solo
+ * lectura, con los cálculos puros de ficha_anual.ts sobre las lecturas existentes (calendario del año y convenio).
+ *
  * Se registra sobre cualquier instancia de Fastify (pruebas con instancia propia, sin BD).
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -21,6 +24,13 @@ import {
   AVISO_ANULAR_PENDIENTE, FECHA_MAX, FECHA_MIN, MAX_DIAS_LECTURA, diasEntre, enAniosConvenio, esFecha, validarDeshacer, validarPeticionEventos,
 } from './eventos.ts';
 import { ErrorRrhhBd, MENSAJES_BD } from './errores_bd.ts';
+import { anioFicha, calcularFichaAnual, reglasFicha, resumenPlantilla, type FichaAnualDTO, type ResumenPlantillaDTO } from './ficha_anual.ts';
+
+/** Hoy en el reloj del servidor (fecha local), si el navegador no manda el suyo. */
+function hoyServidor(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 /** Código HTTP de cada error del módulo (y mensaje llano de los que lo necesitan). */
 const HTTP_ERROR: Readonly<Record<string, number>> = {
@@ -116,6 +126,45 @@ export function registrarRrhh(app: FastifyInstance, opciones: OpcionesRrhh): voi
     if (f === null) return datos === null ? pendiente(reply) : reply.code(400).send({ error: 'FARMACIA_NO_VALIDA' });
     return con(reply, async (d) => d.trabajadoras(f, req.query.bajas === '1'));
   });
+  // --- TA-FICHA: ficha anual y resumen de plantilla (solo lectura; mismas lecturas en FIXTURES y REAL) -----------
+  /** Año (por defecto el de hoy, dentro de los del convenio) y hoy (el del navegador; por defecto, el del servidor). */
+  const anioYHoy = (q: { anio?: string; hoy?: string }): { anio: number; hoy: string } | null => {
+    const hoy = q.hoy === undefined ? hoyServidor() : q.hoy;
+    if (!esFecha(hoy)) return null;
+    const porDefecto = anioFicha(hoy.slice(0, 4)) ?? (hoy < FECHA_MIN ? anioFicha(FECHA_MIN.slice(0, 4)) : anioFicha(FECHA_MAX.slice(0, 4)));
+    const anio = q.anio === undefined ? porDefecto : anioFicha(q.anio);
+    return anio === null ? null : { anio, hoy };
+  };
+  app.get<{ Querystring: { farmacia?: string; anio?: string; hoy?: string } }>('/api/rrhh/fichas', async (req, reply) => {
+    if (datos === null) return pendiente(reply);
+    const f = farmacia(req.query.farmacia);
+    if (f === null) return reply.code(400).send({ error: 'FARMACIA_NO_VALIDA' });
+    const ah = anioYHoy(req.query);
+    if (ah === null) return reply.code(400).send({ error: 'ANIO_NO_VALIDO' });
+    return con(reply, async (d): Promise<ResumenPlantillaDTO> => {
+      const cal = await d.calendario(f, `${ah.anio}-01-01`, `${ah.anio}-12-31`);
+      const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, await d.convenio(), ah.anio, ah.hoy);
+      return { farmacia: f, anio: ah.anio, hoy: ah.hoy, filas, reglas: reglasFicha() };
+    });
+  });
+  app.get<{ Params: { id: string }; Querystring: { anio?: string; hoy?: string } }>('/api/rrhh/trabajadoras/:id/anual', async (req, reply) => {
+    if (datos === null) return pendiente(reply);
+    if (!UUID.test(req.params.id)) return reply.code(400).send({ error: 'ID_NO_VALIDO' });
+    const ah = anioYHoy(req.query);
+    if (ah === null) return reply.code(400).send({ error: 'ANIO_NO_VALIDO' });
+    const id = req.params.id.toLowerCase();
+    return con(reply, async (d) => {
+      const det = await d.trabajadora(id);
+      if (!det) return reply.code(404).send({ error: 'TRABAJADORA_NO_ENCONTRADA' });
+      const base = { anio: ah.anio, hoy: ah.hoy, reglas: reglasFicha() };
+      if (det.trabajadora.anulada) return { ...base, ficha: null, motivo: 'ANULADA' } satisfies FichaAnualDTO;
+      const cal = await d.calendario(det.trabajadora.farmacia, `${ah.anio}-01-01`, `${ah.anio}-12-31`);
+      const t = cal.trabajadoras.find((x) => x.id === id);
+      if (!t) return { ...base, ficha: null, motivo: 'SIN_ALTA_EN_EL_ANIO' } satisfies FichaAnualDTO;
+      return { ...base, ficha: calcularFichaAnual(t, cal.eventos, await d.convenio(), ah.anio, ah.hoy), motivo: null } satisfies FichaAnualDTO;
+    });
+  });
+
   app.get<{ Params: { id: string } }>('/api/rrhh/trabajadoras/:id', async (req, reply) => {
     if (datos !== null && !UUID.test(req.params.id)) return reply.code(400).send({ error: 'ID_NO_VALIDO' });
     return con(reply, async (d) => (await d.trabajadora(req.params.id.toLowerCase())) ?? reply.code(404).send({ error: 'TRABAJADORA_NO_ENCONTRADA' }));

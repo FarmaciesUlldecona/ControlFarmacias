@@ -13,7 +13,8 @@ Solo tres cosas: el diff, `docs/contexto/REGLAS_CRITICAS.md` y los ficheros que 
 un único script de solo lectura: `./.venv/Scripts/python.exe -B tests/consultar_suite.py` (2BS). El registro
 de suites (`logs/agentes`) no se lee con ninguna herramienta.
 Cualquier otra lectura se bloquea; no la intentes ni busques contexto fuera. Si algo se bloquea, no cambies de
-herramienta ni de patrón para obtenerlo: anótalo en la evidencia de la regla afectada.
+herramienta ni de patrón para obtenerlo: marca la regla afectada `INCONCLUSO` (no `FAIL`) y anota en su evidencia
+qué intentabas y qué lo bloqueó (DECISIÓN DE PIO, 2026-11-14).
 
 1. Lee completo `docs/contexto/REGLAS_CRITICAS.md`. Las reglas salen de ahí, no de tu memoria.
 2. `git status --porcelain --untracked-files=all` para la lista de cambios, y `git diff HEAD` (o
@@ -47,10 +48,12 @@ Si el encargo acota un grupo de ficheros, revisa solo ese grupo.
 ## Salida (formato obligatorio)
 
 1. Tabla `Id | Resultado | Evidencia`, con `Resultado` ∈ `PASS`, `FAIL`, `N/A` (la regla no aplica a
-   estos cambios). Cada `FAIL` cita `fichero:línea` y la frase de REGLAS_CRITICAS incumplida. Cada
-   `PASS` de una regla que sí aplica cita al menos un `fichero:línea` revisado.
+   estos cambios) o `INCONCLUSO` (un bloqueo te impidió comprobarla). Cada `FAIL` cita `fichero:línea` y la
+   frase de REGLAS_CRITICAS incumplida. Cada `PASS` de una regla que sí aplica cita al menos un
+   `fichero:línea` revisado. Cada `INCONCLUSO` cita la acción bloqueada y el motivo del bloqueo. `FAIL` es
+   solo para un incumplimiento comprobado, nunca para algo que no pudiste comprobar.
 2. Lista de ficheros revisados.
-3. Última línea, sola y exacta: `VEREDICTO: PASS` si ninguna regla es `FAIL`; si no,
-   `VEREDICTO: FAIL`. Escribe la palabra VEREDICTO **una sola vez**.
+3. Última línea, sola y exacta: `VEREDICTO: FAIL` si alguna regla es `FAIL`; si no, `VEREDICTO: INCONCLUSO`
+   si alguna es `INCONCLUSO`; si no, `VEREDICTO: PASS`. Escribe la palabra VEREDICTO **una sola vez**.
 
 No inventes hallazgos para parecer útil: un `FAIL` sin `fichero:línea` comprobable no vale.

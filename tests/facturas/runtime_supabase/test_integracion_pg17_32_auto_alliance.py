@@ -8,8 +8,9 @@ Diseno: pruebas/auditoria_auto_alliance/DISENO.md. Se comprueba:
   sesion READ_ONLY real: sombra, normalizacion Alliance / no soportado, conciliacion CONCILIADA con resultado real =
   simulado, DIFERENCIA que para la conciliacion sin reclamar, guard por noche, puertas, limites, noche anterior sin
   cerrar y fila ajena (postcheck 2AX por fila).
-La fila de resumen la escribe el cliente de los tests del 2AZ, que usa el rol del sistema con sus privilegios por
-defecto (los de Supabase, reproducidos en la base local desde el 2BQ). Sin produccion ni Farmatic.
+La fila de resumen la escribe el cliente de los tests del 2AZ, que usa el rol del sistema con los privilegios que la
+32 le concede explicitamente sobre la tabla (opcion A: SELECT, INSERT y UPDATE; sin DELETE, TRUNCATE, REFERENCES ni
+TRIGGER). Sin produccion ni Farmatic.
 """
 from __future__ import annotations
 
@@ -304,6 +305,8 @@ def test_noche_sombra_solo_escribe_su_fila(entorno_noche, tmp_path):
     informe = json.loads((tmp_path / "informes" / fila["fecha"] / "informe.json").read_text(encoding="utf-8"))
     assert informe["postcheck"]["veredicto"] == "POSTCHECK_OK"
     assert informe["postcheck"]["filas_cambiadas_por_tabla"] == {}
+    # Mejora aprobada por Pio (2026-11-13): Trabajadores, leido aparte e informativo.
+    assert informe["postcheck"]["trabajadores"] == {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}
     assert alliance in [d["documento_id"] for d in informe["sombra"]["documentos_que_reclamaria"]]
     assert informe["sombra"]["conciliacion_n1"]["factura_id"] == ids["08007969"]
     assert informe["sombra"]["conciliacion_n1"]["resultado"] == "CONCILIADA"

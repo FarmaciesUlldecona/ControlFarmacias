@@ -390,6 +390,12 @@ def barrera_commit(huella_actual=None, ruta_uso=None, rutas_cambiadas=None, ruta
             "commit_revision_desfasada",
             "los cambios difieren de los revisados por revisor-reglas; vuelve a revisarlos.",
         )
+    if revision["veredicto"] == "INCONCLUSO":
+        return bloquear(
+            "commit_revisor_inconcluso",
+            "una revisión de revisor-reglas sobre estos cambios es INCONCLUSO y no hay un PASS posterior; "
+            "resuelve el bloqueo y vuelve a revisarlos.",
+        )
     if revision["veredicto"] != "PASS":
         return bloquear(
             "commit_revisor_fail",

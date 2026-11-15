@@ -47,6 +47,7 @@ import auditoria_readonly as ar  # noqa: E402
 from auditoria_readonly import (  # noqa: E402
     COLUMNAS_HUELLA, MODO_CLAIM, PROJECT_REF, SQL_SELECTOR_OFICIAL, SQL_TODAS_CON_FILTROS, _cuerpo_local,
     _cuerpo_remoto, _ejecutar_lectura, _escribir, _operacion, _puertas_operacion, _salida_fuera_del_repo)
+from src.facturas.runtime_supabase.noche_automatica import TABLAS_TRABAJADORES  # noqa: E402
 
 
 def _cargar(nombre: str, ruta: str):
@@ -332,11 +333,23 @@ def comprobar_resultado(previsto: dict, estado_previsto: dict, real: dict) -> li
     return motivos
 
 
+def cambios_trabajadores(antes: dict, despues: dict) -> dict[str, int]:
+    """Filas de Trabajadores cambiadas, nuevas o borradas por tabla: se informan aparte, sin veredicto (Pio, 2026-11-13)."""
+    cambios = {}
+    for tabla in sorted((set(antes) | set(despues)) & TABLAS_TRABAJADORES):
+        a, b = antes.get(tabla, {}), despues.get(tabla, {})
+        distintas = sum(1 for k in set(a) | set(b) if (a.get(k) or [None])[0] != (b.get(k) or [None])[0])
+        if distintas:
+            cambios[tabla] = distintas
+    return cambios
+
+
 def diferencias_filas(antes: dict, despues: dict, facturas: set[str]) -> list[str]:
     """Criterio 2AX por fila: solo filas nuevas de ``facturas``, cambios en sus filas de ``CAMBIABLES`` y bajas de
-    sus reservas (R15)."""
+    sus reservas (R15). Las tablas de Trabajadores no cuentan (las escribe la web); se informan con
+    ``cambios_trabajadores``."""
     problemas = []
-    for tabla in sorted(set(antes) | set(despues)):
+    for tabla in sorted((set(antes) | set(despues)) - TABLAS_TRABAJADORES):
         a, b = antes.get(tabla, {}), despues.get(tabla, {})
         for clave in set(b) - set(a):
             if b[clave][1] not in facturas:
@@ -426,7 +439,10 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
         if post["cf_configuracion"] != pre["cf_configuracion"] or post["operacion"]["flags"] != pre["operacion"]["flags"]:
             problemas.append("CONFIGURACION_U_OPERACION_DISTINTA")
         registro["postcheck"] = {"veredicto": "POSTCHECK_OK" if not problemas else "POSTCHECK_REVISAR",
-                                 "problemas": problemas, "facturas": list(conciliadas)}
+                                 "problemas": problemas, "facturas": list(conciliadas),
+                                 "trabajadores": {"afecta_al_veredicto": False,
+                                                  "filas_cambiadas_por_tabla": cambios_trabajadores(pre["filas"],
+                                                                                                    post["filas"])}}
         return problemas
 
     def cerrar(veredicto: str, motivos: list[str]) -> int:

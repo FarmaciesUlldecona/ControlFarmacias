@@ -4,11 +4,12 @@
 // reales; sin credencial, «Falta configurar la credencial de Trabajadores» y ningún dato). Categorías del esquema
 // (titular = Farmacéutica titular, fuera del cómputo); fecha de alta obligatoria; «Anular» aparte, con confirmación;
 // si faltan años del convenio, botón para crearlos con los valores firmados.
+// TA-FICHA: resumen de plantilla encima del listado y ficha anual en el detalle (ficha_anual.tsx).
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   CATEGORIAS, CONVENIO_ANUAL, FRANJA_JORNADA, HORAS_COMPLETA, HORAS_POR_DEFECTO, JORNADAS, LARGO_NOMBRE, TEXTO_ACCION, TEXTO_BANNER_EJEMPLO,
-  TEXTO_BANNER_REAL, TEXTO_CAMPO, TEXTO_CATEGORIA, TEXTO_ESTADO_CONVENIO, TEXTO_FUERA_COMPUTO, TEXTO_JORNADA, TEXTO_PENDIENTE_T5, TEXTO_PROVISIONAL,
+  TEXTO_BANNER_REAL, TEXTO_CAMPO, TEXTO_CATEGORIA, TEXTO_ESTADO_CONVENIO, TEXTO_FUERA_COMPUTO, TEXTO_JORNADA, TEXTO_PROVISIONAL,
   TEXTO_REFERENCIA_PROVISIONAL, aniosConvenioQueFaltan, esTitular, filtroFarmacia, horasSemanales, porcentajeDerivado,
   type Categoria, type ConvenioAnual, type EstadoRrhhDTO, type EventoHistorial, type FarmaciaRrhh, type FiltroFarmacia, type Jornada, type Trabajadora,
   type TrabajadoraDetalleDTO, type TrabajadorasDTO,
@@ -16,6 +17,7 @@ import {
 import { ErrorApi, enviar, useApi, useApiRecargable } from './api.ts';
 import { fechaCorta, fechaHora } from './formato.ts';
 import { Cabecera, MOVIL, useMedia } from './ui.tsx';
+import { FichaAnualSeccion, ResumenPlantilla } from './ficha_anual.tsx';
 
 const HORAS = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 const horas = (h: number) => `${HORAS.format(h)} h`;
@@ -321,6 +323,8 @@ function Fichas() {
   const { carga, recargar } = useApiRecargable<TrabajadorasDTO>(`/api/rrhh/trabajadoras?farmacia=${farmacia}${bajas ? '&bajas=1' : ''}`);
   const [alta, setAlta] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  /** TA-FICHA: el resumen de plantilla se recalcula tras crear una ficha o el convenio. */
+  const [version, setVersion] = useState(0);
   const movil = useMedia(MOVIL);
   const navegar = useNavigate();
 
@@ -339,7 +343,7 @@ function Fichas() {
 
   return (
     <div className="rrhh-fichas" data-rrhh-fichas>
-      <ConvenioQueFalta convenio={d.convenio} onCreado={() => { setAviso('Convenio creado con los valores firmados.'); recargar(); }} />
+      <ConvenioQueFalta convenio={d.convenio} onCreado={() => { setAviso('Convenio creado con los valores firmados.'); recargar(); setVersion((v) => v + 1); }} />
       <div className="rrhh-barra-herramientas">
         <SelectorFarmacia valor={farmacia} onChange={(v) => cambiar({ farmacia: v === 'AMBAS' ? null : v })} />
         <label className="rrhh-check rrhh-bajas">
@@ -353,8 +357,10 @@ function Fichas() {
           referencia={c?.horas_semanales_referencia ?? null}
           inicial={{ farmacia: farmacia === 'RITA' ? 'RITA' : 'PIO', nombre: '', categoria: 'TECNICA', tipo_jornada: 'COMPLETA', horas: textoHoras(HORAS_COMPLETA), fecha_alta: hoyLocal() }}
           onCancelar={() => setAlta(false)}
-          onGuardada={(t) => { setAlta(false); setAviso(`Ficha creada: ${t.nombre} (${t.farmacia}).`); recargar(); }} />
+          onGuardada={(t) => { setAlta(false); setAviso(`Ficha creada: ${t.nombre} (${t.farmacia}).`); recargar(); setVersion((v) => v + 1); }} />
       )}
+      {/* TA-FICHA: resumen de plantilla encima del listado (mismo selector de farmacia). */}
+      <ResumenPlantilla key={version} farmacia={farmacia} />
       <p className="rrhh-resumen" data-resumen-fichas>
         {activas.length} {activas.length === 1 ? 'ficha activa' : 'fichas activas'} · {computan} en el cómputo del convenio
         {c && <> · jornada máxima {c.anio}: <strong>{horas(c.jornada_max_horas)}</strong> · jornada completa de referencia: <strong data-referencia-semanal>{horas(c.horas_semanales_referencia)}/sem</strong> <span className="tenue">({TEXTO_PROVISIONAL})</span></>}
@@ -556,6 +562,9 @@ function Detalle() {
         <FormularioAnular t={t} onCancelar={() => setModo('ver')} onHecha={() => { setModo('ver'); setAviso('Ficha anulada.'); recargar(); }} />
       )}
 
+      {/* TA-FICHA: ficha anual (vacaciones, libre disposición, permiso médico, horas, ausencias y baja), con selector de año. */}
+      <FichaAnualSeccion key={t.updated_at} id={t.id} />
+
       <section className="tarjeta bloque" aria-labelledby="t-objetivo">
         <div className="bloque-cabecera">
           <h2 id="t-objetivo">Objetivo anual de horas</h2>
@@ -579,17 +588,6 @@ function Detalle() {
             </div>
           ))}
         </div>
-      </section>
-
-      <section className="tarjeta bloque" aria-labelledby="t-horas">
-        <h2 id="t-horas">Horas de {anio}</h2>
-        <dl className="rrhh-horas">
-          {['Planificadas', 'Confirmadas', 'Pendientes'].map((x) => (
-            <div key={x} className="rrhh-hueco" data-hueco-horas={x.toLowerCase()}>
-              <dt>{x}</dt><dd>{TEXTO_PENDIENTE_T5}</dd>
-            </div>
-          ))}
-        </dl>
       </section>
 
       {/* TA2-2: historial plegado por defecto; se despliega con un clic. */}

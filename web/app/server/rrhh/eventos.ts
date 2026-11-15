@@ -654,6 +654,8 @@ export interface SemillaEventos {
   jornada_habitual: { desde: string; hasta: string };
   /** Días ya confirmados (todas las fichas). */
   confirmado: { desde: string; hasta: string };
+  /** TA-FICHA: jornada habitual de una persona en otro periodo (de lunes a viernes, sin pisar ausencias), confirmada o no. */
+  jornada_extra?: { trabajadora_id: string; desde: string; hasta: string; confirmado?: boolean }[];
 }
 
 export interface AlmacenEventos {
@@ -716,6 +718,18 @@ export function crearAlmacenEventos(o: {
         for (const f of rangoFechas(a.desde, a.hasta)) {
           if (!esLaborable(f)) continue;
           for (const franja of a.franja ? [a.franja] : FRANJAS_DE_JORNADA[t.tipo_jornada]) crear(t, f, franja, a.tipo, nota && nota.ok ? nota.nota : null);
+        }
+      }
+      for (const j of s.jornada_extra ?? []) {
+        const t = ficha(j.trabajadora_id);
+        if (!t) throw new Error(`SEMILLA_EVENTOS: ficha ${j.trabajadora_id}`);
+        for (const f of rangoFechas(j.desde, j.hasta)) {
+          if (!esLaborable(f)) continue;
+          for (const franja of FRANJAS_DE_JORNADA[t.tipo_jornada]) {
+            crear(t, f, franja, 'JORNADA');
+            const e = enCelda(t.id, f, franja);
+            if (j.confirmado && e?.tipo === 'JORNADA') e.estado = 'CONFIRMADO';
+          }
         }
       }
       for (const t of fichas) {

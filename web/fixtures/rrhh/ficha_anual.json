@@ -1,0 +1,13 @@
+{
+  "_nota": "TA-FICHA: eventos FICTICIOS de 2026 fuera de noviembre (la semana de TA2 no cambia) para la ficha anual y el resumen de plantilla. Solo fichas de RITA: Laura (30 días de vacaciones planificados, sin aviso), Sílvia (vacaciones con fin de semana dentro y una media franja), Paula (alta el 1 de julio, media jornada: su franja única cuenta 1 día), Marta (baja con fin de semana dentro) y Judit (jornada de enero a octubre confirmada: exceso de horas). Nunca datos reales.",
+  "ausencias": [
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000011", "tipo": "VACACIONES", "desde": "2026-07-06", "hasta": "2026-08-04" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000013", "tipo": "VACACIONES", "desde": "2026-08-03", "hasta": "2026-08-14" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000013", "tipo": "VACACIONES", "desde": "2026-10-09", "hasta": "2026-10-09", "franja": "TARDE" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000016", "tipo": "VACACIONES", "desde": "2026-09-07", "hasta": "2026-09-11", "franja": "MANANA" },
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000012", "tipo": "BAJA", "desde": "2026-03-12", "hasta": "2026-03-17" }
+  ],
+  "jornada_extra": [
+    { "trabajadora_id": "e0000000-0000-4000-8000-000000000014", "desde": "2026-01-01", "hasta": "2026-10-31", "confirmado": true }
+  ]
+}

@@ -27,6 +27,8 @@ import {
   horasQueSuman, leerNota, validarPeticionEventos,
 } from '../../app/server/rrhh/eventos.ts';
 import { traducirErrorBd } from '../../app/server/rrhh/errores_bd.ts';
+import { leerSemillaFichaAnual } from '../../app/server/rrhh/adaptador_fixtures.ts';
+import { AVISO_VACACIONES_DESDE, REDONDEO_PROPORCIONAL, TIPOS_HORAS_COMPUTAN, VACACIONES_DIAS_NATURALES, calcularFichaAnual, resumenPlantilla } from '../../app/server/rrhh/ficha_anual.ts';
 import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
 import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, generar } from './gen_fixtures.mjs';
 
@@ -872,7 +874,9 @@ comprobar('TA1/TA-REAL: fichas de ejemplo: PIO 3 completas + 1 media mañana (t�
     && rita.filter((t) => t.categoria === 'FARMACEUTICA_ADJUNTA').length === 1 && rita.filter((t) => t.categoria === 'TECNICA').length === 6
     && tit.length === 2 && new Set(tit.map((t) => t.farmacia)).size === 2 && new Set(tit.map((t) => t.nombre)).size === 1
     // TA-REAL: valores del esquema (migración 31) y fecha de alta obligatoria.
-    && s.every((t) => CATEGORIAS.includes(t.categoria) && JORNADAS.includes(t.tipo_jornada) && t.fecha_alta === '2026-01-01')
+    // TA-FICHA: Paula (RITA, media mañana) con alta el 1 de julio (derecho proporcional); el resto, 1 de enero.
+    && s.every((t) => CATEGORIAS.includes(t.categoria) && JORNADAS.includes(t.tipo_jornada)
+      && t.fecha_alta === (t.id === 'e0000000-0000-4000-8000-000000000016' ? '2026-07-01' : '2026-01-01'))
     // TA1-2: jornada en horas diarias (lunes a viernes): completa 8 h; media mañana 4,5 h (también el titular).
     && [...pio, ...rita].filter((t) => t.tipo_jornada === 'COMPLETA').every((t) => t.horas_diarias === 8)
     && [...pio, ...rita, ...tit].filter((t) => t.tipo_jornada === 'MEDIA_MANANA').every((t) => t.horas_diarias === 4.5)
@@ -928,7 +932,7 @@ comprobar('TA2: semilla de eventos: solo fichas de ejemplo, tipos de TA2 sin JOR
 });
 comprobar('TA2-2: carga por franja: 21 franjas/día (8 completas × 2 + 5 medias) × 20 laborables = 420; 41 de ausencia (23 días de persona); 105 confirmados', () => {
   const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
-  const evs = a.eventos();
+  const evs = a.eventos().filter((e) => e.fecha.startsWith('2026-11')); // TA-FICHA suma eventos fuera de noviembre
   const aus = evs.filter((e) => e.tipo !== 'JORNADA');
   const tipos = new Set(evs.map((e) => e.tipo));
   const ok = evs.length === 420 && aus.length === 41 && new Set(aus.map((e) => `${e.trabajadora_id}|${e.fecha}`)).size === 23
@@ -947,7 +951,7 @@ comprobar('TA2-3: franjas y horas de la ficha (completa mañana 4,5 h + tarde 3,
   });
   // Cada persona suma al día sus horas diarias (completa: 4,5 + 3,5 = 8).
   const porDia = new Map();
-  for (const e of a.eventos()) porDia.set(`${e.trabajadora_id}|${e.fecha}`, (porDia.get(`${e.trabajadora_id}|${e.fecha}`) ?? 0) + e.horas_efectivas);
+  for (const e of a.eventos().filter((x) => x.fecha.startsWith('2026-11'))) porDia.set(`${e.trabajadora_id}|${e.fecha}`, (porDia.get(`${e.trabajadora_id}|${e.fecha}`) ?? 0) + e.horas_efectivas);
   const sumaMal = [...porDia].filter(([k, h]) => fichas.get(k.split('|')[0]).horas_diarias !== h);
   const aina = (fr) => a.eventos().find((e) => e.trabajadora_id === 'e0000000-0000-4000-8000-000000000001' && e.franja === fr).horas_efectivas;
   const irene = a.eventos().find((e) => e.trabajadora_id === 'e0000000-0000-4000-8000-000000000017');
@@ -1030,6 +1034,41 @@ comprobar('TA-REAL: errores de la BD → código y mensaje llano (P0001, 42501, 
     caso('23505'), caso('23514'), caso('23503'), caso('57014'), caso('25P03'), caso('53300')];
   return si(isDeepStrictEqual(r, ['AUTOR_AUSENTE', 'FARMACIA_NO_HABILITADA_EN_MODULO', 'EVENTO_FUERA_DEL_ALTA', 'PERMISO_DENEGADO', 'DUPLICADO', 'REGLA_TABLA',
     'REGISTRO_RELACIONADO', 'TIEMPO_AGOTADO', 'TIEMPO_AGOTADO', 'SIN_CONEXIONES']), JSON.stringify(r));
+});
+
+// --- Casos TA-FICHA (ficha anual y resumen de plantilla, datos de ejemplo) ----------
+const fichaEjemplo = (() => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const cal = a.calendario('AMBAS', '2026-01-01', '2026-12-31');
+  const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, a.convenio(), 2026, '2026-11-13');
+  return { a, cal, de: (n) => filas.find((f) => f.trabajadora.id === `e0000000-0000-4000-8000-0000000000${n}`), filas };
+})();
+comprobar('TA-FICHA: semilla solo de RITA y fuera de noviembre; reglas en un único punto (30 días, entero hacia arriba, 1 de octubre)', () => {
+  const s = leerSemillaFichaAnual();
+  const fichas = new Map(leerSemilla().map((t) => [t.id, t]));
+  const malos = [...s.ausencias, ...s.jornada_extra].filter((x) => fichas.get(x.trabajadora_id)?.farmacia !== 'RITA' || x.desde.startsWith('2026-11') || x.hasta.startsWith('2026-11'));
+  return si(malos.length === 0 && VACACIONES_DIAS_NATURALES === 30 && REDONDEO_PROPORCIONAL === 'ENTERO_ARRIBA' && AVISO_VACACIONES_DESDE === '10-01',
+    JSON.stringify(malos));
+});
+comprobar('TA-FICHA: vacaciones en días naturales (Sílvia 3–14 ago = 12 + media franja 0,5 + 23–27 nov = 5), media jornada (Paula 5) y alta a mitad de año (derecho 16)', () => {
+  const s = fichaEjemplo.de('13').vacaciones;
+  const p = fichaEjemplo.de('16').vacaciones;
+  return si(isDeepStrictEqual(s.periodos.map((x) => x.dias), [12, 0.5, 5]) && s.disfrutadas === 12.5 && s.planificadas === 5 && s.pendientes === 12.5
+    && p.derecho === 16 && p.proporcional && p.disfrutadas === 5, JSON.stringify({ s, p }));
+});
+comprobar('TA-FICHA/TA-FICHA-2: exceso de horas (Judit 129 h ≈ 16,1 días, con su descanso compensatorio del 6 nov que suma 8 h), baja (Marta 11 días), aviso de octubre (Sílvia sí, Laura no)', () => {
+  const j = fichaEjemplo.de('14');
+  const cods = (n) => fichaEjemplo.de(n).avisos.map((x) => x.codigo);
+  return si(TIPOS_HORAS_COMPUTAN.includes('DESCANSO_COMPENSATORIO') && !TIPOS_HORAS_COMPUTAN.includes('VACACIONES') && !TIPOS_HORAS_COMPUTAN.includes('PERMISO_NO_RETRIBUIDO')
+    && j.horas.confirmadas === 1776 && j.horas.exceso === 129 && j.horas.exceso_dias === 16.1 && fichaEjemplo.de('12').dias_baja === 11
+    && cods('13').includes('VACACIONES_SIN_PLANIFICAR') && cods('11').length === 0, JSON.stringify({ h: j.horas, s: cods('13'), l: cods('11') }));
+});
+comprobar('TA-FICHA: libre disposición (Rosa media franja 0,5 de 1), permiso médico (Laura 8 de 24 h), titular sin objetivo; el 30 sep no hay aviso de octubre', () => {
+  const { a, cal, de } = fichaEjemplo;
+  const silvia = cal.trabajadoras.find((t) => t.id === 'e0000000-0000-4000-8000-000000000013');
+  const sep = calcularFichaAnual(silvia, cal.eventos, a.convenio(), 2026, '2026-09-30');
+  return si(de('15').libre_disposicion.usadas === 0.5 && de('15').libre_disposicion.restantes === 0.5 && de('11').permiso_medico.usadas === 8
+    && de('22').horas.objetivo === null && sep.avisos.length === 0 && fichaEjemplo.filas.length === 13, JSON.stringify(sep.avisos));
 });
 
 // --- Informe ----------------------------------------------------------------------

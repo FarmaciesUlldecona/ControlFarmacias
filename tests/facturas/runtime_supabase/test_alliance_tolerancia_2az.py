@@ -47,6 +47,8 @@ def _fila(tipo, sentido, total):
 @pytest.mark.parametrize("tipo,sentido,total,concepto", [
     ("DIRECTO", "CARGO", 191.84, "ALBARAN_MERCANCIA"),              # 08C18299 (08007971)
     ("ENCARGO VACUNAS", "CARGO", 415.61, "ALBARAN_MERCANCIA"),      # 08008834
+    ("ENCARGO", "CARGO", 7.42, "ALBARAN_MERCANCIA"),                # 08D50803 (08012619), Pio 2026-11-14
+    ("ENCARGO", "ABONO", -7.42, "NO_DEMOSTRABLE"),                  # abono no certificado
     ("MIS RESERVAS", "CARGO", 35.2, "ALBARAN_MERCANCIA"),           # 08010085
     ("TELEVENTA 2", "CARGO", 175.15, "ALBARAN_MERCANCIA"),          # 08006570
     ("COSTO TELEVENTA", "CARGO", 6.51, "ALBARAN_MERCANCIA"),        # 08B96275 (08007501)
@@ -99,7 +101,7 @@ def test_r10_08007971_promueve_los_3_directo():
     raw = _raw(local, "08007971")
     assert [a["numero_albaran"]["valor"] for a in raw["albaranes"]] == ["08C18299", "08M24229", "08M25574"]
     assert not [i for i in raw["incidencias"] if i["codigo"] == "CANDIDATO_ALBARAN_NO_PROMOVIDO"]
-    assert local.documento["layout_version"] == "1.3.0"
+    assert local.documento["layout_version"] == "1.3.1"
     assert doc["metadata_tecnica"]["version_normalizador"] == "multifactura-local-2"
 
 

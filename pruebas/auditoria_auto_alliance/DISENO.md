@@ -271,3 +271,14 @@ código, con su suite completa):
    defecto»; la 32 concede los privilegios explícitamente (opción A).
 3. Comentario de `src/facturas/runtime_supabase/noche_automatica.py` que cita «(R10)» por el riesgo del diseño; se
    confunde con la regla R10 de REGLAS_CRITICAS.
+
+Mejora aprobada por Pio (2026-11-13, tras AUTO-32-D), en el mismo commit: en los postchecks, las tablas de Trabajadores
+se informan aparte y no hacen fallar el veredicto.
+
+Decisión de Pio (2026-11-13, tras crear la tarea de sombra), en el mismo commit: `ejecutar_automatizacion_alliance.bat`
+guarda registro con el mismo patrón que el `.bat` de importación de facturas, en `logs\automatizacion_alliance.log`,
+con la ruta completa de Python.
+
+**HECHO (commit ENCARGO, 2026-11-14):** los tres textos, la mejora de los postchecks (noche: Trabajadores leído en su
+propia sesión READ_ONLY e informado en `postcheck.trabajadores`; series 2BJ y 2BP: fuera del criterio 2AX e
+informado en `postcheck.trabajadores`) y el registro del `.bat`.
