@@ -11,9 +11,10 @@ import {
 } from '../server/rrhh/contrato.ts';
 import { CODIGO_TIPO_EVENTO, COLOR_TIPO_EVENTO, TEXTO_TIPO_EVENTO, textoPeriodoCambio } from '../server/rrhh/eventos.ts';
 import {
-  TEXTO_FESTIVOS_PENDIENTES, TEXTO_VACACIONES_PENDIENTE,
+  TEXTO_VACACIONES_PENDIENTE,
   type AvisoFicha, type FichaAnual, type FichaAnualDTO, type Periodo, type ResumenPlantillaDTO,
 } from '../server/rrhh/ficha_anual.ts';
+import { TEXTO_TA3_PENDIENTE, type ResumenGuardiasPersona } from '../server/rrhh/guardias.ts';
 import { ErrorApi, enviar, useApiRecargable } from './api.ts';
 import { fechaCorta } from './formato.ts';
 import { MOVIL, useMedia } from './ui.tsx';
@@ -314,7 +315,7 @@ function BloqueHoras({ f }: { f: FichaAnual }) {
       {h.exceso !== null && (
         <p className="fa-exceso" data-exceso-horas>Exceso de {horas(h.exceso)} ≈ {dias(h.exceso_dias as number)} que podrían ser vacaciones <span className="tenue">(estimación: exceso / {horas(f.trabajadora.horas_diarias)} al día)</span></p>
       )}
-      <p className="fa-nota tenue" data-festivos-pendientes>{TEXTO_FESTIVOS_PENDIENTES}. Suman jornada, asuntos propios, permisos retribuidos, permiso médico, baja y descanso compensatorio.</p>
+      <p className="fa-nota tenue" data-horas-suman>Suman jornada, asuntos propios, permisos retribuidos, permiso médico, baja y descanso compensatorio.</p>
     </section>
   );
 }
@@ -359,13 +360,40 @@ export function FichaAnualSeccion({ id }: { id: string }) {
           {carga.datos.motivo === 'ANULADA' ? 'Ficha anulada: no tiene ficha anual.' : `Sin días de alta en ${carga.datos.anio}.`}
         </p>
       ) : (
-        <FichaAnualCuerpo f={carga.datos.ficha} onCambio={recargar} />
+        <FichaAnualCuerpo f={carga.datos.ficha} onCambio={recargar} guardias={carga.datos.guardias ?? null} />
       ))}
     </section>
   );
 }
 
-function FichaAnualCuerpo({ f, onCambio }: { f: FichaAnual; onCambio: () => void }) {
+/**
+ * TA3: «Guardias del año»: semanas de guardia (también localizada por teléfono), sábados de apoyo, festivos de guardia
+ * y horas fuera de cómputo (se registran; no suman en las horas del año). Sin datos (REAL): tablas pendientes.
+ */
+function BloqueGuardias({ g }: { g: ResumenGuardiasPersona | null }) {
+  return (
+    <section className="fa-bloque fa-guardias" aria-labelledby="t-fa-g" data-bloque="guardias">
+      <div className="fa-bloque-cabecera">
+        <h3 id="t-fa-g">Guardias del año</h3>
+        {g && <span className="fa-derecho" data-horas-fuera-computo><strong>{horas(g.horas_total)}</strong> <span className="tenue">fuera de cómputo</span></span>}
+      </div>
+      {g === null ? <p className="tenue" data-guardias-pendiente>{TEXTO_TA3_PENDIENTE}.</p> : (
+        <>
+          <div className="fa-cifras">
+            <Cifra valor={num(g.semanas_guardia)} texto={g.semanas_guardia === 1 ? 'semana de guardia' : 'semanas de guardia'} clase="gris" dato="semanas-guardia" />
+            <Cifra valor={num(g.sabados_apoyo)} texto={g.sabados_apoyo === 1 ? 'sábado de apoyo' : 'sábados de apoyo'} clase="gris" dato="sabados-apoyo" />
+            <Cifra valor={num(g.festivos_guardia)} texto={g.festivos_guardia === 1 ? 'festivo de guardia' : 'festivos de guardia'} clase="gris" dato="festivos-guardia" />
+          </div>
+          <p className="fa-nota tenue" data-desglose-guardias>
+            Guardia {horas(g.horas_guardia)} · apoyo {horas(g.horas_apoyo)} · festivos {horas(g.horas_festivo)}. Localizada por teléfono las {g.semanas_guardia} {g.semanas_guardia === 1 ? 'semana' : 'semanas'} de guardia (sin horas). Se registran; no suman en las horas del año.
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
+
+function FichaAnualCuerpo({ f, onCambio, guardias }: { f: FichaAnual; onCambio: () => void; guardias: ResumenGuardiasPersona | null }) {
   return (
     <>
       <p className="fa-calculo tenue">Calculado a {fechaCorta(f.hoy)} · {f.dias_en_alta} de {f.dias_anio} días en alta en {f.anio}</p>
@@ -377,6 +405,7 @@ function FichaAnualCuerpo({ f, onCambio }: { f: FichaAnual; onCambio: () => void
         <BloqueMedico f={f} />
         <BloqueBaja f={f} />
         <BloqueAusencias f={f} />
+        <BloqueGuardias g={guardias} />
       </div>
     </>
   );
@@ -456,7 +485,7 @@ export function ResumenPlantilla({ farmacia }: { farmacia: FiltroFarmacia }) {
       {carga.estado === 'ok' && (
         <>
           <p className="fa-calculo tenue" data-resumen-pie>
-            {filas.length} {filas.length === 1 ? 'persona' : 'personas'} · {conAvisos} con avisos · calculado a {fechaCorta(carga.datos.hoy)} · vacaciones: {carga.datos.reglas.vacaciones_dias === null ? `${TEXTO_VACACIONES_PENDIENTE} (el convenio de ${anio} no tiene los días)` : `${carga.datos.reglas.vacaciones_dias} días naturales del convenio`} · festivos aún no descontados (TA3)
+            {filas.length} {filas.length === 1 ? 'persona' : 'personas'} · {conAvisos} con avisos · calculado a {fechaCorta(carga.datos.hoy)} · vacaciones: {carga.datos.reglas.vacaciones_dias === null ? `${TEXTO_VACACIONES_PENDIENTE} (el convenio de ${anio} no tiene los días)` : `${carga.datos.reglas.vacaciones_dias} días naturales del convenio`}
           </p>
           {filas.length === 0 ? <p className="tenue">Nadie de alta en {anio} en esta farmacia.</p> : movil ? (
             <>

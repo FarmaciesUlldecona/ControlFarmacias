@@ -6,6 +6,7 @@ import { PaginaFacturas } from './facturas.tsx';
 import { PaginaEnConstruccion, PaginaNoEncontrada } from './paginas.tsx';
 import { PaginaTrabajadora, PaginaTrabajadores } from './trabajadores.tsx';
 import { PaginaCalendario } from './calendario.tsx';
+import { PaginaGuardias } from './guardias.tsx';
 
 /** Pantallas de la fase 1. En H3b: cabecera + "En construcción". */
 export const PANTALLAS = [
@@ -37,6 +38,8 @@ export default function App() {
         <Route path="/trabajadores" element={<PaginaTrabajadores />} />
         {/* TA2: calendario (ruta fija: tiene prioridad sobre /trabajadores/:id). */}
         <Route path="/trabajadores/calendario" element={<PaginaCalendario />} />
+        {/* TA3: guardias y festivos (ruta fija, como el calendario). */}
+        <Route path="/trabajadores/guardias" element={<PaginaGuardias />} />
         <Route path="/trabajadores/:id" element={<PaginaTrabajadora />} />
         <Route path="*" element={<PaginaNoEncontrada />} />
       </Route>

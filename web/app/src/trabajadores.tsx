@@ -6,6 +6,7 @@
 // si faltan años del convenio, botón para crearlos con los valores firmados. TA-REAL-2: si a algún año le faltan las
 // vacaciones, botón para completar solo esos dos campos.
 // TA-FICHA: resumen de plantilla encima del listado y ficha anual en el detalle (ficha_anual.tsx).
+// TA3: pestaña «Guardias y festivos» (guardias.tsx); en REAL, deshabilitada («Pendiente de tablas en Supabase»).
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -15,6 +16,7 @@ import {
   type Categoria, type ConvenioAnual, type EstadoRrhhDTO, type EventoHistorial, type FarmaciaRrhh, type FiltroFarmacia, type Jornada, type Trabajadora,
   type TrabajadoraDetalleDTO, type TrabajadorasDTO,
 } from '../server/rrhh/contrato.ts';
+import { TEXTO_TA3_PENDIENTE } from '../server/rrhh/guardias.ts';
 import { ErrorApi, enviar, useApi, useApiRecargable } from './api.ts';
 import { fechaCorta, fechaHora } from './formato.ts';
 import { Cabecera, MOVIL, useMedia } from './ui.tsx';
@@ -57,20 +59,23 @@ function SinConexion({ mensaje }: { mensaje: string }) {
   );
 }
 
-type Seccion = 'fichas' | 'calendario';
+type Seccion = 'fichas' | 'calendario' | 'guardias';
 const SECCIONES = [
   { clave: 'fichas', texto: 'Fichas', a: '/trabajadores' },
   { clave: 'calendario', texto: 'Calendario', a: '/trabajadores/calendario' },
-  { clave: 'guardias', texto: 'Guardias y festivos', hito: 'TA3' },
+  { clave: 'guardias', texto: 'Guardias y festivos', a: '/trabajadores/guardias' },
 ] as const;
 
-function Secciones({ activa }: { activa: Seccion }) {
+/** TA3: «Guardias y festivos» deshabilitada mientras no haya tablas (REAL): «Pendiente de tablas en Supabase». */
+function Secciones({ activa, guardias }: { activa: Seccion; guardias: boolean }) {
   return (
     <nav className="rrhh-secciones" aria-label="Secciones de Trabajadores">
-      {SECCIONES.map((s) => ('a' in s
-        ? <Link key={s.clave} to={s.a} className={`rrhh-seccion${s.clave === activa ? ' activa' : ''}`} aria-current={s.clave === activa ? 'page' : undefined}
-          data-seccion={s.clave}>{s.texto}</Link>
-        : <span key={s.clave} className="rrhh-seccion" aria-disabled="true">{s.texto}<span className="chip-proximamente">{s.hito}</span></span>))}
+      {SECCIONES.map((s) => (s.clave === 'guardias' && !guardias
+        ? <span key={s.clave} className="rrhh-seccion" aria-disabled="true" title={TEXTO_TA3_PENDIENTE} data-seccion={s.clave}>
+            {s.texto}<span className="chip-proximamente" data-seccion-pendiente>{TEXTO_TA3_PENDIENTE}</span>
+          </span>
+        : <Link key={s.clave} to={s.a} className={`rrhh-seccion${s.clave === activa ? ' activa' : ''}`} aria-current={s.clave === activa ? 'page' : undefined}
+          data-seccion={s.clave}>{s.texto}</Link>))}
     </nav>
   );
 }
@@ -79,11 +84,12 @@ function Secciones({ activa }: { activa: Seccion }) {
 export function Modulo({ subtitulo, seccion = 'fichas', children }: { subtitulo: string; seccion?: Seccion; children: ReactNode }) {
   const estado = useApi<EstadoRrhhDTO>('/api/rrhh/estado');
   const listo = estado.estado === 'ok' && (estado.datos.datos_ejemplo || estado.datos.conectado);
+  const guardias = estado.estado === 'ok' && estado.datos.guardias_disponibles === true;
   return (
     <div className="rrhh">
       <Cabecera titulo="Trabajadores" subtitulo={subtitulo} />
       {listo && <Banner real={!estado.datos.datos_ejemplo} />}
-      <Secciones activa={seccion} />
+      <Secciones activa={seccion} guardias={guardias} />
       {estado.estado === 'cargando' && <p className="tenue">Cargando…</p>}
       {estado.estado === 'error' && <p className="rrhh-error" role="alert">No se ha podido leer el módulo ({estado.mensaje}).</p>}
       {estado.estado === 'ok' && (listo ? children : <SinConexion mensaje={estado.datos.mensaje} />)}

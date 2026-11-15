@@ -5,6 +5,8 @@
  * anterior al alta, eventos solo dentro del alta, nombre único por farmacia entre las fichas sin anular.
  * TA-REAL-2 (migración 33): la goma anula eventos (no se leen); convenio con vacaciones; ajustes anuales (días extra)
  * de ejemplo en fixtures/rrhh/ajustes_anuales.json, uno no anulado por persona y año.
+ * TA3: guardias semanales, festivos y guardias de festivo de ejemplo (fixtures/rrhh/guardias.json, ./guardias.ts);
+ * rellenar la jornada habitual salta esos festivos.
  *
  * Solo sintaxis TypeScript borrable.
  */
@@ -20,6 +22,7 @@ import {
   crearAlmacenEventos, type CalendarioDTO, type CambioCalendario, type ErrorCambio, type ErrorDeshacer, type EventoCalendario,
   type NotaProxima, type PeticionEventos, type ResultadoCambioDTO, type SemillaEventos,
 } from './eventos.ts';
+import { crearAlmacenGuardias, type AlmacenGuardias, type SemillaGuardias } from './guardias.ts';
 
 export const RUTA_SEMILLA = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'trabajadoras.json');
 /** TA2: semanas de ejemplo del calendario (ausencias, jornada habitual y una semana confirmada). */
@@ -28,6 +31,8 @@ export const RUTA_SEMILLA_EVENTOS = join(import.meta.dirname, '..', '..', '..', 
 export const RUTA_SEMILLA_FICHA_ANUAL = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'ficha_anual.json');
 /** TA-REAL-2: ajustes anuales de ejemplo (trabajadoras_ajustes_anuales). */
 export const RUTA_SEMILLA_AJUSTES = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'ajustes_anuales.json');
+/** TA3: rotación de guardias y festivos de ejemplo (2026). */
+export const RUTA_SEMILLA_GUARDIAS = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'guardias.json');
 /** Instante fijo de la carga de ejemplo (las fichas de ejemplo no tienen fecha real). */
 export const CARGA_EJEMPLO_AT = '2026-11-01T08:00:00.000Z';
 
@@ -64,9 +69,14 @@ export interface AdaptadorRrhh {
   cambiarEventos(p: PeticionEventos, quien: string): Quizas<ResultadoCambioDTO | ErrorCambio>;
   deshacerEventos(cambioId: string, quien: string): Quizas<ResultadoCambioDTO | ErrorDeshacer>;
   historialEventos(farmacia: FiltroFarmacia): Quizas<CambioCalendario[]>;
-  // TA3: interfaz preparada.
+  // Tablas de la migración 31 (guardias_farmacia y festivos): solo lectura, sin pantalla.
   guardias(farmacia: FiltroFarmacia): Quizas<GuardiaFarmacia[]>;
   festivos(farmacia: FiltroFarmacia): Quizas<Festivo[]>;
+  /**
+   * TA3: guardia semanal, festivos y guardia de festivo (./guardias.ts). Solo FIXTURES; en REAL no existe (tablas
+   * pendientes en Supabase: pestaña y edición deshabilitadas, «Pendiente de tablas en Supabase»).
+   */
+  guardiasTa3?: AlmacenGuardias;
   cerrar?(): Promise<void>;
 }
 
@@ -94,6 +104,7 @@ export interface AdaptadorRrhhFixtures extends AdaptadorRrhh {
   historialEventos(farmacia: FiltroFarmacia): CambioCalendario[];
   guardias(farmacia: FiltroFarmacia): GuardiaFarmacia[];
   festivos(farmacia: FiltroFarmacia): Festivo[];
+  guardiasTa3: AlmacenGuardias;
   eventos(): EventoCalendario[];
   /** TA-REAL-2: eventos anulados (nunca salen en las lecturas). */
   eventosAnulados(): EventoCalendario[];
@@ -101,6 +112,11 @@ export interface AdaptadorRrhhFixtures extends AdaptadorRrhh {
 
 export function leerSemillaAjustes(ruta: string = RUTA_SEMILLA_AJUSTES): AjusteAnual[] {
   return (JSON.parse(readFileSync(ruta, 'utf8')) as { ajustes: AjusteAnual[] }).ajustes;
+}
+
+export function leerSemillaGuardias(ruta: string = RUTA_SEMILLA_GUARDIAS): SemillaGuardias {
+  const { rotacion, festivos } = JSON.parse(readFileSync(ruta, 'utf8')) as SemillaGuardias;
+  return { rotacion, festivos };
 }
 
 export function leerSemilla(ruta: string = RUTA_SEMILLA): SemillaTrabajadora[] {
@@ -137,6 +153,8 @@ const conActiva = (t: Trabajadora): Trabajadora => ({ ...t, activa: !t.anulada &
 export function crearAdaptadorRrhhFixtures(opciones: {
   semilla?: SemillaTrabajadora[]; semillaEventos?: SemillaEventos | null; ahora?: () => string; nuevoId?: () => string; anioReferencia?: number;
   convenio?: readonly ConvenioAnual[]; ajustes?: readonly AjusteAnual[];
+  /** TA3: semilla de guardias y festivos (por defecto, la de ejemplo, salvo con `semilla` propia; null = sin ninguna). */
+  guardias?: SemillaGuardias | null;
 } = {}): AdaptadorRrhhFixtures {
   const ahora = opciones.ahora ?? (() => new Date().toISOString());
   const nuevoId = opciones.nuevoId ?? randomUUID;
@@ -159,7 +177,13 @@ export function crearAdaptadorRrhhFixtures(opciones: {
   const nombreOcupado = (farmacia: FarmaciaRrhh, nombre: string, salvo: string | null) =>
     [...fichas.values()].some((t) => !t.anulada && t.id !== salvo && t.farmacia === farmacia && t.nombre.toLowerCase() === nombre.toLowerCase());
   // TA2: calendario sobre las mismas fichas (siempre las vigentes: altas, ediciones, bajas y anulaciones cuentan al momento).
-  const almacen = crearAlmacenEventos({ fichas: () => [...fichas.values()], ahora, nuevoId });
+  // TA3: guardias y festivos sobre las mismas fichas; el calendario los usa para saltar festivos al rellenar.
+  const guardiasTa3 = crearAlmacenGuardias({
+    fichas: () => [...fichas.values()], nuevoId,
+    // Con fichas propias (pruebas) no hay guardias de ejemplo: sus personas no existirían.
+    semilla: opciones.guardias !== undefined ? opciones.guardias : opciones.semilla ? null : leerSemillaGuardias(),
+  });
+  const almacen = crearAlmacenEventos({ fichas: () => [...fichas.values()], ahora, nuevoId, esFestivo: guardiasTa3.esFestivo });
   const semillaEventos = opciones.semillaEventos === undefined ? semillaEjemplo() : opciones.semillaEventos;
   if (semillaEventos) almacen.cargarEjemplo(semillaEventos, CARGA_EJEMPLO_AT);
   /** Actualiza la ficha y registra el historial (anulación, baja o edición). */
@@ -279,5 +303,6 @@ export function crearAdaptadorRrhhFixtures(opciones: {
     eventosAnulados: () => almacen.anulados(),
     guardias: () => [],
     festivos: () => [],
+    guardiasTa3,
   };
 }

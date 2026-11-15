@@ -1,0 +1,94 @@
+/* TA3 Trabajadores: guardias y festivos. Color de guardia por farmacia (--g, texto --gt): PIO ciruela, RITA oliva,
+   OTRA gris; distintos de los tipos de evento y de los colores de estado. El color va siempre con farmacia o iniciales. */
+
+.gu-chip {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 5px; font-size: 11.5px; font-weight: 800;
+  letter-spacing: 0.02em; background: var(--g); color: var(--gt); white-space: nowrap;
+}
+.gu-chip.sin { background: var(--gris-fondo); color: var(--tenue); }
+.gu-f {
+  display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; margin-left: 4px; border-radius: 4px;
+  font-size: 10px; font-weight: 800; background: var(--gris-fondo); color: var(--gris-texto); vertical-align: 1px;
+}
+.gu-f.g { background: #26415e; color: #fff; }
+.gu-f.l { background: #5d8aa8; color: #fff; }
+.gu-f.a { background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--gris); }
+
+/* Vista año: banda de la semana a todo el ancho del mes, bajo los 7 días */
+.gu-banda {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; height: 17px; margin: -1px 0 3px; padding: 0 6px; border-radius: 4px;
+  background: var(--g); color: var(--gt); font-size: 10.5px; font-weight: 700; line-height: 1; overflow: hidden; white-space: nowrap;
+}
+.gu-banda.sin { background: repeating-linear-gradient(135deg, #fff 0 3px, var(--gris-fondo) 3px 6px); color: var(--tenue); font-weight: 600; }
+.gu-banda-cod { font-weight: 900; opacity: 0.75; }
+.gu-banda-f { font-weight: 900; letter-spacing: 0.03em; }
+.gu-banda-txt { overflow: hidden; text-overflow: ellipsis; }
+.cal-dia.festivo { box-shadow: inset 0 0 0 1.5px var(--gris); }
+.cal-dia-festivo {
+  position: absolute; bottom: 2px; right: 2px; display: grid; place-items: center; width: 12px; height: 12px; border-radius: 3px;
+  font-size: 8.5px; font-weight: 900; background: var(--g, var(--gris-fondo)); color: var(--gt, var(--gris-texto));
+}
+
+/* Semana y mes: cabecera de guardia y festivos; columna festiva */
+.gu-cabecera {
+  display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: flex-start; padding: 9px 14px; margin: 0 0 10px;
+  border: 1px solid var(--borde); border-radius: 10px; background: var(--superficie); font-size: 13.5px;
+}
+.gu-semanas-linea, .gu-festivos-linea { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.gu-semanas-linea li, .gu-festivos-linea li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.gu-cuando { font-size: 12px; min-width: 9em; }
+.gu-festivos-linea .gu-f { margin-left: 0; }
+.cal-col.festivo { background: repeating-linear-gradient(135deg, var(--superficie) 0 4px, var(--gris-fondo) 4px 8px); }
+.cal-col-festivo { display: block; margin-top: 1px; font-size: 10px; font-weight: 700; color: var(--gris-texto); line-height: 1.1; white-space: normal; }
+
+/* Pestaña */
+.gu { display: flex; flex-direction: column; gap: 12px; }
+.gu .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.gu-rejilla { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.gu-lateral { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gu-semanas, .gu-festivos, .gu-horario { padding: 14px 16px; min-width: 0; }
+.gu-semanas h2, .gu-festivos h2, .gu-horario h2 { margin: 0; font-size: 16px; }
+.gu-tabla-marco { overflow-x: auto; max-height: 72vh; overflow-y: auto; margin-top: 8px; }
+.gu-tabla { width: 100%; font-size: 13.5px; }
+.gu-tabla thead th { position: sticky; top: 0; background: var(--superficie); z-index: 1; }
+.gu-tabla th[scope='row'] { font-weight: 600; white-space: nowrap; }
+.gu-tabla tr.actual { background: color-mix(in srgb, var(--primario) 6%, white); }
+.gu-tabla tr.sin th[scope='row'] { color: var(--tenue); }
+.gu-tabla select { max-width: 100%; min-height: 32px; font: inherit; }
+.gu-semana-cuando { position: relative; padding-left: 14px !important; }
+.gu-barra { position: absolute; left: 2px; top: 6px; bottom: 6px; width: 4px; border-radius: 2px; background: var(--g, transparent); }
+.gu-editando { background: var(--primario-fondo); }
+.gu-botones { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.boton-mini { min-height: 30px; padding: 0 10px; font-size: 13px; }
+
+.gu-horario dl { display: grid; gap: 6px; margin: 8px 0 0; font-size: 13.5px; }
+.gu-horario dl > div { display: grid; grid-template-columns: minmax(10em, auto) 1fr; gap: 10px; }
+.gu-horario dt { font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.gu-horario dt .gu-f { margin-left: 0; }
+.gu-horario dd { margin: 0; font-variant-numeric: tabular-nums; }
+.gu-nota { margin: 8px 0 0; font-size: 12px; }
+
+.gu-alta { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; margin: 10px 0; }
+.gu-alta-nombre { flex: 1 1 12em; }
+.gu-lista-festivos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.gu-lista-festivos > li { padding: 7px 0; border-top: 1px solid var(--borde-suave); display: flex; flex-direction: column; gap: 6px; }
+.gu-festivo-linea { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 13.5px; }
+.gu-festivo-fecha { min-width: 6.5em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gu-lista-festivos > li.finde .gu-festivo-fecha { color: var(--tenue); }
+.gu-festivo-nombre { flex: 1 1 8em; }
+.gu-festivo-guardia { display: inline-flex; align-items: center; gap: 6px; }
+.gu-editor-festivo { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; padding: 8px 10px; border-radius: 8px; background: var(--primario-fondo); }
+.gu-confirmar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--rojo-fondo); font-size: 13px; }
+
+/* Ficha anual: bloque de guardias a dos columnas */
+.fa-guardias { grid-column: span 2; }
+
+@media (max-width: 1100px) {
+  .gu-rejilla { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .gu-horario dl > div { grid-template-columns: 1fr; gap: 2px; }
+  .gu-cuando { min-width: 0; }
+  .fa-guardias { grid-column: 1 / -1; }
+  .gu-tabla-marco { max-height: none; }
+}

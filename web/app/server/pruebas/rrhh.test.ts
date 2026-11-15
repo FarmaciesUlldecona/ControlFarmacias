@@ -254,7 +254,7 @@ describe('adaptador RRHH_FIXTURES e historial', () => {
     assert.deepEqual(b.trabajadora(x.id)?.historial.map((h) => h.accion), ['BAJA', 'EDICION', 'ALTA']);
     assert.deepEqual(b.historial('PIO').map((h) => h.accion), ['BAJA', 'EDICION', 'ALTA']);
   });
-  test('interfaz TA3 preparada y vacía (guardias y festivos); TA2 con eventos de ejemplo', () => {
+  test('tablas de la migración 31 (guardias_farmacia y festivos) vacías en FIXTURES (TA3 usa ./guardias.ts); TA2 con eventos de ejemplo', () => {
     assert.deepEqual([a.guardias('PIO'), a.festivos('RITA')], [[], []]);
     assert.ok(a.eventos().length > 0);
   });
@@ -301,7 +301,7 @@ describe('API /api/rrhh en el servidor FIXTURES (inyección)', async () => {
     assert.equal(r.json().trabajadoras.length, 8); // RITA: 7 + titular (TA1-3: media tarde)
     assert.equal((await app.inject({ method: 'GET', url: '/api/rrhh/trabajadoras?farmacia=X', headers: { ...H, cookie } })).statusCode, 400);
     const e = await app.inject({ method: 'GET', url: '/api/rrhh/estado', headers: { ...H, cookie } });
-    assert.deepEqual(e.json(), { modo: 'FIXTURES', conectado: false, datos_ejemplo: true, mensaje: 'Datos de ejemplo en memoria' });
+    assert.deepEqual(e.json(), { modo: 'FIXTURES', conectado: false, datos_ejemplo: true, mensaje: 'Datos de ejemplo en memoria', guardias_disponibles: true });
   });
   test('escritura: Origin obligatorio y del mismo sitio; solo JSON; validación 400; anular con confirmación', async () => {
     const post = (headers: Record<string, string>, payload: unknown = valido) =>
@@ -370,7 +370,7 @@ describe('modo REAL sin credencial (instancia propia de Fastify, sin BD): «Falt
       for (const n of nombresEjemplo) assert.ok(!r.body.includes(n), `${url}: ${n}`);
     }
     const e = await app.inject({ method: 'GET', url: '/api/rrhh/estado', headers: H });
-    assert.deepEqual(e.json(), { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: MENSAJE_FALTA_CREDENCIAL });
+    assert.deepEqual(e.json(), { modo: 'REAL', conectado: false, datos_ejemplo: false, mensaje: MENSAJE_FALTA_CREDENCIAL, guardias_disponibles: false });
   });
   test('escritura en REAL: sesión y origen primero; luego 503, sin crear nada', async () => {
     const W = { ...H, origin: 'http://127.0.0.1:4747', 'content-type': 'application/json' };

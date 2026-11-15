@@ -122,6 +122,25 @@ describe('días naturales por periodo y medias franjas', () => {
     assert.deepEqual(f.vacaciones.periodos.map((x) => x.dias), [3]);
     assert.deepEqual(calcularFichaAnual(COMPLETA, e, CONVENIO_ANUAL, 2026, HOY).vacaciones.periodos.map((x) => x.dias), [1, 1]);
   });
+  test('TA3-2: festivo de TA3 entre días de vacaciones hace de puente: 24 dic + 28 dic con el 25 festivo = 5 días; sin festivo, 1 + 1', () => {
+    const e = [...dias(COMPLETA, '2026-12-24', '2026-12-24', 'VACACIONES'), ...dias(COMPLETA, '2026-12-28', '2026-12-28', 'VACACIONES')];
+    const con = calcularFichaAnual(COMPLETA, e, CONVENIO_ANUAL, 2026, HOY, { festivos: ['2026-12-25'] });
+    assert.deepEqual(con.vacaciones.periodos.map((x) => [x.desde, x.hasta, x.dias]), [['2026-12-24', '2026-12-28', 5]]);
+    assert.deepEqual([con.vacaciones.planificadas, con.vacaciones.pendientes], [5, 25]);
+    for (const o of [{}, { festivos: [] }, { festivos: ['2026-12-08'] }]) { // sin festivos de alta (o uno que no está en medio): regla de siempre
+      assert.deepEqual(calcularFichaAnual(COMPLETA, e, CONVENIO_ANUAL, 2026, HOY, o).vacaciones.periodos.map((x) => x.dias), [1, 1], JSON.stringify(o));
+    }
+  });
+  test('TA3-2: festivo al borde del periodo no lo amplía; dos festivos seguidos entre vacaciones sí unen; otros tipos no cambian', () => {
+    const v = dias(COMPLETA, '2026-12-09', '2026-12-11', 'VACACIONES'); // 8 festivo, justo antes
+    assert.deepEqual(calcularFichaAnual(COMPLETA, v, CONVENIO_ANUAL, 2026, HOY, { festivos: ['2026-12-08'] }).vacaciones.periodos.map((x) => [x.desde, x.dias]), [['2026-12-09', 3]]);
+    const tras = dias(COMPLETA, '2026-12-21', '2026-12-24', 'VACACIONES'); // 25 festivo, justo después
+    assert.deepEqual(calcularFichaAnual(COMPLETA, tras, CONVENIO_ANUAL, 2026, HOY, { festivos: ['2026-12-25'] }).vacaciones.periodos.map((x) => [x.hasta, x.dias]), [['2026-12-24', 4]]);
+    const dos = [...dias(COMPLETA, '2026-04-02', '2026-04-02', 'VACACIONES'), ...dias(COMPLETA, '2026-04-07', '2026-04-07', 'VACACIONES')]; // 3 y 6 abr festivos
+    assert.deepEqual(calcularFichaAnual(COMPLETA, dos, CONVENIO_ANUAL, 2026, HOY, { festivos: ['2026-04-03', '2026-04-06'] }).vacaciones.periodos.map((x) => x.dias), [6]);
+    const baja = [...dias(COMPLETA, '2026-12-24', '2026-12-24', 'BAJA'), ...dias(COMPLETA, '2026-12-28', '2026-12-28', 'BAJA')];
+    assert.equal(calcularFichaAnual(COMPLETA, baja, CONVENIO_ANUAL, 2026, HOY, { festivos: ['2026-12-25'] }).dias_baja, 2); // solo vacaciones
+  });
   test('una sola franja de jornada completa = 0,5 (suelta, no une periodos); la franja única de media jornada = 1', () => {
     assert.equal(valoresPorDia([ev(COMPLETA, '2026-10-09', 'TARDE', 'VACACIONES')], COMPLETA, 'VACACIONES').get('2026-10-09'), 0.5);
     assert.equal(valoresPorDia([ev(MEDIA, '2026-10-09', 'MANANA', 'VACACIONES')], MEDIA, 'VACACIONES').get('2026-10-09'), 1);

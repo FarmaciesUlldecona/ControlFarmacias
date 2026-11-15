@@ -1,0 +1,38 @@
+{
+  "_nota": "TA3: guardias y festivos FICTICIOS para el adaptador RRHH_FIXTURES en memoria (personas de trabajadoras.json; nunca datos reales). Rotación semanal de ejemplo de 2026 (del lunes 29 dic 2025 al lunes 28 dic 2026): PIO, RITA y OTRA (farmacia ajena, sin personas) por turnos; cada farmacia recorre su lista. Festivos de ejemplo de 2026 (no es el calendario oficial), con su propia rotación de guardia, que no coincide con la semanal; el 31 ago queda sin guardia asignada. 2027 y 2028, sin guardias (las pruebas que escriben usan 2027).",
+  "rotacion": {
+    "desde": "2025-12-29",
+    "hasta": "2026-12-28",
+    "farmacias": ["PIO", "RITA", "OTRA"],
+    "PIO": [
+      { "guardia": "e0000000-0000-4000-8000-000000000001", "apoyo": "e0000000-0000-4000-8000-000000000004" },
+      { "guardia": "e0000000-0000-4000-8000-000000000002", "apoyo": "e0000000-0000-4000-8000-000000000004" },
+      { "guardia": "e0000000-0000-4000-8000-000000000003", "apoyo": null },
+      { "guardia": "e0000000-0000-4000-8000-000000000021", "apoyo": "e0000000-0000-4000-8000-000000000001" }
+    ],
+    "RITA": [
+      { "guardia": "e0000000-0000-4000-8000-000000000011", "apoyo": "e0000000-0000-4000-8000-000000000017" },
+      { "guardia": "e0000000-0000-4000-8000-000000000012", "apoyo": "e0000000-0000-4000-8000-000000000015" },
+      { "guardia": "e0000000-0000-4000-8000-000000000013", "apoyo": null },
+      { "guardia": "e0000000-0000-4000-8000-000000000014", "apoyo": "e0000000-0000-4000-8000-000000000012" },
+      { "guardia": "e0000000-0000-4000-8000-000000000015", "apoyo": "e0000000-0000-4000-8000-000000000014" }
+    ]
+  },
+  "festivos": [
+    { "fecha": "2026-01-01", "nombre": "Año Nuevo", "guardia": { "farmacia": "PIO", "persona": null } },
+    { "fecha": "2026-01-06", "nombre": "Reyes", "guardia": { "farmacia": "OTRA", "persona": null } },
+    { "fecha": "2026-04-03", "nombre": "Viernes Santo", "guardia": { "farmacia": "RITA", "persona": "e0000000-0000-4000-8000-000000000012" } },
+    { "fecha": "2026-04-06", "nombre": "Lunes de Pascua", "guardia": { "farmacia": "PIO", "persona": "e0000000-0000-4000-8000-000000000002" } },
+    { "fecha": "2026-05-01", "nombre": "Fiesta del Trabajo", "guardia": { "farmacia": "OTRA", "persona": null } },
+    { "fecha": "2026-05-25", "nombre": "Segunda Pascua", "guardia": { "farmacia": "RITA", "persona": "e0000000-0000-4000-8000-000000000013" } },
+    { "fecha": "2026-06-24", "nombre": "Sant Joan", "guardia": { "farmacia": "PIO", "persona": "e0000000-0000-4000-8000-000000000003" } },
+    { "fecha": "2026-08-15", "nombre": "La Asunción", "guardia": { "farmacia": "RITA", "persona": "e0000000-0000-4000-8000-000000000014" } },
+    { "fecha": "2026-08-31", "nombre": "Fiesta mayor (ejemplo)" },
+    { "fecha": "2026-09-11", "nombre": "Diada", "guardia": { "farmacia": "OTRA", "persona": null } },
+    { "fecha": "2026-10-12", "nombre": "Fiesta Nacional", "guardia": { "farmacia": "PIO", "persona": "e0000000-0000-4000-8000-000000000001" } },
+    { "fecha": "2026-11-01", "nombre": "Todos los Santos", "guardia": { "farmacia": "RITA", "persona": "e0000000-0000-4000-8000-000000000011" } },
+    { "fecha": "2026-12-08", "nombre": "La Inmaculada", "guardia": { "farmacia": "PIO", "persona": "e0000000-0000-4000-8000-000000000002" } },
+    { "fecha": "2026-12-25", "nombre": "Navidad", "guardia": { "farmacia": "RITA", "persona": "e0000000-0000-4000-8000-000000000012" } },
+    { "fecha": "2026-12-26", "nombre": "Sant Esteve", "guardia": { "farmacia": "OTRA", "persona": null } }
+  ]
+}

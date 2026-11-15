@@ -219,9 +219,11 @@ export interface EventoHistorial {
   despues: Partial<Trabajadora> | null;
 }
 
-// --- TA2: eventos_calendario en ./eventos.ts. TA3 (sin pantalla) ---------------------------------------------
+// --- TA2: eventos_calendario en ./eventos.ts. TA3: guardias y festivos en ./guardias.ts --------------------------
+// Las dos tablas de la migración 31 que siguen (guardias_farmacia y festivos) solo se leen y no tienen pantalla: no
+// encajan con la guardia semanal de TA3 (con OTRA, persona y apoyo). Qué hacer con ellas: docs/propuesta_tablas_ta3.sql.
 
-/** guardias_farmacia (TA3): días de guardia de la farmacia. */
+/** guardias_farmacia (migración 31): días de guardia de la farmacia. */
 export interface GuardiaFarmacia {
   id: string;
   farmacia: FarmaciaRrhh;
@@ -230,7 +232,7 @@ export interface GuardiaFarmacia {
   anulada: boolean;
 }
 export type AmbitoFestivo = 'NACIONAL' | 'AUTONOMICO' | 'LOCAL';
-/** festivos (TA3). */
+/** festivos (migración 31). */
 export interface Festivo {
   id: string;
   fecha: string;
@@ -250,6 +252,8 @@ export interface EstadoRrhhDTO {
   conectado: boolean;
   datos_ejemplo: boolean;
   mensaje: string;
+  /** TA3: guardias y festivos disponibles (FIXTURES); en REAL, false hasta que existan las tablas en Supabase. */
+  guardias_disponibles: boolean;
 }
 
 export interface TrabajadorasDTO {

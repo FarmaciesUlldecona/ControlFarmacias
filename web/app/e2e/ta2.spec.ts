@@ -28,6 +28,8 @@ const franja = (page: Page, id: string, fecha: string, f: 'MANANA' | 'TARDE') =>
 const diaCompleto = (page: Page, id: string, fecha: string) => page.locator(`[data-celda="${id}|${fecha}"]`);
 const aviso = (page: Page) => page.locator('[data-aviso-calendario]');
 async function arrastrar(page: Page, desde: Locator, hasta: Locator) {
+  // TA3: la cabecera de guardias baja la rejilla; se lleva arriba para que origen y destino estén en la ventana.
+  await page.locator('[data-rejilla]').first().evaluate((e) => e.scrollIntoView({ block: 'start' }));
   const a = await desde.boundingBox();
   const b = await hasta.boundingBox();
   if (!a || !b) throw new Error('sin caja');
@@ -176,7 +178,8 @@ test.describe('Calendario PC 1440', () => {
     // Arrastre: Clara (mañana y tarde) y Elena (solo mañana) del 7 al 9 = 9 franjas, 6 días.
     await page.locator('[data-herramienta="PERMISO_RETRIBUIDO"]').click();
     await arrastrar(page, franja(page, CLARA, '2026-12-07', 'MANANA'), franja(page, ELENA, '2026-12-09', 'MANANA'));
-    await expect(aviso(page)).toHaveText('Pintado Permiso retribuido 7–9 dic 2026: 3 días laborables × 2 personas.');
+    // TA3: pintar sobre un festivo se permite, con aviso.
+    await expect(aviso(page)).toHaveText('Pintado Permiso retribuido 7–9 dic 2026: 3 días laborables × 2 personas. Ojo: 8 dic (La Inmaculada) es festivo.');
     for (const [id, f, fr] of [[CLARA, '2026-12-07', 'MANANA'], [CLARA, '2026-12-09', 'TARDE'], [ELENA, '2026-12-08', 'MANANA']] as const) {
       await expect(franja(page, id, f, fr)).toHaveAttribute('data-tipo', 'PERMISO_RETRIBUIDO');
     }
@@ -299,7 +302,8 @@ test.describe('Calendario PC 1440', () => {
     // Mes: rellenar diciembre de una persona de RITA (media tarde: solo tardes de 3,5 h).
     await abrir(page, `?farmacia=RITA&vista=mes&fecha=2026-12-01&persona=${IRENE}`);
     await page.locator('[data-accion="rellenar"]').click();
-    await expect(aviso(page)).toHaveText('Rellenado diciembre de 2026: 23 días laborables × 1 persona.');
+    await expect(aviso(page)).toHaveText('Rellenado diciembre de 2026: 21 días laborables × 1 persona.'); // TA3: sin el 8 ni el 25 (festivos)
+    await expect(diaCompleto(page, IRENE, '2026-12-25')).toHaveAttribute('data-tipo-tarde', '');
     await expect(diaCompleto(page, IRENE, '2026-12-31')).toHaveAttribute('data-tipo-tarde', 'JORNADA');
     await expect(diaCompleto(page, IRENE, '2026-12-31')).toHaveAttribute('data-tipo-manana', '');
   });

@@ -581,7 +581,7 @@ describe('TA-REAL: API en modo REAL con el adaptador simulado', async () => {
 
   test('estado: conectado, sin «datos de ejemplo»', async () => {
     const e = await app.inject({ method: 'GET', url: '/api/rrhh/estado', headers: H });
-    assert.deepEqual(e.json(), { modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: TEXTO_BANNER_REAL });
+    assert.deepEqual(e.json(), { modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: TEXTO_BANNER_REAL, guardias_disponibles: false });
     assert.ok(!/ejemplo/i.test(TEXTO_BANNER_REAL));
   });
   test('errores de la BD con su mensaje llano: duplicado 409, tiempo agotado 504; TA-REAL-2: la goma ya funciona', async () => {

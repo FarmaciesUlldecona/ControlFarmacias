@@ -12,11 +12,15 @@
  *  - Conteo en días naturales: un periodo de vacaciones va del primer al último día laborable seguidos de VACACIONES y
  *    cuentan todos los días naturales entre ambos (fines de semana y festivos intermedios incluidos). Una sola franja de
  *    una jornada completa = 0,5 días; la franja única de una media jornada = 1 día.
+ *  - TA3-2 (decisión de Marc): un festivo de TA3 dado de alta (OpcionesFicha.festivos) entre días de vacaciones hace de
+ *    puente, como un fin de semana (24 dic + 28 dic con el 25 festivo = 5 días). Solo en vacaciones; un festivo al borde
+ *    del periodo no lo amplía; sin festivos, la regla no cambia.
  *  - Libre disposición: convenio_anual.asuntos_propios_dias del año; mismas medias franjas (0,5 / 1).
  *  - Permiso médico: convenio_anual.permiso_medico_horas (24) frente a las horas_efectivas de PERMISO_MEDICO.
  *  - Horas del año (solo si computa el convenio): objetivo, confirmadas, planificadas y pendientes; si confirmadas +
  *    planificadas superan el objetivo, «Exceso de X h ≈ Y días que podrían ser vacaciones» (estimación; Y = X / horas
- *    diarias). Festivos aún no descontados (TA3). Titular: horas registradas, sin objetivo.
+ *    diarias). TA3-2: los festivos no se descuentan del objetivo (la jornada máxima del convenio es trabajo efectivo y
+ *    ya los descuenta). Titular: horas registradas, sin objetivo.
  *  - Aviso si desde el 1 de octubre (AVISO_VACACIONES_DESDE, configurable) quedan vacaciones sin planificar.
  *  - Días de baja: solo el número (nunca el motivo).
  *
@@ -24,6 +28,7 @@
  */
 import { ANIOS_CONVENIO, objetivoAnual, ordenFichas, type AjusteAnual, type ConvenioAnual, type FiltroFarmacia, type Trabajadora } from './contrato.ts';
 import { FRANJAS_DE_JORNADA, aDia, deDia, esLaborable, horasQueSuman, type EventoCalendario, type TipoEvento } from './eventos.ts';
+import type { ResumenGuardiasPersona } from './guardias.ts';
 
 // ---------------------------------------------------------------------------
 // Constantes (únicos puntos de cada regla)
@@ -46,12 +51,14 @@ export const TIPOS_AUSENCIA: readonly TipoEvento[] = [
   'VACACIONES', 'ASUNTOS_PROPIOS', 'PERMISO_RETRIBUIDO', 'PERMISO_NO_RETRIBUIDO', 'PERMISO_MEDICO', 'DESCANSO_COMPENSATORIO', 'BAJA',
 ];
 export const MAX_PROXIMAS_AUSENCIAS = 3;
-export const TEXTO_FESTIVOS_PENDIENTES = 'Festivos aún no descontados (TA3)';
 /** TA-REAL-2: vacaciones sin dato en convenio_anual. */
 export const TEXTO_VACACIONES_PENDIENTE = 'pendiente';
 
-/** `ajustes`: filas de trabajadoras_ajustes_anuales (se usa la no anulada de la persona y el año). */
-export interface OpcionesFicha { redondeo?: Redondeo; avisoDesde?: string; ajustes?: readonly AjusteAnual[] }
+/**
+ * `ajustes`: filas de trabajadoras_ajustes_anuales (se usa la no anulada de la persona y el año). TA3-2: `festivos`,
+ * fechas de los festivos de TA3 dados de alta (puente en las vacaciones).
+ */
+export interface OpcionesFicha { redondeo?: Redondeo; avisoDesde?: string; ajustes?: readonly AjusteAnual[]; festivos?: readonly string[] }
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -119,6 +126,11 @@ export interface FichaAnualDTO {
   ficha: FichaAnual | null;
   /** Sin ficha: anulada o sin días de alta en el año. */
   motivo: 'ANULADA' | 'SIN_ALTA_EN_EL_ANIO' | null;
+  /**
+   * TA3: «Guardias del año» (horas fuera de cómputo: no cambian ninguna cifra de la ficha). null = no disponible (REAL:
+   * tablas pendientes en Supabase) o sin ficha.
+   */
+  guardias?: ResumenGuardiasPersona | null;
 }
 
 export const reglasFicha = (convenio: readonly ConvenioAnual[], anio: number, o: OpcionesFicha = {}): ReglasFichaDTO => {
@@ -228,13 +240,17 @@ export function calcularFichaAnual(t: Trabajadora, eventos: readonly EventoCalen
   const c = convenio.find((x) => x.anio === anio) ?? null;
   const festivos = new Set(evs.filter((e) => e.tipo === 'FESTIVO').map((e) => e.fecha));
   const puente = (f: string) => !esLaborable(f) || festivos.has(f);
+  // TA3-2: en las vacaciones, además, los festivos de TA3 dados de alta hacen de puente.
+  const festivosTa3 = new Set(o.festivos ?? []);
+  const puenteVac = (f: string) => puente(f) || festivosTa3.has(f);
+  const puenteDe = (tipo: TipoEvento) => (tipo === 'VACACIONES' ? puenteVac : puente);
 
   // Vacaciones: base del convenio (o pendiente) + días extra del ajuste.
   const der = derechoVacaciones(t, anio, c?.vacaciones_dias_naturales ?? null, o);
   const ajuste = ajusteDe(o.ajustes, t.id, anio);
   const extra = ajuste?.vacaciones_dias_extra ?? 0;
   const derechoVac = der.derecho === null ? null : der.derecho + extra;
-  const pv = periodos(evs, t, 'VACACIONES', puente);
+  const pv = periodos(evs, t, 'VACACIONES', puenteVac);
   const vac = partirEnHoy(pv, hoy);
   const pendientesVac = derechoVac === null ? null : derechoVac - vac.hasta_hoy - vac.desde_manana;
 
@@ -252,7 +268,7 @@ export function calcularFichaAnual(t: Trabajadora, eventos: readonly EventoCalen
   const exceso = objetivo !== null && registradas > objetivo + EPS ? r2(registradas - objetivo) : null;
 
   // Próximas ausencias (desde hoy) y días de baja.
-  const ausencias = TIPOS_AUSENCIA.flatMap((tipo) => periodos(evs, t, tipo, puente))
+  const ausencias = TIPOS_AUSENCIA.flatMap((tipo) => periodos(evs, t, tipo, puenteDe(tipo)))
     .filter((p) => p.hasta >= hoy).sort((a, b) => a.desde.localeCompare(b.desde) || a.tipo.localeCompare(b.tipo)).slice(0, MAX_PROXIMAS_AUSENCIAS);
   const diasBaja = suma(periodos(evs, t, 'BAJA', puente));
 

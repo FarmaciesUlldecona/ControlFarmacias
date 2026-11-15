@@ -272,7 +272,7 @@ describe('pintar y goma por franja', () => {
     const id = (nueva as { id: string }).id;
     assert.equal(aplicar(a, { accion: 'PINTAR', tipo: 'JORNADA', celdas: [{ trabajadora_id: id, fecha: '2026-12-09' }] }), 'EVENTO_FUERA_DEL_ALTA');
     const r = ok(aplicar(a, { accion: 'RELLENAR', trabajadora_ids: [id], desde: '2026-12-01', hasta: '2026-12-31' }));
-    assert.equal(describirCambio(r.cambio!), 'Rellenado diciembre de 2026: 16 días laborables × 1 persona'); // del 10 al 31
+    assert.equal(describirCambio(r.cambio!), 'Rellenado diciembre de 2026: 15 días laborables × 1 persona'); // del 10 al 31, sin el 25 (TA3: festivo)
     assert.equal(a.calendario('PIO', '2026-11-30', '2026-12-06').trabajadoras.some((t) => t.id === id), false);
   });
 });
@@ -282,8 +282,9 @@ describe('rellenar jornada habitual (semana, mes y año)', () => {
     const a = nuevo();
     ok(aplicar(a, { accion: 'PINTAR', tipo: 'VACACIONES', celdas: celdas(AINA, '2026-12-09', '2026-12-09', 'TARDE') }));
     const r = ok(aplicar(a, { accion: 'RELLENAR', trabajadora_ids: PIO, desde: '2026-12-07', hasta: '2026-12-13' }));
-    assert.deepEqual([r.cambio?.n, r.cambio?.dias], [39, 25]); // 8 franjas × 5 días − la tarde de vacaciones
-    assert.equal(describirCambio(r.cambio!), 'Rellenado 7–13 dic 2026: 5 días laborables × 5 personas · 39 franjas'); // Aina, solo la mañana del 9
+    assert.deepEqual([r.cambio?.n, r.cambio?.dias], [31, 20]); // 8 franjas × 4 días (TA3: el 8, festivo) − la tarde de vacaciones
+    assert.deepEqual(delDia(a, AINA, '2026-12-08'), []); // TA3: festivo (La Inmaculada): rellenar lo salta
+    assert.equal(describirCambio(r.cambio!), 'Rellenado 7–13 dic 2026: 4 días laborables × 5 personas · 31 franjas'); // Aina, solo la mañana del 9; TA3: sin el 8
     assert.deepEqual(delDia(a, AINA, '2026-12-09'), [['MANANA', 'JORNADA'], ['TARDE', 'VACACIONES']]);
     assert.deepEqual(delDia(a, AINA, '2026-12-12'), []); // sábado
     assert.deepEqual(delDia(a, ELENA, '2026-12-07'), [['MANANA', 'JORNADA']]);
@@ -293,19 +294,20 @@ describe('rellenar jornada habitual (semana, mes y año)', () => {
   test('un mes (RITA, media tarde a 3,5 h de tarde)', () => {
     const a = nuevo();
     const r = ok(aplicar(a, { accion: 'RELLENAR', trabajadora_ids: [IRENE], desde: '2026-12-01', hasta: '2026-12-31' }));
-    assert.equal(r.cambio?.dias, 23);
-    assert.equal(describirCambio(r.cambio!), 'Rellenado diciembre de 2026: 23 días laborables × 1 persona');
+    assert.equal(r.cambio?.dias, 21); // 23 laborables − 8 y 25 (TA3: festivos)
+    assert.equal(describirCambio(r.cambio!), 'Rellenado diciembre de 2026: 21 días laborables × 1 persona');
     assert.ok(a.eventos().filter((e) => e.trabajadora_id === IRENE && e.fecha >= '2026-12-01').every((e) => e.franja === 'TARDE' && e.horas_efectivas === 3.5));
   });
   test('TA2-2: año completo sin tocar lo pintado ni lo confirmado; se deshace de una vez', () => {
     const a = nuevo();
     const antes = foto(a);
     const r = ok(aplicar(a, { accion: 'RELLENAR', trabajadora_ids: [AINA, ELENA], desde: '2026-01-01', hasta: '2026-12-31' }));
-    // 261 laborables en 2026; Aina y Elena ya tienen 20 días de noviembre cada una.
-    assert.deepEqual([r.cambio?.dias, r.cambio?.n], [(261 - 20) * 2, (261 - 20) * 3]);
+    // 261 laborables en 2026 − 12 festivos de lunes a viernes (TA3, semilla de ejemplo); Aina y Elena ya tienen 20 días de noviembre.
+    assert.deepEqual([r.cambio?.dias, r.cambio?.n], [(261 - 12 - 20) * 2, (261 - 12 - 20) * 3]);
     assert.equal(en(a, AINA, '2026-11-17', 'MANANA')?.tipo, 'VACACIONES'); // ausencia intacta
     assert.equal(en(a, AINA, '2026-11-03', 'MANANA')?.estado, 'CONFIRMADO'); // confirmado intacto
-    assert.equal(en(a, AINA, '2026-01-01', 'MANANA')?.tipo, 'JORNADA'); // los festivos llegan en TA3
+    assert.equal(en(a, AINA, '2026-01-01', 'MANANA'), undefined); // TA3: Año Nuevo es festivo: rellenar lo salta
+    assert.equal(en(a, AINA, '2026-01-02', 'MANANA')?.tipo, 'JORNADA');
     ok(a.deshacerEventos(r.cambio!.id, AUTOR_HISTORIAL) as ResultadoCambioDTO);
     assert.equal(foto(a), antes);
   });
@@ -409,7 +411,8 @@ describe('deshacer e historial', () => {
     assert.equal(a.calendario('PIO', '2026-12-07', '2026-12-13').ultimo_cambio?.id, c4.id);
     assert.equal(a.deshacerEventos(c2.id, AUTOR_HISTORIAL), 'NO_ES_EL_ULTIMO'); // solo el último
     const d4 = a.deshacerEventos(c4.id, AUTOR_HISTORIAL) as ResultadoCambioDTO;
-    assert.equal(describirCambio(d4.cambio!), 'Deshecho «Borrado 7–8 dic 2026»: 2 días laborables × 1 persona');
+    // TA3: el 8 de diciembre es festivo (rellenar lo saltó): solo se borró el 7.
+    assert.equal(describirCambio(d4.cambio!), 'Deshecho «Borrado 7 dic 2026»: 1 día laborable × 1 persona');
     assert.equal(en(a, CLARA, '2026-12-07', 'MANANA')?.nota, 'Abre la farmacia'); // vuelve con su nota
     ok(a.deshacerEventos(c3.id, AUTOR_HISTORIAL) as ResultadoCambioDTO);
     const d2 = a.deshacerEventos(c2.id, AUTOR_HISTORIAL) as ResultadoCambioDTO;

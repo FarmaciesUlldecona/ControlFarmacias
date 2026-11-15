@@ -421,7 +421,7 @@ Reglas de Pío:
   - **TA-FICHA-2 (regla de Pío):** el descanso compensatorio (día libre tras la semana de guardia de 24 h) cuenta como trabajado, con sus `horas_efectivas`, que son las de la jornada normal de la persona.
   - Se separan confirmadas (estado CONFIRMADO) y planificadas (PLANIFICADO).
   - Si se pasa del objetivo: «Exceso de X h ≈ Y días que podrían ser vacaciones (estimación)», con Y = X / horas diarias.
-  - Siempre se avisa: «Festivos aún no descontados (TA3)».
+  - TA3-2 (decisión de Marc): los festivos no se descuentan del objetivo; la jornada máxima del convenio es trabajo efectivo y ya los descuenta. Se retira el aviso «Festivos aún no descontados (TA3)».
   - Titular: horas registradas, sin objetivo.
 - **Aviso de octubre:** desde el 1 de octubre del año (`AVISO_VACACIONES_DESDE`, configurable) y hasta el 31 de diciembre, si quedan vacaciones sin planificar.
 - **Otros avisos:** vacaciones por encima del derecho, libre disposición o permiso médico por encima del convenio, y año sin convenio.
@@ -480,3 +480,43 @@ Fixtures:
 | Convenio sin vacaciones | Año sin `vacaciones_dias_naturales` | Vacaciones «pendiente», sin regla; aviso gris «Vacaciones de 2026 pendientes: el convenio no tiene los días» |
 | Completar vacaciones | Filas 2026 y 2027 sin el dato | Confirmación con los dos datos → POST `{ "anios": [2026, 2027] }`; el resto del convenio no cambia |
 | REAL simulado | `rrhh_real.test.ts` con el esquema de la migración 33 en memoria | SQL con `NOT anulado`, ON CONFLICT parcial, sin DELETE, `cf.autor` en cada escritura y ninguna columna `autor`; la base simulada rechaza esa columna (42703) y la falta de `cf.autor` (AUTOR_AUSENTE) |
+
+## TA3: guardias y festivos (solo FIXTURES)
+
+En Ulldecona hay 3 farmacias: PIO, RITA y una ajena (OTRA). La guardia semanal rota entre las 3; los festivos tienen su propia rotación. Modelo y reglas en `app/server/rrhh/guardias.ts`:
+- **guardia_semana:** lunes (semana de lunes a domingo; una por semana), farmacia PIO|RITA|OTRA, persona de guardia y apoyo del sábado (opcional).
+- **festivo:** fecha (una por día), nombre (máx. 60), alta manual; la baja lo anula junto con su guardia.
+- **guardia_festivo:** fecha (tiene que ser festivo), farmacia y persona.
+- **Reglas:** OTRA sin personas. En PIO/RITA, la persona es de esa farmacia y está de alta los días del servicio (guardia: sábado y domingo; apoyo: sábado; festivo: ese día). El titular puede hacer guardia. El apoyo es distinto de la guardia. La persona de la guardia de un festivo es, por defecto, la de guardia de esa semana si es la misma farmacia; se puede cambiar.
+- **Horas fuera de cómputo** (`HORARIO_GUARDIA`, único punto): se registran y no suman en el año. Guardia: sábado 9:00–13:30 y 18:00–20:00 (6,5 h) y domingo 10:00–13:00 (3 h). Apoyo del sábado: 9:00–13:30 (4,5 h). Festivo de guardia: 10:00–13:00 (3 h). Localizada por teléfono (la persona de guardia): sin horas. Criterio provisional, a confirmar: un festivo en sábado o domingo sustituye ese día de la semana de guardia.
+- **Calendario:** «Rellenar jornada habitual» salta festivos. Pintar sobre un festivo se permite, con aviso («Ojo: 8 dic (La Inmaculada) es festivo.»).
+- **REAL:** pestaña y edición deshabilitadas con «Pendiente de tablas en Supabase». La lectura responde `{ disponible: false, mensaje }` y la escritura 503 `TA3_PENDIENTE`. Propuesta de tablas, sin aplicar: `web/docs/propuesta_tablas_ta3.sql`.
+
+Fixtures: `fixtures/rrhh/guardias.json`.
+- Rotación de 2026: 53 semanas, del 29 dic 2025 al 28 dic 2026, PIO → RITA → OTRA; cada farmacia recorre su lista de guardia y apoyo.
+- 15 festivos de ejemplo de 2026 (no es el calendario oficial), con guardia propia. El 31 ago queda sin guardia asignada.
+- 2027 y 2028, sin guardias.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Banda del año | Semana 9 nov 2026 | PIO, «G: TE · A: AB» (titular de PIO de guardia, Aina de apoyo); OTRA en gris, solo «OTRA» |
+| Festivo en el año | 1 ene 2026 | Marcado con PIO, su farmacia de guardia; 31 ago sin guardia |
+| Cabecera de semana | 9–15 nov 2026 | «Guardia: Titular de ejemplo · Apoyo sábado: Aina Bosch Ferrer» |
+| Semana con festivo | 7–13 dic 2026 | Columna del 8 con «La Inmaculada»; cabecera con su guardia (PIO · Clara) |
+| Persona por defecto | Año Nuevo 2026 (`persona: null` en la semilla) | Aina, de guardia esa semana con PIO |
+| Festivo que sustituye un domingo | Semana del 26 oct 2026 (Rosa); 1 nov festivo (Laura) | Rosa 6,5 h esa semana; Laura 3 h por el festivo |
+| Guardias del año | Aina 2026 | 5 semanas (47,5 h), 4 sábados de apoyo (18 h), 2 festivos (6 h) = 71,5 h fuera de cómputo |
+| Cambio de año | Semana del 28 dic 2026 (Sílvia) | Cuenta en 2027 (año del sábado) |
+| Rellenar | Semana del 7 dic 2026 | 4 días: el 8 se salta. Diciembre de Irene: 21 días laborables, sin el 8 ni el 25 |
+| Reglas | OTRA con persona; persona de otra farmacia; apoyo igual a la guardia | 400 / 409 PERSONA_NO_VALIDA / 400, sin cambios |
+| REAL simulado | Estado sin guardias | Pestaña sin enlace, «Pendiente de tablas en Supabase»; el calendario sigue sin guardias |
+
+TA3-2 (decisiones de Marc): se aceptan los tres criterios (el festivo sustituye el día de guardia; la semana cuenta en el año de su sábado; sin eventos). El objetivo anual no descuenta festivos. En vacaciones, un festivo de TA3 dado de alta hace de puente, solo entre días de vacaciones.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Puente de festivo | Vacaciones 24 y 28 dic, 25 festivo | Un periodo de 5 días naturales (24–28) |
+| Sin festivo | Mismas fechas sin festivo de alta (o dado de baja) | Dos periodos: 1 + 1 = 2 días (regla anterior) |
+| Festivo al borde | Vacaciones 9–11 dic, 8 festivo | No amplía: 3 días |
+| Otros tipos | Baja y demás ausencias | No cambian (solo vacaciones) |
+| Ficha (Playwright) | Irene: vacaciones 24 y 28 dic 2026 | «5 días» en un solo periodo; tras dar de baja el festivo del 25, 2 periodos |

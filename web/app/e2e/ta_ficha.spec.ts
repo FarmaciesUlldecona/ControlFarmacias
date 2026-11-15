@@ -47,7 +47,7 @@ test.describe('TA-FICHA PC 1440', () => {
       return !!r && !!l && !!(r.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING);
     })).toBe(true);
     await expect(page.locator('[data-resumen-pie]')).toContainText('calculado a 13/11/2026');
-    await expect(page.locator('[data-resumen-pie]')).toContainText('festivos aún no descontados (TA3)');
+    await expect(page.locator('[data-resumen-pie]')).not.toContainText('festivos'); // TA3-2: el objetivo ya descuenta los festivos
     await expect(page.locator('[data-resumen-pie]')).toContainText('vacaciones: 30 días naturales del convenio');
     await expect(fila(page, ROSA).locator('[data-col="vacaciones"]')).toHaveText('32 de 32 (2 extra)'); // TA-REAL-2: 30 + 2 días extra
     // Una fila por persona de RITA, con sus cifras.
@@ -126,7 +126,7 @@ test.describe('TA-FICHA PC 1440', () => {
     await expect(page.locator('[data-medico-usadas]')).toHaveText('0 de 24 h usadas');
     await expect(page.locator('[data-dias-baja]')).toHaveText('0 días en 2026');
     await expect(page.locator('[data-objetivo-anual]')).toContainText('objetivo 1767 h');
-    await expect(page.locator('[data-festivos-pendientes]')).toContainText('Festivos aún no descontados (TA3)');
+    await expect(page.locator('[data-bloque="horas"]')).not.toContainText('aún no descontados'); // TA3-2: texto retirado
     await expect(page.locator('[data-ausencia]').first()).toHaveAttribute('data-ausencia', 'VACACIONES');
     await expect(page.locator('[data-ausencia]').first()).toContainText('23–27 nov 2026');
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_ficha.png'), fullPage: true });
@@ -158,7 +158,7 @@ test.describe('TA-FICHA PC 1440', () => {
     await expect(cifra(page, 'confirmadas')).toHaveText('1776');
     await expect(cifra(page, 'planificadas-h')).toHaveText('120');
     await expect(cifra(page, 'exceso')).toHaveText('129');
-    await expect(page.locator('[data-festivos-pendientes]')).toContainText('baja y descanso compensatorio');
+    await expect(page.locator('[data-horas-suman]')).toContainText('baja y descanso compensatorio');
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_ficha_exceso.png'), fullPage: true });
 
     await abrirFicha(page, MARTA);
@@ -230,6 +230,34 @@ test.describe('TA-FICHA PC 1440', () => {
     await expect(page.locator('[data-dias-extra-actual]')).toHaveText('sin días extra');
     await expect(page.locator('[data-derecho-vacaciones] strong')).toHaveText('30 días');
     await expect(page.locator('[data-dias-extra]')).toHaveValue('');
+  });
+
+  test('TA3-2: un festivo dado de alta entre días de vacaciones hace de puente (Irene 18 y 22 mar 2027, 19 festivo = 5 días); dado de baja, 1 + 1', async ({ page }) => {
+    await preparar(page);
+    await abrirFicha(page, IRENE, '?anio=2027');
+    // Preparación por la API (2027, Irene; se deshace al final: el servidor es común a todas las pruebas).
+    const W = { headers: { origin: new URL(page.url()).origin } };
+    expect((await page.request.post('/api/rrhh/festivos', { ...W, data: { fecha: '2027-03-19', nombre: 'Puente de ejemplo' } })).status()).toBe(201);
+    const p = await page.request.post('/api/rrhh/eventos', { ...W, data: { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [
+      { trabajadora_id: IRENE, fecha: '2027-03-18' }, { trabajadora_id: IRENE, fecha: '2027-03-22' }] } });
+    expect(p.status()).toBe(200);
+    const cambio = (await p.json()).cambio.id as string;
+    try {
+      await abrirFicha(page, IRENE, '?anio=2027');
+      const periodos = page.locator('[data-periodos-vacaciones] [data-periodo-vacaciones]');
+      await expect(periodos).toHaveText(['18–22 mar 2027 · 5 días']);
+      await expect(cifra(page, 'planificadas')).toHaveText('5');
+      await expect(page.locator('[data-bloque="horas"]')).not.toContainText('aún no descontados');
+      await page.locator('[data-bloque="vacaciones"]').screenshot({ path: join(CAPTURAS, 'pc1440_vacaciones_puente_festivo.png') });
+      // Sin el festivo: la regla de siempre (el viernes laborable corta).
+      expect((await page.request.put('/api/rrhh/festivos/2027-03-19/anular', { ...W, data: { confirmar: true } })).status()).toBe(200);
+      await abrirFicha(page, IRENE, '?anio=2027');
+      await expect(periodos).toHaveText(['18 mar 2027 · 1 día', '22 mar 2027 · 1 día']);
+      await expect(cifra(page, 'planificadas')).toHaveText('2');
+    } finally {
+      await page.request.post('/api/rrhh/eventos/deshacer', { ...W, data: { cambio_id: cambio } });
+      await page.request.put('/api/rrhh/festivos/2027-03-19/anular', { ...W, data: { confirmar: true } });
+    }
   });
 
   test('TA-REAL-2: convenio sin días de vacaciones (como hoy en REAL): la ficha muestra «pendiente», sin regla ni cifra inventada', async ({ page }) => {

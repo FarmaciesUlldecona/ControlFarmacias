@@ -29,6 +29,7 @@ import {
   horasQueSuman, leerNota, validarPeticionEventos,
 } from '../../app/server/rrhh/eventos.ts';
 import { traducirErrorBd } from '../../app/server/rrhh/errores_bd.ts';
+import { COLOR_FARMACIA_GUARDIA, FARMACIAS_GUARDIA, HORAS_SERVICIO, reglasSemana, validarFestivo } from '../../app/server/rrhh/guardias.ts';
 import { leerSemillaFichaAnual } from '../../app/server/rrhh/adaptador_fixtures.ts';
 import { AVISO_VACACIONES_DESDE, REDONDEO_PROPORCIONAL, TIPOS_HORAS_COMPUTAN, calcularFichaAnual, resumenPlantilla } from '../../app/server/rrhh/ficha_anual.ts';
 import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
@@ -1114,6 +1115,77 @@ comprobar('TA-FICHA: libre disposición (Rosa media franja 0,5 de 1), permiso m�
   const sep = calcularFichaAnual(silvia, cal.eventos, a.convenio(), 2026, '2026-09-30');
   return si(de('15').libre_disposicion.usadas === 0.5 && de('15').libre_disposicion.restantes === 0.5 && de('11').permiso_medico.usadas === 8
     && de('22').horas.objetivo === null && sep.avisos.length === 0 && fichaEjemplo.filas.length === 13, JSON.stringify(sep.avisos));
+});
+
+// --- Casos TA3 (guardias y festivos, datos de ejemplo) ------------------------------
+const aG3 = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+const g3 = aG3.guardiasTa3;
+const g3d = g3.datos();
+const fichasG3 = new Map(leerSemilla().map((t) => [t.id, t]));
+comprobar('TA3: horario de guardia en un único punto (sábado 6,5 h, domingo 3 h, apoyo 4,5 h, festivo 3 h, localizada sin horas); colores propios', () => {
+  const colores = Object.values(COLOR_FARMACIA_GUARDIA).map((c) => c.toLowerCase());
+  const deEventos = Object.values(COLOR_TIPO_EVENTO).map((c) => c.toLowerCase());
+  return si(isDeepStrictEqual(HORAS_SERVICIO, { GUARDIA_SABADO: 6.5, GUARDIA_DOMINGO: 3, APOYO_SABADO: 4.5, FESTIVO: 3, LOCALIZADA: 0 })
+    && isDeepStrictEqual(FARMACIAS_GUARDIA, ['PIO', 'RITA', 'OTRA']) && colores.every((c) => !deEventos.includes(c)) && new Set(colores).size === 3,
+  JSON.stringify(HORAS_SERVICIO));
+});
+comprobar('TA3: semilla de guardias 2026: 53 semanas (una por lunes) rotando PIO/RITA/OTRA; OTRA sin personas; personas de su farmacia y de alta; apoyo distinto', () => {
+  const ficha = (id) => aG3.trabajadoras('AMBAS', true).trabajadoras.find((t) => t.id === id);
+  const malas = g3d.semanas.filter((s) => s.anulada || reglasSemana(s, ficha) !== null || (s.farmacia !== 'OTRA' && fichasG3.get(s.persona_guardia_id)?.farmacia !== s.farmacia));
+  const lunes = g3d.semanas.map((s) => s.lunes);
+  return si(malas.length === 0 && g3d.semanas.length === 53 && new Set(lunes).size === 53 && lunes[0] === '2025-12-29' && lunes[52] === '2026-12-28'
+    && g3d.semanas.every((s, i) => s.farmacia === ['PIO', 'RITA', 'OTRA'][i % 3]), JSON.stringify(malas.map((s) => s.lunes)));
+});
+comprobar('TA3: festivos de ejemplo 2026 (15, uno por día, nombre ≤ 60, todos en 2026; el 31 ago sin guardia); guardias de festivo solo en festivos, OTRA sin persona', () => {
+  const festivos = new Set(g3d.festivos.filter((f) => !f.anulado).map((f) => f.fecha));
+  const malos = g3d.festivos.filter((f) => !validarFestivo({ fecha: f.fecha, nombre: f.nombre }).ok || !f.fecha.startsWith('2026-'));
+  const gfMalas = g3d.guardiasFestivo.filter((g) => !festivos.has(g.fecha) || (g.farmacia === 'OTRA') !== (g.persona_id === null)
+    || (g.persona_id !== null && fichasG3.get(g.persona_id)?.farmacia !== g.farmacia));
+  return si(malos.length === 0 && gfMalas.length === 0 && festivos.size === 15 && g3d.festivos.length === 15 && g3d.guardiasFestivo.length === 14
+    && !g3d.guardiasFestivo.some((g) => g.fecha === '2026-08-31'), JSON.stringify({ malos, gfMalas }));
+});
+comprobar('TA3: persona por defecto de la guardia del festivo (Año Nuevo: semana PIO de Aina → Aina); rotación propia (no siempre la semanal)', () => {
+  const v = g3.vista('2026-01-01', '2026-12-31');
+  const anio = v.festivos.find((f) => f.fecha === '2026-01-01');
+  const distintos = v.festivos.filter((f) => f.guardia && f.semana && f.guardia.farmacia !== f.semana.farmacia).length;
+  return si(anio?.guardia?.persona?.id === 'e0000000-0000-4000-8000-000000000001' && distintos >= 5, JSON.stringify({ anio, distintos }));
+});
+comprobar('TA3: «Guardias del año» de Aina 2026 = 5 semanas, 4 sábados de apoyo, 2 festivos, 71,5 h fuera de cómputo; las horas del año no cambian', () => {
+  const r = g3.resumenPersona('e0000000-0000-4000-8000-000000000001', 2026);
+  const aina = fichaEjemplo.de('01');
+  return si(isDeepStrictEqual([r.semanas_guardia, r.sabados_apoyo, r.festivos_guardia, r.horas_total], [5, 4, 2, 71.5]) && aina.horas.objetivo !== null
+    && !TIPOS_HORAS_COMPUTAN.includes('TURNO_GUARDIA') && !TIPOS_HORAS_COMPUTAN.includes('LOCALIZADA') && !TIPOS_HORAS_COMPUTAN.includes('FESTIVO'), JSON.stringify(r));
+});
+comprobar('TA3: rellenar salta festivos (8 dic 2026); pintar sobre festivo se permite con aviso', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const aina = 'e0000000-0000-4000-8000-000000000001';
+  const r = a.cambiarEventos({ accion: 'RELLENAR', trabajadora_ids: [aina], desde: '2026-12-07', hasta: '2026-12-13' }, 'Marc');
+  const el8 = a.eventos().filter((e) => e.trabajadora_id === aina && e.fecha === '2026-12-08').length;
+  const p = a.cambiarEventos({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: aina, fecha: '2026-12-08' }] }, 'Marc');
+  return si(typeof r === 'object' && r.cambio?.fechas === 4 && el8 === 0 && typeof p === 'object' && isDeepStrictEqual(p.festivos_pintados, ['2026-12-08']),
+    JSON.stringify({ r: typeof r === 'object' ? r.cambio?.fechas : r, el8, p: typeof p === 'object' ? p.festivos_pintados : p }));
+});
+comprobar('TA3-2: festivo de alta entre vacaciones = puente (24 + 28 dic, 25 festivo = 5 días); sin festivo 1 + 1; el objetivo no descuenta festivos', () => {
+  const a = crearAdaptadorRrhhFixtures({ anioReferencia: 2026 });
+  const aina = 'e0000000-0000-4000-8000-000000000001';
+  a.cambiarEventos({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: aina, fecha: '2026-12-24' }, { trabajadora_id: aina, fecha: '2026-12-28' }] }, 'Marc');
+  const cal = a.calendario('PIO', '2026-01-01', '2026-12-31');
+  const t = cal.trabajadoras.find((x) => x.id === aina);
+  const dias = (festivos) => calcularFichaAnual(t, cal.eventos, a.convenio(), 2026, '2026-11-13', { festivos }).vacaciones.periodos
+    .filter((p) => p.desde >= '2026-12-24').map((p) => p.dias);
+  const con = dias(a.guardiasTa3.fechasFestivo(2026));
+  const obj = (festivos) => calcularFichaAnual(t, cal.eventos, a.convenio(), 2026, '2026-11-13', { festivos }).horas.objetivo;
+  return si(isDeepStrictEqual(con, [5]) && isDeepStrictEqual(dias([]), [1, 1]) && obj([]) === obj(a.guardiasTa3.fechasFestivo(2026)) && obj([]) === 1767,
+    JSON.stringify({ con, sin: dias([]), obj: obj([]) }));
+});
+comprobar('TA3: propuesta SQL (docs/propuesta_tablas_ta3.sql) sin aplicar: autor por cf.autor sin columna, anulado en vez de DELETE, RLS, grants y rollback', () => {
+  const ruta = join(RAIZ, '..', 'docs', 'propuesta_tablas_ta3.sql');
+  if (!existsSync(ruta)) return 'falta la propuesta';
+  const s = readFileSync(ruta, 'utf8');
+  const tablas = s.match(/create table public\.\w+ \([^;]*\);/g) ?? [];
+  return si(/NO APLICAR/.test(s) && /cf\.autor/.test(s) && tablas.length >= 2 && tablas.every((t) => !/\bautor\b/.test(t))
+    && /enable row level security/.test(s) && /grant select, insert, update on [^;]*to cf_trabajadores_web/.test(s) && /grant select on [^;]*to cf_lectura/.test(s)
+    && /ROLLBACK/.test(s) && /DECISIONES PARA EL CIRCUITO/.test(s) && !/^grant [^;]*\bdelete\b/im.test(s), 'faltan elementos');
 });
 
 // --- Informe ----------------------------------------------------------------------

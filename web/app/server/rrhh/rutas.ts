@@ -16,6 +16,12 @@
  * vacaciones_fuente de los años que no los tienen); PUT /api/rrhh/trabajadoras/:id/ajustes/:anio (días extra de
  * vacaciones y nota) y PUT …/ajustes/:anio/anular (con confirmación). La ficha anual suma los días extra.
  *
+ * TA3: GET /api/rrhh/guardias (semanas de guardia y festivos de un año o un rango); PUT /api/rrhh/guardias/:lunes
+ * (farmacia, guardia y apoyo de la semana); POST /api/rrhh/festivos (alta); PUT /api/rrhh/festivos/:fecha/anular (baja,
+ * con confirmación) y PUT /api/rrhh/festivos/:fecha/guardia (farmacia y persona de guardia del festivo). Solo FIXTURES:
+ * en REAL las tablas no existen todavía; la lectura responde { disponible: false, mensaje } y la escritura 503
+ * TA3_PENDIENTE «Pendiente de tablas en Supabase». La ficha anual añade «Guardias del año» (fuera de cómputo).
+ *
  * Se registra sobre cualquier instancia de Fastify (pruebas con instancia propia, sin BD).
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -29,6 +35,10 @@ import {
 } from './eventos.ts';
 import { ErrorRrhhBd, MENSAJES_BD } from './errores_bd.ts';
 import { anioFicha, calcularFichaAnual, diasEnAlta, reglasFicha, resumenPlantilla, type FichaAnualDTO, type ResumenPlantillaDTO } from './ficha_anual.ts';
+import {
+  ERROR_TA3_PENDIENTE, TEXTO_TA3_PENDIENTE, enAniosGuardia, validarFestivo, validarGuardiaFestivo, validarGuardiaSemana,
+  type AlmacenGuardias, type GuardiasRespuestaDTO,
+} from './guardias.ts';
 
 /** Hoy en el reloj del servidor (fecha local), si el navegador no manda el suyo. */
 function hoyServidor(): string {
@@ -42,8 +52,17 @@ const HTTP_ERROR: Readonly<Record<string, number>> = {
   NADA_QUE_DESHACER: 409, NO_ES_EL_ULTIMO: 409, ESTADO_CAMBIADO: 409,
   YA_DE_BAJA: 409, YA_ANULADA: 409, BAJA_ANTES_DEL_ALTA: 400, NOMBRE_DUPLICADO: 409,
   SIN_AJUSTE: 409, SIN_ALTA_EN_EL_ANIO: 409, TRABAJADORA_ANULADA: 409,
+  PERSONA_NO_VALIDA: 409, APOYO_IGUAL_GUARDIA: 400, OTRA_SIN_PERSONAS: 400, PERSONA_OBLIGATORIA: 400, NO_ES_FESTIVO: 409,
+  FESTIVO_DUPLICADO: 409, SIN_FESTIVO: 409,
 };
 const MENSAJE_ERROR: Readonly<Record<string, string>> = {
+  PERSONA_NO_VALIDA: 'Esa persona no es de esa farmacia o no está de alta esos días.',
+  APOYO_IGUAL_GUARDIA: 'El apoyo del sábado tiene que ser otra persona.',
+  OTRA_SIN_PERSONAS: 'La farmacia ajena (OTRA) no lleva personas.',
+  PERSONA_OBLIGATORIA: 'Elige la persona de guardia.',
+  NO_ES_FESTIVO: 'Ese día no es festivo.',
+  FESTIVO_DUPLICADO: 'Ese día ya es festivo.',
+  SIN_FESTIVO: 'Ese día no es festivo.',
   SIN_AJUSTE: 'Esa persona no tiene días extra ese año.',
   SIN_ALTA_EN_EL_ANIO: 'Esa persona no está de alta ningún día de ese año.',
   TRABAJADORA_ANULADA: 'Esa ficha está anulada.',
@@ -59,14 +78,18 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * Rutas de escritura del módulo (método + patrón): las únicas que el servidor admite fuera de login/logout.
  * TA1: fichas (POST alta; PUT edición y baja; TA-REAL: PUT anulación). TA-REAL: POST /api/rrhh/convenio (crear los
  * años firmados que falten). TA2: POST /api/rrhh/eventos y POST /api/rrhh/eventos/deshacer. TA-REAL-2: POST
- * /api/rrhh/convenio/vacaciones; PUT /api/rrhh/trabajadoras/:id/ajustes/:anio(/anular). Nunca DELETE ni PATCH.
+ * /api/rrhh/convenio/vacaciones; PUT /api/rrhh/trabajadoras/:id/ajustes/:anio(/anular). TA3: PUT /api/rrhh/guardias/:lunes;
+ * POST /api/rrhh/festivos; PUT /api/rrhh/festivos/:fecha/(anular|guardia). Nunca DELETE ni PATCH.
  */
 export function esEscrituraRrhh(metodo: string, ruta: string): boolean {
   if (metodo === 'POST') {
     return ruta === '/api/rrhh/trabajadoras' || ruta === '/api/rrhh/convenio' || ruta === '/api/rrhh/convenio/vacaciones'
-      || ruta === '/api/rrhh/eventos' || ruta === '/api/rrhh/eventos/deshacer';
+      || ruta === '/api/rrhh/eventos' || ruta === '/api/rrhh/eventos/deshacer' || ruta === '/api/rrhh/festivos';
   }
-  if (metodo === 'PUT') return /^\/api\/rrhh\/trabajadoras\/[0-9a-fA-F-]{36}(\/baja|\/anular|\/ajustes\/\d{4}(\/anular)?)?$/.test(ruta);
+  if (metodo === 'PUT') {
+    return /^\/api\/rrhh\/trabajadoras\/[0-9a-fA-F-]{36}(\/baja|\/anular|\/ajustes\/\d{4}(\/anular)?)?$/.test(ruta)
+      || /^\/api\/rrhh\/guardias\/\d{4}-\d{2}-\d{2}$/.test(ruta) || /^\/api\/rrhh\/festivos\/\d{4}-\d{2}-\d{2}\/(anular|guardia)$/.test(ruta);
+  }
   return false;
 }
 
@@ -124,10 +147,12 @@ export function registrarRrhh(app: FastifyInstance, opciones: OpcionesRrhh): voi
     if (!/^application\/json\b/i.test(req.headers['content-type'] ?? '')) return reply.code(415).send({ error: 'SOLO_JSON' });
   });
 
+  const g3 = datos?.guardiasTa3 ?? null;
   app.get('/api/rrhh/estado', async (): Promise<EstadoRrhhDTO> => {
-    if (modo === 'FIXTURES') return { modo, conectado: false, datos_ejemplo: true, mensaje: 'Datos de ejemplo en memoria' };
-    if (datos === null) return { modo, conectado: false, datos_ejemplo: false, mensaje: sin.mensaje };
-    return { modo, conectado: true, datos_ejemplo: false, mensaje: TEXTO_BANNER_REAL };
+    const guardias_disponibles = g3 !== null;
+    if (modo === 'FIXTURES') return { modo, conectado: false, datos_ejemplo: true, mensaje: 'Datos de ejemplo en memoria', guardias_disponibles };
+    if (datos === null) return { modo, conectado: false, datos_ejemplo: false, mensaje: sin.mensaje, guardias_disponibles };
+    return { modo, conectado: true, datos_ejemplo: false, mensaje: TEXTO_BANNER_REAL, guardias_disponibles };
   });
 
   const farmacia = (v: string | undefined) => filtroFarmacia(v ?? 'AMBAS');
@@ -155,7 +180,9 @@ export function registrarRrhh(app: FastifyInstance, opciones: OpcionesRrhh): voi
     return con(reply, async (d): Promise<ResumenPlantillaDTO> => {
       const cal = await d.calendario(f, `${ah.anio}-01-01`, `${ah.anio}-12-31`);
       const convenio = await d.convenio();
-      const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, convenio, ah.anio, ah.hoy, { ajustes: await d.ajustes(f, ah.anio) });
+      const filas = resumenPlantilla(cal.trabajadoras, cal.eventos, convenio, ah.anio, ah.hoy, {
+        ajustes: await d.ajustes(f, ah.anio), festivos: g3 ? g3.fechasFestivo(ah.anio) : [],
+      });
       return { farmacia: f, anio: ah.anio, hoy: ah.hoy, filas, reglas: reglasFicha(convenio, ah.anio) };
     });
   });
@@ -175,8 +202,67 @@ export function registrarRrhh(app: FastifyInstance, opciones: OpcionesRrhh): voi
       const t = cal.trabajadoras.find((x) => x.id === id);
       if (!t) return { ...base, ficha: null, motivo: 'SIN_ALTA_EN_EL_ANIO' } satisfies FichaAnualDTO;
       const ajustes = await d.ajustes(t.farmacia, ah.anio);
-      return { ...base, ficha: calcularFichaAnual(t, cal.eventos, convenio, ah.anio, ah.hoy, { ajustes }), motivo: null } satisfies FichaAnualDTO;
+      return {
+        ...base, ficha: calcularFichaAnual(t, cal.eventos, convenio, ah.anio, ah.hoy, { ajustes, festivos: g3 ? g3.fechasFestivo(ah.anio) : [] }), motivo: null,
+        guardias: g3 ? g3.resumenPersona(t.id, ah.anio) : null,
+      } satisfies FichaAnualDTO;
     });
+  });
+
+  // --- TA3: guardias y festivos (solo FIXTURES; en REAL, tablas pendientes en Supabase) --------------------------
+  const ta3Pendiente = (reply: FastifyReply) => reply.code(503).send({ error: ERROR_TA3_PENDIENTE, mensaje: TEXTO_TA3_PENDIENTE });
+  /** Con el almacén de TA3; sin él (REAL), 503 «Pendiente de tablas en Supabase». */
+  const conTa3 = (reply: FastifyReply, trabajo: (g: AlmacenGuardias) => unknown) => {
+    if (datos === null) return pendiente(reply);
+    if (g3 === null) return ta3Pendiente(reply);
+    const r = trabajo(g3);
+    return typeof r === 'string' ? error(reply, r) : r;
+  };
+  app.get<{ Querystring: { anio?: string; desde?: string; hasta?: string } }>('/api/rrhh/guardias', async (req, reply): Promise<GuardiasRespuestaDTO | FastifyReply> => {
+    if (datos === null) return pendiente(reply);
+    const q = req.query;
+    let desde: string; let hasta: string;
+    if (q.anio !== undefined) {
+      const a = anioFicha(q.anio);
+      if (a === null || q.desde !== undefined || q.hasta !== undefined) return reply.code(400).send({ error: 'RANGO_NO_VALIDO' });
+      [desde, hasta] = [`${a}-01-01`, `${a}-12-31`];
+    } else {
+      if (!esFecha(q.desde) || !esFecha(q.hasta) || q.hasta < q.desde || !enAniosGuardia(q.desde) || !enAniosGuardia(q.hasta) || diasEntre(q.desde, q.hasta) + 1 > MAX_DIAS_LECTURA) {
+        return reply.code(400).send({ error: 'RANGO_NO_VALIDO' });
+      }
+      [desde, hasta] = [q.desde, q.hasta];
+    }
+    if (g3 === null) return { disponible: false, mensaje: TEXTO_TA3_PENDIENTE };
+    return g3.vista(desde, hasta);
+  });
+  app.put<{ Params: { lunes: string } }>('/api/rrhh/guardias/:lunes', async (req, reply) => {
+    const v = validarGuardiaSemana(req.params.lunes, req.body);
+    if (datos !== null && g3 !== null && !v.ok) return reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores: v.errores });
+    return conTa3(reply, (g) => (v.ok ? g.guardarSemana(v.datos) : 'DATOS_NO_VALIDOS'));
+  });
+  app.post('/api/rrhh/festivos', async (req, reply) => {
+    const v = validarFestivo(req.body);
+    if (datos !== null && g3 !== null && !v.ok) return reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores: v.errores });
+    return conTa3(reply, (g) => {
+      if (!v.ok) return 'DATOS_NO_VALIDOS';
+      const r = g.crearFestivo(v.fecha, v.nombre);
+      return typeof r === 'string' ? r : reply.code(201).send(r);
+    });
+  });
+  const fechaFestivo = (f: string) => esFecha(f) && enAniosGuardia(f);
+  app.put<{ Params: { fecha: string } }>('/api/rrhh/festivos/:fecha/anular', async (req, reply) => {
+    const v = validarAnulacion(req.body);
+    if (datos !== null && g3 !== null && (!v.ok || !fechaFestivo(req.params.fecha))) {
+      return reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores: v.ok ? { fecha: 'Fecha no válida' } : v.errores });
+    }
+    return conTa3(reply, (g) => g.anularFestivo(req.params.fecha));
+  });
+  app.put<{ Params: { fecha: string } }>('/api/rrhh/festivos/:fecha/guardia', async (req, reply) => {
+    const v = validarGuardiaFestivo(req.body);
+    if (datos !== null && g3 !== null && (!v.ok || !fechaFestivo(req.params.fecha))) {
+      return reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores: v.ok ? { fecha: 'Fecha no válida' } : v.errores });
+    }
+    return conTa3(reply, (g) => (v.ok ? g.guardarGuardiaFestivo(req.params.fecha, v.farmacia, v.persona_id) : 'DATOS_NO_VALIDOS'));
   });
 
   // --- TA-REAL-2: días extra de vacaciones por persona y año (trabajadoras_ajustes_anuales) -------------------------

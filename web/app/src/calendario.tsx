@@ -10,6 +10,10 @@
 // pintan desde TA3; guardia y localizada no suman horas); fuera del alta o la baja de la persona no se pinta; recuadro
 // «Notas próximas» (de hoy en adelante). TA-REAL-2 (migración 33): goma y deshacer también en REAL (anulan, nunca borran);
 // lo confirmado sigue bloqueado.
+// TA3: festivos y guardias (guardias.tsx): vista año con una banda por semana de guardia (color de la farmacia e
+// iniciales «G: XX · A: YY») y los festivos marcados con su farmacia de guardia; semana y mes con la cabecera
+// «Guardia: Nombre · Apoyo sábado: Nombre» y los festivos con su nombre. Rellenar salta festivos; pintar sobre un
+// festivo se permite, con aviso. En REAL (sin tablas de TA3), el calendario sigue igual, sin guardias.
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as EventoPuntero, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -22,8 +26,10 @@ import {
   type CalendarioDTO, type CambioCalendario, type Celda, type EventoCalendario, type Franja, type NotaProxima, type ResultadoCambioDTO, type TipoEvento,
   type TrazaEvento,
 } from '../server/rrhh/eventos.ts';
+import type { FestivoVista, GuardiasRespuestaDTO, SemanaGuardiaVista } from '../server/rrhh/guardias.ts';
 import { ErrorApi, enviar, useApiRecargable } from './api.ts';
 import { fechaHora } from './formato.ts';
+import { BandaGuardia, CabeceraGuardias, estiloGuardia, useGuardias } from './guardias.tsx';
 import { EtiquetaFarmacia, Modulo, SelectorFarmacia } from './trabajadores.tsx';
 
 // ---------------------------------------------------------------------------
@@ -160,7 +166,13 @@ function textoError(e: unknown): string {
   // TA-REAL: errores de la base de datos con su mensaje llano (la transacción ya está deshecha).
   return e.mensaje ?? `No se ha podido guardar (${e.codigo}).`;
 }
-function textoResultado(r: ResultadoCambioDTO): Aviso {
+/** TA3: aviso (no error) al pintar sobre festivos: «Ojo: 25 dic es festivo (Navidad).» */
+function textoFestivos(fechas: string[] | undefined, festivos: ReadonlyMap<string, FestivoVista>): string {
+  if (!fechas || fechas.length === 0) return '';
+  const lista = fechas.map((f) => `${F_DIA_MES.format(dia(f))}${festivos.has(f) ? ` (${festivos.get(f)?.nombre})` : ''}`).join(', ');
+  return ` Ojo: ${fechas.length === 1 ? `${lista} es festivo` : `${lista} son festivos`}.`;
+}
+function textoResultado(r: ResultadoCambioDTO, festivos: ReadonlyMap<string, FestivoVista> = new Map()): Aviso {
   const o = r.omitidas_confirmadas;
   const v = r.omitidas_vacias;
   const omitidas = (o > 0 ? ` ${o} ${o === 1 ? 'franja confirmada no se ha tocado' : 'franjas confirmadas no se han tocado'} (quita antes la confirmación).` : '')
@@ -169,7 +181,7 @@ function textoResultado(r: ResultadoCambioDTO): Aviso {
     if (v > 0 && o === 0) return { ok: false, texto: `${AVISO_NOTA_VACIA}.` };
     return { ok: o === 0 && v === 0, texto: `Sin cambios: esos días ya estaban así.${omitidas}` };
   }
-  return { ok: true, texto: `${describirCambio(r.cambio)}.${omitidas}` };
+  return { ok: true, texto: `${describirCambio(r.cambio)}.${omitidas}${textoFestivos(r.festivos_pintados, festivos)}` };
 }
 
 function Calendario() {
@@ -189,6 +201,9 @@ function Calendario() {
   const hist = useApiRecargable<CambioCalendario[]>(`/api/rrhh/eventos/historial?farmacia=${farmacia}`);
   // TA-REAL «Notas próximas»: desde hoy (reloj del navegador); al pasar el día salen del recuadro.
   const notas = useApiRecargable<NotaProxima[]>(`/api/rrhh/eventos/notas?farmacia=${farmacia}&desde=${hoy()}`);
+  // TA3: guardias y festivos del periodo (sin ellos, en REAL o si falla la lectura, el calendario sigue igual).
+  const guardias = useGuardias(dq, hq);
+  const festivos = new Map((guardias?.disponible ? guardias.festivos : []).map((f) => [f.fecha, f]));
   const [herr, setHerr] = useState<Herramienta>({ k: 'seleccion' });
   const [sel, setSel] = useState<Set<string>>(() => new Set());
   const [aviso, setAviso] = useState<Aviso>(null);
@@ -209,7 +224,7 @@ function Calendario() {
   const ejecutar = (tarea: () => Promise<void>) => { cola.current = cola.current.then(tarea).catch(() => undefined); };
   const recargar = () => { cal.recargar(); hist.recargar(); notas.recargar(); };
   const escribir = (ruta: string, cuerpo: object) => ejecutar(async () => {
-    try { setAviso(textoResultado(await enviar<ResultadoCambioDTO>(ruta, 'POST', cuerpo))); } catch (e) { setAviso({ ok: false, texto: textoError(e) }); }
+    try { setAviso(textoResultado(await enviar<ResultadoCambioDTO>(ruta, 'POST', cuerpo), festivos)); } catch (e) { setAviso({ ok: false, texto: textoError(e) }); }
     recargar();
   });
   const cambioEventos = (cuerpo: object) => escribir('/api/rrhh/eventos', cuerpo);
@@ -355,13 +370,14 @@ function Calendario() {
         <p className="tarjeta rrhh-vacio" data-calendario-vacio>Ninguna persona con estos filtros. Cambia la persona o la categoría.</p>
       )}
 
+      {rango && <CabeceraGuardias datos={guardias} />}
       {datos && visibles.length > 0 && rango && (
         <RejillaPeriodo vista={vista} desde={desde} hasta={hasta} hoyF={hoyF} trabajadoras={visibles} agrupar={farmacia === 'AMBAS'}
-          eventos={eventos} sel={sel} herr={herr} colores={colores} tipoFiltro={tipoFiltro} onAplicar={aplicar} />
+          eventos={eventos} sel={sel} herr={herr} colores={colores} tipoFiltro={tipoFiltro} onAplicar={aplicar} festivos={festivos} />
       )}
       {datos && vista === 'anio' && visibles.length > 0 && (
         <VistaAnio anio={anioSel} hoyF={hoyF} trabajadoras={visibles} eventos={eventos} colores={colores} tipoFiltro={tipoFiltro}
-          onDia={(f) => cambiar({ vista: null, fecha: f })} />
+          onDia={(f) => cambiar({ vista: null, fecha: f })} guardias={guardias} />
       )}
       {datos && vista === 'persona' && (elegida
         ? <VistaPersona t={elegida} anio={anioSel} hoyF={hoyF} eventos={eventos} sel={sel} herr={herr} colores={colores}
@@ -403,7 +419,7 @@ function Paleta({ herr, onHerr, colores, onColor, semana }: {
           title="Quitar eventos (se anulan y quedan en el historial; lo confirmado no se toca)" onClick={() => onHerr({ k: 'goma' })}><span className="cal-muestra-goma" aria-hidden="true" />Goma</button>
       </div>
       <p className="tenue cal-tipos-ta3" data-tipos-ta3>
-        {TIPOS_EVENTO.filter((t) => !TIPOS_PINTABLES.includes(t)).map((t) => TEXTO_TIPO_EVENTO[t]).join(', ')}: se verán si existen; se pintan desde Guardias y festivos (TA3).
+        {TIPOS_EVENTO.filter((t) => !TIPOS_PINTABLES.includes(t)).map((t) => TEXTO_TIPO_EVENTO[t]).join(', ')}: no se pintan aquí; se registran en <Link to="/trabajadores/guardias">Guardias y festivos</Link>.
         {' '}{TIPOS_SIN_HORAS.map((t) => TEXTO_TIPO_EVENTO[t]).join(' y ')} no suman horas.
       </p>
       <div className="cal-leyenda">
@@ -439,7 +455,8 @@ function Paleta({ herr, onHerr, colores, onColor, semana }: {
 // Rejilla pintable (semana, mes y por persona)
 // ---------------------------------------------------------------------------
 
-interface Columna { clave: string; cabecera: ReactNode; titulo?: string; finde?: boolean; hoy?: boolean }
+/** TA3: festivo = nombre del festivo de ese día (columna marcada con su nombre). */
+interface Columna { clave: string; cabecera: ReactNode; titulo?: string; finde?: boolean; hoy?: boolean; festivo?: string }
 /**
  * Fila de la rejilla. Semana: una subfila por franja (cabecera de persona con rowSpan 2 en la de mañana); celda null
  * = franja que la persona no trabaja. Mes y por persona: una fila por persona o mes; celda null = día inexistente.
@@ -536,9 +553,13 @@ function Rejilla({ variante, columnas, filas, nombres, eventos, sel, herr, color
           <tr>
             <th scope="col" className="cal-esquina" colSpan={semana ? 2 : 1}>{variante === 'persona' ? 'Mes' : 'Persona'}</th>
             {columnas.map((c, j) => (
-              <th key={c.clave} scope="col" className={`cal-col${c.finde ? ' finde' : ''}${c.hoy ? ' hoy' : ''}`} title={c.titulo} data-columna={c.clave}>
+              <th key={c.clave} scope="col" className={`cal-col${c.finde ? ' finde' : ''}${c.hoy ? ' hoy' : ''}${c.festivo ? ' festivo' : ''}`}
+                title={c.festivo ? `${c.titulo} · Festivo: ${c.festivo}` : c.titulo} data-columna={c.clave} {...(c.festivo ? { 'data-festivo-columna': c.festivo } : {})}>
                 {variante === 'persona' ? c.cabecera : (
-                  <button type="button" className="cal-col-boton" onClick={() => columna(j)} aria-label={`${c.titulo}: aplicar a todas las personas`}>{c.cabecera}</button>
+                  <button type="button" className="cal-col-boton" onClick={() => columna(j)} aria-label={`${c.titulo}${c.festivo ? ` (festivo: ${c.festivo})` : ''}: aplicar a todas las personas`}>
+                    {c.cabecera}
+                    {c.festivo && <span className="cal-col-festivo">{semana ? c.festivo : CODIGO_TIPO_EVENTO.FESTIVO}</span>}
+                  </button>
                 )}
               </th>
             ))}
@@ -622,14 +643,15 @@ function CabeceraPersona({ t, compacto }: { t: Trabajadora; compacto: boolean })
 const trabajanEl = (trabajadoras: Trabajadora[], eventos: Map<string, EventoCalendario>, f: string) =>
   trabajadoras.filter((t) => FRANJAS.some((fr) => eventos.get(claveEv(t.id, f, fr))?.tipo === 'JORNADA')).length;
 
-function RejillaPeriodo({ vista, desde, hasta, hoyF, trabajadoras, agrupar, eventos, sel, herr, colores, tipoFiltro, onAplicar }: {
+function RejillaPeriodo({ vista, desde, hasta, hoyF, trabajadoras, agrupar, eventos, sel, herr, colores, tipoFiltro, onAplicar, festivos }: {
   vista: Vista; desde: string; hasta: string; hoyF: string; trabajadoras: Trabajadora[]; agrupar: boolean;
   eventos: Map<string, EventoCalendario>; sel: Set<string>; herr: Herramienta; colores: Colores; tipoFiltro: TipoEvento | ''; onAplicar: (c: Celda[]) => void;
+  festivos: ReadonlyMap<string, FestivoVista>;
 }) {
   const dias = rangoFechas(desde, hasta);
   const semana = vista === 'semana';
   const columnas: Columna[] = dias.map((f) => ({
-    clave: f, titulo: mayuscula(F_LARGA.format(dia(f))), finde: diaSemana(f) >= 5, hoy: f === hoyF,
+    clave: f, titulo: mayuscula(F_LARGA.format(dia(f))), finde: diaSemana(f) >= 5, hoy: f === hoyF, festivo: festivos.get(f)?.nombre,
     cabecera: semana
       ? <><span className="cal-dsem">{F_DIA_SEM.format(dia(f))}</span> <span className="cal-dnum">{Number(f.slice(8))}</span></>
       : <><span className="cal-dsem">{INICIALES[diaSemana(f)]}</span><span className="cal-dnum">{Number(f.slice(8))}</span></>,
@@ -717,10 +739,13 @@ function VistaPersona({ t, anio, hoyF, eventos, sel, herr, colores, tipoFiltro, 
 // Vista año: resumen por día (quién falta y cuántos trabajan)
 // ---------------------------------------------------------------------------
 
-function VistaAnio({ anio, hoyF, trabajadoras, eventos, colores, tipoFiltro, onDia }: {
+function VistaAnio({ anio, hoyF, trabajadoras, eventos, colores, tipoFiltro, onDia, guardias }: {
   anio: string; hoyF: string; trabajadoras: Trabajadora[]; eventos: Map<string, EventoCalendario>; colores: Colores;
-  tipoFiltro: TipoEvento | ''; onDia: (f: string) => void;
+  tipoFiltro: TipoEvento | ''; onDia: (f: string) => void; guardias: GuardiasRespuestaDTO | null;
 }) {
+  // TA3: semanas de guardia (por lunes) y festivos (por fecha); sin datos (REAL), ni bandas ni marcas.
+  const semanas = new Map<string, SemanaGuardiaVista>((guardias?.disponible ? guardias.semanas : []).map((s) => [s.lunes, s]));
+  const festivos = new Map<string, FestivoVista>((guardias?.disponible ? guardias.festivos : []).map((f) => [f.fecha, f]));
   const nombre = new Map(trabajadoras.map((t) => [t.id, t.nombre]));
   const porDia = new Map<string, EventoCalendario[]>();
   for (const e of eventos.values()) {
@@ -739,31 +764,52 @@ function VistaAnio({ anio, hoyF, trabajadoras, eventos, colores, tipoFiltro, onD
         const primero = `${anio}-${String(m + 1).padStart(2, '0')}-01`;
         const dias = rangoFechas(primero, ultimoDeMes(primero));
         const total = dias.reduce((s, f) => s + new Set(ausencias(f).map((e) => e.trabajadora_id)).size, 0);
+        const ultimo = dias[dias.length - 1];
+        const lunesMes: string[] = [];
+        for (let l = lunesDe(primero); l <= ultimo; l = sumarDias(l, 7)) lunesMes.push(l);
+        const diaBoton = (f: string) => {
+          const faltan = ausencias(f);
+          const personas = new Set(faltan.map((e) => e.trabajadora_id)).size;
+          const trabajan = new Set((porDia.get(f) ?? []).filter((e) => e.tipo === 'JORNADA').map((e) => e.trabajadora_id)).size;
+          const fe = festivos.get(f);
+          const guardiaFe = fe?.guardia ? ` (guardia ${fe.guardia.farmacia}${fe.guardia.persona ? `: ${fe.guardia.persona.nombre}` : ''})` : fe ? ' (guardia sin asignar)' : '';
+          const titulo = `${mayuscula(F_LARGA.format(dia(f)))}${fe ? ` · Festivo: ${fe.nombre}${guardiaFe}` : ''}: ${trabajan} trabajan${faltan.length
+            ? ` · ${faltan.map((e) => `${TEXTO_TIPO_EVENTO[e.tipo]}: ${nombre.get(e.trabajadora_id)}`).join('; ')}` : ''}`;
+          return (
+            <button key={f} type="button" className={`cal-dia${diaSemana(f) >= 5 ? ' finde' : ''}${f === hoyF ? ' hoy' : ''}${trabajan ? ' con-jornada' : ''}${fe ? ' festivo' : ''}`}
+              data-dia={f} data-ausencias={personas} data-trabajan={trabajan} title={titulo} aria-label={`${titulo}. Abrir la semana`}
+              {...(fe ? { 'data-festivo': fe.guardia?.farmacia ?? '' } : {})}
+              onClick={() => onDia(f)}>
+              <span className="cal-dia-num">{Number(f.slice(8))}</span>
+              {fe && (
+                <span className="cal-dia-festivo" style={fe.guardia ? estiloGuardia(fe.guardia.farmacia) : undefined} aria-hidden="true">
+                  {CODIGO_TIPO_EVENTO.FESTIVO}
+                </span>
+              )}
+              {faltan.length > 0 && (
+                <span className="cal-dia-marcas" aria-hidden="true">
+                  {faltan.slice(0, 3).map((e) => <span key={e.id} className="cal-dia-marca" style={estiloColor(colores[e.tipo])} />)}
+                  {faltan.length > 3 && <span className="cal-dia-mas">+{faltan.length - 3}</span>}
+                </span>
+              )}
+            </button>
+          );
+        };
         return (
           <section key={primero} className="tarjeta cal-mes" data-mes={primero.slice(0, 7)}>
             <h3>{mayuscula(F_MES_SOLO.format(dia(primero)))} <span className="tenue">{total > 0 ? `${total} ${total === 1 ? 'ausencia' : 'ausencias'}` : ''}</span></h3>
             <div className="cal-mes-rejilla">
               {INICIALES.map((x) => <span key={x} className="cal-mes-dsem" aria-hidden="true">{x}</span>)}
-              {Array.from({ length: diaSemana(primero) }, (_, i) => <span key={`h${i}`} aria-hidden="true" />)}
-              {dias.map((f) => {
-                const faltan = ausencias(f);
-                const personas = new Set(faltan.map((e) => e.trabajadora_id)).size;
-                const trabajan = new Set((porDia.get(f) ?? []).filter((e) => e.tipo === 'JORNADA').map((e) => e.trabajadora_id)).size;
-                const titulo = `${mayuscula(F_LARGA.format(dia(f)))}: ${trabajan} trabajan${faltan.length
-                  ? ` · ${faltan.map((e) => `${TEXTO_TIPO_EVENTO[e.tipo]}: ${nombre.get(e.trabajadora_id)}`).join('; ')}` : ''}`;
-                return (
-                  <button key={f} type="button" className={`cal-dia${diaSemana(f) >= 5 ? ' finde' : ''}${f === hoyF ? ' hoy' : ''}${trabajan ? ' con-jornada' : ''}`}
-                    data-dia={f} data-ausencias={personas} data-trabajan={trabajan} title={titulo} aria-label={`${titulo}. Abrir la semana`}
-                    onClick={() => onDia(f)}>
-                    <span className="cal-dia-num">{Number(f.slice(8))}</span>
-                    {faltan.length > 0 && (
-                      <span className="cal-dia-marcas" aria-hidden="true">
-                        {faltan.slice(0, 3).map((e) => <span key={e.id} className="cal-dia-marca" style={estiloColor(colores[e.tipo])} />)}
-                        {faltan.length > 3 && <span className="cal-dia-mas">+{faltan.length - 3}</span>}
-                      </span>
-                    )}
-                  </button>
-                );
+              {lunesMes.map((l) => {
+                const s = semanas.get(l);
+                return [
+                  ...[0, 1, 2, 3, 4, 5, 6].map((n) => {
+                    const f = sumarDias(l, n);
+                    return f.slice(0, 7) === primero.slice(0, 7) ? diaBoton(f) : <span key={`h${f}`} aria-hidden="true" />;
+                  }),
+                  // TA3: banda de la semana de guardia (toda la fila), con el color de la farmacia y las iniciales.
+                  ...(s ? [<BandaGuardia key={`b${l}`} s={s} />] : []),
+                ];
               })}
             </div>
           </section>

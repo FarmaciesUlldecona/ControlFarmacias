@@ -23,6 +23,9 @@
  *  - TA-REAL-2 (migración 33): nada se borra. La goma y el deshacer de un pintado nuevo ANULAN el evento
  *    (eventos_calendario.anulado = true); los anulados no se leen nunca y dejan libre su franja (la unicidad de
  *    persona, día y franja solo cuenta los no anulados). Lo confirmado sigue sin tocarse.
+ *  - TA3: «Rellenar jornada habitual» salta los festivos (ContextoPlan.esFestivo; tabla de festivos de TA3, ./guardias.ts).
+ *    Pintar sobre un festivo se permite, con aviso (festivos_pintados). Festivo, Turno de guardia y Localizada no se
+ *    pintan: se registran en Guardias y festivos.
  *
  * Solo sintaxis TypeScript borrable.
  */
@@ -43,7 +46,7 @@ export const TIPOS_EVENTO = [
   'DESCANSO_COMPENSATORIO', 'BAJA', 'FESTIVO', 'TURNO_GUARDIA', 'LOCALIZADA',
 ] as const;
 export type TipoEvento = (typeof TIPOS_EVENTO)[number];
-/** Tipos que se pintan hoy desde la paleta; FESTIVO, TURNO_GUARDIA y LOCALIZADA quedan para TA3. */
+/** Tipos que se pintan desde la paleta; FESTIVO, TURNO_GUARDIA y LOCALIZADA se registran en Guardias y festivos (TA3). */
 export const TIPOS_PINTABLES = TIPOS_EVENTO.slice(0, 8) as readonly TipoEvento[];
 /** TA-REAL: tipos que no suman horas (guardia y localizada). */
 export const TIPOS_SIN_HORAS: readonly TipoEvento[] = ['TURNO_GUARDIA', 'LOCALIZADA'];
@@ -213,8 +216,11 @@ export interface CalendarioDTO {
   /** Último cambio que se puede deshacer (de cualquier farmacia); null si no hay. */
   ultimo_cambio: ResumenCambio | null;
 }
-/** TA2-4: omitidas_vacias = franjas sin evento que ANOTAR no ha podido anotar (0 en el resto). */
-export interface ResultadoCambioDTO { cambio: ResumenCambio | null; omitidas_confirmadas: number; omitidas_vacias: number }
+/**
+ * TA2-4: omitidas_vacias = franjas sin evento que ANOTAR no ha podido anotar (0 en el resto). TA3: festivos_pintados =
+ * fechas festivas en las que PINTAR ha creado o cambiado algo (se permite, con aviso); ausente si ninguna.
+ */
+export interface ResultadoCambioDTO { cambio: ResumenCambio | null; omitidas_confirmadas: number; omitidas_vacias: number; festivos_pintados?: string[] }
 
 /** TA-REAL «Notas próximas»: notas de hoy en adelante («Persona — fecha: nota»). */
 export interface NotaProxima { trabajadora_id: string; nombre: string; farmacia: FarmaciaRrhh; fecha: string; nota: string }
@@ -335,7 +341,7 @@ export function validarPeticionEventos(cuerpo: unknown): ResultadoPeticion {
 
   let p: PeticionEventos | null = null;
   if (accion === 'PINTAR') {
-    // TA-REAL: FESTIVO, TURNO_GUARDIA y LOCALIZADA no se pintan desde el calendario hasta TA3.
+    // FESTIVO, TURNO_GUARDIA y LOCALIZADA no se pintan desde el calendario: TA3 los registra en Guardias y festivos.
     const tipo = TIPOS_PINTABLES.includes(b.tipo as TipoEvento) ? (b.tipo as TipoEvento) : null;
     if (tipo === null) errores.tipo = 'Elige un tipo de evento';
     const celdas = leerCeldas(b.celdas, errores);
@@ -427,6 +433,8 @@ export interface ContextoPlan {
   evento(id: string): EventoCalendario | undefined;
   nuevoId(): string;
   cuando: string;
+  /** TA3: día festivo (RELLENAR lo salta). Sin función: ningún festivo. */
+  esFestivo?: (fecha: string) => boolean;
 }
 export interface Plan {
   ops: Operacion[];
@@ -462,11 +470,11 @@ function huecosDeCeldas(ctx: ContextoPlan, celdas: Celda[]): Hueco[] | ErrorCamb
   }
   return r;
 }
-/** Huecos de un rango: solo los días de alta de cada persona (rellenar, además, solo de lunes a viernes). */
+/** Huecos de un rango: solo los días de alta de cada persona (rellenar, además, solo de lunes a viernes y TA3: sin festivos). */
 function huecosDeRango(ctx: ContextoPlan, r: Rango, soloLaborables: boolean): Hueco[] | ErrorCambio {
   const fichas: Trabajadora[] = [];
   for (const id of r.trabajadora_ids) { const t = ctx.ficha(id); if (!t || t.anulada) return 'TRABAJADORA_NO_VALIDA'; fichas.push(t); }
-  const fechas = rangoFechas(r.desde, r.hasta).filter((f) => !soloLaborables || esLaborable(f));
+  const fechas = rangoFechas(r.desde, r.hasta).filter((f) => !soloLaborables || (esLaborable(f) && !ctx.esFestivo?.(f)));
   return fichas.flatMap((t) => fechas.filter((f) => deAltaEl(t, f)).flatMap((fecha) => FRANJAS_DE_JORNADA[t.tipo_jornada].map((franja) => ({ t, fecha, franja }))));
 }
 
@@ -692,8 +700,14 @@ export interface AlmacenEventos {
   anulados(): (EventoCalendario & { anulado: true })[];
 }
 
+/** TA3: fechas festivas en las que un PINTAR crea o cambia algo (aviso; no se impide). */
+export function festivosPintados(pl: Pick<Plan, 'origen' | 'ops'>, esFestivo: ((f: string) => boolean) | undefined): string[] {
+  if (pl.origen !== 'PINTAR' || !esFestivo) return [];
+  return [...new Set(pl.ops.map((op) => (op.despues ?? op.antes) as EventoCalendario).map((e) => e.fecha).filter(esFestivo))].sort();
+}
+
 export function crearAlmacenEventos(o: {
-  fichas: () => Trabajadora[]; ahora: () => string; nuevoId: () => string;
+  fichas: () => Trabajadora[]; ahora: () => string; nuevoId: () => string; esFestivo?: (fecha: string) => boolean;
 }): AlmacenEventos {
   const eventos = new Map<string, EventoCalendario>();
   const porCelda = new Map<string, string>();
@@ -729,6 +743,7 @@ export function crearAlmacenEventos(o: {
   const ultimoDeshacible = () => [...cambios].reverse().find((c) => c.origen !== 'DESHACER' && !c.deshecho) ?? null;
   const contexto = (cuando: string): ContextoPlan => ({
     ficha: (id) => o.fichas().find((t) => t.id === id), enCelda, evento: (id) => eventos.get(id), nuevoId: o.nuevoId, cuando,
+    ...(o.esFestivo ? { esFestivo: o.esFestivo } : {}),
   });
 
   return {
@@ -789,7 +804,9 @@ export function crearAlmacenEventos(o: {
       const cuando = o.ahora();
       const pl = planificar(p, contexto(cuando));
       if (typeof pl === 'string') return pl;
-      return registrar(pl.ops, pl.origen, pl.tipo, quien, cuando, pl.omitidas, null, pl.periodo, pl.vacias);
+      const fp = festivosPintados(pl, o.esFestivo);
+      const r = registrar(pl.ops, pl.origen, pl.tipo, quien, cuando, pl.omitidas, null, pl.periodo, pl.vacias);
+      return fp.length > 0 ? { ...r, festivos_pintados: fp } : r;
     },
 
     deshacer(cambioId, quien) {
