@@ -1,7 +1,21 @@
 # H6: marcas de pago de vencimientos y forma de pago por proveedor (migración 35). DISEÑO
 
-Estado: **SOLO DISEÑO** (2026-11-16). No hay migración, script ni test. Nada desplegado. Espera las decisiones de
-Pio (§3 y §4).
+Estado: **DISEÑO APROBADO** (2026-11-16). No hay migración, script ni test. Nada desplegado.
+
+## 0. Decisiones de Pio (2026-11-16)
+
+- **D1–D9 aprobadas tal como se proponen** en §3 y §4. Donde las secciones siguientes dicen `PROPUESTA`, queda
+  decidido. En D1, el check admite `PIO` o `RITA`, y la barrera efectiva es `cf_configuracion`.
+- **D8: AUTORIZACIÓN EXPRESA DE PIO (2026-11-16)** para nombrar el rol del sistema **solo** en
+  `sql/migrations/35_*.sql` y su rollback. Tests, scripts y documentación no lo nombran; cualquier otro fichero
+  requiere una autorización nueva. Se registra en REGLAS_CRITICAS al implementar la 35.
+- **Orden de trabajo (2026-11-17):**
+  1. Commit con código:
+     - `TABLAS_PAGOS` en los postchecks de la noche y de las series 2BJ y 2BP (§6);
+     - defectos de extracción directos a REVISION;
+     - la tarea de Alliance en la puerta de tareas de los preflights;
+     - `probar_acceso_cf_trabajadores_web.py` actualizado a la 34.
+  2. Migración 35, solo local, con `desplegar_35` ensayado (§7, punto 2).
 
 - **Origen:** petición de la web, propuesta `web/docs/propuesta_tablas_h6_pagos.sql` de la rama `origin/web/fase1`
   (commit 91ae084, «NO APLICAR»).
@@ -248,7 +262,7 @@ Las tres tablas se informan aparte y **no hacen fallar el veredicto**, como Trab
 
 ## 7. Plan de hitos
 
-1. **Ahora:** este diseño, en un commit solo de documentación, y decisiones de Pio sobre D1–D9.
+1. **Hecho (2026-11-16):** este diseño (1a4cd53) y las decisiones de Pio sobre D1–D9 (§0).
 2. **H6, solo local:**
    - `sql/migrations/35_cf_pagos_marcas.sql` y su rollback. El rollback falla cerrado si hay marcas o formas de pago:
      no se pierde historia sin decisión de Pio;
