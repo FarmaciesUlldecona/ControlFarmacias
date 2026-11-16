@@ -67,11 +67,12 @@ FUNCIONES_REQUERIDAS = ("cf_reclamar_documento_normalizacion", "cf_reclamar_fact
                         "cf_persistir_conciliacion", "cf_recuperar_claim_huerfano_normalizacion",
                         "cf_detalles_por_linea")
 TABLAS_REQUERIDAS = ("conciliacion_albaranes_reservados", "cf_modulos_farmacias", TABLA_RESUMEN)
-# Modulo de Trabajadores (migracion 31): lo escribe la web y es ajeno a facturas. Mejora aprobada por Pio
+# Modulo de Trabajadores (migraciones 31, 33 y 34): lo escribe la web y es ajeno a facturas. Mejora aprobada por Pio
 # (2026-11-13): en los postchecks se informa aparte y no hace fallar el veredicto. Tambien lo usan las series 2BJ/2BP.
+# guardias_farmacia (31) sigue en la lista mientras exista: la 34 la retira (solo se leen las tablas que existen).
 TABLAS_TRABAJADORES = frozenset({
     "cf_modulos_farmacias", "trabajadoras", "convenio_anual", "eventos_calendario", "guardias_farmacia", "festivos",
-    "trabajadores_historial"})
+    "trabajadores_historial", "trabajadoras_ajustes_anuales", "guardias_semana", "guardias_festivo"})
 # Fuera del snapshot 2AX: la propia tabla de resumen y Trabajadores (este se lee aparte, ``snapshot_trabajadores``).
 TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES
 

@@ -1,6 +1,8 @@
 # Reglas críticas
 
-Actualizado: 2026-11-15 (migración 33 desplegada en producción, hito TRAB-33-D; 2026-11-14: migración 33 de
+Actualizado: 2026-11-16 (TRAB-34: migración 34 de Trabajadores, guardias y festivos de TA3, solo local, y
+autorización de Pio para nombrar el rol del sistema solo en la 34 y su rollback; 2026-11-15: migración 33
+desplegada en producción, hito TRAB-33-D; 2026-11-14: migración 33 de
 Trabajadores, solo local, y autorización de Pio para nombrar el rol del
 sistema solo en la 33 y su rollback; decisiones de Pio: R10 ampliada con `ENCARGO`, adaptador Alliance 1.3.1 y autoridad D1
 en 1.3.1; veredicto INCONCLUSO del revisor; 2026-11-13: excepción existente y cerrada de `pg17_local.py` para emular la API de Supabase en la base local de tests, decisión de Pio; 2026-11-12, AUTO-A: automatización Alliance solo local, migración 32 y autorización de Pio para nombrar el rol del sistema solo en la 32 y su rollback; D1 de AUTO-ALLIANCE implementada solo en local, no activada; contraseñas de roles siempre con SCRAM, decisión de Pio; Trabajadores: migración 31 desplegada en producción, hito TRAB-D; LOCALIZADA y TURNO_GUARDIA no computan; decisiones de Pio: RITA habilitada solo para el esquema de Trabajadores, rol de escritura de la web limitado a Trabajadores, fichajes de Farmatic pospuestos; 2026-11-10, 2BS: huecos de barreras_agentes, incidente de la sesión WEB-COMMIT y segundo incidente como ejemplos prohibidos, regla permanente sobre nombrar el rol del sistema, R9 de lectura ampliada a cualquier presentación de la web; 2BR-D: decisión de Pio, opción A, relleno de las conciliaciones de septiembre con la fórmula única; 2BP: serie supervisada de conciliación, solo local; decisiones de Pio sobre el 2BR; 2BR: detalle por línea en la conciliación, migración 30, solo local; decisiones de Pio: sentido de vencimientos desde datos_extraidos.tipo_documento.valor; R9 de solo lectura para la web; 2BQ: excepción expresa de Pio para nombrar el rol del sistema en dos ediciones de staging; exclusión de los esquemas internos de Supabase en la comparación con la referencia local; 2BN-D: aclaración de la norma de hooks, forma documentada permitida; ensayos de despliegue con el rol que imita al postgres de Supabase; puerta git con excepción documental, decisión de Pio; 2BK-D: barrera de commit con
@@ -447,6 +449,19 @@ producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTAD
   módulo: RLS por farmacia, sin DELETE, autor e historial). Diseño en `pruebas/auditoria_trab/DISENO_33.md`.
   **AUTORIZACIÓN EXPRESA DE PIO (2026-11-14):** nombrar el rol del sistema **solo** en
   `sql/migrations/33_cf_trabajadores_ajustes.sql` y su rollback; tests, scripts y documentación no lo nombran.
+
+- **Migración 34 (TA3, petición de la web, OK de Pio, 2026-11-16; `CONFIRMADO POR TEST`, solo local, sin desplegar;
+  ver ESTADO_ACTUAL):**
+  - `guardias_semana`: una por semana, PIO, RITA u `OTRA`; la persona de guardia y el apoyo del sábado son
+    trabajadoras de esa farmacia, y `OTRA` va sin personas.
+  - `guardias_festivo`: una por festivo común vigente.
+  - `festivos` se reutiliza: un festivo LOCAL puede no llevar farmacia (vacía = las dos).
+  - `guardias_farmacia` se retira: la migración y `desplegar_34.py` **se paran si tiene filas** (decisión de Pio).
+  - Mismas reglas que el resto del módulo: autor por `cf.autor`, anulación en lugar de DELETE, historial por trigger,
+    RLS por farmacia del módulo, con las filas `OTRA` visibles para PIO y RITA.
+  - Diseño en `pruebas/auditoria_trab/DISENO_34.md`.
+  - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-16):** nombrar el rol del sistema **solo** en
+    `sql/migrations/34_cf_trabajadores_guardias.sql` y su rollback; tests, scripts y documentación no lo nombran.
 
 ## Automatización Alliance
 

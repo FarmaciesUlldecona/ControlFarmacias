@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-15 (TRAB-33-D: migración 33 desplegada en producción, APLICADA, postcheck por fila OK;
+Actualizado: 2026-11-16 (TRAB-34: migración 34 de Trabajadores, guardias y festivos de TA3, solo local;
+2026-11-15, TRAB-33-D: migración 33 desplegada en producción, APLICADA, postcheck por fila OK;
 R12-08012619: enriquecimiento y conciliación de 08012619 en producción, 62 de 63
 facturas conciliadas; AUTO-S: primera noche de sombra efectiva 14→15/11, NOCHE_OK; 2026-11-14, TRAB-33: migración 33
 de Trabajadores, solo local; AUTO-S: noche del 13/11 sin ejecutar y
@@ -332,6 +333,36 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito TRAB-34: migración 34 de Trabajadores (TA3), solo local (2026-11-16)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local). Sin desplegar: TRAB-34-D requiere preflight, alcance explícito y
+confirmación de Pio. Petición de la web con OK de Pio; diseño en `pruebas/auditoria_trab/DISENO_34.md`.
+
+- **`guardias_semana`:**
+  - una guardia por semana (lunes) entre las no anuladas, de PIO, RITA u `OTRA`;
+  - la persona de guardia (obligatoria en PIO y RITA) y el apoyo del sábado son trabajadoras de esa farmacia, sin
+    anular y de alta ese fin de semana;
+  - `OTRA` va sin personas.
+- **`guardias_festivo`:** solo en un festivo común vigente, una por fecha. Anular o mover el festivo anula su guardia.
+- **`festivos` se reutiliza:**
+  - un festivo LOCAL puede no llevar farmacia (se retira el check de la 31);
+  - `ambito` toma LOCAL por defecto.
+- **`guardias_farmacia` se retira.** Estaba vacía en producción (preflight READ_ONLY del 16/11: 0 filas, 0 de
+  historial). La migración falla cerrado si tiene filas.
+- **Reglas comunes:**
+  - autor por `cf.autor`, anulación sin DELETE e historial por trigger;
+  - RLS por farmacia del módulo, con las filas `OTRA` y su historial visibles para el módulo;
+  - la web, `SELECT`, `INSERT` y `UPDATE`; `cf_lectura`, `SELECT`.
+- **Rollback:** exacto al esquema 33; falla cerrado con guardias o con festivos LOCAL sin farmacia.
+- **`desplegar_34.py`:** ensayado con la imitación del `postgres` de Supabase. 38 tests en
+  `test_integracion_pg17_34_trabajadores.py`.
+- **Orquestador nocturno** (`TABLAS_TRABAJADORES`): incluye las dos tablas nuevas y `trabajadoras_ajustes_anuales`,
+  que faltaba desde la 33. Las escrituras de la web en ellas se informan aparte y no hacen fallar el postcheck.
+- `PENDIENTE`:
+  - push y TRAB-34-D;
+  - actualizar `probar_acceso_cf_trabajadores_web.py`, que aún lee `guardias_farmacia`;
+  - la web confirma sus criterios D3 y D4, que no afectan al esquema.
 
 ### Hito TRAB-33-D: migración 33 desplegada en producción (2026-11-15)
 
