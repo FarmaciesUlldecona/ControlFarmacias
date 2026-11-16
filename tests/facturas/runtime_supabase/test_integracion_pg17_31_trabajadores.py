@@ -618,7 +618,8 @@ def _cargar_acceso():
 
 def test_prueba_de_acceso_contra_pg17_local(contenedor_tcp):
     nombre, puerto, _plantilla = contenedor_tcp
-    pg = base_desde(nombre, pgl.construir_plantilla(nombre, "31"))
+    # Esquema vigente en produccion (TRAB-34-D): la prueba de acceso lee las tablas de la 33 y la 34.
+    pg = base_desde(nombre, pgl.construir_plantilla(nombre, "34"))
     # Regla: las contrasenas de roles se fijan siempre con SCRAM (el pooler rechaza otro formato).
     pg.sql(f"set password_encryption = 'scram-sha-256'; alter role {ROL} password 'local-only'")
     assert pg.sql(f"select left(rolpassword, 14) from pg_authid where rolname = '{ROL}'") == "SCRAM-SHA-256$"
@@ -630,7 +631,10 @@ def test_prueba_de_acceso_contra_pg17_local(contenedor_tcp):
     finally:
         pg.sql(f"alter role {ROL} password null")
     assert resultado["veredicto"] == "ACCESO_OK", resultado
-    assert set(resultado["lee_trabajadores"]) == set(DESPLIEGUE.OBJETOS)
+    acceso = _cargar_acceso()
+    assert set(resultado["lee_trabajadores"]) == set(acceso.LECTURAS)
+    assert "guardias_farmacia" not in acceso.LECTURAS
+    assert {"trabajadoras_ajustes_anuales", "guardias_semana", "guardias_festivo"} <= set(acceso.LECTURAS)
     assert resultado["insert_con_autor"] | {"nombre_prueba": None} == {
         "nombre_prueba": None, "inserta": True, "historial_con_autor": True, "deshecho": True}
     assert resultado["insert_sin_autor"]["mensaje"] == "AUTOR_AUSENTE"

@@ -73,8 +73,12 @@ TABLAS_REQUERIDAS = ("conciliacion_albaranes_reservados", "cf_modulos_farmacias"
 TABLAS_TRABAJADORES = frozenset({
     "cf_modulos_farmacias", "trabajadoras", "convenio_anual", "eventos_calendario", "guardias_farmacia", "festivos",
     "trabajadores_historial", "trabajadoras_ajustes_anuales", "guardias_semana", "guardias_festivo"})
-# Fuera del snapshot 2AX: la propia tabla de resumen y Trabajadores (este se lee aparte, ``snapshot_trabajadores``).
-TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES
+# Pagos (H6, migracion 35; decision de Pio del 2026-11-16, pruebas/auditoria_h6/DISENO.md §6): marcas de pago y forma
+# de pago por proveedor, escritas por la web con su propio rol. Igual que Trabajadores: se informan aparte y no hacen
+# fallar el veredicto. Solo se leen las tablas que existen (hasta desplegar la 35, ninguna).
+TABLAS_PAGOS = frozenset({"vencimientos_marcas_pago", "proveedores_forma_pago", "pagos_historial"})
+# Fuera del snapshot 2AX: la propia tabla de resumen, Trabajadores y Pagos (se leen aparte, ``snapshot_aparte``).
+TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES | TABLAS_PAGOS
 
 CODIGO_OK, CODIGO_PARADA, CODIGO_YA_EJECUTADA = 0, 3, 4
 
@@ -298,7 +302,17 @@ def snapshot_por_fila(lector: LectorReadOnly) -> dict[str, dict[str, list]]:
 
 
 def snapshot_trabajadores(entorno: Entorno) -> dict:
-    """Huella por fila de las tablas de Trabajadores, en su propia sesion READ_ONLY.
+    """Huella por fila de las tablas de Trabajadores (ver ``snapshot_aparte``)."""
+    return snapshot_aparte(entorno, TABLAS_TRABAJADORES)
+
+
+def snapshot_pagos(entorno: Entorno) -> dict:
+    """Huella por fila de las tablas de Pagos (H6; ver ``snapshot_aparte``)."""
+    return snapshot_aparte(entorno, TABLAS_PAGOS)
+
+
+def snapshot_aparte(entorno: Entorno, tablas: frozenset[str]) -> dict:
+    """Huella por fila de tablas que escribe la web (Trabajadores, Pagos), en su propia sesion READ_ONLY.
 
     Solo informativo: si no se puede leer (por ejemplo, sin privilegio de lectura) se anota el error y la noche sigue;
     nunca comparte la transaccion del snapshot 2AX.
@@ -310,13 +324,13 @@ def snapshot_trabajadores(entorno: Entorno) -> dict:
                 "and table_type = 'BASE TABLE'")}
             return {"tablas": {tabla: dict(lector.filas(
                 f'select coalesce(to_jsonb(t)->>\'id\', md5(to_jsonb(t)::text)), md5(to_jsonb(t)::text) '
-                f'from public."{tabla}" t')) for tabla in sorted(TABLAS_TRABAJADORES & existentes)}}
+                f'from public."{tabla}" t')) for tabla in sorted(tablas & existentes)}}
     except Exception as exc:  # noqa: BLE001 - informativo: no afecta a la noche
         return {"error": f"{type(exc).__name__}"}
 
 
 def cambios_trabajadores(pre: dict | None, post: dict | None) -> dict:
-    """Filas de Trabajadores cambiadas, nuevas o desaparecidas por tabla. Se informa aparte; no es veredicto."""
+    """Filas cambiadas, nuevas o desaparecidas por tabla (Trabajadores o Pagos). Se informa aparte; no es veredicto."""
     informe: dict = {"afecta_al_veredicto": False}
     if not pre or not post or "error" in pre or "error" in post:
         informe["no_comparable"] = {"pre": (pre or {}).get("error", "AUSENTE" if not pre else None),
@@ -585,6 +599,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
 
     pre: dict | None = None
     pre_trabajadores: dict | None = None
+    pre_pagos: dict | None = None
     try:
         with entorno.abrir_lectura() as lector:
             cfg, op, marcas = _configuracion(lector), _operacion(lector), _marcas(lector)
@@ -594,6 +609,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
         with entorno.abrir_lectura() as lector:
             pre = snapshot_por_fila(lector)
         pre_trabajadores = snapshot_trabajadores(entorno)
+        pre_pagos = snapshot_pagos(entorno)
         fin = inicio + dt.timedelta(minutes=MINUTOS_MAXIMOS)
         if modo == "SOMBRA":
             _fase_sombra(entorno, noche, docs, conc)
@@ -633,6 +649,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
         if pre is not None and noche.postcheck is not None:
             # Despues de cerrar la sesion anterior: las sesiones comparten conexion y no se anidan.
             noche.postcheck["trabajadores"] = cambios_trabajadores(pre_trabajadores, snapshot_trabajadores(entorno))
+            noche.postcheck["pagos"] = cambios_trabajadores(pre_pagos, snapshot_pagos(entorno))
         if noche.postcheck and noche.postcheck.get("veredicto") != "POSTCHECK_OK":
             noche.resultado = "PARADA"
             noche.motivo = ((noche.motivo + "; ") if noche.motivo else "") + noche.postcheck["veredicto"]

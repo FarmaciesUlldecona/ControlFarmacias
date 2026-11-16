@@ -45,7 +45,10 @@ from auditoria_readonly import (  # noqa: E402
     PROJECT_REF, _ejecutar_lectura, _escribir, _operacion, _puertas_operacion, _salida_fuera_del_repo)
 from src.facturas.runtime_supabase.clasificacion_fallos import (  # noqa: E402
     DEFECTO_DOCUMENTO, NO_SOPORTADO, clasificar_fallo)
-from src.facturas.runtime_supabase.noche_automatica import TABLAS_TRABAJADORES  # noqa: E402
+from src.facturas.runtime_supabase.noche_automatica import TABLAS_PAGOS, TABLAS_TRABAJADORES  # noqa: E402
+
+# Tablas que escribe la web (Trabajadores; Pagos, H6): fuera del veredicto, informadas aparte.
+TABLAS_WEB = TABLAS_TRABAJADORES | TABLAS_PAGOS
 
 
 def _cargar(nombre: str, ruta: str):
@@ -282,10 +285,11 @@ def comprobar_resultado(esperado: dict, real: dict) -> list[str]:
     return [f"RESULTADO_INESPERADO:{k}:{esperado[k]}!={real.get(k)}" for k in esperado if real.get(k) != esperado[k]]
 
 
-def cambios_trabajadores(antes: dict, despues: dict) -> dict[str, int]:
-    """Filas de Trabajadores cambiadas, nuevas o borradas por tabla: se informan aparte, sin veredicto (Pio, 2026-11-13)."""
+def cambios_trabajadores(antes: dict, despues: dict, tablas: frozenset[str] = TABLAS_TRABAJADORES) -> dict[str, int]:
+    """Filas de Trabajadores (o de ``tablas``) cambiadas, nuevas o borradas por tabla: se informan aparte, sin veredicto
+    (Pio, 2026-11-13; Pagos, H6, 2026-11-16)."""
     cambios = {}
-    for tabla in sorted((set(antes) | set(despues)) & TABLAS_TRABAJADORES):
+    for tabla in sorted((set(antes) | set(despues)) & tablas):
         a, b = antes.get(tabla, {}), despues.get(tabla, {})
         distintas = sum(1 for k in set(a) | set(b) if (a.get(k) or [None])[0] != (b.get(k) or [None])[0])
         if distintas:
@@ -293,12 +297,17 @@ def cambios_trabajadores(antes: dict, despues: dict) -> dict[str, int]:
     return cambios
 
 
+def cambios_pagos(antes: dict, despues: dict) -> dict[str, int]:
+    """Filas de Pagos (H6) cambiadas, nuevas o borradas por tabla: se informan aparte, sin veredicto (Pio, 2026-11-16)."""
+    return cambios_trabajadores(antes, despues, TABLAS_PAGOS)
+
+
 def diferencias_filas(antes: dict, despues: dict, documentos: set[str], cambiables: set[str]) -> list[str]:
     """Criterio 2AX por fila: solo filas nuevas de ``documentos`` y cambios en sus filas de ``cambiables``.
 
-    Las tablas de Trabajadores no cuentan (las escribe la web); se informan con ``cambios_trabajadores``."""
+    Las tablas de Trabajadores y Pagos no cuentan (las escribe la web); se informan con ``cambios_trabajadores``."""
     problemas = []
-    for tabla in sorted((set(antes) | set(despues)) - TABLAS_TRABAJADORES):
+    for tabla in sorted((set(antes) | set(despues)) - TABLAS_WEB):
         a, b = antes.get(tabla, {}), despues.get(tabla, {})
         for clave in set(b) - set(a):
             if b[clave][1] not in documentos:
@@ -389,7 +398,9 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
                                  "problemas": problemas, "documentos": list(reclamados), "corte_alliance": alliance,
                                  "trabajadores": {"afecta_al_veredicto": False,
                                                   "filas_cambiadas_por_tabla": cambios_trabajadores(pre["filas"],
-                                                                                                    post["filas"])}}
+                                                                                                    post["filas"])},
+                                 "pagos": {"afecta_al_veredicto": False,
+                                           "filas_cambiadas_por_tabla": cambios_pagos(pre["filas"], post["filas"])}}
         return problemas
 
     def cerrar(veredicto: str, motivos: list[str]) -> int:

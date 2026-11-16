@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-11-16 (migración 34 desplegada en producción, hito TRAB-34-D; TRAB-34: migración 34 de
+Actualizado: 2026-11-16 (COD-1611: tablas de Pagos fuera del veredicto de los postchecks y tarea de Alliance en la
+puerta de tareas; migración 34 desplegada en producción, hito TRAB-34-D; TRAB-34: migración 34 de
 Trabajadores, guardias y festivos de TA3, solo local, y
 autorización de Pio para nombrar el rol del sistema solo en la 34 y su rollback; 2026-11-15: migración 33
 desplegada en producción, hito TRAB-33-D; 2026-11-14: migración 33 de
@@ -507,6 +508,12 @@ Estado a 2026-09-24: `NO ENCONTRADO` en el código vigente. No se presentan como
 módulos parciales.
 
 ## Pruebas
+
+- **Tablas que escribe la web en los postchecks (Pio, 2026-11-13 para Trabajadores; 2026-11-16 para Pagos, H6):**
+  `TABLAS_TRABAJADORES` y `TABLAS_PAGOS` (`noche_automatica.py`) quedan fuera del snapshot 2AX y del criterio por
+  fila de la noche y de las series 2BJ/2BP; se informan aparte y **no hacen fallar el veredicto**.
+- **Puerta de tareas (Pio, 2026-11-15):** las tres tareas son obligatorias, también «ControlFarmacias -
+  Automatizacion Alliance» (`auditoria_readonly.TAREAS_ESPERADAS`).
 
 - **Criterio de postcheck de privilegios (Pio, Hito 2AX, 2026-09-29)** para todo
   despliegue futuro: (1) producción antes vs después: solo cambian los objetos

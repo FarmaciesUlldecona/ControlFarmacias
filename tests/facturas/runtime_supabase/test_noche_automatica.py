@@ -159,6 +159,44 @@ def test_trabajadores_fuera_del_2ax_y_comparados_aparte():
     assert informe == {"afecta_al_veredicto": False, "no_comparable": {"pre": None, "post": "InsufficientPrivilege"}}
 
 
+def test_pagos_fuera_del_2ax_y_comparados_aparte():
+    """H6 (Pio, 2026-11-16, DISENO §6): Pagos se informa aparte, como Trabajadores, y nunca hace fallar el postcheck."""
+    assert na.TABLAS_PAGOS == {"vencimientos_marcas_pago", "proveedores_forma_pago", "pagos_historial"}
+    assert na.TABLAS_PAGOS <= na.TABLAS_FUERA_DEL_SNAPSHOT
+    assert not na.TABLAS_PAGOS & na.TABLAS_TRABAJADORES
+    pre = {"tablas": {"vencimientos_marcas_pago": {}}}
+    post = {"tablas": {"vencimientos_marcas_pago": {"m1": "h1"}, "pagos_historial": {"1": "h"}}}
+    assert na.cambios_trabajadores(pre, post) == {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {
+        "pagos_historial": 1, "vencimientos_marcas_pago": 1}}
+
+
+def test_snapshot_pagos_solo_lee_tablas_de_pagos_existentes():
+    """Hasta desplegar la 35 no existe ninguna: el snapshot de Pagos queda vacio y no falla."""
+    consultas = []
+
+    class _Lector:
+        def filas(self, sql, params=None):
+            consultas.append(sql)
+            if "information_schema.tables" in sql:
+                return [("facturas",), ("trabajadoras",), ("pagos_historial",)]
+            return [("1", "h1")]
+
+    class _Ctx:
+        def __enter__(self):
+            return _Lector()
+
+        def __exit__(self, *a):
+            return False
+
+    class _Entorno:
+        def abrir_lectura(self):
+            return _Ctx()
+
+    assert na.snapshot_pagos(_Entorno()) == {"tablas": {"pagos_historial": {"1": "h1"}}}
+    assert not any("trabajadoras" in c or "facturas" in c for c in consultas[1:])
+    assert na.snapshot_trabajadores(_Entorno()) == {"tablas": {"trabajadoras": {"1": "h1"}}}
+
+
 class _LectorRoto:
     def __enter__(self):
         raise RuntimeError("sin privilegio")
