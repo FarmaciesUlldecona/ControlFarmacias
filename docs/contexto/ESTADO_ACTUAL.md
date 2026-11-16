@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-16 (TRAB-34: migración 34 de Trabajadores, guardias y festivos de TA3, solo local;
+Actualizado: 2026-11-16 (TRAB-34-D: migración 34 desplegada en producción, APLICADA, postcheck por fila OK;
+TRAB-34: migración 34 de Trabajadores, guardias y festivos de TA3, solo local;
 2026-11-15, TRAB-33-D: migración 33 desplegada en producción, APLICADA, postcheck por fila OK;
 R12-08012619: enriquecimiento y conciliación de 08012619 en producción, 62 de 63
 facturas conciliadas; AUTO-S: primera noche de sombra efectiva 14→15/11, NOCHE_OK; 2026-11-14, TRAB-33: migración 33
@@ -334,10 +335,38 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito TRAB-34-D: migración 34 desplegada en producción (2026-11-16)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación explícita de Pio (Pio no usó la web durante el despliegue). Evidencias
+en `C:\ControlFarmacias\evidencias_trab_34_d\` (`SHA256SUMS.txt`, 16 entradas, scripts READ_ONLY incluidos).
+
+- **Puerta:** árbol limpio; HEAD = `origin/main` = 39a05bb; migración idéntica en local y en origin, SHA LF
+  `ecc97a4d2f83ac0ff9f0aeba47d5a21518dc181d812a27ae3731ba5ead1efaa1`; las 3 tareas con resultado 0 la noche
+  anterior y fuera de su ventana.
+- **Preflight READ_ONLY:** 7 precondiciones OK; captura pre `CAPTURA_OK` (marcas 28–33 presentes, ninguna de la 34;
+  `guardias_farmacia` con 0 filas y 0 de historial, comprobado de nuevo; flags `f|f|f|{PIO}`; módulo Trabajadores
+  `{PIO,RITA}`).
+- **Despliegue** (`desplegar_34.py`, una vez, 14:09:11–14:09:15 UTC): **`APLICADA`**; 7 precondiciones y las
+  postcondiciones OK (privilegios de la web, lectura y ACL, estructura y RLS, propietario).
+- **Captura post y postcheck por fila** (`POSTCHECK_OK`):
+  - facturas, albaranes y conciliación: 0 filas cambiadas;
+  - Trabajadores, solo cambios de la 34: 12 trabajadoras, 3 filas de convenio, 110 eventos, 2 ajustes anuales,
+    0 festivos y 249 filas de historial, idénticas fila a fila;
+  - `guardias_farmacia` retirada; `guardias_semana` y `guardias_festivo`, nuevas y vacías;
+  - esquema: 7 objetos nuevos (2 tablas y 5 funciones internas) y 1 retirado (`guardias_farmacia`);
+  - `festivos` sin el check `festivos_local_con_farmacia`; la política de lectura del historial incluye `OTRA`;
+  - flags y configuración sin cambios.
+- **Esquema final entregado a la web** (`esquema_web_34.json`, READ_ONLY): columnas, restricciones, únicos parciales
+  (`ON CONFLICT` con el predicado `WHERE NOT anulada`/`anulado`), anulación, permisos de `cf_trabajadores_web` y
+  `cf_lectura` y errores esperables.
+- `PENDIENTE`:
+  - la web adapta su código a la 34 (`guardias_farmacia` ya no existe);
+  - actualizar `probar_acceso_cf_trabajadores_web.py` en el próximo commit con código (decisión de Pio: 17/11).
+
 ### Hito TRAB-34: migración 34 de Trabajadores (TA3), solo local (2026-11-16)
 
-`CONFIRMADO POR TEST` (PostgreSQL 17 local). Sin desplegar: TRAB-34-D requiere preflight, alcance explícito y
-confirmación de Pio. Petición de la web con OK de Pio; diseño en `pruebas/auditoria_trab/DISENO_34.md`.
+`CONFIRMADO POR TEST` (PostgreSQL 17 local). **Desplegada el 2026-11-16: ver «Hito TRAB-34-D».** Petición de la
+web con OK de Pio; diseño en `pruebas/auditoria_trab/DISENO_34.md`.
 
 - **`guardias_semana`:**
   - una guardia por semana (lunes) entre las no anuladas, de PIO, RITA u `OTRA`;
@@ -360,7 +389,7 @@ confirmación de Pio. Petición de la web con OK de Pio; diseño en `pruebas/aud
 - **Orquestador nocturno** (`TABLAS_TRABAJADORES`): incluye las dos tablas nuevas y `trabajadoras_ajustes_anuales`,
   que faltaba desde la 33. Las escrituras de la web en ellas se informan aparte y no hacen fallar el postcheck.
 - `PENDIENTE`:
-  - push y TRAB-34-D;
+  - push y TRAB-34-D: hechos el 2026-11-16;
   - actualizar `probar_acceso_cf_trabajadores_web.py`, que aún lee `guardias_farmacia`;
   - la web confirma sus criterios D3 y D4, que no afectan al esquema.
 

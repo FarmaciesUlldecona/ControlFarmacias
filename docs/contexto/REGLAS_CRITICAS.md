@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-11-16 (TRAB-34: migración 34 de Trabajadores, guardias y festivos de TA3, solo local, y
+Actualizado: 2026-11-16 (migración 34 desplegada en producción, hito TRAB-34-D; TRAB-34: migración 34 de
+Trabajadores, guardias y festivos de TA3, solo local, y
 autorización de Pio para nombrar el rol del sistema solo en la 34 y su rollback; 2026-11-15: migración 33
 desplegada en producción, hito TRAB-33-D; 2026-11-14: migración 33 de
 Trabajadores, solo local, y autorización de Pio para nombrar el rol del
@@ -450,13 +451,16 @@ producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTAD
   **AUTORIZACIÓN EXPRESA DE PIO (2026-11-14):** nombrar el rol del sistema **solo** en
   `sql/migrations/33_cf_trabajadores_ajustes.sql` y su rollback; tests, scripts y documentación no lo nombran.
 
-- **Migración 34 (TA3, petición de la web, OK de Pio, 2026-11-16; `CONFIRMADO POR TEST`, solo local, sin desplegar;
-  ver ESTADO_ACTUAL):**
+- **Migración 34 (TA3, petición de la web, OK de Pio, 2026-11-16; desplegada en producción el 2026-11-16, hito
+  TRAB-34-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTADO_ACTUAL):**
   - `guardias_semana`: una por semana, PIO, RITA u `OTRA`; la persona de guardia y el apoyo del sábado son
     trabajadoras de esa farmacia, y `OTRA` va sin personas.
   - `guardias_festivo`: una por festivo común vigente.
   - `festivos` se reutiliza: un festivo LOCAL puede no llevar farmacia (vacía = las dos).
   - `guardias_farmacia` se retira: la migración y `desplegar_34.py` **se paran si tiene filas** (decisión de Pio).
+    Retirada en producción (estaba vacía); **la web no debe usarla**.
+  - Los únicos son parciales (entre no anulados): un `ON CONFLICT` de la web debe repetir el predicado
+    (`WHERE NOT anulada` en las guardias, `WHERE NOT anulado` en `festivos`).
   - Mismas reglas que el resto del módulo: autor por `cf.autor`, anulación en lugar de DELETE, historial por trigger,
     RLS por farmacia del módulo, con las filas `OTRA` visibles para PIO y RITA.
   - Diseño en `pruebas/auditoria_trab/DISENO_34.md`.
