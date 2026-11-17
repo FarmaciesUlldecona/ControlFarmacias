@@ -555,7 +555,6 @@ export function generar() {
     'factura_detalle.json': detalles,
     'conciliacion_bandeja.json': construir.conciliacionBandeja(comunes, GENERADO_AT),
     'vencimientos.json': construir.vencimientos(comunes, GENERADO_AT),
-    'cashflow_semanas.json': construir.cashflowSemanas(comunes, GENERADO_AT),
     'proveedores.json': construir.proveedores(comunes, GENERADO_AT),
     'configuracion.json': construir.configuracion(comunes, GENERADO_AT),
   };

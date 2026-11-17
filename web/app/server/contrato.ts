@@ -3,7 +3,8 @@
  *
  * Una función y un DTO por bloque de pantalla:
  *   inicio, facturas, facturaDetalle, conciliacionBandeja, vencimientos,
- *   cashflowSemanas, proveedores (+ mapa documentos proveedor×estado), configuracion.
+ *   proveedores (+ mapa documentos proveedor×estado), configuracion.
+ *   (H7: el cashflow por semanas de H3a se retira; la pantalla Cashflow lee su propio contrato, server/cashflow/.)
  * Alertas (en inicio y en la bandeja de conciliación): albarán facturado no en Farmatic,
  * posible duplicado en Farmatic y correcciones aprobadas de albaranes.
  *
@@ -459,23 +460,6 @@ export interface VencimientosDTO extends Cabecera {
   pago: EstadoPago;
 }
 
-export interface SemanaCashflow {
-  /** Lunes de la semana (ISO). null = vencimientos sin fecha. */
-  semana: string | null;
-  semana_fin: string | null;
-  vencimientos: number;
-  vencimientos_sin_importe: number;
-  importe_cargos_conocido: Importe;
-  importe_abonos_conocido: Importe;
-  vencimientos_sentido_no_documentado: number;
-  vencimientos_sin_validar: number;
-}
-
-export interface CashflowSemanasDTO extends Cabecera {
-  semanas: SemanaCashflow[];
-  pago: EstadoPago;
-}
-
 /**
  * Grupo de proveedor (H4b/H4c; el catálogo `proveedores` está vacío en producción y no se usa para agrupar):
  *  - con CIF: cifFactura (facturas.proveedor_cif o, si está vacía, datos_extraidos proveedor.nif.valor),
@@ -573,7 +557,6 @@ export interface Contrato {
   facturaDetalle(id: string): Promise<FacturaDetalleDTO | null>;
   conciliacionBandeja(): Promise<ConciliacionBandejaDTO>;
   vencimientos(): Promise<VencimientosDTO>;
-  cashflowSemanas(): Promise<CashflowSemanasDTO>;
   proveedores(): Promise<ProveedoresDTO>;
   configuracion(): Promise<ConfiguracionDTO>;
 }
@@ -581,7 +564,7 @@ export interface Contrato {
 export type Bloque = keyof Contrato;
 export const BLOQUES: Bloque[] = [
   'inicio', 'facturas', 'facturaDetalle', 'conciliacionBandeja',
-  'vencimientos', 'cashflowSemanas', 'proveedores', 'configuracion',
+  'vencimientos', 'proveedores', 'configuracion',
 ];
 
 // ---------------------------------------------------------------------------
@@ -1418,7 +1401,6 @@ export const CONSULTAS_POR_BLOQUE: Record<Bloque, NombreConsulta[]> = {
     'factura_otras_pdf'],
   conciliacionBandeja: ['facturas', 'lineas', ...ALERTAS],
   vencimientos: ['vencimientos'],
-  cashflowSemanas: ['vencimientos'],
   // H4b: agrupación por CIF; el catálogo `proveedores` no interviene (vacío en producción).
   proveedores: ['facturas', 'documentos'],
   configuracion: ['configuracion'],
@@ -2420,30 +2402,6 @@ export const construir = {
     };
   },
 
-  cashflowSemanas(f: Filas, generado_at: string = ahora()): CashflowSemanasDTO {
-    const v = filas(f, 'vencimientos').map(aVencimiento);
-    const grupos = new Map<string, Vencimiento[]>();
-    for (const x of v) {
-      const k = x.fecha_vencimiento === null ? '' : lunesISO(x.fecha_vencimiento);
-      const g = grupos.get(k) ?? [];
-      g.push(x);
-      grupos.set(k, g);
-    }
-    const semanas: SemanaCashflow[] = [...grupos.entries()]
-      .sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b)))
-      .map(([k, g]) => ({
-        semana: k === '' ? null : k,
-        semana_fin: k === '' ? null : sumarDias(k, 6),
-        vencimientos: g.length,
-        vencimientos_sin_importe: g.filter((x) => x.importe === null).length,
-        importe_cargos_conocido: sumaConocida(g.filter((x) => x.sentido === 'CARGO' && x.importe !== null).map((x) => x.importe)).suma,
-        importe_abonos_conocido: sumaConocida(g.filter((x) => x.sentido === 'ABONO' && x.importe !== null).map((x) => x.importe)).suma,
-        vencimientos_sentido_no_documentado: g.filter((x) => x.sentido === 'NO_DOCUMENTADO').length,
-        vencimientos_sin_validar: g.filter((x) => x.estado_revision !== 'VALIDADA_PIO').length,
-      }));
-    return { farmacia: FARMACIA, generado_at, semanas, pago: PAGO_SIN_DATOS };
-  },
-
   proveedores(f: Filas, generado_at: string = ahora()): ProveedoresDTO {
     const facts = filas(f, 'facturas').map(aFactura);
     const docs = filas(f, 'documentos').map(aDocumento);
@@ -2520,19 +2478,6 @@ export const construir = {
   },
 };
 
-// Fechas ISO (YYYY-MM-DD) sin zona horaria.
-function lunesISO(fecha: string): string {
-  const d = new Date(fecha.slice(0, 10) + 'T00:00:00Z');
-  const dia = (d.getUTCDay() + 6) % 7; // lunes = 0
-  d.setUTCDate(d.getUTCDate() - dia);
-  return d.toISOString().slice(0, 10);
-}
-function sumarDias(fecha: string, n: number): string {
-  const d = new Date(fecha + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
 /** Ejecutor de consultas que provee el adaptador REAL (una transacción READ ONLY por bloque). */
 export type EjecutorBloque = <T>(trabajo: (consultar: (n: NombreConsulta, idFactura?: string) => Promise<Fila[]>) => Promise<T>) => Promise<T>;
 
@@ -2550,7 +2495,6 @@ export function contratoDesdeConsultas(enTransaccion: EjecutorBloque): Contrato 
     facturaDetalle: async (id) => construir.facturaDetalle(await cargar('facturaDetalle', id)),
     conciliacionBandeja: async () => construir.conciliacionBandeja(await cargar('conciliacionBandeja')),
     vencimientos: async () => construir.vencimientos(await cargar('vencimientos')),
-    cashflowSemanas: async () => construir.cashflowSemanas(await cargar('cashflowSemanas')),
     proveedores: async () => construir.proveedores(await cargar('proveedores')),
     configuracion: async () => construir.configuracion(await cargar('configuracion')),
   };

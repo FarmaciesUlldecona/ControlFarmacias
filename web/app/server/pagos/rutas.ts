@@ -73,7 +73,8 @@ export interface OpcionesPagos {
   almacen?: AlmacenPagos;
 }
 
-export function registrarPagos(app: FastifyInstance, opciones: OpcionesPagos): void {
+/** Devuelve la pantalla de vencimientos (con las marcas del almacén): la usa el cashflow (H7). */
+export function registrarPagos(app: FastifyInstance, opciones: OpcionesPagos): { pantalla: () => Promise<PantallaVencimientosDTO> } {
   const { modo, contrato, sesionValida, quien } = opciones;
   const almacen: AlmacenPagos | null = modo === 'FIXTURES' ? opciones.almacen ?? crearAlmacenPagos(leerSemillaPagos()) : null;
 
@@ -148,4 +149,5 @@ export function registrarPagos(app: FastifyInstance, opciones: OpcionesPagos): v
     const r = almacen.fijarForma(req.params.cif, v.forma, quien);
     return typeof r === 'string' ? error(reply, r) : r;
   });
+  return { pantalla };
 }

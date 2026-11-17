@@ -15,6 +15,7 @@ import './estilos_calendario.css';
 import './estilos_ficha.css';
 import './estilos_guardias.css';
 import './estilos_vencimientos.css';
+import './estilos_cashflow.css';
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>

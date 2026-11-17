@@ -12,7 +12,7 @@ const MENU = [
   { texto: 'Facturas', ruta: '/facturas', titulo: 'Facturas', bloque: 'facturas' },
   { texto: 'Conciliación', ruta: '/conciliacion', titulo: 'Conciliación', bloque: 'conciliacionBandeja' },
   { texto: 'Vencimientos', ruta: '/vencimientos', titulo: 'Vencimientos', bloque: 'vencimientos' },
-  { texto: 'Cashflow', ruta: '/cashflow', titulo: 'Cashflow', bloque: 'cashflowSemanas' },
+  { texto: 'Cashflow', ruta: '/cashflow', titulo: 'Cashflow', bloque: 'cashflow' },
   { texto: 'Proveedores', ruta: '/proveedores', titulo: 'Proveedores', bloque: 'proveedores' },
   { texto: 'Configuración', ruta: '/configuracion', titulo: 'Configuración', bloque: 'configuracion' },
 ];
@@ -34,8 +34,9 @@ test.describe('PC 1440', () => {
       await menu.getByRole('link', { name: m.texto, exact: true }).click();
       await expect(page).toHaveURL(m.ruta);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(m.titulo);
-      // Inicio está construida desde H4 (e2e/h4.spec.ts), Facturas desde H5 (e2e/h5.spec.ts) y Vencimientos desde H6.
-      if (!['/', '/facturas', '/vencimientos'].includes(m.ruta)) await expect(page.getByText('En construcción')).toBeVisible();
+      // Inicio está construida desde H4 (e2e/h4.spec.ts), Facturas desde H5 (e2e/h5.spec.ts), Vencimientos desde H6 y
+      // Cashflow desde H7 (e2e/h7.spec.ts).
+      if (!['/', '/facturas', '/vencimientos', '/cashflow'].includes(m.ruta)) await expect(page.getByText('En construcción')).toBeVisible();
       await expect(page.locator(`[data-contrato-ok="${m.bloque}"]`)).toBeVisible();
       await expect(menu.getByRole('link', { name: m.texto, exact: true })).toHaveClass(/activo/);
     }

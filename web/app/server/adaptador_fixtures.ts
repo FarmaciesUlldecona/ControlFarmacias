@@ -6,7 +6,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
-  CashflowSemanasDTO, ConciliacionBandejaDTO, ConfiguracionDTO, Contrato, FacturaDetalleDTO,
+  ConciliacionBandejaDTO, ConfiguracionDTO, Contrato, FacturaDetalleDTO,
   FacturasDTO, InicioDTO, ProveedoresDTO, VencimientosDTO,
 } from './contrato.ts';
 
@@ -19,7 +19,6 @@ export const FICHEROS_DTO = {
   facturaDetalle: 'factura_detalle.json',
   conciliacionBandeja: 'conciliacion_bandeja.json',
   vencimientos: 'vencimientos.json',
-  cashflowSemanas: 'cashflow_semanas.json',
   proveedores: 'proveedores.json',
   configuracion: 'configuracion.json',
 } as const;
@@ -38,7 +37,6 @@ export function crearAdaptadorFixtures(): Contrato {
     },
     conciliacionBandeja: () => leer<ConciliacionBandejaDTO>(FICHEROS_DTO.conciliacionBandeja),
     vencimientos: () => leer<VencimientosDTO>(FICHEROS_DTO.vencimientos),
-    cashflowSemanas: () => leer<CashflowSemanasDTO>(FICHEROS_DTO.cashflowSemanas),
     proveedores: () => leer<ProveedoresDTO>(FICHEROS_DTO.proveedores),
     configuracion: () => leer<ConfiguracionDTO>(FICHEROS_DTO.configuracion),
   };

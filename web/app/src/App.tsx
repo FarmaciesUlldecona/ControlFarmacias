@@ -8,6 +8,7 @@ import { PaginaTrabajadora, PaginaTrabajadores } from './trabajadores.tsx';
 import { PaginaCalendario } from './calendario.tsx';
 import { PaginaGuardias } from './guardias.tsx';
 import { PaginaVencimientos } from './vencimientos.tsx';
+import { PaginaCashflow } from './cashflow.tsx';
 
 /** Pantallas de la fase 1. En H3b: cabecera + "En construcción". */
 export const PANTALLAS = [
@@ -16,7 +17,8 @@ export const PANTALLAS = [
   { ruta: '/conciliacion', menu: 'Conciliación', titulo: 'Conciliación', subtitulo: 'Bandeja de facturas frente a albaranes de Farmatic', api: '/api/conciliacion', bloque: 'conciliacionBandeja' },
   // H6: lista de vencimientos con estado de pago (marcas en /api/pagos/*).
   { ruta: '/vencimientos', menu: 'Vencimientos', titulo: 'Vencimientos', subtitulo: 'Vencimientos de PIO y su estado de pago', api: '/api/pagos/vencimientos', bloque: 'vencimientos' },
-  { ruta: '/cashflow', menu: 'Cashflow', titulo: 'Cashflow', subtitulo: 'Vencimientos agrupados por semana', api: '/api/cashflow', bloque: 'cashflowSemanas' },
+  // H7: saldo real y previsto por decenas y meses (PIO, RITA y consolidado; sustituye al cashflow por semanas de H3a).
+  { ruta: '/cashflow', menu: 'Cashflow', titulo: 'Cashflow', subtitulo: 'Saldo real y previsto de PIO y RITA', api: '/api/cashflow', bloque: 'cashflow' },
   { ruta: '/proveedores', menu: 'Proveedores', titulo: 'Proveedores', subtitulo: 'Estado por proveedor y documentos por estado', api: '/api/proveedores', bloque: 'proveedores' },
   { ruta: '/configuracion', menu: 'Configuración', titulo: 'Configuración', subtitulo: 'Interruptores y parámetros del motor (solo lectura)', api: '/api/configuracion', bloque: 'configuracion' },
 ] as const;
@@ -33,7 +35,8 @@ export default function App() {
             path={p.ruta}
             element={p.ruta === '/' ? <PaginaInicio />
               : p.ruta === '/facturas' ? <PaginaFacturas />
-              : p.ruta === '/vencimientos' ? <PaginaVencimientos /> : <PaginaEnConstruccion pantalla={p} />}
+              : p.ruta === '/vencimientos' ? <PaginaVencimientos />
+              : p.ruta === '/cashflow' ? <PaginaCashflow /> : <PaginaEnConstruccion pantalla={p} />}
           />
         ))}
         <Route path="/facturas/:id" element={<PaginaDetalle />} />

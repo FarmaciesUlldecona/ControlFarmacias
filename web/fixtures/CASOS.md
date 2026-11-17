@@ -666,3 +666,25 @@ H6-3 (decisiones de Marc): abonos y cargos negativos.
 | Domiciliados futuros (REAL simulado, hoy 1/11/2026) | Noviembre sin marcas | Todo en falta por pagar (881,66 €); domiciliado previsto «—»; la cabecera del mes coincide |
 | Año 2026 | 12 pagos | 1.261,66 € |
 | REAL simulado: vencido sin importe | V08 (Fedefarma, sin CIF, sin importe) movido al 20/10 en la prueba; REAL sin marcas | Con «Vencido sin pagar»: noviembre avisa e «Ir al anterior (20 oct 2026)»; 20/10 rojo, globo 1, «importe pendiente»; resumen: total «importe pendiente», falta por pagar «sin importe», 1 sin importe fuera |
+
+## H7: pantalla Cashflow (fixtures/cashflow/cashflow.json; tablas pendientes del circuito)
+
+Datos ficticios con la forma del contrato del circuito (`cf_cashflow_importaciones`, `cf_cashflow_cuentas`, `cf_cashflow_importes`, `cf_cashflow_saldos`), generados por `fixtures/scripts/gen_cashflow.mjs` (`npm run fixtures:cashflow`; check_fixtures comprueba que están al día). Sustituyen al cashflow por semanas de H3a (`dto/cashflow_semanas.json` ya no se usa). Fecha de referencia 16/11/2026 (la de la semilla de pagos). El cálculo es `server/cashflow/cashflow.ts` (servidor, front y pruebas).
+
+- **Real / previsto:** real hasta la última decena con `saldo_bancos` de cada cuenta (01–10/11/2026); saldo de partida = ese saldo (PIO 9.000 €, RITA 2.000 €).
+- **Fuentes de la previsión:** a) PIO: vencimientos del sistema (contrato H6) del concepto con el mismo nombre comercial (`CORRESPONDENCIAS_PROVEEDOR`: ALLIANCE, HEFAME, COFARES, FEDERACIÓ = FEDEFARMA, LOGISTA = LOGISTA PHARMA); sustituyen al Excel en esa decena; b) Excel; c) media de TPV y efectivo (6 últimas decenas reales) y de la SOE (3 últimos meses reales, en su decena habitual), con «Media / Excel» por categoría guardado solo en el navegador (por defecto, Media). RITA: solo datos bancarios (nunca vencimientos).
+- **Signo (H7-2, decisión de Marc):** el importe se usa con el signo de la celda, nunca en valor absoluto. RE suma el valor tal cual; RS lo resta tal cual (un RS negativo reduce las salidas; un RE negativo, las entradas).
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Vencimiento y Excel distintos | ALLIANCE 11–20/11/2026: Excel 520,00 €; sistema F02 472,22 € | Cuenta 472,22 € (vencimientos) con «!» «posible duplicado o diferencia»; el desglose enlaza a la factura |
+| Naranja | RITA 11–20/12/2026 (HEFAME campaña 14.000 € el 1–10/12 y paga extra 7.000 €) | RITA en negativo, PIO la cubre; devolución prevista 21–31/12/2026 (decena de la SOE) |
+| Rojo | 11–20/01/2027: IVA (8.500 + 3.000 €) y robot dispensador de PIO (32.000 €) | Consolidado en negativo; falta lo que marca el aviso (con Media 2.608,88 €) |
+| RS negativo (H7-2) | PIO 1–10/12/2026: COFARES −4.500 € y abono −250 € en la misma decena | La celda resta 4.250 € (el abono reduce las salidas) |
+| RE negativo (H7-2) | RITA 21–30/11/2026: «RE Otros cobros» / Regularización mutua −120 € | Reduce las entradas en 120 € |
+| Importación antigua | Vigente del 10/11/2026 (6 días) | Aviso gris «La importación vigente del Excel tiene 6 días» |
+| Traspasos | PIO → RITA 3.000 € (11–20/09/2026) y 2.000 € (1–10/03/2027), con contrapartida | Neutros en el consolidado (sin línea; aviso gris si no se compensan) |
+| No relacionadas | Alquiler apartamento (+650), préstamo vivienda (−1.200), retirada del titular (meses reales) | Cuentan en el saldo, no en «cash flow generado farmacia» |
+| Fórmulas ≠ banco | PIO 21–31/10/2026: fórmulas 35,20 € más | El saldo final lo muestra («fórmulas …») |
+| Otra cuenta | SL: 2 filas de gestoría | Fuera de la pantalla, contadas en «Fuera de la previsión» |
+| Media / Excel | PIO TPV: media 10.000 €; Excel 9.900 € | Las dos cifras a la vista; el saldo de 11–20/11 pasa de 11.827,78 € (Media) a 11.727,78 € (Excel) |

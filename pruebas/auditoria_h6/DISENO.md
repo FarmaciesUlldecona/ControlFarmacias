@@ -1,6 +1,7 @@
 # H6: marcas de pago de vencimientos y forma de pago por proveedor (migración 35). DISEÑO
 
-Estado: **DISEÑO APROBADO** (2026-11-16). No hay migración, script ni test. Nada desplegado.
+Estado: **DISEÑO APROBADO** (2026-11-16). **IMPLEMENTADO SOLO EN LOCAL** (2026-11-17): migración 35, rollback,
+`desplegar_35.py` y tests PostgreSQL 17 (ver §9). Nada desplegado.
 
 ## 0. Decisiones de Pio (2026-11-16)
 
@@ -263,7 +264,7 @@ Las tres tablas se informan aparte y **no hacen fallar el veredicto**, como Trab
 ## 7. Plan de hitos
 
 1. **Hecho (2026-11-16):** este diseño (1a4cd53) y las decisiones de Pio sobre D1–D9 (§0).
-2. **H6, solo local:**
+2. **Hecho (2026-11-17), H6 solo local** (§9):
    - `sql/migrations/35_cf_pagos_marcas.sql` y su rollback. El rollback falla cerrado si hay marcas o formas de pago:
      no se pierde historia sin decisión de Pio;
    - `desplegar_35.py`, ensayado con la imitación del `postgres` de Supabase;
@@ -286,3 +287,35 @@ Las tres tablas se informan aparte y **no hacen fallar el veredicto**, como Trab
 - Cambios en facturas, vencimientos, conciliación o en su lógica de cálculo.
 - Cashflow del sistema: no cambia. La web calcula el estado de cada vencimiento con las marcas, y el sistema no las
   lee.
+
+## 9. Implementación local (2026-11-17)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local, `tests/facturas/runtime_supabase/test_integracion_pg17_35_pagos.py`).
+
+- **Ficheros:** `sql/migrations/35_cf_pagos_marcas.sql` y su rollback; `pruebas/auditoria_h6/desplegar_35.py`;
+  plantillas «35» y «35_rollback» en `pg17_local.py`. `TABLAS_PAGOS` ya estaba en `main` desde COD-1611 (f64d520).
+- **Ajuste respecto a §2.5 (lectura de `cf_lectura`):** la política de `cf_lectura` no usa la función security
+  definer. Usa la subconsulta sobre `cf_configuracion` de la 29, porque la regla del 2BN prohíbe que `cf_lectura`
+  ejecute funciones security definer (`test_no_puede_ejecutar_funciones_privilegiadas_ni_que_escriben`). La función
+  `cf_pagos_farmacia_habilitada` la ejecuta solo `cf_pagos_web`, para su RLS. Resultado: la misma regla de farmacia,
+  sin abrir esa excepción.
+- **Función auxiliar `cf_pagos_dia_madrid(timestamptz)`** (D3): el trigger la llama con `now()`. Permite probar el
+  cambio de día de Madrid en momentos fijos (invierno y verano).
+- **Errores:**
+  - `FACTURA_NO_ENCONTRADA`, `FARMACIA_DISTINTA_DE_LA_FACTURA`;
+  - `VENCIMIENTO_NO_ENCONTRADO`, `VENCIMIENTO_SIN_FECHA`, `VENCIMIENTO_SIN_IMPORTE`;
+  - `FECHA_PAGO_FUTURA`, `DOMICILIADO_NO_VALIDO`, `FARMACIA_NO_HABILITADA`;
+  - `SOLO_ANULAR`, `BORRADO_NO_PERMITIDO`, `AUTOR_AUSENTE`.
+- **`desplegar_35.py`:**
+  - precondiciones: 35 no aplicada, 34 aplicada, roles, privilegios mínimos, flags, sin claims, propietarios 2AX;
+  - el rol `cf_pagos_web` no entra en las precondiciones, porque es del clúster. Si ya existiera, deciden sus
+    atributos, que se comprueban en las postcondiciones;
+  - postcondiciones:
+    - datos y huellas de facturas y vencimientos sin cambios, y la estructura de facturas y vencimientos (triggers,
+      restricciones y políticas) idéntica (D7);
+    - privilegios de la web y atributos del rol;
+    - `cf_lectura` sin escritura ni funciones privilegiadas;
+    - ACL de tablas, secuencia y funciones;
+    - RLS, únicos parciales y ninguna clave externa;
+    - propietario.
+  - No lee ni comprueba la contraseña.

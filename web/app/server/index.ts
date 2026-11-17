@@ -27,6 +27,7 @@ import { esEscrituraRrhh, registrarRrhh } from './rrhh/rutas.ts';
 import { AUTOR_HISTORIAL } from './rrhh/contrato.ts';
 import type { AdaptadorRrhh } from './rrhh/adaptador_fixtures.ts';
 import { esEscrituraPagos, registrarPagos } from './pagos/rutas.ts';
+import { registrarCashflow } from './cashflow/rutas.ts';
 
 const HOST = '127.0.0.1';
 export const PUERTO_FIJO = 4747;
@@ -193,14 +194,16 @@ export async function crearServidor(modo: Modo) {
   });
   app.get('/api/conciliacion', () => contrato.conciliacionBandeja());
   app.get('/api/vencimientos', () => contrato.vencimientos());
-  app.get('/api/cashflow', () => contrato.cashflowSemanas());
   app.get('/api/proveedores', () => contrato.proveedores());
   app.get('/api/configuracion', () => contrato.configuracion());
   // TA1: módulo Trabajadores (FIXTURES: datos de ejemplo en memoria; TA-REAL: tablas reales con cf_trabajadores_web).
   // TA1-2 (decisión de Pío): autor del historial "Marc" (en REAL, cf.autor de cada transacción).
   registrarRrhh(app, { modo, quien: AUTOR_HISTORIAL, ...rrhh, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
   // H6: pantalla Vencimientos (FIXTURES: marcas y formas en memoria; REAL: solo lectura, escritura 503).
-  registrarPagos(app, { modo, contrato, quien: AUTOR_HISTORIAL, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
+  const pagos = registrarPagos(app, { modo, contrato, quien: AUTOR_HISTORIAL, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
+  // H7: Cashflow (solo lectura; sustituye al cashflow por semanas de H3a). FIXTURES: datos ficticios con la forma del
+  // contrato + vencimientos de H6. REAL: 503 «Pendiente de tablas en Supabase».
+  registrarCashflow(app, { modo, pantallaPagos: pagos.pantalla });
 
   // Errores: mensaje genérico al cliente; nunca filas ni datos de conexión.
   app.setErrorHandler((err, _req, reply) => {

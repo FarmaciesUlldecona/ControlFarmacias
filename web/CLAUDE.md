@@ -5,7 +5,7 @@
 - Code trabaja y verifica solo en modo FIXTURES. Nunca abre, captura ni lee datos reales.
 - Objetos legibles: solo la lista cerrada de ..\pruebas\auditoria_2bn\DISENO.md.
 - No usar v_dashboard_diario para importes (convierte null en 0).
-- Farmacia: solo PIO.
+- Farmacia: solo PIO. Excepción: RITA en Cashflow, solo con sus datos bancarios del Excel importado (decisión de Pío, 17/11/2026); sus facturas siguen desactivadas.
 - 3 estados separados: normalización / conciliación / revisión Pío.
 - Importe ausente = null, nunca 0. Diferencias siempre visibles. Tolerancia: resultado del motor (R11), no recalcular.
 - Estado de pago: gris, 'sin datos bancarios'.

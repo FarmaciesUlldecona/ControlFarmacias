@@ -40,6 +40,9 @@ import {
 import { leerSemillaPagos } from '../../app/server/pagos/rutas.ts';
 import { agregar as agregarCalendario, resumenAnio, sinFecha as sinFechaCalendario } from '../../app/server/pagos/calendario.ts';
 import { PESTANAS_VENCIMIENTOS, cumpleBusquedaLista } from '../../app/server/pagos/lista.ts';
+import { CATEGORIAS_MEDIA, calcularCashflow, esDecenaInicio, finDecena } from '../../app/server/cashflow/cashflow.ts';
+import { vencimientoCashflow } from '../../app/server/cashflow/rutas.ts';
+import { RUTA_CASHFLOW, generarCashflow, serializarCashflow } from './gen_cashflow.mjs';
 
 const RAIZ = join(import.meta.dirname, '..');
 const DTO = join(RAIZ, 'dto');
@@ -69,10 +72,12 @@ for (const [bloque, fichero] of Object.entries(FICHEROS_DTO)) {
   comprobar(`existe dto/${fichero} (${bloque})`, () => si(existsSync(join(DTO, fichero)), 'no existe'));
   if (existsSync(join(DTO, fichero))) dto[bloque] = JSON.parse(readFileSync(join(DTO, fichero), 'utf8'));
 }
-const { inicio, facturas, facturaDetalle, conciliacionBandeja, vencimientos, cashflowSemanas, proveedores, configuracion } = dto;
+const { inicio, facturas, facturaDetalle, conciliacionBandeja, vencimientos, proveedores, configuracion } = dto;
 
 // --- Contrato ------------------------------------------------------------------
-comprobar('los 8 bloques del contrato tienen fichero', () => si(Object.keys(FICHEROS_DTO).length === 8 && Object.keys(CONSULTAS_POR_BLOQUE).length === 8, 'faltan bloques'));
+// H7: el bloque cashflowSemanas de H3a se retira (la pantalla Cashflow tiene su propio contrato): 7 bloques.
+comprobar('los 7 bloques del contrato tienen fichero (sin el cashflow semanal de H3a)', () => si(Object.keys(FICHEROS_DTO).length === 7 && Object.keys(CONSULTAS_POR_BLOQUE).length === 7
+  && !('cashflowSemanas' in FICHEROS_DTO) && !('cashflowSemanas' in CONSULTAS_POR_BLOQUE), 'faltan o sobran bloques'));
 comprobar('DTO al día: idénticos a regenerarlos con el contrato', () => {
   const nuevos = generar();
   const distintos = Object.entries(FICHEROS_DTO).filter(([b, f]) => !isDeepStrictEqual(nuevos[f], dto[b])).map(([, f]) => f);
@@ -144,43 +149,12 @@ comprobar('vencimientos: totales con nulls contados aparte', () => {
   const t = vencimientos.totales;
   return si(t.sin_importe === vencimientos.vencimientos.filter((x) => x.importe === null).length && t.sin_importe >= 2, JSON.stringify(t));
 });
-comprobar('cashflow: igual a v_web_cashflow_semanal de H3a salvo los vencimientos de sentido no documentado (H4c-2)', () => {
-  // H3a sumaba como cargo todo lo que no era ABONO. Los NO_DOCUMENTADO (F03 rectificativa, F05 sin tipo, F06 OTRO)
-  // salen de los cargos y se cuentan aparte; el resto de la semana no cambia.
-  const noDoc = new Set(Object.keys(TIPO_DOCUMENTAL_H4C).filter((id) => sentidoDocumental(TIPO_DOCUMENTAL_H4C[id]) === 'NO_DOCUMENTADO'));
-  const venc = h3a('vencimientos');
-  const lunes = (f) => { const d = new Date(f + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
-  const esperado = h3a('cashflow_semanal').map(({ farmacia, ...r }) => { // eslint-disable-line no-unused-vars
-    const nd = venc.filter((v) => noDoc.has(v.factura_id) && v.fecha_vencimiento && lunes(v.fecha_vencimiento) === r.semana);
-    const restar = nd.reduce((a, v) => a + (v.importe ?? 0), 0);
-    const quedan = venc.filter((v) => v.fecha_vencimiento && lunes(v.fecha_vencimiento) === r.semana && v.tipo_documento !== 'ABONO' && !noDoc.has(v.factura_id) && v.importe !== null);
-    return {
-      ...r,
-      importe_cargos_conocido: quedan.length === 0 ? null : Math.round((r.importe_cargos_conocido - restar) * 10000) / 10000,
-      vencimientos_sentido_no_documentado: nd.length,
-    };
-  }).sort((a, b) => String(a.semana).localeCompare(String(b.semana)));
-  // H6-3: los dos vencimientos nuevos (cargo negativo de F04 y abono vencido de F07) suman en su semana como cargo y abono.
-  const r4 = (x) => Math.round(x * 10000) / 10000;
-  for (const v of VENCIMIENTOS_H6_3) {
-    const s = esperado.find((x) => x.semana === lunes(v.fecha_vencimiento));
-    s.vencimientos += 1;
-    if (v.tipo_documento === 'ABONO') s.importe_abonos_conocido = r4((s.importe_abonos_conocido ?? 0) + v.importe);
-    else s.importe_cargos_conocido = r4((s.importe_cargos_conocido ?? 0) + v.importe);
-    if (v.estado_revision !== 'VALIDADA_PIO') s.vencimientos_sin_validar += 1;
-  }
-  const obtenido = cashflowSemanas.semanas.map(({ semana_fin, ...r }) => r); // eslint-disable-line no-unused-vars
-  const orden = (o) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
-  return si(isDeepStrictEqual(obtenido.map(orden), esperado.map(orden)), `obtenido ${JSON.stringify(obtenido)}`);
-});
-comprobar('cashflow: semana 2026-11-30 con cargos null (no 0)', () => {
-  const s = cashflowSemanas.semanas.find((x) => x.semana === '2026-11-30');
-  return si(s && s.importe_cargos_conocido === null && s.vencimientos_sin_importe === 1, JSON.stringify(s));
-});
+// H7: las comprobaciones del cashflow semanal de H3a (v_web_cashflow_semanal) se retiran con su bloque; el cashflow
+// nuevo se comprueba en «Casos H7».
 comprobar('abono F07: total y vencimiento con signo impreso (−45,30)', () => {
   const f = facturas.facturas.find((x) => x.factura_id === F(7));
   const v = vencimientos.vencimientos.find((x) => x.factura_id === F(7));
-  return si(f.tipo_documento === 'ABONO' && f.importe_total === -45.3 && v.importe === -45.3 && cashflowSemanas.semanas.some((s) => s.importe_abonos_conocido === -45.3), 'abono mal');
+  return si(f.tipo_documento === 'ABONO' && f.importe_total === -45.3 && v.importe === -45.3, 'abono mal');
 });
 
 // --- Inicio --------------------------------------------------------------------
@@ -426,11 +400,10 @@ comprobar('H4c: F05 sin tipo documental → sentido no documentado; nunca suma c
   const t = vencimientos.totales;
   const cargos = vencimientos.vencimientos.filter((x) => x.sentido === 'CARGO' && x.importe !== null).reduce((a, x) => a + x.importe, 0);
   const abonos = vencimientos.vencimientos.filter((x) => x.sentido === 'ABONO' && x.importe !== null).reduce((a, x) => a + x.importe, 0);
-  const s = cashflowSemanas.semanas.find((x) => x.semana === '2026-11-02');
   return si(v.length === 1 && v[0].tipo_documento === 'FACTURA' && v[0].tipo_documento_documental === null && v[0].sentido === 'NO_DOCUMENTADO'
     && t.sentido_no_documentado === 3 && t.importe_cargos_conocido === Math.round(cargos * 10000) / 10000 && t.importe_abonos_conocido === abonos
-    && s.vencimientos_sentido_no_documentado === 1 && facturaDetalle[F05_SIN_TIPO_DOCUMENTAL].vencimientos[0]?.sentido === 'NO_DOCUMENTADO',
-  JSON.stringify([t, s]));
+    && facturaDetalle[F05_SIN_TIPO_DOCUMENTAL].vencimientos[0]?.sentido === 'NO_DOCUMENTADO',
+  JSON.stringify(t));
 });
 comprobar('H4c: abono F07 sigue sumando como abono (tipo documental ABONO)', () => {
   // H6-3: F07 tiene dos vencimientos (−45,30 de H3a y −20,00 vencido): los dos suman como abono.
@@ -1299,6 +1272,64 @@ comprobar('H6-4: lista con las pestañas de Facturas (12 / 6 conciliadas / 5 pen
   const n = Object.fromEntries(PESTANAS_VENCIMIENTOS.map((t) => [t.clave, pantallaH6.filas.filter(t.cumple).length]));
   const porImporte = pantallaH6.filas.filter((f) => cumpleBusquedaLista(f, '152,37')).length;
   return si(isDeepStrictEqual(n, { todas: 12, conciliadas: 6, pendientes: 5, revision: 2, 'no-revisadas': 3 }) && porImporte === 2, JSON.stringify({ n, porImporte }));
+});
+
+// --- Casos H7: Cashflow (datos ficticios con la forma del contrato del circuito) -------------------------------------
+const cashflowSemilla = JSON.parse(readFileSync(RUTA_CASHFLOW, 'utf8'));
+const cashflowDatos = { ...cashflowSemilla, vencimientos: pantallaH6.filas.map(vencimientoCashflow) };
+const ELEGIR = (e) => Object.fromEntries(Object.keys(CATEGORIAS_MEDIA).map((c) => [c, e]));
+comprobar('H7: cashflow.json al día (idéntico a regenerarlo con gen_cashflow.mjs) y sin cashflow_semanas de H3a', () =>
+  si(readFileSync(RUTA_CASHFLOW, 'utf8') === serializarCashflow(generarCashflow()) && !Object.values(FICHEROS_DTO).includes('cashflow_semanas.json'),
+    'desactualizado (npm run fixtures:cashflow)'));
+comprobar('H7: forma del contrato (importaciones, cuentas PIO|RITA|SL, importes por decena con categoría RE/RS, saldos con saldo_bancos o null)', () => {
+  const claves = (o) => Object.keys(o).sort().join(',');
+  const malos = [];
+  for (const i of cashflowSemilla.importaciones) if (claves(i) !== 'estado,importacion_id,importado_at,origen,vigente') malos.push(`importación ${claves(i)}`);
+  for (const c of cashflowSemilla.cuentas) if (claves(c) !== 'codigo,farmacia' || !['PIO', 'RITA', 'SL'].includes(c.codigo)) malos.push(`cuenta ${c.codigo}`);
+  for (const f of cashflowSemilla.importes) {
+    if (claves(f) !== 'categoria,concepto,cuenta,decena_fin,decena_inicio,importe' || !esDecenaInicio(f.decena_inicio) || f.decena_fin !== finDecena(f.decena_inicio)
+      || !/^R[ES] /.test(f.categoria)) malos.push(`importe ${JSON.stringify(f)}`);
+  }
+  for (const s of cashflowSemilla.saldos) if (claves(s) !== 'cuenta,decena_inicio,saldo_bancos,saldo_formulas' || !esDecenaInicio(s.decena_inicio)) malos.push(`saldo ${JSON.stringify(s)}`);
+  const anios = new Set(cashflowSemilla.importes.map((f) => f.decena_inicio.slice(0, 4)));
+  const cuentas = new Set(cashflowSemilla.importes.map((f) => f.cuenta));
+  return si(malos.length === 0 && anios.has('2026') && anios.has('2027') && cuentas.has('PIO') && cuentas.has('RITA')
+    && Object.keys(CATEGORIAS_MEDIA).every((c) => cashflowSemilla.importes.some((f) => f.categoria === c)), malos.slice(0, 3).join('; '));
+});
+for (const e of ['media', 'excel']) {
+  comprobar(`H7 (${e}): naranja RITA cubierta por PIO 11–20/12/2026 con devolución en la SOE (21–31/12); rojo del consolidado 11–20/01/2027; importación de hace 6 días (gris)`, () => {
+    const r = calcularCashflow(cashflowDatos, ELEGIR(e));
+    const n = r.avisos.filter((a) => a.tipo === 'naranja');
+    const rojo = r.avisos.filter((a) => a.tipo === 'rojo');
+    const soe = r.vistas.RITA.lineas.find((l) => l.categoria === 'RE Cobro SOE' && l.celdas['2026-12-21']?.en_saldo);
+    return si(n.length === 1 && n[0].cuenta === 'RITA' && n[0].cubre === 'PIO' && n[0].decena === '2026-12-11' && n[0].devolucion === '2026-12-21' && soe !== undefined
+      && rojo.length === 1 && rojo[0].decena === '2027-01-11' && rojo[0].importe > 0
+      && isDeepStrictEqual(r.avisos.filter((a) => a.tipo === 'gris').map((a) => a.codigo), ['IMPORTACION_ANTIGUA']) && r.importacion.dias === 6,
+    JSON.stringify(r.avisos.map((a) => [a.tipo, a.codigo, a.cuenta, a.decena, a.importe, a.devolucion])));
+  });
+}
+comprobar('H7: ALLIANCE 11–20/11/2026: vencimiento del sistema (F02, 472,22) sustituye al Excel (520,00) con «posible duplicado o diferencia»; RITA sin vencimientos; SL fuera', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const c = r.vistas.PIO.lineas.find((l) => l.concepto === 'ALLIANCE').celdas['2026-11-11'];
+  const rita = r.vistas.RITA.lineas.every((l) => Object.values(l.celdas).every((x) => x.fuente !== 'VENCIMIENTOS'));
+  return si(c.fuente === 'VENCIMIENTOS' && c.importe === -472.22 && c.excel === -520 && c.diferencia && c.vencimientos.incluidos[0].factura_id === F(2)
+    && rita && r.fuera.filas_otras_cuentas === 2 && r.vistas.PIO.saldo_partida === 9000 && r.vistas.RITA.saldo_partida === 2000,
+  JSON.stringify({ fuente: c.fuente, importe: c.importe, excel: c.excel, fuera: r.fuera.filas_otras_cuentas }));
+});
+comprobar('H7-2: signo de la celda: RS negativo (abono COFARES −250, PIO 1–10/12/2026) reduce las salidas; RE negativo (regularización −120, RITA 21–30/11/2026) reduce las entradas', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const rs = cashflowSemilla.importes.filter((f) => f.categoria.startsWith('RS ') && f.importe < 0);
+  const re = cashflowSemilla.importes.filter((f) => f.categoria.startsWith('RE ') && f.importe < 0);
+  const cof = r.vistas.PIO.lineas.find((l) => l.categoria === 'RS Proveedores' && l.concepto === 'COFARES').celdas['2026-12-01'];
+  const reg = r.vistas.RITA.lineas.find((l) => l.concepto === 'Regularización mutua').celdas['2026-11-21'];
+  return si(rs.length === 1 && re.length === 1 && cof.importe === -4250 && reg.importe === -120, JSON.stringify({ rs, re, cof: cof.importe, reg: reg.importe }));
+});
+comprobar('H7: traspasos neutros en el consolidado; «no relacionadas» fuera del cash flow generado farmacia', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const sep = r.vistas.CONSOLIDADO.decenas['2026-09-11'];
+  const dic = r.vistas.PIO.decenas['2026-12-01'];
+  return si(sep.traspasos === 0 && r.vistas.CONSOLIDADO.lineas.every((l) => l.clase !== 'TRASPASO') && dic.no_relacionadas === -550
+    && Math.round((dic.farmacia + dic.no_relacionadas) * 100) === Math.round(dic.neto * 100), JSON.stringify({ sep, dic }));
 });
 
 // --- Informe ----------------------------------------------------------------------
