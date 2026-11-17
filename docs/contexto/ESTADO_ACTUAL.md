@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-17 (H6: migración 35 de Pagos, marcas de pago, solo local, con desplegar_35 ensayado; AUTO-S:
+Actualizado: 2026-11-17 (H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
+acceso de cf_pagos_web ACCESO_OK; decisiones de Pio para Cashflow (H7), en REGLAS_CRITICAS; H6: migración 35 de Pagos, marcas de pago, solo local, con desplegar_35 ensayado; AUTO-S:
 noche de sombra 16→17/11, primera con f64d520, NOCHE_OK y coherente con el plan 2BJ; 2026-11-16, COD-1611: tablas de Pagos fuera del veredicto de los postchecks, tarea de Alliance en la
 puerta de tareas y prueba de acceso de Trabajadores al esquema de la 34, solo local; defectos directos a REVISION
 a la migración 36 por requerir migración, decisión de Pio; D3: tanda_05, 10 defectos a REVISION; H6: diseño de la migración 35 aprobado;
@@ -339,10 +340,33 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito H6-D: migración 35 desplegada en producción (2026-11-17)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación explícita de Pio (Pio no usó la web durante el despliegue). Evidencias
+en `C:\ControlFarmacias\evidencias_h6_d\` (`SHA256SUMS.txt`, 12 entradas, scripts READ_ONLY incluidos).
+
+- **Puerta:** HEAD = `origin/main` = 9c13af2; migración con SHA LF
+  `63c76c03291d3c763cf0944dbcd44f7c6530af05f081faf5424c1dd91f7271b7`; precondiciones 7 de 7; captura previa
+  `CAPTURA_OK` (11:28).
+- **`desplegar_35` una sola vez (11:35): APLICADA**, todas las postcondiciones ciertas, sin reintento.
+- **Postcheck por fila (`POSTCHECK_OK`, sha `453104ab…`):**
+  - 0 filas cambiadas en facturas (63), vencimientos (63), documentos, albaranes y conciliación;
+  - huella DATOS de `desplegar_35` igual (incluida la estructura de facturas y vencimientos);
+  - Trabajadores idéntico fila a fila;
+  - las tres tablas de Pagos, nuevas y vacías;
+  - esquema: solo los 11 objetos de la 35, ninguno quitado ni cambiado; privilegios por defecto iguales; flags
+    apagados y solo PIO.
+- **Rol `cf_pagos_web`:** `LOGIN` con los dos límites de 60 s. Contraseña fijada por Pio con SCRAM, fuera del
+  repositorio.
+- **Prueba de acceso de Pio: `ACCESO_OK`** (`pruebas/auditoria_h6/probar_acceso_cf_pagos_web.py`, contraseña solo
+  desde `CF_PAGOS_PASSWORD`): lee y escribe solo en sus tablas, con historial y autor; sin autor, `DELETE` y
+  cualquier lectura o escritura en facturas, vencimientos o el historial fallan. La transacción de prueba se deshace.
+- La web puede dejar FIXTURES en Pagos.
+
 ### Hito H6: migración 35 de Pagos (marcas de pago), solo local (2026-11-17)
 
 `CONFIRMADO POR TEST` (PostgreSQL 17 local). Petición de la web, excepción autorizada por Pio; D1–D9 aprobadas el
-2026-11-16. Diseño en `pruebas/auditoria_h6/DISENO.md` (§9: implementación). **No desplegada.** Producción no tocada.
+2026-11-16. Diseño en `pruebas/auditoria_h6/DISENO.md` (§9: implementación). Desplegada después en H6-D.
 
 - **Esquema:**
   - `vencimientos_marcas_pago`: una marca vigente por vencimiento `(factura_id, vencimiento_orden)`, sin claves
@@ -366,10 +390,7 @@ con confirmación expresa de Pio y lanzada una sola vez.
   rollback con la imitación. 50 tests de la 35.
 - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-16, D8):** el rol del sistema se nombra solo en la 35 y su rollback.
   Registrada en REGLAS_CRITICAS («Pagos (H6)»).
-- `PENDIENTE`:
-  - H6-D: preflight READ_ONLY, captura previa, `desplegar_35` una vez con confirmación de Pio, captura posterior y
-    postcheck por fila;
-  - después, la contraseña con SCRAM y la prueba de acceso de Pio. La web sigue en FIXTURES hasta entonces.
+- Pendientes de este hito cerrados en H6-D (despliegue, contraseña y prueba de acceso).
 
 ### Hito AUTO-S: noche de sombra 16→17/11, primera con f64d520 (2026-11-17)
 

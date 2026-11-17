@@ -548,3 +548,67 @@ def test_el_despliegue_rechaza_un_sql_distinto_del_commit(tmp_path, repo_corto):
     copia.write_text(copia.read_text(encoding="utf-8") + "\n-- cambio\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="MIGRACION_35_NO_COINCIDE_CON_COMMIT"):
         despliegue.main(commit, sha, tmp_path / "x.json")
+
+
+# --------------------------------------------------------------------------- probar_acceso_cf_pagos_web.py
+
+SCRIPT_ACCESO = ROOT / "pruebas/auditoria_h6/probar_acceso_cf_pagos_web.py"
+
+
+def _cargar_acceso():
+    spec = importlib.util.spec_from_file_location(f"acceso_h6d_{uuid.uuid4().hex[:6]}", SCRIPT_ACCESO)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+def test_prueba_de_acceso_contra_pg17_local(contenedor_tcp):
+    nombre, puerto, _plantilla = contenedor_tcp
+    pg = base_desde(nombre, pgl.construir_plantilla(nombre, "35"))
+    # Regla: las contrasenas de roles se fijan siempre con SCRAM (el pooler rechaza otro formato).
+    pg.sql(f"set password_encryption = 'scram-sha-256'; alter role {ROL} password 'local-only'")
+    assert pg.sql(f"select left(rolpassword, 14) from pg_authid where rolname = '{ROL}'") == "SCRAM-SHA-256$"
+    filas = (f"select (select count(*) from public.{MARCAS})||'|'||(select count(*) from public.{FORMAS})||'|'||"
+             f"(select count(*) from public.{HISTORIAL})||'|'||(select count(*) from public.facturas_vencimientos)")
+    antes = pg.sql(filas)
+    try:
+        resultado = _cargar_acceso().probar("127.0.0.1", puerto, ROL, "local-only", dbname=pg.db, sslmode="disable")
+    finally:
+        pg.sql(f"alter role {ROL} password null")
+    assert resultado["veredicto"] == "ACCESO_OK", resultado
+    assert set(resultado["lee_sus_tablas"]) == {MARCAS, FORMAS, HISTORIAL}
+    assert resultado["escritura_con_autor"] | {"cif_prueba": None} == {
+        "cif_prueba": None, "inserta_y_anula": True, "historial_con_autor": True, "deshecho": True}
+    assert resultado["insert_sin_autor"]["mensaje"] == "AUTOR_AUSENTE"
+    assert resultado["marca_factura_inexistente"]["mensaje"].startswith("FACTURA_NO_ENCONTRADA")
+    for clave in ("delete_marcas", "delete_formas", "leer_facturas", "leer_vencimientos", "escribir_facturas",
+                  "escribir_vencimientos", "escribir_historial"):
+        assert resultado[clave]["sqlstate"] == "42501", (clave, resultado[clave])
+    # Todo se deshace.
+    assert pg.sql(filas) == antes
+
+
+def test_prueba_de_acceso_sin_contrasena_no_conecta(monkeypatch):
+    acceso = _cargar_acceso()
+    monkeypatch.delenv(acceso.VARIABLE, raising=False)
+    monkeypatch.setattr(acceso, "probar", lambda *a, **k: pytest.fail("no debe conectar"))
+    assert acceso.VARIABLE == "CF_PAGOS_PASSWORD"
+    assert acceso.main(["host", "5432"]) == 2
+    with pytest.raises(SystemExit):
+        acceso.main(["host", "5432", "contrasena-como-argumento"])
+
+
+def test_prueba_de_acceso_no_imprime_la_contrasena(monkeypatch, capsys):
+    acceso = _cargar_acceso()
+    secreto = "secreto-" + uuid.uuid4().hex
+    monkeypatch.setenv(acceso.VARIABLE, secreto)
+    recibidos = []
+
+    def falla(host, puerto, usuario, contrasena, **_k):
+        recibidos.append((usuario, contrasena))
+        raise RuntimeError("conexion rechazada")
+
+    monkeypatch.setattr(acceso, "probar", falla)
+    assert acceso.main(["host", "5432"]) == 2
+    assert recibidos == [(f"cf_pagos_web.{acceso.PROJECT_REF}", secreto)]
+    assert secreto not in capsys.readouterr().out

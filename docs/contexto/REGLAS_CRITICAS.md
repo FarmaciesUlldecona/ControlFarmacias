@@ -1,6 +1,8 @@
 # Reglas críticas
 
-Actualizado: 2026-11-17 (H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
+Actualizado: 2026-11-17 (H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
+`ACCESO_OK`; decisiones de Pio para Cashflow (H7): excepción de RITA solo con sus datos bancarios, lista cerrada de
+`cf_lectura` ampliada a `cf_cashflow_*` con la migración 37, estado de importación y signo del importe; H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
 autorización de Pio para nombrar el rol del sistema solo en la 35 y su rollback; 2026-11-16, COD-1611: tablas de Pagos
 fuera del veredicto de los postchecks y tarea de Alliance en la puerta de tareas; migración 34 desplegada en producción, hito TRAB-34-D; TRAB-34: migración 34 de
 Trabajadores, guardias y festivos de TA3, solo local, y
@@ -31,6 +33,8 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   esquema de Trabajadores (trabajadoras, convenio, calendario, guardias y festivos). Facturas, albaranes,
   normalización y conciliación siguen **solo PIO**: `cf_configuracion.farmacias_habilitadas` no cambia
   (`{PIO}`) y el permiso de farmacia de Trabajadores es propio del módulo, nunca global. Ver «Trabajadores».
+  **Excepción Cashflow (DECISIÓN DE PIO, 2026-11-17):** RITA es visible en el módulo CASHFLOW **SOLO** con sus
+  datos bancarios del Excel importado; sus facturas siguen desactivadas. Ver «Cashflow (H7)».
 - Los nombres de archivo, rutas, hashes, carpetas y gold son metadatos técnicos; no
   prueban proveedor, farmacia, obligación económica ni sentido contable.
 - Los valores documentales necesitan evidencia trazable. No se inventan importes,
@@ -474,8 +478,9 @@ producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTAD
 ## Pagos (H6)
 
 Petición de la web, excepción autorizada por Pio; decisiones D1–D9 aprobadas el 2026-11-16. Diseño en
-`pruebas/auditoria_h6/DISENO.md`. Migración 35 (`sql/migrations/35_cf_pagos_marcas.sql`) `CONFIRMADO POR TEST`,
-**solo local**: no desplegada; `desplegar_35.py` ensayado con la imitación del `postgres` de Supabase.
+`pruebas/auditoria_h6/DISENO.md`. Migración 35 (`sql/migrations/35_cf_pagos_marcas.sql`) **desplegada en
+producción** el 2026-11-17 (hito H6-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTADO_ACTUAL), con `desplegar_35.py` ensayado
+antes con la imitación del `postgres` de Supabase.
 
 - **Escritura de la web, solo en dos tablas.** `cf_pagos_web` tiene `SELECT`, `INSERT` y `UPDATE` sobre
   `vencimientos_marcas_pago` y `proveedores_forma_pago`, `SELECT` sobre `pagos_historial` y `EXECUTE` solo sobre la
@@ -503,11 +508,23 @@ Petición de la web, excepción autorizada por Pio; decisiones D1–D9 aprobadas
   security definer (regla del 2BN, que se mantiene).
 - **Únicos parciales** (una marca vigente por vencimiento y una forma vigente por CIF): un `ON CONFLICT` de la web debe
   repetir el predicado `WHERE NOT anulada`.
-- **Contraseña de `cf_pagos_web`:** la fija Pio fuera del repositorio, con SCRAM, después de H6-D (ver «Seguridad y
-  operación»). La web sigue en FIXTURES hasta H6-D y la prueba de acceso.
+- **Contraseña de `cf_pagos_web`:** fijada por Pio fuera del repositorio, con SCRAM, tras H6-D (ver «Seguridad y
+  operación»); prueba de acceso `ACCESO_OK` (2026-11-17, `pruebas/auditoria_h6/probar_acceso_cf_pagos_web.py`).
 - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-16, D8):** nombrar el rol del sistema **solo** en
   `sql/migrations/35_cf_pagos_marcas.sql` y su rollback, para quitarle los privilegios por defecto de Supabase sobre lo
   nuevo. Tests, scripts y documentación no lo nombran; cualquier otro fichero, autorización nueva.
+
+## Cashflow (H7)
+
+Decisiones de Pio (2026-11-17). Módulo **NO IMPLEMENTADO** en este repositorio: sin esquema ni migración todavía.
+
+- **Excepción de farmacia:** RITA es visible en el módulo CASHFLOW **SOLO** con sus datos bancarios del Excel
+  importado. Sus facturas siguen desactivadas: `cf_configuracion.farmacias_habilitadas` no cambia y facturas,
+  albaranes, normalización y conciliación siguen solo PIO. La excepción es propia del módulo, nunca global.
+- **Lista cerrada de `cf_lectura`:** se amplía con las tablas `cf_cashflow_*` cuando existan (migración 37). Hasta
+  entonces no cambia.
+- **Importación:** su estado es `OK` o `ERROR`. El importe conserva el signo de la celda del Excel; no se deduce ni se
+  invierte.
 
 ## Automatización Alliance
 
@@ -543,7 +560,8 @@ en producción (ninguna tarea ejecuta el orquestador; flags apagados).
 - Interfaz web: **PARCIALMENTE IMPLEMENTADA** (Pio, 2026-11-12). Vive fuera de este repositorio. Hoy solo lee
   Supabase con `cf_lectura` (R9 de lectura); escribe en el módulo de Trabajadores, con un rol propio,
   `cf_trabajadores_web`, desplegado el 2026-11-12 (ver «Trabajadores»), y su única otra escritura prevista son las
-  marcas de pago y la forma de pago por proveedor (`cf_pagos_web`, H6, migración 35 solo local; ver «Pagos (H6)»).
+  marcas de pago y la forma de pago por proveedor (`cf_pagos_web`, H6, migración 35 desplegada el 2026-11-17; ver
+  «Pagos (H6)»).
 - Beiersdorf: **SIN EXTRACTOR IMPLEMENTADO**.
 
 Estado a 2026-09-24: `NO ENCONTRADO` en el código vigente. No se presentan como
