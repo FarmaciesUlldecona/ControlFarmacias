@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-17 (H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
+Actualizado: 2026-11-17 (D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
+con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
 acceso de cf_pagos_web ACCESO_OK; decisiones de Pio para Cashflow (H7), en REGLAS_CRITICAS; H6: migración 35 de Pagos, marcas de pago, solo local, con desplegar_35 ensayado; AUTO-S:
 noche de sombra 16→17/11, primera con f64d520, NOCHE_OK y coherente con el plan 2BJ; 2026-11-16, COD-1611: tablas de Pagos fuera del veredicto de los postchecks, tarea de Alliance en la
 puerta de tareas y prueba de acceso de Trabajadores al esquema de la 34, solo local; defectos directos a REVISION
@@ -339,6 +340,17 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### D3: los 3 defectos en ERROR pasan a REVISION (2026-11-17)
+
+Confirmación explícita de Pio. Evidencias en `C:\ControlFarmacias\evidencias_d3_1711\` (`SHA256SUMS.txt`).
+
+- **Plan 2BJ READ_ONLY (19:36):** 8 en cola; los 3 primeros, los defectos de D3 (`ERROR`, 3 intentos, reclamables
+  desde las 16:34). Cola reclamable real comprobada antes de la tanda: los mismos 3 en cabeza, con `max_intentos` = 4.
+- **Tanda de 3, una vez (19:38):** `TANDA_OK`; los 3 `DEFECTO` → `REVISION` al 4.º intento; `POSTCHECK_OK`, sin
+  cambios en Trabajadores ni en Pagos.
+- **cedb06d0** (Alliance 08013495–98) sigue en `PENDIENTE` con 0 intentos, reservado para la primera noche `REAL`
+  (decisión de Pio). Detrás quedan 4 `PENDIENTE` no soportados.
 
 ### Hito H6-D: migración 35 desplegada en producción (2026-11-17)
 
