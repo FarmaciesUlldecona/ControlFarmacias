@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-16 (COD-1611: tablas de Pagos fuera del veredicto de los postchecks, tarea de Alliance en la
+Actualizado: 2026-11-17 (H6: migración 35 de Pagos, marcas de pago, solo local, con desplegar_35 ensayado; AUTO-S:
+noche de sombra 16→17/11, primera con f64d520, NOCHE_OK y coherente con el plan 2BJ; 2026-11-16, COD-1611: tablas de Pagos fuera del veredicto de los postchecks, tarea de Alliance en la
 puerta de tareas y prueba de acceso de Trabajadores al esquema de la 34, solo local; defectos directos a REVISION
 a la migración 36 por requerir migración, decisión de Pio; D3: tanda_05, 10 defectos a REVISION; H6: diseño de la migración 35 aprobado;
 TRAB-34-D: migración 34 desplegada en producción, APLICADA, postcheck por fila OK;
@@ -337,6 +338,61 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito H6: migración 35 de Pagos (marcas de pago), solo local (2026-11-17)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local). Petición de la web, excepción autorizada por Pio; D1–D9 aprobadas el
+2026-11-16. Diseño en `pruebas/auditoria_h6/DISENO.md` (§9: implementación). **No desplegada.** Producción no tocada.
+
+- **Esquema:**
+  - `vencimientos_marcas_pago`: una marca vigente por vencimiento `(factura_id, vencimiento_orden)`, sin claves
+    externas (D7), con fecha e importe copiados por el trigger;
+  - `proveedores_forma_pago`: una forma vigente por CIF y farmacia;
+  - `pagos_historial`: solo inserción, por trigger, con el autor de `cf.autor`.
+- **Rol `cf_pagos_web`:** `LOGIN` sin contraseña en el repositorio (la fija Pio con SCRAM tras H6-D). `SELECT`,
+  `INSERT` y `UPDATE` solo en las dos tablas, `SELECT` del historial y `EXECUTE` solo de la función de su RLS.
+- **Reglas en la BD:**
+  - solo anular (`SOLO_ANULAR`) y sin borrar (`BORRADO_NO_PERMITIDO`, y nadie tiene `DELETE` ni `TRUNCATE`);
+  - farmacia según `cf_configuracion` (D1) y la de la factura;
+  - vencimiento existente con fecha e importe;
+  - fecha de pago no posterior a hoy en Madrid (D3), sea cual sea la zona de la sesión;
+  - `DOMICILIADOS` (D2).
+- **`cf_lectura`** lee las tres tablas con la regla de la 29, sin la función security definer: la regla del 2BN se
+  mantiene (ajuste respecto al diseño, §9).
+- **D7 probado:** una persistencia que borra y reinserta los vencimientos no falla por las marcas, la marca desfasada
+  se detecta, y facturas y vencimientos no cambian de estructura.
+- **Rollback** exacto al esquema 34; falla cerrado si hay datos (`ROLLBACK_35_PAGOS_CON_DATOS`).
+- **`desplegar_35.py`** ensayado con la imitación del `postgres` de Supabase: aplicada, segundo intento revertido y
+  rollback con la imitación. 50 tests de la 35.
+- **AUTORIZACIÓN EXPRESA DE PIO (2026-11-16, D8):** el rol del sistema se nombra solo en la 35 y su rollback.
+  Registrada en REGLAS_CRITICAS («Pagos (H6)»).
+- `PENDIENTE`:
+  - H6-D: preflight READ_ONLY, captura previa, `desplegar_35` una vez con confirmación de Pio, captura posterior y
+    postcheck por fila;
+  - después, la contraseña con SCRAM y la prueba de acceso de Pio. La web sigue en FIXTURES hasta entonces.
+
+### Hito AUTO-S: noche de sombra 16→17/11, primera con f64d520 (2026-11-17)
+
+Revisión READ_ONLY (evidencias en `C:\ControlFarmacias\evidencias_noche_1611\`, `SHA256SUMS.txt`).
+
+- **Tareas:** importación (21:00) y sincronización (21:30) con código 0; automatización Alliance 22:15:15, código 0.
+  - La puerta de la noche (`TAREAS_PREVIAS`: las dos anteriores, ejecutadas hoy con código 0) pasó.
+  - La puerta de los preflights y las series (`TAREAS_ESPERADAS`, con la tarea de Alliance desde COD-1611), evaluada
+    con las tareas reales, encuentra las tres y no da fallos.
+- **Informe** (`C:\ControlFarmacias\noches_auto\2026-11-16\`):
+  - SHA de `informe.json` y `resumen.txt` iguales a su `SHA256SUMS.txt`;
+  - `NOCHE_OK`, sin puertas fallidas, commit f64d520, límites 5 + 5;
+  - postcheck OK (0 filas cambiadas, 0 ajenas), con Trabajadores y **pagos aparte**, sin cambios (las tablas de
+    pagos aún no existen).
+- **Fila `SOMBRA`** con contadores a 0 e `informe_sha256` igual al del fichero. **Solo escribió su fila:** en las 62
+  columnas de fecha de `public`, entre las 21:00 y las 22:00 UTC solo aparecen las marcas de esa fila. Flags
+  apagados.
+- **Coherencia con el plan 2BJ READ_ONLY de las 07:39:**
+  - las 5 que reclamaría la noche son los 5 `PENDIENTE` importados el 16/11, en el mismo orden;
+  - el plan predice 1 Alliance (cedb06d0: 08013495–98) y 4 no soportados;
+  - el plan lista además los 3 defectos en `ERROR` de D3. Lee la cola sin filtrar la espera (`SQL_COLA_TOTAL`), y la
+    noche los excluye porque son reclamables desde las 16:34 del 17/11;
+  - conciliación: ninguna apta.
 
 ### Hito COD-1611: postchecks con Pagos, puerta de tareas y prueba de acceso (2026-11-16)
 

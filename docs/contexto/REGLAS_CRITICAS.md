@@ -1,7 +1,8 @@
 # Reglas críticas
 
-Actualizado: 2026-11-16 (COD-1611: tablas de Pagos fuera del veredicto de los postchecks y tarea de Alliance en la
-puerta de tareas; migración 34 desplegada en producción, hito TRAB-34-D; TRAB-34: migración 34 de
+Actualizado: 2026-11-17 (H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
+autorización de Pio para nombrar el rol del sistema solo en la 35 y su rollback; 2026-11-16, COD-1611: tablas de Pagos
+fuera del veredicto de los postchecks y tarea de Alliance en la puerta de tareas; migración 34 desplegada en producción, hito TRAB-34-D; TRAB-34: migración 34 de
 Trabajadores, guardias y festivos de TA3, solo local, y
 autorización de Pio para nombrar el rol del sistema solo en la 34 y su rollback; 2026-11-15: migración 33
 desplegada en producción, hito TRAB-33-D; 2026-11-14: migración 33 de
@@ -425,9 +426,11 @@ producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTAD
 
 - **Farmacias:** PIO y RITA, solo en este módulo (excepción por módulo de «Seguridad y operación»). Los tests
   demuestran que facturas, albaranes y conciliación siguen solo PIO.
-- **Rol de escritura de la web limitado EXCLUSIVAMENTE a Trabajadores:** credencial propia (nunca la del sistema ni
-  la de `cf_lectura`); `SELECT`, `INSERT` y `UPDATE` solo sobre las tablas del módulo; **sin `DELETE`** (un registro
-  se anula y la anulación queda en el historial); ningún privilegio sobre el resto del esquema.
+- **Rol de escritura de la web en Trabajadores limitado EXCLUSIVAMENTE a sus tablas:** credencial propia (nunca la
+  del sistema ni la de `cf_lectura`); `SELECT`, `INSERT` y `UPDATE` solo sobre las tablas del módulo; **sin `DELETE`**
+  (un registro se anula y la anulación queda en el historial); ningún privilegio sobre el resto del esquema. La web
+  escribe en Trabajadores (`cf_trabajadores_web`) y **solo** en `vencimientos_marcas_pago` y `proveedores_forma_pago`
+  (`cf_pagos_web`, H6; ver «Pagos (H6)»).
 - **Historial solo de inserción**, escrito por trigger; el autor lo indica la web (por ahora «Marc») y sin autor la
   escritura falla.
 - **Sin datos de salud ni DNI:** las trabajadoras no guardan DNI; la nota de un evento tiene como máximo 200
@@ -468,6 +471,44 @@ producción** el 2026-11-12, hito TRAB-D, `CONFIRMADO EN PRODUCCIÓN`; ver ESTAD
   - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-16):** nombrar el rol del sistema **solo** en
     `sql/migrations/34_cf_trabajadores_guardias.sql` y su rollback; tests, scripts y documentación no lo nombran.
 
+## Pagos (H6)
+
+Petición de la web, excepción autorizada por Pio; decisiones D1–D9 aprobadas el 2026-11-16. Diseño en
+`pruebas/auditoria_h6/DISENO.md`. Migración 35 (`sql/migrations/35_cf_pagos_marcas.sql`) `CONFIRMADO POR TEST`,
+**solo local**: no desplegada; `desplegar_35.py` ensayado con la imitación del `postgres` de Supabase.
+
+- **Escritura de la web, solo en dos tablas.** `cf_pagos_web` tiene `SELECT`, `INSERT` y `UPDATE` sobre
+  `vencimientos_marcas_pago` y `proveedores_forma_pago`, `SELECT` sobre `pagos_historial` y `EXECUTE` solo sobre la
+  función de su RLS (`cf_pagos_farmacia_habilitada`). Nunca escribe en `facturas`, `facturas_vencimientos`,
+  conciliación, albaranes ni ninguna otra tabla, ni las lee.
+- **Anulación en lugar de DELETE.** Nadie tiene `DELETE` ni `TRUNCATE` y un trigger los rechaza
+  (`BORRADO_NO_PERMITIDO`). Una fila solo admite pasar `anulada` de false a true (`SOLO_ANULAR`): corregir es anular y
+  crear otra, y una anulada no se reactiva.
+- **Autor e historial.** El autor va por transacción (`set local cf.autor`); sin él, `AUTOR_AUSENTE`. El historial
+  (`pagos_historial`) lo escribe un trigger, solo por inserción, y es inmutable.
+- **El sistema no usa las marcas.** Ni la normalización, ni la conciliación, ni la persistencia, ni la noche leen estas
+  tablas para decidir nada, y las marcas no cambian ningún estado de factura, vencimiento ni conciliación. En los
+  postchecks se informan aparte (`TABLAS_PAGOS`, ver «Pruebas»).
+- **Cuando haya banco, manda el banco.** La conciliación bancaria y la Norma 43 siguen `NO IMPLEMENTADAS`; cuando
+  existan, su estado prevalece sobre la marca manual, que se conserva como histórico. `PAGADO_BANCO` queda reservado,
+  sin esquema (D6).
+- **Farmacia (D1).** La misma fuente que facturas: `cf_configuracion.farmacias_habilitadas` (hoy solo PIO), en los
+  triggers y en la RLS. No usa la excepción por módulo de Trabajadores. La marca es de la farmacia de su factura.
+- **Vencimiento por `(factura_id, vencimiento_orden)`, sin claves externas (D7).** El trigger copia fecha e importe
+  al marcar: si un reproceso los cambia, la web muestra la marca «a revisar», **nunca «pagado»**. No se marca un
+  vencimiento sin importe o sin fecha.
+- **Fecha de pago no posterior a hoy en `Europe/Madrid` (D3).** `DOMICILIADOS` (D2) exige forma `DOMICILIACION`,
+  fecha de pago = fecha de vencimiento y vencimiento ya pasado.
+- **Lectura (D4).** `cf_lectura` lee las tres tablas con la regla de farmacia de la 29, sin ejecutar ninguna función
+  security definer (regla del 2BN, que se mantiene).
+- **Únicos parciales** (una marca vigente por vencimiento y una forma vigente por CIF): un `ON CONFLICT` de la web debe
+  repetir el predicado `WHERE NOT anulada`.
+- **Contraseña de `cf_pagos_web`:** la fija Pio fuera del repositorio, con SCRAM, después de H6-D (ver «Seguridad y
+  operación»). La web sigue en FIXTURES hasta H6-D y la prueba de acceso.
+- **AUTORIZACIÓN EXPRESA DE PIO (2026-11-16, D8):** nombrar el rol del sistema **solo** en
+  `sql/migrations/35_cf_pagos_marcas.sql` y su rollback, para quitarle los privilegios por defecto de Supabase sobre lo
+  nuevo. Tests, scripts y documentación no lo nombran; cualquier otro fichero, autorización nueva.
+
 ## Automatización Alliance
 
 Decisiones de Pio (2026-11-12) en `pruebas/auditoria_auto_alliance/DISENO.md` (D1–D7 y plan de hitos). Hito AUTO-A
@@ -500,8 +541,9 @@ en producción (ninguna tarea ejecuta el orquestador; flags apagados).
 - Norma 43: **NO IMPLEMENTADA**.
 - Telegram: **NO IMPLEMENTADO**.
 - Interfaz web: **PARCIALMENTE IMPLEMENTADA** (Pio, 2026-11-12). Vive fuera de este repositorio. Hoy solo lee
-  Supabase con `cf_lectura` (R9 de lectura); su única escritura prevista es el módulo de Trabajadores, con un rol
-  propio, `cf_trabajadores_web`, desplegado el 2026-11-12 (ver «Trabajadores»).
+  Supabase con `cf_lectura` (R9 de lectura); escribe en el módulo de Trabajadores, con un rol propio,
+  `cf_trabajadores_web`, desplegado el 2026-11-12 (ver «Trabajadores»), y su única otra escritura prevista son las
+  marcas de pago y la forma de pago por proveedor (`cf_pagos_web`, H6, migración 35 solo local; ver «Pagos (H6)»).
 - Beiersdorf: **SIN EXTRACTOR IMPLEMENTADO**.
 
 Estado a 2026-09-24: `NO ENCONTRADO` en el código vigente. No se presentan como
