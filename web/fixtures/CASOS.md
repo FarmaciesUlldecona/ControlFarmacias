@@ -481,7 +481,7 @@ Fixtures:
 | Completar vacaciones | Filas 2026 y 2027 sin el dato | Confirmación con los dos datos → POST `{ "anios": [2026, 2027] }`; el resto del convenio no cambia |
 | REAL simulado | `rrhh_real.test.ts` con el esquema de la migración 33 en memoria | SQL con `NOT anulado`, ON CONFLICT parcial, sin DELETE, `cf.autor` en cada escritura y ninguna columna `autor`; la base simulada rechaza esa columna (42703) y la falta de `cf.autor` (AUTOR_AUSENTE) |
 
-## TA3: guardias y festivos (solo FIXTURES)
+## TA3: guardias y festivos (FIXTURES; TA3-REAL: también REAL)
 
 En Ulldecona hay 3 farmacias: PIO, RITA y una ajena (OTRA). La guardia semanal rota entre las 3; los festivos tienen su propia rotación. Modelo y reglas en `app/server/rrhh/guardias.ts`:
 - **guardia_semana:** lunes (semana de lunes a domingo; una por semana), farmacia PIO|RITA|OTRA, persona de guardia y apoyo del sábado (opcional).
@@ -490,7 +490,7 @@ En Ulldecona hay 3 farmacias: PIO, RITA y una ajena (OTRA). La guardia semanal r
 - **Reglas:** OTRA sin personas. En PIO/RITA, la persona es de esa farmacia y está de alta los días del servicio (guardia: sábado y domingo; apoyo: sábado; festivo: ese día). El titular puede hacer guardia. El apoyo es distinto de la guardia. La persona de la guardia de un festivo es, por defecto, la de guardia de esa semana si es la misma farmacia; se puede cambiar.
 - **Horas fuera de cómputo** (`HORARIO_GUARDIA`, único punto): se registran y no suman en el año. Guardia: sábado 9:00–13:30 y 18:00–20:00 (6,5 h) y domingo 10:00–13:00 (3 h). Apoyo del sábado: 9:00–13:30 (4,5 h). Festivo de guardia: 10:00–13:00 (3 h). Localizada por teléfono (la persona de guardia): sin horas. Criterio provisional, a confirmar: un festivo en sábado o domingo sustituye ese día de la semana de guardia.
 - **Calendario:** «Rellenar jornada habitual» salta festivos. Pintar sobre un festivo se permite, con aviso («Ojo: 8 dic (La Inmaculada) es festivo.»).
-- **REAL:** pestaña y edición deshabilitadas con «Pendiente de tablas en Supabase». La lectura responde `{ disponible: false, mensaje }` y la escritura 503 `TA3_PENDIENTE`. Propuesta de tablas, sin aplicar: `web/docs/propuesta_tablas_ta3.sql`.
+- **REAL (TA3-REAL, migración 34 en producción):** `guardias_semana`, `guardias_festivo` y `festivos` con `cf_trabajadores_web` (lectura y escritura; detalles abajo). `guardias_farmacia` ya no existe y la web no la lee.
 
 Fixtures: `fixtures/rrhh/guardias.json`.
 - Rotación de 2026: 53 semanas, del 29 dic 2025 al 28 dic 2026, PIO → RITA → OTRA; cada farmacia recorre su lista de guardia y apoyo.
@@ -509,7 +509,56 @@ Fixtures: `fixtures/rrhh/guardias.json`.
 | Cambio de año | Semana del 28 dic 2026 (Sílvia) | Cuenta en 2027 (año del sábado) |
 | Rellenar | Semana del 7 dic 2026 | 4 días: el 8 se salta. Diciembre de Irene: 21 días laborables, sin el 8 ni el 25 |
 | Reglas | OTRA con persona; persona de otra farmacia; apoyo igual a la guardia | 400 / 409 PERSONA_NO_VALIDA / 400, sin cambios |
-| REAL simulado | Estado sin guardias | Pestaña sin enlace, «Pendiente de tablas en Supabase»; el calendario sigue sin guardias |
+| REAL simulado | Estado REAL con guardias | Pestaña de consulta (TA3-4); el calendario muestra las guardias y las 4 herramientas |
+
+TA3-4 (decisión de Marc): las guardias se pintan en el calendario de Trabajadores, no en la pestaña. Sin fixtures nuevos; las pruebas que escriben usan semanas de 2027 y lo deshacen todo.
+- **Herramientas** (paleta, junto a los tipos; también en la vista año):
+  - Guardia: clic en una persona → guardia de su farmacia toda la semana. Si había guardia de su farmacia, la sustituye; si era de otra farmacia (u OTRA), pregunta antes. Conserva el apoyo si es de la misma farmacia y no es la nueva guardia. En un festivo, pone la guardia del festivo.
+  - Apoyo sábado: clic en una persona en el sábado. Solo con guardia de su farmacia esa semana; si no, aviso y nada guardado.
+  - Guardia otra farmacia: clic en la cabecera de un día → su semana (o su festivo) pasa a OTRA.
+  - Festivo: clic en la cabecera de un día → nombre (≤60) y ámbito (local por defecto).
+  - Goma: en una celda, quita eventos como antes; sobre G, A, GF, OTRA o el nombre del festivo, los anula. Dar de baja un festivo pide confirmación y arrastra su guardia.
+  - Año: clic en la banda de la semana con Guardia o Apoyo → selector de farmacia, guardia y apoyo. Con OTRA o la goma, actúa sobre la banda. Con «Abrir semana», abre la semana como antes.
+- **Marcas** (capa al pie de la celda; no tapan jornada ni ausencias): franja del color de la farmacia toda la semana con «G» el primer día visible; «A» el sábado del apoyo; «GF» en la guardia de festivo; cabecera gris con «OTRA».
+- **Deshacer:** una pila de la sesión (sessionStorage de la pestaña) con eventos y guardias. Las guardias se deshacen con sus pasos inversos por lunes o fecha; restaurar tras la goma crea filas nuevas (ids nuevos).
+- **Rutas nuevas** (goma): `PUT /api/rrhh/guardias/:lunes/anular` y `PUT /api/rrhh/festivos/:fecha/guardia/anular`, con `{ confirmar: true }`. Anulan; nunca DELETE.
+- **Reglas y mensajes:** los de TA3-REAL, comprobados antes de escribir (`herramientas_guardia.ts`); el servidor y la BD los vuelven a aplicar.
+- **Pestaña «Guardias y festivos»:** consulta del año, solo lectura, con «Editar en el calendario» (abre la semana).
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Guardia | Aina, mié 6 ene 2027 | Guardia PIO 4–10 ene: franja ciruela 7 días, «G» el lunes |
+| Apoyo | Elena (media mañana), sáb 9 ene | «A» en su sábado (en la franja vacía de tarde); viernes → «El apoyo se pinta en el sábado» |
+| Otra farmacia | Laura (RITA) en esa semana PIO | Confirmación «La semana 4–10 ene 2027 es de PIO (Aina Bosch Ferrer). ¿Sustituirla…?» |
+| OTRA | Cabecera del 13 ene | Semana 11–17 ene en gris con «OTRA» |
+| Festivo + GF | 19 mar 2027 «Sant Josep», autonómico; Clara | Columna con el nombre; «GF» en Clara; rellenar lo salta |
+| Goma del festivo | Sant Josep | Confirmación; deshacer lo vuelve a dar de alta |
+| Año | Banda 15 feb 2027, RITA, Laura + Marta | «G: LS · A: MV» |
+
+TA3-REAL (migración 34 en producción). Sin fixtures nuevos; la base simulada de `rrhh_real.test.ts` reproduce las tres tablas.
+- **Lecturas:** sin filas anuladas. De los festivos, solo los comunes (`farmacia` null). Nombre = `descripcion`.
+- **Editar** (semana y guardia de festivo): anular la fila vigente e insertar la nueva en la misma transacción. Si no cambia nada, no escribe.
+- **Baja de un festivo:** `anulado = true`; su guardia la anula la BD. Nunca DELETE. Autor solo por `cf.autor`.
+- **Alta de festivo:** común, con ámbito elegible (local por defecto: la BD admite NACIONAL, AUTONOMICO o LOCAL). En FIXTURES también se guarda el ámbito.
+- **Reglas de la web (las de la BD):**
+  - guardia de alta sábado y domingo; apoyo, de alta el sábado;
+  - persona de esa farmacia;
+  - guardia de festivo solo en un festivo común.
+- **Errores de la BD con mensaje llano:**
+  - `PERSONA_NO_VALIDA` (con la fecha) y `NO_ES_FESTIVO`;
+  - checks `guardias_semana_*`, `guardias_festivo_*` y `festivos_*`;
+  - duplicados de semana, guardia de festivo y festivo;
+  - FK de persona de otra farmacia;
+  - permiso denegado y RLS.
+- **Calendario en REAL:** «Rellenar» salta los festivos comunes; pintar sobre uno avisa.
+- **check:real:** recuentos de `guardias_semana`, `guardias_festivo` y `festivos` en lugar de `guardias_farmacia`.
+
+| Caso | Datos (simulados) | Efecto |
+|---|---|---|
+| Editar semana | 4 ene 2027 PIO, Aina; añadir apoyo Elena | La fila anterior queda anulada y la nueva vigente; una sola transacción |
+| Baja de festivo | Reyes 6 ene 2027 con guardia | El festivo queda anulado; su guardia la anula la BD |
+| Festivo de una farmacia | 7 ene 2027 solo PIO | No sale en la lista; guardia → «Ese día no es festivo» |
+| Duplicado en carrera | `guardias_semana_lunes_unico` | 409: «Esa semana ya tiene guardia… Actualiza y vuelve a intentarlo» |
 
 TA3-2 (decisiones de Marc): se aceptan los tres criterios (el festivo sustituye el día de guardia; la semana cuenta en el año de su sábado; sin eventos). El objetivo anual no descuenta festivos. En vacaciones, un festivo de TA3 dado de alta hace de puente, solo entre días de vacaciones.
 
@@ -574,3 +623,46 @@ H6-3 (decisiones de Marc): abonos y cargos negativos.
 | Abono vencido | V12 (29/10, −20,00 €) | «Abono pendiente de compensar» en azul; no entra en «Confirmar domiciliados» |
 | Marcar compensado | V12, forma «la de cada proveedor» | Compensación con abono; «compensado / cobrado (marcado a mano)»; historial «marcó compensado / cobrado» |
 | Cargo negativo | V11 (31/10, −25,00 €, Cofares) | Sentido «Cargo», aviso «importe negativo: revisar»; semana del 26/10 y octubre: domiciliado 400 − 20 = 380 €; «1 cargo con importe negativo» |
+
+## H6-4: Vencimientos en calendario (sin fixtures nuevos)
+
+- **Calendario sobre la lista:** vistas Día, Semana, Mes (por defecto) y Año; vista y fecha en la URL (`vista`, `fecha`).
+- **Día con pagos:** total = cargos − |abonos| con la regla de totales de H6 (también lo ya pagado). No suman el importe pendiente, el sentido no documentado ni los cargos negativos, que se cuentan aparte («N fuera»). El globo da el nº de pagos.
+- **Color del día = peor estado:** vencido sin pagar (rojo) > domiciliado previsto (violeta) > abono pendiente de compensar (azul) > pendiente (neutro) > pagado (verde).
+- **Desplegable:** con el cursor o el foco de teclado (flechas, Escape). En pantalla táctil, un toque abre una hoja con «Filtrar la lista a este día».
+- **Filtrar la lista:** clic en un día, una semana (columna «Sem.») o un mes (Año, o «Ver este mes en la lista»). Queda en `?cal=dia:AAAA-MM-DD | semana:lunes | mes:AAAA-MM`, visible y quitable. Un valor no válido no filtra.
+- **Qué filtros usa el calendario:** todos los de la lista salvo los de fecha.
+- **Totales:** sin tarjetas por semana ni por mes; queda la cabecera de totales generales.
+- **Lista con las capacidades de Facturas:**
+  - pestañas por estado de la factura, con recuento;
+  - filtros de proveedor (por CIF; sin CIF, por nombre), sentido, importe, estado de la factura y revisión de Pío;
+  - búsqueda también por importe (el del vencimiento o el total de su factura);
+  - orden por columna (estado por gravedad).
+
+  Se suman los filtros de H6: periodo (ahora en un selector), estado de pago y forma de pago.
+- **Lo que tiene Facturas y aquí no:** fecha de factura y diferencia del motor. No forman parte del contrato `vencimientos`.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Varios pagos el mismo día | 04/11: V01 y V10 (Alliance, 152,37 € cada uno) | Globo 2, 304,74 €, rojo; el desplegable lista los dos y la suma |
+| Pagado sin total | 07/11: V07 (Hefame, no documentado, marcado) | Verde, globo 1; la celda dice «sentido no documentado» (H6-5; antes «—» y «1 fuera») |
+| Abono no vencido | 21/11: V09 (−45,30 €) | Neutro (pendiente), −45,30 € |
+| Semana 44 | 26/10–01/11 | 380,00 € (el cargo negativo del 31/10 fuera) |
+| Noviembre | 9 pagos | 881,66 €; 2 importes pendientes y 2 de sentido no documentado fuera; intensidad 4 |
+| Octubre | 3 pagos | 380,00 €, violeta; intensidad 2 |
+| Pestañas | 12 vencimientos | 6 conciliadas, 5 pendientes de conciliar, 2 en revisión, 3 no revisadas por Pío |
+
+## H6-5: vencidos sin importe en el calendario y resumen del periodo (sin fixtures nuevos)
+
+- **Día con pagos, siempre marcado:** color del peor estado y globo aunque ningún pago sume. Sin total, la celda (y la semana, el mes del año y la vista Día) dice por qué: «importe pendiente» > «importe negativo» > «sentido no documentado»; nunca «—» ni 0. En el desplegable, «importe pendiente» en el pago y en la suma.
+- **Periodo visible vacío:** si lo filtrado tiene pagos en otras fechas, aviso «Ningún pago en este periodo con estos filtros; hay N en otras fechas» con «Ir al anterior / al siguiente». Es lo visto en REAL: «Vencido sin pagar» siempre cae antes de hoy y el mes actual salía en blanco.
+- **Resumen junto al título** (día, semana, mes o año visible; lo filtrado salvo fechas): Total = Pagado (verde: PAGADO_MANUAL y PAGADO_BANCO) + Domiciliado previsto (violeta: solo DOMICILIADO_PREVISTO, domiciliado ya vencido sin marca) + Falta por pagar (rojo: PENDIENTE, no vencido y de cualquier forma, también domiciliación, + VENCIDO_SIN_PAGAR) − Abonos por compensar (azul: ABONO_PENDIENTE_COMPENSAR, aparte, solo si hay). H6-6 (decisión de Marc, revierte el ajuste de TA3-4): por ESTADO, la misma regla en el resumen y en la cabecera de totales generales (que pasa a «Falta por pagar», «Domiciliado previsto» y «Abonos por compensar»). Cuadra al céntimo; un grupo sin pagos, «—»; con pagos que no suman, «sin importe». Fuera de los totales, con recuento: sin importe, cargos negativos, sentido no documentado.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Noviembre | 9 pagos | Total 881,66 € = — + 150,00 € (domiciliado vencido del 15) + 731,66 € (incluye el abono domiciliado del 21, no vencido); fuera: 2 sin importe · 2 de sentido no documentado |
+| Octubre | 3 pagos | 380,00 € = — + 400,00 € + — − 20,00 € (abono V12); fuera: 1 cargo negativo |
+| Cabecera (todo) | 12 vencimientos | Falta por pagar 731,66 €; domiciliado previsto 550,00 €; abonos por compensar −20,00 € |
+| Domiciliados futuros (REAL simulado, hoy 1/11/2026) | Noviembre sin marcas | Todo en falta por pagar (881,66 €); domiciliado previsto «—»; la cabecera del mes coincide |
+| Año 2026 | 12 pagos | 1.261,66 € |
+| REAL simulado: vencido sin importe | V08 (Fedefarma, sin CIF, sin importe) movido al 20/10 en la prueba; REAL sin marcas | Con «Vencido sin pagar»: noviembre avisa e «Ir al anterior (20 oct 2026)»; 20/10 rojo, globo 1, «importe pendiente»; resumen: total «importe pendiente», falta por pagar «sin importe», 1 sin importe fuera |

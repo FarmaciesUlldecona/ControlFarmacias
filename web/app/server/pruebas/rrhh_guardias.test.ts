@@ -1,7 +1,7 @@
 // TA3 Trabajadores: guardias y festivos. Horario (único punto) y horas fuera de cómputo, validación, reglas de
 // personas (OTRA sin personas, persona de esa farmacia y de alta, titular permitido, apoyo distinto), persona por
 // defecto de la guardia de un festivo, semilla de ejemplo, «Guardias del año», calendario (rellenar salta festivos,
-// pintar sobre festivo avisa) y API (FIXTURES; REAL: «Pendiente de tablas en Supabase»). Uso: npm run test:unit
+// pintar sobre festivo avisa) y API (FIXTURES; TA3-REAL: también en modo REAL). Uso: npm run test:unit
 import assert from 'node:assert/strict';
 import { after, describe, test } from 'node:test';
 import Fastify from 'fastify';
@@ -11,7 +11,7 @@ import { AUTOR_HISTORIAL } from '../rrhh/contrato.ts';
 import { crearAdaptadorRrhhFixtures, leerSemillaGuardias, type AdaptadorRrhhFixtures } from '../rrhh/adaptador_fixtures.ts';
 import { validarPeticionEventos, type PeticionEventos, type ResultadoCambioDTO } from '../rrhh/eventos.ts';
 import {
-  ERROR_TA3_PENDIENTE, HORARIO_GUARDIA, HORAS_SERVICIO, TEXTO_TA3_PENDIENTE, horasSemana, horasTramos, iniciales, reglasSemana,
+  HORARIO_GUARDIA, HORAS_SERVICIO, horasSemana, horasTramos, iniciales, reglasSemana,
   resumenGuardiasPersona, semanasDeRotacion, validarFestivo, validarGuardiaFestivo, validarGuardiaSemana,
   type DatosGuardiaSemana,
 } from '../rrhh/guardias.ts';
@@ -67,9 +67,12 @@ describe('validación (falla cerrado)', () => {
     assert.equal(e('2027-01-04', { farmacia: 'OTRA', nota: 'x' }).nota, 'Campo no admitido');
   });
   test('festivo: fecha de los años del convenio y nombre de 1 a 60 caracteres; guardia de festivo: farmacia y persona', () => {
-    assert.deepEqual(validarFestivo({ fecha: '2027-01-01', nombre: '  Año   Nuevo ' }), { ok: true, fecha: '2027-01-01', nombre: 'Año Nuevo' });
+    // TA3-REAL: ámbito opcional (por defecto LOCAL), solo LOCAL, AUTONOMICO o NACIONAL.
+    assert.deepEqual(validarFestivo({ fecha: '2027-01-01', nombre: '  Año   Nuevo ' }), { ok: true, fecha: '2027-01-01', nombre: 'Año Nuevo', ambito: 'LOCAL' });
+    assert.deepEqual(validarFestivo({ fecha: '2027-01-01', nombre: 'Año Nuevo', ambito: 'NACIONAL' }), { ok: true, fecha: '2027-01-01', nombre: 'Año Nuevo', ambito: 'NACIONAL' });
     for (const b of [{ fecha: '2027-01-01', nombre: '' }, { fecha: '2027-01-01', nombre: 'x'.repeat(61) }, { fecha: '2025-12-25', nombre: 'Navidad' },
-      { fecha: '2027-02-30', nombre: 'x' }, { fecha: '2027-01-01', nombre: '<b>' }, { fecha: '2027-01-01', nombre: 'x', ambito: 'LOCAL' }, null]) {
+      { fecha: '2027-02-30', nombre: 'x' }, { fecha: '2027-01-01', nombre: '<b>' }, { fecha: '2027-01-01', nombre: 'x', ambito: 'COMARCAL' },
+      { fecha: '2027-01-01', nombre: 'x', farmacia: 'PIO' }, null]) {
       assert.equal(validarFestivo(b).ok, false, JSON.stringify(b));
     }
     assert.ok(validarFestivo({ fecha: '2027-01-01', nombre: 'x'.repeat(60) }).ok);
@@ -298,28 +301,34 @@ describe('API /api/rrhh/guardias y /api/rrhh/festivos (FIXTURES)', async () => {
   });
 });
 
-describe('modo REAL: «Pendiente de tablas en Supabase» (lectura sin datos, escritura 503)', async () => {
-  // Adaptador sin almacén de TA3 (como RRHH_REAL hoy).
-  const { guardiasTa3: _g, ...sinTa3 } = crearAdaptadorRrhhFixtures();
+describe('TA3-REAL: en modo REAL las rutas de guardias funcionan (sin «Pendiente de tablas» ni 503 TA3_PENDIENTE)', async () => {
   const app = Fastify();
-  registrarRrhh(app, { modo: 'REAL', quien: 'Marc', adaptador: sinTa3, sesionValida: () => true });
+  registrarRrhh(app, { modo: 'REAL', quien: 'Marc', adaptador: crearAdaptadorRrhhFixtures(), sesionValida: () => true });
   await app.ready();
   after(() => app.close());
   const H = { host: '127.0.0.1:4747' };
   const W = { ...H, origin: 'http://127.0.0.1:4747', 'content-type': 'application/json' };
 
-  test('estado sin guardias; lectura { disponible: false, mensaje }; cada escritura 503 TA3_PENDIENTE; ficha anual sin guardias', async () => {
-    assert.equal((await app.inject({ method: 'GET', url: '/api/rrhh/estado', headers: H })).json().guardias_disponibles, false);
+  test('estado con guardias; lectura disponible; escrituras 200/201 (ámbito por defecto LOCAL); ficha anual con guardias', async () => {
+    assert.equal((await app.inject({ method: 'GET', url: '/api/rrhh/estado', headers: H })).json().guardias_disponibles, true);
     const r = await app.inject({ method: 'GET', url: '/api/rrhh/guardias?anio=2026', headers: H });
-    assert.deepEqual(r.json(), { disponible: false, mensaje: TEXTO_TA3_PENDIENTE });
+    assert.equal(r.json().disponible, true);
+    const alta = await app.inject({ method: 'POST', url: '/api/rrhh/festivos', headers: W, payload: JSON.stringify({ fecha: '2027-01-01', nombre: 'Año Nuevo' }) });
+    assert.deepEqual([alta.statusCode, alta.json().ambito], [201, 'LOCAL']);
     for (const [method, url, body] of [
-      ['PUT', '/api/rrhh/guardias/2027-01-04', { farmacia: 'OTRA' }], ['POST', '/api/rrhh/festivos', { fecha: '2027-01-01', nombre: 'Año Nuevo' }],
-      ['PUT', '/api/rrhh/festivos/2027-01-01/anular', { confirmar: true }], ['PUT', '/api/rrhh/festivos/2027-01-01/guardia', { farmacia: 'OTRA' }],
+      ['PUT', '/api/rrhh/guardias/2027-01-04', { farmacia: 'OTRA' }], ['PUT', '/api/rrhh/festivos/2027-01-01/guardia', { farmacia: 'OTRA' }],
+      ['PUT', '/api/rrhh/festivos/2027-01-01/anular', { confirmar: true }],
     ] as const) {
       const e = await app.inject({ method, url, headers: W, payload: JSON.stringify(body) });
-      assert.deepEqual([e.statusCode, e.json()], [503, { error: ERROR_TA3_PENDIENTE, mensaje: TEXTO_TA3_PENDIENTE }], url);
+      assert.equal(e.statusCode, 200, `${url}: ${e.body}`);
+      assert.ok(!/Pendiente de tablas|TA3_PENDIENTE/.test(e.body));
     }
+    const amb = await app.inject({ method: 'POST', url: '/api/rrhh/festivos', headers: W, payload: JSON.stringify({ fecha: '2027-01-06', nombre: 'Reyes', ambito: 'NACIONAL' }) });
+    assert.equal(amb.json().ambito, 'NACIONAL');
+    const mal = await app.inject({ method: 'POST', url: '/api/rrhh/festivos', headers: W, payload: JSON.stringify({ fecha: '2027-01-07', nombre: 'X', ambito: 'COMARCAL' }) });
+    assert.deepEqual([mal.statusCode, Object.keys(mal.json().errores)], [400, ['ambito']]);
     const f = await app.inject({ method: 'GET', url: `/api/rrhh/trabajadoras/${AINA}/anual?anio=2026&hoy=2026-11-13`, headers: H });
-    assert.equal(f.json().guardias, null);
+    assert.equal(typeof f.json().guardias, 'object');
+    assert.notEqual(f.json().guardias, null);
   });
 });

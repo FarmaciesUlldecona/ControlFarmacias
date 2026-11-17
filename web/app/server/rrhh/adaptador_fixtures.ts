@@ -15,14 +15,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   CONVENIO_ANUAL, FUENTE_VACACIONES, VACACIONES_DIAS_NATURALES, accionActualizacion, camposAlta, computaConvenio, diferencias, objetivosAnuales, ordenFichas,
-  type AjusteAnual, type ConvenioAnual, type DatosTrabajadora, type EventoHistorial, type FarmaciaRrhh, type Festivo,
-  type FiltroFarmacia, type GuardiaFarmacia, type Trabajadora, type TrabajadoraDetalleDTO, type TrabajadorasDTO,
+  type AjusteAnual, type ConvenioAnual, type DatosTrabajadora, type EventoHistorial, type FarmaciaRrhh,
+  type FiltroFarmacia, type Trabajadora, type TrabajadoraDetalleDTO, type TrabajadorasDTO,
 } from './contrato.ts';
 import {
   crearAlmacenEventos, type CalendarioDTO, type CambioCalendario, type ErrorCambio, type ErrorDeshacer, type EventoCalendario,
   type NotaProxima, type PeticionEventos, type ResultadoCambioDTO, type SemillaEventos,
 } from './eventos.ts';
-import { crearAlmacenGuardias, type AlmacenGuardias, type SemillaGuardias } from './guardias.ts';
+import { crearAlmacenGuardias, type AlmacenGuardias, type GuardiasTa3, type SemillaGuardias } from './guardias.ts';
 
 export const RUTA_SEMILLA = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'rrhh', 'trabajadoras.json');
 /** TA2: semanas de ejemplo del calendario (ausencias, jornada habitual y una semana confirmada). */
@@ -69,14 +69,11 @@ export interface AdaptadorRrhh {
   cambiarEventos(p: PeticionEventos, quien: string): Quizas<ResultadoCambioDTO | ErrorCambio>;
   deshacerEventos(cambioId: string, quien: string): Quizas<ResultadoCambioDTO | ErrorDeshacer>;
   historialEventos(farmacia: FiltroFarmacia): Quizas<CambioCalendario[]>;
-  // Tablas de la migración 31 (guardias_farmacia y festivos): solo lectura, sin pantalla.
-  guardias(farmacia: FiltroFarmacia): Quizas<GuardiaFarmacia[]>;
-  festivos(farmacia: FiltroFarmacia): Quizas<Festivo[]>;
   /**
-   * TA3: guardia semanal, festivos y guardia de festivo (./guardias.ts). Solo FIXTURES; en REAL no existe (tablas
-   * pendientes en Supabase: pestaña y edición deshabilitadas, «Pendiente de tablas en Supabase»).
+   * TA3 / TA3-REAL: guardia semanal, festivos y guardia de festivo (./guardias.ts). FIXTURES: almacén en memoria;
+   * REAL: guardias_semana, guardias_festivo y festivos (migración 34).
    */
-  guardiasTa3?: AlmacenGuardias;
+  guardiasTa3: GuardiasTa3;
   cerrar?(): Promise<void>;
 }
 
@@ -102,8 +99,6 @@ export interface AdaptadorRrhhFixtures extends AdaptadorRrhh {
   cambiarEventos(p: PeticionEventos, quien: string): ResultadoCambioDTO | ErrorCambio;
   deshacerEventos(cambioId: string, quien: string): ResultadoCambioDTO | ErrorDeshacer;
   historialEventos(farmacia: FiltroFarmacia): CambioCalendario[];
-  guardias(farmacia: FiltroFarmacia): GuardiaFarmacia[];
-  festivos(farmacia: FiltroFarmacia): Festivo[];
   guardiasTa3: AlmacenGuardias;
   eventos(): EventoCalendario[];
   /** TA-REAL-2: eventos anulados (nunca salen en las lecturas). */
@@ -301,8 +296,6 @@ export function crearAdaptadorRrhhFixtures(opciones: {
     historialEventos: (farmacia) => almacen.historial(farmacia),
     eventos: () => almacen.todos(),
     eventosAnulados: () => almacen.anulados(),
-    guardias: () => [],
-    festivos: () => [],
     guardiasTa3,
   };
 }

@@ -41,8 +41,58 @@
 .cal-col.festivo { background: repeating-linear-gradient(135deg, var(--superficie) 0 4px, var(--gris-fondo) 4px 8px); }
 .cal-col-festivo { display: block; margin-top: 1px; font-size: 10px; font-weight: 700; color: var(--gris-texto); line-height: 1.1; white-space: normal; }
 
+/* TA3-4: herramientas de guardia en el calendario.
+   Capa de marcas al pie de la celda (padding propio): no tapa ni cambia jornada ni ausencias; solo los botones de la
+   goma reciben el clic. Franja del color de la farmacia toda la semana; «G» el primer día visible; «A» y «GF». */
+.cal-rejilla td.con-capa { position: relative; padding-bottom: 17px; }
+.gu-capa { position: absolute; left: 0; right: 0; bottom: 1px; height: 15px; display: flex; align-items: center; gap: 3px; padding: 0 3px; pointer-events: none; }
+.gu-franja { position: absolute; left: 0; right: 0; top: 5px; height: 5px; background: var(--g); opacity: 0.9; }
+.gu-marca {
+  position: relative; z-index: 1; display: inline-grid; place-items: center; min-width: 16px; height: 15px; padding: 0 4px; border: 0; border-radius: 4px;
+  font: inherit; font-size: 10px; font-weight: 900; line-height: 1; letter-spacing: 0.02em; background: var(--g); color: var(--gt);
+}
+.gu-marca.a { background: var(--superficie); color: var(--g); box-shadow: inset 0 0 0 1.5px var(--g); }
+.gu-marca.gf { box-shadow: 0 0 0 1px var(--superficie); }
+.gu-marca.goma, .cal-col-festivo.goma, .gu-col-otra.goma { pointer-events: auto; cursor: pointer; outline: 1.5px dashed var(--rojo); outline-offset: 1px; }
+.gu-marca.goma:hover, .cal-col-festivo.goma:hover, .gu-col-otra.goma:hover { background: var(--rojo); color: #fff; }
+.gu-marca.goma:focus-visible, .cal-col-festivo.goma:focus-visible, .gu-col-otra.goma:focus-visible { outline: 2px solid var(--primario); }
+.gu-leyenda { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.gu-leyenda .gu-marca { margin-left: 6px; }
+.gu-leyenda .gu-marca:first-child { margin-left: 0; }
+
+/* Cabecera: semana de farmacia ajena en gris; marca «OTRA» el primer día visible; festivo con la goma: botón */
+.cal-col.gu-otra { background: var(--gris-fondo); box-shadow: inset 0 -3px 0 #c9cec9; }
+.gu-col-otra, .gu-col-otra-muestra {
+  display: inline-block; margin-top: 1px; padding: 1px 4px; border: 0; border-radius: 3px; background: #c9cec9; color: var(--gris-texto);
+  font: inherit; font-size: 9.5px; font-weight: 800; letter-spacing: 0.03em; line-height: 1.2;
+}
+button.cal-col-festivo { border: 0; background: var(--superficie); border-radius: 3px; padding: 1px 3px; margin: 1px auto 0; font: inherit; font-size: 10px; font-weight: 700; color: var(--gris-texto); }
+
+/* Paleta: grupo de guardias y ayuda de la herramienta */
+.cal-paleta-grupo { display: inline-flex; flex-wrap: wrap; gap: 6px; padding-left: 8px; margin-left: 2px; border-left: 1px solid var(--borde); }
+.gu-muestra { background: #26415e !important; color: #fff !important; font-size: 9.5px; }
+.cal-herr-guardia.h-guardia .gu-muestra { background: var(--g-pio, #6d2e6b) !important; }
+.cal-herr-guardia.h-apoyo .gu-muestra { background: var(--superficie) !important; color: #6d2e6b !important; box-shadow: inset 0 0 0 1.5px #6d2e6b; }
+.cal-herr-guardia.h-otra .gu-muestra { background: #c9cec9 !important; color: var(--gris-texto) !important; min-width: 30px; }
+.cal-herr-guardia.h-festivo .gu-muestra { background: var(--gris-fondo) !important; color: var(--gris-texto) !important; }
+.cal-ayuda-guardia { margin: 6px 0 0; padding: 6px 10px; border-radius: 8px; background: var(--primario-fondo); font-size: 13px; }
+
+/* Diálogos (festivo, confirmación, selector del año) */
+.gu-dialogo { display: flex; flex-direction: column; gap: 10px; }
+.gu-dialogo p { margin: 0; }
+.gu-dialogo-campos { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; }
+.gu-dialogo-campos select { min-height: 36px; }
+.gu-banda.activa { border: 0; width: 100%; font: inherit; font-size: 10.5px; font-weight: 700; cursor: pointer; outline: 1.5px dashed var(--primario); outline-offset: -1px; }
+.gu-banda.activa:hover { filter: brightness(1.08); }
+.gu-banda.activa:focus-visible { outline: 2px solid var(--primario); outline-offset: 1px; }
+
 /* Pestaña */
 .gu { display: flex; flex-direction: column; gap: 12px; }
+.gu-solo-consulta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; padding: 8px 12px; border-radius: 10px;
+  background: var(--primario-fondo); font-size: 13.5px;
+}
+.gu-enlace-calendario { font-size: 13px; font-weight: 600; white-space: nowrap; }
 .gu .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .gu-rejilla { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .gu-lateral { display: flex; flex-direction: column; gap: 12px; min-width: 0; }

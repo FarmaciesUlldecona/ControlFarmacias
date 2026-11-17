@@ -8,6 +8,14 @@
  *  - 42501 permiso denegado; 23505 duplicado; 23514 regla de la tabla (check); 23503 registro relacionado ausente.
  *  - 57014 consulta cancelada (statement_timeout 60 s) / 25P03 transacción inactiva cancelada (60 s).
  *  - 53300 demasiadas conexiones (el rol admite 5).
+ * TA3-REAL (migración 34: guardias_semana, guardias_festivo, festivos):
+ *  - P0001 PERSONA_NO_VALIDA:<id>:<fecha> y NO_ES_FESTIVO:<fecha> (triggers): mensaje llano con la fecha (dd/mm/aaaa),
+ *    nunca el id ni el texto técnico.
+ *  - 23514 por restricción: guardias_semana_*, guardias_festivo_*, festivos_*.
+ *  - 23505 por índice: guardias_semana_lunes_unico, guardias_festivo_fecha_unico, festivos_unico.
+ *  - 23503 en las tablas de guardias: persona de otra farmacia (FK (persona, farmacia)).
+ *  - 42501 por RLS («row-level security»): mensaje propio, distinto del permiso denegado.
+ * El nombre de la restricción sale de `constraint` (pg) o, si no viene, del texto del error; nunca se muestra.
  *
  * Solo sintaxis TypeScript borrable.
  */
@@ -37,6 +45,17 @@ export const MENSAJES_BD = {
   SIN_CONEXIONES: { http: 503, mensaje: 'La base de datos tiene ocupadas todas las conexiones permitidas. Espera un momento y vuelve a intentarlo.' },
   SIN_CONEXION: { http: 503, mensaje: 'No se ha podido conectar con la base de datos de Trabajadores. Comprueba la conexión y vuelve a intentarlo.' },
   ERROR_BD: { http: 500, mensaje: `Error de la base de datos. ${NADA}` },
+  // TA3-REAL (migración 34)
+  PERSONA_NO_VALIDA: { http: 409, mensaje: `Esa persona no es de esa farmacia o no está de alta ese día. ${NADA}` },
+  NO_ES_FESTIVO: { http: 409, mensaje: `Ese día no es un festivo común de las dos farmacias. ${NADA}` },
+  GUARDIA_SEMANA_REGLA: { http: 400, mensaje: `La guardia semanal no cumple las reglas: la semana empieza en lunes; PIO y RITA llevan persona de guardia, OTRA ninguna; el apoyo del sábado es opcional y otra persona. ${NADA}` },
+  GUARDIA_FESTIVO_REGLA: { http: 400, mensaje: `La guardia del festivo no cumple las reglas: PIO y RITA llevan persona; OTRA, ninguna. ${NADA}` },
+  FESTIVO_REGLA: { http: 400, mensaje: `El festivo no cumple las reglas: nombre de 1 a 100 caracteres y ámbito nacional, autonómico o local. ${NADA}` },
+  GUARDIA_SEMANA_DUPLICADA: { http: 409, mensaje: `Esa semana ya tiene guardia (otro cambio se ha guardado antes). Actualiza y vuelve a intentarlo. ${NADA}` },
+  GUARDIA_FESTIVO_DUPLICADA: { http: 409, mensaje: `Ese festivo ya tiene guardia (otro cambio se ha guardado antes). Actualiza y vuelve a intentarlo. ${NADA}` },
+  FESTIVO_DUPLICADO: { http: 409, mensaje: `Ese día ya es festivo. ${NADA}` },
+  PERSONA_OTRA_FARMACIA: { http: 409, mensaje: `Esa persona no es de la farmacia de guardia. ${NADA}` },
+  RLS_DENEGADO: { http: 403, mensaje: `La base de datos no permite ese registro para esa farmacia (política de seguridad). ${NADA}` },
 } as const satisfies Record<string, { http: number; mensaje: string }>;
 export type CodigoErrorBd = keyof typeof MENSAJES_BD;
 
@@ -48,11 +67,53 @@ const RED = new Set(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNRESET', 'EA
 
 export const errorBd = (codigo: CodigoErrorBd) => new ErrorRrhhBd(codigo, MENSAJES_BD[codigo].http, MENSAJES_BD[codigo].mensaje);
 
+/** 'YYYY-MM-DD' → 'dd/mm/aaaa'; cualquier otra cosa → null (no se muestra). */
+const fechaLlana = (v: string | undefined) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v.slice(8, 10)}/${v.slice(5, 7)}/${v.slice(0, 4)}` : null);
+
+/** Nombre de la restricción: `constraint` de pg o, si falta, el que cita el texto («… constraint "x"»). */
+function restriccion(e: unknown, msg: string): string {
+  const c = (e as { constraint?: unknown })?.constraint;
+  if (typeof c === 'string') return c;
+  return /constraint "([a-z0-9_]+)"/i.exec(msg)?.[1] ?? '';
+}
+
+/** TA3-REAL: errores de las tablas de guardias y festivos (null si no es de ellas). */
+function errorTa3(code: string, msg: string, nombre: string): ErrorRrhhBd | null {
+  if (code === 'P0001') {
+    const [k, , fecha] = msg.split(':');
+    if (k === 'PERSONA_NO_VALIDA' || k === 'NO_ES_FESTIVO') {
+      const e = errorBd(k);
+      const f = fechaLlana(k === 'NO_ES_FESTIVO' ? msg.split(':')[1] : fecha);
+      if (f === null) return e;
+      const m = k === 'PERSONA_NO_VALIDA'
+        ? `Esa persona no es de esa farmacia o no está de alta el ${f}. ${NADA}`
+        : `El ${f} no es un festivo común de las dos farmacias. ${NADA}`;
+      return new ErrorRrhhBd(k, e.http, m);
+    }
+    return null;
+  }
+  if (code === '23514') {
+    if (nombre.startsWith('guardias_semana_')) return errorBd('GUARDIA_SEMANA_REGLA');
+    if (nombre.startsWith('guardias_festivo_')) return errorBd('GUARDIA_FESTIVO_REGLA');
+    if (nombre.startsWith('festivos_')) return errorBd('FESTIVO_REGLA');
+  }
+  if (code === '23505') {
+    if (nombre === 'guardias_semana_lunes_unico') return errorBd('GUARDIA_SEMANA_DUPLICADA');
+    if (nombre === 'guardias_festivo_fecha_unico') return errorBd('GUARDIA_FESTIVO_DUPLICADA');
+    if (nombre === 'festivos_unico') return errorBd('FESTIVO_DUPLICADO');
+  }
+  if (code === '23503' && (nombre.startsWith('guardias_semana_') || nombre.startsWith('guardias_festivo_'))) return errorBd('PERSONA_OTRA_FARMACIA');
+  if (code === '42501' && /row-level security/i.test(msg)) return errorBd('RLS_DENEGADO');
+  return null;
+}
+
 /** Traduce cualquier error de pg a ErrorRrhhBd (código propio, HTTP y mensaje llano). Nunca expone datos ni SQL. */
 export function traducirErrorBd(e: unknown): ErrorRrhhBd {
   if (e instanceof ErrorRrhhBd) return e;
   const code = typeof (e as { code?: unknown })?.code === 'string' ? (e as { code: string }).code : '';
   const msg = e instanceof Error ? e.message : String(e);
+  const ta3 = errorTa3(code, msg, restriccion(e, msg));
+  if (ta3) return ta3;
   if (code === 'P0001') {
     for (const k of ['AUTOR_AUSENTE', 'FARMACIA_NO_HABILITADA_EN_MODULO', 'EVENTO_FUERA_DEL_ALTA'] as const) if (msg.startsWith(k)) return errorBd(k);
     return errorBd('ERROR_BD');

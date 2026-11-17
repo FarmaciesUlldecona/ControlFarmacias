@@ -37,14 +37,19 @@ import {
   CATEGORIAS, CONVENIO_ANUAL, FARMACIAS_RRHH, JORNADAS, MENSAJE_FALTA_CREDENCIAL, accionActualizacion, aniosConvenioQueFaltan,
   camposAlta, computaConvenio, diferencias, farmaciasDe, objetivosAnuales, ordenFichas,
   FUENTE_VACACIONES, VACACIONES_DIAS_NATURALES,
-  type AjusteAnual, type ConvenioAnual, type EventoHistorial, type FarmaciaRrhh, type Festivo, type GuardiaFarmacia, type Trabajadora,
+  type AjusteAnual, type ConvenioAnual, type EventoHistorial, type Trabajadora,
 } from './contrato.ts';
 import {
-  ESTADOS_EVENTO, FECHA_MAX, FRANJAS, TIPOS_EVENTO, celdaDe, construirCambio, horasEfectivas, inferirOrigen, notasProximas, planDeshacer,
-  planificar, reasignarIds, resumen,
+  ESTADOS_EVENTO, FECHA_MAX, FRANJAS, TIPOS_EVENTO, celdaDe, construirCambio, festivosPintados, horasEfectivas, inferirOrigen, lunesDe, notasProximas,
+  planDeshacer, planificar, reasignarIds, resumen, sumarDias,
   type CambioCalendario, type EventoCalendario, type Franja, type Operacion, type ResultadoCambioDTO,
 } from './eventos.ts';
 import { ErrorRrhhBd, traducirErrorBd } from './errores_bd.ts';
+import {
+  AMBITOS_FESTIVO, FARMACIAS_GUARDIA, personaDe, reglasGuardiaFestivo, reglasSemana, resumenGuardiasPersona, vistaFestivoDe, vistaGuardias, vistaSemanaDe,
+  type BuscarPersona, type DatosGuardiaSemana, type DatosGuardias, type FestivoTa3, type GuardiaFestivo, type GuardiaSemana, type GuardiasTa3,
+  type ResultadoFestivo, type ResultadoSemana,
+} from './guardias.ts';
 import type { AdaptadorRrhh } from './adaptador_fixtures.ts';
 
 // ---------------------------------------------------------------------------
@@ -181,11 +186,25 @@ export const SQL = {
   historialEventos: "with g as (select distinct created_at from public.trabajadores_historial where tabla = 'eventos_calendario' and farmacia = any($1::text[]) "
     + 'order by created_at desc limit 30) select h.*, h.created_at::text as grupo from public.trabajadores_historial h join g on g.created_at = h.created_at '
     + "where h.tabla = 'eventos_calendario' and h.farmacia = any($1::text[]) order by h.created_at desc, h.id",
-  guardias: 'select * from public.guardias_farmacia where farmacia = any($1::text[]) and not anulada order by fecha',
-  festivos: 'select * from public.festivos where (farmacia is null or farmacia = any($1::text[])) and not anulado order by fecha',
+  // --- TA3-REAL (migración 34): guardias_semana, guardias_festivo y festivos. Lecturas sin anuladas; la web solo usa
+  // los festivos comunes (farmacia null). Editar = anular la vigente + insertar la nueva (misma transacción). Nunca DELETE.
+  semanasPeriodo: 'select * from public.guardias_semana where lunes between $1::date and $2::date and not anulada order by lunes',
+  semanaBloqueo: 'select * from public.guardias_semana where lunes = $1::date and not anulada for update',
+  anularSemana: 'update public.guardias_semana set anulada = true where id = $1::uuid and not anulada returning *',
+  insertarSemana: 'insert into public.guardias_semana (lunes, farmacia, persona_guardia_id, persona_apoyo_sabado_id) values ($1::date, $2, $3::uuid, $4::uuid) returning *',
+  festivosPeriodo: 'select * from public.festivos where farmacia is null and not anulado and fecha between $1::date and $2::date order by fecha',
+  festivoBloqueo: 'select * from public.festivos where farmacia is null and not anulado and fecha = $1::date for update',
+  anularFestivo: 'update public.festivos set anulado = true where id = $1::uuid and not anulado returning *',
+  insertarFestivo: 'insert into public.festivos (fecha, ambito, farmacia, descripcion) values ($1::date, $2, null, $3) returning *',
+  guardiasFestivoPeriodo: 'select * from public.guardias_festivo where fecha between $1::date and $2::date and not anulada order by fecha',
+  guardiaFestivoBloqueo: 'select * from public.guardias_festivo where fecha = $1::date and not anulada for update',
+  anularGuardiaFestivo: 'update public.guardias_festivo set anulada = true where id = $1::uuid and not anulada returning *',
+  insertarGuardiaFestivo: 'insert into public.guardias_festivo (fecha, farmacia, persona_id) values ($1::date, $2, $3::uuid) returning *',
   diagnostico: 'select (select count(*) from public.trabajadoras) as trabajadoras, (select count(*) from public.convenio_anual) as convenio_anual, '
-    + '(select count(*) from public.eventos_calendario where not anulado) as eventos_calendario, (select count(*) from public.guardias_farmacia) as guardias_farmacia, '
-    + '(select count(*) from public.festivos) as festivos, (select count(*) from public.trabajadores_historial) as trabajadores_historial, '
+    + '(select count(*) from public.eventos_calendario where not anulado) as eventos_calendario, '
+    + '(select count(*) from public.guardias_semana where not anulada) as guardias_semana, '
+    + '(select count(*) from public.guardias_festivo where not anulada) as guardias_festivo, '
+    + '(select count(*) from public.festivos where not anulado) as festivos, (select count(*) from public.trabajadores_historial) as trabajadores_historial, '
     + "(select farmacias from public.cf_modulos_farmacias where modulo = 'TRABAJADORES') as modulo, "
     + "(select coalesce(array_agg(anio order by anio), '{}') from public.convenio_anual) as anios",
 } as const;
@@ -253,6 +272,23 @@ export function filaAAjuste(r: Fila): AjusteAnual {
   };
 }
 
+// TA3-REAL (migración 34). Falla cerrado ante un valor no previsto.
+const uuidONulo = (v: unknown) => (v === null || v === undefined ? null : String(v));
+export function filaASemana(r: Fila): GuardiaSemana {
+  return {
+    id: String(r.id), lunes: fecha(r.lunes), farmacia: deLista(FARMACIAS_GUARDIA, r.farmacia, 'farmacia'),
+    persona_guardia_id: uuidONulo(r.persona_guardia_id), persona_apoyo_sabado_id: uuidONulo(r.persona_apoyo_sabado_id), anulada: r.anulada === true,
+  };
+}
+/** Festivo común: nombre = descripcion (la BD admite hasta 100 caracteres). */
+export function filaAFestivo(r: Fila): FestivoTa3 {
+  if (r.farmacia !== null && r.farmacia !== undefined) throw new Error('VALOR_NO_PREVISTO: festivo con farmacia'); // la web solo usa los comunes
+  return { id: String(r.id), fecha: fecha(r.fecha), nombre: String(r.descripcion), ambito: deLista(AMBITOS_FESTIVO, r.ambito, 'ambito'), anulado: r.anulado === true };
+}
+export function filaAGuardiaFestivo(r: Fila): GuardiaFestivo {
+  return { id: String(r.id), fecha: fecha(r.fecha), farmacia: deLista(FARMACIAS_GUARDIA, r.farmacia, 'farmacia'), persona_id: uuidONulo(r.persona_id), anulada: r.anulada === true };
+}
+
 const jsonb = (v: unknown): Fila | null => (v === null || v === undefined ? null : typeof v === 'string' ? JSON.parse(v) as Fila : v as Fila);
 
 /** Historial de fichas desde trabajadores_historial (más reciente primero): alta, edición, baja o anulación. */
@@ -309,7 +345,7 @@ export function lotes<T>(xs: readonly T[], tam: number = TAM_LOTE): T[][] {
 // ---------------------------------------------------------------------------
 
 export interface DiagnosticoTrabajadores {
-  trabajadoras: number; convenio_anual: number; eventos_calendario: number; guardias_farmacia: number; festivos: number;
+  trabajadoras: number; convenio_anual: number; eventos_calendario: number; guardias_semana: number; guardias_festivo: number; festivos: number;
   trabajadores_historial: number; modulo_pio_rita: boolean; anios_convenio: number[]; anios_convenio_faltan: number[];
 }
 export type AdaptadorRrhhReal = AdaptadorRrhh & { diagnostico(): Promise<DiagnosticoTrabajadores> };
@@ -397,6 +433,109 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
     }
     return hechas;
   }
+
+  // --- TA3-REAL: guardias y festivos (migración 34) -----------------------------------------------------------------
+  /** Filas de las semanas que tocan el periodo (de su lunes al domingo de la última) y personas citadas. */
+  async function datosGuardias(c: ClienteBd, desde: string, hasta: string): Promise<{ d: DatosGuardias; persona: BuscarPersona }> {
+    const [l0, l1] = [lunesDe(desde), lunesDe(hasta)];
+    const fin = sumarDias(l1, 6);
+    const semanas = (await c.query(SQL.semanasPeriodo, [l0, l1])).rows.map(filaASemana);
+    const festivos = (await c.query(SQL.festivosPeriodo, [l0, fin])).rows.map(filaAFestivo);
+    const guardiasFestivo = (await c.query(SQL.guardiasFestivoPeriodo, [l0, fin])).rows.map(filaAGuardiaFestivo);
+    const ids = [...new Set([...semanas.flatMap((s) => [s.persona_guardia_id, s.persona_apoyo_sabado_id]), ...guardiasFestivo.map((g) => g.persona_id)]
+      .filter((x): x is string => x !== null))];
+    const fm = new Map((await fichasDe(c, ids)).map((t) => [t.id, t]));
+    return { d: { semanas, festivos, guardiasFestivo }, persona: (id) => (id === null ? null : personaDe(fm.get(id))) };
+  }
+  const igualSemana = (s: GuardiaSemana, d: DatosGuardiaSemana) => s.farmacia === d.farmacia && s.persona_guardia_id === d.persona_guardia_id
+    && s.persona_apoyo_sabado_id === d.persona_apoyo_sabado_id;
+
+  const guardiasTa3: GuardiasTa3 = {
+    vista: (desde, hasta) => leer(async (c) => {
+      const { d, persona } = await datosGuardias(c, desde, hasta);
+      return vistaGuardias(desde, hasta, d, persona);
+    }),
+
+    /** Reglas de la web (las de la BD) antes de escribir; editar = anular la vigente + insertar la nueva. */
+    guardarSemana: (g, quien) => escribir(quien, async (c): Promise<ResultadoSemana> => {
+      const ids = [g.persona_guardia_id, g.persona_apoyo_sabado_id].filter((x): x is string => x !== null);
+      const fm = new Map((await fichasDe(c, ids)).map((t) => [t.id, t]));
+      const e = reglasSemana(g, (id) => fm.get(id));
+      if (e) return e;
+      const previa = (await c.query(SQL.semanaBloqueo, [g.lunes])).rows.map(filaASemana)[0];
+      if (!previa || !igualSemana(previa, g)) {
+        if (previa && !(await c.query(SQL.anularSemana, [previa.id])).rows[0]) throw ESTADO_CAMBIADO();
+        await c.query(SQL.insertarSemana, [g.lunes, g.farmacia, g.persona_guardia_id, g.persona_apoyo_sabado_id]);
+      }
+      const { d, persona } = await datosGuardias(c, g.lunes, g.lunes);
+      return vistaSemanaDe(g.lunes, d, persona);
+    }),
+
+    /** Festivo común (farmacia null), con el ámbito elegido. */
+    crearFestivo: (f, nombre, ambito, quien) => escribir(quien, async (c): Promise<ResultadoFestivo> => {
+      if ((await c.query(SQL.festivoBloqueo, [f])).rows[0]) return 'FESTIVO_DUPLICADO';
+      const nuevo = filaAFestivo((await c.query(SQL.insertarFestivo, [f, ambito, nombre])).rows[0]);
+      const { d, persona } = await datosGuardias(c, f, f);
+      return vistaFestivoDe(nuevo, d, persona);
+    }),
+
+    /** Baja: anula el festivo; su guardia la anula la BD (trigger). Devuelve cómo estaba. */
+    anularFestivo: (f, quien) => escribir(quien, async (c): Promise<ResultadoFestivo> => {
+      const fila = (await c.query(SQL.festivoBloqueo, [f])).rows[0];
+      if (!fila) return 'SIN_FESTIVO';
+      const { d, persona } = await datosGuardias(c, f, f);
+      const vista = vistaFestivoDe(filaAFestivo(fila), d, persona);
+      if (!(await c.query(SQL.anularFestivo, [String(fila.id)])).rows[0]) throw ESTADO_CAMBIADO();
+      return vista;
+    }),
+
+    guardarGuardiaFestivo: (f, farmacia, personaId, quien) => escribir(quien, async (c): Promise<ResultadoFestivo> => {
+      const festivo = (await c.query(SQL.festivoBloqueo, [f])).rows.map(filaAFestivo)[0];
+      const semana = (await c.query(SQL.semanasPeriodo, [lunesDe(f), lunesDe(f)])).rows.map(filaASemana)[0];
+      const ids = [personaId, semana?.persona_guardia_id ?? null].filter((x): x is string => x !== null);
+      const fm = new Map((await fichasDe(c, ids)).map((t) => [t.id, t]));
+      const r = reglasGuardiaFestivo(f, farmacia, personaId, { esFestivoComun: festivo !== undefined, semana, ficha: (id) => fm.get(id) });
+      if (typeof r === 'string') return r;
+      const previa = (await c.query(SQL.guardiaFestivoBloqueo, [f])).rows.map(filaAGuardiaFestivo)[0];
+      if (!previa || previa.farmacia !== farmacia || previa.persona_id !== r.persona) {
+        if (previa && !(await c.query(SQL.anularGuardiaFestivo, [previa.id])).rows[0]) throw ESTADO_CAMBIADO();
+        await c.query(SQL.insertarGuardiaFestivo, [f, farmacia, r.persona]);
+      }
+      const { d, persona } = await datosGuardias(c, f, f);
+      return vistaFestivoDe(festivo as FestivoTa3, d, persona);
+    }),
+
+    /** TA3-4: goma sobre la guardia de una semana: anula la vigente (UPDATE anulada, nunca DELETE). */
+    anularSemana: (lunes, quien) => escribir(quien, async (c): Promise<ResultadoSemana> => {
+      const previa = (await c.query(SQL.semanaBloqueo, [lunes])).rows.map(filaASemana)[0];
+      if (!previa) return 'SIN_GUARDIA';
+      if (!(await c.query(SQL.anularSemana, [previa.id])).rows[0]) throw ESTADO_CAMBIADO();
+      const { d, persona } = await datosGuardias(c, lunes, lunes);
+      return vistaSemanaDe(lunes, d, persona);
+    }),
+
+    /** TA3-4: goma sobre la guardia de un festivo: anula la vigente; el festivo sigue. */
+    anularGuardiaFestivo: (f, quien) => escribir(quien, async (c): Promise<ResultadoFestivo> => {
+      const festivo = (await c.query(SQL.festivoBloqueo, [f])).rows.map(filaAFestivo)[0];
+      if (!festivo) return 'SIN_FESTIVO';
+      const previa = (await c.query(SQL.guardiaFestivoBloqueo, [f])).rows.map(filaAGuardiaFestivo)[0];
+      if (!previa) return 'SIN_GUARDIA';
+      if (!(await c.query(SQL.anularGuardiaFestivo, [previa.id])).rows[0]) throw ESTADO_CAMBIADO();
+      const { d, persona } = await datosGuardias(c, f, f);
+      return vistaFestivoDe(festivo, d, persona);
+    }),
+
+    fechasFestivo: (a) => leer(async (c) => (await c.query(SQL.festivosPeriodo, [`${a}-01-01`, `${a}-12-31`])).rows.map((f) => fecha(f.fecha)).sort()),
+
+    /** «Guardias del año»: semanas cuyo sábado o domingo cae en el año, festivos y guardias de festivo del año. */
+    resumenPersona: (tid, a) => leer(async (c) => {
+      const [ini, fin] = [`${a}-01-01`, `${a}-12-31`];
+      const semanas = (await c.query(SQL.semanasPeriodo, [sumarDias(ini, -6), fin])).rows.map(filaASemana);
+      const festivos = (await c.query(SQL.festivosPeriodo, [ini, fin])).rows.map(filaAFestivo);
+      const guardiasFestivo = (await c.query(SQL.guardiasFestivoPeriodo, [ini, fin])).rows.map(filaAGuardiaFestivo);
+      return resumenGuardiasPersona(tid, a, { semanas, festivos, guardiasFestivo });
+    }),
+  };
 
   /** Registra en la sesión un cambio ya confirmado (COMMIT hecho). */
   const anotarSesion = (clave: string, cambio: CambioCalendario, deshecho: CambioCalendario | null) => {
@@ -522,14 +661,21 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
         const evs = filas.map((f) => filaAEvento(f, fm.get(String(f.trabajadora_id))));
         const porId = new Map(evs.map((e) => [e.id, e]));
         const porCelda = new Map(evs.map((e) => [`${e.trabajadora_id}|${e.fecha}|${e.franja}`, e]));
+        // TA3-REAL: festivos comunes del periodo (rellenar los salta; pintar sobre uno se permite, con aviso).
+        const fechasP = p.accion === 'EDITAR' ? evs.map((e) => e.fecha) : 'celdas' in p ? p.celdas.map((x) => x.fecha) : [p.desde, p.hasta];
+        const festivos = fechasP.length === 0 ? new Set<string>()
+          : new Set((await c.query(SQL.festivosPeriodo, [fechasP.reduce((a, b) => (a < b ? a : b)), fechasP.reduce((a, b) => (a > b ? a : b))])).rows.map((f) => fecha(f.fecha)));
+        const esFestivo = (f: string) => festivos.has(f);
         const pl = planificar(p, {
-          ficha: (id) => fm.get(id), enCelda: (t, f, fr) => porCelda.get(`${t}|${f}|${fr}`), evento: (id) => porId.get(id), nuevoId, cuando,
+          ficha: (id) => fm.get(id), enCelda: (t, f, fr) => porCelda.get(`${t}|${f}|${fr}`), evento: (id) => porId.get(id), nuevoId, cuando, esFestivo,
         });
         if (typeof pl === 'string') return { r: pl };
         const ops = pl.ops.length ? await ejecutar(c, pl.ops, fm) : [];
         if (ops.length === 0) return { r: { cambio: null, omitidas_confirmadas: pl.omitidas, omitidas_vacias: pl.vacias } as ResultadoCambioDTO };
         const cambio = construirCambio({ id: nuevoId(), ops, origen: pl.origen, tipo: pl.tipo, quien, cuando, omitidas: pl.omitidas, deshace: null, periodo: pl.periodo, fichas, nuevoId });
-        return { r: { cambio: resumen(cambio), omitidas_confirmadas: pl.omitidas, omitidas_vacias: pl.vacias } as ResultadoCambioDTO, nuevo: { clave, cambio } };
+        const fp = festivosPintados({ origen: pl.origen, ops }, esFestivo);
+        const base: ResultadoCambioDTO = { cambio: resumen(cambio), omitidas_confirmadas: pl.omitidas, omitidas_vacias: pl.vacias };
+        return { r: fp.length > 0 ? { ...base, festivos_pintados: fp } : base, nuevo: { clave, cambio } };
       });
       if (r.nuevo) anotarSesion(r.nuevo.clave, r.nuevo.cambio, null);
       return r.r;
@@ -583,13 +729,7 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
       return cambiosDesdeHistorial(filas, fichas, sesion);
     }),
 
-    guardias: (farmacia) => leer(async (c) => (await c.query(SQL.guardias, [farmaciasDe(farmacia)])).rows.map((f): GuardiaFarmacia => ({
-      id: String(f.id), farmacia: f.farmacia as FarmaciaRrhh, fecha: fecha(f.fecha), nota: f.nota === null ? null : String(f.nota), anulada: f.anulada === true,
-    }))),
-    festivos: (farmacia) => leer(async (c) => (await c.query(SQL.festivos, [farmaciasDe(farmacia)])).rows.map((f): Festivo => ({
-      id: String(f.id), fecha: fecha(f.fecha), ambito: f.ambito as Festivo['ambito'], farmacia: (f.farmacia ?? null) as FarmaciaRrhh | null,
-      descripcion: String(f.descripcion), anulado: f.anulado === true,
-    }))),
+    guardiasTa3,
 
     /** check:real: recuentos por tabla, módulo TRABAJADORES = PIO/RITA y años de convenio. Solo lectura. */
     diagnostico: () => leer(async (c) => {
@@ -599,7 +739,7 @@ export function crearAdaptadorRrhhReal(o: { pool: PoolBd; nuevoId?: () => string
       const anios = Array.isArray(f.anios) ? (f.anios as unknown[]).map(Number) : [];
       return {
         trabajadoras: n('trabajadoras'), convenio_anual: n('convenio_anual'), eventos_calendario: n('eventos_calendario'),
-        guardias_farmacia: n('guardias_farmacia'), festivos: n('festivos'), trabajadores_historial: n('trabajadores_historial'),
+        guardias_semana: n('guardias_semana'), guardias_festivo: n('guardias_festivo'), festivos: n('festivos'), trabajadores_historial: n('trabajadores_historial'),
         modulo_pio_rita: modulo.length === 2 && modulo[0] === 'PIO' && modulo[1] === 'RITA',
         anios_convenio: anios, anios_convenio_faltan: aniosConvenioQueFaltan(anios.map((a) => ({ anio: a }))),
       };

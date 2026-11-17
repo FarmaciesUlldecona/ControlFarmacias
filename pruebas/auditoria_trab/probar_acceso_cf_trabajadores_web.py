@@ -7,7 +7,7 @@ impresa):
 Usuario fijo ``cf_trabajadores_web.<project_ref>``. Patron de pruebas/auditoria_2bn_d/probar_acceso_cf_lectura.py.
 Comprueba:
 - conecta (TLS) como cf_trabajadores_web;
-- lee las tablas, la vista y los permisos del modulo de Trabajadores (conteos);
+- lee las tablas, la vista y los permisos del modulo de Trabajadores tras la 34 (conteos);
 - un INSERT de prueba en trabajadoras CON autor funciona y escribe su fila de historial con ese autor; la transaccion
   se DESHACE siempre (rollback) y despues se comprueba que no queda ni la trabajadora ni su historial;
 - el mismo INSERT SIN autor falla (AUTOR_AUSENTE);
@@ -33,8 +33,11 @@ VARIABLE = "CF_TRAB_PASSWORD"
 APPLICATION_NAME = "cf_trabd_prueba_acceso"
 AUTOR = "prueba-acceso-TRAB-D"
 
-LECTURAS = ("trabajadoras", "convenio_anual", "eventos_calendario", "guardias_farmacia", "festivos",
-            "trabajadores_historial", "cf_modulos_farmacias", "v_eventos_calendario_horas")
+# Esquema vigente tras la 34 (TRAB-34-D, 2026-11-16): sin guardias_farmacia (retirada); con las tablas de la 33
+# (trabajadoras_ajustes_anuales) y de la 34 (guardias_semana, guardias_festivo).
+LECTURAS = ("trabajadoras", "convenio_anual", "eventos_calendario", "festivos", "trabajadoras_ajustes_anuales",
+            "guardias_semana", "guardias_festivo", "trabajadores_historial", "cf_modulos_farmacias",
+            "v_eventos_calendario_horas")
 DENEGADO = "42501"  # insufficient_privilege
 
 

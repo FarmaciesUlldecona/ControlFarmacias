@@ -67,6 +67,23 @@ def test_postcheck_informa_trabajadores_aparte_sin_veredicto():
     assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == ["FILA_CAMBIADA_AJENA:albaranes:a1"]
 
 
+def test_postcheck_informa_pagos_aparte_sin_veredicto():
+    """H6 (Pio, 2026-11-16, DISENO §6): las tablas de Pagos las escribe la web; se informan aparte, sin veredicto."""
+    m = _modulo()
+    assert m.TABLAS_PAGOS == {"vencimientos_marcas_pago", "proveedores_forma_pago", "pagos_historial"}
+    assert m.TABLAS_PAGOS <= m.TABLAS_WEB and m.TABLAS_TRABAJADORES <= m.TABLAS_WEB
+    # Una marca de pago lleva factura_id: el snapshot la atribuiria a un documento; aun asi no es fila ajena.
+    antes = {"vencimientos_marcas_pago": {}, "pagos_historial": {}, "albaranes": {"a1": ["ha", None]}}
+    despues = {"vencimientos_marcas_pago": {"m1": ["hm", "doc-ajeno"]}, "pagos_historial": {"1": ["hh", None]},
+               "proveedores_forma_pago": {"p1": ["hp", None]}, "albaranes": {"a1": ["ha", None]}}
+    assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == []
+    assert m.cambios_pagos(antes, despues) == {"pagos_historial": 1, "proveedores_forma_pago": 1,
+                                               "vencimientos_marcas_pago": 1}
+    assert m.cambios_trabajadores(antes, despues) == {}
+    despues["albaranes"] = {}
+    assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == ["FILA_BORRADA:albaranes:a1"]
+
+
 # --------------------------------------------------------------------------- PostgreSQL 17 local
 
 @pytest.fixture
@@ -161,7 +178,8 @@ def test_parada_por_resultado_distinto_del_plan(serie):
     # 2BK: la parada tambien hace el postcheck 2AX por fila (solo cambio el documento ejecutado).
     assert registro["postcheck"] == {"veredicto": "POSTCHECK_OK", "problemas": [],
                                      "documentos": [serie.ids["hefame"]], "corte_alliance": False,
-                                     "trabajadores": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
+                                     "trabajadores": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}},
+                                     "pagos": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
     assert (serie.raiz / "t01" / "snapshot_post.json").exists()
 
 

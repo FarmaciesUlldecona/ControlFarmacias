@@ -40,15 +40,11 @@
 }
 .ve-buscar { max-width: 340px; flex-basis: 240px; }
 
-/* Totales */
+/* Totales (H6-4: solo la cabecera de totales generales) */
 .ve-totales { display: flex; flex-direction: column; gap: 12px; }
-.ve-totales h2 { margin: 0; font-size: 17px; font-weight: 700; }
-.ve-totales .rrhh-selector button { min-height: 32px; min-width: 64px; font-size: 13px; }
 .ve-total-general { padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; }
-.ve-total-titulo, .ve-periodo-titulo { font-size: 13px; font-weight: 700; }
+.ve-total-titulo { font-size: 13px; font-weight: 700; }
 .ve-total-general .ve-cifras { flex: 1 1 360px; min-width: 0; }
-.ve-periodos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
-.ve-periodo { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 /* H6-2: la cifra nunca se corta ni se sale. Las dos cifras van lado a lado si cada una tiene al menos 8,5rem y, si no,
    una debajo de otra. Cada cifra mide su propio ancho (container) y la letra se adapta a él (clamp con cqi): un importe de
    12–14 caracteres («2.999.999,97 €») ocupa ~7,5em, así que 12,5cqi siempre cabe. Sin puntos suspensivos. */
@@ -57,8 +53,9 @@
   display: flex; flex-direction: column; gap: 1px; padding-left: 10px; border-left: 3px solid var(--borde); min-width: 0;
   container-type: inline-size;
 }
-.ve-cifra.por-pagar { border-left-color: var(--primario); }
+.ve-cifra.por-pagar { border-left-color: var(--rojo); } /* H6-6: como «Falta por pagar» del resumen */
 .ve-cifra.domiciliado { border-left-color: var(--domiciliado); }
+.ve-cifra.abonos { border-left-color: var(--azul); }
 .ve-cifra-etiqueta { font-size: 12px; font-weight: 600; color: var(--tenue); }
 .ve-cifra-n {
   font-size: clamp(12px, 12.5cqi, 19px); line-height: 1.2; font-weight: 800; letter-spacing: -0.01em;
@@ -170,7 +167,241 @@
 .ve-historial-fecha { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 13px; }
 .ve-historial-vacio { margin: 0; padding: 0 20px 16px; font-size: 14px; }
 
+/* Lista (H6-4): título, filtro del calendario y orden en móvil */
+.ve-lista-titulo { margin: 10px 0 0; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+.ve-filtro-cal {
+  margin: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px;
+  padding: 10px 12px 10px 14px; border-radius: 10px; background: var(--primario-fondo); border: 1px solid #cfdcdf; font-size: 14px;
+  scroll-margin: 12px 0 140px;
+}
+.ve-filtro-cal-texto strong { font-weight: 700; }
+.ve-filtro-cal-quitar {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--primario);
+  background: var(--superficie); color: var(--primario); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+.ve-filtro-cal-quitar:hover { background: #f4f8f9; }
+.ve-orden-movil { display: flex; align-items: flex-end; gap: 6px; flex: 1 1 100%; }
+.ve-orden-movil .filtro { max-width: none; }
+.ve-orden-dir { min-height: 40px; min-width: 44px; padding: 0; font-size: 16px; }
+
+/* ---------------------------------------------------------------------------
+   H6-4: calendario. Cada día con pagos es una ficha: número y globo arriba, total abajo; el color de fondo y el filo
+   superior dicen el peor estado. Pendiente es neutro (blanco con filo gris); el resto, los colores de estado.
+   --------------------------------------------------------------------------- */
+.vc { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; position: relative; }
+.vc-barra .cal-navegar { margin-left: 0; }
+.vc-periodo { margin: 0 0 0 6px; }
+.vc-mostrar { margin-left: auto; min-height: 38px; font-size: 14px; }
+.vc .cal-vistas button:focus-visible, .vc .cal-navegar button:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+
+.vc-leyenda { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 12.5px; color: var(--gris-texto); }
+.vc-leyenda li { display: inline-flex; align-items: center; gap: 6px; }
+.vc-muestra { width: 16px; height: 14px; border-radius: 4px; border: 1px solid var(--borde); }
+
+/* H6-5: resumen del periodo visible, como una suma: Total = Pagado + Domiciliado + Falta por pagar (− Abonos, aparte) */
+.vc-resumen { display: flex; flex-direction: column; gap: 4px; min-width: 0; margin-top: -2px; }
+.vc-resumen-cifras { margin: 0; display: flex; flex-wrap: wrap; align-items: flex-end; row-gap: 8px; min-width: 0; }
+.vc-r { position: relative; display: flex; flex-direction: column; gap: 1px; min-width: 0; padding-right: 16px; }
+.vc-r[data-op] { padding-left: 20px; }
+.vc-r[data-op]::before {
+  content: attr(data-op); position: absolute; left: 2px; bottom: 1px; font-size: 17px; font-weight: 600; color: var(--gris); line-height: 1.3;
+}
+.vc-r dt { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--gris-texto); white-space: nowrap; }
+.vc-r:not(.vc-r-total) dt::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--r-color); }
+.vc-r dd { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.3; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--r-texto, var(--texto)); }
+.vc-r-total dd { font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+.vc-r-total dd .vc-importe-nulo { font-size: 16px; }
+.vc-r-n { font-weight: 500; color: var(--tenue); }
+.vc-r-pagado { --r-color: var(--verde); --r-texto: var(--verde-texto); }
+.vc-r-domiciliado { --r-color: var(--domiciliado); --r-texto: var(--domiciliado-texto); }
+.vc-r-falta { --r-color: var(--rojo); --r-texto: var(--rojo-texto); }
+.vc-r-abonos { --r-color: var(--azul); --r-texto: var(--azul-texto); margin-left: 4px; border-left: 1px dashed var(--borde); }
+.vc-r.vacio dd { color: var(--tenue); font-weight: 600; }
+.vc-resumen-fuera { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--naranja-texto); }
+.vc-aviso-vacio {
+  margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 12px; border-radius: 8px;
+  background: var(--gris-fondo); font-size: 13.5px;
+}
+.vc-resumen-vacio > .tenue { margin: 0; font-size: 13.5px; }
+
+.vc { --c-fondo: var(--superficie); --c-filo: var(--borde); }
+.vc .c-rojo { --c-fondo: var(--rojo-fondo); --c-filo: var(--rojo); }
+.vc .c-domiciliado { --c-fondo: var(--domiciliado-fondo); --c-filo: var(--domiciliado); }
+.vc .c-azul { --c-fondo: var(--azul-fondo); --c-filo: var(--azul); }
+.vc .c-neutro { --c-fondo: var(--superficie); --c-filo: var(--gris); }
+.vc .c-verde { --c-fondo: var(--verde-fondo); --c-filo: var(--verde); }
+.vc-muestra { background: var(--c-fondo); box-shadow: inset 0 3px 0 var(--c-filo); }
+
+/* Mes */
+.vc-mes { display: flex; flex-direction: column; gap: 4px; }
+.vc-fila { display: grid; grid-template-columns: 64px repeat(7, minmax(0, 1fr)); gap: 4px; }
+.vc-fila-cabecera { font-size: 12px; font-weight: 700; color: var(--tenue); text-align: center; }
+.vc-fila-cabecera abbr { text-decoration: none; }
+.vc-cab.finde { color: #8a9590; }
+.vc-cab-sem { font-size: 11px; }
+.vc-celda, .vc-sem-marco { display: block; min-width: 0; }
+.vc-dia-marco { position: relative; height: 100%; }
+
+.vc-dia, .vc-sem {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 2px; width: 100%; height: 76px;
+  padding: 6px 8px; border: 1px solid var(--borde); border-radius: 8px; background: var(--c-fondo); box-shadow: inset 0 3px 0 var(--c-filo);
+  font: inherit; color: var(--texto); text-align: left; cursor: pointer; overflow: hidden;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.vc-dia.sin-pagos { background: #fafbf9; border-color: var(--borde-suave); box-shadow: none; }
+.vc-dia.fuera { opacity: 0.5; }
+.vc-dia:hover { border-color: #b9c2bd; }
+.vc-dia:focus-visible, .vc-sem:focus-visible, .vc-mes-boton:focus-visible, .vc-ver-mes:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; z-index: 1; }
+.vc-dia.elegido, .vc-sem.elegido { border-color: var(--primario); box-shadow: inset 0 3px 0 var(--c-filo), 0 0 0 2px var(--primario); }
+.vc-dia-cabeza { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.vc-dia-num { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 20px; }
+.vc-dia.hoy .vc-dia-num { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 4px; border-radius: 999px; background: var(--primario); color: #fff; }
+.vc-dia-sem { font-size: 12px; font-weight: 600; color: var(--tenue); text-transform: lowercase; }
+.vc-globo {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin-left: auto; border-radius: 999px;
+  background: var(--primario); color: #fff; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+}
+.vc-dia-cuerpo { display: flex; flex-direction: column; min-width: 0; container-type: inline-size; }
+.vc-dia-fuera { font-size: 10.5px; font-weight: 700; color: var(--naranja-texto); white-space: nowrap; }
+
+/* Importe del día: completo si cabe; en celdas estrechas, corto. Nunca se corta ni se sale. */
+.vc-importe { display: block; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.01em; line-height: 1.2; }
+.vc-importe-largo { font-size: clamp(10px, 11.5cqi, 15px); }
+.vc-importe-corto { display: none; font-size: clamp(9px, 21cqi, 12.5px); }
+.vc-importe-nulo { color: var(--tenue); font-weight: 600; }
+/* H6-5: sin total, la celda dice por qué; en dos líneas si hace falta, nunca se sale */
+.vc-importe.vc-importe-nulo .vc-importe-largo { font-size: 11.5px; white-space: normal; line-height: 1.15; }
+.vc-vista-dia-total.vc-importe-nulo { font-size: 18px; }
+.vc-mes-total .vc-importe-nulo { font-size: 14px; }
+@container (max-width: 84px) {
+  .vc-importe-largo { display: none; }
+  .vc-importe-corto { display: inline; }
+}
+
+/* Semana (columna de la izquierda en el mes): número ISO y total corto */
+.vc-sem { container-type: inline-size; background: transparent; box-shadow: none; border-style: dashed; color: var(--tenue); padding: 6px; }
+.vc-sem:hover { border-color: var(--primario); color: var(--primario); }
+.vc-sem.sin-pagos { cursor: pointer; }
+.vc-sem-n { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.vc-sem .vc-importe { color: var(--texto); }
+
+/* Desplegable (cursor o foco): no captura el ratón, así nunca tapa la celda de debajo */
+.vc-desplegable {
+  position: absolute; top: calc(100% + 6px); z-index: 30; width: 310px; padding: 12px 14px; border-radius: 10px;
+  background: var(--superficie); border: 1px solid var(--borde); box-shadow: 0 10px 30px rgba(24, 33, 30, 0.16);
+  pointer-events: none; font-size: 13.5px; text-align: left;
+}
+.l-izq .vc-desplegable { left: 0; }
+.l-centro .vc-desplegable { left: 50%; transform: translateX(-50%); }
+.l-der .vc-desplegable { right: 0; }
+.vc-desplegable-titulo { margin: 0 0 8px; font-weight: 800; font-size: 14px; }
+.vc-desplegable-pista { margin: 8px 0 0; font-size: 12px; }
+.vc-pagos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.vc-pago {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 12px; padding: 6px 0;
+  border-top: 1px solid var(--borde-suave);
+}
+.vc-pago:first-child { border-top: 0; }
+.vc-pago-proveedor { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vc-pago-importe { display: flex; flex-direction: column; align-items: flex-end; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vc-pago-aviso { font-size: 11.5px; font-weight: 700; color: var(--naranja-texto); }
+.vc-pago-estado { grid-column: 1 / -1; justify-self: start; padding: 1px 8px; font-size: 11.5px; }
+.vc-mas { margin: 4px 0 0; font-size: 12.5px; }
+.vc-suma {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 6px 0 0; padding-top: 8px;
+  border-top: 1.5px solid var(--texto); font-size: 14px;
+}
+.vc-suma strong { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vc-fuera { margin: 4px 0 0; font-size: 12px; color: var(--naranja-texto); font-weight: 600; }
+
+/* Hoja táctil: detalle del día tocado, fija abajo */
+.vc-hoja {
+  position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 40; max-width: 520px; margin: 0 auto; max-height: 72vh;
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--superficie);
+  border: 1px solid var(--borde); box-shadow: 0 -8px 40px rgba(24, 33, 30, 0.22); font-size: 14px; outline: none;
+}
+.vc-hoja-cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.vc-hoja-cabecera .vc-desplegable-titulo { margin: 4px 0 0; }
+.vc-hoja-cuerpo { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+.vc-cerrar {
+  flex: none; width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--borde); background: var(--superficie);
+  font: inherit; font-size: 22px; line-height: 1; color: var(--texto); cursor: pointer;
+}
+.vc-hoja-filtrar { min-height: 46px; }
+
+/* Semana */
+.vc-semana { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.vc-semana-dia { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.vc-dia.v-semana { height: 72px; }
+.vc-semana-pagos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.vc-mini {
+  display: flex; flex-direction: column; gap: 1px; padding: 5px 7px; border-radius: 6px; background: var(--c-fondo);
+  box-shadow: inset 3px 0 0 var(--c-filo); font-size: 12.5px; min-width: 0;
+}
+.vc-mini-proveedor { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vc-mini-importe { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Día */
+.vc-vista-dia { padding: 12px 16px; border-radius: 10px; border: 1px solid var(--borde); box-shadow: inset 4px 0 0 var(--c-filo); max-width: 640px; }
+.vc-vista-dia-resumen { margin: 0 0 8px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.vc-vista-dia-total { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.vc-vacio { margin: 0; }
+
+/* Año: 12 meses; el fondo se intensifica con el importe del mes (un solo tono, de menos a más) */
+.vc-anio { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.vc-mes-tarjeta { position: relative; border-radius: 10px; border: 1px solid var(--borde); background: var(--i-fondo, var(--superficie)); min-width: 0; }
+.i-1 { --i-fondo: color-mix(in srgb, var(--primario) 7%, white); }
+.i-2 { --i-fondo: color-mix(in srgb, var(--primario) 15%, white); }
+.i-3 { --i-fondo: color-mix(in srgb, var(--primario) 27%, white); }
+.i-4 { --i-fondo: color-mix(in srgb, var(--primario) 42%, white); }
+.vc-mes-tarjeta.elegido { border-color: var(--primario); box-shadow: 0 0 0 2px var(--primario); }
+.vc-mes-boton {
+  display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 12px 14px 30px; border: 0; border-radius: 10px; background: none;
+  font: inherit; color: var(--texto); text-align: left; cursor: pointer; container-type: inline-size;
+}
+.vc-mes-boton:hover { background: rgba(255, 255, 255, 0.35); }
+.vc-mes-nombre { font-size: 14px; font-weight: 700; }
+.vc-mes-total { font-size: clamp(13px, 9.5cqi, 22px); font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vc-mes-total .tenue { font-size: 14px; font-weight: 600; }
+.vc-mes-nota { font-size: 12px; color: var(--gris-texto); font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+.vc-ver-mes {
+  position: absolute; right: 8px; bottom: 6px; padding: 2px 6px; border: 0; border-radius: 6px; background: none; font: inherit;
+  font-size: 12.5px; font-weight: 700; color: var(--primario); text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+.vc-leyenda-intensidad { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.vc-escala { display: inline-flex; gap: 3px; }
+.vc-escala i { width: 18px; height: 12px; border-radius: 3px; border: 1px solid var(--borde); background: var(--i-fondo); }
+.vc-nota { margin: 0; font-size: 12.5px; }
+
+@media (max-width: 1180px) {
+  .vc-anio { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 @media (max-width: 900px) {
+  .vc { padding: 12px; }
+  .vc-mostrar { margin-left: 0; width: 100%; }
+  .vc-r { padding-right: 10px; }
+  .vc-r[data-op] { padding-left: 16px; }
+  .vc-r dd { font-size: 15px; }
+  .vc-r-total { flex-basis: 100%; }
+  .vc-r-total dd { font-size: 20px; }
+  .vc-fila { grid-template-columns: 24px repeat(7, minmax(0, 1fr)); gap: 3px; }
+  .vc-dia { height: 56px; padding: 4px 4px 3px; border-radius: 6px; }
+  .vc-dia-num { font-size: 11.5px; line-height: 16px; }
+  .vc-dia.hoy .vc-dia-num { min-width: 18px; height: 18px; }
+  .vc-globo { min-width: 16px; height: 16px; padding: 0 3px; font-size: 9.5px; }
+  .vc-dia-fuera { display: none; }
+  .vc-sem { height: 56px; padding: 4px 0; align-items: center; justify-content: center; border: 0; }
+  .vc-sem .vc-importe { display: none; }
+  .vc-sem-n { font-size: 10.5px; }
+  .vc-desplegable { position: fixed; top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; transform: none; max-height: 60vh; overflow: hidden; }
+  .l-centro .vc-desplegable { transform: none; left: 8px; }
+  .vc-semana { grid-template-columns: minmax(0, 1fr); }
+  .vc-semana-dia { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: start; gap: 8px; }
+  .vc-semana-dia > .vc-dia-marco { grid-row: span 2; }
+  .vc-dia.v-semana { height: 64px; }
+  .vc-anio { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .vc-mes-boton { padding: 10px 10px 28px; }
   .ve-estados { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ve-estado-n { font-size: 24px; }
   .ve-forma-fila { grid-template-columns: minmax(0, 1fr) auto; }

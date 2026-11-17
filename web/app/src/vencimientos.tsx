@@ -3,30 +3,53 @@
 // FIXTURES: marcar, confirmar domiciliados, anular y editar la forma de pago (en memoria). REAL: solo lectura; los
 // botones quedan deshabilitados con «Pendiente de tablas en Supabase».
 // Importe ausente = «importe pendiente» (nunca 0), fuera de los totales y con su recuento a la vista.
+// H6-4: calendario sobre la lista (calendario_vencimientos.tsx); sin tarjetas de totales por semana y mes (queda la
+// cabecera de totales generales); la lista con las capacidades de Facturas (pestañas, filtros, búsqueda también por
+// importe, orden por columna) más los filtros de H6. Filtros, orden y vista del calendario en la URL.
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
+  OPCIONES_CONCILIACION, OPCIONES_NORMALIZACION, OPCIONES_REVISION, etiquetaConciliacion, etiquetaNormalizacion, etiquetaRevision,
+} from '../server/detalle.ts';
+import {
+  VISTA_POR_DEFECTO, cumpleCalendario, esVista, leerFiltroCalendario, valorFiltroCalendario,
+  type FiltroCalendario, type VistaCalendario,
+} from '../server/pagos/calendario.ts';
+import {
+  COLUMNAS_LISTA, COLUMNA_POR_DEFECTO, IMPORTES_LISTA, PESTANAS_VENCIMIENTOS, claveProveedor, columnaDe, cumpleBusquedaLista,
+  cumpleEstadoFactura, cumpleImporte, direccionDe, opcionesProveedor, ordenar, pestanaDe,
+} from '../server/pagos/lista.ts';
+import {
   DICCIONARIO_ESTADOS, ESTADOS_IMPLEMENTADOS, FORMAS_PAGO, PERIODOS, TEXTO_CARGO_NEGATIVO, TEXTO_FORMA, TEXTO_H6_PENDIENTE, TEXTO_SENTIDO,
-  cumpleBusquedaPago, cumplePeriodo, formaPorDefectoMarca, textoEstadoPago, totalGeneral, totalesPorPeriodo,
+  cumplePeriodo, esFechaIso, formaPorDefectoMarca, textoEstadoPago, totalGeneral,
   type BloqueTotal, type ColorEstadoPago, type EventoPagoVista, type FilaVencimientoPago,
   type FormaEfectiva, type FormaPago, type PantallaVencimientosDTO, type ProveedorPagoVista, type TotalPeriodo,
 } from '../server/pagos/pagos.ts';
 import { ErrorApi, enviar, useApiRecargable } from './api.ts';
+import { CalendarioVencimientos, textoFiltroCalendario } from './calendario_vencimientos.tsx';
 import { euros, fechaCorta, fechaHora, plural } from './formato.ts';
 import { Cabecera, MOVIL, NombreProveedor, useMedia } from './ui.tsx';
 
 const CLASE_ESTADO: Record<ColorEstadoPago, string> = { azul: 'b', rojo: 'r', verde: 'g', gris: 'n', domiciliado: 'd' };
-const CLAVES_FILTRO = ['periodo', 'desde', 'hasta', 'estado', 'forma', 'q'] as const;
+/** Filtros de la lista (todos en la URL; «Quitar filtros» los borra). Los de fecha no se aplican al calendario. */
+const CLAVES_FILTRO = ['pestana', 'periodo', 'desde', 'hasta', 'cal', 'estado', 'forma', 'proveedor', 'sentido', 'importe', 'factura', 'revision', 'q'] as const;
 type Filtros = Record<(typeof CLAVES_FILTRO)[number], string>;
 
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-const diaMes = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 const diaSemana = (iso: string) => DIAS[new Date(`${iso}T00:00:00Z`).getUTCDay()];
-function textoPeriodo(t: TotalPeriodo, periodo: 'semana' | 'mes'): string {
-  if (t.clave === null) return 'Sin fecha de vencimiento';
-  if (periodo === 'mes') return `${MESES[Number(t.clave.slice(5, 7)) - 1]} ${t.clave.slice(0, 4)}`;
-  return `${diaMes(t.desde as string)} – ${diaMes(t.hasta as string)}`;
+
+/** true si la fila pasa los filtros de la lista; `sinFecha`: sin los filtros de fecha (para el calendario). */
+function cumpleFiltros(f: FilaVencimientoPago, x: Filtros, hoy: string, cal: FiltroCalendario | null, o: { sinFecha?: boolean; sinEstado?: boolean } = {}): boolean {
+  if (!pestanaDe(x.pestana || null).cumple(f)) return false;
+  if (!o.sinFecha && (!cumplePeriodo(f, x.periodo, hoy, { desde: x.desde, hasta: x.hasta }) || !cumpleCalendario(f, cal))) return false;
+  if (!o.sinEstado && x.estado !== '' && f.estado_pago !== x.estado) return false;
+  if (x.forma !== '' && f.forma_pago !== x.forma) return false;
+  if (x.proveedor !== '' && claveProveedor(f) !== x.proveedor) return false;
+  if (x.sentido !== '' && f.sentido !== x.sentido) return false;
+  if (!cumpleImporte(f.importe, x.importe)) return false;
+  if (!cumpleEstadoFactura(f, x.factura)) return false;
+  if (x.revision !== '' && f.estado_revision !== x.revision) return false;
+  return cumpleBusquedaLista(f, x.q);
 }
 
 function textoError(e: unknown, defecto: string): string {
@@ -146,41 +169,45 @@ function NotasTotal({ t }: { t: Omit<TotalPeriodo, 'clave' | 'desde' | 'hasta'> 
   return notas.length ? <span className="ve-total-notas" data-notas-total>{notas.join(' · ')}</span> : null;
 }
 
-function Totales({ filas, periodo, onPeriodo }: { filas: FilaVencimientoPago[]; periodo: 'semana' | 'mes'; onPeriodo: (p: 'semana' | 'mes') => void }) {
-  const ts = totalesPorPeriodo(filas, periodo);
+/**
+ * H6-4: solo la cabecera de totales generales de lo filtrado (sin tarjetas por semana ni por mes). H6-6: por estado,
+ * como el resumen del calendario: Falta por pagar (pendiente, también domiciliado no vencido, + vencido sin pagar),
+ * Domiciliado previsto (solo domiciliado ya vencido) y Abonos por compensar aparte (si hay); pagado en las notas.
+ */
+function Totales({ filas }: { filas: FilaVencimientoPago[] }) {
   const g = totalGeneral(filas);
+  const hayAbonos = filas.some((f) => f.estado_pago === 'ABONO_PENDIENTE_COMPENSAR');
   return (
-    <section className="ve-totales" aria-labelledby="t-ve-totales">
-      <div className="bloque-cabecera">
-        <h2 id="t-ve-totales">Totales {periodo === 'semana' ? 'por semana' : 'por mes'}</h2>
-        <div className="rrhh-selector" role="group" aria-label="Agrupar totales">
-          <button type="button" className={periodo === 'semana' ? 'activa' : undefined} aria-pressed={periodo === 'semana'} onClick={() => onPeriodo('semana')} data-totales="semana">Semana</button>
-          <button type="button" className={periodo === 'mes' ? 'activa' : undefined} aria-pressed={periodo === 'mes'} onClick={() => onPeriodo('mes')} data-totales="mes">Mes</button>
-        </div>
-      </div>
+    <section className="ve-totales" aria-label="Totales de lo filtrado">
       <div className="ve-total-general tarjeta" data-total-general>
         <span className="ve-total-titulo">Todo lo filtrado <span className="tenue">· {plural(g.vencimientos, 'vencimiento', 'vencimientos')}</span></span>
         <div className="ve-cifras">
-          <Cifra etiqueta="Por pagar" b={g.por_pagar} clase="por-pagar" datos="por_pagar" />
+          <Cifra etiqueta="Falta por pagar" b={g.por_pagar} clase="por-pagar" datos="por_pagar" />
           <Cifra etiqueta="Domiciliado previsto" b={g.domiciliado} clase="domiciliado" datos="domiciliado" />
+          {hayAbonos && <Cifra etiqueta="Abonos por compensar" b={g.abonos} clase="abonos" datos="abonos" />}
         </div>
         <NotasTotal t={g} />
       </div>
-      {ts.length > 0 && (
-        <ol className="ve-periodos" aria-label={periodo === 'semana' ? 'Semanas' : 'Meses'}>
-          {ts.map((t) => (
-            <li key={t.clave ?? 'sin'} className="tarjeta ve-periodo" data-periodo={t.clave ?? 'sin-fecha'}>
-              <span className="ve-periodo-titulo">{textoPeriodo(t, periodo)} <span className="tenue">· {t.vencimientos}</span></span>
-              <div className="ve-cifras">
-                <Cifra etiqueta="Por pagar" b={t.por_pagar} clase="por-pagar" datos="por_pagar" />
-                <Cifra etiqueta="Domiciliado" b={t.domiciliado} clase="domiciliado" datos="domiciliado" />
-              </div>
-              <NotasTotal t={t} />
-            </li>
-          ))}
-        </ol>
-      )}
     </section>
+  );
+}
+
+function Selector({ nombre, etiqueta, valor, onChange, opciones, todos }: {
+  nombre: string; etiqueta: string; valor: string; onChange: (v: string) => void;
+  opciones: { valor: string; texto: string; grupo?: string }[]; todos: string;
+}) {
+  const grupos = [...new Set(opciones.map((o) => o.grupo ?? ''))];
+  return (
+    <label className="filtro">
+      {etiqueta}
+      <select name={nombre} value={valor} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{todos}</option>
+        {grupos.map((g) => {
+          const os = opciones.filter((o) => (o.grupo ?? '') === g).map((o) => <option key={o.valor} value={o.valor}>{o.texto}</option>);
+          return g ? <optgroup key={g} label={g}>{os}</optgroup> : os;
+        })}
+      </select>
+    </label>
   );
 }
 
@@ -374,7 +401,12 @@ export function PaginaVencimientos() {
   const d = carga.estado === 'ok' ? carga.datos : null;
 
   const filtros = Object.fromEntries(CLAVES_FILTRO.map((k) => [k, params.get(k) ?? ''])) as Filtros;
-  const agrupar: 'semana' | 'mes' = params.get('totales') === 'mes' ? 'mes' : 'semana';
+  const cal = leerFiltroCalendario(filtros.cal || null);
+  const vista: VistaCalendario = esVista(params.get('vista')) ? params.get('vista') as VistaCalendario : VISTA_POR_DEFECTO;
+  const fechaCal = esFechaIso(params.get('fecha')) ? params.get('fecha') as string : d?.hoy ?? '';
+  const pestana = pestanaDe(filtros.pestana || null);
+  const columna = columnaDe(params.get('orden'));
+  const dir = direccionDe(params.get('dir'));
   // Parte siempre de los últimos parámetros escritos: dos cambios seguidos (p. ej. quitar el estado y elegir forma antes
   // de que React vuelva a pintar) no se pisan con parámetros viejos.
   const ultimos = useRef(params);
@@ -386,14 +418,35 @@ export function PaginaVencimientos() {
     setParams(p, { replace: true });
   };
 
-  // Filtros de periodo, forma y búsqueda (los recuentos por estado se calculan sobre esto); después, el estado.
-  const sinEstado = useMemo(() => (d ? d.filas.filter((f) => cumplePeriodo(f, filtros.periodo, d.hoy, { desde: filtros.desde, hasta: filtros.hasta })
-    && (filtros.forma === '' || f.forma_pago === filtros.forma) && cumpleBusquedaPago(f, filtros.q)) : []),
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  [d, params]);
-  const filas = useMemo(() => sinEstado.filter((f) => filtros.estado === '' || f.estado_pago === filtros.estado),
+  // Calendario: todos los filtros salvo los de fecha. Recuentos por estado: todos salvo el estado. Lista: todos, ordenada.
+  const delCalendario = useMemo(() => (d ? d.filas.filter((f) => cumpleFiltros(f, filtros, d.hoy, cal, { sinFecha: true })) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sinEstado, params]);
+    [d, params]);
+  const sinEstado = useMemo(() => (d ? d.filas.filter((f) => cumpleFiltros(f, filtros, d.hoy, cal, { sinEstado: true })) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [d, params]);
+  // Pestañas: recuento con el resto de filtros (como Facturas).
+  const sinPestana = useMemo(() => (d ? d.filas.filter((f) => cumpleFiltros(f, { ...filtros, pestana: '' }, d.hoy, cal)) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [d, params]);
+  const filas = useMemo(() => ordenar(sinPestana.filter((f) => pestana.cumple(f)), columna.clave, dir === 1 ? 'asc' : 'desc'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sinPestana, params]);
+  const proveedores = useMemo(() => opcionesProveedor(d?.filas ?? []), [d]);
+  const filtrarCalendario = (escala: FiltroCalendario['escala'], clave: string) => {
+    const v = valorFiltroCalendario(escala, clave);
+    // Un segundo clic sobre el mismo periodo quita el filtro. Elegir un periodo del calendario sustituye al de las pestañas.
+    cambiar(filtros.cal === v ? { cal: null } : { cal: v, periodo: null, desde: null, hasta: null });
+    desplazar.current = filtros.cal !== v;
+  };
+  // Tras filtrar desde el calendario, el filtro queda a la vista (en móvil, la lista empieza arriba).
+  const desplazar = useRef(false);
+  useEffect(() => {
+    if (!desplazar.current || !cal) return;
+    desplazar.current = false;
+    document.querySelector('[data-filtro-calendario]')?.scrollIntoView({ block: movil ? 'start' : 'nearest' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtros.cal]);
   const visibles = new Set(filas.map((f) => f.vencimiento_id));
   // La selección solo guarda lo que está a la vista.
   useEffect(() => {
@@ -467,44 +520,67 @@ export function PaginaVencimientos() {
             </span>
           </div>
 
-          <div className="pestanas" role="tablist" aria-label="Periodo">
-            <button type="button" role="tab" aria-selected={filtros.periodo === ''} className={filtros.periodo === '' ? 'pestana activa' : 'pestana'}
-              onClick={() => cambiar({ periodo: null, desde: null, hasta: null })} data-periodo-filtro="">Todos</button>
-            {PERIODOS.map((p) => (
-              <button key={p.clave} type="button" role="tab" aria-selected={filtros.periodo === p.clave}
-                className={filtros.periodo === p.clave ? 'pestana activa' : 'pestana'} data-periodo-filtro={p.clave}
-                onClick={() => cambiar({ periodo: p.clave, ...(p.clave === 'rango' ? {} : { desde: null, hasta: null }) })}>{p.texto}</button>
+          <CalendarioVencimientos filas={delCalendario} hoy={d.hoy} vista={vista} fecha={fechaCal} filtro={cal}
+            onNavegar={(v, f) => cambiar({ vista: v === VISTA_POR_DEFECTO ? null : v, fecha: f === d.hoy ? null : f })}
+            onFiltrar={filtrarCalendario} />
+
+          <h2 className="ve-lista-titulo" id="t-ve-lista">Lista de vencimientos</h2>
+          <label className="buscar">
+            <span>Buscar</span>
+            <input type="search" name="q" placeholder="Proveedor, CIF, nº de factura o importe" value={filtros.q} onChange={(e) => cambiar({ q: e.target.value })} />
+          </label>
+
+          <div className="pestanas" role="tablist" aria-label="Estado de las facturas">
+            {PESTANAS_VENCIMIENTOS.map((p) => (
+              <button key={p.clave} type="button" role="tab" aria-selected={p.clave === pestana.clave}
+                className={p.clave === pestana.clave ? 'pestana activa' : 'pestana'} data-pestana={p.clave}
+                onClick={() => cambiar({ pestana: p.clave === 'todas' ? null : p.clave })}>
+                {p.texto} <span className="pestana-n">{sinPestana.filter(p.cumple).length}</span>
+              </button>
             ))}
           </div>
 
           <section className="tarjeta filtros" aria-label="Filtros">
+            <Selector nombre="periodo" etiqueta="Vencimiento" todos="Cualquier fecha" valor={filtros.periodo}
+              onChange={(v) => cambiar({ periodo: v, cal: null, ...(v === 'rango' ? {} : { desde: null, hasta: null }) })}
+              opciones={PERIODOS.map((p) => ({ valor: p.clave, texto: p.texto }))} />
             {filtros.periodo === 'rango' && (
               <>
                 <label className="filtro">Desde<input type="date" name="desde" value={filtros.desde} onChange={(e) => cambiar({ desde: e.target.value })} /></label>
                 <label className="filtro">Hasta<input type="date" name="hasta" value={filtros.hasta} onChange={(e) => cambiar({ hasta: e.target.value })} /></label>
               </>
             )}
-            <label className="filtro">Estado
-              <select name="estado" value={filtros.estado} onChange={(e) => cambiar({ estado: e.target.value })}>
-                <option value="">Todos</option>
-                {ESTADOS_IMPLEMENTADOS.map((e) => <option key={e} value={e}>{DICCIONARIO_ESTADOS[e].texto}</option>)}
-              </select>
-            </label>
-            <label className="filtro">Forma de pago
-              <select name="forma" value={filtros.forma} onChange={(e) => cambiar({ forma: e.target.value })}>
-                <option value="">Todas</option>
-                {[...FORMAS_PAGO, 'SIN_DETERMINAR' as const].map((x) => <option key={x} value={x}>{TEXTO_FORMA[x]}{x === 'SIN_DETERMINAR' ? ' (sin CIF)' : ''}</option>)}
-              </select>
-            </label>
-            <label className="filtro ve-buscar">Buscar
-              <input type="search" name="q" placeholder="Proveedor, CIF o nº de factura" value={filtros.q} onChange={(e) => cambiar({ q: e.target.value })} />
-            </label>
+            <Selector nombre="estado" etiqueta="Estado de pago" todos="Todos" valor={filtros.estado} onChange={(v) => cambiar({ estado: v })}
+              opciones={ESTADOS_IMPLEMENTADOS.map((e) => ({ valor: e, texto: DICCIONARIO_ESTADOS[e].texto }))} />
+            <Selector nombre="forma" etiqueta="Forma de pago" todos="Todas" valor={filtros.forma} onChange={(v) => cambiar({ forma: v })}
+              opciones={[...FORMAS_PAGO, 'SIN_DETERMINAR' as const].map((x) => ({ valor: x, texto: `${TEXTO_FORMA[x]}${x === 'SIN_DETERMINAR' ? ' (sin CIF)' : ''}` }))} />
+            <Selector nombre="proveedor" etiqueta="Proveedor" todos="Todos" valor={filtros.proveedor} onChange={(v) => cambiar({ proveedor: v })}
+              opciones={proveedores.map((o) => ({ valor: o.clave, texto: o.texto }))} />
+            <Selector nombre="sentido" etiqueta="Sentido" todos="Todos" valor={filtros.sentido} onChange={(v) => cambiar({ sentido: v })}
+              opciones={(['CARGO', 'ABONO', 'NO_DOCUMENTADO'] as const).map((s) => ({ valor: s, texto: TEXTO_SENTIDO[s] }))} />
+            <Selector nombre="importe" etiqueta="Importe" todos="Cualquiera" valor={filtros.importe} onChange={(v) => cambiar({ importe: v })}
+              opciones={IMPORTES_LISTA.map((o) => ({ valor: o.clave, texto: o.texto }))} />
+            <Selector nombre="factura" etiqueta="Estado de la factura" todos="Todos" valor={filtros.factura} onChange={(v) => cambiar({ factura: v })}
+              opciones={[
+                ...OPCIONES_NORMALIZACION.map((e) => ({ valor: `norm:${e}`, texto: etiquetaNormalizacion(e).texto, grupo: 'Normalización' })),
+                ...OPCIONES_CONCILIACION.map((e) => ({ valor: `conc:${e}`, texto: etiquetaConciliacion(e).texto, grupo: 'Conciliación' })),
+              ]} />
+            <Selector nombre="revision" etiqueta="Revisión Pío" todos="Todas" valor={filtros.revision} onChange={(v) => cambiar({ revision: v })}
+              opciones={OPCIONES_REVISION.map((e) => ({ valor: e, texto: etiquetaRevision(e).texto }))} />
             {hayFiltros && (
               <button type="button" className="boton-secundario boton-limpiar" onClick={() => cambiar(Object.fromEntries(CLAVES_FILTRO.map((k) => [k, null])))}>Quitar filtros</button>
             )}
           </section>
 
-          <Totales filas={filas} periodo={agrupar} onPeriodo={(p) => cambiar({ totales: p === 'semana' ? null : p })} />
+          {cal && (
+            <p className="ve-filtro-cal" data-filtro-calendario={filtros.cal}>
+              <span className="ve-filtro-cal-texto"><span className="tenue">Calendario:</span> <strong>{textoFiltroCalendario(cal)}</strong></span>
+              <button type="button" className="ve-filtro-cal-quitar" onClick={() => cambiar({ cal: null })} data-quitar-filtro-calendario
+                aria-label={`Quitar el filtro del calendario (${textoFiltroCalendario(cal)})`}>Quitar <span aria-hidden="true">×</span></button>
+            </p>
+          )}
+
+          <Totales filas={filas} />
 
           <div className="ve-lista-cabecera">
             <p className="tenue resumen-listado" data-resumen-listado aria-live="polite">
@@ -512,6 +588,17 @@ export function PaginaVencimientos() {
               {sinImporte > 0 && <span data-recuento-sin-importe> · {plural(sinImporte, 'con importe pendiente', 'con importe pendiente')} (fuera de los totales)</span>}
               {negativos > 0 && <span data-recuento-cargo-negativo> · {plural(negativos, 'cargo con importe negativo', 'cargos con importe negativo')}: revisar (fuera de los totales)</span>}
             </p>
+            {movil && filas.length > 0 && (
+              <span className="ve-orden-movil">
+                <label className="filtro">Ordenar por
+                  <select name="orden" value={columna.clave} onChange={(e) => cambiar({ orden: e.target.value === COLUMNA_POR_DEFECTO ? null : e.target.value })}>
+                    {COLUMNAS_LISTA.map((c) => <option key={c.clave} value={c.clave}>{c.texto}</option>)}
+                  </select>
+                </label>
+                <button type="button" className="boton-secundario ve-orden-dir" onClick={() => cambiar({ dir: dir === 1 ? 'desc' : null })}
+                  aria-label={dir === 1 ? 'Orden ascendente; cambiar a descendente' : 'Orden descendente; cambiar a ascendente'} data-orden-dir>{dir === 1 ? '↑' : '↓'}</button>
+              </span>
+            )}
             {movil && filas.length > 0 && (
               <label className="rrhh-check ve-todas-movil">
                 <input type="checkbox" checked={todas} onChange={() => setSeleccion(todas ? new Set() : new Set(filas.map((f) => f.vencimiento_id)))} data-seleccionar-todas />
@@ -549,13 +636,19 @@ export function PaginaVencimientos() {
                       <input type="checkbox" className="ve-casilla" checked={todas} aria-label="Seleccionar todos los vencimientos a la vista"
                         onChange={() => setSeleccion(todas ? new Set() : new Set(filas.map((f) => f.vencimiento_id)))} data-seleccionar-todas />
                     </th>
-                    <th scope="col">Fecha</th>
-                    <th scope="col">Proveedor</th>
-                    <th scope="col">Nº factura</th>
-                    <th scope="col" className="num">Importe</th>
-                    <th scope="col">Sentido</th>
-                    <th scope="col">Forma de pago</th>
-                    <th scope="col">Estado</th>
+                    {COLUMNAS_LISTA.map((c) => {
+                      const activa = c.clave === columna.clave;
+                      return (
+                        <th key={c.clave} scope="col" className={c.num ? 'num' : undefined} aria-sort={activa ? (dir === 1 ? 'ascending' : 'descending') : 'none'}>
+                          <button type="button" className="ordenar" data-ordenar={c.clave}
+                            onClick={() => cambiar(activa
+                              ? { orden: c.clave === COLUMNA_POR_DEFECTO ? null : c.clave, dir: dir === 1 ? 'desc' : null }
+                              : { orden: c.clave === COLUMNA_POR_DEFECTO ? null : c.clave, dir: null })}>
+                            {c.texto}<span className="flecha" aria-hidden="true">{activa ? (dir === 1 ? '↑' : '↓') : '↕'}</span>
+                          </button>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>

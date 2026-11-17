@@ -7,6 +7,8 @@
 // trabajadoras_ajustes_anuales (TA-REAL-2b: columnas de producción, sin autor; autor solo por cf.autor). Uso: npm run test:unit
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { after, describe, test } from 'node:test';
 import Fastify from 'fastify';
 import { FUENTE_VACACIONES, MENSAJE_FALTA_CREDENCIAL, TEXTO_BANNER_REAL } from '../rrhh/contrato.ts';
@@ -17,6 +19,10 @@ import {
 } from '../rrhh/adaptador_real.ts';
 import { registrarRrhh } from '../rrhh/rutas.ts';
 import { describirCambio, type CambioCalendario, type PeticionEventos } from '../rrhh/eventos.ts';
+import {
+  contextoGuardias, esAviso, peticionGuardia, planApoyo, planFestivo, planGomaFestivo, planGuardia, planOtra,
+  type OpGuardia, type PlanGuardia, type ResultadoPlan,
+} from '../rrhh/herramientas_guardia.ts';
 
 const AINA = 'e0000000-0000-4000-8000-000000000001';
 const ELENA = 'e0000000-0000-4000-8000-000000000004';
@@ -50,10 +56,14 @@ const filaAjuste = (x: Partial<Fila>): Fila => ({
  * farmacia obligatoria y del módulo (PIO o RITA). `sinAutor`: set_config no llega (simula que falta cf.autor).
  */
 function bdSimulada(o: { eventos?: Fila[]; convenio?: Fila[]; ajustes?: Fila[]; fallo?: (sql: string, params?: unknown[]) => unknown; falloConexion?: unknown;
-  sinAutor?: boolean } = {}) {
+  sinAutor?: boolean; semanas?: Fila[]; festivos?: Fila[]; guardiasFestivo?: Fila[] } = {}) {
   const eventos = new Map<string, Fila>((o.eventos ?? []).map((e) => [String(e.id), { anulado: false, ...e }]));
   const convenio = (o.convenio ?? []).map((c) => ({ ...c }));
   const ajustes = (o.ajustes ?? []).map((a) => ({ ...a }));
+  // TA3-REAL (migración 34): guardias_semana, guardias_festivo y festivos.
+  const semanas: Fila[] = (o.semanas ?? []).map((s) => ({ anulada: false, persona_apoyo_sabado_id: null, ...s }));
+  const festivos: Fila[] = (o.festivos ?? []).map((f) => ({ anulado: false, ambito: 'LOCAL', farmacia: null, ...f }));
+  const gfs: Fila[] = (o.guardiasFestivo ?? []).map((g) => ({ anulada: false, ...g }));
   const log: Consulta[] = [];
   let conexiones = 0;
   let liberadas = 0;
@@ -61,6 +71,73 @@ function bdSimulada(o: { eventos?: Fila[]; convenio?: Fila[]; ajustes?: Fila[]; 
   const vivos = () => [...eventos.values()].filter((e) => e.anulado !== true);
   /** cf.autor local de la transacción de cada conexión (se pierde en commit / rollback). */
   const autorDe = new Map<number, string | null>();
+  /** Reglas de la migración 34 (triggers, checks, FK (persona, farmacia) e índices únicos parciales). */
+  const ficha = (id: unknown) => FICHAS.find((f) => f.id === id);
+  const deAlta = (f: Fila, dia: string) => String(f.fecha_alta) <= dia && (f.fecha_baja === null || String(f.fecha_baja) >= dia);
+  const mas = (dia: string, n: number) => { const d = new Date(`${dia}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  const check = (nombre: string) => Object.assign(errorPg('23514', `new row violates check constraint "${nombre}"`), { constraint: nombre });
+  const unico = (nombre: string) => Object.assign(errorPg('23505', `duplicate key value violates unique constraint "${nombre}"`), { constraint: nombre });
+  const fk = (nombre: string) => Object.assign(errorPg('23503', `insert violates foreign key constraint "${nombre}"`), { constraint: nombre });
+  /** Persona de esa farmacia (FK) y de alta en esas fechas (trigger). */
+  const persona = (id: unknown, farmacia: unknown, fechas: string[], fkNombre: string) => {
+    const f = ficha(id);
+    if (!f || f.farmacia !== farmacia) throw fk(fkNombre);
+    const fuera = fechas.find((d) => !deAlta(f, d));
+    if (fuera) throw errorPg('P0001', `PERSONA_NO_VALIDA:${String(id)}:${fuera}`);
+  };
+  const responderTa3 = (sql: string, p: unknown[]): Fila[] | null => {
+    const entre = (v: unknown) => String(v) >= String(p[0]) && String(v) <= String(p[1]);
+    if (sql === SQL.semanasPeriodo) return semanas.filter((s) => !s.anulada && entre(s.lunes)).map((s) => ({ ...s }));
+    if (sql === SQL.semanaBloqueo) return semanas.filter((s) => !s.anulada && s.lunes === p[0]).map((s) => ({ ...s }));
+    if (sql === SQL.anularSemana) return semanas.filter((s) => s.id === p[0] && !s.anulada).map((s) => ({ ...Object.assign(s, { anulada: true }) }));
+    if (sql === SQL.insertarSemana) {
+      const [lunes, farmacia, guardia, apoyo] = p as (string | null)[];
+      if (new Date(`${lunes}T00:00:00Z`).getUTCDay() !== 1) throw check('guardias_semana_lunes_check');
+      if (!['PIO', 'RITA', 'OTRA'].includes(String(farmacia))) throw check('guardias_semana_farmacia_check');
+      if (farmacia === 'OTRA' ? guardia !== null || apoyo !== null : guardia === null) throw check('guardias_semana_personas_check');
+      if (apoyo !== null && apoyo === guardia) throw check('guardias_semana_apoyo_distinto_check');
+      const sab = mas(String(lunes), 5);
+      if (guardia !== null) persona(guardia, farmacia, [sab, mas(String(lunes), 6)], 'guardias_semana_persona_guardia_fk');
+      if (apoyo !== null) persona(apoyo, farmacia, [sab], 'guardias_semana_persona_apoyo_fk');
+      if (semanas.some((s) => !s.anulada && s.lunes === lunes)) throw unico('guardias_semana_lunes_unico');
+      const f: Fila = { id: randomUUID(), lunes, farmacia, persona_guardia_id: guardia, persona_apoyo_sabado_id: apoyo, anulada: false, created_at: AHORA, updated_at: AHORA };
+      semanas.push(f);
+      return [{ ...f }];
+    }
+    if (sql === SQL.festivosPeriodo) return festivos.filter((f) => f.farmacia === null && !f.anulado && entre(f.fecha)).map((f) => ({ ...f }));
+    if (sql === SQL.festivoBloqueo) return festivos.filter((f) => f.farmacia === null && !f.anulado && f.fecha === p[0]).map((f) => ({ ...f }));
+    if (sql === SQL.anularFestivo) {
+      return festivos.filter((f) => f.id === p[0] && !f.anulado).map((f) => {
+        Object.assign(f, { anulado: true });
+        // Trigger de la BD: anular el festivo anula su guardia.
+        for (const g of gfs) if (!g.anulada && g.fecha === f.fecha) g.anulada = true;
+        return { ...f };
+      });
+    }
+    if (sql === SQL.insertarFestivo) {
+      const [fecha, ambito, descripcion] = p as string[];
+      if (!['NACIONAL', 'AUTONOMICO', 'LOCAL'].includes(ambito)) throw check('festivos_ambito_check');
+      if (typeof descripcion !== 'string' || descripcion.length < 1 || descripcion.length > 100) throw check('festivos_descripcion_check');
+      if (festivos.some((f) => !f.anulado && f.fecha === fecha && f.farmacia === null)) throw unico('festivos_unico'); // (fecha, coalesce(farmacia, '*'))
+      const f: Fila = { id: randomUUID(), fecha, ambito, farmacia: null, descripcion, anulado: false, created_at: AHORA, updated_at: AHORA };
+      festivos.push(f);
+      return [{ ...f }];
+    }
+    if (sql === SQL.guardiasFestivoPeriodo) return gfs.filter((g) => !g.anulada && entre(g.fecha)).map((g) => ({ ...g }));
+    if (sql === SQL.guardiaFestivoBloqueo) return gfs.filter((g) => !g.anulada && g.fecha === p[0]).map((g) => ({ ...g }));
+    if (sql === SQL.anularGuardiaFestivo) return gfs.filter((g) => g.id === p[0] && !g.anulada).map((g) => ({ ...Object.assign(g, { anulada: true }) }));
+    if (sql === SQL.insertarGuardiaFestivo) {
+      const [fecha, farmacia, pid] = p as (string | null)[];
+      if (farmacia === 'OTRA' ? pid !== null : pid === null) throw check('guardias_festivo_personas_check');
+      if (!festivos.some((f) => !f.anulado && f.farmacia === null && f.fecha === fecha)) throw errorPg('P0001', `NO_ES_FESTIVO:${String(fecha)}`);
+      if (pid !== null) persona(pid, farmacia, [String(fecha)], 'guardias_festivo_persona_fk');
+      if (gfs.some((g) => !g.anulada && g.fecha === fecha)) throw unico('guardias_festivo_fecha_unico');
+      const g: Fila = { id: randomUUID(), fecha, farmacia, persona_id: pid, anulada: false, created_at: AHORA, updated_at: AHORA };
+      gfs.push(g);
+      return [{ ...g }];
+    }
+    return null;
+  };
   const responder = (cliente: number, sql: string, p: unknown[] = []): Fila[] => {
     const err = o.fallo?.(sql, p);
     if (err) throw err;
@@ -70,6 +147,15 @@ function bdSimulada(o: { eventos?: Fila[]; convenio?: Fila[]; ajustes?: Fila[]; 
       if (/\bautor\b/.test(sql)) throw errorPg('42703', 'column "autor" of relation "trabajadoras_ajustes_anuales" does not exist');
       if (!autorDe.get(cliente)) throw errorPg('P0001', 'AUTOR_AUSENTE');
     }
+    // Producción: la tabla antigua ya no existe.
+    if (/guardias_farmacia/.test(sql)) throw errorPg('42P01', 'relation "public.guardias_farmacia" does not exist');
+    if (/^(insert into|update) public\.(guardias_semana|guardias_festivo|festivos)\b/.test(sql)) {
+      if (/\bautor\b/.test(sql)) throw errorPg('42703', 'column "autor" does not exist');
+      if (/\bdelete\b/i.test(sql)) throw errorPg('42501', 'permission denied');
+      if (!autorDe.get(cliente)) throw errorPg('P0001', 'AUTOR_AUSENTE');
+    }
+    const ta3 = responderTa3(sql, p);
+    if (ta3) return ta3;
     if (sql === SQL.ahora) return [{ ahora: AHORA }];
     if (sql === SQL.fichasPorId) return FICHAS.filter((f) => en(p[0], f.id));
     if (sql === SQL.fichasTodas || sql === SQL.fichasPeriodo) return FICHAS;
@@ -137,7 +223,7 @@ function bdSimulada(o: { eventos?: Fila[]; convenio?: Fila[]; ajustes?: Fila[]; 
     },
     end: async () => {},
   };
-  return { pool, log, eventos, convenio, ajustes, cuenta: () => ({ conexiones, liberadas }) };
+  return { pool, log, eventos, convenio, ajustes, semanas, festivos, gfs, cuenta: () => ({ conexiones, liberadas }) };
 }
 const errorPg = (code: string, message = 'x') => Object.assign(new Error(message), { code });
 const sqls = (log: Consulta[]) => log.map((c) => c.sql);
@@ -442,7 +528,7 @@ describe('TA-REAL: transacciones (simulado, sin conexión)', () => {
     const r = await a.cambiarEventos({ accion: 'BORRAR', celdas: [{ trabajadora_id: AINA, fecha: '2026-11-09' }, { trabajadora_id: AINA, fecha: '2026-11-10' }] }, 'Marc');
     const res = r as Exclude<typeof r, string>;
     assert.deepEqual([res.cambio?.n, res.cambio?.origen, res.omitidas_confirmadas], [2, 'BORRAR', 1]); // el 10 tiene solo la mañana, confirmada
-    assert.deepEqual(sqls(bd.log).filter((s) => s !== SQL.fichasPorId), ['begin', SQL.autor, SQL.ahora, SQL.eventosCeldasBloqueo, SQL.anularEventos, 'commit']);
+    assert.deepEqual(sqls(bd.log).filter((s) => s !== SQL.fichasPorId), ['begin', SQL.autor, SQL.ahora, SQL.eventosCeldasBloqueo, SQL.festivosPeriodo, SQL.anularEventos, 'commit']);
     assert.ok(!bd.log.some((c) => /\bdelete\b/i.test(c.sql)), 'nunca DELETE');
     assert.deepEqual([bd.eventos.get(String(e9.id))?.anulado, bd.eventos.get(String(e9t.id))?.anulado, bd.eventos.get(String(conf.id))?.anulado], [true, true, false]);
     const cal = await a.calendario('PIO', '2026-11-09', '2026-11-15');
@@ -555,16 +641,19 @@ describe('TA-REAL: transacciones (simulado, sin conexión)', () => {
       connect: async () => ({
         query: async (sql) => {
           log.push(sql);
-          return { rows: sql === SQL.diagnostico ? [{ trabajadoras: '13', convenio_anual: '2', eventos_calendario: '0', guardias_farmacia: '0', festivos: '0',
-            trabajadores_historial: '15', modulo: ['RITA', 'PIO'], anios: [2026, 2027] }] : [] };
+          return { rows: sql === SQL.diagnostico ? [{ trabajadoras: '13', convenio_anual: '2', eventos_calendario: '0', guardias_semana: '52', guardias_festivo: '3',
+            festivos: '14', trabajadores_historial: '15', modulo: ['RITA', 'PIO'], anios: [2026, 2027] }] : [] };
         },
         release: () => {},
       }),
       end: async () => {},
     };
     const d = await crearAdaptadorRrhhReal({ pool }).diagnostico();
-    assert.deepEqual(d, { trabajadoras: 13, convenio_anual: 2, eventos_calendario: 0, guardias_farmacia: 0, festivos: 0, trabajadores_historial: 15,
+    assert.deepEqual(d, { trabajadoras: 13, convenio_anual: 2, eventos_calendario: 0, guardias_semana: 52, guardias_festivo: 3, festivos: 14, trabajadores_historial: 15,
       modulo_pio_rita: true, anios_convenio: [2026, 2027], anios_convenio_faltan: [2028] });
+    assert.match(SQL.diagnostico, /from public\.guardias_semana where not anulada/);
+    assert.match(SQL.diagnostico, /from public\.guardias_festivo where not anulada/);
+    assert.match(SQL.diagnostico, /from public\.festivos where not anulado/);
     assert.deepEqual(log, ['begin transaction read only', SQL.diagnostico, 'rollback']);
     assert.ok(!/insert|update|delete/i.test(SQL.diagnostico));
   });
@@ -581,7 +670,7 @@ describe('TA-REAL: API en modo REAL con el adaptador simulado', async () => {
 
   test('estado: conectado, sin «datos de ejemplo»', async () => {
     const e = await app.inject({ method: 'GET', url: '/api/rrhh/estado', headers: H });
-    assert.deepEqual(e.json(), { modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: TEXTO_BANNER_REAL, guardias_disponibles: false });
+    assert.deepEqual(e.json(), { modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: TEXTO_BANNER_REAL, guardias_disponibles: true });
     assert.ok(!/ejemplo/i.test(TEXTO_BANNER_REAL));
   });
   test('errores de la BD con su mensaje llano: duplicado 409, tiempo agotado 504; TA-REAL-2: la goma ya funciona', async () => {
@@ -618,5 +707,329 @@ describe('TA-REAL: API en modo REAL con el adaptador simulado', async () => {
     const r = await app.inject({ method: 'POST', url: '/api/rrhh/eventos', headers: W,
       payload: { accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: ELENA, fecha: '2026-12-07', franja: 'TARDE' }] } });
     assert.deepEqual([r.statusCode, r.json().error], [400, 'FRANJA_NO_VALIDA']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// TA3-REAL: guardias_semana, guardias_festivo y festivos (migración 34, simulada en memoria)
+// ---------------------------------------------------------------------------
+
+/** Semana 2027-01-04 (sábado 9, domingo 10); festivo común del 2027-01-06 (miércoles). */
+const LUNES = '2027-01-04';
+const semanaFila = (x: Partial<Fila> = {}): Fila => ({ id: randomUUID(), lunes: LUNES, farmacia: 'PIO', persona_guardia_id: AINA, persona_apoyo_sabado_id: ELENA, anulada: false, ...x });
+const festivoFila = (x: Partial<Fila> = {}): Fila => ({ id: randomUUID(), fecha: '2027-01-06', ambito: 'NACIONAL', farmacia: null, descripcion: 'Reyes', anulado: false, ...x });
+const escrituras = (log: Consulta[]) => log.filter((c) => /^(insert|update) /i.test(c.sql)).map((c) => c.sql);
+/** Un cliente de la base simulada (para comprobar sus reglas como en producción, sin pasar por la web). */
+async function cliente(bd: ReturnType<typeof bdSimulada>, autor = true) {
+  const c = await bd.pool.connect();
+  await c.query('begin');
+  if (autor) await c.query(SQL.autor, ['Marc']);
+  return c;
+}
+const rechaza = (p: Promise<unknown>, code: string, texto: RegExp | string) =>
+  assert.rejects(p, (e: Error & { code?: string; constraint?: string }) => e.code === code && (typeof texto === 'string' ? (e.constraint ?? e.message) === texto : texto.test(e.message)));
+
+describe('TA3-REAL: sin ninguna referencia a guardias_farmacia (la tabla ya no existe)', () => {
+  test('ni en las consultas del adaptador ni en el código de la web (server y src, salvo pruebas)', () => {
+    for (const [k, s] of Object.entries(SQL)) assert.ok(!s.includes('guardias_farmacia'), k);
+    const raiz = join(import.meta.dirname, '..', '..');
+    const ficheros = ['server', 'src'].flatMap((d) => (readdirSync(join(raiz, d), { recursive: true }) as string[])
+      .filter((f) => /\.(ts|tsx)$/.test(f) && !f.includes('pruebas')).map((f) => join(raiz, d, f)));
+    assert.ok(ficheros.length > 20);
+    const con = ficheros.filter((f) => readFileSync(f, 'utf8').includes('guardias_farmacia') && !/rrhh[\\/]contrato\.ts$/.test(f));
+    assert.deepEqual(con, []);
+    // contrato.ts solo la nombra para dejar constancia de que ya no existe (sin tipos ni lecturas).
+    assert.ok(!/interface GuardiaFarmacia|from public\.guardias_farmacia/.test(readFileSync(join(raiz, 'server', 'rrhh', 'contrato.ts'), 'utf8')));
+  });
+  test('la base simulada, como producción, rechaza cualquier consulta a guardias_farmacia', async () => {
+    const c = await cliente(bdSimulada());
+    await rechaza(c.query('select * from public.guardias_farmacia'), '42P01', /does not exist/);
+  });
+});
+
+describe('TA3-REAL: errores de la migración 34 → mensaje llano (nunca el texto técnico)', () => {
+  const con = (code: string, message: string, constraint?: string) => Object.assign(errorPg(code, message), constraint ? { constraint } : {});
+  test('triggers, checks, únicos, FK, permiso y RLS', () => {
+    const casos: [unknown, string, number, RegExp?][] = [
+      [con('P0001', 'AUTOR_AUSENTE'), 'AUTOR_AUSENTE', 500],
+      [con('P0001', `PERSONA_NO_VALIDA:${AINA}:2027-01-09`), 'PERSONA_NO_VALIDA', 409, /no está de alta el 09\/01\/2027/],
+      [con('P0001', 'NO_ES_FESTIVO:2027-01-07'), 'NO_ES_FESTIVO', 409, /El 07\/01\/2027 no es un festivo común/],
+      [con('P0001', 'FARMACIA_NO_HABILITADA_EN_MODULO:OTRA'), 'FARMACIA_NO_HABILITADA_EN_MODULO', 403],
+      [con('23514', 'x', 'guardias_semana_lunes_check'), 'GUARDIA_SEMANA_REGLA', 400],
+      [con('23514', 'x', 'guardias_semana_apoyo_distinto_check'), 'GUARDIA_SEMANA_REGLA', 400],
+      [con('23514', 'new row for relation "guardias_festivo" violates check constraint "guardias_festivo_personas_check"'), 'GUARDIA_FESTIVO_REGLA', 400],
+      [con('23514', 'x', 'festivos_descripcion_check'), 'FESTIVO_REGLA', 400],
+      [con('23514', 'x', 'trabajadoras_horas_check'), 'REGLA_TABLA', 400],
+      [con('23505', 'x', 'guardias_semana_lunes_unico'), 'GUARDIA_SEMANA_DUPLICADA', 409],
+      [con('23505', 'x', 'guardias_festivo_fecha_unico'), 'GUARDIA_FESTIVO_DUPLICADA', 409],
+      [con('23505', 'x', 'festivos_unico'), 'FESTIVO_DUPLICADO', 409],
+      [con('23505', 'x', 'trabajadoras_nombre_unico'), 'DUPLICADO', 409],
+      [con('23503', 'x', 'guardias_semana_persona_guardia_fk'), 'PERSONA_OTRA_FARMACIA', 409],
+      [con('23503', 'x', 'guardias_festivo_persona_fk'), 'PERSONA_OTRA_FARMACIA', 409],
+      [con('42501', 'permission denied for table guardias_semana'), 'PERMISO_DENEGADO', 403],
+      [con('42501', 'new row violates row-level security policy for table "guardias_semana"'), 'RLS_DENEGADO', 403],
+    ];
+    for (const [e, codigo, http, texto] of casos) {
+      const r = traducirErrorBd(e);
+      assert.deepEqual([r.codigo, r.http], [codigo, http], codigo);
+      if (texto) assert.match(r.mensaje, texto);
+      else assert.equal(r.mensaje, MENSAJES_BD[codigo as keyof typeof MENSAJES_BD].mensaje, codigo);
+      assert.ok(!/constraint|violates|relation|policy|permission|guardias_|festivos_|P0001|\d{5}|e0000000/.test(r.mensaje), `${codigo}: ${r.mensaje}`);
+      assert.match(r.mensaje, /No se ha guardado nada/);
+    }
+  });
+});
+
+describe('TA3-REAL: la base simulada aplica las reglas de la migración 34 (como producción)', () => {
+  test('guardias_semana: lunes, personas según farmacia, apoyo distinto, FK de farmacia, alta sábado/domingo, único entre no anuladas', async () => {
+    const bd = bdSimulada({ semanas: [semanaFila()] });
+    const c = await cliente(bd);
+    const ins = (l: string, f: string, g: string | null, a: string | null) => c.query(SQL.insertarSemana, [l, f, g, a]);
+    await rechaza(ins('2027-01-05', 'PIO', AINA, null), '23514', 'guardias_semana_lunes_check');
+    await rechaza(ins('2027-01-11', 'PIO', null, null), '23514', 'guardias_semana_personas_check');
+    await rechaza(ins('2027-01-11', 'OTRA', AINA, null), '23514', 'guardias_semana_personas_check');
+    await rechaza(ins('2027-01-11', 'PIO', AINA, AINA), '23514', 'guardias_semana_apoyo_distinto_check');
+    await rechaza(ins('2027-01-11', 'RITA', AINA, null), '23503', 'guardias_semana_persona_guardia_fk'); // Aina es de PIO
+    await rechaza(ins('2025-12-22', 'PIO', AINA, null), 'P0001', new RegExp(`^PERSONA_NO_VALIDA:${AINA}:2025-12-27$`)); // alta el 01/01/2026
+    await rechaza(ins(LUNES, 'OTRA', null, null), '23505', 'guardias_semana_lunes_unico');
+    await c.query(SQL.anularSemana, [bd.semanas[0].id]);
+    await ins(LUNES, 'OTRA', null, null); // anulada la vigente, el lunes queda libre (índice parcial)
+    assert.deepEqual(bd.semanas.map((s) => [s.farmacia, s.anulada]), [['PIO', true], ['OTRA', false]]);
+  });
+  test('guardias_festivo: festivo común no anulado, personas según farmacia, FK y alta, único; festivos: reglas y único', async () => {
+    const bd = bdSimulada({ festivos: [festivoFila(), festivoFila({ fecha: '2027-01-07', farmacia: 'PIO', descripcion: 'Solo PIO' })] });
+    const c = await cliente(bd);
+    await rechaza(c.query(SQL.insertarGuardiaFestivo, ['2027-01-07', 'PIO', AINA]), 'P0001', /^NO_ES_FESTIVO:2027-01-07$/); // el de PIO no es común
+    await rechaza(c.query(SQL.insertarGuardiaFestivo, ['2027-01-06', 'PIO', null]), '23514', 'guardias_festivo_personas_check');
+    await rechaza(c.query(SQL.insertarGuardiaFestivo, ['2027-01-06', 'OTRA', AINA]), '23514', 'guardias_festivo_personas_check');
+    await rechaza(c.query(SQL.insertarGuardiaFestivo, ['2027-01-06', 'RITA', AINA]), '23503', 'guardias_festivo_persona_fk');
+    await c.query(SQL.insertarGuardiaFestivo, ['2027-01-06', 'PIO', AINA]);
+    await rechaza(c.query(SQL.insertarGuardiaFestivo, ['2027-01-06', 'OTRA', null]), '23505', 'guardias_festivo_fecha_unico');
+    await rechaza(c.query(SQL.insertarFestivo, ['2027-01-06', 'LOCAL', 'Otra vez']), '23505', 'festivos_unico');
+    await rechaza(c.query(SQL.insertarFestivo, ['2027-03-19', 'COMARCAL', 'Sant Josep']), '23514', 'festivos_ambito_check');
+    await rechaza(c.query(SQL.insertarFestivo, ['2027-03-19', 'LOCAL', 'x'.repeat(101)]), '23514', 'festivos_descripcion_check');
+  });
+  test('sin cf.autor, cualquier escritura en las tres tablas falla (AUTOR_AUSENTE)', async () => {
+    const c = await cliente(bdSimulada({ festivos: [festivoFila()] }), false);
+    await rechaza(c.query(SQL.insertarSemana, [LUNES, 'OTRA', null, null]), 'P0001', /^AUTOR_AUSENTE$/);
+    await rechaza(c.query(SQL.insertarFestivo, ['2027-03-19', 'LOCAL', 'x']), 'P0001', /^AUTOR_AUSENTE$/);
+    await rechaza(c.query(SQL.insertarGuardiaFestivo, ['2027-01-06', 'OTRA', null]), 'P0001', /^AUTOR_AUSENTE$/);
+  });
+});
+
+describe('TA3-REAL: adaptador REAL de guardias y festivos (simulado)', () => {
+  test('consultas: columnas de la migración 34, sin anuladas, solo festivos comunes; editar = anular + insertar; nunca DELETE ni columna autor', () => {
+    for (const k of ['semanasPeriodo', 'semanaBloqueo', 'guardiasFestivoPeriodo', 'guardiaFestivoBloqueo'] as const) assert.match(SQL[k], /and not anulada/, k);
+    for (const k of ['festivosPeriodo', 'festivoBloqueo'] as const) assert.match(SQL[k], /farmacia is null and not anulado/, k);
+    assert.match(SQL.insertarSemana, /\(lunes, farmacia, persona_guardia_id, persona_apoyo_sabado_id\)/);
+    assert.match(SQL.insertarGuardiaFestivo, /\(fecha, farmacia, persona_id\)/);
+    assert.match(SQL.insertarFestivo, /\(fecha, ambito, farmacia, descripcion\) values \(\$1::date, \$2, null, \$3\)/);
+    for (const k of ['anularSemana', 'anularGuardiaFestivo'] as const) assert.match(SQL[k], /set anulada = true where id = \$1::uuid and not anulada/);
+    assert.match(SQL.anularFestivo, /set anulado = true where id = \$1::uuid and not anulado/);
+    for (const s of Object.values(SQL)) { assert.ok(!/\bdelete\b/i.test(s), s); }
+    for (const k of ['insertarSemana', 'insertarFestivo', 'insertarGuardiaFestivo'] as const) assert.ok(!/\bautor\b/.test(SQL[k]), k);
+  });
+
+  test('vista: transacción READ ONLY con ROLLBACK; semanas, festivos comunes, guardias de festivo y nombres', async () => {
+    const bd = bdSimulada({ semanas: [semanaFila()], festivos: [festivoFila(), festivoFila({ fecha: '2027-01-07', farmacia: 'PIO' })],
+      guardiasFestivo: [{ id: randomUUID(), fecha: '2027-01-06', farmacia: 'PIO', persona_id: ELENA }] });
+    const v = await crearAdaptadorRrhhReal({ pool: bd.pool }).guardiasTa3.vista('2027-01-01', '2027-01-31');
+    const s = v.semanas.find((x) => x.lunes === LUNES);
+    assert.deepEqual([s?.farmacia, s?.guardia?.nombre, s?.apoyo?.iniciales, s?.horas_guardia, s?.horas_apoyo, s?.festivos], ['PIO', 'Aina Bosch Ferrer', 'EM', 9.5, 4.5, ['2027-01-06']]);
+    assert.deepEqual(v.festivos.map((f) => [f.fecha, f.nombre, f.ambito, f.guardia?.persona?.nombre, f.semana?.guardia?.nombre]),
+      [['2027-01-06', 'Reyes', 'NACIONAL', 'Elena Mas Garriga', 'Aina Bosch Ferrer']]); // el de solo PIO no sale
+    const q = sqls(bd.log);
+    assert.equal(q[0], 'begin transaction read only');
+    assert.equal(q.at(-1), 'rollback');
+    assert.ok(!q.includes(SQL.autor) && escrituras(bd.log).length === 0);
+  });
+
+  test('guardar semana: crear; editar = anular + insertar en la MISMA transacción con autor; sin cambios no escribe', async () => {
+    const bd = bdSimulada();
+    const g = crearAdaptadorRrhhReal({ pool: bd.pool }).guardiasTa3;
+    const r1 = await g.guardarSemana({ lunes: LUNES, farmacia: 'PIO', persona_guardia_id: AINA, persona_apoyo_sabado_id: null }, 'Marc');
+    assert.equal(typeof r1 === 'object' && r1.guardia?.id, AINA);
+    assert.deepEqual(escrituras(bd.log), [SQL.insertarSemana]);
+    bd.log.length = 0;
+    const r2 = await g.guardarSemana({ lunes: LUNES, farmacia: 'PIO', persona_guardia_id: AINA, persona_apoyo_sabado_id: ELENA }, 'Marc');
+    assert.equal(typeof r2 === 'object' && r2.apoyo?.id, ELENA);
+    const q = sqls(bd.log);
+    assert.deepEqual(escrituras(bd.log), [SQL.anularSemana, SQL.insertarSemana]);
+    assert.deepEqual([q[0], q[1], q.at(-1)], ['begin', SQL.autor, 'commit']);
+    assert.equal(q.filter((x) => x === 'begin').length, 1); // una sola transacción
+    assert.deepEqual(bd.semanas.map((s) => [s.persona_apoyo_sabado_id, s.anulada]), [[null, true], [ELENA, false]]);
+    bd.log.length = 0;
+    await g.guardarSemana({ lunes: LUNES, farmacia: 'PIO', persona_guardia_id: AINA, persona_apoyo_sabado_id: ELENA }, 'Marc');
+    assert.deepEqual(escrituras(bd.log), []); // sin cambios
+  });
+
+  test('reglas de la web antes de escribir (las de la BD): persona desconocida o de otra farmacia → PERSONA_NO_VALIDA sin escribir', async () => {
+    const bd = bdSimulada();
+    const g = crearAdaptadorRrhhReal({ pool: bd.pool }).guardiasTa3;
+    assert.equal(await g.guardarSemana({ lunes: LUNES, farmacia: 'RITA', persona_guardia_id: AINA, persona_apoyo_sabado_id: null }, 'Marc'), 'PERSONA_NO_VALIDA');
+    assert.equal(await g.guardarSemana({ lunes: LUNES, farmacia: 'PIO', persona_guardia_id: randomUUID(), persona_apoyo_sabado_id: null }, 'Marc'), 'PERSONA_NO_VALIDA');
+    assert.equal(await g.guardarSemana({ lunes: LUNES, farmacia: 'PIO', persona_guardia_id: AINA, persona_apoyo_sabado_id: AINA }, 'Marc'), 'APOYO_IGUAL_GUARDIA');
+    assert.deepEqual(escrituras(bd.log), []);
+  });
+
+  test('festivo: crear común con su ámbito; duplicado sin escribir; baja anula el festivo y la BD anula su guardia (cascada)', async () => {
+    const bd = bdSimulada({ semanas: [semanaFila()] });
+    const g = crearAdaptadorRrhhReal({ pool: bd.pool }).guardiasTa3;
+    const f = await g.crearFestivo('2027-01-06', 'Reyes', 'NACIONAL', 'Marc');
+    assert.deepEqual(typeof f === 'object' && [f.nombre, f.ambito], ['Reyes', 'NACIONAL']);
+    assert.deepEqual([bd.festivos[0].farmacia, bd.festivos[0].descripcion], [null, 'Reyes']);
+    assert.equal(await g.crearFestivo('2027-01-06', 'Otra vez', 'LOCAL', 'Marc'), 'FESTIVO_DUPLICADO');
+    assert.equal(bd.festivos.length, 1);
+    // Guardia del festivo sin persona: por defecto, la de guardia de esa semana (misma farmacia).
+    const gf = await g.guardarGuardiaFestivo('2027-01-06', 'PIO', null, 'Marc');
+    assert.equal(typeof gf === 'object' && gf.guardia?.persona?.id, AINA);
+    bd.log.length = 0;
+    const baja = await g.anularFestivo('2027-01-06', 'Marc');
+    assert.equal(typeof baja === 'object' && baja.guardia?.persona?.id, AINA); // cómo estaba
+    assert.deepEqual(escrituras(bd.log), [SQL.anularFestivo]); // la guardia no la anula la web
+    assert.deepEqual([bd.festivos[0].anulado, bd.gfs[0].anulada], [true, true]); // la anula la BD (trigger)
+    assert.equal(await g.anularFestivo('2027-01-06', 'Marc'), 'SIN_FESTIVO');
+    const v = await g.vista('2027-01-01', '2027-01-31');
+    assert.deepEqual(v.festivos, []);
+  });
+
+  test('guardia de festivo: solo en festivo común (NO_ES_FESTIVO sin escribir); editar = anular + insertar; persona de otra farmacia rechazada', async () => {
+    const bd = bdSimulada({ festivos: [festivoFila(), festivoFila({ fecha: '2027-01-07', farmacia: 'PIO' })] });
+    const g = crearAdaptadorRrhhReal({ pool: bd.pool }).guardiasTa3;
+    assert.equal(await g.guardarGuardiaFestivo('2027-01-07', 'PIO', AINA, 'Marc'), 'NO_ES_FESTIVO');
+    assert.equal(await g.guardarGuardiaFestivo('2027-01-06', 'RITA', AINA, 'Marc'), 'PERSONA_NO_VALIDA');
+    assert.equal(await g.guardarGuardiaFestivo('2027-01-06', 'PIO', null, 'Marc'), 'PERSONA_OBLIGATORIA'); // sin semana de guardia
+    assert.equal(await g.guardarGuardiaFestivo('2027-01-06', 'OTRA', AINA, 'Marc'), 'OTRA_SIN_PERSONAS');
+    assert.deepEqual(escrituras(bd.log), []);
+    await g.guardarGuardiaFestivo('2027-01-06', 'PIO', AINA, 'Marc');
+    bd.log.length = 0;
+    await g.guardarGuardiaFestivo('2027-01-06', 'OTRA', null, 'Marc');
+    assert.deepEqual(escrituras(bd.log), [SQL.anularGuardiaFestivo, SQL.insertarGuardiaFestivo]);
+    assert.deepEqual(bd.gfs.map((x) => [x.farmacia, x.anulada]), [['PIO', true], ['OTRA', false]]);
+  });
+
+  test('ficha anual: fechas de festivos y «Guardias del año» desde las tablas (solo lectura)', async () => {
+    const bd = bdSimulada({ semanas: [semanaFila({ lunes: '2026-11-09' })], festivos: [festivoFila({ fecha: '2026-12-08', descripcion: 'Inmaculada' })],
+      guardiasFestivo: [{ id: randomUUID(), fecha: '2026-12-08', farmacia: 'PIO', persona_id: AINA }] });
+    const g = crearAdaptadorRrhhReal({ pool: bd.pool }).guardiasTa3;
+    assert.deepEqual(await g.fechasFestivo(2026), ['2026-12-08']);
+    const r = await g.resumenPersona(AINA, 2026);
+    assert.deepEqual([r.semanas_guardia, r.festivos_guardia, r.horas_total], [1, 1, 12.5]);
+    assert.deepEqual(escrituras(bd.log), []);
+  });
+
+  test('calendario en REAL: rellenar salta los festivos comunes; pintar sobre uno avisa (festivos_pintados)', async () => {
+    const bd = bdSimulada({ festivos: [festivoFila({ fecha: '2026-12-08', descripcion: 'Inmaculada' })] });
+    const a = crearAdaptadorRrhhReal({ pool: bd.pool });
+    await a.cambiarEventos({ accion: 'RELLENAR', trabajadora_ids: [AINA], desde: '2026-12-07', hasta: '2026-12-11' }, 'Marc');
+    assert.deepEqual([...new Set([...bd.eventos.values()].map((e) => e.fecha))].sort(), ['2026-12-07', '2026-12-09', '2026-12-10', '2026-12-11']);
+    const p = await a.cambiarEventos({ accion: 'PINTAR', tipo: 'VACACIONES', celdas: [{ trabajadora_id: AINA, fecha: '2026-12-08', franja: 'MANANA' }] }, 'Marc');
+    assert.deepEqual((p as { festivos_pintados?: string[] }).festivos_pintados, ['2026-12-08']);
+  });
+
+  test('API en REAL: un error de la BD sale con su mensaje llano (sin texto técnico) y ROLLBACK', async () => {
+    const casos: [unknown, number, string][] = [
+      [Object.assign(errorPg('23505', 'duplicate key value violates unique constraint "guardias_semana_lunes_unico"'), { constraint: 'guardias_semana_lunes_unico' }), 409, 'GUARDIA_SEMANA_DUPLICADA'],
+      [errorPg('P0001', `PERSONA_NO_VALIDA:${AINA}:2027-01-10`), 409, 'PERSONA_NO_VALIDA'],
+      [Object.assign(errorPg('23503', 'x'), { constraint: 'guardias_semana_persona_guardia_fk' }), 409, 'PERSONA_OTRA_FARMACIA'],
+      [errorPg('42501', 'new row violates row-level security policy for table "guardias_semana"'), 403, 'RLS_DENEGADO'],
+      [errorPg('42501', 'permission denied for table guardias_semana'), 403, 'PERMISO_DENEGADO'],
+      [errorPg('P0001', 'FARMACIA_NO_HABILITADA_EN_MODULO:RITA'), 403, 'FARMACIA_NO_HABILITADA_EN_MODULO'],
+    ];
+    for (const [err, http, codigo] of casos) {
+      const bd = bdSimulada({ fallo: (sql) => (sql === SQL.insertarSemana ? err : null) });
+      const app = Fastify();
+      registrarRrhh(app, { modo: 'REAL', quien: 'Marc', adaptador: crearAdaptadorRrhhReal({ pool: bd.pool }), sesionValida: () => true });
+      await app.ready();
+      try {
+        const r = await app.inject({ method: 'PUT', url: `/api/rrhh/guardias/${LUNES}`, headers: { host: '127.0.0.1:4747', origin: 'http://127.0.0.1:4747', 'content-type': 'application/json' },
+          payload: JSON.stringify({ farmacia: 'PIO', persona_guardia_id: AINA }) });
+        assert.deepEqual([r.statusCode, r.json().error], [http, codigo], codigo);
+        assert.ok(!/constraint|violates|policy|permission denied|guardias_semana|P0001|e0000000/.test(r.json().mensaje), r.body);
+        assert.ok(sqls(bd.log).includes('rollback') && !sqls(bd.log).includes('commit'), codigo);
+      } finally { await app.close(); }
+    }
+  });
+});
+
+describe('TA3-4: herramientas de guardia del calendario en REAL (simulado)', () => {
+  const W = { host: '127.0.0.1:4747', origin: 'http://127.0.0.1:4747', 'content-type': 'application/json' };
+  test('goma: anular la semana y la guardia de un festivo = UPDATE anulada en su transacción con autor; nunca DELETE', async () => {
+    const bd = bdSimulada({ semanas: [semanaFila()], festivos: [festivoFila()], guardiasFestivo: [{ id: randomUUID(), fecha: '2027-01-06', farmacia: 'PIO', persona_id: ELENA }] });
+    const g = crearAdaptadorRrhhReal({ pool: bd.pool }).guardiasTa3;
+    const idAntes = bd.semanas[0].id;
+    const r = await g.anularSemana(LUNES, 'Marc');
+    assert.equal(typeof r === 'object' && r.farmacia, null);
+    assert.deepEqual(escrituras(bd.log), [SQL.anularSemana]);
+    const q = sqls(bd.log);
+    assert.deepEqual([q[0], q[1], q.at(-1)], ['begin', SQL.autor, 'commit']);
+    assert.equal(await g.anularSemana(LUNES, 'Marc'), 'SIN_GUARDIA');
+    // Deshacer la goma: vuelve a crear la semana como estaba (fila nueva, id nuevo; la anulada sigue en el historial).
+    await g.guardarSemana({ lunes: LUNES, farmacia: 'PIO', persona_guardia_id: AINA, persona_apoyo_sabado_id: ELENA }, 'Marc');
+    assert.deepEqual(bd.semanas.map((s) => s.anulada), [true, false]);
+    assert.notEqual(bd.semanas[1].id, idAntes);
+    bd.log.length = 0;
+    const gf = await g.anularGuardiaFestivo('2027-01-06', 'Marc');
+    assert.equal(typeof gf === 'object' && gf.guardia, null);
+    assert.deepEqual(escrituras(bd.log), [SQL.anularGuardiaFestivo]);
+    assert.deepEqual([bd.gfs[0].anulada, bd.festivos[0].anulado], [true, false]); // el festivo sigue
+    assert.equal(await g.anularGuardiaFestivo('2027-01-06', 'Marc'), 'SIN_GUARDIA');
+    assert.equal(await g.anularGuardiaFestivo('2027-01-08', 'Marc'), 'SIN_FESTIVO');
+    assert.ok(!bd.log.some((c) => /\bdelete\b/i.test(c.sql)));
+  });
+
+  test('plan y deshacer por la API en REAL: guardia, apoyo, OTRA, festivo + guardia de festivo, goma del festivo y restaurar (ids nuevos)', async () => {
+    const bd = bdSimulada();
+    const app = Fastify();
+    const a = crearAdaptadorRrhhReal({ pool: bd.pool });
+    registrarRrhh(app, { modo: 'REAL', quien: 'Marc', adaptador: a, sesionValida: () => true });
+    await app.ready();
+    try {
+      const fichas = FICHAS.map((f) => filaATrabajadora(f));
+      const ctx = async () => contextoGuardias(await a.guardiasTa3.vista('2027-01-01', '2027-01-31'), fichas);
+      const aplicar = async (op: OpGuardia) => {
+        const p = peticionGuardia(op);
+        const r = await app.inject({ method: p.metodo, url: p.ruta, headers: W, payload: JSON.stringify(p.cuerpo) });
+        assert.ok(r.statusCode === 200 || r.statusCode === 201, `${p.ruta}: ${r.body}`);
+      };
+      const hacer = async (r: ResultadoPlan) => { assert.ok(!esAviso(r), JSON.stringify(r)); await aplicar((r as PlanGuardia).op); return r as PlanGuardia; };
+      const deshacer = async (p: PlanGuardia) => { for (const op of p.inversa) await aplicar(op); };
+      // Guardia de Aina (PIO) toda la semana; apoyo de Elena el sábado; OTRA sustituye (con confirmación).
+      const pg = await hacer(planGuardia(await ctx(), AINA, '2027-01-05'));
+      const pa = await hacer(planApoyo(await ctx(), ELENA, '2027-01-09'));
+      let s = (await ctx()).semana(LUNES);
+      assert.deepEqual([s?.farmacia, s?.guardia?.id, s?.apoyo?.id], ['PIO', AINA, ELENA]);
+      const po = planOtra(await ctx(), '2027-01-07');
+      assert.ok(!esAviso(po) && po.confirmar !== null);
+      await hacer(po);
+      assert.equal((await ctx()).semana(LUNES)?.farmacia, 'OTRA');
+      await deshacer(po as PlanGuardia);
+      s = (await ctx()).semana(LUNES);
+      assert.deepEqual([s?.farmacia, s?.guardia?.id, s?.apoyo?.id], ['PIO', AINA, ELENA]);
+      // Festivo y su guardia (la herramienta Guardia en el día festivo).
+      const pf = await hacer(planFestivo(await ctx(), '2027-01-06', 'Reyes', 'NACIONAL'));
+      await hacer(planGuardia(await ctx(), ELENA, '2027-01-06'));
+      assert.equal((await ctx()).festivo('2027-01-06')?.guardia?.persona?.id, ELENA);
+      const idFestivo = bd.festivos[0].id;
+      // Goma del festivo (arrastra su guardia, la anula la BD) y deshacer: festivo y guardia de nuevo, con ids nuevos.
+      const pb = planGomaFestivo(await ctx(), '2027-01-06');
+      assert.ok(!esAviso(pb) && /También se anula su guardia/.test(pb.confirmar ?? ''));
+      await hacer(pb);
+      assert.equal((await ctx()).festivo('2027-01-06'), undefined);
+      await deshacer(pb as PlanGuardia);
+      const fe = (await ctx()).festivo('2027-01-06');
+      assert.deepEqual([fe?.nombre, fe?.ambito, fe?.guardia?.persona?.id], ['Reyes', 'NACIONAL', ELENA]);
+      assert.notEqual(bd.festivos.find((f) => !f.anulado)?.id, idFestivo);
+      // Deshacer en orden inverso deja todo como al principio.
+      await deshacer(pf); // el festivo (con la guardia: la anula la BD)
+      await deshacer(pa);
+      await deshacer(pg);
+      assert.equal((await ctx()).semana(LUNES)?.farmacia, null);
+      assert.equal((await ctx()).festivo('2027-01-06'), undefined);
+      assert.ok(!bd.log.some((c) => /\bdelete\b/i.test(c.sql)));
+      // Rutas nuevas: anular exige confirmar.
+      const sin = await app.inject({ method: 'PUT', url: `/api/rrhh/guardias/${LUNES}/anular`, headers: W, payload: '{}' });
+      assert.equal(sin.statusCode, 400);
+    } finally { await app.close(); }
   });
 });

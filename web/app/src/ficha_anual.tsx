@@ -14,7 +14,7 @@ import {
   TEXTO_VACACIONES_PENDIENTE,
   type AvisoFicha, type FichaAnual, type FichaAnualDTO, type Periodo, type ResumenPlantillaDTO,
 } from '../server/rrhh/ficha_anual.ts';
-import { TEXTO_TA3_PENDIENTE, type ResumenGuardiasPersona } from '../server/rrhh/guardias.ts';
+import type { ResumenGuardiasPersona } from '../server/rrhh/guardias.ts';
 import { ErrorApi, enviar, useApiRecargable } from './api.ts';
 import { fechaCorta } from './formato.ts';
 import { MOVIL, useMedia } from './ui.tsx';
@@ -368,7 +368,7 @@ export function FichaAnualSeccion({ id }: { id: string }) {
 
 /**
  * TA3: «Guardias del año»: semanas de guardia (también localizada por teléfono), sábados de apoyo, festivos de guardia
- * y horas fuera de cómputo (se registran; no suman en las horas del año). Sin datos (REAL): tablas pendientes.
+ * y horas fuera de cómputo (se registran; no suman en las horas del año). TA3-REAL: también en REAL (migración 34).
  */
 function BloqueGuardias({ g }: { g: ResumenGuardiasPersona | null }) {
   return (
@@ -377,7 +377,7 @@ function BloqueGuardias({ g }: { g: ResumenGuardiasPersona | null }) {
         <h3 id="t-fa-g">Guardias del año</h3>
         {g && <span className="fa-derecho" data-horas-fuera-computo><strong>{horas(g.horas_total)}</strong> <span className="tenue">fuera de cómputo</span></span>}
       </div>
-      {g === null ? <p className="tenue" data-guardias-pendiente>{TEXTO_TA3_PENDIENTE}.</p> : (
+      {g === null ? <p className="tenue" data-guardias-pendiente>Sin datos de guardias.</p> : (
         <>
           <div className="fa-cifras">
             <Cifra valor={num(g.semanas_guardia)} texto={g.semanas_guardia === 1 ? 'semana de guardia' : 'semanas de guardia'} clase="gris" dato="semanas-guardia" />

@@ -12,7 +12,7 @@ import { crearAdaptadorFixtures, DIR_DTO } from '../adaptador_fixtures.ts';
 import type { VencimientosDTO } from '../contrato.ts';
 import { crearServidor } from '../index.ts';
 import {
-  DICCIONARIO_ESTADOS, ESTADOS_IMPLEMENTADOS, ESTADOS_PAGO, MAX_VENCIMIENTOS_PETICION, TEXTO_H6_PENDIENTE,
+  BLOQUE_DE_ESTADO, DICCIONARIO_ESTADOS, ESTADOS_IMPLEMENTADOS, ESTADOS_PAGO, MAX_VENCIMIENTOS_PETICION, TEXTO_H6_PENDIENTE,
   construirPantalla, crearAlmacenPagos, cumpleBusquedaPago, cumplePeriodo, esCargoNegativo, estadoPago, filasPagos, formaEfectiva,
   formaPorDefectoMarca, textoEstadoPago,
   totalGeneral, totalesPorPeriodo, validarConfirmacion, validarDomiciliados, validarFormaProveedor, validarMarcar,
@@ -109,12 +109,14 @@ describe('estados de pago', () => {
 });
 
 describe('totales por semana y mes', () => {
-  test('cargos menos abonos; por pagar, domiciliado y pagado aparte; importe pendiente y sentido no documentado fuera', () => {
+  test('H6-6: por estado: falta por pagar (pendiente, también domiciliado no vencido, + vencido), domiciliado previsto (solo vencido), pagado y abonos aparte', () => {
     const fs = [
       fila({ importe: 100 }),
       fila({ importe: -30, sentido: 'ABONO' }),
       fila({ importe: 30, sentido: 'ABONO' }), // un abono con importe positivo resta igual
-      fila({ importe: 200, forma_pago: 'DOMICILIACION' }),
+      fila({ importe: 200, forma_pago: 'DOMICILIACION' }), // domiciliado aún no vencido: PENDIENTE → falta por pagar
+      fila({ importe: 150, forma_pago: 'DOMICILIACION', estado_pago: 'DOMICILIADO_PREVISTO' }),
+      fila({ importe: 45, sentido: 'ABONO', estado_pago: 'ABONO_PENDIENTE_COMPENSAR' }),
       fila({ importe: 50, estado_pago: 'PAGADO_MANUAL' }),
       fila({ importe: null }),
       fila({ importe: 80, sentido: 'NO_DOCUMENTADO' }),
@@ -123,11 +125,17 @@ describe('totales por semana y mes', () => {
     const [s1, s2] = totalesPorPeriodo(fs, 'semana');
     assert.deepEqual([s1.clave, s1.desde, s1.hasta], ['2026-11-09', '2026-11-09', '2026-11-15']);
     assert.deepEqual(s1.por_pagar, { neto: 70, cargos: 70, abonos: null, vencimientos: 1 });
-    assert.deepEqual([s2.clave, s2.hasta, s2.vencimientos], ['2026-11-16', '2026-11-22', 7]);
-    assert.deepEqual(s2.por_pagar, { neto: 40, cargos: 100, abonos: -60, vencimientos: 3 });
-    assert.deepEqual(s2.domiciliado, { neto: 200, cargos: 200, abonos: null, vencimientos: 1 });
+    assert.deepEqual([s2.clave, s2.hasta, s2.vencimientos], ['2026-11-16', '2026-11-22', 9]);
+    assert.deepEqual(s2.por_pagar, { neto: 240, cargos: 300, abonos: -60, vencimientos: 4 });
+    assert.deepEqual(s2.domiciliado, { neto: 150, cargos: 150, abonos: null, vencimientos: 1 });
     assert.deepEqual(s2.pagado, { neto: 50, cargos: 50, abonos: null, vencimientos: 1 });
+    assert.deepEqual(s2.abonos, { neto: -45, cargos: null, abonos: -45, vencimientos: 1 });
     assert.deepEqual([s2.sin_importe, s2.sentido_no_documentado], [1, 1]);
+    // Cada estado, en un solo bloque.
+    assert.deepEqual(BLOQUE_DE_ESTADO, {
+      PAGADO_MANUAL: 'pagado', PAGADO_BANCO: 'pagado', DOMICILIADO_PREVISTO: 'domiciliado',
+      PENDIENTE: 'por_pagar', VENCIDO_SIN_PAGAR: 'por_pagar', ABONO_PENDIENTE_COMPENSAR: 'abonos',
+    });
   });
   test('H6-3: el cargo con importe negativo queda fuera de los totales y se cuenta aparte (en cualquier bloque)', () => {
     const [t] = totalesPorPeriodo([
@@ -152,14 +160,14 @@ describe('totales por semana y mes', () => {
     const filas = filasPagos(dto().vencimientos, f.formas, f.marcas, f.hoy);
     const sem = totalesPorPeriodo(filas, 'semana').map((t) => [t.clave, t.por_pagar.neto, t.domiciliado.neto, t.pagado.vencimientos, t.sin_importe, t.sentido_no_documentado, t.cargo_negativo]);
     assert.deepEqual(sem, [
-      ['2026-10-26', null, 380, 0, 0, 0, 1], // 400 − 20 (abono vencido); el cargo negativo de −25 no suma
+      ['2026-10-26', null, 400, 0, 0, 0, 1], // domiciliado vencido 400; el abono vencido (−20) va aparte; el cargo negativo de −25 no suma
       ['2026-11-02', 304.74, null, 0, 0, 1, 0], // HEFAME pagado, pero de sentido no documentado: no suma
       ['2026-11-09', 472.22, 150, 0, 0, 1, 0],
-      ['2026-11-16', null, -45.3, 0, 1, 0, 0],
+      ['2026-11-16', -45.3, null, 0, 1, 0, 0], // H6-6: abono domiciliado aún no vencido (pendiente): falta por pagar
       ['2026-11-30', null, null, 0, 1, 0, 0],
     ]);
-    const mes = totalesPorPeriodo(filas, 'mes').map((t) => [t.clave, t.por_pagar.neto, t.domiciliado.neto, t.domiciliado.abonos, t.sin_importe, t.sentido_no_documentado, t.cargo_negativo]);
-    assert.deepEqual(mes, [['2026-10', null, 380, -20, 0, 0, 1], ['2026-11', 776.96, 104.7, -45.3, 2, 2, 0]]);
+    const mes = totalesPorPeriodo(filas, 'mes').map((t) => [t.clave, t.por_pagar.neto, t.domiciliado.neto, t.abonos.neto, t.sin_importe, t.sentido_no_documentado, t.cargo_negativo]);
+    assert.deepEqual(mes, [['2026-10', null, 400, -20, 0, 0, 1], ['2026-11', 731.66, 150, null, 2, 2, 0]]);
   });
 });
 

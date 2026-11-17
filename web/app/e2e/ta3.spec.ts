@@ -1,13 +1,13 @@
 // TA3 Trabajadores: guardias y festivos con los datos de ejemplo del servidor FIXTURES. Solo FIXTURES
 // (playwright.config.ts lo exige). El modo REAL se simula interceptando la API.
-// Las pruebas que escriben usan 2027 y personas de RITA, y deshacen o dan de baja lo que crean (el servidor es común).
+// TA3-4: la pestaña es de consulta; pintar guardias y festivos en el calendario se prueba en ta3_4.spec.ts.
 import { expect, test, type Page } from '@playwright/test';
 import { join } from 'node:path';
 import { entrar } from './sesion.ts';
 
 const CAPTURAS = join(import.meta.dirname, '..', '..', 'docs', 'capturas', 'ta3');
 const ID = (n: number) => `e0000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
-const AINA = ID(1); const CLARA = ID(2); const ELENA = ID(4); const LAURA = ID(11); const MARTA = ID(12);
+const AINA = ID(1);
 
 test.beforeEach(async ({ page }) => entrar(page));
 
@@ -27,7 +27,6 @@ async function abrirGuardias(page: Page, consulta = '') {
   await expect(page.locator('[data-guardias]')).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
 }
-const aviso = (page: Page) => page.locator('[data-aviso-guardias]');
 
 test.describe('Guardias y festivos PC 1440', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
@@ -79,9 +78,10 @@ test.describe('Guardias y festivos PC 1440', () => {
     await expect(page.locator('[data-cabecera-semana="2026-12-21"] [data-texto-guardia]')).toHaveText('Guardia: Clara Roig Pujol · Apoyo sábado: Elena Mas Garriga');
     await expect(page.locator('[data-columna="2026-12-25"]')).toHaveAttribute('data-festivo-columna', 'Navidad');
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_mes_guardias.png'), fullPage: true });
-    // La paleta ya no habla de TA3.
-    await expect(page.locator('[data-tipos-ta3]')).toContainText('se registran en Guardias y festivos');
+    // La paleta ya no habla de TA3; TA3-4: guardias y festivos se pintan con sus herramientas.
+    await expect(page.locator('[data-tipos-ta3]')).toContainText('guardias, apoyos y festivos se pintan con sus herramientas');
     await expect(page.locator('[data-tipos-ta3]')).not.toContainText('TA3');
+    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(4);
   });
 
   test('pestaña: lista anual por semana y festivos; sin etiqueta TA3', async ({ page }) => {
@@ -107,95 +107,19 @@ test.describe('Guardias y festivos PC 1440', () => {
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_pestana_guardias.png'), fullPage: true });
   });
 
-  test('pestaña: editar farmacia, guardia y apoyo de una semana; alta, guardia por defecto y baja de un festivo; el calendario los usa', async ({ page }) => {
+  test('TA3-4: la pestaña es de consulta (sin formularios); «Editar en el calendario» abre la semana', async ({ page }) => {
     await abrirGuardias(page, '?anio=2026');
-    await page.locator('[data-selector-anio="2027"]').click();
-    await expect(page.locator('[data-semana="2027-01-04"] [data-sin-asignar]')).toBeVisible();
-
-    // Semana del 4 ene 2027: PIO, Clara de guardia, Elena de apoyo (la guardia no sale como apoyo).
-    await page.locator('[data-editar-semana="2027-01-04"]').click();
-    const ed = page.locator('[data-editor-semana="2027-01-04"]');
-    await ed.locator('[data-campo="farmacia"]').selectOption('PIO');
-    await ed.locator('[data-campo="guardia"]').selectOption(CLARA);
-    await expect(ed.locator(`[data-campo="apoyo"] option[value="${CLARA}"]`)).toHaveCount(0);
-    await expect(ed.locator(`[data-campo="guardia"] option[value="${MARTA}"]`)).toHaveCount(0); // solo personas de PIO
-    await ed.locator('[data-campo="apoyo"]').selectOption(ELENA);
-    await ed.locator('[data-guardar-semana]').click();
-    await expect(aviso(page)).toHaveText('Guardia de la semana 4–10 ene 2027 guardada.');
-    const fila = page.locator('[data-semana="2027-01-04"]');
-    await expect(fila.locator('[data-col="guardia"]')).toHaveText('Clara Roig Pujol');
-    await expect(fila.locator('[data-col="apoyo"]')).toHaveText('Elena Mas Garriga');
-    await expect(fila.locator('[data-col="horas"]')).toHaveText('14 h');
-    // RITA sin persona: falla cerrado con el motivo; OTRA: sin personas.
-    await page.locator('[data-editar-semana="2027-01-04"]').click();
-    await ed.locator('[data-campo="farmacia"]').selectOption('RITA');
-    await ed.locator('[data-guardar-semana]').click();
-    await expect(aviso(page)).toHaveText('Elige la persona de guardia');
-    await ed.locator('[data-campo="farmacia"]').selectOption('OTRA');
-    await expect(ed.locator('[data-campo="guardia"]')).toHaveCount(0);
-    await ed.locator('[data-guardar-semana]').click();
-    await expect(fila.locator('[data-col="guardia"]')).toHaveText('farmacia ajena');
-    // Semana del 15 mar 2027: RITA, Laura (para la guardia por defecto del festivo).
-    await page.locator('[data-editar-semana="2027-03-15"]').click();
-    const ed2 = page.locator('[data-editor-semana="2027-03-15"]');
-    await ed2.locator('[data-campo="farmacia"]').selectOption('RITA');
-    await ed2.locator('[data-campo="guardia"]').selectOption(LAURA);
-    await ed2.locator('[data-guardar-semana]').click();
-    await expect(page.locator('[data-semana="2027-03-15"] [data-col="guardia"]')).toHaveText('Laura Serra Coll');
-
-    // Alta de un festivo (fecha y nombre); duplicado rechazado.
-    await page.locator('input[name="fecha_festivo"]').fill('2027-03-19');
-    await page.locator('input[name="nombre_festivo"]').fill('Sant Josep');
-    await page.locator('[data-anadir-festivo]').click();
-    await expect(aviso(page)).toContainText('Festivo añadido');
-    const fe = page.locator('[data-festivo="2027-03-19"]');
-    await expect(fe.locator('[data-nombre-festivo]')).toHaveText('Sant Josep');
-    await expect(fe.locator('[data-guardia-festivo]')).toHaveText('guardia sin asignar');
-    await page.locator('input[name="fecha_festivo"]').fill('2027-03-19');
-    await page.locator('input[name="nombre_festivo"]').fill('Otro');
-    await page.locator('[data-anadir-festivo]').click();
-    await expect(aviso(page)).toHaveText('Ese día ya es festivo.');
-    // Guardia del festivo: por defecto, la de esa semana (RITA, Laura); editable.
-    await page.locator('[data-editar-festivo="2027-03-19"]').click();
-    const ef = page.locator('[data-editor-festivo="2027-03-19"]');
-    await expect(ef.locator('[data-campo="farmacia"]')).toHaveValue('RITA');
-    await expect(ef.locator('[data-campo="persona"]')).toHaveValue(LAURA);
-    await expect(ef.locator('[data-pista-defecto]')).toBeVisible();
-    await ef.locator('[data-campo="farmacia"]').selectOption('PIO');
-    await expect(ef.locator('[data-campo="persona"]')).toHaveValue(''); // otra farmacia: sin persona por defecto
-    await ef.locator('[data-campo="farmacia"]').selectOption('RITA');
-    await ef.locator('[data-campo="persona"]').selectOption(MARTA);
-    await page.screenshot({ path: join(CAPTURAS, 'pc1440_pestana_editar.png'), fullPage: true });
-    await ef.locator('[data-guardar-festivo]').click();
-    await expect(fe.locator('[data-guardia-festivo]')).toContainText('RITA');
-    await expect(fe.locator('[data-guardia-festivo]')).toContainText('Marta Vila Soler');
-
-    // Calendario: columna festiva; rellenar la salta; pintar sobre ella se permite con aviso.
-    await abrirCalendario(page, `?farmacia=RITA&fecha=2027-03-15&persona=${MARTA}`);
-    await expect(page.locator('[data-columna="2027-03-19"]')).toHaveAttribute('data-festivo-columna', 'Sant Josep');
-    await expect(page.locator('[data-cabecera-guardias] [data-texto-guardia]')).toHaveText('Guardia: Laura Serra Coll · Apoyo sábado: —');
-    await page.locator('[data-accion="rellenar"]').click();
-    await expect(page.locator('[data-aviso-calendario]')).toHaveText('Rellenado 15–21 mar 2027: 4 días laborables × 1 persona.');
-    await expect(page.locator(`[data-celda="${MARTA}|2027-03-19|MANANA"]`)).toHaveAttribute('data-tipo', '');
-    await page.locator('[data-herramienta="VACACIONES"]').click();
-    await page.locator(`[data-celda="${MARTA}|2027-03-19|MANANA"]`).click();
-    await expect(page.locator('[data-aviso-calendario]')).toHaveText('Pintado Vacaciones 19 mar 2027: 1 día laborable × 1 persona · 1 franja. Ojo: 19 mar (Sant Josep) es festivo.');
-    await expect(page.locator(`[data-celda="${MARTA}|2027-03-19|MANANA"]`)).toHaveAttribute('data-tipo', 'VACACIONES');
-    await page.screenshot({ path: join(CAPTURAS, 'pc1440_semana_festivo_aviso.png'), fullPage: true });
-    // Se deshace todo lo pintado (el servidor es común a todas las pruebas).
-    await page.locator('[data-accion="deshacer"]').click();
-    await expect(page.locator('[data-aviso-calendario]')).toContainText('Deshecho «Pintado Vacaciones');
-    await page.locator('[data-accion="deshacer"]').click();
-    await expect(page.locator('[data-aviso-calendario]')).toContainText('Deshecho «Rellenado');
-
-    // Baja del festivo con confirmación (se anula con su guardia).
+    await expect(page.locator('[data-solo-consulta]')).toContainText('se pintan en el calendario');
+    await expect(page.locator('.gu form, .gu select, .gu input, [data-alta-festivo], [data-baja-festivo]')).toHaveCount(0);
+    await expect(page.locator('[data-editar-festivo="2026-12-08"]')).toHaveText('Editar en el calendario');
+    await page.locator('[data-editar-semana="2026-11-09"]').click();
+    await expect(page).toHaveURL(/\/trabajadores\/calendario\?fecha=2026-11-09$/);
+    await expect(page.locator('[data-calendario]')).toHaveAttribute('data-vista', 'semana');
+    await expect(page.locator('[data-periodo]')).toHaveText('9–15 nov 2026');
     await abrirGuardias(page, '?anio=2027');
-    await page.locator('[data-baja-festivo="2027-03-19"]').click();
-    await expect(page.locator('[data-confirmar-baja="2027-03-19"]')).toContainText('Se anula con su guardia');
-    await page.locator('[data-baja-festivo-si]').click();
-    await expect(aviso(page)).toContainText('Festivo dado de baja');
-    await expect(page.locator('[data-festivo="2027-03-19"]')).toHaveCount(0);
-    await expect(page.locator('[data-sin-festivos]')).toBeVisible();
+    await expect(page.locator('[data-sin-festivos]')).toContainText('con la herramienta Festivo');
+    await page.locator('[data-editar-calendario-anio]').click();
+    await expect(page.locator('[data-calendario]')).toHaveAttribute('data-vista', 'anio');
   });
 
   test('ficha anual: bloque «Guardias del año» (horas fuera de cómputo)', async ({ page }) => {
@@ -212,23 +136,22 @@ test.describe('Guardias y festivos PC 1440', () => {
   });
 });
 
-test.describe('Modo REAL simulado (intercepción): pestaña y edición deshabilitadas', () => {
+test.describe('TA3-REAL: modo REAL simulado (intercepción del estado): pestaña y edición disponibles', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
-  test('«Pendiente de tablas en Supabase»: pestaña sin enlace; la página no muestra ni edita nada; el calendario sigue sin guardias', async ({ page }) => {
+  test('sin «Pendiente de tablas en Supabase»: pestaña de consulta; el calendario muestra las guardias y sus herramientas', async ({ page }) => {
     await page.route('**/api/rrhh/estado', (r) => r.fulfill({ json: {
-      modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc', guardias_disponibles: false } }));
-    await page.route(/\/api\/rrhh\/guardias\?/, (r) => r.fulfill({ json: { disponible: false, mensaje: 'Pendiente de tablas en Supabase' } }));
-    await page.goto('/trabajadores/guardias');
-    const pestana = page.locator('[data-seccion="guardias"]');
-    await expect(pestana).toHaveAttribute('aria-disabled', 'true');
-    await expect(pestana).toContainText('Pendiente de tablas en Supabase');
-    await expect(page.locator('a[data-seccion="guardias"]')).toHaveCount(0);
-    await expect(page.locator('[data-ta3-pendiente]')).toContainText('Pendiente de tablas en Supabase');
-    await expect(page.locator('[data-semana], [data-festivo], [data-alta-festivo]')).toHaveCount(0);
-    await page.screenshot({ path: join(CAPTURAS, 'pc1440_real_pendiente.png'), fullPage: true });
+      modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc', guardias_disponibles: true } }));
+    await page.goto('/trabajadores/guardias?anio=2026');
+    await expect(page.locator('a[data-seccion="guardias"]')).toHaveCount(1);
+    await expect(page.locator('[data-semana]').first()).toBeVisible();
+    await expect(page.locator('[data-solo-consulta]')).toBeVisible();
+    await expect(page.getByText('Pendiente de tablas en Supabase')).toHaveCount(0);
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_real_guardias.png'), fullPage: true });
     await page.goto('/trabajadores/calendario?fecha=2026-11-09');
     await expect(page.locator('[data-calendario]')).toBeVisible();
-    await expect(page.locator('[data-cabecera-guardias]')).toHaveCount(0);
+    await expect(page.locator('[data-cabecera-guardias]')).toBeVisible();
+    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(4);
+    await expect(page.locator(`[data-marca-g="${ID(21)}|2026-11-09"]`)).toBeVisible(); // titular de PIO de guardia
   });
 });
 

@@ -48,7 +48,9 @@ APPLICATION_NAME = "cf_2at_readonly"
 MODO_CLAIM = "MANUAL_ONE_SHOT"
 TOLERANCIA_CERTIFICADA = Decimal("0.0500")
 FLAGS_ESPERADOS = [False, False, False, "{PIO}"]
-TAREAS_ESPERADAS = ("ControlFarmacias - Importar facturas", "Sincronización ControlFarmacias")
+# La tarea de Alliance (22:15, noche_automatica) tambien es obligatoria en la puerta (encargo de Pio, 2026-11-15).
+TAREAS_ESPERADAS = ("ControlFarmacias - Importar facturas", "Sincronización ControlFarmacias",
+                    "ControlFarmacias - Automatizacion Alliance")
 MARGEN_TAREAS = timedelta(minutes=60)
 
 # Columnas declaradas ANTES de ejecutar. Se incluyen tambien las columnas tecnicas

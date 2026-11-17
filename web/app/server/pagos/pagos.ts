@@ -241,12 +241,17 @@ export interface TotalPeriodo {
   desde: string | null;
   hasta: string | null;
   vencimientos: number;
-  /** Sin marca y forma no domiciliada (incluye sin determinar). */
+  /**
+   * H6-6 (decisión de Marc): agrupación por ESTADO. «Falta por pagar» = PENDIENTE (no vencido, cualquier forma,
+   * también domiciliación) + VENCIDO_SIN_PAGAR.
+   */
   por_pagar: BloqueTotal;
-  /** Sin marca y forma DOMICILIACION (vencido o no). */
+  /** Solo DOMICILIADO_PREVISTO (domiciliado y ya vencido, sin marca). */
   domiciliado: BloqueTotal;
-  /** Con marca de pago vigente. */
+  /** PAGADO_MANUAL (y PAGADO_BANCO). */
   pagado: BloqueTotal;
+  /** ABONO_PENDIENTE_COMPENSAR: aparte. */
+  abonos: BloqueTotal;
   /** Importe ausente: excluido de los totales. */
   sin_importe: number;
   /** Sentido no documentado con importe: excluido de los totales (no se sabe si es cargo o abono). */
@@ -255,8 +260,23 @@ export interface TotalPeriodo {
   cargo_negativo: number;
 }
 export type FilaTotal = Pick<FilaVencimientoPago, 'fecha_vencimiento' | 'importe' | 'sentido' | 'estado_pago' | 'forma_pago'>;
+/** Recuentos de lo que no suma en un total (siempre a la vista). */
+export function excluidosTotal(g: readonly Pick<FilaTotal, 'importe' | 'sentido'>[]): { sin_importe: number; sentido_no_documentado: number; cargo_negativo: number } {
+  return {
+    sin_importe: g.filter((x) => x.importe === null).length,
+    sentido_no_documentado: g.filter((x) => x.importe !== null && x.sentido === 'NO_DOCUMENTADO').length,
+    cargo_negativo: g.filter(esCargoNegativo).length,
+  };
+}
 export type Periodo = 'semana' | 'mes';
 
+/**
+ * Bloque de totales (regla única de H6, también para el calendario de H6-4): suman los importes conocidos de sentido
+ * CARGO o ABONO, salvo los cargos con importe negativo; neto = Σ cargos − Σ |abonos|; null si no suma nada.
+ */
+export function bloqueTotal(fs: readonly FilaTotal[]): BloqueTotal {
+  return bloque(fs);
+}
 function bloque(fs: readonly FilaTotal[]): BloqueTotal {
   const suman = fs.filter((x) => x.importe !== null && x.sentido !== 'NO_DOCUMENTADO' && !esCargoNegativo(x));
   const cargos = sumaConocida(suman.filter((x) => x.sentido === 'CARGO').map((x) => x.importe)).suma;
@@ -265,10 +285,17 @@ function bloque(fs: readonly FilaTotal[]): BloqueTotal {
   return { neto, cargos, abonos, vencimientos: suman.length };
 }
 
-/** Bloque al que va cada fila en los totales. */
-export function bloqueDe(x: Pick<FilaTotal, 'estado_pago' | 'forma_pago'>): 'pagado' | 'domiciliado' | 'por_pagar' {
-  if (x.estado_pago === 'PAGADO_MANUAL' || x.estado_pago === 'PAGADO_BANCO') return 'pagado';
-  return x.forma_pago === 'DOMICILIACION' ? 'domiciliado' : 'por_pagar';
+/**
+ * Bloque al que va cada fila en los totales (H6-6: por estado; la misma regla en la cabecera de totales y en el resumen
+ * del periodo del calendario). Cada vencimiento va a un solo bloque.
+ */
+export type Bloque = 'pagado' | 'domiciliado' | 'por_pagar' | 'abonos';
+export const BLOQUE_DE_ESTADO: Readonly<Record<EstadoPagoVencimiento, Bloque>> = {
+  PAGADO_MANUAL: 'pagado', PAGADO_BANCO: 'pagado', DOMICILIADO_PREVISTO: 'domiciliado',
+  PENDIENTE: 'por_pagar', VENCIDO_SIN_PAGAR: 'por_pagar', ABONO_PENDIENTE_COMPENSAR: 'abonos',
+};
+export function bloqueDe(x: Pick<FilaTotal, 'estado_pago'>): Bloque {
+  return BLOQUE_DE_ESTADO[x.estado_pago];
 }
 
 /** Totales de un conjunto de filas (todo lo filtrado o un periodo). */
@@ -278,9 +305,8 @@ export function totalGeneral(g: readonly FilaTotal[]): Omit<TotalPeriodo, 'clave
     por_pagar: bloque(g.filter((x) => bloqueDe(x) === 'por_pagar')),
     domiciliado: bloque(g.filter((x) => bloqueDe(x) === 'domiciliado')),
     pagado: bloque(g.filter((x) => bloqueDe(x) === 'pagado')),
-    sin_importe: g.filter((x) => x.importe === null).length,
-    sentido_no_documentado: g.filter((x) => x.importe !== null && x.sentido === 'NO_DOCUMENTADO').length,
-    cargo_negativo: g.filter(esCargoNegativo).length,
+    abonos: bloque(g.filter((x) => bloqueDe(x) === 'abonos')),
+    ...excluidosTotal(g),
   };
 }
 

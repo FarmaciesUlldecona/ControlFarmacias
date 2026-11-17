@@ -13,8 +13,17 @@
 // TA3: festivos y guardias (guardias.tsx): vista año con una banda por semana de guardia (color de la farmacia e
 // iniciales «G: XX · A: YY») y los festivos marcados con su farmacia de guardia; semana y mes con la cabecera
 // «Guardia: Nombre · Apoyo sábado: Nombre» y los festivos con su nombre. Rellenar salta festivos; pintar sobre un
-// festivo se permite, con aviso. En REAL (sin tablas de TA3), el calendario sigue igual, sin guardias.
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as EventoPuntero, type ReactNode } from 'react';
+// festivo se permite, con aviso. TA3-REAL: también en REAL (migración 34).
+// TA3-4 (decisión de Marc): las guardias se pintan aquí, no en la pestaña. Herramientas Guardia (clic en una persona:
+// toda la semana de su farmacia; en un festivo, su guardia), Apoyo sábado, Guardia otra farmacia (cabecera del día:
+// su semana o su festivo) y Festivo (cabecera del día: nombre y ámbito). La Goma, sobre sus marcas (G, A, GF, OTRA y el
+// nombre del festivo) las anula; dar de baja un festivo pide confirmación. Sustituir algo de otra farmacia, también.
+// Marcas en una capa superpuesta al pie de la celda (no tapan jornada ni ausencias): franja del color de la farmacia
+// con «G», «A» el sábado del apoyo, «GF» en la guardia de festivo; semana OTRA en gris en la cabecera. Año: clic en la
+// banda de la semana abre un selector de guardia y apoyo. Deshacer: una pila de la sesión con eventos y guardias; las
+// guardias se deshacen con sus pasos inversos por clave (lunes o fecha), así que restaurar tras la goma crea filas nuevas.
+// Las reglas y los avisos, en herramientas_guardia.ts (puro); el servidor y la BD las vuelven a aplicar.
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent as EventoPuntero, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   CATEGORIAS, TEXTO_CATEGORIA, TEXTO_JORNADA, esTitular, filtroFarmacia, type FarmaciaRrhh, type Trabajadora,
@@ -26,7 +35,15 @@ import {
   type CalendarioDTO, type CambioCalendario, type Celda, type EventoCalendario, type Franja, type NotaProxima, type ResultadoCambioDTO, type TipoEvento,
   type TrazaEvento,
 } from '../server/rrhh/eventos.ts';
-import type { FestivoVista, GuardiasRespuestaDTO, SemanaGuardiaVista } from '../server/rrhh/guardias.ts';
+import {
+  AMBITOS_FESTIVO, AMBITO_POR_DEFECTO, LARGO_NOMBRE_FESTIVO, TEXTO_AMBITO,
+  type AmbitoFestivoTa3, type FarmaciaGuardia, type FestivoVista, type GuardiasRespuestaDTO, type SemanaGuardiaVista,
+} from '../server/rrhh/guardias.ts';
+import {
+  candidatasSemana, contextoGuardias, esAviso, marcasGuardia, peticionGuardia, planApoyo, planFestivo, planGomaApoyo, planGomaFestivo,
+  planGomaGuardiaFestivo, planGomaSemana, planGuardia, planOtra, planSemanaElegida,
+  type ContextoGuardias, type MarcaGuardia, type OpGuardia, type PlanGuardia, type ResultadoPlan,
+} from '../server/rrhh/herramientas_guardia.ts';
 import { ErrorApi, enviar, useApiRecargable } from './api.ts';
 import { fechaHora } from './formato.ts';
 import { BandaGuardia, CabeceraGuardias, estiloGuardia, useGuardias } from './guardias.tsx';
@@ -145,8 +162,37 @@ export function PaginaCalendario() {
   );
 }
 
-type Herramienta = { k: 'seleccion' } | { k: 'goma' } | { k: 'tipo'; tipo: TipoEvento };
+/** TA3-4: herramientas de guardia (guardia, apoyo, otra, festivo); la goma también anula sus marcas. */
+type HerramientaGuardia = 'guardia' | 'apoyo' | 'otra' | 'festivo';
+type Herramienta = { k: 'seleccion' } | { k: 'goma' } | { k: 'tipo'; tipo: TipoEvento } | { k: HerramientaGuardia };
 type Aviso = { ok: boolean; texto: string } | null;
+const HERRAMIENTAS_GUARDIA: readonly { k: HerramientaGuardia; cod: string; texto: string; ayuda: string }[] = [
+  { k: 'guardia', cod: 'G', texto: 'Guardia', ayuda: 'Clic en una persona: guardia de su farmacia toda la semana (en un festivo, la guardia del festivo)' },
+  { k: 'apoyo', cod: 'A', texto: 'Apoyo sábado', ayuda: 'Clic en una persona en el sábado de una semana con guardia de su farmacia' },
+  { k: 'otra', cod: 'OTRA', texto: 'Guardia otra farmacia', ayuda: 'Clic en la cabecera de un día: su semana (o su festivo) de farmacia ajena' },
+  { k: 'festivo', cod: 'F', texto: 'Festivo', ayuda: 'Clic en la cabecera de un día: nuevo festivo común con nombre y ámbito' },
+];
+const esHerramientaGuardia = (h: Herramienta): h is { k: HerramientaGuardia } => HERRAMIENTAS_GUARDIA.some((x) => x.k === h.k);
+/** Pila de deshacer de la sesión: cambios de eventos (los deshace el servidor) y de guardias (pasos inversos). */
+type PasoPila = { k: 'eventos' } | { k: 'guardia'; texto: string; inversa: OpGuardia[] };
+const CLAVE_PILA = 'cf.rrhh.calendario.pila.v1';
+/** Pila guardada en esta pestaña; cualquier cosa rara se descarta (falla cerrado: pila vacía). */
+function leerPila(): PasoPila[] {
+  try {
+    const x = JSON.parse(sessionStorage.getItem(CLAVE_PILA) ?? '[]') as unknown;
+    if (!Array.isArray(x)) return [];
+    return x.filter((p): p is PasoPila => !!p && typeof p === 'object'
+      && ((p as PasoPila).k === 'eventos' || ((p as PasoPila).k === 'guardia' && typeof (p as { texto?: unknown }).texto === 'string'
+        && Array.isArray((p as { inversa?: unknown }).inversa)))).slice(-100);
+  } catch { return []; }
+}
+/** Diálogos de las herramientas de guardia. */
+type Dialogo = null
+  | { k: 'festivo'; fecha: string }
+  | { k: 'confirmar'; plan: PlanGuardia }
+  | { k: 'selector'; lunes: string; papel: 'guardia' | 'apoyo' };
+/** Goma sobre una marca de guardia. */
+type MarcaGoma = 'semana' | 'apoyo' | 'guardia_festivo' | 'festivo';
 
 const ERRORES: Readonly<Record<string, string>> = {
   TRABAJADORA_NO_VALIDA: 'Alguna persona ya no está activa: no se ha cambiado nada.',
@@ -159,6 +205,7 @@ const ERRORES: Readonly<Record<string, string>> = {
   DATOS_NO_VALIDOS: 'Datos no válidos: no se ha cambiado nada.',
   EVENTO_FUERA_DEL_ALTA: 'Ese día está fuera del alta o la baja de la persona: no se ha cambiado nada.',
 };
+const enviarOp = (op: OpGuardia) => { const p = peticionGuardia(op); return enviar(p.ruta, p.metodo, p.cuerpo); };
 function textoError(e: unknown): string {
   if (!(e instanceof ErrorApi)) return 'No se ha podido guardar.';
   if (e.codigo === 'DATOS_NO_VALIDOS' && e.errores.nota) return `${e.errores.nota}: no se ha cambiado nada.`;
@@ -202,9 +249,18 @@ function Calendario() {
   // TA-REAL «Notas próximas»: desde hoy (reloj del navegador); al pasar el día salen del recuadro.
   const notas = useApiRecargable<NotaProxima[]>(`/api/rrhh/eventos/notas?farmacia=${farmacia}&desde=${hoy()}`);
   // TA3: guardias y festivos del periodo (sin ellos, en REAL o si falla la lectura, el calendario sigue igual).
-  const guardias = useGuardias(dq, hq);
+  const lecturaGuardias = useGuardias(dq, hq);
+  const guardias = lecturaGuardias.datos;
   const festivos = new Map((guardias?.disponible ? guardias.festivos : []).map((f) => [f.fecha, f]));
   const [herr, setHerr] = useState<Herramienta>({ k: 'seleccion' });
+  const [dialogo, setDialogo] = useState<Dialogo>(null);
+  // Pila de deshacer de la sesión (estado para pintar el botón; ref para leerla dentro de la cola de escrituras).
+  // Se guarda en sessionStorage (esta pestaña): sobrevive a recargar; si no hay almacenamiento, solo en memoria.
+  const [pila, setPila] = useState<PasoPila[]>(leerPila);
+  const pilaRef = useRef(pila);
+  pilaRef.current = pila;
+  useEffect(() => { try { sessionStorage.setItem(CLAVE_PILA, JSON.stringify(pila)); } catch { /* sin almacenamiento */ } }, [pila]);
+  const apilar = (p: PasoPila) => setPila((x) => [...x, p].slice(-100));
   const [sel, setSel] = useState<Set<string>>(() => new Set());
   const [aviso, setAviso] = useState<Aviso>(null);
   const [confirmarAnio, setConfirmarAnio] = useState(false);
@@ -212,7 +268,9 @@ function Calendario() {
   const cola = useRef<Promise<void>>(Promise.resolve());
   const datos = cal.carga.estado === 'ok' ? cal.carga.datos : null;
 
-  useEffect(() => { setSel(new Set()); setConfirmarAnio(false); }, [farmacia, vista, desde, persona]);
+  useEffect(() => { setSel(new Set()); setConfirmarAnio(false); setDialogo(null); }, [farmacia, vista, desde, persona]);
+  // En la vista año solo valen Seleccionar, las herramientas de guardia y la goma.
+  useEffect(() => { if (vista === 'anio' && herr.k === 'tipo') setHerr({ k: 'seleccion' }); }, [vista, herr.k]);
 
   const cambiar = (x: Record<string, string | null>) => {
     const p = new URLSearchParams(params);
@@ -224,13 +282,75 @@ function Calendario() {
   const ejecutar = (tarea: () => Promise<void>) => { cola.current = cola.current.then(tarea).catch(() => undefined); };
   const recargar = () => { cal.recargar(); hist.recargar(); notas.recargar(); };
   const escribir = (ruta: string, cuerpo: object) => ejecutar(async () => {
-    try { setAviso(textoResultado(await enviar<ResultadoCambioDTO>(ruta, 'POST', cuerpo), festivos)); } catch (e) { setAviso({ ok: false, texto: textoError(e) }); }
+    try {
+      const r = await enviar<ResultadoCambioDTO>(ruta, 'POST', cuerpo);
+      setAviso(textoResultado(r, festivos));
+      if (ruta === '/api/rrhh/eventos' && r.cambio !== null) apilar({ k: 'eventos' });
+    } catch (e) { setAviso({ ok: false, texto: textoError(e) }); }
     recargar();
   });
   const cambioEventos = (cuerpo: object) => escribir('/api/rrhh/eventos', cuerpo);
   const ultimo = datos?.ultimo_cambio ?? null;
-  const deshacible = ultimo !== null;
+
+  // --- TA3-4: herramientas de guardia ---------------------------------------------------------------------------------
+  const ctx: ContextoGuardias = contextoGuardias(guardias, datos?.trabajadoras ?? []);
+  /** Guarda un plan (ya confirmado) y lo apila para deshacer; los errores de regla o de la BD, con su mensaje llano. */
+  const guardarPlan = (p: PlanGuardia) => ejecutar(async () => {
+    try {
+      await enviarOp(p.op);
+      apilar({ k: 'guardia', texto: p.texto, inversa: p.inversa });
+      setAviso({ ok: true, texto: `${p.texto}.` });
+    } catch (e) { setAviso({ ok: false, texto: textoError(e) }); }
+    lecturaGuardias.recargar();
+  });
+  const ejecutarPlan = (r: ResultadoPlan) => {
+    setDialogo(null);
+    if (esAviso(r)) { setAviso({ ok: false, texto: r.aviso }); return; }
+    if (r.confirmar) { setDialogo({ k: 'confirmar', plan: r }); return; }
+    guardarPlan(r);
+  };
+  const conGuardias = guardias !== null;
+  /** Clic en una persona con una herramienta de guardia. */
+  const guardiaEnCelda = (h: HerramientaGuardia, c: Celda) => {
+    if (h === 'guardia') ejecutarPlan(planGuardia(ctx, c.trabajadora_id, c.fecha));
+    else if (h === 'apoyo') ejecutarPlan(planApoyo(ctx, c.trabajadora_id, c.fecha));
+    else guardiaEnCabecera(h, c.fecha);
+  };
+  /** Clic en la cabecera de un día (o en un día de la vista año) con una herramienta de guardia. */
+  const guardiaEnCabecera = (h: HerramientaGuardia, fecha: string) => {
+    if (h === 'otra') ejecutarPlan(planOtra(ctx, fecha));
+    else if (h === 'festivo') {
+      if (festivos.has(fecha)) ejecutarPlan(planFestivo(ctx, fecha, '')); // aviso: ya es festivo
+      else { setAviso(null); setDialogo({ k: 'festivo', fecha }); }
+    }
+    else setAviso({ ok: false, texto: `Con ${h === 'guardia' ? 'Guardia' : 'Apoyo sábado'}, haz clic en la fila de la persona, en el día que toca.` });
+  };
+  /** Goma sobre una marca (G, A, GF, OTRA o el festivo). */
+  const gomaMarca = (m: MarcaGoma, fecha: string) => {
+    if (m === 'semana') ejecutarPlan(planGomaSemana(ctx, lunesDe(fecha)));
+    else if (m === 'apoyo') ejecutarPlan(planGomaApoyo(ctx, lunesDe(fecha)));
+    else if (m === 'guardia_festivo') ejecutarPlan(planGomaGuardiaFestivo(ctx, fecha));
+    else ejecutarPlan(planGomaFestivo(ctx, fecha));
+  };
+  const marcas = marcasGuardia(guardias);
+
+  const cima = pila.length > 0 ? pila[pila.length - 1] : null;
+  const deshacible = cima?.k === 'guardia' || ultimo !== null;
+  const textoDeshacer = cima?.k === 'guardia' ? cima.texto : ultimo ? describirCambio(ultimo) : null;
   const deshacer = () => {
+    const top = pilaRef.current.length > 0 ? pilaRef.current[pilaRef.current.length - 1] : null;
+    if (top?.k === 'guardia') {
+      setPila((x) => x.slice(0, -1));
+      ejecutar(async () => {
+        try {
+          for (const op of top.inversa) await enviarOp(op);
+          setAviso({ ok: true, texto: `Deshecho «${top.texto}».` });
+        } catch (e) { setAviso({ ok: false, texto: `No se ha podido deshacer «${top.texto}»: ${textoError(e)}` }); }
+        lecturaGuardias.recargar();
+      });
+      return;
+    }
+    if (top?.k === 'eventos') setPila((x) => x.slice(0, -1));
     if (!ultimo) return;
     escribir('/api/rrhh/eventos/deshacer', { cambio_id: ultimo.id });
   };
@@ -251,6 +371,8 @@ function Calendario() {
 
   const aplicar = (celdas: Celda[]) => {
     if (celdas.length === 0) return;
+    // TA3-4: con una herramienta de guardia cuenta la celda del clic (un arrastre, la primera).
+    if (esHerramientaGuardia(herr)) { guardiaEnCelda(herr.k, celdas[0]); return; }
     if (herr.k === 'seleccion') {
       setSel((p) => {
         const n = new Set(p);
@@ -319,7 +441,11 @@ function Calendario() {
         </label>
       </div>
 
-      {vista !== 'anio' && <Paleta herr={herr} onHerr={setHerr} colores={colores} onColor={cambiarColor} semana={vista === 'semana'} />}
+      <Paleta herr={herr} onHerr={(h) => { setHerr(h); setDialogo(null); }} colores={colores} onColor={cambiarColor} semana={vista === 'semana'}
+        anio={vista === 'anio'} conGuardias={conGuardias && vista !== 'persona'} />
+      {vista === 'persona' && esHerramientaGuardia(herr) && (
+        <p className="tenue" data-aviso-vista-persona>Las herramientas de guardia se usan en las vistas Semana, Mes y Año.</p>
+      )}
 
       <div className="cal-acciones">
         {rango && (
@@ -336,8 +462,8 @@ function Calendario() {
             aria-expanded={confirmarAnio} onClick={() => setConfirmarAnio(true)}>Rellenar año completo</button>
         )}
         <button type="button" className="boton-secundario cal-deshacer" disabled={!deshacible} onClick={deshacer} data-accion="deshacer"
-          title={ultimo ? `Deshacer: ${describirCambio(ultimo)} (Ctrl+Z)` : 'No hay cambios que deshacer'}>
-          Deshacer{ultimo && <span className="cal-deshacer-que" data-deshacer-que>{describirCambio(ultimo)}</span>}
+          title={textoDeshacer ? `Deshacer: ${textoDeshacer} (Ctrl+Z)` : 'No hay cambios que deshacer'}>
+          Deshacer{textoDeshacer && <span className="cal-deshacer-que" data-deshacer-que>{textoDeshacer}</span>}
         </button>
       </div>
 
@@ -363,6 +489,27 @@ function Calendario() {
       )}
 
       {aviso && <p className={aviso.ok ? 'rrhh-aviso-ok' : 'rrhh-error'} role={aviso.ok ? 'status' : 'alert'} data-aviso-calendario>{aviso.texto}</p>}
+      {dialogo?.k === 'festivo' && (
+        <DialogoFestivo fecha={dialogo.fecha} onCancelar={() => setDialogo(null)}
+          onCrear={(nombre, ambito) => ejecutarPlan(planFestivo(ctx, dialogo.fecha, nombre, ambito))} />
+      )}
+      {dialogo?.k === 'confirmar' && (
+        <div className="tarjeta cal-oferta cal-confirmar gu-dialogo" role="alertdialog" aria-labelledby="t-conf-guardia" data-confirmar-guardia={dialogo.plan.op.k}>
+          <p id="t-conf-guardia">{dialogo.plan.confirmar}</p>
+          <div className="rrhh-botones">
+            <button type="button" className={dialogo.plan.op.k === 'anular_festivo' ? 'boton-peligro' : 'boton-primario'} data-confirmar-guardia-si
+              onClick={() => { const p = dialogo.plan; setDialogo(null); guardarPlan(p); }}>
+              {dialogo.plan.op.k === 'anular_festivo' ? 'Sí, dar de baja' : 'Sí, sustituir'}
+            </button>
+            <button type="button" className="boton-secundario" onClick={() => setDialogo(null)} data-confirmar-guardia-no>Cancelar</button>
+          </div>
+        </div>
+      )}
+      {dialogo?.k === 'selector' && (
+        <SelectorSemana lunes={dialogo.lunes} papel={dialogo.papel} semana={ctx.semana(dialogo.lunes)} fichas={todas}
+          farmacia={farmacia === 'AMBAS' ? null : farmacia} onCancelar={() => setDialogo(null)}
+          onGuardar={(g, a) => ejecutarPlan(planSemanaElegida(ctx, dialogo.lunes, g, a))} />
+      )}
 
       {cal.carga.estado === 'cargando' && <p className="tenue">Cargando calendario…</p>}
       {cal.carga.estado === 'error' && <p className="rrhh-error" role="alert">No se ha podido leer el calendario ({cal.carga.mensaje}).</p>}
@@ -373,11 +520,23 @@ function Calendario() {
       {rango && <CabeceraGuardias datos={guardias} />}
       {datos && visibles.length > 0 && rango && (
         <RejillaPeriodo vista={vista} desde={desde} hasta={hasta} hoyF={hoyF} trabajadoras={visibles} agrupar={farmacia === 'AMBAS'}
-          eventos={eventos} sel={sel} herr={herr} colores={colores} tipoFiltro={tipoFiltro} onAplicar={aplicar} festivos={festivos} />
+          eventos={eventos} sel={sel} herr={herr} colores={colores} tipoFiltro={tipoFiltro} onAplicar={aplicar} festivos={festivos}
+          capa={conGuardias ? { de: marcas.de, otra: marcas.otra, goma: herr.k === 'goma', onGoma: gomaMarca } : null}
+          onCabecera={esHerramientaGuardia(herr) ? (f) => guardiaEnCabecera(herr.k, f) : null} />
       )}
       {datos && vista === 'anio' && visibles.length > 0 && (
         <VistaAnio anio={anioSel} hoyF={hoyF} trabajadoras={visibles} eventos={eventos} colores={colores} tipoFiltro={tipoFiltro}
-          onDia={(f) => cambiar({ vista: null, fecha: f })} guardias={guardias} />
+          onDia={(f) => cambiar({ vista: null, fecha: f })} guardias={guardias} herr={herr}
+          onBanda={(lunes) => {
+            if (herr.k === 'guardia' || herr.k === 'apoyo') { setAviso(null); setDialogo({ k: 'selector', lunes, papel: herr.k }); }
+            else if (herr.k === 'otra') ejecutarPlan(planOtra(ctx, lunes));
+            else if (herr.k === 'goma') gomaMarca('semana', lunes);
+          }}
+          onDiaHerramienta={(f) => {
+            if (herr.k === 'goma') { if (festivos.has(f)) gomaMarca('festivo', f); return; }
+            if (herr.k === 'guardia' || herr.k === 'apoyo') { setAviso(null); setDialogo({ k: 'selector', lunes: lunesDe(f), papel: herr.k }); return; }
+            if (esHerramientaGuardia(herr)) guardiaEnCabecera(herr.k, f);
+          }} />
       )}
       {datos && vista === 'persona' && (elegida
         ? <VistaPersona t={elegida} anio={anioSel} hoyF={hoyF} eventos={eventos} sel={sel} herr={herr} colores={colores}
@@ -398,39 +557,67 @@ function Calendario() {
 // Paleta (también leyenda) y colores
 // ---------------------------------------------------------------------------
 
-function Paleta({ herr, onHerr, colores, onColor, semana }: {
+function Paleta({ herr, onHerr, colores, onColor, semana, anio, conGuardias }: {
   herr: Herramienta; onHerr: (h: Herramienta) => void; colores: Colores; onColor: (t: TipoEvento | null, c?: string) => void; semana: boolean;
+  /** Vista año: sin tipos de evento (allí no se pinta por día). */
+  anio: boolean;
+  /** TA3-4: herramientas de guardia (con la lectura de guardias disponible). */
+  conGuardias: boolean;
 }) {
   const [editar, setEditar] = useState(false);
   const activa = (h: Herramienta) => (h.k === herr.k && (h.k !== 'tipo' || (herr.k === 'tipo' && herr.tipo === h.tipo)));
   const accion = herr.k === 'seleccion' ? 'seleccionar' : herr.k === 'goma' ? 'borrar' : 'pintar';
+  const ayudaGuardia = HERRAMIENTAS_GUARDIA.find((x) => x.k === herr.k)?.ayuda;
   return (
     <section className="cal-paleta-marco" aria-label="Paleta y leyenda">
       <div className="cal-paleta" role="toolbar" aria-label="Herramienta">
         <button type="button" className="cal-herr cal-herr-sel" aria-pressed={activa({ k: 'seleccion' })} data-herramienta="seleccion"
-          onClick={() => onHerr({ k: 'seleccion' })}><span className="cal-muestra-sel" aria-hidden="true" />Seleccionar</button>
-        {TIPOS_PINTABLES.map((t) => (
+          onClick={() => onHerr({ k: 'seleccion' })}><span className="cal-muestra-sel" aria-hidden="true" />{anio ? 'Abrir semana' : 'Seleccionar'}</button>
+        {!anio && TIPOS_PINTABLES.map((t) => (
           <button key={t} type="button" className="cal-herr" aria-pressed={activa({ k: 'tipo', tipo: t })} data-herramienta={t} style={estiloColor(colores[t])}
             onClick={() => onHerr({ k: 'tipo', tipo: t })}>
             <span className="cal-muestra" aria-hidden="true">{CODIGO_TIPO_EVENTO[t]}</span>{TEXTO_TIPO_EVENTO[t]}
           </button>
         ))}
+        {conGuardias && (
+          <span className="cal-paleta-grupo" role="group" aria-label="Guardias y festivos" data-paleta-guardias>
+            {HERRAMIENTAS_GUARDIA.map((x) => (
+              <button key={x.k} type="button" className={`cal-herr cal-herr-guardia h-${x.k}`} aria-pressed={activa({ k: x.k })} data-herramienta={x.k}
+                title={x.ayuda} onClick={() => onHerr({ k: x.k })}>
+                <span className="cal-muestra gu-muestra" aria-hidden="true">{x.cod}</span>{x.texto}
+              </button>
+            ))}
+          </span>
+        )}
         <button type="button" className="cal-herr cal-herr-goma" aria-pressed={activa({ k: 'goma' })} data-herramienta="goma"
-          title="Quitar eventos (se anulan y quedan en el historial; lo confirmado no se toca)" onClick={() => onHerr({ k: 'goma' })}><span className="cal-muestra-goma" aria-hidden="true" />Goma</button>
+          title={`Quitar ${anio ? '' : 'eventos (se anulan y quedan en el historial; lo confirmado no se toca)'}${conGuardias ? `${anio ? '' : ' y '}guardias, apoyos, OTRA y festivos: clic sobre su marca` : ''}`}
+          onClick={() => onHerr({ k: 'goma' })}><span className="cal-muestra-goma" aria-hidden="true" />Goma</button>
       </div>
+      {ayudaGuardia && <p className="cal-ayuda-guardia" data-ayuda-guardia={herr.k} role="status">{ayudaGuardia}{herr.k === 'guardia' || herr.k === 'apoyo' ? (anio ? ' (en el año: clic en la banda de la semana).' : '.') : '.'}</p>}
+      {herr.k === 'goma' && conGuardias && <p className="cal-ayuda-guardia" data-ayuda-guardia="goma" role="status">Goma: sobre una celda quita sus eventos; sobre una marca G, A, GF, OTRA o el nombre del festivo, la anula{anio ? ' (en el año: clic en la banda o en el festivo)' : ''}.</p>}
       <p className="tenue cal-tipos-ta3" data-tipos-ta3>
-        {TIPOS_EVENTO.filter((t) => !TIPOS_PINTABLES.includes(t)).map((t) => TEXTO_TIPO_EVENTO[t]).join(', ')}: no se pintan aquí; se registran en <Link to="/trabajadores/guardias">Guardias y festivos</Link>.
+        {TIPOS_EVENTO.filter((t) => !TIPOS_PINTABLES.includes(t)).map((t) => TEXTO_TIPO_EVENTO[t]).join(', ')}: no se pintan como evento; guardias, apoyos y festivos se pintan con sus herramientas
+        (consulta del año en <Link to="/trabajadores/guardias">Guardias y festivos</Link>).
         {' '}{TIPOS_SIN_HORAS.map((t) => TEXTO_TIPO_EVENTO[t]).join(' y ')} no suman horas.
       </p>
       <div className="cal-leyenda">
         <span className="cal-leyenda-estado"><span className="cal-mini e-planificado" aria-hidden="true" /> claro: planificado</span>
         <span className="cal-leyenda-estado"><span className="cal-mini e-confirmado" aria-hidden="true">✓</span> sólido: confirmado</span>
         <span className="cal-leyenda-estado"><span className="cal-nota-marca" aria-hidden="true">✎</span> con nota</span>
-        <span className="tenue" data-ayuda-franjas>
+        {conGuardias && !anio && (
+          <span className="cal-leyenda-estado gu-leyenda" data-leyenda-guardias>
+            <span className="gu-marca g" style={estiloGuardia('PIO')} aria-hidden="true">G</span> guardia PIO
+            <span className="gu-marca g" style={estiloGuardia('RITA')} aria-hidden="true">G</span> guardia RITA
+            <span className="gu-marca a" style={estiloGuardia('PIO')} aria-hidden="true">A</span> apoyo sábado
+            <span className="gu-marca gf" style={estiloGuardia('PIO')} aria-hidden="true">GF</span> guardia de festivo
+            <span className="gu-col-otra-muestra" aria-hidden="true">OTRA</span> farmacia ajena
+          </span>
+        )}
+        {!anio && <span className="tenue" data-ayuda-franjas>
           {semana
             ? `Arriba mañana (M), abajo tarde (T): clic en una franja o arrastre sobre las dos para ${accion} el día.`
             : `Arriba mañana, abajo tarde: un clic ${accion === 'seleccionar' ? 'selecciona' : accion === 'borrar' ? 'borra' : 'pinta'} el día completo (sus franjas).`}
-        </span>
+        </span>}
         <button type="button" className="cal-enlace" aria-expanded={editar} onClick={() => setEditar(!editar)} data-editar-colores>
           {editar ? 'Cerrar colores' : 'Cambiar colores'}
         </button>
@@ -464,8 +651,53 @@ interface Columna { clave: string; cabecera: ReactNode; titulo?: string; finde?:
 interface Fila {
   clave: string; grupo?: FarmaciaRrhh; cabecera?: ReactNode; span?: number; titulo?: string; franja?: Franja;
   celdas: (Celda | null)[]; nombre?: string;
+  /** TA3-4: persona de la fila y si lleva la capa de marcas de guardia (en la semana, la subfila de tarde). */
+  tid?: string; capa?: boolean;
 }
 type Punto = [number, number];
+
+/** TA3-4: capa de marcas de guardia de la rejilla. */
+interface CapaGuardias {
+  de: (tid: string, fecha: string) => MarcaGuardia | undefined;
+  /** Días de semanas de farmacia ajena (cabecera en gris). */
+  otra: ReadonlySet<string>;
+  /** Goma activa: las marcas son botones que anulan. */
+  goma: boolean;
+  onGoma: (m: MarcaGoma, fecha: string) => void;
+}
+const TEXTO_GOMA: Readonly<Record<MarcaGoma, string>> = {
+  semana: 'Quitar la guardia de esa semana', apoyo: 'Quitar el apoyo de ese sábado', guardia_festivo: 'Quitar la guardia de ese festivo', festivo: 'Dar de baja el festivo',
+};
+/** Marca de guardia: texto; con la goma, botón que la anula. */
+function Marca({ clase, f, texto, titulo, goma, onGoma, datos }: {
+  clase: string; f: FarmaciaGuardia; texto: string; titulo: string; goma: MarcaGoma | null; onGoma?: () => void; datos: Record<string, string>;
+}) {
+  return goma && onGoma
+    ? <button type="button" className={`gu-marca ${clase} goma`} style={estiloGuardia(f)} title={`${TEXTO_GOMA[goma]}: ${titulo}`} aria-label={`${TEXTO_GOMA[goma]}: ${titulo}`}
+        onClick={onGoma} data-goma-marca={goma} {...datos}>{texto}</button>
+    : <span className={`gu-marca ${clase}`} style={estiloGuardia(f)} title={titulo} {...datos}>{texto}</span>;
+}
+/** Al pie de la celda: franja de la guardia (toda la semana) con «G» el primer día visible; «A» y «GF». */
+function CapaCelda({ m, tid, fecha, primero, capa }: { m: MarcaGuardia; tid: string; fecha: string; primero: boolean; capa: CapaGuardias }) {
+  const goma = capa.goma;
+  const d = (tipo: string) => ({ [`data-marca-${tipo}`]: `${tid}|${fecha}` });
+  return (
+    <span className="gu-capa" data-capa-guardia={`${tid}|${fecha}`}>
+      {m.guardia && <span className="gu-franja" style={estiloGuardia(m.guardia)} data-franja-guardia={m.guardia} aria-hidden="true" />}
+      {m.guardia && primero && (
+        <Marca clase="g" f={m.guardia} texto="G" titulo={`guardia ${m.guardia}`} goma={goma ? 'semana' : null} onGoma={() => capa.onGoma('semana', fecha)} datos={d('g')} />
+      )}
+      {m.apoyo && <Marca clase="a" f={m.apoyo} texto="A" titulo={`apoyo del sábado ${m.apoyo}`} goma={goma ? 'apoyo' : null} onGoma={() => capa.onGoma('apoyo', fecha)} datos={d('a')} />}
+      {m.festivo && (
+        <Marca clase="gf" f={m.festivo} texto="GF" titulo={`guardia de festivo ${m.festivo}`} goma={goma ? 'guardia_festivo' : null} onGoma={() => capa.onGoma('guardia_festivo', fecha)} datos={d('gf')} />
+      )}
+    </span>
+  );
+}
+/** Texto de las marcas para la etiqueta accesible de la celda. */
+const textoMarcas = (m: MarcaGuardia | undefined) => (m ? [
+  m.guardia ? `semana de guardia ${m.guardia}` : '', m.apoyo ? 'apoyo del sábado' : '', m.festivo ? `guardia de festivo ${m.festivo}` : '',
+].filter(Boolean).join(', ') : '');
 
 function enRect(filas: Fila[], a: Punto, b: Punto): Celda[] {
   const [r0, r1] = [Math.min(a[0], b[0]), Math.max(a[0], b[0])];
@@ -486,10 +718,14 @@ function Evento({ ev, color, atenuado, compacto }: { ev: EventoCalendario; color
   );
 }
 
-function Rejilla({ variante, columnas, filas, nombres, eventos, sel, herr, colores, tipoFiltro, hoyF, onAplicar, pie }: {
+function Rejilla({ variante, columnas, filas, nombres, eventos, sel, herr, colores, tipoFiltro, hoyF, onAplicar, pie, capa = null, onCabecera = null }: {
   variante: 'semana' | 'mes' | 'persona'; columnas: Columna[]; filas: Fila[]; nombres: Map<string, string>;
   eventos: Map<string, EventoCalendario>; sel: Set<string>; herr: Herramienta; colores: Colores; tipoFiltro: TipoEvento | '';
   hoyF: string; onAplicar: (c: Celda[]) => void; pie?: { titulo: string; valores: (number | null)[] };
+  /** TA3-4: marcas de guardia (null: sin lectura de guardias). */
+  capa?: CapaGuardias | null;
+  /** TA3-4: clic en la cabecera de un día con una herramienta de guardia (en lugar de aplicar a la columna). */
+  onCabecera?: ((fecha: string) => void) | null;
 }) {
   const [trazo, setTrazo] = useState<{ a: Punto; b: Punto } | null>(null);
   const trazoRef = useRef(trazo);
@@ -534,7 +770,10 @@ function Rejilla({ variante, columnas, filas, nombres, eventos, sel, herr, color
     const c = filas[p[0]].celdas[p[1]];
     if (c) onAplicar([c]);
   };
-  const columna = (j: number) => onAplicar(filas.flatMap((f) => (f.celdas[j] ? [f.celdas[j] as Celda] : [])));
+  const columna = (j: number) => {
+    if (onCabecera) { onCabecera(columnas[j].clave); return; }
+    onAplicar(filas.flatMap((f) => (f.celdas[j] ? [f.celdas[j] as Celda] : [])));
+  };
 
   const enTrazo = trazo ? new Set(enRect(filas, trazo.a, trazo.b).map(clave)) : null;
   const colorHerr = herr.k === 'tipo' ? colores[herr.tipo] : herr.k === 'goma' ? '#c8372d' : '#1d3b47';
@@ -552,17 +791,36 @@ function Rejilla({ variante, columnas, filas, nombres, eventos, sel, herr, color
         <thead>
           <tr>
             <th scope="col" className="cal-esquina" colSpan={semana ? 2 : 1}>{variante === 'persona' ? 'Mes' : 'Persona'}</th>
-            {columnas.map((c, j) => (
-              <th key={c.clave} scope="col" className={`cal-col${c.finde ? ' finde' : ''}${c.hoy ? ' hoy' : ''}${c.festivo ? ' festivo' : ''}`}
-                title={c.festivo ? `${c.titulo} · Festivo: ${c.festivo}` : c.titulo} data-columna={c.clave} {...(c.festivo ? { 'data-festivo-columna': c.festivo } : {})}>
-                {variante === 'persona' ? c.cabecera : (
-                  <button type="button" className="cal-col-boton" onClick={() => columna(j)} aria-label={`${c.titulo}${c.festivo ? ` (festivo: ${c.festivo})` : ''}: aplicar a todas las personas`}>
-                    {c.cabecera}
-                    {c.festivo && <span className="cal-col-festivo">{semana ? c.festivo : CODIGO_TIPO_EVENTO.FESTIVO}</span>}
-                  </button>
-                )}
-              </th>
-            ))}
+            {columnas.map((c, j) => {
+              const otra = capa?.otra.has(c.clave) ?? false;
+              // OTRA: la marca va en el primer día visible de la semana (lunes o primera columna).
+              const marcaOtra = otra && (diaSemana(c.clave) === 0 || j === 0);
+              const textoFestivo = c.festivo ? (semana ? c.festivo : CODIGO_TIPO_EVENTO.FESTIVO) : '';
+              const accionCabecera = onCabecera ? 'herramienta de guardia' : 'aplicar a todas las personas';
+              return (
+                <th key={c.clave} scope="col" className={`cal-col${c.finde ? ' finde' : ''}${c.hoy ? ' hoy' : ''}${c.festivo ? ' festivo' : ''}${otra ? ' gu-otra' : ''}`}
+                  title={`${c.festivo ? `${c.titulo} · Festivo: ${c.festivo}` : c.titulo}${otra ? ' · Guardia: OTRA (farmacia ajena)' : ''}`} data-columna={c.clave}
+                  {...(c.festivo ? { 'data-festivo-columna': c.festivo } : {})} {...(otra ? { 'data-otra-columna': '' } : {})}>
+                  {variante === 'persona' ? c.cabecera : (
+                    <>
+                      <button type="button" className="cal-col-boton" onClick={() => columna(j)}
+                        aria-label={`${c.titulo}${c.festivo ? ` (festivo: ${c.festivo})` : ''}${otra ? ' (guardia OTRA)' : ''}: ${accionCabecera}`}>
+                        {c.cabecera}
+                        {c.festivo && !capa?.goma && <span className="cal-col-festivo">{textoFestivo}</span>}
+                      </button>
+                      {c.festivo && capa?.goma && (
+                        <button type="button" className="cal-col-festivo goma" onClick={() => capa.onGoma('festivo', c.clave)} data-goma-festivo={c.clave}
+                          title={`${TEXTO_GOMA.festivo}: ${c.festivo}`} aria-label={`${TEXTO_GOMA.festivo}: ${c.festivo}`}>{textoFestivo}</button>
+                      )}
+                      {marcaOtra && (capa?.goma
+                        ? <button type="button" className="gu-col-otra goma" onClick={() => capa.onGoma('semana', c.clave)} data-goma-otra={c.clave} data-marca-otra={c.clave}
+                            title="Quitar la guardia OTRA de esa semana" aria-label="Quitar la guardia OTRA de esa semana">OTRA</button>
+                        : <span className="gu-col-otra" data-marca-otra={c.clave}>OTRA</span>)}
+                    </>
+                  )}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -574,22 +832,28 @@ function Rejilla({ variante, columnas, filas, nombres, eventos, sel, herr, color
               {f.franja && <th scope="row" className="cal-franja" title={TEXTO_FRANJA[f.franja]}>{f.franja === 'MANANA' ? 'M' : 'T'}</th>}
               {f.celdas.map((c, j) => {
                 const fechaCol = columnas[j]?.clave ?? '';
+                // TA3-4: marcas de guardia de la persona ese día (capa al pie; no cambia la celda ni sus eventos).
+                const m = capa && f.capa && f.tid ? capa.de(f.tid, fechaCol) : undefined;
+                const capaCelda = m && capa && f.tid
+                  ? <CapaCelda m={m} tid={f.tid} fecha={fechaCol} primero={m.lunes === fechaCol || j === 0} capa={capa} /> : null;
+                const conCapa = capa && f.capa ? ' con-capa' : '';
                 if (!c) {
                   return f.franja
-                    ? <td key={j} className={`cal-sin-franja${diaSemana(fechaCol) >= 5 ? ' finde' : ''}${fechaCol === hoyF ? ' hoy' : ''}`}
-                        title={`${f.nombre ?? ''} no trabaja de ${TEXTO_FRANJA[f.franja]}`} aria-hidden="true" />
+                    ? <td key={j} className={`cal-sin-franja${diaSemana(fechaCol) >= 5 ? ' finde' : ''}${fechaCol === hoyF ? ' hoy' : ''}${conCapa}`}
+                        title={`${f.nombre ?? ''} no trabaja de ${TEXTO_FRANJA[f.franja]}`} aria-hidden={capaCelda ? undefined : true}>{capaCelda}</td>
                     : <td key={j} className="cal-vacia" aria-hidden="true" />;
                 }
                 const k = clave(c);
                 const evs = eventosDe(eventos, c);
                 const finde = diaSemana(c.fecha) >= 5;
+                const marcasTxt = textoMarcas(capa && f.tid ? capa.de(f.tid, c.fecha) : undefined);
                 const etiqueta = `${nombres.get(c.trabajadora_id) ?? ''}, ${F_LARGA.format(dia(c.fecha))}${c.franja ? `, ${TEXTO_FRANJA[c.franja]}` : ''}: ${evs.length
-                  ? evs.map((e) => descripcionEvento(e, !c.franja)).join('; ') : 'libre'}`;
+                  ? evs.map((e) => descripcionEvento(e, !c.franja)).join('; ') : 'libre'}${marcasTxt ? `; ${marcasTxt}` : ''}`;
                 const manana = eventos.get(claveEv(c.trabajadora_id, c.fecha, 'MANANA'));
                 const tarde = eventos.get(claveEv(c.trabajadora_id, c.fecha, 'TARDE'));
                 const unico = c.franja ? evs[0] ?? null : null;
                 return (
-                  <td key={k} className={`${finde ? 'finde' : ''}${c.fecha === hoyF ? ' hoy' : ''}`}>
+                  <td key={k} className={`${finde ? 'finde' : ''}${c.fecha === hoyF ? ' hoy' : ''}${conCapa}`}>
                     <button type="button" className={`cal-celda${c.franja ? ' de-franja' : ' de-dia'}${sel.has(k) ? ' sel' : ''}${enTrazo?.has(k) ? ' trazo' : ''}`}
                       data-celda={k}
                       {...(c.franja
@@ -607,6 +871,7 @@ function Rejilla({ variante, columnas, filas, nombres, eventos, sel, herr, color
                           </>
                         )}
                     </button>
+                    {capaCelda}
                   </td>
                 );
               })}
@@ -643,10 +908,10 @@ function CabeceraPersona({ t, compacto }: { t: Trabajadora; compacto: boolean })
 const trabajanEl = (trabajadoras: Trabajadora[], eventos: Map<string, EventoCalendario>, f: string) =>
   trabajadoras.filter((t) => FRANJAS.some((fr) => eventos.get(claveEv(t.id, f, fr))?.tipo === 'JORNADA')).length;
 
-function RejillaPeriodo({ vista, desde, hasta, hoyF, trabajadoras, agrupar, eventos, sel, herr, colores, tipoFiltro, onAplicar, festivos }: {
+function RejillaPeriodo({ vista, desde, hasta, hoyF, trabajadoras, agrupar, eventos, sel, herr, colores, tipoFiltro, onAplicar, festivos, capa, onCabecera }: {
   vista: Vista; desde: string; hasta: string; hoyF: string; trabajadoras: Trabajadora[]; agrupar: boolean;
   eventos: Map<string, EventoCalendario>; sel: Set<string>; herr: Herramienta; colores: Colores; tipoFiltro: TipoEvento | ''; onAplicar: (c: Celda[]) => void;
-  festivos: ReadonlyMap<string, FestivoVista>;
+  festivos: ReadonlyMap<string, FestivoVista>; capa: CapaGuardias | null; onCabecera: ((fecha: string) => void) | null;
 }) {
   const dias = rangoFechas(desde, hasta);
   const semana = vista === 'semana';
@@ -666,14 +931,14 @@ function RejillaPeriodo({ vista, desde, hasta, hoyF, trabajadoras, agrupar, even
       const propias = FRANJAS_DE_JORNADA[t.tipo_jornada];
       for (const franja of FRANJAS) {
         filas.push({
-          clave: `${t.id}|${franja}`, franja, nombre: t.nombre, titulo: t.nombre,
+          clave: `${t.id}|${franja}`, franja, nombre: t.nombre, titulo: t.nombre, tid: t.id, capa: franja === 'TARDE',
           ...(franja === 'MANANA' ? { cabecera: <CabeceraPersona t={t} compacto={false} />, span: 2 } : {}),
           celdas: dias.map((f) => (dentro(f) && deAltaEl(t, f) && propias.includes(franja) ? { trabajadora_id: t.id, fecha: f, franja } : null)),
         });
       }
     } else {
       filas.push({
-        clave: t.id, titulo: t.nombre, nombre: t.nombre, cabecera: <CabeceraPersona t={t} compacto />,
+        clave: t.id, titulo: t.nombre, nombre: t.nombre, cabecera: <CabeceraPersona t={t} compacto />, tid: t.id, capa: true,
         celdas: dias.map((f) => (dentro(f) && deAltaEl(t, f) ? { trabajadora_id: t.id, fecha: f } : null)),
       });
     }
@@ -681,7 +946,7 @@ function RejillaPeriodo({ vista, desde, hasta, hoyF, trabajadoras, agrupar, even
   return (
     <Rejilla variante={semana ? 'semana' : 'mes'} columnas={columnas} filas={filas} nombres={new Map(trabajadoras.map((t) => [t.id, t.nombre]))}
       eventos={eventos} sel={sel} herr={herr} colores={colores} tipoFiltro={tipoFiltro} hoyF={hoyF} onAplicar={onAplicar}
-      pie={{ titulo: 'Trabajan', valores: dias.map((f) => trabajanEl(trabajadoras, eventos, f)) }} />
+      pie={{ titulo: 'Trabajan', valores: dias.map((f) => trabajanEl(trabajadoras, eventos, f)) }} capa={capa} onCabecera={onCabecera} />
   );
 }
 
@@ -739,10 +1004,16 @@ function VistaPersona({ t, anio, hoyF, eventos, sel, herr, colores, tipoFiltro, 
 // Vista año: resumen por día (quién falta y cuántos trabajan)
 // ---------------------------------------------------------------------------
 
-function VistaAnio({ anio, hoyF, trabajadoras, eventos, colores, tipoFiltro, onDia, guardias }: {
+function VistaAnio({ anio, hoyF, trabajadoras, eventos, colores, tipoFiltro, onDia, guardias, herr, onBanda, onDiaHerramienta }: {
   anio: string; hoyF: string; trabajadoras: Trabajadora[]; eventos: Map<string, EventoCalendario>; colores: Colores;
   tipoFiltro: TipoEvento | ''; onDia: (f: string) => void; guardias: GuardiasRespuestaDTO | null;
+  /** TA3-4: con una herramienta de guardia o la goma, la banda y los días actúan en lugar de abrir la semana. */
+  herr: Herramienta; onBanda: (lunes: string) => void; onDiaHerramienta: (f: string) => void;
 }) {
+  const conHerr = esHerramientaGuardia(herr) || herr.k === 'goma';
+  const accionBanda = herr.k === 'guardia' ? 'Elegir guardia y apoyo' : herr.k === 'apoyo' ? 'Elegir apoyo del sábado'
+    : herr.k === 'otra' ? 'Poner OTRA (farmacia ajena)' : herr.k === 'goma' ? 'Quitar la guardia de la semana' : null;
+  const bandaActiva = accionBanda !== null && guardias !== null;
   // TA3: semanas de guardia (por lunes) y festivos (por fecha); sin datos (REAL), ni bandas ni marcas.
   const semanas = new Map<string, SemanaGuardiaVista>((guardias?.disponible ? guardias.semanas : []).map((s) => [s.lunes, s]));
   const festivos = new Map<string, FestivoVista>((guardias?.disponible ? guardias.festivos : []).map((f) => [f.fecha, f]));
@@ -777,9 +1048,10 @@ function VistaAnio({ anio, hoyF, trabajadoras, eventos, colores, tipoFiltro, onD
             ? ` · ${faltan.map((e) => `${TEXTO_TIPO_EVENTO[e.tipo]}: ${nombre.get(e.trabajadora_id)}`).join('; ')}` : ''}`;
           return (
             <button key={f} type="button" className={`cal-dia${diaSemana(f) >= 5 ? ' finde' : ''}${f === hoyF ? ' hoy' : ''}${trabajan ? ' con-jornada' : ''}${fe ? ' festivo' : ''}`}
-              data-dia={f} data-ausencias={personas} data-trabajan={trabajan} title={titulo} aria-label={`${titulo}. Abrir la semana`}
+              data-dia={f} data-ausencias={personas} data-trabajan={trabajan} title={titulo}
+              aria-label={`${titulo}. ${conHerr ? (herr.k === 'goma' ? (fe ? 'Dar de baja el festivo' : 'Goma: solo sobre festivos y bandas') : 'Aplicar la herramienta') : 'Abrir la semana'}`}
               {...(fe ? { 'data-festivo': fe.guardia?.farmacia ?? '' } : {})}
-              onClick={() => onDia(f)}>
+              onClick={() => (conHerr ? onDiaHerramienta(f) : onDia(f))}>
               <span className="cal-dia-num">{Number(f.slice(8))}</span>
               {fe && (
                 <span className="cal-dia-festivo" style={fe.guardia ? estiloGuardia(fe.guardia.farmacia) : undefined} aria-hidden="true">
@@ -808,7 +1080,7 @@ function VistaAnio({ anio, hoyF, trabajadoras, eventos, colores, tipoFiltro, onD
                     return f.slice(0, 7) === primero.slice(0, 7) ? diaBoton(f) : <span key={`h${f}`} aria-hidden="true" />;
                   }),
                   // TA3: banda de la semana de guardia (toda la fila), con el color de la farmacia y las iniciales.
-                  ...(s ? [<BandaGuardia key={`b${l}`} s={s} />] : []),
+                  ...(s ? [<BandaGuardia key={`b${l}`} s={s} {...(bandaActiva ? { accion: accionBanda, onClick: () => onBanda(l) } : {})} />] : []),
                 ];
               })}
             </div>
@@ -816,6 +1088,93 @@ function VistaAnio({ anio, hoyF, trabajadoras, eventos, colores, tipoFiltro, onD
         );
       })}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TA3-4: diálogos de las herramientas de guardia
+// ---------------------------------------------------------------------------
+
+/** Festivo: nombre (1–60) y ámbito (por defecto local) del festivo común de ese día. */
+function DialogoFestivo({ fecha, onCrear, onCancelar }: { fecha: string; onCrear: (nombre: string, ambito: AmbitoFestivoTa3) => void; onCancelar: () => void }) {
+  const [nombre, setNombre] = useState('');
+  const [ambito, setAmbito] = useState<AmbitoFestivoTa3>(AMBITO_POR_DEFECTO);
+  const campo = useRef<HTMLInputElement>(null);
+  useEffect(() => { campo.current?.focus(); }, [fecha]);
+  const crear = (e: FormEvent) => { e.preventDefault(); onCrear(nombre, ambito); };
+  return (
+    <form className="tarjeta cal-oferta gu-dialogo" onSubmit={crear} noValidate aria-labelledby="t-nuevo-festivo" data-dialogo-festivo={fecha}
+      onKeyDown={(e) => { if (e.key === 'Escape') onCancelar(); }}>
+      <p id="t-nuevo-festivo"><strong>Nuevo festivo: {mayuscula(F_LARGA.format(dia(fecha)))}</strong> <span className="tenue">común a PIO y RITA</span></p>
+      <div className="gu-dialogo-campos">
+        <label className="rrhh-campo gu-alta-nombre">Nombre <span className="rrhh-campo-pista">{nombre.length}/{LARGO_NOMBRE_FESTIVO}</span>
+          <input ref={campo} name="nombre_festivo" maxLength={LARGO_NOMBRE_FESTIVO} value={nombre} autoComplete="off" onChange={(e) => setNombre(e.target.value)} />
+        </label>
+        <label className="rrhh-campo">Ámbito
+          <select name="ambito_festivo" value={ambito} onChange={(e) => setAmbito(e.target.value as AmbitoFestivoTa3)}>
+            {AMBITOS_FESTIVO.map((a) => <option key={a} value={a}>{TEXTO_AMBITO[a]}</option>)}
+          </select>
+        </label>
+      </div>
+      <div className="rrhh-botones">
+        <button type="submit" className="boton-primario" data-crear-festivo>Crear festivo</button>
+        <button type="button" className="boton-secundario" onClick={onCancelar}>Cancelar</button>
+      </div>
+    </form>
+  );
+}
+
+/** Vista año: guardia y apoyo de una semana (personas de la farmacia elegida, de alta ese fin de semana). */
+function SelectorSemana({ lunes, papel, semana, fichas, farmacia, onGuardar, onCancelar }: {
+  lunes: string; papel: 'guardia' | 'apoyo'; semana: SemanaGuardiaVista | undefined; fichas: Trabajadora[];
+  /** Farmacia del filtro del calendario (null: AMBAS, se elige aquí). */
+  farmacia: FarmaciaRrhh | null;
+  onGuardar: (guardia: string, apoyo: string | null) => void; onCancelar: () => void;
+}) {
+  const inicial: FarmaciaRrhh = farmacia ?? (semana?.farmacia === 'PIO' || semana?.farmacia === 'RITA' ? semana.farmacia : 'PIO');
+  const misma = semana?.farmacia === inicial;
+  const [f, setF] = useState<FarmaciaRrhh>(inicial);
+  const [guardia, setGuardia] = useState(misma ? semana?.guardia?.id ?? '' : '');
+  const [apoyo, setApoyo] = useState(misma ? semana?.apoyo?.id ?? '' : '');
+  const opcionesG = candidatasSemana(fichas, f, lunes, 'guardia');
+  const opcionesA = candidatasSemana(fichas, f, lunes, 'apoyo').filter((t) => t.id !== guardia);
+  const cambiarF = (n: FarmaciaRrhh) => {
+    setF(n);
+    const igual = semana?.farmacia === n;
+    setGuardia(igual ? semana?.guardia?.id ?? '' : ''); setApoyo(igual ? semana?.apoyo?.id ?? '' : '');
+  };
+  const guardar = (e: FormEvent) => { e.preventDefault(); onGuardar(guardia, apoyo === '' ? null : apoyo); };
+  return (
+    <form className="tarjeta cal-oferta gu-dialogo" onSubmit={guardar} noValidate aria-labelledby="t-selector-semana" data-selector-semana={lunes}
+      onKeyDown={(e) => { if (e.key === 'Escape') onCancelar(); }}>
+      <p id="t-selector-semana"><strong>Semana {textoPeriodo('semana', lunes, sumarDias(lunes, 6))}</strong>
+        <span className="tenue"> · {papel === 'apoyo' ? 'apoyo del sábado' : 'guardia y apoyo'}{semana?.farmacia ? ` · ahora: ${semana.farmacia === 'OTRA' ? 'OTRA (farmacia ajena)' : `${semana.farmacia}${semana.guardia ? `, ${semana.guardia.nombre}` : ''}`}` : ' · sin asignar'}</span></p>
+      <div className="gu-dialogo-campos">
+        {farmacia === null && (
+          <label className="rrhh-campo">Farmacia
+            <select value={f} onChange={(e) => cambiarF(e.target.value as FarmaciaRrhh)} data-selector-campo="farmacia">
+              <option value="PIO">PIO</option><option value="RITA">RITA</option>
+            </select>
+          </label>
+        )}
+        <label className="rrhh-campo">Guardia (sábado y domingo)
+          <select value={guardia} onChange={(e) => { setGuardia(e.target.value); if (e.target.value === apoyo) setApoyo(''); }} data-selector-campo="guardia">
+            <option value="">Elige…</option>
+            {opcionesG.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+          </select>
+        </label>
+        <label className="rrhh-campo">Apoyo sábado
+          <select value={apoyo} onChange={(e) => setApoyo(e.target.value)} data-selector-campo="apoyo">
+            <option value="">Sin apoyo</option>
+            {opcionesA.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+          </select>
+        </label>
+      </div>
+      <div className="rrhh-botones">
+        <button type="submit" className="boton-primario" disabled={guardia === ''} data-selector-guardar>Guardar semana</button>
+        <button type="button" className="boton-secundario" onClick={onCancelar}>Cancelar</button>
+      </div>
+    </form>
   );
 }
 

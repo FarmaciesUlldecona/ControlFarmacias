@@ -3,8 +3,8 @@
  * las pruebas y check_fixtures.
  *
  * TA-REAL: alineado con el esquema real (migración 31, sql/migrations/31_cf_trabajadores.sql): tablas trabajadoras,
- * convenio_anual, eventos_calendario (./eventos.ts), guardias_farmacia, festivos y trabajadores_historial (lo escribe
- * un trigger). Mismos nombres de columna y mismos valores. Dos adaptadores con la misma interfaz:
+ * convenio_anual, eventos_calendario (./eventos.ts) y trabajadores_historial (lo escribe un trigger). TA3-REAL
+ * (migración 34): guardias_semana, guardias_festivo y festivos (./guardias.ts). Mismos nombres de columna y mismos valores. Dos adaptadores con la misma interfaz:
  * RRHH_FIXTURES (datos de ejemplo en memoria, para las pruebas) y RRHH_REAL (rol cf_trabajadores_web, ./adaptador_real.ts).
  *
  * Decisiones de Pío:
@@ -219,29 +219,8 @@ export interface EventoHistorial {
   despues: Partial<Trabajadora> | null;
 }
 
-// --- TA2: eventos_calendario en ./eventos.ts. TA3: guardias y festivos en ./guardias.ts --------------------------
-// Las dos tablas de la migración 31 que siguen (guardias_farmacia y festivos) solo se leen y no tienen pantalla: no
-// encajan con la guardia semanal de TA3 (con OTRA, persona y apoyo). Qué hacer con ellas: docs/propuesta_tablas_ta3.sql.
-
-/** guardias_farmacia (migración 31): días de guardia de la farmacia. */
-export interface GuardiaFarmacia {
-  id: string;
-  farmacia: FarmaciaRrhh;
-  fecha: string;
-  nota: string | null;
-  anulada: boolean;
-}
-export type AmbitoFestivo = 'NACIONAL' | 'AUTONOMICO' | 'LOCAL';
-/** festivos (migración 31). */
-export interface Festivo {
-  id: string;
-  fecha: string;
-  ambito: AmbitoFestivo;
-  /** null = festivo común a las dos farmacias (obligatoria si es LOCAL). */
-  farmacia: FarmaciaRrhh | null;
-  descripcion: string;
-  anulado: boolean;
-}
+// --- TA2: eventos_calendario en ./eventos.ts. TA3: guardias_semana, guardias_festivo y festivos en ./guardias.ts ---
+// TA3-REAL (migración 34): guardias_farmacia ya no existe; la web no la lee ni la nombra.
 
 // ---------------------------------------------------------------------------
 // DTO de la API /api/rrhh/*
@@ -252,7 +231,7 @@ export interface EstadoRrhhDTO {
   conectado: boolean;
   datos_ejemplo: boolean;
   mensaje: string;
-  /** TA3: guardias y festivos disponibles (FIXTURES); en REAL, false hasta que existan las tablas en Supabase. */
+  /** TA3-REAL: guardias y festivos disponibles siempre que el módulo tenga datos (FIXTURES o REAL conectado). */
   guardias_disponibles: boolean;
 }
 

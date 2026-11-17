@@ -5,12 +5,16 @@
  * Contexto (Pío): en Ulldecona hay 3 farmacias (PIO, RITA y una ajena, OTRA). La guardia semanal rota entre las 3;
  * los festivos tienen su propia rotación, que puede no coincidir con la semanal.
  *
- * Modelo (3 tablas; en REAL aún no existen: docs/propuesta_tablas_ta3.sql, sin aplicar):
- *  - guardia_semana: lunes (semana = lunes a domingo; una por semana), farmacia PIO|RITA|OTRA, persona de guardia y
- *    persona de apoyo del sábado (opcional).
- *  - festivo: fecha (una por día) y nombre (máx. 60), alta manual; la baja lo anula (nunca se borra).
- *  - guardia_festivo: fecha (debe ser un festivo), farmacia PIO|RITA|OTRA y persona.
- * Reglas:
+ * Modelo (TA3-REAL: migración 34 en producción; en FIXTURES, almacén en memoria con las mismas reglas):
+ *  - guardias_semana: lunes (semana = lunes a domingo; una no anulada por lunes), farmacia PIO|RITA|OTRA, persona de
+ *    guardia y persona de apoyo del sábado (opcional); anulada.
+ *  - festivos: fecha, ambito NACIONAL|AUTONOMICO|LOCAL (por defecto LOCAL), farmacia (la web crea y usa solo los
+ *    comunes: farmacia null), descripcion (= nombre; la BD admite 1–100, la web limita a 60); anulado. Uno no anulado
+ *    por (fecha, farmacia). La baja lo anula (nunca se borra).
+ *  - guardias_festivo: fecha (debe ser un festivo común no anulado), farmacia PIO|RITA|OTRA y persona; anulada. Una no
+ *    anulada por fecha. Si el festivo se anula, cambia de fecha o pasa a tener farmacia, la BD anula su guardia.
+ *  - Editar = anular la fila vigente + crear la nueva en la misma transacción (REAL); autor por cf.autor; nunca DELETE.
+ * Reglas (las mismas que la BD):
  *  - OTRA (farmacia ajena) nunca lleva personas.
  *  - PIO/RITA: la persona es de esa farmacia y está de alta los días del servicio (guardia: sábado y domingo; apoyo:
  *    sábado; festivo: ese día). El titular puede hacer guardia (no computa, pero se registra).
@@ -68,12 +72,14 @@ export const HORAS_SERVICIO: Readonly<Record<ServicioGuardia, number>> = Object.
 export const textoTramos = (ts: readonly Tramo[]) => ts.map((t) => `${t.desde}–${t.hasta}`).join(' y ');
 
 export const LARGO_NOMBRE_FESTIVO = 60;
-/** REAL: las tablas de TA3 no existen todavía en Supabase. */
-export const TEXTO_TA3_PENDIENTE = 'Pendiente de tablas en Supabase';
-export const ERROR_TA3_PENDIENTE = 'TA3_PENDIENTE';
+/** Ámbito del festivo (columna festivos.ambito); la web elige al crear, por defecto LOCAL. */
+export const AMBITOS_FESTIVO = ['LOCAL', 'AUTONOMICO', 'NACIONAL'] as const;
+export type AmbitoFestivoTa3 = (typeof AMBITOS_FESTIVO)[number];
+export const AMBITO_POR_DEFECTO: AmbitoFestivoTa3 = 'LOCAL';
+export const TEXTO_AMBITO: Readonly<Record<AmbitoFestivoTa3, string>> = { LOCAL: 'Local', AUTONOMICO: 'Autonómico', NACIONAL: 'Nacional' };
 
 // ---------------------------------------------------------------------------
-// Tablas (propuesta: docs/propuesta_tablas_ta3.sql)
+// Tablas (migración 34)
 // ---------------------------------------------------------------------------
 
 export interface GuardiaSemana {
@@ -86,10 +92,12 @@ export interface GuardiaSemana {
   persona_apoyo_sabado_id: string | null;
   anulada: boolean;
 }
+/** Festivo común (festivos con farmacia null); nombre = descripcion. */
 export interface FestivoTa3 {
   id: string;
   fecha: string;
   nombre: string;
+  ambito: AmbitoFestivoTa3;
   anulado: boolean;
 }
 export interface GuardiaFestivo {
@@ -122,6 +130,7 @@ export interface SemanaGuardiaVista {
 export interface FestivoVista {
   fecha: string;
   nombre: string;
+  ambito: AmbitoFestivoTa3;
   /** null = sin guardia asignada. */
   guardia: { farmacia: FarmaciaGuardia; persona: PersonaGuardia | null } | null;
   /** Guardia de esa semana (para la persona por defecto). */
@@ -134,7 +143,8 @@ export interface GuardiasDTO {
   semanas: SemanaGuardiaVista[];
   festivos: FestivoVista[];
 }
-export type GuardiasRespuestaDTO = GuardiasDTO | { disponible: false; mensaje: string };
+/** TA3-REAL: siempre disponible (FIXTURES y REAL). */
+export type GuardiasRespuestaDTO = GuardiasDTO;
 
 /** Bloque «Guardias del año» de la ficha anual. */
 export interface ResumenGuardiasPersona {
@@ -202,17 +212,19 @@ export function leerNombreFestivo(v: unknown): { ok: true; nombre: string } | { 
   return { ok: true, nombre: n };
 }
 
-/** Cuerpo de POST /api/rrhh/festivos: { fecha, nombre }. */
-export function validarFestivo(cuerpo: unknown): { ok: true; fecha: string; nombre: string } | { ok: false; errores: ErroresGuardia } {
+/** Cuerpo de POST /api/rrhh/festivos: { fecha, nombre, ambito? } (ámbito por defecto LOCAL). */
+export function validarFestivo(cuerpo: unknown): { ok: true; fecha: string; nombre: string; ambito: AmbitoFestivoTa3 } | { ok: false; errores: ErroresGuardia } {
   if (!esObjeto(cuerpo)) return { ok: false, errores: { _: 'Datos no válidos' } };
   const errores: ErroresGuardia = {};
-  for (const k of Object.keys(cuerpo)) if (k !== 'fecha' && k !== 'nombre') errores[k] = 'Campo no admitido';
+  for (const k of Object.keys(cuerpo)) if (k !== 'fecha' && k !== 'nombre' && k !== 'ambito') errores[k] = 'Campo no admitido';
   if (!esFecha(cuerpo.fecha)) errores.fecha = 'Indica la fecha';
   else if (!enAniosGuardia(cuerpo.fecha)) errores.fecha = 'Fecha fuera de los años del convenio';
   const n = leerNombreFestivo(cuerpo.nombre);
   if (!n.ok) errores.nombre = n.error;
+  const ambito = cuerpo.ambito === undefined || cuerpo.ambito === null || cuerpo.ambito === '' ? AMBITO_POR_DEFECTO : cuerpo.ambito;
+  if (!(AMBITOS_FESTIVO as readonly unknown[]).includes(ambito)) errores.ambito = 'Elige local, autonómico o nacional';
   if (Object.keys(errores).length > 0 || !n.ok) return { ok: false, errores };
-  return { ok: true, fecha: cuerpo.fecha as string, nombre: n.nombre };
+  return { ok: true, fecha: cuerpo.fecha as string, nombre: n.nombre, ambito: ambito as AmbitoFestivoTa3 };
 }
 
 /**
@@ -236,7 +248,7 @@ export function validarGuardiaFestivo(cuerpo: unknown): { ok: true; farmacia: Fa
 // ---------------------------------------------------------------------------
 
 export type ErrorGuardia = 'PERSONA_NO_VALIDA' | 'APOYO_IGUAL_GUARDIA' | 'OTRA_SIN_PERSONAS' | 'PERSONA_OBLIGATORIA'
-  | 'NO_ES_FESTIVO' | 'FESTIVO_DUPLICADO' | 'SIN_FESTIVO';
+  | 'NO_ES_FESTIVO' | 'FESTIVO_DUPLICADO' | 'SIN_FESTIVO' | 'SIN_GUARDIA';
 
 export const sabadoDe = (lunes: string) => sumarDias(lunes, 5);
 export const domingoDe = (lunes: string) => sumarDias(lunes, 6);
@@ -344,19 +356,120 @@ export function semanasDeRotacion(r: SemillaGuardias['rotacion']): Omit<GuardiaS
 // Almacén en memoria (RRHH_FIXTURES)
 // ---------------------------------------------------------------------------
 
-export interface AlmacenGuardias {
-  vista(desde: string, hasta: string): GuardiasDTO;
-  guardarSemana(d: DatosGuardiaSemana): SemanaGuardiaVista | ErrorGuardia;
-  crearFestivo(fecha: string, nombre: string): FestivoVista | ErrorGuardia;
-  /** Baja del festivo: lo anula (y su guardia). */
-  anularFestivo(fecha: string): FestivoVista | ErrorGuardia;
-  guardarGuardiaFestivo(fecha: string, farmacia: FarmaciaGuardia, persona: string | null): FestivoVista | ErrorGuardia;
-  esFestivo(fecha: string): boolean;
+type Quizas<T> = T | Promise<T>;
+export type ResultadoSemana = SemanaGuardiaVista | ErrorGuardia;
+export type ResultadoFestivo = FestivoVista | ErrorGuardia;
+
+/**
+ * TA3-REAL: interfaz común de guardias y festivos. FIXTURES: almacén en memoria (síncrono). REAL: tablas de la
+ * migración 34 con cf_trabajadores_web (asíncrono; cada escritura en su transacción con cf.autor).
+ */
+export interface GuardiasTa3 {
+  vista(desde: string, hasta: string): Quizas<GuardiasDTO>;
+  guardarSemana(d: DatosGuardiaSemana, quien: string): Quizas<ResultadoSemana>;
+  crearFestivo(fecha: string, nombre: string, ambito: AmbitoFestivoTa3, quien: string): Quizas<ResultadoFestivo>;
+  /** Baja del festivo: lo anula (y su guardia: en REAL la anula la BD). */
+  anularFestivo(fecha: string, quien: string): Quizas<ResultadoFestivo>;
+  guardarGuardiaFestivo(fecha: string, farmacia: FarmaciaGuardia, persona: string | null, quien: string): Quizas<ResultadoFestivo>;
+  /** TA3-4 (goma del calendario): anula la guardia de una semana (PIO, RITA u OTRA); queda sin asignar. */
+  anularSemana(lunes: string, quien: string): Quizas<ResultadoSemana>;
+  /** TA3-4 (goma del calendario): anula la guardia de un festivo; el festivo sigue. */
+  anularGuardiaFestivo(fecha: string, quien: string): Quizas<ResultadoFestivo>;
   /** TA3-2: fechas de los festivos dados de alta en un año (puente en las vacaciones de la ficha anual). */
+  fechasFestivo(anio: number): Quizas<string[]>;
+  resumenPersona(tid: string, anio: number): Quizas<ResumenGuardiasPersona>;
+}
+
+export interface AlmacenGuardias extends GuardiasTa3 {
+  vista(desde: string, hasta: string): GuardiasDTO;
+  guardarSemana(d: DatosGuardiaSemana): ResultadoSemana;
+  crearFestivo(fecha: string, nombre: string, ambito?: AmbitoFestivoTa3): ResultadoFestivo;
+  anularFestivo(fecha: string): ResultadoFestivo;
+  guardarGuardiaFestivo(fecha: string, farmacia: FarmaciaGuardia, persona: string | null): ResultadoFestivo;
+  anularSemana(lunes: string): ResultadoSemana;
+  anularGuardiaFestivo(fecha: string): ResultadoFestivo;
+  esFestivo(fecha: string): boolean;
   fechasFestivo(anio: number): string[];
   resumenPersona(tid: string, anio: number): ResumenGuardiasPersona;
   /** Todas las filas, anuladas incluidas (pruebas y check_fixtures). */
   datos(): { semanas: GuardiaSemana[]; festivos: FestivoTa3[]; guardiasFestivo: GuardiaFestivo[] };
+}
+
+// ---------------------------------------------------------------------------
+// Vistas (puras; FIXTURES y REAL las construyen igual a partir de sus filas)
+// ---------------------------------------------------------------------------
+
+export type BuscarPersona = (id: string | null) => PersonaGuardia | null;
+export const personaDe = (t: Trabajadora | undefined): PersonaGuardia | null =>
+  (t ? { id: t.id, nombre: t.nombre, farmacia: t.farmacia, iniciales: iniciales(t.nombre) } : null);
+
+/** Filas vigentes indexadas (las anuladas no cuentan). */
+export function indice(d: DatosGuardias) {
+  const v = vigentes(d);
+  const semanas = new Map(v.semanas.map((s) => [s.lunes, s]));
+  return {
+    semana: (lunes: string) => semanas.get(lunes),
+    festivo: (f: string) => v.festivos.get(f),
+    gf: (f: string) => v.gf.get(f),
+    esFestivo: (f: string) => v.festivos.has(f),
+    festivos: [...v.festivos.values()],
+  };
+}
+
+export function vistaSemanaDe(lunes: string, d: DatosGuardias, persona: BuscarPersona): SemanaGuardiaVista {
+  const ix = indice(d);
+  const s = ix.semana(lunes);
+  const h = horasSemana(lunes, ix.esFestivo);
+  const conGuardia = s !== undefined && s.farmacia !== 'OTRA';
+  return {
+    lunes, domingo: domingoDe(lunes), farmacia: s?.farmacia ?? null, guardia: persona(s?.persona_guardia_id ?? null), apoyo: persona(s?.persona_apoyo_sabado_id ?? null),
+    horas_guardia: conGuardia ? h.guardia : 0, horas_apoyo: conGuardia && s.persona_apoyo_sabado_id !== null ? h.apoyo : 0,
+    festivos: [0, 1, 2, 3, 4, 5, 6].map((n) => sumarDias(lunes, n)).filter(ix.esFestivo),
+  };
+}
+
+export function vistaFestivoDe(f: FestivoTa3, d: DatosGuardias, persona: BuscarPersona): FestivoVista {
+  const ix = indice(d);
+  const g = ix.gf(f.fecha);
+  const s = ix.semana(lunesDe(f.fecha));
+  return {
+    fecha: f.fecha, nombre: f.nombre, ambito: f.ambito,
+    guardia: g ? { farmacia: g.farmacia, persona: persona(g.persona_id) } : null,
+    semana: s ? { farmacia: s.farmacia, guardia: persona(s.persona_guardia_id) } : null,
+  };
+}
+
+/** Lunes cuyas semanas tocan el periodo (dentro de los años del convenio). */
+export function lunesDelPeriodo(desde: string, hasta: string): string[] {
+  const lunes: string[] = [];
+  for (let l = lunesDe(desde); l <= hasta; l = sumarDias(l, 7)) if (l >= LUNES_MIN && l <= LUNES_MAX) lunes.push(l);
+  return lunes;
+}
+
+/** Vista de un periodo. `d` debe contener las filas de las semanas que lo tocan (de lunes a domingo). */
+export function vistaGuardias(desde: string, hasta: string, d: DatosGuardias, persona: BuscarPersona): GuardiasDTO {
+  return {
+    disponible: true, desde, hasta, semanas: lunesDelPeriodo(desde, hasta).map((l) => vistaSemanaDe(l, d, persona)),
+    festivos: indice(d).festivos.filter((f) => f.fecha >= desde && f.fecha <= hasta).sort((a, b) => a.fecha.localeCompare(b.fecha))
+      .map((f) => vistaFestivoDe(f, d, persona)),
+  };
+}
+
+/** Persona por defecto de la guardia de un festivo: la de guardia de esa semana si es la misma farmacia. */
+export function personaPorDefecto(farmacia: FarmaciaGuardia, semana: GuardiaSemana | undefined): string | null {
+  return semana && semana.farmacia === farmacia && farmacia !== 'OTRA' ? semana.persona_guardia_id : null;
+}
+
+/** Reglas de la guardia de un festivo (como la BD); devuelve la persona resuelta o el error. */
+export function reglasGuardiaFestivo(fecha: string, farmacia: FarmaciaGuardia, personaId: string | null, o: {
+  esFestivoComun: boolean; semana: GuardiaSemana | undefined; ficha: (id: string) => Trabajadora | undefined;
+}): { persona: string | null } | ErrorGuardia {
+  if (!o.esFestivoComun) return 'NO_ES_FESTIVO';
+  if (farmacia === 'OTRA') return personaId !== null ? 'OTRA_SIN_PERSONAS' : { persona: null };
+  const pid = personaId ?? personaPorDefecto(farmacia, o.semana);
+  if (pid === null) return 'PERSONA_OBLIGATORIA';
+  if (!personaValida(o.ficha(pid), farmacia, [fecha])) return 'PERSONA_NO_VALIDA';
+  return { persona: pid };
 }
 
 export function crearAlmacenGuardias(o: { fichas: () => Trabajadora[]; nuevoId: () => string; semilla?: SemillaGuardias | null }): AlmacenGuardias {
@@ -364,50 +477,17 @@ export function crearAlmacenGuardias(o: { fichas: () => Trabajadora[]; nuevoId: 
   let festivos: FestivoTa3[] = [];
   let gfs: GuardiaFestivo[] = [];
   const ficha = (id: string) => o.fichas().find((t) => t.id === id);
-  const persona = (id: string | null): PersonaGuardia | null => {
-    const t = id === null ? undefined : ficha(id);
-    return t ? { id: t.id, nombre: t.nombre, farmacia: t.farmacia, iniciales: iniciales(t.nombre) } : null;
-  };
+  const persona: BuscarPersona = (id) => (id === null ? null : personaDe(ficha(id)));
+  const datosAhora = (): DatosGuardias => ({ semanas, festivos, guardiasFestivo: gfs });
   const festivoDe = (f: string) => festivos.find((x) => x.fecha === f && !x.anulado);
   const esFestivo = (f: string) => festivoDe(f) !== undefined;
   const semanaDe = (lunes: string) => semanas.find((s) => s.lunes === lunes && !s.anulada);
   const gfDe = (f: string) => gfs.find((g) => g.fecha === f && !g.anulada);
-
-  const vistaSemana = (lunes: string): SemanaGuardiaVista => {
-    const s = semanaDe(lunes);
-    const h = horasSemana(lunes, esFestivo);
-    const conGuardia = s !== undefined && s.farmacia !== 'OTRA';
-    return {
-      lunes, domingo: domingoDe(lunes), farmacia: s?.farmacia ?? null, guardia: persona(s?.persona_guardia_id ?? null), apoyo: persona(s?.persona_apoyo_sabado_id ?? null),
-      horas_guardia: conGuardia ? h.guardia : 0, horas_apoyo: conGuardia && s.persona_apoyo_sabado_id !== null ? h.apoyo : 0,
-      festivos: [0, 1, 2, 3, 4, 5, 6].map((n) => sumarDias(lunes, n)).filter(esFestivo),
-    };
-  };
-  const vistaFestivo = (f: FestivoTa3): FestivoVista => {
-    const g = gfDe(f.fecha);
-    const s = semanaDe(lunesDe(f.fecha));
-    return {
-      fecha: f.fecha, nombre: f.nombre,
-      guardia: g ? { farmacia: g.farmacia, persona: persona(g.persona_id) } : null,
-      semana: s ? { farmacia: s.farmacia, guardia: persona(s.persona_guardia_id) } : null,
-    };
-  };
-
-  /** Persona por defecto de la guardia de un festivo: la de guardia de esa semana si es la misma farmacia. */
-  const porDefecto = (fecha: string, farmacia: FarmaciaGuardia): string | null => {
-    const s = semanaDe(lunesDe(fecha));
-    return s && s.farmacia === farmacia && farmacia !== 'OTRA' ? s.persona_guardia_id : null;
-  };
+  const vistaSemana = (lunes: string) => vistaSemanaDe(lunes, datosAhora(), persona);
+  const vistaFestivo = (f: FestivoTa3) => vistaFestivoDe(f, datosAhora(), persona);
 
   const almacen: AlmacenGuardias = {
-    vista(desde, hasta) {
-      const lunes: string[] = [];
-      for (let l = lunesDe(desde); l <= hasta; l = sumarDias(l, 7)) if (l >= LUNES_MIN && l <= LUNES_MAX) lunes.push(l);
-      return {
-        disponible: true, desde, hasta, semanas: lunes.map(vistaSemana),
-        festivos: festivos.filter((f) => !f.anulado && f.fecha >= desde && f.fecha <= hasta).sort((a, b) => a.fecha.localeCompare(b.fecha)).map(vistaFestivo),
-      };
-    },
+    vista: (desde, hasta) => vistaGuardias(desde, hasta, datosAhora(), persona),
     guardarSemana(d) {
       const e = reglasSemana(d, ficha);
       if (e) return e;
@@ -416,9 +496,9 @@ export function crearAlmacenGuardias(o: { fichas: () => Trabajadora[]; nuevoId: 
       semanas = previa ? semanas.map((s) => (s.id === previa.id ? n : s)) : [...semanas, n];
       return vistaSemana(d.lunes);
     },
-    crearFestivo(fecha, nombre) {
+    crearFestivo(fecha, nombre, ambito = AMBITO_POR_DEFECTO) {
       if (festivoDe(fecha)) return 'FESTIVO_DUPLICADO';
-      const f: FestivoTa3 = { id: o.nuevoId(), fecha, nombre, anulado: false };
+      const f: FestivoTa3 = { id: o.nuevoId(), fecha, nombre, ambito, anulado: false };
       festivos = [...festivos, f];
       return vistaFestivo(f);
     },
@@ -433,17 +513,25 @@ export function crearAlmacenGuardias(o: { fichas: () => Trabajadora[]; nuevoId: 
     },
     guardarGuardiaFestivo(fecha, farmacia, personaId) {
       const f = festivoDe(fecha);
-      if (!f) return 'NO_ES_FESTIVO';
-      let pid = personaId;
-      if (farmacia === 'OTRA') { if (pid !== null) return 'OTRA_SIN_PERSONAS'; }
-      else {
-        pid ??= porDefecto(fecha, farmacia);
-        if (pid === null) return 'PERSONA_OBLIGATORIA';
-        if (!personaValida(ficha(pid), farmacia, [fecha])) return 'PERSONA_NO_VALIDA';
-      }
+      const r = reglasGuardiaFestivo(fecha, farmacia, personaId, { esFestivoComun: f !== undefined, semana: semanaDe(lunesDe(fecha)), ficha });
+      if (typeof r === 'string' || !f) return typeof r === 'string' ? r : 'NO_ES_FESTIVO';
       const previa = gfDe(fecha);
-      const n: GuardiaFestivo = { id: previa?.id ?? o.nuevoId(), fecha, farmacia, persona_id: pid, anulada: false };
+      const n: GuardiaFestivo = { id: previa?.id ?? o.nuevoId(), fecha, farmacia, persona_id: r.persona, anulada: false };
       gfs = previa ? gfs.map((g) => (g.id === previa.id ? n : g)) : [...gfs, n];
+      return vistaFestivo(f);
+    },
+    anularSemana(lunes) {
+      const s = semanaDe(lunes);
+      if (!s) return 'SIN_GUARDIA';
+      semanas = semanas.map((x) => (x.id === s.id ? { ...x, anulada: true } : x));
+      return vistaSemana(lunes);
+    },
+    anularGuardiaFestivo(fecha) {
+      const f = festivoDe(fecha);
+      const g = gfDe(fecha);
+      if (!f) return 'SIN_FESTIVO';
+      if (!g) return 'SIN_GUARDIA';
+      gfs = gfs.map((x) => (x.id === g.id ? { ...x, anulada: true } : x));
       return vistaFestivo(f);
     },
     esFestivo,

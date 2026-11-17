@@ -38,6 +38,8 @@ import {
   DICCIONARIO_ESTADOS, ESTADOS_IMPLEMENTADOS, construirPantalla, crearAlmacenPagos, totalesPorPeriodo,
 } from '../../app/server/pagos/pagos.ts';
 import { leerSemillaPagos } from '../../app/server/pagos/rutas.ts';
+import { agregar as agregarCalendario, resumenAnio, sinFecha as sinFechaCalendario } from '../../app/server/pagos/calendario.ts';
+import { PESTANAS_VENCIMIENTOS, cumpleBusquedaLista } from '../../app/server/pagos/lista.ts';
 
 const RAIZ = join(import.meta.dirname, '..');
 const DTO = join(RAIZ, 'dto');
@@ -1236,11 +1238,12 @@ comprobar('H6: sin CIF = forma sin determinar con aviso; sin configurar = domici
   return si(f8.forma_pago === 'SIN_DETERMINAR' && f8.sin_cif && pantallaH6.sin_cif.vencimientos === 1 && cof.forma === 'DOMICILIACION' && cof.por_defecto,
     JSON.stringify({ f8: f8.forma_pago, cof }));
 });
-comprobar('H6: totales por mes (noviembre: por pagar 776,96; domiciliado 150 − 45,30 = 104,70; octubre: 400 − 20 = 380 y el cargo negativo fuera)', () => {
+comprobar('H6-6: totales por mes por estado (noviembre: falta por pagar 731,66 con el abono domiciliado no vencido −45,30; domiciliado previsto 150; octubre: domiciliado 400, abono por compensar −20 aparte, cargo negativo fuera)', () => {
   const nov = totalesPorPeriodo(pantallaH6.filas, 'mes').find((t) => t.clave === '2026-11');
   const oct = totalesPorPeriodo(pantallaH6.filas, 'mes').find((t) => t.clave === '2026-10');
-  return si(nov.por_pagar.neto === 776.96 && nov.domiciliado.neto === 104.7 && nov.domiciliado.abonos === -45.3 && nov.sin_importe === 2
-    && nov.sentido_no_documentado === 2 && nov.cargo_negativo === 0 && oct.domiciliado.neto === 380 && oct.domiciliado.cargos === 400
+  return si(nov.por_pagar.neto === 731.66 && nov.por_pagar.abonos === -45.3 && nov.domiciliado.neto === 150 && nov.abonos.neto === null
+    && nov.sin_importe === 2 && nov.sentido_no_documentado === 2 && nov.cargo_negativo === 0
+    && oct.domiciliado.neto === 400 && oct.domiciliado.cargos === 400 && oct.abonos.neto === -20
     && oct.cargo_negativo === 1 && oct.por_pagar.neto === null, JSON.stringify({ nov, oct }));
 });
 comprobar('H6-3: abono vencido = «Abono pendiente de compensar» (azul); cargo negativo con aviso y fuera de totales; check:real cuenta ambos (solo números)', () => {
@@ -1272,6 +1275,30 @@ comprobar('H6: propuesta SQL (docs/propuesta_tablas_h6_pagos.sql) sin aplicar: a
     && /grant select on [^;]*vencimientos_marcas_pago[^;]*to cf_lectura/.test(s) && !/^grant [^;]*\bdelete\b/im.test(s)
     && /ROLLBACK/.test(s) && /A CONFIRMAR/.test(s) && /DECISIONES PARA EL CIRCUITO/.test(s)
     && !/facturas_vencimientos[^;\n]*to cf_pagos_web/.test(s), 'faltan elementos');
+});
+
+// --- H6-4: Vencimientos en calendario -------------------------------------------------------------------------------
+comprobar('H6-4: calendario: 04/11 con 2 pagos (304,74 €, rojo); noviembre 9 pagos y 881,66 € (2 pendientes y 2 no documentados fuera); octubre 380 € (cargo negativo fuera, violeta); sin cambiar los fixtures', () => {
+  const dia = agregarCalendario(pantallaH6.filas, 'dia');
+  const d4 = dia.get('2026-11-04');
+  const anio = resumenAnio(pantallaH6.filas, '2026');
+  const [oct, nov] = [anio[9], anio[10]];
+  const colores = Object.fromEntries([...dia].map(([k, r]) => [k, r.color]));
+  const esperado = {
+    '2026-10-29': 'azul', '2026-10-30': 'domiciliado', '2026-10-31': 'domiciliado', '2026-11-04': 'rojo', '2026-11-07': 'verde',
+    '2026-11-11': 'rojo', '2026-11-14': 'domiciliado', '2026-11-15': 'domiciliado', '2026-11-19': 'neutro', '2026-11-21': 'neutro', '2026-11-30': 'neutro',
+  };
+  return si(d4.pagos === 2 && d4.total.neto === 304.74 && d4.color === 'rojo'
+    && nov.pagos === 9 && nov.total.neto === 881.66 && nov.sin_importe === 2 && nov.sentido_no_documentado === 2 && nov.color === 'rojo'
+    && oct.pagos === 3 && oct.total.neto === 380 && oct.cargo_negativo === 1 && oct.color === 'domiciliado'
+    && anio.filter((m) => m.pagos > 0).length === 2 && nov.intensidad === 4 && isDeepStrictEqual(colores, esperado)
+    && sinFechaCalendario(pantallaH6.filas) === 0 && pantallaH6.filas.length === 12,
+  JSON.stringify({ d4: d4 && [d4.pagos, d4.total.neto, d4.color], nov: [nov.pagos, nov.total.neto], oct: [oct.pagos, oct.total.neto], colores }));
+});
+comprobar('H6-4: lista con las pestañas de Facturas (12 / 6 conciliadas / 5 pendientes / 2 en revisión / 3 no revisadas) y búsqueda por importe', () => {
+  const n = Object.fromEntries(PESTANAS_VENCIMIENTOS.map((t) => [t.clave, pantallaH6.filas.filter(t.cumple).length]));
+  const porImporte = pantallaH6.filas.filter((f) => cumpleBusquedaLista(f, '152,37')).length;
+  return si(isDeepStrictEqual(n, { todas: 12, conciliadas: 6, pendientes: 5, revision: 2, 'no-revisadas': 3 }) && porImporte === 2, JSON.stringify({ n, porImporte }));
 });
 
 // --- Informe ----------------------------------------------------------------------

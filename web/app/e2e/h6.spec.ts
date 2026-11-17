@@ -71,11 +71,15 @@ test.describe('PC 1440', () => {
     // Importe pendiente: recuento visible; totales sin inventar ceros.
     await expect(page.locator('[data-recuento-sin-importe]')).toContainText('2 con importe pendiente (fuera de los totales)');
     const general = page.locator('[data-total-general]');
-    await expect(general.locator('[data-total="por_pagar"] .ve-cifra-n')).toHaveText('776,96 €');
-    await expect(general.locator('[data-total="domiciliado"] .ve-cifra-n')).toHaveText('484,70 €');
+    // H6-6: por estado. Falta por pagar 731,66 (incluye el abono domiciliado no vencido); domiciliado previsto, solo lo
+    // vencido (400 + 150); abonos por compensar aparte (−20). 731,66 + 550 − 20 = 1.261,66, el total del año.
+    await expect(general.locator('[data-total="por_pagar"] .ve-cifra-etiqueta')).toHaveText('Falta por pagar');
+    await expect(general.locator('[data-total="por_pagar"] .ve-cifra-n')).toHaveText('731,66 €');
+    await expect(general.locator('[data-total="domiciliado"] .ve-cifra-n')).toHaveText('550,00 €');
+    await expect(general.locator('[data-total="abonos"] .ve-cifra-n')).toHaveText('-20,00 €');
     await expect(general.locator('[data-notas-total]')).toContainText('2 importes pendientes · 2 de sentido no documentado · 1 cargo con importe negativo');
-    await expect(page.locator('[data-periodo="2026-11-16"] [data-total="domiciliado"] .ve-cifra-n')).toHaveText('-45,30 €');
-    await expect(page.locator('[data-periodo="2026-11-30"] [data-total="por_pagar"] .ve-cifra-n')).toHaveText('—');
+    // H6-4: sin tarjetas de totales por semana ni por mes.
+    await expect(page.locator('.ve-periodo, [data-totales]')).toHaveCount(0);
     await expect(page.locator('[data-nota-banco]')).toContainText('sin datos bancarios');
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_lista.png'), fullPage: true });
@@ -84,23 +88,24 @@ test.describe('PC 1440', () => {
     await expect(page).toHaveURL('/facturas/f0000000-0000-4000-8000-000000000005');
   });
 
-  test('filtros: atrasados, esta semana, este mes, próximos 30, rango, estado, forma y búsqueda (en la URL); totales por mes', async ({ page }) => {
-    const pestana = (t: string) => page.getByRole('tab', { name: t, exact: true });
-    await pestana('Atrasados').click();
+  test('filtros de H6: atrasados, esta semana, este mes, próximos 30, rango, estado, forma y búsqueda (en la URL)', async ({ page }) => {
+    // H6-4: el periodo pasa de pestañas a un selector («Vencimiento»); las pestañas son las de Facturas.
+    const periodo = page.locator('select[name="periodo"]');
+    await periodo.selectOption('atrasados');
     await expect(filas(page)).toHaveCount(8); // 3 rojos + 4 domiciliados previstos + 1 abono pendiente; el pagado no
     await expect(page.locator('tr[data-vencimiento] [data-estado-pago="PAGADO_MANUAL"]')).toHaveCount(0);
     await expect(page).toHaveURL(/periodo=atrasados/);
-    await pestana('Esta semana').click();
+    await periodo.selectOption('semana');
     await expect(filas(page)).toHaveCount(2); // 19 y 21 nov
-    await pestana('Este mes').click();
+    await periodo.selectOption('mes');
     await expect(filas(page)).toHaveCount(9);
-    await pestana('Próximos 30 días').click();
+    await periodo.selectOption('p30');
     await expect(filas(page)).toHaveCount(3);
-    await pestana('Rango').click();
+    await periodo.selectOption('rango');
     await page.locator('input[name="desde"]').fill('2026-11-01');
     await page.locator('input[name="hasta"]').fill('2026-11-07');
     await expect(filas(page)).toHaveCount(3);
-    await pestana('Todos').click();
+    await periodo.selectOption('');
     await expect(filas(page)).toHaveCount(12);
     await page.locator('select[name="estado"]').selectOption('VENCIDO_SIN_PAGAR');
     await expect(filas(page)).toHaveCount(3);
@@ -120,11 +125,6 @@ test.describe('PC 1440', () => {
     await expect(filas(page)).toHaveCount(1);
     await page.getByRole('button', { name: 'Quitar filtros' }).click();
     await expect(filas(page)).toHaveCount(12);
-    await page.locator('[data-totales="mes"]').click();
-    await expect(page.locator('.ve-periodo')).toHaveCount(2);
-    await expect(page.locator('[data-periodo="2026-11"] [data-total="por_pagar"] .ve-cifra-n')).toHaveText('776,96 €');
-    await expect(page.locator('[data-periodo="2026-11"] [data-total="domiciliado"] .ve-cifra-n')).toHaveText('104,70 €');
-    await expect(page.locator('[data-periodo="2026-11"] [data-total="domiciliado"] .ve-cifra-nota')).toHaveText('150,00 € cargos − 45,30 € abonos');
   });
 
   test('marcar varios como pagados: fecha (hoy por defecto) y forma de cada proveedor; quedan «pagado (marcado a mano)»', async ({ page }) => {
@@ -146,7 +146,8 @@ test.describe('PC 1440', () => {
     await expect(contador(page, 'VENCIDO_SIN_PAGAR')).toHaveText('0');
     await page.locator('[data-filtro-estado="VENCIDO_SIN_PAGAR"]').click(); // quitar el filtro
     for (const n of [1, 2, 10]) await expect(page.locator(`tr[data-vencimiento="${V(n)}"]`)).toContainText('pagado (marcado a mano)13/11/2026 · Transferencia');
-    await expect(page.locator('[data-total-general] [data-total="por_pagar"] .ve-cifra-n')).toHaveText('—');
+    // H6-6: queda en falta por pagar el abono domiciliado del 21/11, aún no vencido.
+    await expect(page.locator('[data-total-general] [data-total="por_pagar"] .ve-cifra-n')).toHaveText('-45,30 €');
     await page.locator('[data-historial-pagos] summary').click();
     await expect(page.locator('[data-historial-pagos] li').first()).toContainText('Marc marcó pagado');
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_marcado_hecho.png'), fullPage: true });
@@ -217,14 +218,18 @@ test.describe('PC 1440', () => {
     await expect(neg).toContainText('-25,00 €');
     await expect(neg.locator('[data-cargo-negativo]')).toHaveText('importe negativo: revisar');
     await expect(page.locator('[data-recuento-cargo-negativo]')).toContainText('1 cargo con importe negativo: revisar (fuera de los totales)');
-    // Semana del 26/10: domiciliado 400 − 20 (abono) = 380; los −25 no restan.
-    const sem = page.locator('[data-periodo="2026-10-26"]');
-    await expect(sem.locator('[data-total="domiciliado"] .ve-cifra-n')).toHaveText('380,00 €');
-    await expect(sem.locator('[data-total="domiciliado"] .ve-cifra-nota')).toHaveText('400,00 € cargos − 20,00 € abonos');
-    await expect(sem.locator('[data-notas-total]')).toContainText('1 cargo con importe negativo');
-    await page.locator('[data-totales="mes"]').click();
-    await expect(page.locator('[data-periodo="2026-10"] [data-total="domiciliado"] .ve-cifra-n')).toHaveText('380,00 €');
-    await page.locator('[data-totales="semana"]').click();
+    // H6-4: en el calendario el 31/10 no suma (H6-5: la celda dice «importe negativo», ya no «—»); filtrada la semana
+    // del 26/10, la cabecera de totales da domiciliado previsto 400 y, aparte (H6-6), abonos por compensar −20; los −25
+    // no restan.
+    await expect(page.locator('[data-dia="2026-10-31"] [data-importe-dia]')).toHaveAttribute('data-sin-total', 'importe negativo');
+    await expect(page.locator('[data-dia="2026-10-31"]')).toHaveAttribute('data-color-dia', 'domiciliado');
+    await expect(page.locator('[data-semana="2026-10-26"]')).toHaveAttribute('aria-label', /total 380,00\s€.*1 cargo con importe negativo/);
+    await page.locator('[data-semana="2026-10-26"]').click();
+    const cab = page.locator('[data-total-general]');
+    await expect(cab.locator('[data-total="domiciliado"] .ve-cifra-n')).toHaveText('400,00 €');
+    await expect(cab.locator('[data-total="abonos"] .ve-cifra-n')).toHaveText('-20,00 €');
+    await expect(cab.locator('[data-notas-total]')).toContainText('1 cargo con importe negativo');
+    await page.locator('[data-quitar-filtro-calendario]').click();
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_cargo_negativo.png'), fullPage: true });
   });
@@ -284,7 +289,7 @@ function pantallaImportesLargos(): PantallaVencimientosDTO {
 async function comprobarDentro(page: Page, donde: string) {
   const fuera = await page.evaluate(() => {
     const malos: string[] = [];
-    for (const tarjeta of document.querySelectorAll<HTMLElement>('.ve-periodo, .ve-total-general')) {
+    for (const tarjeta of document.querySelectorAll<HTMLElement>('.ve-total-general')) {
       const t = tarjeta.getBoundingClientRect();
       for (const el of tarjeta.querySelectorAll<HTMLElement>('.ve-cifra-n, .ve-cifra-nota, .ve-cifra-etiqueta')) {
         const r = el.getBoundingClientRect();
@@ -302,24 +307,51 @@ async function comprobarDentro(page: Page, donde: string) {
   expect(fuera, donde).toEqual([]);
 }
 
-test.describe('H6-2: importes largos dentro de las tarjetas de totales', () => {
+/** H6-4: importe de cada día, semana y mes del calendario dentro de su celda (el visible: completo o corto). */
+async function comprobarCalendarioDentro(page: Page, donde: string) {
+  const fuera = await page.evaluate(() => {
+    const malos: string[] = [];
+    for (const celda of document.querySelectorAll<HTMLElement>('.vc-dia, .vc-sem, .vc-mes-boton')) {
+      const c = celda.getBoundingClientRect();
+      for (const el of celda.querySelectorAll<HTMLElement>('.vc-importe-largo, .vc-importe-corto, .vc-mes-total, .vc-globo, .vc-dia-num')) {
+        if (getComputedStyle(el).display === 'none' || el.offsetParent === null) continue;
+        const rango = document.createRange();
+        rango.selectNodeContents(el);
+        const t = rango.getBoundingClientRect();
+        if (t.width === 0) continue;
+        if (t.left < c.left - 0.5 || t.right > c.right + 0.5 || t.top < c.top - 0.5 || t.bottom > c.bottom + 0.5) {
+          malos.push(`${celda.dataset.dia ?? celda.dataset.semana ?? celda.closest<HTMLElement>('[data-mes]')?.dataset.mes}: «${el.textContent}» ${Math.round(t.left)}–${Math.round(t.right)} en ${Math.round(c.left)}–${Math.round(c.right)}`);
+        }
+      }
+    }
+    return malos;
+  });
+  expect(fuera, donde).toEqual([]);
+}
+
+test.describe('H6-2 / H6-4: importes largos dentro de la cabecera de totales y de las celdas del calendario', () => {
   for (const ancho of [1440, 1024, 390]) {
-    test(`${ancho} px: semana, mes y cabecera con importes de 6 y 7 cifras`, async ({ page }) => {
+    test(`${ancho} px: cabecera, calendario Mes, Semana y Año con importes de 6 y 7 cifras`, async ({ page }) => {
       await page.setViewportSize({ width: ancho, height: 900 });
       const dto = pantallaImportesLargos();
       await page.route('**/api/pagos/vencimientos', (r) => r.fulfill({ json: dto }));
       await entrar(page, '/vencimientos');
       const cab = page.locator('[data-total-general]');
-      await expect(cab.locator('[data-total="por_pagar"] .ve-cifra-n')).toHaveText('2.999.999,97 €');
-      await expect(page.locator('[data-periodo="2026-10-26"] [data-total="domiciliado"] .ve-cifra-n')).toHaveText('999.999,99 €');
+      // H6-6: por estado (el domiciliado aún no vencido cuenta en falta por pagar).
+      await expect(cab.locator('[data-total="por_pagar"] .ve-cifra-n')).toHaveText('1.999.999,98 €');
+      await expect(page.locator('[data-dia="2026-11-04"] [data-importe-dia]')).toHaveAttribute('data-importe-dia', '1.999.999,98 €');
       await page.evaluate(() => document.fonts.ready);
-      await comprobarDentro(page, `${ancho} semana`);
-      if (ancho !== 1024) await page.locator('.ve-totales').screenshot({ path: join(CAPTURAS, `${ancho === 390 ? 'movil390' : 'pc1440'}_importes_largos_semana.png`) });
-      await page.locator('[data-totales="mes"]').click();
-      await expect(page.locator('[data-periodo="2026-11"] [data-total="por_pagar"] .ve-cifra-n')).toHaveText('2.999.999,97 €');
-      await expect(page.locator('[data-periodo="2026-11"] [data-total="domiciliado"] .ve-cifra-nota')).toHaveText('999.999,99 € cargos − 999.999,99 € abonos');
-      await comprobarDentro(page, `${ancho} mes`);
-      if (ancho !== 1024) await page.locator('.ve-totales').screenshot({ path: join(CAPTURAS, `${ancho === 390 ? 'movil390' : 'pc1440'}_importes_largos_mes.png`) });
+      await comprobarDentro(page, `${ancho} cabecera`);
+      await comprobarCalendarioDentro(page, `${ancho} mes`);
+      if (ancho !== 1024) {
+        await page.locator('.ve-totales').screenshot({ path: join(CAPTURAS, `${ancho === 390 ? 'movil390' : 'pc1440'}_importes_largos_cabecera.png`) });
+        await page.locator('[data-calendario-vencimientos]').screenshot({ path: join(CAPTURAS, `${ancho === 390 ? 'movil390' : 'pc1440'}_importes_largos_calendario.png`) });
+      }
+      await page.locator('[data-vista="semana"]').click();
+      await comprobarCalendarioDentro(page, `${ancho} semana`);
+      await page.locator('[data-vista="anio"]').click();
+      await expect(page.locator('[data-mes="2026-11"] [data-importe-mes]')).toHaveAttribute('data-importe-mes', /^\d\.\d{3}\.\d{3},\d{2}\s€$/);
+      await comprobarCalendarioDentro(page, `${ancho} año`);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(ancho);
     });
   }

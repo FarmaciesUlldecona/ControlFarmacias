@@ -6,7 +6,7 @@
 // si faltan años del convenio, botón para crearlos con los valores firmados. TA-REAL-2: si a algún año le faltan las
 // vacaciones, botón para completar solo esos dos campos.
 // TA-FICHA: resumen de plantilla encima del listado y ficha anual en el detalle (ficha_anual.tsx).
-// TA3: pestaña «Guardias y festivos» (guardias.tsx); en REAL, deshabilitada («Pendiente de tablas en Supabase»).
+// TA3: pestaña «Guardias y festivos» (guardias.tsx); TA3-REAL: también en REAL (migración 34).
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -16,7 +16,6 @@ import {
   type Categoria, type ConvenioAnual, type EstadoRrhhDTO, type EventoHistorial, type FarmaciaRrhh, type FiltroFarmacia, type Jornada, type Trabajadora,
   type TrabajadoraDetalleDTO, type TrabajadorasDTO,
 } from '../server/rrhh/contrato.ts';
-import { TEXTO_TA3_PENDIENTE } from '../server/rrhh/guardias.ts';
 import { ErrorApi, enviar, useApi, useApiRecargable } from './api.ts';
 import { fechaCorta, fechaHora } from './formato.ts';
 import { Cabecera, MOVIL, useMedia } from './ui.tsx';
@@ -66,13 +65,13 @@ const SECCIONES = [
   { clave: 'guardias', texto: 'Guardias y festivos', a: '/trabajadores/guardias' },
 ] as const;
 
-/** TA3: «Guardias y festivos» deshabilitada mientras no haya tablas (REAL): «Pendiente de tablas en Supabase». */
+/** TA3-REAL: «Guardias y festivos» también en REAL; solo sin conexión (sin datos) sale deshabilitada. */
 function Secciones({ activa, guardias }: { activa: Seccion; guardias: boolean }) {
   return (
     <nav className="rrhh-secciones" aria-label="Secciones de Trabajadores">
       {SECCIONES.map((s) => (s.clave === 'guardias' && !guardias
-        ? <span key={s.clave} className="rrhh-seccion" aria-disabled="true" title={TEXTO_TA3_PENDIENTE} data-seccion={s.clave}>
-            {s.texto}<span className="chip-proximamente" data-seccion-pendiente>{TEXTO_TA3_PENDIENTE}</span>
+        ? <span key={s.clave} className="rrhh-seccion" aria-disabled="true" title="Sin conexión con la base de datos" data-seccion={s.clave}>
+            {s.texto}
           </span>
         : <Link key={s.clave} to={s.a} className={`rrhh-seccion${s.clave === activa ? ' activa' : ''}`} aria-current={s.clave === activa ? 'page' : undefined}
           data-seccion={s.clave}>{s.texto}</Link>))}

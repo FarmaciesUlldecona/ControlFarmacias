@@ -1,6 +1,11 @@
 # Estado actual
 
-Actualizado: 2026-11-15 (TRAB-33-D: migración 33 desplegada en producción, APLICADA, postcheck por fila OK;
+Actualizado: 2026-11-16 (COD-1611: tablas de Pagos fuera del veredicto de los postchecks, tarea de Alliance en la
+puerta de tareas y prueba de acceso de Trabajadores al esquema de la 34, solo local; defectos directos a REVISION
+a la migración 36 por requerir migración, decisión de Pio; D3: tanda_05, 10 defectos a REVISION; H6: diseño de la migración 35 aprobado;
+TRAB-34-D: migración 34 desplegada en producción, APLICADA, postcheck por fila OK;
+TRAB-34: migración 34 de Trabajadores, guardias y festivos de TA3, solo local;
+2026-11-15, TRAB-33-D: migración 33 desplegada en producción, APLICADA, postcheck por fila OK;
 R12-08012619: enriquecimiento y conciliación de 08012619 en producción, 62 de 63
 facturas conciliadas; AUTO-S: primera noche de sombra efectiva 14→15/11, NOCHE_OK; 2026-11-14, TRAB-33: migración 33
 de Trabajadores, solo local; AUTO-S: noche del 13/11 sin ejecutar y
@@ -333,6 +338,86 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Hito COD-1611: postchecks con Pagos, puerta de tareas y prueba de acceso (2026-11-16)
+
+`CONFIRMADO POR TEST`, solo local. Encargo de Pio (adelantado del 17/11). Producción no tocada.
+
+- **`TABLAS_PAGOS`** (`noche_automatica.py`): `vencimientos_marcas_pago`, `proveedores_forma_pago` y
+  `pagos_historial` (H6, `pruebas/auditoria_h6/DISENO.md` §6). Fuera del snapshot 2AX; se leen aparte
+  (`snapshot_pagos`) y se informan en `postcheck["pagos"]` sin afectar al veredicto, como Trabajadores. Las series
+  2BJ y 2BP las excluyen del criterio 2AX (`TABLAS_WEB`) y las informan aparte. Hasta desplegar la 35 no existe
+  ninguna y no se lee nada.
+- **Puerta de tareas:** `auditoria_readonly.TAREAS_ESPERADAS` exige también «ControlFarmacias - Automatizacion
+  Alliance» (nombre real, sin tilde). La heredan los preflights de despliegue y las series.
+- **`probar_acceso_cf_trabajadores_web.py`:** lee el esquema vigente tras la 34 (sin `guardias_farmacia`; con
+  `trabajadoras_ajustes_anuales`, `guardias_semana` y `guardias_festivo`); su test usa la plantilla 34.
+- **Defectos de extracción directos a REVISION: NO implementado, PARADO.** El paso a `REVISION` o a `ERROR` con
+  backoff lo decide el RPC de producción `cf_registrar_fallo_normalizacion`
+  (`17_cf_replay_y_fallos_no_bloqueantes.sql:516-528`); Python solo envía la clase. Requiere una migración, con
+  preflight y despliegue. **DECISIÓN DE PIO (2026-11-16): migración aparte, la 36, después de la 35.** Hasta
+  entonces sigue la regla D3 vigente (R3).
+- **D3 (2026-11-16, confirmación de Pio):** tanda_05 de 13, `TANDA_OK` y postcheck 2AX OK; 10 defectos a
+  `REVISION` (4 de 4) y 3 en `ERROR` (3 de 4, reclamables el 17/11 desde las 16:34 local). Evidencias en
+  `C:\ControlFarmacias\evidencias_d3_1611` y `C:\ControlFarmacias\evidencias_auto_cola\tanda_05`.
+
+### Hito TRAB-34-D: migración 34 desplegada en producción (2026-11-16)
+
+`CONFIRMADO EN PRODUCCIÓN`, con confirmación explícita de Pio (Pio no usó la web durante el despliegue). Evidencias
+en `C:\ControlFarmacias\evidencias_trab_34_d\` (`SHA256SUMS.txt`, 16 entradas, scripts READ_ONLY incluidos).
+
+- **Puerta:** árbol limpio; HEAD = `origin/main` = 39a05bb; migración idéntica en local y en origin, SHA LF
+  `ecc97a4d2f83ac0ff9f0aeba47d5a21518dc181d812a27ae3731ba5ead1efaa1`; las 3 tareas con resultado 0 la noche
+  anterior y fuera de su ventana.
+- **Preflight READ_ONLY:** 7 precondiciones OK; captura pre `CAPTURA_OK` (marcas 28–33 presentes, ninguna de la 34;
+  `guardias_farmacia` con 0 filas y 0 de historial, comprobado de nuevo; flags `f|f|f|{PIO}`; módulo Trabajadores
+  `{PIO,RITA}`).
+- **Despliegue** (`desplegar_34.py`, una vez, 14:09:11–14:09:15 UTC): **`APLICADA`**; 7 precondiciones y las
+  postcondiciones OK (privilegios de la web, lectura y ACL, estructura y RLS, propietario).
+- **Captura post y postcheck por fila** (`POSTCHECK_OK`):
+  - facturas, albaranes y conciliación: 0 filas cambiadas;
+  - Trabajadores, solo cambios de la 34: 12 trabajadoras, 3 filas de convenio, 110 eventos, 2 ajustes anuales,
+    0 festivos y 249 filas de historial, idénticas fila a fila;
+  - `guardias_farmacia` retirada; `guardias_semana` y `guardias_festivo`, nuevas y vacías;
+  - esquema: 7 objetos nuevos (2 tablas y 5 funciones internas) y 1 retirado (`guardias_farmacia`);
+  - `festivos` sin el check `festivos_local_con_farmacia`; la política de lectura del historial incluye `OTRA`;
+  - flags y configuración sin cambios.
+- **Esquema final entregado a la web** (`esquema_web_34.json`, READ_ONLY): columnas, restricciones, únicos parciales
+  (`ON CONFLICT` con el predicado `WHERE NOT anulada`/`anulado`), anulación, permisos de `cf_trabajadores_web` y
+  `cf_lectura` y errores esperables.
+- `PENDIENTE`:
+  - la web adapta su código a la 34 (`guardias_farmacia` ya no existe);
+  - actualizar `probar_acceso_cf_trabajadores_web.py` en el próximo commit con código (decisión de Pio: 17/11).
+
+### Hito TRAB-34: migración 34 de Trabajadores (TA3), solo local (2026-11-16)
+
+`CONFIRMADO POR TEST` (PostgreSQL 17 local). **Desplegada el 2026-11-16: ver «Hito TRAB-34-D».** Petición de la
+web con OK de Pio; diseño en `pruebas/auditoria_trab/DISENO_34.md`.
+
+- **`guardias_semana`:**
+  - una guardia por semana (lunes) entre las no anuladas, de PIO, RITA u `OTRA`;
+  - la persona de guardia (obligatoria en PIO y RITA) y el apoyo del sábado son trabajadoras de esa farmacia, sin
+    anular y de alta ese fin de semana;
+  - `OTRA` va sin personas.
+- **`guardias_festivo`:** solo en un festivo común vigente, una por fecha. Anular o mover el festivo anula su guardia.
+- **`festivos` se reutiliza:**
+  - un festivo LOCAL puede no llevar farmacia (se retira el check de la 31);
+  - `ambito` toma LOCAL por defecto.
+- **`guardias_farmacia` se retira.** Estaba vacía en producción (preflight READ_ONLY del 16/11: 0 filas, 0 de
+  historial). La migración falla cerrado si tiene filas.
+- **Reglas comunes:**
+  - autor por `cf.autor`, anulación sin DELETE e historial por trigger;
+  - RLS por farmacia del módulo, con las filas `OTRA` y su historial visibles para el módulo;
+  - la web, `SELECT`, `INSERT` y `UPDATE`; `cf_lectura`, `SELECT`.
+- **Rollback:** exacto al esquema 33; falla cerrado con guardias o con festivos LOCAL sin farmacia.
+- **`desplegar_34.py`:** ensayado con la imitación del `postgres` de Supabase. 38 tests en
+  `test_integracion_pg17_34_trabajadores.py`.
+- **Orquestador nocturno** (`TABLAS_TRABAJADORES`): incluye las dos tablas nuevas y `trabajadoras_ajustes_anuales`,
+  que faltaba desde la 33. Las escrituras de la web en ellas se informan aparte y no hacen fallar el postcheck.
+- `PENDIENTE`:
+  - push y TRAB-34-D: hechos el 2026-11-16;
+  - actualizar `probar_acceso_cf_trabajadores_web.py`, que aún lee `guardias_farmacia`;
+  - la web confirma sus criterios D3 y D4, que no afectan al esquema.
+
 ### Hito TRAB-33-D: migración 33 desplegada en producción (2026-11-15)
 
 `CONFIRMADO EN PRODUCCIÓN`, con confirmación explícita de Pio. Evidencias en
@@ -352,9 +437,8 @@ con confirmación expresa de Pio y lanzada una sola vez.
   anulados y conserva su ACL.
 - **Decisiones de Pio (2026-11-15):** la web adapta su `ON CONFLICT` justo después del despliegue (Pio no crea
   eventos mientras); las filas del convenio 2026–2028 las crea la web.
-- `PENDIENTE` (próximo commit con código): la puerta de tareas de los preflights de despliegue
-  (`pruebas/auditoria_2bn_d/preflight_readonly.py`, `_tareas`) no consulta «ControlFarmacias - Automatizacion
-  Alliance» (22:15); sin efecto en este despliegue.
+- ~~`PENDIENTE`: la puerta de tareas de los preflights no consultaba «ControlFarmacias - Automatizacion
+  Alliance»~~: hecho en COD-1611 (2026-11-16).
 
 ### Hito R12-08012619: enriquecimiento y conciliación de 08012619, 62 de 63 (2026-11-15)
 

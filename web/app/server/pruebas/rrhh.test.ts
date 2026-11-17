@@ -254,8 +254,9 @@ describe('adaptador RRHH_FIXTURES e historial', () => {
     assert.deepEqual(b.trabajadora(x.id)?.historial.map((h) => h.accion), ['BAJA', 'EDICION', 'ALTA']);
     assert.deepEqual(b.historial('PIO').map((h) => h.accion), ['BAJA', 'EDICION', 'ALTA']);
   });
-  test('tablas de la migración 31 (guardias_farmacia y festivos) vacías en FIXTURES (TA3 usa ./guardias.ts); TA2 con eventos de ejemplo', () => {
-    assert.deepEqual([a.guardias('PIO'), a.festivos('RITA')], [[], []]);
+  test('TA3-REAL: sin lecturas de la tabla antigua guardias_farmacia (TA3 usa guardiasTa3); TA2 con eventos de ejemplo', () => {
+    assert.ok(!('guardias' in a) && !('festivos' in a));
+    assert.equal(typeof a.guardiasTa3.vista, 'function');
     assert.ok(a.eventos().length > 0);
   });
 });
