@@ -403,16 +403,17 @@ def test_cliente_productivo_con_claves_ficticias(monkeypatch, clave, acepta):
         na._cliente_productivo()
 
 
-def test_bat_lanza_el_orquestador_en_sombra():
+def test_bat_lanza_el_orquestador_en_real():
     bat = (na.ROOT / "ejecutar_automatizacion_alliance.bat").read_text(encoding="utf-8")
     # Decision de Pio (2026-11-13): registro como el .bat de importacion, con la ruta completa de Python.
+    # AUTO-ON (confirmacion explicita de Pio, 2026-11-18): modo REAL; los flags de la BD son el interruptor.
     log = "logs\\automatizacion_alliance.log"
     assert ("C:\\ControlFarmacias\\Programa\\.venv\\Scripts\\python.exe -m src.facturas.runtime_supabase."
-            f"noche_automatica SOMBRA C:\\ControlFarmacias\\noches_auto >> {log} 2>&1") in bat
+            f"noche_automatica REAL C:\\ControlFarmacias\\noches_auto >> {log} 2>&1") in bat
     assert "if not exist logs mkdir logs" in bat
     assert f"echo INICIO: %date% %time% >> {log}" in bat
     assert "set CODIGO_SALIDA=%ERRORLEVEL%" in bat
     assert f"echo CODIGO DE SALIDA: %CODIGO_SALIDA% >> {log}" in bat
     assert f"echo FIN: %date% %time% >> {log}" in bat
     assert bat.rstrip().endswith("exit /b %CODIGO_SALIDA%")
-    assert "noche_automatica REAL" not in bat
+    assert "noche_automatica SOMBRA" not in bat

@@ -1,6 +1,7 @@
 @echo off
 rem Hito AUTO-ALLIANCE: tarea "ControlFarmacias - Automatizacion Alliance", 22:15 locales, identidad Usuari.
-rem Modo: SOMBRA hasta AUTO-ON (decision de Pio); en AUTO-ON se cambia a REAL con un commit.
+rem Modo: REAL desde AUTO-ON (2026-11-18, confirmacion explicita de Pio); antes, SOMBRA.
+rem Volver atras: Pio apaga los flags en cf_configuracion y deshabilita la tarea o devuelve este .bat a SOMBRA.
 rem Registro (decision de Pio, 2026-11-13): mismo patron que el .bat de importacion de facturas, en
 rem logs\automatizacion_alliance.log, con la ruta completa de Python.
 
@@ -11,7 +12,7 @@ if not exist logs mkdir logs
 echo ================================================== >> logs\automatizacion_alliance.log
 echo INICIO: %date% %time% >> logs\automatizacion_alliance.log
 
-C:\ControlFarmacias\Programa\.venv\Scripts\python.exe -m src.facturas.runtime_supabase.noche_automatica SOMBRA C:\ControlFarmacias\noches_auto >> logs\automatizacion_alliance.log 2>&1
+C:\ControlFarmacias\Programa\.venv\Scripts\python.exe -m src.facturas.runtime_supabase.noche_automatica REAL C:\ControlFarmacias\noches_auto >> logs\automatizacion_alliance.log 2>&1
 
 set CODIGO_SALIDA=%ERRORLEVEL%
 
