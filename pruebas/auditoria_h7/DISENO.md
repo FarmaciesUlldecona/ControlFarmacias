@@ -1,7 +1,7 @@
 # H7: importación del Excel de cashflow de Pio a Supabase (migración 37). DISEÑO
 
-Estado: **DISEÑO CON LAS DECISIONES DE PIO C1–C8** (2026-11-17). Falta la verificación del Excel real (§1), prevista
-para el 2026-11-18. Sin código, sin migración y sin tocar producción.
+Estado: **DISEÑO CON LAS DECISIONES DE PIO C1–C8** (2026-11-17), **EXCEL VERIFICADO Y DECISIONES E1–E7**
+(2026-11-18, §0 y §1). Sin código, sin migración y sin tocar producción.
 
 - **Origen:** petición de la web (H7 Cashflow). La pantalla ya está hecha en FIXTURES contra el contrato de la petición
   (commit H7 en `web/fase1`, que no se ha leído para este diseño).
@@ -15,7 +15,7 @@ para el 2026-11-18. Sin código, sin migración y sin tocar producción.
   REVISION; `TABLAS_CASHFLOW` en los postchecks; tarea nocturna como `Usuari`, sin solaparse con las demás; rol del
   sistema nombrado solo en la 37 y su rollback (autorización concedida por Pio el 2026-11-17, C3).
 - **Etiquetas:** lo que se afirma del esquema actual está `CONFIRMADO POR CÓDIGO` (con fichero:línea). Lo que se
-  afirma del Excel es `PENDIENTE DE VERIFICAR` (§1). Lo demás es `PROPUESTA`.
+  afirma del Excel está `CONFIRMADO POR VERIFICACIÓN` (§1, 2026-11-18). Lo demás es `PROPUESTA`.
 
 ## 0. Decisiones de Pio (2026-11-17)
 
@@ -32,38 +32,51 @@ Donde las secciones siguientes dicen `PROPUESTA` para C1–C8, queda decidido.
 | **C7** | Sí: la tarea de Cashflow no es obligatoria en la puerta de la noche ni en la de los preflights; solo se comprueba que no está en ejecución (§5.2) |
 | **C8** | Sí: `farmacia` en importes y saldos, `saldo_inicial` en saldos e `id` en los dos (§3.7) |
 
-## 1. Verificación del Excel: PENDIENTE
+### Decisiones de Pio tras la verificación del Excel (2026-11-18)
 
-`PENDIENTE DE VERIFICAR`. El chat del circuito pide comprobar el análisis de la web contra el fichero real (solo
-lectura, sobre una copia, sin conceptos en el informe). **No se ha hecho todavía.** Por decisión de Pio, se hace el
-2026-11-18, no el 17, sobre el fichero de la ruta C1: el único `.xlsm` de `C:\GoogleDrive\CASHFLOW` cuyo nombre empieza
-por `CASHFLOW`, sin contar los temporales `~$`.
+| Id | Decisión de Pio |
+|---|---|
+| **E1** | **Cuadre = saldo inicial + ΣRE − ΣRS.** Las salidas `RS` están en positivo en las celdas: un `RS` positivo es una salida. El importe se guarda con el signo de la celda y la web interpreta el sentido por el prefijo de la categoría (§2.4, §3.5, §3.7) |
+| **E2** | El texto que sale de una fórmula y las celdas con solo espacios cuentan como **vacías**. Cualquier otro texto en una celda de importe es `ERROR` (§2.3) |
+| **E3** | **Pio no modifica el Excel.** Un importe con más de 2 decimales se **redondea al céntimo (half-up)** y se avisa en el informe (hoja, celda, valor original y redondeado), sin `ERROR`. El cuadre se comprueba con los valores guardados en el Excel **sin redondear** (§2.3, §2.4, §4) |
+| **E4** | «Hoja ignorada con datos» = hoja ignorada con **algún importe distinto de 0** (§2.4) |
+| **E5** | `SL` sin saldo en la primera decena: **aceptado** (§2.4) |
+| **E6** | Las hojas no listadas se ignoran (§2.2) |
+| **E7** | Saldo según bancos distinto del de fórmulas: **nunca `ERROR`** (§2.4) |
 
-- **Búsqueda previa, antes de C1 (2026-11-17):** ficheros `.xlsm` y nombres con «cash», «tesorer», «flujo», «caja» o «banc» en
-  Escritorio, Documentos, Descargas, OneDrive y `G:\`. Solo aparece un `.xlsm` ajeno a Cashflow.
-- **No se buscó en `C:\ControlFarmacias` entero:** esa búsqueda abarca `logs/agentes` y el hook la bloquea. No se
-  repitió de otra forma.
-- **El chequeo** es READ_ONLY y queda fuera del repositorio. Copia el fichero a una carpeta
-  de evidencias, calcula su SHA-256 y lo abre con `openpyxl` (3.1.5 en el `.venv`) en modo `data_only=True` y
-  `keep_vba=False`, sin ejecutar macros. Informa solo de esto:
-  - las hojas, con su estado (visible u oculta) y si están vacías;
-  - en las hojas `PÍO`, `RITA` y `SL`:
-    - las filas 2 y 3 desde la columna D: tipo de dato, días de inicio (1, 11, 21) y fines, y las columnas
-      `TOTAL 202x` (se espera `AN`, `BY`, `DJ`, `EU` y `GF`);
-    - de la columna A, el número de categorías `RE` y `RS` y las que no tienen ese prefijo, **sin listarlas**;
-    - las filas de saldo («Saldo Inicial», «Saldo Final según fórmulas», «Saldo Final según bancos»), encontradas
-      por texto en la columna B, con su número de fila;
-    - las celdas con fórmula sin valor guardado (cargando el libro dos veces: con y sin `data_only`);
-    - el cuadre por decena: saldo inicial + suma de la decena = saldo según fórmulas, en recuentos de decenas que
-      cuadran y que no;
-  - el número de decimales de los importes.
-  Nunca muestra el texto de la columna B, y tampoco el de la A.
-- **Lo que hay que confirmar del análisis de la web:**
-  - qué contienen las filas 2 y 3: fecha completa o solo el día. Si es solo el día, el mes y el año se deducen de la
-    columna, lo que es frágil (§2.2);
-  - que todas las celdas tienen valor guardado. Un `.xlsm` guardado con cálculo manual o generado por otro programa
-    puede no tenerlo;
-  - que el saldo inicial de cada decena es el saldo final de la anterior.
+## 1. Verificación del Excel: HECHA (2026-11-18)
+
+`CONFIRMADO POR VERIFICACIÓN`. Chequeo READ_ONLY, fuera del repositorio, sobre una copia del fichero de la ruta C1.
+Se abrió con `openpyxl` 3.1.5 con `keep_vba=False`, sin ejecutar macros, dos veces: con y sin `data_only`. El informe
+no contiene conceptos ni categorías: solo recuentos, posiciones de celda, fechas de decena y sumas de control.
+Evidencias en `C:\ControlFarmacias\evidencias_h7_excel\` (copia, `verificacion_excel.json`, `verificacion_2.json`,
+los dos scripts y `SHA256SUMS.txt`).
+
+- **Selección (C1):** un único candidato y ningún temporal `~$`. El nombre actual no es «CASHFLOW» a secas (lleva
+  sufijos), lo que confirma que se elige por prefijo. El SHA-256 del original es el mismo antes y después de copiar.
+- **Hojas:** `PÍO`, `RITA` y `SL` visibles. `Banco_4` a `Banco_10` están ocultas: son una plantilla con fórmulas y
+  **ningún importe**. Además hay ocho hojas que la web no menciona (de SOE, posición de tesorería, comparativa,
+  gráficas y control de cambios); se ignoran (E6).
+- **Fórmulas:** ninguna sin valor guardado.
+- **Encabezados:** las filas 2 y 3 traen **fechas completas** (`datetime`). En las tres hojas hay 180 decenas
+  consecutivas, del 2024-01-01 al 2028-12-31, que empiezan el día 1, 11 o 21. Las columnas `TOTAL` están en `AN`,
+  `BY`, `DJ`, `EU` y `GF`.
+- **Categorías:** todas con prefijo `RE` o `RS`. PÍO y RITA tienen 38 categorías distintas cada una, y SL, 47.
+- **Filas de saldo:** encontradas por texto, una vez cada una: PÍO 4/260/261, RITA 4/205/206 y SL 4/92/93.
+- **Saldo inicial = saldo final de la decena anterior** en todas las decenas.
+- **Importes:** PÍO 3204 y RITA 1917, distintos de 0. `SL` no tiene ninguno.
+  - `RE` siempre positivo.
+  - `RS` positivo, salvo 12 negativos en PÍO y 11 en RITA (probablemente devoluciones).
+- **Cuadre:** con la suma literal fallan 115 de 180 decenas en PÍO y 117 en RITA. Con **saldo inicial + ΣRE − ΣRS**
+  cuadran **180 de 180** en las dos (E1).
+- **Texto en celdas de importe:** 3 en PÍO y 13 en RITA. La mayoría salen de fórmulas y tienen un carácter; tres
+  son solo espacios (E2).
+- **Más de 2 decimales:** una celda en PÍO y otra en RITA, las dos de fórmula (E3).
+- **Saldo según bancos:** vacío en 77 decenas de cada hoja. Igual al de fórmulas en 8 (PÍO) y 33 (RITA); distinto en
+  95 (PÍO) y 70 (RITA) (E7).
+- **SL:** no tiene saldo en la primera decena (columna D) (E5).
+- **Búsqueda previa, antes de C1 (2026-11-17):** sin resultado útil fuera de la ruta C1. No se buscó en
+  `C:\ControlFarmacias` entero porque el hook bloquea esa búsqueda (abarca `logs/agentes`).
 
 ## 2. Lectura del Excel
 
@@ -79,26 +92,31 @@ por `CASHFLOW`, sin contar los temporales `~$`.
   importación queda en `ERROR` y se conserva la vigente anterior.
 - `archivo_hash` es el SHA-256 de la copia, y `archivo_nombre`, el nombre del original, sin la ruta.
 
-### 2.2 Estructura esperada (según la web)
+### 2.2 Estructura esperada (según la web, confirmada en §1)
 
 - **Hojas `PÍO`, `RITA` y `SL`:** cuentas bancarias de PIO, de RITA y sin farmacia; `SL` está vacía en 2026. Se
-  ignoran `Banco_4` a `Banco_10`.
+  ignoran `Banco_4` a `Banco_10` (salvo que tengan importes, §2.4) y cualquier otra hoja no listada (E6).
 - **Columnas de decena:** desde la columna D. La fila 2 es el inicio de la decena (día 1, 11 o 21) y la fila 3, el fin.
   Se ignoran las columnas cuyo encabezado empieza por «TOTAL»; se localizan por el texto, no por la letra.
 - **Columna A:** categoría, «RE …» (entrada) o «RS …» (salida). **Columna B:** concepto.
 - **Filas sin columna A:** totales, saldos y cuadre. Solo se leen las tres de saldo, localizadas por el texto de la
   columna B en cada hoja, porque PÍO y RITA tienen filas distintas.
-- **Fechas:** cada columna da `decena_inicio` y `decena_fin` como fechas completas. Si el Excel solo trae el día, el
-  algoritmo para deducir el mes y el año se fija después de la verificación (§1), y se exige que las decenas sean
-  consecutivas, sin huecos ni repeticiones.
+- **Fechas:** cada columna da `decena_inicio` y `decena_fin` como fechas completas (confirmado en §1). Un encabezado
+  que no sea fecha es `ERROR`, y se exige que las decenas sean consecutivas, sin huecos ni repeticiones.
 
 ### 2.3 Importes
 
-- Valor guardado de la celda con su signo, sin deducirlo de la categoría ni invertirlo (decisión de Pio).
+- Valor guardado de la celda con su signo, sin deducirlo de la categoría ni invertirlo (decisión de Pio; E1). Un `RS`
+  positivo es una salida.
 - `0` y celda vacía no se guardan.
-- Se pasa a `numeric(14,2)`. Si un valor tiene más de 2 decimales significativos (diferencia con su redondeo mayor
-  que 0,000001), es `ERROR`: el importe no se redondea en silencio.
-- Un texto en una celda de importe es `ERROR`.
+- **Texto (E2):** cuentan como vacías, y no se guardan, las celdas con fórmula cuyo valor guardado es texto y las
+  celdas que solo contienen espacios. Cualquier otro texto en una celda de importe es `ERROR`. El informe da cuántas
+  se trataron como vacías y su posición (hoja y celda), nunca su contenido.
+- **Decimales (E3):** se pasa a `numeric(14,2)`. Si un valor tiene más de 2 decimales significativos (diferencia con su
+  redondeo mayor que 0,000001), se **redondea al céntimo (half-up)**, no es `ERROR` y el informe lo avisa con hoja,
+  celda, valor original y valor redondeado. Pio no modifica el Excel.
+- Los saldos se guardan también al céntimo. `PROPUESTA` (extensión de E3, pendiente de confirmar por Pio): un saldo con
+  más de 2 decimales se redondea igual y se avisa.
 
 ### 2.4 Fallo cerrado
 
@@ -106,16 +124,21 @@ Cualquiera de estos casos da `ERROR`, con un `detalle_error` sin conceptos, y la
 mantiene:
 
 - una celda con fórmula sin valor guardado;
-- una hoja esperada que falta, o una hoja ignorada que tiene datos;
+- una hoja esperada que falta, o una hoja ignorada con algún importe distinto de 0 en una fila de categoría (E4).
+  Las fórmulas de plantilla sin importes, como las de `Banco_4` a `Banco_10`, no cuentan como datos;
 - encabezados de decena ilegibles, no consecutivos o repetidos;
 - una fila con importes y sin categoría, o una categoría sin prefijo `RE` o `RS`;
 - una fila de saldo que falta o está repetida;
-- un cuadre que falla: en alguna decena, el saldo inicial más la suma de la decena no es igual al saldo según
-  fórmulas (al céntimo).
+- un texto en una celda de importe que no sea de fórmula ni solo espacios (E2);
+- un cuadre que falla (E1): en alguna decena, **saldo inicial + ΣRE − ΣRS** no es igual al saldo según fórmulas (al
+  céntimo). Se calcula con los valores guardados en el Excel **sin redondear** (E3).
+  - **`SL` sin saldo en la primera decena (E5):** aceptado. Esa decena de `SL` no tiene fila en `cf_cashflow_saldos` y
+    se omite del cuadre siempre que no tenga importes. Cualquier otra decena sin saldo inicial o sin saldo según
+    fórmulas sigue siendo `ERROR`.
   - Que el saldo según bancos esté vacío no es error: quiere decir que la decena aún no está cuadrada, y se guarda
     `null`.
-  - Si está informado y no coincide con el de fórmulas, **no es `ERROR`**: es una diferencia que muestra la web.
-    `PROPUESTA`; Pio puede pedir que sea `ERROR`.
+  - Si está informado y no coincide con el de fórmulas, **nunca es `ERROR`** (E7): es una diferencia que muestra la
+    web.
 - **Categorías nuevas (C5):** una categoría que no estaba en la importación vigente.
   - **PROPUESTA:** en la importación nocturna, `ERROR`. Pio la acepta lanzando la manual con
     `--aceptar-categorias-nuevas`, que informa de cuántas son, sin nombrarlas.
@@ -176,7 +199,7 @@ Se carga en la propia migración con las tres filas y no la escribe nadie más: 
 - `decena_inicio` y `decena_fin` (date, con `decena_fin >= decena_inicio`);
 - `categoria` (literal de la columna A, `^R[ES] `);
 - `concepto` (columna B);
-- `importe` (`numeric(14,2)`, distinto de 0);
+- `importe` (`numeric(14,2)`, distinto de 0; con el signo de la celda, de modo que un `RS` positivo es una salida, E1);
 - `fila_excel` (integer).
 
 **`cf_cashflow_saldos`**
@@ -195,9 +218,14 @@ En los dos, `farmacia` se copia de la cuenta (null en `SL`) y un check comprueba
   - inserta la importación, sus importes y sus saldos;
   - si es `OK` y todo valida, pone `vigente = false` en la anterior y `vigente = true` en la nueva;
   - si es `ERROR`, solo inserta la importación, con `vigente = false`; la vigente anterior no cambia;
-  - **vuelve a validar en la BD** (falla cerrado aunque el script tenga un fallo): cuadre de saldos al céntimo, cuentas
-    y farmacias, decenas, importes distintos de 0, número de filas igual a `filas`, y que no exista ya una importación
+  - **vuelve a validar en la BD** (falla cerrado aunque el script tenga un fallo): cuadre de saldos (E1), cuentas y
+    farmacias, decenas, importes distintos de 0, número de filas igual a `filas`, y que no exista ya una importación
     con ese hash. Si algo falla, la transacción entera se deshace y el script registra un `ERROR` aparte;
+  - **cuadre en la BD:** saldo inicial + Σ importes `RE` − Σ importes `RS` = saldo según fórmulas, con los importes
+    ya redondeados. `PROPUESTA` (pendiente de confirmar por Pio): como el cuadre exacto se hace en el script con los
+    valores sin redondear (E3), la RPC admite en cada decena una diferencia de hasta 0,005 por importe redondeado de
+    esa cuenta y decena. El script marca esos importes en `p_importes` con un campo de validación que no se guarda.
+    Sin importes redondeados, la diferencia admitida es 0;
   - toda la importación entra o no entra nada: nunca queda a medias.
 - **Solo inserción:** un trigger rechaza `UPDATE`, `DELETE` y `TRUNCATE` en todas las tablas (`BORRADO_NO_PERMITIDO`,
   `SOLO_INSERCION`). La única excepción es el cambio de `vigente` que hace la RPC: se reconoce por una variable de
@@ -227,6 +255,8 @@ En los dos, `farmacia` se copia de la cuenta (null en `SL`) y un check comprueba
   usarla.
 - **`id` en importes y saldos:** añadido (la petición no lo nombra).
 - **Escritura por RPC** en lugar de inserciones directas: no afecta a la web, que solo lee.
+- **Sentido del importe (E1):** la web lo interpreta por el prefijo de la categoría. `RE` es entrada y `RS` es salida,
+  y un `RS` positivo resta del saldo. Un `RS` negativo (devolución) suma.
 - El resto de nombres de tablas y columnas, igual que en la petición.
 
 ## 4. Script de importación
@@ -249,6 +279,8 @@ En los dos, `farmacia` se copia de la cuenta (null en `SL`) y un check comprueba
   - estado, origen y hash del fichero;
   - por cuenta: número de decenas, de filas, de entradas y de salidas, y suma de control de los importes;
   - el cuadre (decenas que cuadran y decenas sin saldo de bancos);
+  - avisos de redondeo (E3): hoja, celda, valor original y valor redondeado;
+  - celdas de texto tratadas como vacías (E2): número y posición (hoja y celda), sin contenido;
   - categorías nuevas, solo su número.
   **Nunca contiene conceptos ni categorías.**
 - **Credenciales:** las mismas del sistema que usa la noche, sin variables nuevas. La contraseña o clave nunca aparece
@@ -294,14 +326,16 @@ Igual que `TABLAS_PAGOS` (COD-1611):
 ## 7. Plan de hitos
 
 1. **Este diseño** (solo documentación).
-2. **Hecho (2026-11-17):** decisiones de Pio C1–C8 (§0). **Pendiente (2026-11-18):** la verificación del Excel real
-   (§1, READ_ONLY, sobre una copia fuera del repositorio).
+2. **Hecho:** decisiones de Pio C1–C8 (2026-11-17), verificación del Excel real (2026-11-18, §1, READ_ONLY, sobre
+   una copia fuera del repositorio) y decisiones de Pio E1–E7 (2026-11-18, §0).
 3. **H7, solo local:**
    - migración 37 y su rollback (falla cerrado si hay importaciones);
    - `desplegar_37.py`, ensayado con la imitación del `postgres` de Supabase;
    - `importar_cashflow.py`, con tests sobre un Excel ficticio generado en el test (ningún dato real en el
-     repositorio): estructura cambiada, fórmula sin valor, cuadre roto, categoría nueva, mismo hash, decenas, signo y
-     vigente;
+     repositorio): estructura cambiada, fórmula sin valor, cuadre roto, cuadre con `RS` positivos y negativos,
+     categoría nueva, mismo hash, decenas, signo, vigente, texto de fórmula y solo espacios como vacío, otro texto como
+     `ERROR`, redondeo half-up con aviso, hoja ignorada con plantilla sin importes y con importes, y `SL` sin saldo en
+     la primera decena;
    - `TABLAS_CASHFLOW` en la noche y las series;
    - suite completa y revisor PASS.
 4. **H7-D:**
