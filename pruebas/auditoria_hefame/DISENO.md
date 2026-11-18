@@ -12,6 +12,18 @@ en el repositorio y sin persistir nada. Scripts y salidas fuera del repositorio,
 Etiquetas de certeza: `CONFIRMADO POR MEDICIÓN` (espejo local o lectura READ_ONLY de Supabase) y `PROPUESTA`
 (pendiente de decisión de Pio).
 
+## 0. Decisiones de Pio (2026-11-18)
+
+| Id | Decisión de Pio |
+|---|---|
+| **H1** | El cargo de **80,00 € de base S.R.** de las facturas de fin de mes es el **cargo cooperativo HEFAME**, **fijo cada mes** (§2.4) |
+| **H2** | **`APROAFA`** es la aportación a la Asociación para la Promoción de la Asistencia Farmacéutica en España: **CARGO** (§2.3) |
+| **H3** | `Resumen Liquidaciones Comerciales`: **`PENDIENTE`** (Pio) |
+| **H4** | Números de 9 dígitos que empiezan por `91`: **`PENDIENTE`** (Pio) |
+| **H5** | Factura del 30.09.2026: **`PENDIENTE`** de que Pio la suba al espejo |
+
+Siguen también pendientes la tolerancia del control de la página 2 (§2.5) y las reglas de conciliación de §4.
+
 ## 1. Inventario del espejo
 
 `CONFIRMADO POR MEDICIÓN`:
@@ -22,7 +34,7 @@ Etiquetas de certeza: `CONFIRMADO POR MEDICIÓN` (espejo local o lectura READ_ON
   `hefame-local`: razón social, CIF, relación de albaranes, tabla de bases, desglose total factura, vencimientos y
   paginación interna. Todas tienen 2 páginas.
 - **Periodo:** del 10.06.2026 al 31.10.2026, con una factura por decena (los días 10, 20 y fin de mes).
-  - **Falta la del 30.09.2026:** hay 15 decenas y solo 14 facturas. `PENDIENTE` (Pio): comprobar si existe.
+  - **Falta la del 30.09.2026:** hay 15 decenas y solo 14 facturas. `PENDIENTE` (H5): Pio la subirá al espejo.
 - **Importe total:** 2.907,66 €. Hay 81 filas numéricas (albaranes o documentos de entrega).
 - **Supabase** (READ_ONLY, por SHA): los 14 documentos están.
   - 13 están en `PROVEEDOR_NO_SOPORTADO`.
@@ -67,10 +79,12 @@ Se aplica la misma fórmula por clase. El signo y el sentido salen del documento
   - Puede mezclar signos entre clases (0563791043: S.R. +1,53, Re. −24,72 y No. −23,64).
   - Sentido: el del signo neto; si el neto es positivo, CARGO. Si el neto es 0, o si los signos se mezclan entre
     clases, el sentido es `null` (sin inferir); en ese caso lleva el importe con su signo por clase.
-- **`APROAFA`:** positivo, pequeño (0,11–0,26 de base) y siempre en la base No. Aparece en 4 facturas. Su naturaleza
-  está `PENDIENTE` (Pio).
+- **`APROAFA`:** positivo, pequeño (0,11–0,26 de base) y siempre en la base No. Aparece en 4 facturas.
+  **Decisión de Pio (H2, 2026-11-18):** es la aportación a la Asociación para la Promoción de la Asistencia
+  Farmacéutica en España y es un **CARGO**. El importe se toma del documento con su signo. `PROPUESTA`: si una fila
+  `APROAFA` sale negativa, el lector falla cerrado en lugar de invertir el sentido.
 - **`Resumen Liquidaciones Comerciales`:** negativo y en la base S.R. Aparece en 2 facturas (−0,96 y −1,17 con
-  impuestos).
+  impuestos). Su naturaleza está `PENDIENTE` (H3).
 - **`Resumen Servicios Operativos`:** siempre en la base No., con **21 % de IVA y sin RE** (evidencia: el RE No. de la
   página 2 excluye esta base).
   - 110,00 de base (133,10 con IVA) en las facturas de fin de mes; 113,43 en la de junio.
@@ -79,7 +93,8 @@ Se aplica la misma fórmula por clase. El signo y el sentido salen del documento
 
 ### 2.4 Cargo cooperativo no listado
 
-`CONFIRMADO POR MEDICIÓN` en cuanto al importe; su naturaleza está `PENDIENTE` (Pio).
+`CONFIRMADO POR MEDICIÓN` en cuanto al importe. **Decisión de Pio (H1, 2026-11-18):** es el **cargo cooperativo
+HEFAME**, **fijo cada mes**, de 80,00 € de base S.R. en la factura de fin de mes.
 
 - En las **4 facturas de fin de mes** presentes (30.06, 31.07, 31.08 y 31.10), los `Totales` de la base S.R. superan en
   **80,00 exactos** a la suma de las filas de S.R. Ninguna fila lo lista, pero está incluido en
@@ -90,9 +105,11 @@ Se aplica la misma fórmula por clase. El signo y el sentido salen del documento
   calculado y que el desfase es exclusivo de S.R.
 - Ya existe `detectar_comision_hefame`: reconoce solo un desfase positivo y exclusivo de S.R., con
   `periodicidad: NO_DEMOSTRADA`.
-  - **Propuesta:** periodicidad «mensual, en la factura de fin de mes», con la evidencia de las 4 facturas.
-  - **Propuesta:** el nombre definitivo del concepto (cuota o cargo cooperativo), que decide Pio.
+  - **Decidido (H1):** nombre «cargo cooperativo HEFAME» y periodicidad mensual, en la factura de fin de mes, con la
+    evidencia de las 4 facturas.
   - Si el desfase aparece en otra clase, es negativo o no es de fin de mes, el lector falla cerrado.
+  - `PROPUESTA` (derivada de «fijo» en H1): un desfase de S.R. distinto de 80,00 en una factura de fin de mes también
+    falla cerrado. Si HEFAME cambia la cuota, se actualiza con una decisión de Pio.
 
 ### 2.5 Comprobación contra la página 2 (falla cerrado)
 
@@ -155,7 +172,7 @@ Propuestas, medidas READ_ONLY contra `Supabase.albaranes` (81 filas numéricas).
   izquierda hasta 10** (`7070398` ↔ `0007070398`).
   - **Regla:** comparar sin ceros a la izquierda; solo cuando las dos partes sean numéricas.
 - **9 dígitos que empiezan por `91`** (3 filas). Uno casa por importe con un interno `Q0…`. Su naturaleza está
-  `PENDIENTE`.
+  `PENDIENTE` (H4).
 - **Resultado del casamiento:**
 
 | Casamiento | Filas | Detalle |
@@ -195,11 +212,14 @@ Hoy dice «número exacto e importe operativo». **Propuesta:**
 ## 5. Qué falta para la autoridad productiva
 
 1. **Decisiones de Pio:**
-   - tolerancia del control de la página 2 (§2.5);
-   - naturaleza y nombre del cargo de 80,00 y su periodicidad (§2.4);
-   - naturaleza de `APROAFA`, de las liquidaciones comerciales y de los números `91…`;
-   - reglas de §4 (normalización, ventana y tolerancia por línea);
-   - qué hacer con la factura del 30.09 que falta.
+   - **tomadas (2026-11-18, §0):** el cargo de 80,00 es el cargo cooperativo HEFAME, fijo cada mes (H1), y
+     `APROAFA` es un CARGO (H2);
+   - **pendientes:**
+     - tolerancia del control de la página 2 (§2.5);
+     - naturaleza de las liquidaciones comerciales (H3) y de los números `91…` (H4);
+     - reglas de §4 (normalización, ventana y tolerancia por línea);
+     - la factura del 30.09, que Pio subirá al espejo (H5);
+     - las dos `PROPUESTAS` derivadas de H1 y H2: desfase distinto de 80,00 y `APROAFA` negativo fallan cerrados.
 2. **Código** (hito propio, con su suite). La farmacia se demuestra por el destinatario impreso (código de cliente,
    NIF y dirección del bloque de cliente), nunca por la carpeta del espejo ni por el nombre del fichero (S3/S5):
    - corrección del RE No. a 5,2 % en `hefame_economia.py`;
