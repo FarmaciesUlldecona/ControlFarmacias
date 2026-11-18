@@ -67,7 +67,7 @@ export function eurosCorto(v: number): string {
   return `${s}${n(a / 1_000_000, 1)}M€`;
 }
 
-const CLASE_ESTADO: Record<ColorEstadoPago, string> = { azul: 'b', rojo: 'r', verde: 'g', gris: 'n', domiciliado: 'd' };
+const CLASE_ESTADO: Record<ColorEstadoPago, string> = { azul: 'b', rojo: 'r', verde: 'g', gris: 'n', domiciliado: 'd', naranja: 'o' };
 const nombreProveedor = (f: FilaVencimientoPago) => f.proveedor_comercial ?? f.proveedor_razon_social ?? f.proveedor ?? 'Proveedor sin identificar';
 
 function notasFuera(r: ResumenCalendario): string[] {
@@ -439,7 +439,7 @@ function ResumenDelPeriodo({ r, titulo, vecinos, onIr }: {
       </div>
     );
   }
-  const { pagado, domiciliado, falta, abonos } = r.grupos;
+  const { pagado, domiciliado, falta, abonos, revisar } = r.grupos;
   const fuera = [
     r.sin_importe ? `${r.sin_importe} sin importe` : null,
     r.cargo_negativo ? plural(r.cargo_negativo, 'cargo negativo', 'cargos negativos') : null,
@@ -456,6 +456,8 @@ function ResumenDelPeriodo({ r, titulo, vecinos, onIr }: {
         <Termino id="domiciliado" etiqueta="Domiciliado previsto" b={domiciliado} op="+" />
         <Termino id="falta" etiqueta="Falta por pagar" b={falta} op="+" />
         {abonos.pagos > 0 && <Termino id="abonos" etiqueta="Abonos por compensar" b={abonos} op={abonos.neto !== null && abonos.neto < 0 ? '−' : '+'} abs />}
+        {/* H6-REAL: marcas que ya no coinciden con su vencimiento: nunca como pagado. */}
+        {revisar.pagos > 0 && <Termino id="revisar" etiqueta="A revisar" b={revisar} op={revisar.neto !== null && revisar.neto < 0 ? '−' : '+'} abs />}
       </dl>
       {fuera.length > 0 && <p className="vc-resumen-fuera" data-resumen-fuera>Fuera de los totales: {fuera.join(' · ')}</p>}
     </div>

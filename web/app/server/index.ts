@@ -8,7 +8,7 @@
  * Acceso con contraseña (H4b, server/acceso.ts): sin sesión, cualquier ruta devuelve la pantalla de acceso
  * (HTML autónomo) y cualquier /api/* devuelve 401. Solo POST /api/login y /api/logout admiten POST, salvo la
  * escritura del módulo Trabajadores (TA1: POST/PUT en /api/rrhh/trabajadoras…, con sesión y Origin) y, H6, las marcas
- * de pago y la forma de pago por proveedor (/api/pagos/…, mismas condiciones; en REAL, 503 hasta tener tablas).
+ * de pago y la forma de pago por proveedor (/api/pagos/…, mismas condiciones; en REAL, con la credencial de pagos).
  *
  * Sirve la API /api/* y, si existe, el front compilado (dist/).
  */
@@ -27,6 +27,8 @@ import { esEscrituraRrhh, registrarRrhh } from './rrhh/rutas.ts';
 import { AUTOR_HISTORIAL } from './rrhh/contrato.ts';
 import type { AdaptadorRrhh } from './rrhh/adaptador_fixtures.ts';
 import { esEscrituraPagos, registrarPagos } from './pagos/rutas.ts';
+import type { AlmacenPagosAsync } from './pagos/almacen.ts';
+import type { LectorPagos } from './pagos/adaptador_real.ts';
 import { registrarCashflow } from './cashflow/rutas.ts';
 
 const HOST = '127.0.0.1';
@@ -57,11 +59,27 @@ export function leerPuerto(modo: Modo): number {
   return n;
 }
 
-async function crearContrato(modo: Modo): Promise<{ contrato: Contrato; cerrar: () => Promise<void> }> {
+async function crearContrato(modo: Modo): Promise<{ contrato: Contrato; cerrar: () => Promise<void>; leerPagos?: LectorPagos }> {
   if (modo === 'FIXTURES') return { contrato: crearAdaptadorFixtures(), cerrar: async () => {} };
   const { crearAdaptadorReal } = await import('./adaptador_real.ts');
   const real = crearAdaptadorReal();
-  return { contrato: real.contrato, cerrar: real.cerrar };
+  return { contrato: real.contrato, cerrar: real.cerrar, leerPagos: real.leerPagos };
+}
+
+/**
+ * H6-REAL: marcas de pago y forma de pago por proveedor en REAL. Lectura con cf_lectura (siempre); escritura con la
+ * credencial propia CF_PAGOS_USER / CF_PAGOS_PASSWORD de .env.web (rol cf_pagos_web) y pool propio de 2 conexiones. Si
+ * falta o no vale, Vencimientos funciona en solo lectura con «Falta configurar la credencial de pagos».
+ * FIXTURES: almacén en memoria (undefined: lo crea registrarPagos).
+ */
+async function crearAlmacenPagos(modo: Modo, leerPagos?: LectorPagos): Promise<AlmacenPagosAsync | undefined> {
+  if (modo === 'FIXTURES') return undefined;
+  if (!leerPagos) throw new Error('PAGOS_REAL_SIN_LECTURA');
+  const { configuracionPagos, crearAlmacenPagosReal, crearPoolPagos } = await import('./pagos/adaptador_real.ts');
+  const { leerEnvWeb } = await import('./rrhh/adaptador_real.ts');
+  const c = configuracionPagos(leerEnvWeb());
+  if (!c.ok) console.warn(`Pagos en solo lectura: ${c.codigo}`);
+  return crearAlmacenPagosReal({ lector: leerPagos, pool: c.ok ? crearPoolPagos(c.config) : null });
 }
 
 /**
@@ -113,15 +131,35 @@ async function crearRrhh(modo: Modo): Promise<{ adaptador?: AdaptadorRrhh; sinCo
   return { adaptador: crearAdaptadorRrhhReal({ pool: crearPoolRrhh(c.config) }) };
 }
 
+/** Módulos que pueden escribir, en el orden en que salen en el pie del lateral. */
+export type ModuloEscritura = 'Trabajadores' | 'Pagos';
+
+/**
+ * H6-REAL-2: módulos con escritura activa en REAL, para el rótulo del lateral. Cada uno aparece solo si su credencial
+ * está configurada (Trabajadores: adaptador creado; Pagos: almacén sin `sinEscritura`). FIXTURES: lista vacía (el pie
+ * de FIXTURES no cambia). Nunca nombres de usuario ni datos de conexión.
+ */
+export function modulosEscritura(
+  modo: Modo,
+  r: { trabajadores: boolean; pagos: Pick<AlmacenPagosAsync, 'sinEscritura'> | undefined },
+): ModuloEscritura[] {
+  if (modo !== 'REAL') return [];
+  const m: ModuloEscritura[] = [];
+  if (r.trabajadores) m.push('Trabajadores');
+  if (r.pagos !== undefined && r.pagos.sinEscritura === null) m.push('Pagos');
+  return m;
+}
+
 export async function crearServidor(modo: Modo) {
-  const { contrato, cerrar } = await crearContrato(modo);
+  const { contrato, cerrar, leerPagos } = await crearContrato(modo);
   const rrhh = await crearRrhh(modo);
+  const almacenPagos = await crearAlmacenPagos(modo, leerPagos);
   const acceso = await crearGestorAcceso(modo);
   const dist = join(import.meta.dirname, '..', 'dist');
   const { fuentes, publicas } = fuentesAcceso(dist);
 
   const app = Fastify({ logger: { level: 'warn' }, bodyLimit: 4096 });
-  app.addHook('onClose', async () => { await cerrar(); await rrhh.adaptador?.cerrar?.(); });
+  app.addHook('onClose', async () => { await cerrar(); await rrhh.adaptador?.cerrar?.(); await almacenPagos?.cerrar?.(); });
 
   const enviarAcceso = (reply: FastifyReply, codigo: number, aviso: AvisoAcceso, destino: string) =>
     reply.code(codigo)
@@ -140,7 +178,7 @@ export async function crearServidor(modo: Modo) {
   // y, TA2, POST /api/rrhh/eventos y /api/rrhh/eventos/deshacer),
   // con sesión, Origin obligatorio y JSON (server/rrhh/rutas.ts).
   // H6 (excepción autorizada por Marc): marcas de pago y forma de pago por proveedor (esEscrituraPagos, /api/pagos/…;
-  // solo FIXTURES: en REAL responden 503 «Pendiente de tablas en Supabase»). Nunca facturas, vencimientos ni conciliación.
+  // H6-REAL: en REAL, con cf_pagos_web; sin su credencial, 503). Nunca facturas, vencimientos ni conciliación.
   app.addHook('onRequest', async (req, reply) => {
     if (req.method === 'GET' || req.method === 'HEAD') return;
     const escrituraRrhh = esEscrituraRrhh(req.method, ruta(req)) || esEscrituraPagos(req.method, ruta(req));
@@ -183,7 +221,9 @@ export async function crearServidor(modo: Modo) {
     return reply.header('set-cookie', cookieBorrada()).header('cache-control', 'no-store').redirect('/', 303);
   });
 
-  app.get('/api/estado', async () => ({ modo, farmacia: FARMACIA, solo_lectura: true, usuario: USUARIO }));
+  // H6-REAL-2: `escritura` = módulos con credencial de escritura configurada (solo REAL; en FIXTURES, []).
+  const escritura = modulosEscritura(modo, { trabajadores: rrhh.adaptador !== undefined, pagos: almacenPagos });
+  app.get('/api/estado', async () => ({ modo, farmacia: FARMACIA, solo_lectura: true, usuario: USUARIO, escritura }));
   app.get('/api/inicio', () => contrato.inicio());
   app.get('/api/facturas', () => contrato.facturas());
   app.get<{ Params: { id: string } }>('/api/facturas/:id', async (req, reply) => {
@@ -199,8 +239,11 @@ export async function crearServidor(modo: Modo) {
   // TA1: módulo Trabajadores (FIXTURES: datos de ejemplo en memoria; TA-REAL: tablas reales con cf_trabajadores_web).
   // TA1-2 (decisión de Pío): autor del historial "Marc" (en REAL, cf.autor de cada transacción).
   registrarRrhh(app, { modo, quien: AUTOR_HISTORIAL, ...rrhh, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
-  // H6: pantalla Vencimientos (FIXTURES: marcas y formas en memoria; REAL: solo lectura, escritura 503).
-  const pagos = registrarPagos(app, { modo, contrato, quien: AUTOR_HISTORIAL, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)) });
+  // H6: pantalla Vencimientos (FIXTURES: marcas y formas en memoria; H6-REAL: tablas de la migración 35, lectura con
+  // cf_lectura y escritura con cf_pagos_web; sin credencial de pagos, solo lectura).
+  const pagos = registrarPagos(app, {
+    modo, contrato, quien: AUTOR_HISTORIAL, almacen: almacenPagos, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)),
+  });
   // H7: Cashflow (solo lectura; sustituye al cashflow por semanas de H3a). FIXTURES: datos ficticios con la forma del
   // contrato + vencimientos de H6. REAL: 503 «Pendiente de tablas en Supabase».
   registrarCashflow(app, { modo, pantallaPagos: pagos.pantalla });

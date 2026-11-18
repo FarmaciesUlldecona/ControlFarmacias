@@ -1,28 +1,35 @@
 /**
  * H6: pantalla Vencimientos. Estados de pago por vencimiento, forma de pago por proveedor (por CIF), marcas de pago
- * manuales, totales por semana y mes, y filtros. Módulo puro: lo usan el servidor (rutas y almacén en memoria de
- * FIXTURES) y el front (filtros y totales sobre lo filtrado).
+ * manuales, totales por semana y mes, y filtros. Módulo puro: lo usan el servidor (rutas, almacén en memoria de FIXTURES
+ * y adaptador REAL) y el front (filtros y totales sobre lo filtrado).
  *
- * Excepción autorizada por Marc: la web podrá escribir SOLO en tablas nuevas de marcas de pago y forma de pago por
- * proveedor (rol propio, a crear por el circuito); nunca en facturas, vencimientos ni conciliación. En H6, solo
- * FIXTURES: en REAL la lista y los estados son de solo lectura (cf_lectura) y la escritura responde 503
- * «Pendiente de tablas en Supabase» (propuesta: docs/propuesta_tablas_h6_pagos.sql, sin aplicar).
+ * Excepción autorizada por Marc: la web escribe SOLO en las tablas de marcas de pago y de forma de pago por proveedor
+ * (migración 35, rol cf_pagos_web); nunca en facturas, vencimientos ni conciliación.
+ *
+ * H6-REAL (migración 35 en producción):
+ *  - Un vencimiento se identifica por (factura_id, orden), nunca por el id de facturas_vencimientos (la marca no tiene
+ *    FK al id: el circuito puede regenerar los vencimientos). Sin orden, no se puede marcar.
+ *  - La marca guarda la fecha de vencimiento y el importe que tenía el vencimiento al marcarla (los copia un trigger; la
+ *    web no los envía). Si ya no coinciden con el vencimiento actual, la marca queda A_REVISAR: «a revisar» (naranja),
+ *    nunca «pagado», y no cuenta como pagado en ningún total ni en el cashflow. Una marca vigente cuyo vencimiento ya no
+ *    existe (huérfana) también cuenta como «a revisar».
+ *  - Reglas previas de la web (las mismas que la BD, antes de escribir): fecha de pago no posterior a hoy (Madrid); sin
+ *    fecha o sin importe no se marca; confirmar domiciliados solo lo ya vencido y con fecha de pago = fecha de vencimiento.
  *
  * Estados (por vencimiento):
  *   PENDIENTE             no vencido y sin marca (también sin fecha: no se puede afirmar que haya vencido).
  *   VENCIDO_SIN_PAGAR     vencido, forma no domiciliada (TRANSFERENCIA, EFECTIVO, COMPENSACION_ABONO o sin
  *                         determinar por falta de CIF) y sin marca. Rojo.
  *   DOMICILIADO_PREVISTO  vencido, forma DOMICILIACION y sin marca. Color propio (no rojo).
- *   PAGADO_MANUAL         con marca vigente: «pagado (marcado a mano)», fecha y forma.
+ *   PAGADO_MANUAL         con marca vigente que coincide con el vencimiento: «pagado (marcado a mano)», fecha y forma.
+ *   A_REVISAR             con marca vigente cuya fecha o importe copiados ya no coinciden con el vencimiento. Naranja.
  *   PAGADO_BANCO          reservado (sin datos bancarios en esta fase): sin lógica.
  * Vencido = fecha de vencimiento anterior a hoy (el mismo día aún no ha vencido).
  *
- * Totales (por semana ISO o por mes): cargos menos abonos (neto = Σ cargos − Σ |abonos|), separando lo «por pagar»
- * (sin marca, forma no domiciliada) de lo «domiciliado previsto» (sin marca, forma DOMICILIACION) y de lo ya pagado.
- * Importe ausente (null) nunca suma: se cuenta en «importe pendiente». Sentido no documentado nunca suma como cargo
- * ni como abono (regla H4c-2 de Pío): se cuenta aparte. H6-3: un cargo con importe negativo tampoco suma (aviso
- * «importe negativo: revisar», contado aparte); un abono vencido sin marca es ABONO_PENDIENTE_COMPENSAR (azul) y, al
- * marcarlo, «compensado / cobrado (marcado a mano)» con COMPENSACION_ABONO por defecto.
+ * Totales (por semana ISO o por mes): cargos menos abonos (neto = Σ cargos − Σ |abonos|), por estado. Importe ausente
+ * (null) nunca suma: se cuenta en «importe pendiente». Sentido no documentado nunca suma (regla H4c-2 de Pío): se cuenta
+ * aparte. H6-3: un cargo con importe negativo tampoco suma («importe negativo: revisar»); un abono vencido sin marca es
+ * ABONO_PENDIENTE_COMPENSAR (azul) y, al marcarlo, «compensado / cobrado (marcado a mano)».
  *
  * Solo sintaxis TypeScript borrable.
  */
@@ -47,10 +54,10 @@ export const TEXTO_FORMA: Readonly<Record<FormaEfectiva, string>> = {
 // Estados
 // ---------------------------------------------------------------------------
 
-export const ESTADOS_PAGO = ['PENDIENTE', 'VENCIDO_SIN_PAGAR', 'DOMICILIADO_PREVISTO', 'ABONO_PENDIENTE_COMPENSAR', 'PAGADO_MANUAL', 'PAGADO_BANCO'] as const;
+export const ESTADOS_PAGO = ['PENDIENTE', 'VENCIDO_SIN_PAGAR', 'DOMICILIADO_PREVISTO', 'ABONO_PENDIENTE_COMPENSAR', 'A_REVISAR', 'PAGADO_MANUAL', 'PAGADO_BANCO'] as const;
 export type EstadoPagoVencimiento = (typeof ESTADOS_PAGO)[number];
 /** Color de cada estado: los de la web más uno propio para lo domiciliado previsto (no rojo: no es una incidencia). */
-export type ColorEstadoPago = 'azul' | 'rojo' | 'domiciliado' | 'verde' | 'gris';
+export type ColorEstadoPago = 'azul' | 'rojo' | 'domiciliado' | 'naranja' | 'verde' | 'gris';
 export interface DefinicionEstado { texto: string; color: ColorEstadoPago; implementado: boolean; descripcion: string }
 export const DICCIONARIO_ESTADOS: Readonly<Record<EstadoPagoVencimiento, DefinicionEstado>> = {
   PENDIENTE: { texto: 'Pendiente', color: 'azul', implementado: true, descripcion: 'Aún no ha vencido y no tiene marca de pago.' },
@@ -58,19 +65,28 @@ export const DICCIONARIO_ESTADOS: Readonly<Record<EstadoPagoVencimiento, Definic
   DOMICILIADO_PREVISTO: { texto: 'Domiciliado previsto', color: 'domiciliado', implementado: true, descripcion: 'Ha vencido y se paga por domiciliación: el banco debería haberlo cargado. Confírmalo.' },
   // H6-3 (Marc): un abono vencido es dinero a favor: nunca rojo ni «domiciliado previsto».
   ABONO_PENDIENTE_COMPENSAR: { texto: 'Abono pendiente de compensar', color: 'azul', implementado: true, descripcion: 'Abono vencido sin marca: falta compensarlo o cobrarlo.' },
+  // H6-REAL: la fecha o el importe del vencimiento han cambiado desde que se marcó (o el vencimiento ya no existe).
+  A_REVISAR: { texto: 'a revisar', color: 'naranja', implementado: true, descripcion: 'Tiene marca de pago, pero la fecha o el importe del vencimiento han cambiado desde que se marcó: no cuenta como pagado. Revísala: anúlala y vuelve a marcar si procede.' },
   PAGADO_MANUAL: { texto: 'pagado (marcado a mano)', color: 'verde', implementado: true, descripcion: 'Marcado como pagado a mano, con fecha y forma.' },
   // Reservado para cuando haya datos bancarios: sin lógica en esta fase.
   PAGADO_BANCO: { texto: 'Pagado (banco)', color: 'gris', implementado: false, descripcion: 'Reservado: sin datos bancarios en esta fase.' },
 };
 /** Estados que la pantalla puede asignar hoy (PAGADO_BANCO queda solo en el diccionario). */
 export const ESTADOS_IMPLEMENTADOS = ESTADOS_PAGO.filter((e) => DICCIONARIO_ESTADOS[e].implementado);
+/** Estados que cuentan como pagado (nunca A_REVISAR). */
+export function esPagado(e: EstadoPagoVencimiento): boolean {
+  return e === 'PAGADO_MANUAL' || e === 'PAGADO_BANCO';
+}
 
 export const TEXTO_SENTIDO: Readonly<Record<SentidoVencimiento, string>> = { CARGO: 'Cargo', ABONO: 'Abono', NO_DOCUMENTADO: 'No documentado' };
 
-export const TEXTO_H6_PENDIENTE = 'Pendiente de tablas en Supabase';
-export const ERROR_H6_PENDIENTE = 'H6_PENDIENTE';
-/** Máximo de vencimientos por petición de marcado (el cuerpo de la petición está limitado a 4 KB). */
-export const MAX_VENCIMIENTOS_PETICION = 80;
+/** H6-REAL: REAL sin CF_PAGOS_USER / CF_PAGOS_PASSWORD: la pantalla funciona en solo lectura. */
+export const MENSAJE_FALTA_CREDENCIAL_PAGOS = 'Falta configurar la credencial de pagos';
+/**
+ * Máximo de vencimientos por petición de marcado: cada uno viaja como { factura_id, orden } (≈ 56 bytes) y el cuerpo de
+ * la petición está limitado a 4 KB.
+ */
+export const MAX_VENCIMIENTOS_PETICION = 60;
 
 // ---------------------------------------------------------------------------
 // Fechas (ISO YYYY-MM-DD, sin zona)
@@ -96,6 +112,44 @@ function finDeMes(ym: string): string {
 }
 const fechaDe = (v: { fecha_vencimiento: string | null }) => v.fecha_vencimiento?.slice(0, 10) ?? null;
 
+/** Hoy en Madrid (la regla de la BD: fecha de pago no posterior a hoy en Europe/Madrid). */
+export function hoyMadrid(ahora: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit' }).format(ahora);
+}
+
+// ---------------------------------------------------------------------------
+// Identificación del vencimiento: (factura_id, orden)
+// ---------------------------------------------------------------------------
+
+export interface IdVencimiento { factura_id: string; orden: number }
+/** Clave interna de un vencimiento (selección, mapas de marcas). */
+export function claveVencimiento(factura_id: string, orden: number): string {
+  return `${factura_id}#${orden}`;
+}
+/** Clave de una fila; null si no tiene orden válido (no se puede marcar). */
+export function claveDe(v: { factura_id: string; orden: number | null }): string | null {
+  return v.orden !== null && Number.isSafeInteger(v.orden) && v.orden > 0 ? claveVencimiento(v.factura_id, v.orden) : null;
+}
+
+/** Por qué un vencimiento no se puede marcar (regla previa de la web; la BD también lo impide). */
+export type MotivoNoMarcable = 'SIN_ORDEN' | 'SIN_FECHA' | 'SIN_IMPORTE';
+export const TEXTO_NO_MARCABLE: Readonly<Record<MotivoNoMarcable, string>> = {
+  SIN_ORDEN: 'no tiene número de orden en su factura: no se puede marcar',
+  SIN_FECHA: 'no tiene fecha de vencimiento: no se puede marcar hasta que la tenga',
+  SIN_IMPORTE: 'no tiene importe (importe pendiente): no se puede marcar hasta que se complete',
+};
+export const TEXTO_NO_MARCABLE_PLURAL: Readonly<Record<MotivoNoMarcable, string>> = {
+  SIN_ORDEN: 'no tienen número de orden en su factura: no se pueden marcar',
+  SIN_FECHA: 'no tienen fecha de vencimiento: no se pueden marcar hasta que la tengan',
+  SIN_IMPORTE: 'no tienen importe (importe pendiente): no se pueden marcar hasta que se complete',
+};
+export function motivoNoMarcable(v: Pick<VencimientoListado, 'factura_id' | 'orden' | 'fecha_vencimiento' | 'importe'>): MotivoNoMarcable | null {
+  if (claveDe(v) === null) return 'SIN_ORDEN';
+  if (fechaDe(v) === null) return 'SIN_FECHA';
+  if (v.importe === null) return 'SIN_IMPORTE';
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Forma efectiva y estado
 // ---------------------------------------------------------------------------
@@ -103,6 +157,11 @@ const fechaDe = (v: { fecha_vencimiento: string | null }) => v.fecha_vencimiento
 /** CIF comparable válido para la configuración (como normalizarCif: solo A-Z y 0-9). */
 export function esCifComparable(v: unknown): v is string {
   return typeof v === 'string' && /^[A-Z0-9]{5,20}$/.test(v);
+}
+/** CIF normalizado: mayúsculas y sin separadores; null si no cumple ^[A-Z0-9]{5,20}$. */
+export function normalizarCifPago(v: string): string | null {
+  const c = v.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return esCifComparable(c) ? c : null;
 }
 
 export interface FormaResuelta { forma: FormaEfectiva; por_defecto: boolean; sin_cif: boolean }
@@ -121,10 +180,11 @@ export function estaVencido(fecha: string | null, hoy: string): boolean {
 /**
  * Estado de un vencimiento. Sin determinar (sin CIF) cuenta como no domiciliado: rojo si ha vencido.
  * H6-3: un ABONO vencido sin marca es ABONO_PENDIENTE_COMPENSAR (nunca VENCIDO_SIN_PAGAR ni DOMICILIADO_PREVISTO).
+ * H6-REAL: con marca que ya no coincide con el vencimiento (revisar), A_REVISAR.
  */
 export function estadoPago(fecha: string | null, forma: FormaEfectiva, marcado: boolean, hoy: string,
-  sentido: SentidoVencimiento = 'CARGO'): EstadoPagoVencimiento {
-  if (marcado) return 'PAGADO_MANUAL';
+  sentido: SentidoVencimiento = 'CARGO', revisar = false): EstadoPagoVencimiento {
+  if (marcado) return revisar ? 'A_REVISAR' : 'PAGADO_MANUAL';
   if (!estaVencido(fecha, hoy)) return 'PENDIENTE';
   if (sentido === 'ABONO') return 'ABONO_PENDIENTE_COMPENSAR';
   return forma === 'DOMICILIACION' ? 'DOMICILIADO_PREVISTO' : 'VENCIDO_SIN_PAGAR';
@@ -152,16 +212,23 @@ export const TEXTO_CARGO_NEGATIVO = 'importe negativo: revisar';
 // ---------------------------------------------------------------------------
 
 export type OrigenMarca = 'MANUAL' | 'DOMICILIADOS';
+export const ORIGENES_MARCA: readonly OrigenMarca[] = ['MANUAL', 'DOMICILIADOS'];
 export interface MarcaPago {
   marca_id: string;
-  vencimiento_id: string;
+  farmacia: string;
+  factura_id: string;
+  vencimiento_orden: number;
+  /** Copiados del vencimiento al marcar (trigger de la BD; la web no los envía). */
+  fecha_vencimiento: string;
+  importe: number;
   fecha_pago: string;
   forma: FormaPago;
   /** MANUAL = «Marcar pagado»; DOMICILIADOS = «Confirmar domiciliados». */
   origen: OrigenMarca;
   anulada: boolean;
   creada_at: string;
-  creada_por: string;
+  /** Autor (historial). null si no consta en el historial leído. */
+  creada_por: string | null;
   anulada_at: string | null;
   anulada_por: string | null;
 }
@@ -180,7 +247,8 @@ export interface EventoPago {
   accion: AccionPago;
   autor: string;
   at: string;
-  vencimiento_id: string | null;
+  factura_id: string | null;
+  vencimiento_orden: number | null;
   marca_id: string | null;
   cif: string | null;
   fecha_pago: string | null;
@@ -189,10 +257,33 @@ export interface EventoPago {
   origen: OrigenMarca | null;
 }
 
-/** Marca vigente mostrada en la fila. */
-export type MarcaVista = Pick<MarcaPago, 'marca_id' | 'fecha_pago' | 'forma' | 'origen' | 'creada_at' | 'creada_por'>;
+export type DiferenciaMarca = 'FECHA' | 'IMPORTE';
+/**
+ * Diferencias entre lo copiado en la marca y el vencimiento actual (A_REVISAR si hay alguna). Fecha: día; importe: al
+ * céntimo. Un vencimiento que ahora no tiene fecha o importe también difiere.
+ */
+export function diferenciasMarca(m: Pick<MarcaPago, 'fecha_vencimiento' | 'importe'>, v: Pick<VencimientoListado, 'fecha_vencimiento' | 'importe'>): DiferenciaMarca[] {
+  const d: DiferenciaMarca[] = [];
+  if (fechaDe(v) !== m.fecha_vencimiento.slice(0, 10)) d.push('FECHA');
+  if (v.importe === null || Math.round(v.importe * 100) !== Math.round(m.importe * 100)) d.push('IMPORTE');
+  return d;
+}
+
+/** Marca vigente mostrada en la fila (con lo que tenía el vencimiento al marcarla). */
+export interface MarcaVista extends Pick<MarcaPago, 'marca_id' | 'fecha_pago' | 'forma' | 'origen' | 'creada_at' | 'creada_por' | 'fecha_vencimiento' | 'importe'> {
+  /** Vacío = coincide con el vencimiento actual; si no, A_REVISAR. */
+  diferencias: DiferenciaMarca[];
+}
+const vistaMarca = (m: MarcaPago, diferencias: DiferenciaMarca[]): MarcaVista => ({
+  marca_id: m.marca_id, fecha_pago: m.fecha_pago, forma: m.forma, origen: m.origen, creada_at: m.creada_at, creada_por: m.creada_por,
+  fecha_vencimiento: m.fecha_vencimiento, importe: m.importe, diferencias,
+});
 
 export interface FilaVencimientoPago extends VencimientoListado {
+  /** (factura_id, orden) como texto; null si el vencimiento no tiene orden (no se puede marcar). */
+  clave: string | null;
+  /** Regla previa de la web: sin orden, sin fecha o sin importe no se marca. */
+  no_marcable: MotivoNoMarcable | null;
   estado_pago: EstadoPagoVencimiento;
   forma_pago: FormaEfectiva;
   /** true si el CIF no tiene configuración (DOMICILIACION por defecto). */
@@ -205,19 +296,26 @@ export interface FilaVencimientoPago extends VencimientoListado {
   cargo_negativo: boolean;
 }
 
-/** Filas de la pantalla: estado, forma y marca vigente de cada vencimiento. No cambia importes ni fechas. */
+/**
+ * Filas de la pantalla: estado, forma y marca vigente de cada vencimiento (por factura_id + orden). No cambia importes
+ * ni fechas. `marcas`: vigentes por clave.
+ */
 export function filasPagos(vs: readonly VencimientoListado[], formas: ReadonlyMap<string, FormaPago>,
   marcas: ReadonlyMap<string, MarcaPago>, hoy: string): FilaVencimientoPago[] {
   return vs.map((v) => {
     const f = formaEfectiva(v.proveedor_cif_comparable, formas);
-    const m = marcas.get(v.vencimiento_id) ?? null;
+    const clave = claveDe(v);
+    const m = clave === null ? null : marcas.get(clave) ?? null;
+    const dif = m === null ? [] : diferenciasMarca(m, v);
     return {
       ...v,
-      estado_pago: estadoPago(v.fecha_vencimiento, f.forma, m !== null, hoy, v.sentido),
+      clave,
+      no_marcable: motivoNoMarcable(v),
+      estado_pago: estadoPago(v.fecha_vencimiento, f.forma, m !== null, hoy, v.sentido, dif.length > 0),
       cargo_negativo: esCargoNegativo(v),
       forma_pago: f.forma, forma_por_defecto: f.por_defecto, sin_cif: f.sin_cif,
       vencido: estaVencido(v.fecha_vencimiento, hoy),
-      marca: m === null ? null : { marca_id: m.marca_id, fecha_pago: m.fecha_pago, forma: m.forma, origen: m.origen, creada_at: m.creada_at, creada_por: m.creada_por },
+      marca: m === null ? null : vistaMarca(m, dif),
     };
   });
 }
@@ -248,10 +346,12 @@ export interface TotalPeriodo {
   por_pagar: BloqueTotal;
   /** Solo DOMICILIADO_PREVISTO (domiciliado y ya vencido, sin marca). */
   domiciliado: BloqueTotal;
-  /** PAGADO_MANUAL (y PAGADO_BANCO). */
+  /** PAGADO_MANUAL (y PAGADO_BANCO). Nunca A_REVISAR. */
   pagado: BloqueTotal;
   /** ABONO_PENDIENTE_COMPENSAR: aparte. */
   abonos: BloqueTotal;
+  /** H6-REAL: A_REVISAR (marca que ya no coincide con el vencimiento): aparte, nunca como pagado. */
+  revisar: BloqueTotal;
   /** Importe ausente: excluido de los totales. */
   sin_importe: number;
   /** Sentido no documentado con importe: excluido de los totales (no se sabe si es cargo o abono). */
@@ -289,10 +389,10 @@ function bloque(fs: readonly FilaTotal[]): BloqueTotal {
  * Bloque al que va cada fila en los totales (H6-6: por estado; la misma regla en la cabecera de totales y en el resumen
  * del periodo del calendario). Cada vencimiento va a un solo bloque.
  */
-export type Bloque = 'pagado' | 'domiciliado' | 'por_pagar' | 'abonos';
+export type Bloque = 'pagado' | 'domiciliado' | 'por_pagar' | 'abonos' | 'revisar';
 export const BLOQUE_DE_ESTADO: Readonly<Record<EstadoPagoVencimiento, Bloque>> = {
   PAGADO_MANUAL: 'pagado', PAGADO_BANCO: 'pagado', DOMICILIADO_PREVISTO: 'domiciliado',
-  PENDIENTE: 'por_pagar', VENCIDO_SIN_PAGAR: 'por_pagar', ABONO_PENDIENTE_COMPENSAR: 'abonos',
+  PENDIENTE: 'por_pagar', VENCIDO_SIN_PAGAR: 'por_pagar', ABONO_PENDIENTE_COMPENSAR: 'abonos', A_REVISAR: 'revisar',
 };
 export function bloqueDe(x: Pick<FilaTotal, 'estado_pago'>): Bloque {
   return BLOQUE_DE_ESTADO[x.estado_pago];
@@ -306,6 +406,7 @@ export function totalGeneral(g: readonly FilaTotal[]): Omit<TotalPeriodo, 'clave
     domiciliado: bloque(g.filter((x) => bloqueDe(x) === 'domiciliado')),
     pagado: bloque(g.filter((x) => bloqueDe(x) === 'pagado')),
     abonos: bloque(g.filter((x) => bloqueDe(x) === 'abonos')),
+    revisar: bloque(g.filter((x) => bloqueDe(x) === 'revisar')),
     ...excluidosTotal(g),
   };
 }
@@ -344,9 +445,9 @@ export const PERIODOS = [
 export type ClavePeriodo = (typeof PERIODOS)[number]['clave'];
 
 /**
- * Filtro de fecha. Atrasados = vencido y sin marca de pago. Esta semana = lunes a domingo de hoy. Este mes = el mes de
- * hoy. Próximos N días = de hoy a hoy + N. Rango = desde/hasta inclusive (cualquiera puede faltar). Sin fecha: fuera
- * de cualquier filtro de fecha.
+ * Filtro de fecha. Atrasados = vencido y no pagado (A_REVISAR tampoco cuenta como pagado). Esta semana = lunes a domingo
+ * de hoy. Este mes = el mes de hoy. Próximos N días = de hoy a hoy + N. Rango = desde/hasta inclusive (cualquiera puede
+ * faltar). Sin fecha: fuera de cualquier filtro de fecha.
  */
 export function cumplePeriodo(x: Pick<FilaVencimientoPago, 'fecha_vencimiento' | 'estado_pago'>, periodo: string, hoy: string,
   rango: { desde?: string; hasta?: string } = {}): boolean {
@@ -354,7 +455,7 @@ export function cumplePeriodo(x: Pick<FilaVencimientoPago, 'fecha_vencimiento' |
   const f = fechaDe(x);
   if (f === null) return false;
   switch (periodo) {
-    case 'atrasados': return f < hoy && x.estado_pago !== 'PAGADO_MANUAL' && x.estado_pago !== 'PAGADO_BANCO';
+    case 'atrasados': return f < hoy && !esPagado(x.estado_pago);
     case 'semana': { const l = lunesIso(hoy); return f >= l && f <= sumarDiasIso(l, 6); }
     case 'mes': return f.slice(0, 7) === hoy.slice(0, 7);
     case 'p30': return f >= hoy && f <= sumarDiasIso(hoy, 30);
@@ -400,16 +501,29 @@ export interface EventoPagoVista extends EventoPago {
   fecha_vencimiento: string | null;
   proveedor_nombre: string | null;
 }
+/** H6-REAL: marca vigente sin vencimiento actual (factura_id + orden ya no existe): cuenta como «a revisar». */
+export interface MarcaHuerfana extends MarcaVista {
+  factura_id: string;
+  vencimiento_orden: number;
+  /** De otro vencimiento de la misma factura, si queda alguno; si no, null. */
+  numero_factura: string | null;
+  proveedor_nombre: string | null;
+}
 export interface PantallaVencimientosDTO {
   farmacia: string;
   generado_at: string;
-  /** Fecha de referencia de los estados (REAL: la del servidor; FIXTURES: la de la semilla). */
+  /** Fecha de referencia de los estados (REAL: hoy en Madrid; FIXTURES: la de la semilla). */
   hoy: string;
   modo: 'FIXTURES' | 'REAL';
-  /** false en REAL: sin tablas de marcas ni de formas (todo en solo lectura). */
+  /** true si se puede marcar, anular y cambiar formas; false en REAL sin la credencial de pagos (solo lectura). */
   marcas_disponibles: boolean;
-  mensaje_pendiente: string | null;
+  /** Por qué no se puede escribir (mensaje llano); null si se puede. */
+  mensaje_escritura: string | null;
   filas: FilaVencimientoPago[];
+  /** Marcas vigentes cuyo vencimiento ya no existe: a revisar. */
+  marcas_huerfanas: MarcaHuerfana[];
+  /** Vencimientos A_REVISAR + marcas huérfanas. */
+  a_revisar: number;
   proveedores: ProveedorPagoVista[];
   sin_cif: { vencimientos: number };
   historial: EventoPagoVista[];
@@ -420,18 +534,28 @@ export interface PantallaVencimientosDTO {
 export interface FuentePagos {
   hoy: string;
   formas: ReadonlyMap<string, FormaPago>;
+  /** Marcas vigentes por clave (factura_id#orden). */
   marcas: ReadonlyMap<string, MarcaPago>;
   historial: readonly EventoPago[];
+}
+export function fuenteVacia(hoy: string): FuentePagos {
+  return { hoy, formas: new Map(), marcas: new Map(), historial: [] };
 }
 
 const nombreFila = (v: Pick<VencimientoListado, 'proveedor_comercial' | 'proveedor_razon_social' | 'proveedor'>) =>
   v.proveedor_comercial ?? v.proveedor_razon_social ?? v.proveedor ?? 'Proveedor sin identificar';
 
-/** Construye la pantalla a partir del contrato `vencimientos` y de las marcas y formas (vacías en REAL). */
-export function construirPantalla(dto: VencimientosDTO, fuente: FuentePagos | null, opciones: { hoy: string; modo: 'FIXTURES' | 'REAL' }): PantallaVencimientosDTO {
-  const hoy = fuente?.hoy ?? opciones.hoy;
+/**
+ * Construye la pantalla a partir del contrato `vencimientos` y de las marcas y formas. fuente null = sin marcas ni
+ * formas (pruebas), con la fecha de referencia `opciones.hoy`.
+ */
+export function construirPantalla(dto: VencimientosDTO, f: FuentePagos | null,
+  opciones: { modo: 'FIXTURES' | 'REAL'; hoy?: string; mensajeEscritura?: string | null }): PantallaVencimientosDTO {
+  if (f === null && !esFechaIso(opciones.hoy)) throw new Error('PANTALLA_SIN_FECHA_DE_REFERENCIA');
+  const fuente = f ?? fuenteVacia(opciones.hoy as string);
+  const hoy = fuente.hoy;
   // Orden de la lista: fecha de vencimiento (sin fecha, al final), nº de factura y orden del vencimiento.
-  const filas = filasPagos(dto.vencimientos, fuente?.formas ?? new Map(), fuente?.marcas ?? new Map(), hoy)
+  const filas = filasPagos(dto.vencimientos, fuente.formas, fuente.marcas, hoy)
     .map((f, i) => ({ f, i }))
     .sort((a, b) => (fechaDe(a.f) ?? '9999').localeCompare(fechaDe(b.f) ?? '9999')
       || (a.f.numero_factura ?? '').localeCompare(b.f.numero_factura ?? '') || (a.f.orden ?? 0) - (b.f.orden ?? 0) || a.i - b.i)
@@ -445,24 +569,35 @@ export function construirPantalla(dto: VencimientosDTO, fuente: FuentePagos | nu
     forma: fs[0].forma_pago as FormaPago,
     por_defecto: fs[0].forma_por_defecto,
     vencimientos: fs.length,
-    sin_pagar: fs.filter((x) => x.estado_pago !== 'PAGADO_MANUAL').length,
+    sin_pagar: fs.filter((x) => !esPagado(x.estado_pago)).length,
   })).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es') || a.cif.localeCompare(b.cif));
-  const venc = new Map(dto.vencimientos.map((v) => [v.vencimiento_id, v]));
+  const venc = new Map(dto.vencimientos.flatMap((v) => { const c = claveDe(v); return c === null ? [] : [[c, v] as const]; }));
+  const deFactura = new Map(dto.vencimientos.map((v) => [v.factura_id, v]));
   const nombreCif = new Map(proveedores.map((p) => [p.cif, p.nombre]));
-  const historial: EventoPagoVista[] = [...(fuente?.historial ?? [])].sort((a, b) => b.at.localeCompare(a.at) || b.evento_id - a.evento_id).map((e) => {
-    const v = e.vencimiento_id === null ? undefined : venc.get(e.vencimiento_id);
+  const historial: EventoPagoVista[] = [...fuente.historial].sort((a, b) => b.at.localeCompare(a.at) || b.evento_id - a.evento_id).map((e) => {
+    const v = e.factura_id === null || e.vencimiento_orden === null ? undefined : venc.get(claveVencimiento(e.factura_id, e.vencimiento_orden));
+    const fa = e.factura_id === null ? undefined : deFactura.get(e.factura_id);
     return {
       ...e,
       sentido: v?.sentido ?? null,
-      numero_factura: v?.numero_factura ?? null,
+      numero_factura: (v ?? fa)?.numero_factura ?? null,
       fecha_vencimiento: v?.fecha_vencimiento ?? null,
-      proveedor_nombre: v ? nombreFila(v) : e.cif === null ? null : nombreCif.get(e.cif) ?? null,
+      proveedor_nombre: v ?? fa ? nombreFila((v ?? fa) as VencimientoListado) : e.cif === null ? null : nombreCif.get(e.cif) ?? null,
     };
   });
+  const marcas_huerfanas: MarcaHuerfana[] = [...fuente.marcas.entries()].filter(([k]) => !venc.has(k)).map(([, m]) => {
+    const fa = deFactura.get(m.factura_id);
+    return {
+      ...vistaMarca(m, ['FECHA', 'IMPORTE']), factura_id: m.factura_id, vencimiento_orden: m.vencimiento_orden,
+      numero_factura: fa?.numero_factura ?? null, proveedor_nombre: fa ? nombreFila(fa) : null,
+    };
+  }).sort((a, b) => a.fecha_vencimiento.localeCompare(b.fecha_vencimiento) || a.marca_id.localeCompare(b.marca_id));
+  const mensaje = opciones.mensajeEscritura ?? null;
   return {
     farmacia: dto.farmacia, generado_at: dto.generado_at, hoy, modo: opciones.modo,
-    marcas_disponibles: fuente !== null, mensaje_pendiente: fuente === null ? TEXTO_H6_PENDIENTE : null,
-    filas, proveedores, sin_cif: { vencimientos: filas.filter((f) => f.sin_cif).length }, historial, pago: dto.pago,
+    marcas_disponibles: mensaje === null, mensaje_escritura: mensaje,
+    filas, marcas_huerfanas, a_revisar: filas.filter((f) => f.estado_pago === 'A_REVISAR').length + marcas_huerfanas.length,
+    proveedores, sin_cif: { vencimientos: filas.filter((f) => f.sin_cif).length }, historial, pago: dto.pago,
   };
 }
 
@@ -474,20 +609,24 @@ type Errores = Record<string, string>;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const esObjeto = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-function listaIds(v: unknown, errores: Errores): string[] {
+/** [{ factura_id: uuid, orden: entero 1–9999 }], sin repetir (nunca el id del vencimiento). */
+function listaVencimientos(v: unknown, errores: Errores): IdVencimiento[] {
   if (!Array.isArray(v) || v.length === 0) { errores.vencimientos = 'Selecciona al menos un vencimiento'; return []; }
   if (v.length > MAX_VENCIMIENTOS_PETICION) { errores.vencimientos = `Como máximo ${MAX_VENCIMIENTOS_PETICION} vencimientos a la vez`; return []; }
-  if (!v.every((x) => typeof x === 'string' && UUID.test(x))) { errores.vencimientos = 'Identificador de vencimiento no válido'; return []; }
-  if (new Set(v).size !== v.length) { errores.vencimientos = 'Vencimiento repetido'; return []; }
-  return v as string[];
+  const ok = v.every((x) => esObjeto(x) && Object.keys(x).length === 2 && typeof x.factura_id === 'string' && UUID.test(x.factura_id)
+    && typeof x.orden === 'number' && Number.isInteger(x.orden) && x.orden >= 1 && x.orden <= 9999);
+  if (!ok) { errores.vencimientos = 'Vencimiento no válido: se identifica por factura y orden'; return []; }
+  const ids = (v as IdVencimiento[]).map((x) => ({ factura_id: x.factura_id, orden: x.orden }));
+  if (new Set(ids.map((x) => claveVencimiento(x.factura_id, x.orden))).size !== ids.length) { errores.vencimientos = 'Vencimiento repetido'; return []; }
+  return ids;
 }
 
-export interface PeticionMarcar { vencimientos: string[]; fecha_pago: string; forma: FormaPago | null }
-/** { vencimientos: uuid[], fecha_pago: 'YYYY-MM-DD' (≤ hoy), forma: FormaPago | null (null = la de cada proveedor) }. */
+export interface PeticionMarcar { vencimientos: IdVencimiento[]; fecha_pago: string; forma: FormaPago | null }
+/** { vencimientos: [{factura_id, orden}], fecha_pago: 'YYYY-MM-DD' (≤ hoy), forma: FormaPago | null (null = la de cada proveedor) }. */
 export function validarMarcar(cuerpo: unknown, hoy: string): { ok: true; datos: PeticionMarcar } | { ok: false; errores: Errores } {
   const errores: Errores = {};
   if (!esObjeto(cuerpo) || Object.keys(cuerpo).some((k) => !['vencimientos', 'fecha_pago', 'forma'].includes(k))) return { ok: false, errores: { cuerpo: 'Petición no válida' } };
-  const ids = listaIds(cuerpo.vencimientos, errores);
+  const ids = listaVencimientos(cuerpo.vencimientos, errores);
   const fecha = cuerpo.fecha_pago;
   if (!esFechaIso(fecha)) errores.fecha_pago = 'Fecha no válida';
   else if (fecha > hoy) errores.fecha_pago = 'La fecha de pago no puede ser posterior a hoy';
@@ -498,11 +637,11 @@ export function validarMarcar(cuerpo: unknown, hoy: string): { ok: true; datos: 
   return { ok: true, datos: { vencimientos: ids, fecha_pago: fecha as string, forma: forma as FormaPago | null } };
 }
 
-/** { vencimientos: uuid[] } (solo DOMICILIADO_PREVISTO; lo comprueba la ruta). */
-export function validarDomiciliados(cuerpo: unknown): { ok: true; vencimientos: string[] } | { ok: false; errores: Errores } {
+/** { vencimientos: [{factura_id, orden}] } (solo DOMICILIADO_PREVISTO; lo comprueba prepararDomiciliados). */
+export function validarDomiciliados(cuerpo: unknown): { ok: true; vencimientos: IdVencimiento[] } | { ok: false; errores: Errores } {
   const errores: Errores = {};
   if (!esObjeto(cuerpo) || Object.keys(cuerpo).some((k) => k !== 'vencimientos')) return { ok: false, errores: { cuerpo: 'Petición no válida' } };
-  const ids = listaIds(cuerpo.vencimientos, errores);
+  const ids = listaVencimientos(cuerpo.vencimientos, errores);
   return Object.keys(errores).length ? { ok: false, errores } : { ok: true, vencimientos: ids };
 }
 
@@ -521,7 +660,53 @@ export function validarConfirmacion(cuerpo: unknown): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Reglas previas a la escritura (las de la BD, en la web; iguales en FIXTURES y REAL). Todo o nada.
+// ---------------------------------------------------------------------------
+
+export interface ItemMarca { factura_id: string; vencimiento_orden: number; fecha_pago: string; forma: FormaPago; origen: OrigenMarca }
+export type CodigoRegla = 'VENCIMIENTO_NO_ENCONTRADO' | 'VENCIMIENTO_SIN_FECHA' | 'VENCIMIENTO_SIN_IMPORTE' | 'YA_PAGADO'
+  | 'FORMA_SIN_CIF' | 'NO_DOMICILIADO_PREVISTO';
+const CODIGO_NO_MARCABLE: Readonly<Record<MotivoNoMarcable, CodigoRegla>> = {
+  SIN_ORDEN: 'VENCIMIENTO_NO_ENCONTRADO', SIN_FECHA: 'VENCIMIENTO_SIN_FECHA', SIN_IMPORTE: 'VENCIMIENTO_SIN_IMPORTE',
+};
+type Preparado = { ok: true; items: ItemMarca[] } | { ok: false; codigo: CodigoRegla };
+
+/** «Marcar pagado»: cada vencimiento existe, se puede marcar y no tiene marca vigente (tampoco «a revisar»). */
+export function prepararMarcas(filas: ReadonlyMap<string, FilaVencimientoPago>, d: PeticionMarcar): Preparado {
+  const items: ItemMarca[] = [];
+  for (const id of d.vencimientos) {
+    const f = filas.get(claveVencimiento(id.factura_id, id.orden));
+    if (!f) return { ok: false, codigo: 'VENCIMIENTO_NO_ENCONTRADO' };
+    if (f.no_marcable) return { ok: false, codigo: CODIGO_NO_MARCABLE[f.no_marcable] };
+    if (f.marca !== null) return { ok: false, codigo: 'YA_PAGADO' };
+    // Forma por defecto: la del proveedor; un abono, COMPENSACION_ABONO (H6-3; también sin CIF).
+    const defecto = formaPorDefectoMarca(f);
+    if (d.forma === null && defecto === 'SIN_DETERMINAR') return { ok: false, codigo: 'FORMA_SIN_CIF' };
+    items.push({ factura_id: id.factura_id, vencimiento_orden: id.orden, fecha_pago: d.fecha_pago, forma: d.forma ?? (defecto as FormaPago), origen: 'MANUAL' });
+  }
+  return { ok: true, items };
+}
+
+/**
+ * «Confirmar domiciliados» (origen DOMICILIADOS): solo DOMICILIADO_PREVISTO, ya vencido (fecha anterior a hoy), con
+ * forma DOMICILIACION y fecha de pago = fecha de vencimiento (la regla de la BD).
+ */
+export function prepararDomiciliados(filas: ReadonlyMap<string, FilaVencimientoPago>, ids: readonly IdVencimiento[], hoy: string): Preparado {
+  const items: ItemMarca[] = [];
+  for (const id of ids) {
+    const f = filas.get(claveVencimiento(id.factura_id, id.orden));
+    if (!f) return { ok: false, codigo: 'VENCIMIENTO_NO_ENCONTRADO' };
+    if (f.no_marcable) return { ok: false, codigo: CODIGO_NO_MARCABLE[f.no_marcable] };
+    const fecha = fechaDe(f);
+    if (f.marca !== null || f.estado_pago !== 'DOMICILIADO_PREVISTO' || fecha === null || !estaVencido(fecha, hoy)) return { ok: false, codigo: 'NO_DOMICILIADO_PREVISTO' };
+    items.push({ factura_id: id.factura_id, vencimiento_orden: id.orden, fecha_pago: fecha, forma: 'DOMICILIACION', origen: 'DOMICILIADOS' });
+  }
+  return { ok: true, items };
+}
+
+// ---------------------------------------------------------------------------
 // Almacén en memoria (FIXTURES). Nunca borra: anula. Una marca vigente por vencimiento y una forma vigente por CIF.
+// Simula el trigger de la BD: copia la fecha y el importe del vencimiento al marcar.
 // ---------------------------------------------------------------------------
 
 export interface SemillaPagos {
@@ -529,13 +714,15 @@ export interface SemillaPagos {
   formas: Omit<FormaProveedor, 'anulada_at' | 'anulada_por'>[] | FormaProveedor[];
   marcas: MarcaPago[];
 }
-export interface ItemMarca { vencimiento_id: string; fecha_pago: string; forma: FormaPago; origen: OrigenMarca }
+/** Lo que copia el trigger: la fecha y el importe actuales del vencimiento. */
+export type CopiaVencimiento = Pick<VencimientoListado, 'fecha_vencimiento' | 'importe'>;
+export type ErrorAlmacen = 'YA_PAGADO' | 'VENCIMIENTO_NO_ENCONTRADO' | 'VENCIMIENTO_SIN_FECHA' | 'VENCIMIENTO_SIN_IMPORTE' | 'FECHA_PAGO_FUTURA';
 
 export interface AlmacenPagos {
   hoy: string;
   fuente(): FuentePagos;
-  /** Todo o nada: si alguno ya tiene marca vigente, no marca ninguno. */
-  marcar(items: readonly ItemMarca[], autor: string): MarcaPago[] | 'YA_PAGADO';
+  /** Todo o nada: si alguno ya tiene marca vigente (o no se puede copiar su vencimiento), no marca ninguno. */
+  marcar(items: readonly ItemMarca[], autor: string, copia: (clave: string) => CopiaVencimiento | undefined): MarcaPago[] | ErrorAlmacen;
   anular(marcaId: string, autor: string): MarcaPago | 'MARCA_NO_ENCONTRADA' | 'MARCA_YA_ANULADA';
   /** forma null = volver a la forma por defecto (anula la vigente). */
   fijarForma(cif: string, forma: FormaPago | null, autor: string): { cif: string; forma: FormaPago; por_defecto: boolean } | 'SIN_CAMBIOS';
@@ -543,16 +730,24 @@ export interface AlmacenPagos {
   datos(): { marcas: MarcaPago[]; formas: FormaProveedor[] };
 }
 
+const claveMarca = (m: Pick<MarcaPago, 'factura_id' | 'vencimiento_orden'>) => claveVencimiento(m.factura_id, m.vencimiento_orden);
+
 export function crearAlmacenPagos(semilla: SemillaPagos, o: { ahora?: () => string; nuevoId?: () => string } = {}): AlmacenPagos {
   if (!esFechaIso(semilla.hoy)) throw new Error('SEMILLA_PAGOS_HOY_NO_VALIDO');
   const ahora = o.ahora ?? (() => new Date().toISOString());
   const nuevoId = o.nuevoId ?? (() => crypto.randomUUID());
   const marcas: MarcaPago[] = semilla.marcas.map((m) => ({ ...m }));
+  for (const m of marcas) {
+    if (!UUID.test(m.factura_id) || !Number.isInteger(m.vencimiento_orden) || !esFechaIso(m.fecha_vencimiento) || typeof m.importe !== 'number') {
+      throw new Error('SEMILLA_PAGOS_MARCA_NO_VALIDA');
+    }
+  }
   const formas: FormaProveedor[] = semilla.formas.map((f) => ({ anulada_at: null, anulada_por: null, ...f }));
   const historial: EventoPago[] = [];
   let n = 0;
   const evento = (e: Omit<EventoPago, 'evento_id'>) => { historial.push({ evento_id: ++n, ...e }); };
-  const base = { vencimiento_id: null, marca_id: null, cif: null, fecha_pago: null, forma: null, forma_anterior: null, origen: null };
+  const base = { factura_id: null, vencimiento_orden: null, marca_id: null, cif: null, fecha_pago: null, forma: null, forma_anterior: null, origen: null };
+  const deMarca = (m: MarcaPago) => ({ factura_id: m.factura_id, vencimiento_orden: m.vencimiento_orden, marca_id: m.marca_id, fecha_pago: m.fecha_pago, forma: m.forma, origen: m.origen });
   // Historial de la semilla, en orden de fecha.
   const sembrado: Omit<EventoPago, 'evento_id'>[] = [];
   // Un cambio de forma anula la anterior y crea la nueva en el mismo instante: un solo evento FORMA con la anterior.
@@ -563,11 +758,11 @@ export function crearAlmacenPagos(semilla: SemillaPagos, o: { ahora?: () => stri
     if (f.anulada && f.anulada_at && !sustituta(f)) sembrado.push({ ...base, accion: 'FORMA_POR_DEFECTO', autor: f.anulada_por ?? f.creada_por, at: f.anulada_at, cif: f.cif, forma_anterior: f.forma });
   }
   for (const m of marcas) {
-    sembrado.push({ ...base, accion: 'MARCA', autor: m.creada_por, at: m.creada_at, vencimiento_id: m.vencimiento_id, marca_id: m.marca_id, fecha_pago: m.fecha_pago, forma: m.forma, origen: m.origen });
-    if (m.anulada && m.anulada_at) sembrado.push({ ...base, accion: 'ANULA_MARCA', autor: m.anulada_por ?? m.creada_por, at: m.anulada_at, vencimiento_id: m.vencimiento_id, marca_id: m.marca_id, fecha_pago: m.fecha_pago, forma: m.forma, origen: m.origen });
+    sembrado.push({ ...base, ...deMarca(m), accion: 'MARCA', autor: m.creada_por ?? 'Marc', at: m.creada_at });
+    if (m.anulada && m.anulada_at) sembrado.push({ ...base, ...deMarca(m), accion: 'ANULA_MARCA', autor: m.anulada_por ?? m.creada_por ?? 'Marc', at: m.anulada_at });
   }
   sembrado.sort((a, b) => a.at.localeCompare(b.at)).forEach(evento);
-  const vigentes = () => new Map(marcas.filter((m) => !m.anulada).map((m) => [m.vencimiento_id, m]));
+  const vigentes = () => new Map(marcas.filter((m) => !m.anulada).map((m) => [claveMarca(m), m]));
   const formasVigentes = () => new Map(formas.filter((f) => !f.anulada).map((f) => [f.cif, f.forma]));
   if (vigentes().size !== marcas.filter((m) => !m.anulada).length) throw new Error('SEMILLA_PAGOS_MARCA_DUPLICADA');
   if (formasVigentes().size !== formas.filter((f) => !f.anulada).length) throw new Error('SEMILLA_PAGOS_FORMA_DUPLICADA');
@@ -575,14 +770,27 @@ export function crearAlmacenPagos(semilla: SemillaPagos, o: { ahora?: () => stri
   return {
     hoy: semilla.hoy,
     fuente: () => ({ hoy: semilla.hoy, formas: formasVigentes(), marcas: vigentes(), historial: [...historial] }),
-    marcar(items, autor) {
+    marcar(items, autor, copia) {
       const v = vigentes();
-      if (items.some((i) => v.has(i.vencimiento_id))) return 'YA_PAGADO';
+      // Trigger simulado, para todas antes de escribir ninguna (todo o nada).
+      const copias: CopiaVencimiento[] = [];
+      for (const i of items) {
+        if (v.has(claveMarca(i))) return 'YA_PAGADO';
+        if (i.fecha_pago > semilla.hoy) return 'FECHA_PAGO_FUTURA';
+        const c = copia(claveMarca(i));
+        if (!c) return 'VENCIMIENTO_NO_ENCONTRADO';
+        if (c.fecha_vencimiento === null) return 'VENCIMIENTO_SIN_FECHA';
+        if (c.importe === null) return 'VENCIMIENTO_SIN_IMPORTE';
+        copias.push(c);
+      }
       const at = ahora();
-      return items.map((i) => {
-        const m: MarcaPago = { marca_id: nuevoId(), ...i, anulada: false, creada_at: at, creada_por: autor, anulada_at: null, anulada_por: null };
+      return items.map((i, k) => {
+        const m: MarcaPago = {
+          marca_id: nuevoId(), farmacia: 'PIO', ...i, fecha_vencimiento: (copias[k].fecha_vencimiento as string).slice(0, 10), importe: copias[k].importe as number,
+          anulada: false, creada_at: at, creada_por: autor, anulada_at: null, anulada_por: null,
+        };
         marcas.push(m);
-        evento({ ...base, accion: 'MARCA', autor, at, vencimiento_id: m.vencimiento_id, marca_id: m.marca_id, fecha_pago: m.fecha_pago, forma: m.forma, origen: m.origen });
+        evento({ ...base, ...deMarca(m), accion: 'MARCA', autor, at });
         return { ...m };
       });
     },
@@ -592,7 +800,7 @@ export function crearAlmacenPagos(semilla: SemillaPagos, o: { ahora?: () => stri
       if (m.anulada) return 'MARCA_YA_ANULADA';
       const at = ahora();
       Object.assign(m, { anulada: true, anulada_at: at, anulada_por: autor });
-      evento({ ...base, accion: 'ANULA_MARCA', autor, at, vencimiento_id: m.vencimiento_id, marca_id: m.marca_id, fecha_pago: m.fecha_pago, forma: m.forma, origen: m.origen });
+      evento({ ...base, ...deMarca(m), accion: 'ANULA_MARCA', autor, at });
       return { ...m };
     },
     fijarForma(cif, forma, autor) {

@@ -22,6 +22,7 @@
 .ve-estado-boton.c-azul::before { background: var(--azul); } .ve-estado-boton.c-rojo::before { background: var(--rojo); }
 .ve-estado-boton.c-domiciliado::before { background: var(--domiciliado); } .ve-estado-boton.c-verde::before { background: var(--verde); }
 .ve-estado-boton.c-gris::before { background: var(--gris); }
+.ve-estado-boton.c-naranja::before { background: var(--naranja); } .ve-estado-boton.c-naranja .ve-estado-n { color: var(--naranja-texto); }
 .ve-estado-boton:hover:not(.reservado) { border-color: #c9d0cb; }
 .ve-estado-boton.activo { border-color: var(--primario); box-shadow: inset 0 0 0 1px var(--primario); background: #fafbfa; }
 .ve-estado-boton:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
@@ -56,6 +57,7 @@
 .ve-cifra.por-pagar { border-left-color: var(--rojo); } /* H6-6: como «Falta por pagar» del resumen */
 .ve-cifra.domiciliado { border-left-color: var(--domiciliado); }
 .ve-cifra.abonos { border-left-color: var(--azul); }
+.ve-cifra.revisar { border-left-color: var(--naranja); }
 .ve-cifra-etiqueta { font-size: 12px; font-weight: 600; color: var(--tenue); }
 .ve-cifra-n {
   font-size: clamp(12px, 12.5cqi, 19px); line-height: 1.2; font-weight: 800; letter-spacing: -0.01em;
@@ -77,6 +79,18 @@
 .ve-casilla { width: 18px; height: 18px; accent-color: var(--primario); cursor: pointer; margin: 0; vertical-align: middle; }
 .ve-tabla tr.e-VENCIDO_SIN_PAGAR td:first-child { box-shadow: inset 3px 0 0 var(--rojo); }
 .ve-tabla tr.e-DOMICILIADO_PREVISTO td:first-child { box-shadow: inset 3px 0 0 var(--domiciliado); }
+.ve-tabla tr.e-A_REVISAR td:first-child { box-shadow: inset 3px 0 0 var(--naranja); }
+/* H6-REAL: marca a revisar, no marcable, aviso general y marcas huérfanas */
+.ve-revisar { color: var(--naranja-texto); font-weight: 600; max-width: 260px; white-space: normal; }
+.ve-no-marcable { color: var(--gris-texto); max-width: 220px; white-space: normal; }
+.ve-aviso-revisar {
+  margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--naranja-fondo); color: var(--naranja-texto);
+  border-left: 4px solid var(--naranja); font-size: 14px; font-weight: 600;
+}
+.ve-huerfanas { border-left: 4px solid var(--naranja); }
+.ve-huerfanas > p { margin: 0 0 8px; font-size: 13.5px; }
+.ve-huerfanas-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ve-huerfanas-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 8px 0; border-top: 1px solid var(--borde); }
 .ve-tabla tr.elegida td { background: var(--primario-fondo); }
 .ve-factura { display: flex; flex-direction: column; gap: 2px; }
 .ve-factura .enlace-factura { white-space: nowrap; }
@@ -216,6 +230,7 @@
 .vc-r-domiciliado { --r-color: var(--domiciliado); --r-texto: var(--domiciliado-texto); }
 .vc-r-falta { --r-color: var(--rojo); --r-texto: var(--rojo-texto); }
 .vc-r-abonos { --r-color: var(--azul); --r-texto: var(--azul-texto); margin-left: 4px; border-left: 1px dashed var(--borde); }
+.vc-r-revisar { --r-color: var(--naranja); --r-texto: var(--naranja-texto); margin-left: 4px; border-left: 1px dashed var(--borde); }
 .vc-r.vacio dd { color: var(--tenue); font-weight: 600; }
 .vc-resumen-fuera { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--naranja-texto); }
 .vc-aviso-vacio {
@@ -227,6 +242,7 @@
 .vc { --c-fondo: var(--superficie); --c-filo: var(--borde); }
 .vc .c-rojo { --c-fondo: var(--rojo-fondo); --c-filo: var(--rojo); }
 .vc .c-domiciliado { --c-fondo: var(--domiciliado-fondo); --c-filo: var(--domiciliado); }
+.vc .c-naranja { --c-fondo: var(--naranja-fondo); --c-filo: var(--naranja); }
 .vc .c-azul { --c-fondo: var(--azul-fondo); --c-filo: var(--azul); }
 .vc .c-neutro { --c-fondo: var(--superficie); --c-filo: var(--gris); }
 .vc .c-verde { --c-fondo: var(--verde-fondo); --c-filo: var(--verde); }
@@ -272,7 +288,8 @@
 /* H6-5: sin total, la celda dice por qué; en dos líneas si hace falta, nunca se sale */
 .vc-importe.vc-importe-nulo .vc-importe-largo { font-size: 11.5px; white-space: normal; line-height: 1.15; }
 .vc-vista-dia-total.vc-importe-nulo { font-size: 18px; }
-.vc-mes-total .vc-importe-nulo { font-size: 14px; }
+/* H6-REAL: el motivo de un mes sin total («sentido no documentado») parte en dos líneas si no cabe (móvil). */
+.vc-mes-total .vc-importe-nulo { font-size: 14px; display: inline-block; max-width: 100%; white-space: normal; overflow-wrap: break-word; line-height: 1.2; }
 @container (max-width: 84px) {
   .vc-importe-largo { display: none; }
   .vc-importe-corto { display: inline; }

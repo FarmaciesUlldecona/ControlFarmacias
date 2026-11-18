@@ -205,7 +205,7 @@
       "importe_conocido": false,
       "literal": "Vto: 19/11/2026",
       "importe_factura": null,
-      "vencimientos_factura": 1,
+      "vencimientos_factura": 2,
       "estado_normalizacion": "REQUIERE_REVISION",
       "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
       "estado_revision": "PENDIENTE_REVISION_PIO",
@@ -325,15 +325,42 @@
       "proveedor_comercial": null,
       "proveedor_razon_social": "COFARES",
       "proveedor_cif_comparable": "A00000001"
+    },
+    {
+      "vencimiento_id": "90000000-0000-4000-8000-000000000013",
+      "factura_id": "f0000000-0000-4000-8000-000000000006",
+      "numero_factura": "FD-26/04471",
+      "tipo_documento": "OTRO",
+      "tipo_documento_documental": "OTRO",
+      "sentido": "NO_DOCUMENTADO",
+      "proveedor": "FEDEFARMA",
+      "orden": 2,
+      "fecha_vencimiento": "2026-12-19",
+      "importe": 96.8,
+      "importe_conocido": true,
+      "literal": "VTO. 19/12/2026  96,80",
+      "importe_factura": null,
+      "vencimientos_factura": 2,
+      "estado_normalizacion": "REQUIERE_REVISION",
+      "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+      "estado_revision": "PENDIENTE_REVISION_PIO",
+      "pago": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris"
+      },
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "FEDEFARMA",
+      "proveedor_cif_comparable": null
     }
   ],
   "totales": {
-    "vencimientos": 12,
+    "vencimientos": 13,
     "sin_importe": 2,
     "sin_fecha": 0,
     "importe_cargos_conocido": 1301.96,
     "importe_abonos_conocido": -65.3,
-    "sentido_no_documentado": 3
+    "sentido_no_documentado": 4
   },
   "pago": {
     "estado": "SIN_DATOS_BANCARIOS",

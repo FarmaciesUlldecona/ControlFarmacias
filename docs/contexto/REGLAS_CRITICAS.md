@@ -1,6 +1,7 @@
 # Reglas críticas
 
-Actualizado: 2026-11-17 (H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
+Actualizado: 2026-11-18 (AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
+atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
 `ACCESO_OK`; decisiones de Pio para Cashflow (H7): excepción de RITA solo con sus datos bancarios, lista cerrada de
 `cf_lectura` ampliada a `cf_cashflow_*` con la migración 37, estado de importación y signo del importe; H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
 autorización de Pio para nombrar el rol del sistema solo en la 35 y su rollback; 2026-11-16, COD-1611: tablas de Pagos
@@ -106,10 +107,10 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   `runtime_supabase/compositor_automatico.py`, autoridad `alliance-local` 1.3.0, y
   el orquestador `runtime_supabase/noche_automatica.py`). **Versión certificada
   actualizada (DECISIÓN DE PIO, 2026-11-14):** `alliance-local` **1.3.1** (R10 con
-  `ENCARGO`); la 1.3.0 ya no tiene autoridad en la ruta automática. **NO ACTIVADA:** hasta
-  AUTO-ON, con confirmación de Pio, ninguna tarea ejecuta el orquestador en modo
-  `REAL` y los flags `normalizacion_automatica` y `conciliacion_automatica` siguen
-  en `false` (ver «Automatización Alliance»).
+  `ENCARGO`); la 1.3.0 ya no tiene autoridad en la ruta automática. **ACTIVADA EN AUTO-ON
+  (CONFIRMACIÓN EXPLÍCITA DE PIO, 2026-11-18):** la tarea de las 22:15 ejecuta el orquestador en
+  modo `REAL`; los flags `normalizacion_automatica` y `conciliacion_automatica` los enciende
+  Pio en el editor SQL y son el interruptor general (ver «Automatización Alliance»).
 - LÍMITE CONOCIDO aceptado por Pio (Hito 2AQ, 2026-09-25): la omisión de una
   factura Alliance **entera** dentro de un PDF multifactura no es detectable por
   contenido. Alliance solo pagina por factura (`PAGINA 01 DE 03`) y no declara
@@ -529,8 +530,17 @@ Decisiones de Pio (2026-11-17). Módulo **NO IMPLEMENTADO** en este repositorio:
 ## Automatización Alliance
 
 Decisiones de Pio (2026-11-12) en `pruebas/auditoria_auto_alliance/DISENO.md` (D1–D7 y plan de hitos). Hito AUTO-A
-**solo local** (`CONFIRMADO POR TEST`); migración 32 **desplegada en producción** (AUTO-32-D, 2026-11-13); nada activado
-en producción (ninguna tarea ejecuta el orquestador; flags apagados).
+**solo local** (`CONFIRMADO POR TEST`); migración 32 **desplegada en producción** (AUTO-32-D, 2026-11-13); 4 noches
+`SOMBRA` con `NOCHE_OK` (AUTO-S, 14→15 a 17→18/11). **AUTO-ON (CONFIRMACIÓN EXPLÍCITA DE PIO, 2026-11-18):** el `.bat`
+pasa a `REAL` y Pio enciende los dos flags. Primera noche `REAL` con 5 + 5.
+
+- **Apagar (vuelta atrás):** Pio pone los dos flags en `false` en el editor SQL. El efecto es inmediato: la BD no
+  entrega más claims `AUTOMATICO`, y si la noche está en marcha termina con normalidad. Con el `.bat` en `REAL` y los
+  flags apagados, la noche para en la puerta (`REAL_CON_FLAGS_APAGADOS`) sin escribir nada más que su fila. Para
+  dejarlo limpio, Pio deshabilita la tarea o se devuelve el `.bat` a `SOMBRA` con un commit. Lo hecho no se deshace
+  solo.
+- **Con los flags encendidos,** las series 2BJ y 2BP y los preflights de despliegue fallan cerrados (exigen los flags
+  apagados): una tanda manual o un despliegue requieren que Pio apague los flags durante esa ventana.
 
 - **Orquestador nocturno** (`runtime_supabase/noche_automatica.py`, tarea de las 22:15 como `Usuari` con
   `ejecutar_automatizacion_alliance.bat`): modos `SOMBRA` (flags apagados; su única escritura es la fila de resumen

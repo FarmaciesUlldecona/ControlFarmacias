@@ -159,7 +159,7 @@
         "importe_conocido": false,
         "literal": "Vto: 19/11/2026",
         "importe_factura": null,
-        "vencimientos_factura": 1,
+        "vencimientos_factura": 2,
         "estado_normalizacion": "REQUIERE_REVISION",
         "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
         "estado_revision": "PENDIENTE_REVISION_PIO",
@@ -170,9 +170,10 @@
         }
       },
       "vencimiento_vencido": false,
-      "vencimientos_total": 1,
+      "vencimientos_total": 2,
       "vencimientos_importes": [
-        null
+        null,
+        96.8
       ],
       "posible_duplicado": false
     },

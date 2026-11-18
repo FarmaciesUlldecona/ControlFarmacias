@@ -1,5 +1,5 @@
 {
-  "_nota": "H6 (FIXTURES, todo ficticio): fecha de referencia de los estados de pago, formas de pago por CIF y marcas de pago de ejemplo. El servidor FIXTURES las carga en memoria; los cambios se pierden al reiniciar. Ver web/fixtures/CASOS.md (H6).",
+  "_nota": "H6 (FIXTURES, todo ficticio): fecha de referencia de los estados de pago, formas de pago por CIF y marcas de pago de ejemplo. H6-REAL: cada marca identifica su vencimiento por (factura_id, vencimiento_orden) y guarda la fecha y el importe que tenía al marcarla (en REAL los copia el trigger). El servidor FIXTURES las carga en memoria; los cambios se pierden al reiniciar. Ver web/fixtures/CASOS.md (H6).",
   "hoy": "2026-11-16",
   "formas": [
     { "cif": "B00000003", "forma": "TRANSFERENCIA", "anulada": false, "creada_at": "2026-10-01T09:00:00.000Z", "creada_por": "Marc" },
@@ -8,12 +8,14 @@
   ],
   "marcas": [
     {
-      "marca_id": "70000000-0000-4000-8000-000000000001", "vencimiento_id": "90000000-0000-4000-8000-000000000001",
+      "marca_id": "70000000-0000-4000-8000-000000000001", "farmacia": "PIO",
+      "factura_id": "f0000000-0000-4000-8000-000000000001", "vencimiento_orden": 1, "fecha_vencimiento": "2026-11-04", "importe": 152.37,
       "fecha_pago": "2026-11-05", "forma": "TRANSFERENCIA", "origen": "MANUAL", "anulada": true,
       "creada_at": "2026-11-05T10:00:00.000Z", "creada_por": "Marc", "anulada_at": "2026-11-06T09:30:00.000Z", "anulada_por": "Marc"
     },
     {
-      "marca_id": "70000000-0000-4000-8000-000000000002", "vencimiento_id": "90000000-0000-4000-8000-000000000007",
+      "marca_id": "70000000-0000-4000-8000-000000000002", "farmacia": "PIO",
+      "factura_id": "f0000000-0000-4000-8000-000000000005", "vencimiento_orden": 1, "fecha_vencimiento": "2026-11-07", "importe": 288,
       "fecha_pago": "2026-11-09", "forma": "TRANSFERENCIA", "origen": "MANUAL", "anulada": false,
       "creada_at": "2026-11-09T10:00:00.000Z", "creada_por": "Marc", "anulada_at": null, "anulada_por": null
     }

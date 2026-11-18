@@ -667,6 +667,19 @@ H6-3 (decisiones de Marc): abonos y cargos negativos.
 | Año 2026 | 12 pagos | 1.261,66 € |
 | REAL simulado: vencido sin importe | V08 (Fedefarma, sin CIF, sin importe) movido al 20/10 en la prueba; REAL sin marcas | Con «Vencido sin pagar»: noviembre avisa e «Ir al anterior (20 oct 2026)»; 20/10 rojo, globo 1, «importe pendiente»; resumen: total «importe pendiente», falta por pagar «sin importe», 1 sin importe fuera |
 
+## H6-REAL: marcas de pago en REAL (migración 35)
+
+- **Identificación:** cada marca apunta a su vencimiento por (factura_id, vencimiento_orden), nunca por el id del vencimiento. Las peticiones llevan `[{ factura_id, orden }]`. La semilla `pagos/pagos.json` guarda además la fecha y el importe copiados (en REAL los copia el trigger).
+- **A_REVISAR («a revisar», naranja):** marca vigente cuya fecha o importe copiados ya no coinciden con el vencimiento, o cuyo vencimiento ya no existe (huérfana). Nunca cuenta como pagado: bloque propio «A revisar» en la cabecera y en el resumen del calendario; en el cashflow, sin fecha de pago. Los fixtures no tienen ninguna; las pruebas la inyectan.
+- **Reglas previas:** sin orden, sin fecha o sin importe no se marca (mensaje llano en la fila y en la barra). La fecha de pago no puede ser posterior a hoy. Confirmar domiciliados solo vale para lo vencido, con fecha de pago igual a la de vencimiento.
+- **REAL sin credencial de pagos:** las marcas y formas guardadas se ven; toda escritura queda deshabilitada con «Falta configurar la credencial de pagos».
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| Sin CIF con importe (nuevo) | V13: F06 FD-26/04471 (FEDEFARMA), orden 2, 19/12/2026, 96,80 €, sentido no documentado | Se puede marcar eligiendo la forma. No suma en ningún total. Cambian los recuentos: 13 vencimientos; 4 pendientes; 2 sin CIF; 4 de sentido no documentado; «Necesita tu atención» 15 tipos y 27 casos, con 4 en el grupo 4; pestañas 13 / 6 / 6 / 3 / 4; año 2026 con 13 pagos (el total no cambia) |
+| Sin importe | V08 (y V06) | No marcable: «no tiene importe (importe pendiente): no se puede marcar hasta que se complete». La API responde 409 VENCIMIENTO_SIN_IMPORTE |
+| A revisar (prueba) | Marca de V2 con importe 427,22 (vale 472,22) y de V10 con fecha 03/11 (vence 04/11); huérfana de F04 con orden 9 | Contador «A revisar» 3; cabecera y resumen «A revisar» 624,59 €; sección «Marcas a revisar sin vencimiento» |
+
 ## H7: pantalla Cashflow (fixtures/cashflow/cashflow.json; tablas pendientes del circuito)
 
 Datos ficticios con la forma del contrato del circuito (`cf_cashflow_importaciones`, `cf_cashflow_cuentas`, `cf_cashflow_importes`, `cf_cashflow_saldos`), generados por `fixtures/scripts/gen_cashflow.mjs` (`npm run fixtures:cashflow`; check_fixtures comprueba que están al día). Sustituyen al cashflow por semanas de H3a (`dto/cashflow_semanas.json` ya no se usa). Fecha de referencia 16/11/2026 (la de la semilla de pagos). El cálculo es `server/cashflow/cashflow.ts` (servidor, front y pruebas).

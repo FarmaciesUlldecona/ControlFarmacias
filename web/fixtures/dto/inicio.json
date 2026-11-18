@@ -188,7 +188,7 @@
   ],
   "atencion": {
     "tipos": 15,
-    "casos": 26,
+    "casos": 27,
     "grupos": [
       {
         "clave": "DIFERENCIA_ALBARANES",
@@ -305,7 +305,19 @@
             "proveedor": "FEDEFARMA",
             "proveedor_comercial": null,
             "proveedor_razon_social": "FEDEFARMA",
-            "referencia": "FD-26/04471",
+            "referencia": "FD-26/04471 · vencimiento 2 de 2",
+            "codigo": null,
+            "fecha": "2026-12-19",
+            "factura_id": "f0000000-0000-4000-8000-000000000006",
+            "documento_id": "d0000000-0000-4000-8000-000000000005",
+            "enlace": "/facturas/f0000000-0000-4000-8000-000000000006"
+          },
+          {
+            "texto": "No se sabe si esta factura es un pago o un abono; no se suma en el cashflow",
+            "proveedor": "FEDEFARMA",
+            "proveedor_comercial": null,
+            "proveedor_razon_social": "FEDEFARMA",
+            "referencia": "FD-26/04471 · vencimiento 1 de 2",
             "codigo": null,
             "fecha": "2026-11-19",
             "factura_id": "f0000000-0000-4000-8000-000000000006",

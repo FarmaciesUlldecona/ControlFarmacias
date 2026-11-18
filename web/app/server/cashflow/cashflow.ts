@@ -32,7 +32,7 @@
  * Solo sintaxis TypeScript borrable; sin dependencias del servidor (el front lo importa).
  */
 import type { EstadoPago, Importe, SentidoVencimiento } from '../contrato.ts';
-import type { EstadoPagoVencimiento } from '../pagos/pagos.ts';
+import { esPagado, type EstadoPagoVencimiento } from '../pagos/pagos.ts';
 
 // ---------------------------------------------------------------------------
 // Configuración (único punto)
@@ -605,7 +605,7 @@ export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' 
         if (v.fecha_vencimiento === null) { fuera.venc_sin_fecha += 1; continue; }
         const d = decenaDe(v.fecha_vencimiento.slice(0, 10));
         if (esReal(d) || ultimaReal === null) {
-          if (v.estado_pago !== 'PAGADO_MANUAL' && v.estado_pago !== 'PAGADO_BANCO') fuera.venc_en_decenas_reales.push(v);
+          if (!esPagado(v.estado_pago)) fuera.venc_en_decenas_reales.push(v); // A_REVISAR tampoco cuenta como pagado
           continue;
         }
         const corr = v.proveedor_comercial === null ? undefined : CORRESPONDENCIAS_PROVEEDOR.find((c) => c.comercial === v.proveedor_comercial);

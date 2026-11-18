@@ -1,7 +1,8 @@
 // H6: pantalla Vencimientos (maqueta web/docs/maquetas/Vencimientos.dc.html) sobre /api/pagos/vencimientos.
 // Una fila por vencimiento con su estado de pago, forma de pago por proveedor (CIF) y marca manual. Filtros en la URL.
-// FIXTURES: marcar, confirmar domiciliados, anular y editar la forma de pago (en memoria). REAL: solo lectura; los
-// botones quedan deshabilitados con «Pendiente de tablas en Supabase».
+// Marcar, confirmar domiciliados, anular y editar la forma de pago: FIXTURES en memoria; H6-REAL en Supabase (cf_pagos_web).
+// En REAL sin la credencial de pagos, solo lectura: los botones quedan deshabilitados con «Falta configurar la credencial
+// de pagos». El vencimiento se identifica por (factura, orden). H6-REAL: estado «a revisar» (naranja) y marcas huérfanas.
 // Importe ausente = «importe pendiente» (nunca 0), fuera de los totales y con su recuento a la vista.
 // H6-4: calendario sobre la lista (calendario_vencimientos.tsx); sin tarjetas de totales por semana y mes (queda la
 // cabecera de totales generales); la lista con las capacidades de Facturas (pestañas, filtros, búsqueda también por
@@ -20,17 +21,22 @@ import {
   cumpleEstadoFactura, cumpleImporte, direccionDe, opcionesProveedor, ordenar, pestanaDe,
 } from '../server/pagos/lista.ts';
 import {
-  DICCIONARIO_ESTADOS, ESTADOS_IMPLEMENTADOS, FORMAS_PAGO, PERIODOS, TEXTO_CARGO_NEGATIVO, TEXTO_FORMA, TEXTO_H6_PENDIENTE, TEXTO_SENTIDO,
+  DICCIONARIO_ESTADOS, ESTADOS_IMPLEMENTADOS, FORMAS_PAGO, PERIODOS, TEXTO_CARGO_NEGATIVO, TEXTO_FORMA, TEXTO_NO_MARCABLE, TEXTO_NO_MARCABLE_PLURAL, TEXTO_SENTIDO,
   cumplePeriodo, esFechaIso, formaPorDefectoMarca, textoEstadoPago, totalGeneral,
-  type BloqueTotal, type ColorEstadoPago, type EventoPagoVista, type FilaVencimientoPago,
-  type FormaEfectiva, type FormaPago, type PantallaVencimientosDTO, type ProveedorPagoVista, type TotalPeriodo,
+  type BloqueTotal, type ColorEstadoPago, type EventoPagoVista, type FilaVencimientoPago, type MarcaHuerfana, type MarcaVista,
+  type FormaEfectiva, type FormaPago, type MotivoNoMarcable, type PantallaVencimientosDTO, type ProveedorPagoVista, type TotalPeriodo,
 } from '../server/pagos/pagos.ts';
 import { ErrorApi, enviar, useApiRecargable } from './api.ts';
 import { CalendarioVencimientos, textoFiltroCalendario } from './calendario_vencimientos.tsx';
 import { euros, fechaCorta, fechaHora, plural } from './formato.ts';
 import { Cabecera, MOVIL, NombreProveedor, useMedia } from './ui.tsx';
 
-const CLASE_ESTADO: Record<ColorEstadoPago, string> = { azul: 'b', rojo: 'r', verde: 'g', gris: 'n', domiciliado: 'd' };
+const CLASE_ESTADO: Record<ColorEstadoPago, string> = { azul: 'b', rojo: 'r', verde: 'g', gris: 'n', domiciliado: 'd', naranja: 'o' };
+/** Clave de selección: (factura, orden); un vencimiento sin orden se puede seleccionar, pero no marcar. */
+const sel = (f: FilaVencimientoPago) => f.clave ?? `sin-orden:${f.vencimiento_id}`;
+/** Lo que se envía al marcar: nunca el id del vencimiento. */
+const idDe = (f: FilaVencimientoPago) => ({ factura_id: f.factura_id, orden: f.orden as number });
+const TEXTO_DIFERENCIA = { FECHA: 'la fecha', IMPORTE: 'el importe' } as const;
 /** Filtros de la lista (todos en la URL; «Quitar filtros» los borra). Los de fecha no se aplican al calendario. */
 const CLAVES_FILTRO = ['pestana', 'periodo', 'desde', 'hasta', 'cal', 'estado', 'forma', 'proveedor', 'sentido', 'importe', 'factura', 'revision', 'q'] as const;
 type Filtros = Record<(typeof CLAVES_FILTRO)[number], string>;
@@ -95,8 +101,40 @@ function Forma({ f }: { f: FilaVencimientoPago }) {
   );
 }
 
-function Estado({ f, disponible, onAnular }: { f: FilaVencimientoPago; disponible: boolean; onAnular: (f: FilaVencimientoPago) => Promise<void> }) {
+/** H6-REAL: qué ha cambiado desde que se marcó (marca «a revisar»): lo que tenía el vencimiento al marcarlo. */
+function NotaRevisar({ m }: { m: MarcaVista }) {
+  if (m.diferencias.length === 0) return null;
+  const que = m.diferencias.map((d) => TEXTO_DIFERENCIA[d]).join(' y ');
+  return (
+    <span className="nota-celda ve-revisar" data-revisar={m.diferencias.join(',')}>
+      Ha cambiado {que} desde que se marcó (entonces: vto. {fechaCorta(m.fecha_vencimiento)}, {euros(m.importe)}). No cuenta como pagado.
+    </span>
+  );
+}
+
+/** Anular una marca con confirmación (también las «a revisar» y las huérfanas). */
+function AnularMarca({ m, nombre, disponible, motivo, clave, onAnular }: {
+  m: MarcaVista; nombre: string; disponible: boolean; motivo: string | null; clave: string; onAnular: () => Promise<void>;
+}) {
   const [confirmar, setConfirmar] = useState(false);
+  if (!confirmar) {
+    return (
+      <button type="button" className="ve-enlace-boton" disabled={!disponible} title={disponible ? undefined : motivo ?? undefined}
+        onClick={() => setConfirmar(true)} data-anular-marca={clave}>Anular marca</button>
+    );
+  }
+  return (
+    <span className="ve-confirmar" role="alertdialog" aria-label={`Anular la marca de pago de ${nombre}`} data-confirmar-anular={clave} data-marca-anular={m.marca_id}>
+      <span>¿Anular la marca? Queda en el historial (no se borra).</span>
+      <span className="ve-confirmar-botones">
+        <button type="button" className="boton-peligro boton-mini" onClick={() => void onAnular().then(() => setConfirmar(false))} data-anular-si>Sí, anular</button>
+        <button type="button" className="boton-secundario boton-mini" onClick={() => setConfirmar(false)}>Cancelar</button>
+      </span>
+    </span>
+  );
+}
+
+function Estado({ f, d, onAnular }: { f: FilaVencimientoPago; d: PantallaVencimientosDTO; onAnular: (f: FilaVencimientoPago) => Promise<void> }) {
   const m = f.marca;
   return (
     <span className="ve-estado">
@@ -104,21 +142,12 @@ function Estado({ f, disponible, onAnular }: { f: FilaVencimientoPago; disponibl
       {m && (
         <>
           <span className="nota-celda" data-marca={m.marca_id}>{fechaCorta(m.fecha_pago)} · {TEXTO_FORMA[m.forma]}{m.origen === 'DOMICILIADOS' ? ' · domiciliado confirmado' : ''}</span>
-          {!confirmar && (
-            <button type="button" className="ve-enlace-boton" disabled={!disponible} title={disponible ? undefined : TEXTO_H6_PENDIENTE}
-              onClick={() => setConfirmar(true)} data-anular-marca={f.vencimiento_id}>Anular marca</button>
-          )}
-          {confirmar && (
-            <span className="ve-confirmar" role="alertdialog" aria-label={`Anular la marca de pago de ${f.numero_factura ?? 'la factura'}`} data-confirmar-anular={f.vencimiento_id}>
-              <span>¿Anular la marca? Queda en el historial (no se borra).</span>
-              <span className="ve-confirmar-botones">
-                <button type="button" className="boton-peligro boton-mini" onClick={() => void onAnular(f).then(() => setConfirmar(false))} data-anular-si>Sí, anular</button>
-                <button type="button" className="boton-secundario boton-mini" onClick={() => setConfirmar(false)}>Cancelar</button>
-              </span>
-            </span>
-          )}
+          <NotaRevisar m={m} />
+          <AnularMarca m={m} nombre={f.numero_factura ?? 'la factura'} disponible={d.marcas_disponibles} motivo={d.mensaje_escritura}
+            clave={f.vencimiento_id} onAnular={() => onAnular(f)} />
         </>
       )}
+      {!m && f.no_marcable && <span className="nota-celda ve-no-marcable" data-no-marcable={f.no_marcable}>{TEXTO_NO_MARCABLE[f.no_marcable]}</span>}
     </span>
   );
 }
@@ -138,7 +167,7 @@ function Factura({ f }: { f: FilaVencimientoPago }) {
 
 function Casilla({ f, marcada, onCambio }: { f: FilaVencimientoPago; marcada: boolean; onCambio: (id: string) => void }) {
   return (
-    <input type="checkbox" className="ve-casilla" checked={marcada} onChange={() => onCambio(f.vencimiento_id)}
+    <input type="checkbox" className="ve-casilla" checked={marcada} onChange={() => onCambio(sel(f))}
       aria-label={`Seleccionar ${f.numero_factura ?? 'factura sin número'}, vencimiento ${fechaCorta(f.fecha_vencimiento)}`} data-seleccionar={f.vencimiento_id} />
   );
 }
@@ -173,10 +202,12 @@ function NotasTotal({ t }: { t: Omit<TotalPeriodo, 'clave' | 'desde' | 'hasta'> 
  * H6-4: solo la cabecera de totales generales de lo filtrado (sin tarjetas por semana ni por mes). H6-6: por estado,
  * como el resumen del calendario: Falta por pagar (pendiente, también domiciliado no vencido, + vencido sin pagar),
  * Domiciliado previsto (solo domiciliado ya vencido) y Abonos por compensar aparte (si hay); pagado en las notas.
+ * H6-REAL: A revisar aparte (si hay).
  */
 function Totales({ filas }: { filas: FilaVencimientoPago[] }) {
   const g = totalGeneral(filas);
   const hayAbonos = filas.some((f) => f.estado_pago === 'ABONO_PENDIENTE_COMPENSAR');
+  const hayRevisar = filas.some((f) => f.estado_pago === 'A_REVISAR');
   return (
     <section className="ve-totales" aria-label="Totales de lo filtrado">
       <div className="ve-total-general tarjeta" data-total-general>
@@ -185,6 +216,8 @@ function Totales({ filas }: { filas: FilaVencimientoPago[] }) {
           <Cifra etiqueta="Falta por pagar" b={g.por_pagar} clase="por-pagar" datos="por_pagar" />
           <Cifra etiqueta="Domiciliado previsto" b={g.domiciliado} clase="domiciliado" datos="domiciliado" />
           {hayAbonos && <Cifra etiqueta="Abonos por compensar" b={g.abonos} clase="abonos" datos="abonos" />}
+          {/* H6-REAL: marcas que ya no coinciden con su vencimiento: aparte, nunca como pagado. */}
+          {hayRevisar && <Cifra etiqueta="A revisar" b={g.revisar} clase="revisar" datos="revisar" />}
         </div>
         <NotasTotal t={g} />
       </div>
@@ -222,8 +255,11 @@ function BarraSeleccion({ seleccion, d, onHecho, onFallo, onQuitar }: {
   const [fecha, setFecha] = useState(d.hoy);
   const [forma, setForma] = useState<'' | FormaPago>('');
   const [enviando, setEnviando] = useState(false);
-  const sinMarca = seleccion.filter((f) => f.marca === null);
-  const domiciliados = seleccion.filter((f) => f.estado_pago === 'DOMICILIADO_PREVISTO');
+  // Reglas previas (las de la BD): sin orden, sin fecha o sin importe no se marca; se dice por qué.
+  const noMarcables = seleccion.filter((f) => f.marca === null && f.no_marcable !== null);
+  const sinMarca = seleccion.filter((f) => f.marca === null && f.no_marcable === null);
+  const domiciliados = sinMarca.filter((f) => f.estado_pago === 'DOMICILIADO_PREVISTO');
+  const motivos = [...new Set(noMarcables.map((f) => f.no_marcable as MotivoNoMarcable))];
   // Forma por defecto de cada uno: la del proveedor; un abono, compensación con abono (H6-3).
   const sinCif = sinMarca.some((f) => formaPorDefectoMarca(f) === 'SIN_DETERMINAR');
   const formas = [...new Set(sinMarca.map(formaPorDefectoMarca))];
@@ -231,13 +267,14 @@ function BarraSeleccion({ seleccion, d, onHecho, onFallo, onQuitar }: {
   const pistaDefecto = comun && comun !== 'SIN_DETERMINAR' ? ` (${TEXTO_FORMA[comun].toLowerCase()})`
     : sinMarca.some((f) => f.sentido === 'ABONO') ? ' (abonos: compensación con abono)' : '';
   const disponible = d.marcas_disponibles;
+  const motivo = d.mensaje_escritura ?? undefined;
   useEffect(() => { if (sinMarca.length === 0) setAbierto(false); }, [sinMarca.length]);
 
   async function marcar(e: FormEvent) {
     e.preventDefault();
     setEnviando(true);
     try {
-      await enviar('/api/pagos/marcas', 'POST', { vencimientos: sinMarca.map((f) => f.vencimiento_id), fecha_pago: fecha, forma: forma === '' ? null : forma });
+      await enviar('/api/pagos/marcas', 'POST', { vencimientos: sinMarca.map(idDe), fecha_pago: fecha, forma: forma === '' ? null : forma });
       setAbierto(false);
       const abonos = sinMarca.every((f) => f.sentido === 'ABONO');
       onHecho(abonos
@@ -250,7 +287,7 @@ function BarraSeleccion({ seleccion, d, onHecho, onFallo, onQuitar }: {
   async function confirmarDomiciliados() {
     setEnviando(true);
     try {
-      await enviar('/api/pagos/marcas/domiciliados', 'POST', { vencimientos: domiciliados.map((f) => f.vencimiento_id) });
+      await enviar('/api/pagos/marcas/domiciliados', 'POST', { vencimientos: domiciliados.map(idDe) });
       onHecho(`${plural(domiciliados.length, 'domiciliado confirmado', 'domiciliados confirmados')} con su fecha de vencimiento.`);
     } catch (err) {
       onFallo(textoError(err, 'No se han podido confirmar los domiciliados.'));
@@ -262,17 +299,25 @@ function BarraSeleccion({ seleccion, d, onHecho, onFallo, onQuitar }: {
       <div className="ve-barra-linea">
         <strong data-seleccionados>{plural(seleccion.length, 'seleccionado', 'seleccionados')}</strong>
         <button type="button" className="ve-boton-claro" disabled={!disponible || sinMarca.length === 0 || enviando}
-          title={disponible ? undefined : TEXTO_H6_PENDIENTE} onClick={() => setAbierto((v) => !v)} aria-expanded={abierto} data-marcar-pagado>
+          title={motivo} onClick={() => setAbierto((v) => !v)} aria-expanded={abierto} data-marcar-pagado>
           Marcar pagado{sinMarca.length !== seleccion.length ? ` (${sinMarca.length})` : ''}
         </button>
         <button type="button" className="ve-boton-claro domiciliado" disabled={!disponible || domiciliados.length === 0 || enviando}
-          title={disponible ? 'Fecha de pago = fecha de vencimiento; forma: domiciliación' : TEXTO_H6_PENDIENTE}
+          title={disponible ? 'Fecha de pago = fecha de vencimiento; forma: domiciliación' : motivo}
           onClick={() => void confirmarDomiciliados()} data-confirmar-domiciliados>
           Confirmar domiciliados ({domiciliados.length})
         </button>
         <button type="button" className="ve-boton-texto" onClick={onQuitar} data-quitar-seleccion>Quitar selección</button>
       </div>
-      {!disponible && <p className="ve-barra-pendiente" data-pendiente-tablas>{TEXTO_H6_PENDIENTE}: marcar, confirmar y anular estarán disponibles cuando existan las tablas de pagos.</p>}
+      {motivos.map((m) => {
+        const n = noMarcables.filter((f) => f.no_marcable === m).length;
+        return (
+          <p key={m} className="ve-aviso-campo ve-no-marcable-barra" data-aviso-no-marcable={m}>
+            {n === 1 ? `Un vencimiento seleccionado ${TEXTO_NO_MARCABLE[m]}.` : `${n} vencimientos seleccionados ${TEXTO_NO_MARCABLE_PLURAL[m]}.`}
+          </p>
+        );
+      })}
+      {!disponible && <p className="ve-barra-pendiente" data-pendiente-tablas>{d.mensaje_escritura}: marcar, confirmar y anular no están disponibles (solo lectura).</p>}
       {abierto && disponible && (
         <form className="ve-marcar" onSubmit={marcar} noValidate data-formulario-marcar>
           <label className="rrhh-campo">Fecha de pago
@@ -301,7 +346,7 @@ function BarraSeleccion({ seleccion, d, onHecho, onFallo, onQuitar }: {
 // Forma de pago por proveedor
 // ---------------------------------------------------------------------------
 
-function FilaForma({ p, disponible, onHecho, onFallo }: { p: ProveedorPagoVista; disponible: boolean; onHecho: (t: string) => void; onFallo: (t: string) => void }) {
+function FilaForma({ p, disponible, motivo, onHecho, onFallo }: { p: ProveedorPagoVista; disponible: boolean; motivo: string | null; onHecho: (t: string) => void; onFallo: (t: string) => void }) {
   const [forma, setForma] = useState<FormaPago>(p.forma);
   useEffect(() => setForma(p.forma), [p.forma]);
   async function guardar(valor: FormaPago | null) {
@@ -320,7 +365,7 @@ function FilaForma({ p, disponible, onHecho, onFallo }: { p: ProveedorPagoVista;
       </span>
       <label className="ve-forma-campo">
         <span className="visualmente-oculto">Forma de pago de {p.nombre}</span>
-        <select value={forma} disabled={!disponible} title={disponible ? undefined : TEXTO_H6_PENDIENTE} onChange={(e) => setForma(e.target.value as FormaPago)} data-forma-select={p.cif}>
+        <select value={forma} disabled={!disponible} title={disponible ? undefined : motivo ?? undefined} onChange={(e) => setForma(e.target.value as FormaPago)} data-forma-select={p.cif}>
           {FORMAS_PAGO.map((x) => <option key={x} value={x}>{TEXTO_FORMA[x]}</option>)}
         </select>
       </label>
@@ -340,15 +385,45 @@ function FormasProveedor({ d, onHecho, onFallo }: { d: PantallaVencimientosDTO; 
         <h2 id="t-ve-formas">Forma de pago por proveedor</h2>
         <span className="tenue">Por CIF. Sin configurar: domiciliación.</span>
       </div>
-      {!d.marcas_disponibles && <p className="ve-barra-pendiente gris" data-formas-pendiente>{TEXTO_H6_PENDIENTE}: la forma de pago no se puede cambiar todavía.</p>}
+      {!d.marcas_disponibles && <p className="ve-barra-pendiente gris" data-formas-pendiente>{d.mensaje_escritura}: la forma de pago no se puede cambiar (solo lectura).</p>}
       <ul className="ve-formas-lista">
-        {d.proveedores.map((p) => <FilaForma key={p.cif} p={p} disponible={d.marcas_disponibles} onHecho={onHecho} onFallo={onFallo} />)}
+        {d.proveedores.map((p) => <FilaForma key={p.cif} p={p} disponible={d.marcas_disponibles} motivo={d.mensaje_escritura} onHecho={onHecho} onFallo={onFallo} />)}
       </ul>
       {d.sin_cif.vencimientos > 0 && (
         <p className="tenue ve-formas-sin-cif" data-formas-sin-cif>
           {plural(d.sin_cif.vencimientos, 'vencimiento', 'vencimientos')} de facturas sin CIF: forma sin determinar; se trata como transferencia (rojo si vence sin marca).
         </p>
       )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// H6-REAL: marcas huérfanas (su vencimiento ya no existe): a revisar
+// ---------------------------------------------------------------------------
+
+function MarcasHuerfanas({ d, onAnular }: { d: PantallaVencimientosDTO; onAnular: (m: MarcaHuerfana) => Promise<void> }) {
+  if (d.marcas_huerfanas.length === 0) return null;
+  return (
+    <section className="tarjeta bloque ve-huerfanas" aria-labelledby="t-ve-huerfanas" data-marcas-huerfanas>
+      <div className="bloque-cabecera">
+        <h2 id="t-ve-huerfanas">Marcas a revisar sin vencimiento</h2>
+        <span className="insignia o">{plural(d.marcas_huerfanas.length, 'marca', 'marcas')}</span>
+      </div>
+      <p className="tenue">Su vencimiento ya no existe en la factura (el circuito lo ha cambiado). No cuentan como pagado. Revísalas y anúlalas si procede.</p>
+      <ul className="ve-huerfanas-lista">
+        {d.marcas_huerfanas.map((m) => (
+          <li key={m.marca_id} data-marca-huerfana={m.marca_id}>
+            <span>
+              <Link to={`/facturas/${m.factura_id}`} className="enlace-factura">{m.numero_factura ?? 'Factura'}</Link>
+              <span className="tenue"> · vencimiento {m.vencimiento_orden}{m.proveedor_nombre ? ` · ${m.proveedor_nombre}` : ''}</span>
+            </span>
+            <span className="nota-celda">Marcada: vto. {fechaCorta(m.fecha_vencimiento)}, {euros(m.importe)} · pagado el {fechaCorta(m.fecha_pago)} · {TEXTO_FORMA[m.forma]}</span>
+            <AnularMarca m={m} nombre={m.numero_factura ?? 'la factura'} disponible={d.marcas_disponibles} motivo={d.mensaje_escritura}
+              clave={`huerfana:${m.marca_id}`} onAnular={() => onAnular(m)} />
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -447,28 +522,29 @@ export function PaginaVencimientos() {
     document.querySelector('[data-filtro-calendario]')?.scrollIntoView({ block: movil ? 'start' : 'nearest' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtros.cal]);
-  const visibles = new Set(filas.map((f) => f.vencimiento_id));
+  const visibles = new Set(filas.map(sel));
   // La selección solo guarda lo que está a la vista.
   useEffect(() => {
     setSeleccion((s) => { const n = new Set([...s].filter((id) => visibles.has(id))); return n.size === s.size ? s : n; });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filas]);
-  const elegidas = filas.filter((f) => seleccion.has(f.vencimiento_id));
+  const elegidas = filas.filter((f) => seleccion.has(sel(f)));
   const alternar = (id: string) => setSeleccion((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const todas = filas.length > 0 && elegidas.length === filas.length;
   const hayFiltros = CLAVES_FILTRO.some((k) => filtros[k] !== '');
 
   const hecho = (texto: string) => { setAviso({ tipo: 'ok', texto }); setSeleccion(new Set()); recargar(); };
   const fallo = (texto: string) => { setAviso({ tipo: 'error', texto }); recargar(); };
-  async function anular(f: FilaVencimientoPago) {
-    if (!f.marca) return;
+  async function anularMarca(marcaId: string, numero: string | null, vto: string | null) {
     try {
-      await enviar(`/api/pagos/marcas/${f.marca.marca_id}/anular`, 'PUT', { confirmar: true });
-      hecho(`Marca de pago anulada: ${f.numero_factura ?? 'factura sin número'} (vto. ${fechaCorta(f.fecha_vencimiento)}).`);
+      await enviar(`/api/pagos/marcas/${marcaId}/anular`, 'PUT', { confirmar: true });
+      hecho(`Marca de pago anulada: ${numero ?? 'factura sin número'} (vto. ${fechaCorta(vto)}).`);
     } catch (err) {
       fallo(textoError(err, 'No se ha podido anular la marca.'));
     }
   }
+  const anular = async (f: FilaVencimientoPago) => { if (f.marca) await anularMarca(f.marca.marca_id, f.numero_factura, f.fecha_vencimiento); };
+  const anularHuerfana = (m: MarcaHuerfana) => anularMarca(m.marca_id, m.numero_factura, m.fecha_vencimiento);
 
   const sinImporte = filas.filter((f) => f.importe === null).length;
   const negativos = filas.filter((f) => f.cargo_negativo).length;
@@ -492,11 +568,17 @@ export function PaginaVencimientos() {
 
       {d && (
         <div className="vencimientos" data-contrato-ok="vencimientos" aria-busy={recargando}>
-          {d.marcas_disponibles ? (
+          {d.modo === 'FIXTURES' && (
             <p className="rrhh-banner" data-banner-pagos="fixtures"><span className="rrhh-banner-marca">Ejemplo</span>Datos ficticios: las marcas de pago y las formas se guardan solo en memoria hasta reiniciar.</p>
-          ) : (
+          )}
+          {d.modo === 'REAL' && !d.marcas_disponibles && (
             <p className="rrhh-banner ve-banner-real" data-banner-pagos="real">
-              <span className="rrhh-banner-marca">Solo lectura</span>Marcas de pago: {TEXTO_H6_PENDIENTE}. Sin marcas, lo vencido por domiciliación figura como previsto.
+              <span className="rrhh-banner-marca">Solo lectura</span>{d.mensaje_escritura}. Se ven las marcas y las formas guardadas, pero no se pueden cambiar.
+            </p>
+          )}
+          {d.a_revisar > 0 && (
+            <p className="ve-aviso-revisar" role="status" data-aviso-revisar={d.a_revisar}>
+              {plural(d.a_revisar, 'marca de pago a revisar', 'marcas de pago a revisar')}: el vencimiento ha cambiado (o ya no existe) desde que se marcó. No cuentan como pagado.
             </p>
           )}
           {aviso && <p className={aviso.tipo === 'ok' ? 'rrhh-aviso-ok' : 'rrhh-error'} role={aviso.tipo === 'ok' ? 'status' : 'alert'} data-aviso-pagos={aviso.tipo}>{aviso.texto}</p>}
@@ -504,8 +586,10 @@ export function PaginaVencimientos() {
           <div className="ve-estados" role="group" aria-label="Filtrar por estado">
             {ESTADOS_IMPLEMENTADOS.map((e) => {
               const def = DICCIONARIO_ESTADOS[e];
-              const n = sinEstado.filter((f) => f.estado_pago === e).length;
               const activo = filtros.estado === e;
+              // H6-REAL: las marcas huérfanas (sin fila) también cuentan como «a revisar».
+              const n = sinEstado.filter((f) => f.estado_pago === e).length + (e === 'A_REVISAR' ? d.marcas_huerfanas.length : 0);
+              if (e === 'A_REVISAR' && n === 0 && !activo) return null;
               return (
                 <button key={e} type="button" className={`ve-estado-boton c-${def.color}${activo ? ' activo' : ''}`} aria-pressed={activo}
                   title={def.descripcion} onClick={() => cambiar({ estado: activo ? null : e })} data-filtro-estado={e}>
@@ -601,7 +685,7 @@ export function PaginaVencimientos() {
             )}
             {movil && filas.length > 0 && (
               <label className="rrhh-check ve-todas-movil">
-                <input type="checkbox" checked={todas} onChange={() => setSeleccion(todas ? new Set() : new Set(filas.map((f) => f.vencimiento_id)))} data-seleccionar-todas />
+                <input type="checkbox" checked={todas} onChange={() => setSeleccion(todas ? new Set() : new Set(filas.map(sel)))} data-seleccionar-todas />
                 Seleccionar todos
               </label>
             )}
@@ -614,16 +698,16 @@ export function PaginaVencimientos() {
           {filas.length > 0 && (movil ? (
             <ul className="ve-tarjetas" aria-label="Vencimientos">
               {filas.map((f) => (
-                <li key={f.vencimiento_id} className={`tarjeta ve-tarjeta e-${f.estado_pago}${seleccion.has(f.vencimiento_id) ? ' elegida' : ''}`} data-vencimiento={f.vencimiento_id}>
+                <li key={f.vencimiento_id} className={`tarjeta ve-tarjeta e-${f.estado_pago}${seleccion.has(sel(f)) ? ' elegida' : ''}`} data-vencimiento={f.vencimiento_id}>
                   <div className="ve-tarjeta-cabecera">
-                    <Casilla f={f} marcada={seleccion.has(f.vencimiento_id)} onCambio={alternar} />
+                    <Casilla f={f} marcada={seleccion.has(sel(f))} onCambio={alternar} />
                     <span className="ve-tarjeta-fecha">{fechaCorta(f.fecha_vencimiento)}</span>
                     <span className="ve-tarjeta-importe"><Importe f={f} /></span>
                   </div>
                   <Proveedor f={f} />
                   <div className="ve-tarjeta-linea"><Factura f={f} /><Sentido f={f} /></div>
                   <div className="ve-tarjeta-linea"><span className="tenue">Forma</span><Forma f={f} /></div>
-                  <Estado f={f} disponible={d.marcas_disponibles} onAnular={anular} />
+                  <Estado f={f} d={d} onAnular={anular} />
                 </li>
               ))}
             </ul>
@@ -634,7 +718,7 @@ export function PaginaVencimientos() {
                   <tr>
                     <th scope="col" className="ve-col-casilla">
                       <input type="checkbox" className="ve-casilla" checked={todas} aria-label="Seleccionar todos los vencimientos a la vista"
-                        onChange={() => setSeleccion(todas ? new Set() : new Set(filas.map((f) => f.vencimiento_id)))} data-seleccionar-todas />
+                        onChange={() => setSeleccion(todas ? new Set() : new Set(filas.map(sel)))} data-seleccionar-todas />
                     </th>
                     {COLUMNAS_LISTA.map((c) => {
                       const activa = c.clave === columna.clave;
@@ -653,15 +737,15 @@ export function PaginaVencimientos() {
                 </thead>
                 <tbody>
                   {filas.map((f) => (
-                    <tr key={f.vencimiento_id} className={`e-${f.estado_pago}${seleccion.has(f.vencimiento_id) ? ' elegida' : ''}`} data-vencimiento={f.vencimiento_id}>
-                      <td className="ve-col-casilla"><Casilla f={f} marcada={seleccion.has(f.vencimiento_id)} onCambio={alternar} /></td>
+                    <tr key={f.vencimiento_id} className={`e-${f.estado_pago}${seleccion.has(sel(f)) ? ' elegida' : ''}`} data-vencimiento={f.vencimiento_id}>
+                      <td className="ve-col-casilla"><Casilla f={f} marcada={seleccion.has(sel(f))} onCambio={alternar} /></td>
                       <td className="fecha">{fechaCorta(f.fecha_vencimiento)}</td>
                       <td className="proveedor"><Proveedor f={f} /></td>
                       <td><Factura f={f} /></td>
                       <td className="num"><Importe f={f} /></td>
                       <td><Sentido f={f} /></td>
                       <td><Forma f={f} /></td>
-                      <td><Estado f={f} disponible={d.marcas_disponibles} onAnular={anular} /></td>
+                      <td><Estado f={f} d={d} onAnular={anular} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -669,6 +753,7 @@ export function PaginaVencimientos() {
             </div>
           ))}
 
+          <MarcasHuerfanas d={d} onAnular={anularHuerfana} />
           <FormasProveedor d={d} onHecho={hecho} onFallo={fallo} />
           <Historial eventos={d.historial} />
 

@@ -10,7 +10,21 @@ import {
   tokenDeCookie, verificarClave,
 } from '../acceso.ts';
 import { VARIABLE, ejecutar, fijarHashEnTexto } from '../fijar_clave.ts';
-import { crearServidor, leerPuerto } from '../index.ts';
+import { crearServidor, leerPuerto, modulosEscritura } from '../index.ts';
+
+describe('H6-REAL-2: módulos con escritura para el rótulo del lateral', () => {
+  const conCredencial = { sinEscritura: null };
+  const sinCredencial = { sinEscritura: { codigo: 'CREDENCIAL_PAGOS_AUSENTE' as const, mensaje: 'Falta configurar la credencial de pagos' } };
+  test('REAL: cada módulo solo si su credencial está configurada, en orden fijo', () => {
+    assert.deepEqual(modulosEscritura('REAL', { trabajadores: true, pagos: conCredencial }), ['Trabajadores', 'Pagos']);
+    assert.deepEqual(modulosEscritura('REAL', { trabajadores: true, pagos: sinCredencial }), ['Trabajadores']);
+    assert.deepEqual(modulosEscritura('REAL', { trabajadores: false, pagos: conCredencial }), ['Pagos']);
+    assert.deepEqual(modulosEscritura('REAL', { trabajadores: false, pagos: undefined }), []);
+  });
+  test('FIXTURES: siempre vacía', () => {
+    assert.deepEqual(modulosEscritura('FIXTURES', { trabajadores: true, pagos: conCredencial }), []);
+  });
+});
 
 describe('hash scrypt', () => {
   test('formato, verificación y rechazo', async () => {
@@ -110,6 +124,7 @@ describe('servidor FIXTURES (inyección)', async () => {
     const est = await app.inject({ method: 'GET', url: '/api/estado', headers: { ...H, cookie } });
     assert.equal(est.statusCode, 200);
     assert.equal(est.json().modo, 'FIXTURES');
+    assert.deepEqual(est.json().escritura, []); // H6-REAL-2: el pie de FIXTURES no cambia
     const s = await app.inject({ method: 'POST', url: '/api/logout', headers: { ...H, cookie } });
     assert.equal(s.statusCode, 303);
     assert.match(String(s.headers['set-cookie']), /Max-Age=0/);

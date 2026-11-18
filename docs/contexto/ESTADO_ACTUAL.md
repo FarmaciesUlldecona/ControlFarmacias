@@ -1,6 +1,8 @@
 # Estado actual
 
-Actualizado: 2026-11-17 (H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
+Actualizado: 2026-11-18 (AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
+AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
+con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
 acceso de cf_pagos_web ACCESO_OK; decisiones de Pio para Cashflow (H7), en REGLAS_CRITICAS; H6: migración 35 de Pagos, marcas de pago, solo local, con desplegar_35 ensayado; AUTO-S:
 noche de sombra 16→17/11, primera con f64d520, NOCHE_OK y coherente con el plan 2BJ; 2026-11-16, COD-1611: tablas de Pagos fuera del veredicto de los postchecks, tarea de Alliance en la
 puerta de tareas y prueba de acceso de Trabajadores al esquema de la 34, solo local; defectos directos a REVISION
@@ -339,6 +341,46 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito AUTO-ON: activación de la automatización Alliance (2026-11-18)
+
+CONFIRMACIÓN EXPLÍCITA DE PIO. Diseño en `pruebas/auditoria_auto_alliance/DISENO.md` (§4 y §8).
+
+- **Cambio:** `ejecutar_automatizacion_alliance.bat` pasa de `SOMBRA` a `REAL`. Pio enciende en el editor SQL
+  `normalizacion_automatica` y `conciliacion_automatica`, después de su push y antes de las 22:15. Luna sigue en
+  `false` y las farmacias en `{PIO}`.
+- **Primera noche `REAL` (18→19/11), 5 + 5:**
+  - previsión del plan 2BJ: cedb06d0 (Alliance, 08013495–98, la prueba reservada por Pio) `NORMALIZADA` con sus 4
+    facturas, y los 4 no soportados en `PROVEEDOR_NO_SOPORTADO`, por lo que la noche cerraría con `FIN_LIMITE`;
+  - conciliación: el n.º 1 se simula antes de reclamarlo; si no es Alliance, si no simula `CONCILIADA` o si tiene una
+    revisión R18 pendiente, queda para revisar.
+- **Puertas, paradas, límites y vuelta atrás:** REGLAS_CRITICAS, «Automatización Alliance».
+- `PENDIENTE`: revisión READ_ONLY de la mañana del 19/11 (informe, postcheck y noche).
+
+### Hito AUTO-S: noche de sombra 17→18/11 (2026-11-18)
+
+Revisión READ_ONLY (evidencias en `C:\ControlFarmacias\evidencias_noche_1711\`, `SHA256SUMS.txt`).
+
+- **Tareas:** importación (21:00), sincronización (21:30) y automatización Alliance (22:15:15), las tres con código 0.
+- **Informe:** SHA iguales a su `SHA256SUMS.txt`; `NOCHE_OK`, sin puertas fallidas, commit 45c63c6, límites 5 + 5;
+  postcheck OK, con Trabajadores y Pagos aparte y sin cambios.
+- **Fila `SOMBRA`** con contadores a 0 e `informe_sha256` igual al del fichero. **Solo escribió su fila:** en las 67
+  columnas de fecha de `public`, en la ventana de la noche solo aparecen las marcas de esa fila. Flags apagados.
+- **Coherencia con los planes READ_ONLY de la mañana:**
+  - 2BJ: los 5 de la cola (cedb06d0, Alliance, y 4 no soportados) son los 5 que la noche reclamaría, en el mismo orden;
+  - 2BP: ninguna factura apta;
+  - el 17/11 no se importó ningún documento nuevo.
+
+### D3: los 3 defectos en ERROR pasan a REVISION (2026-11-17)
+
+Confirmación explícita de Pio. Evidencias en `C:\ControlFarmacias\evidencias_d3_1711\` (`SHA256SUMS.txt`).
+
+- **Plan 2BJ READ_ONLY (19:36):** 8 en cola; los 3 primeros, los defectos de D3 (`ERROR`, 3 intentos, reclamables
+  desde las 16:34). Cola reclamable real comprobada antes de la tanda: los mismos 3 en cabeza, con `max_intentos` = 4.
+- **Tanda de 3, una vez (19:38):** `TANDA_OK`; los 3 `DEFECTO` → `REVISION` al 4.º intento; `POSTCHECK_OK`, sin
+  cambios en Trabajadores ni en Pagos.
+- **cedb06d0** (Alliance 08013495–98) sigue en `PENDIENTE` con 0 intentos, reservado para la primera noche `REAL`
+  (decisión de Pio). Detrás quedan 4 `PENDIENTE` no soportados.
 
 ### Hito H6-D: migración 35 desplegada en producción (2026-11-17)
 

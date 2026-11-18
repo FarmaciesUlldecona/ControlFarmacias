@@ -31,6 +31,20 @@ const MENU: Grupo[] = [
   },
 ];
 
+/**
+ * H6-REAL-2: rótulo de REAL. Lectura siempre con cf_lectura; escritura solo de los módulos cuya credencial está
+ * configurada (lo dice /api/estado). Sin ninguno: «escritura: ninguna». Nunca usuarios completos ni datos de conexión.
+ */
+function RotuloReal({ escritura }: { escritura: readonly string[] }) {
+  return (
+    <span data-rotulo-real>
+      Datos reales · lectura cf_lectura
+      <br />
+      <span data-rotulo-escritura>escritura: {escritura.length > 0 ? escritura.join(', ') : 'ninguna'}</span>
+    </span>
+  );
+}
+
 export default function Layout() {
   const estado = useApi<EstadoApi>('/api/estado');
   const [abierto, setAbierto] = useState(false);
@@ -39,6 +53,7 @@ export default function Layout() {
 
   const modo = estado.estado === 'ok' ? estado.datos.modo : null;
   const usuario = estado.estado === 'ok' ? estado.datos.usuario : null;
+  const escritura = estado.estado === 'ok' ? (estado.datos.escritura ?? []) : [];
 
   return (
     <div className="app">
@@ -88,10 +103,10 @@ export default function Layout() {
                 <button type="submit" className="boton-salir">Salir</button>
               </form>
             </div>
-            Fase 1 · solo lectura
-            <br />
+            {/* H6-REAL-2: en REAL el rótulo refleja lo que de verdad escribe; FIXTURES sin cambios. */}
+            {modo !== 'REAL' && <>Fase 1 · solo lectura<br /></>}
             {modo === 'FIXTURES' && <span>Datos ficticios</span>}
-            {modo === 'REAL' && <span>Datos reales · cf_lectura</span>}
+            {modo === 'REAL' && <RotuloReal escritura={escritura} />}
             {modo === null && <span>Conectando con la API local…</span>}
           </div>
         </div>

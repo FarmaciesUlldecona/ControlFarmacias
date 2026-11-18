@@ -1,19 +1,22 @@
 /**
  * H6: API /api/pagos/* de la pantalla Vencimientos.
  *
- *   GET  /api/pagos/vencimientos                lista con estado, forma de pago y marca vigente (+ proveedores e historial)
- *   POST /api/pagos/marcas                      «Marcar pagado»: { vencimientos, fecha_pago, forma | null }
- *   POST /api/pagos/marcas/domiciliados         «Confirmar domiciliados»: { vencimientos } (solo DOMICILIADO_PREVISTO;
- *                                               fecha = la de vencimiento, forma DOMICILIACION)
+ *   GET  /api/pagos/vencimientos                lista con estado, forma de pago y marca vigente (+ proveedores, huérfanas e historial)
+ *   POST /api/pagos/marcas                      «Marcar pagado»: { vencimientos: [{factura_id, orden}], fecha_pago, forma | null }
+ *   POST /api/pagos/marcas/domiciliados         «Confirmar domiciliados»: { vencimientos: [{factura_id, orden}] } (solo
+ *                                               DOMICILIADO_PREVISTO ya vencido; fecha = la de vencimiento, forma DOMICILIACION)
  *   PUT  /api/pagos/marcas/:marca_id/anular     anular una marca { confirmar: true } (nunca se borra)
  *   PUT  /api/pagos/formas/:cif                 forma de pago del proveedor { forma | null } (null = por defecto)
  *
  * Toda ruta exige sesión; la escritura, además, Origin del mismo sitio (obligatorio), Sec-Fetch-Site same-origin si
- * viene y JSON. Nunca DELETE ni PATCH.
+ * viene y JSON. Nunca DELETE ni PATCH. El vencimiento se identifica por (factura_id, orden), nunca por su id.
  *
- * FIXTURES: almacén en memoria con la semilla web/fixtures/pagos/pagos.json (y su fecha de referencia).
- * REAL: sin almacén (las tablas no existen): la lista sale del contrato `vencimientos` (cf_lectura, solo lectura) sin
- * marcas ni formas configuradas, y toda escritura responde 503 H6_PENDIENTE «Pendiente de tablas en Supabase».
+ * H6-REAL: el mismo flujo en los dos modos (AlmacenPagosAsync):
+ *  - FIXTURES: almacén en memoria con la semilla web/fixtures/pagos/pagos.json (y su fecha de referencia).
+ *  - REAL: vencimientos y marcas leídos con cf_lectura; escritura con cf_pagos_web (server/pagos/adaptador_real.ts). Sin
+ *    la credencial de pagos, la lectura funciona y la escritura responde 503 «Falta configurar la credencial de pagos».
+ * Antes de escribir, las reglas de la web (prepararMarcas / prepararDomiciliados) sobre la pantalla recién leída. Los
+ * errores (de la web o de la BD) llegan como mensaje llano; la transacción ya está deshecha y no se reintenta.
  * La web nunca escribe en facturas, vencimientos ni conciliación.
  */
 import { readFileSync } from 'node:fs';
@@ -21,10 +24,11 @@ import { join } from 'node:path';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Contrato } from '../contrato.ts';
 import { origenEscrituraValido } from '../rrhh/rutas.ts';
+import { almacenFixtures, type AlmacenPagosAsync } from './almacen.ts';
+import { errorPagos, traducirErrorPagos } from './errores_bd.ts';
 import {
-  ERROR_H6_PENDIENTE, TEXTO_H6_PENDIENTE, construirPantalla, crearAlmacenPagos, esCifComparable, formaPorDefectoMarca, validarConfirmacion,
-  validarDomiciliados, validarFormaProveedor, validarMarcar, type AlmacenPagos, type FormaPago, type ItemMarca,
-  type PantallaVencimientosDTO, type SemillaPagos,
+  construirPantalla, crearAlmacenPagos, esCifComparable, prepararDomiciliados, prepararMarcas, validarConfirmacion,
+  validarDomiciliados, validarFormaProveedor, validarMarcar, type FilaVencimientoPago, type PantallaVencimientosDTO, type SemillaPagos,
 } from './pagos.ts';
 
 export const PREFIJO_PAGOS = '/api/pagos/';
@@ -35,48 +39,34 @@ export function leerSemillaPagos(): SemillaPagos {
   return { hoy, formas, marcas };
 }
 
+/** Id de marca en la ruta de anular: uuid o entero (no se presupone el tipo de la columna). */
+const ID_MARCA = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[1-9]\d{0,17})$/;
+
 /** Rutas de escritura de H6 (método + patrón). */
 export function esEscrituraPagos(metodo: string, ruta: string): boolean {
   if (metodo === 'POST') return ruta === '/api/pagos/marcas' || ruta === '/api/pagos/marcas/domiciliados';
-  if (metodo === 'PUT') return /^\/api\/pagos\/marcas\/[0-9a-f-]{36}\/anular$/.test(ruta) || /^\/api\/pagos\/formas\/[A-Z0-9]{5,20}$/.test(ruta);
+  if (metodo === 'PUT') {
+    const m = /^\/api\/pagos\/marcas\/([^/]+)\/anular$/.exec(ruta);
+    return (m !== null && ID_MARCA.test(m[1])) || /^\/api\/pagos\/formas\/[A-Z0-9]{5,20}$/.test(ruta);
+  }
   return false;
-}
-
-const HTTP_ERROR: Readonly<Record<string, number>> = {
-  VENCIMIENTO_NO_ENCONTRADO: 404, YA_PAGADO: 409, NO_DOMICILIADO_PREVISTO: 409, FORMA_SIN_CIF: 400,
-  MARCA_NO_ENCONTRADA: 404, MARCA_YA_ANULADA: 409, CIF_NO_ENCONTRADO: 404, SIN_CAMBIOS: 409,
-};
-const MENSAJE_ERROR: Readonly<Record<string, string>> = {
-  VENCIMIENTO_NO_ENCONTRADO: 'Algún vencimiento no existe o no es de PIO. Pulsa Actualizar.',
-  YA_PAGADO: 'Algún vencimiento ya está marcado como pagado. No se ha marcado ninguno.',
-  NO_DOMICILIADO_PREVISTO: 'Solo se confirman vencimientos domiciliados ya vencidos y sin marca. No se ha confirmado ninguno.',
-  FORMA_SIN_CIF: 'Alguna factura no tiene CIF: elige la forma de pago.',
-  MARCA_NO_ENCONTRADA: 'Esa marca de pago no existe.',
-  MARCA_YA_ANULADA: 'Esa marca de pago ya está anulada.',
-  CIF_NO_ENCONTRADO: 'Ese CIF no aparece en los vencimientos de PIO.',
-  SIN_CAMBIOS: 'Ese proveedor ya tiene esa forma de pago.',
-};
-
-/** Hoy en el reloj del servidor (fecha local). */
-function hoyServidor(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export interface OpcionesPagos {
   modo: 'FIXTURES' | 'REAL';
   contrato: Contrato;
   sesionValida: (req: FastifyRequest) => boolean;
-  /** Autor de marcas y cambios (historial). */
+  /** Autor de marcas y cambios (historial; en REAL, cf.autor de cada transacción). */
   quien: string;
-  /** FIXTURES: por defecto, uno nuevo con la semilla. REAL: nunca (tablas pendientes). */
-  almacen?: AlmacenPagos;
+  /** FIXTURES: por defecto, uno nuevo con la semilla. REAL: obligatorio (server/pagos/adaptador_real.ts). */
+  almacen?: AlmacenPagosAsync;
 }
 
-/** Devuelve la pantalla de vencimientos (con las marcas del almacén): la usa el cashflow (H7). */
+/** Devuelve la pantalla de vencimientos (con sus marcas): la usa el cashflow (H7). */
 export function registrarPagos(app: FastifyInstance, opciones: OpcionesPagos): { pantalla: () => Promise<PantallaVencimientosDTO> } {
   const { modo, contrato, sesionValida, quien } = opciones;
-  const almacen: AlmacenPagos | null = modo === 'FIXTURES' ? opciones.almacen ?? crearAlmacenPagos(leerSemillaPagos()) : null;
+  if (modo === 'REAL' && !opciones.almacen) throw new Error('PAGOS_REAL_SIN_ALMACEN');
+  const almacen: AlmacenPagosAsync = opciones.almacen ?? almacenFixtures(crearAlmacenPagos(leerSemillaPagos()));
 
   app.addHook('onRequest', async (req, reply) => {
     const ruta = req.url.split('?')[0];
@@ -89,65 +79,53 @@ export function registrarPagos(app: FastifyInstance, opciones: OpcionesPagos): {
     if (!/^application\/json\b/i.test(req.headers['content-type'] ?? '')) return reply.code(415).send({ error: 'SOLO_JSON' });
   });
 
-  const error = (reply: FastifyReply, codigo: string) =>
-    reply.code(HTTP_ERROR[codigo] ?? 400).send({ error: codigo, ...(MENSAJE_ERROR[codigo] ? { mensaje: MENSAJE_ERROR[codigo] } : {}) });
-  const pendiente = (reply: FastifyReply) => reply.code(503).send({ error: ERROR_H6_PENDIENTE, mensaje: TEXTO_H6_PENDIENTE });
+  /** Error de la web o de la BD → { error, mensaje } llano (nunca el texto técnico). */
+  const fallo = (reply: FastifyReply, e: unknown) => {
+    const t = traducirErrorPagos(e);
+    if (t.codigo === 'ERROR_BD') app.log.error({ msg: `pagos: ${(e instanceof Error ? e.message : String(e)).split('\n')[0].slice(0, 200)}` });
+    return reply.code(t.http).send({ error: t.codigo, mensaje: t.mensaje });
+  };
   const noValida = (reply: FastifyReply, errores: Record<string, string>) => reply.code(400).send({ error: 'DATOS_NO_VALIDOS', errores });
   const pantalla = async (): Promise<PantallaVencimientosDTO> =>
-    construirPantalla(await contrato.vencimientos(), almacen?.fuente() ?? null, { hoy: almacen?.hoy ?? hoyServidor(), modo });
+    construirPantalla(await contrato.vencimientos(), await almacen.fuente(), { modo, mensajeEscritura: almacen.sinEscritura?.mensaje ?? null });
+  /** Sin credencial de pagos: 503 antes de leer nada. */
+  const escritura = async (reply: FastifyReply, trabajo: () => Promise<unknown>) => {
+    if (almacen.sinEscritura) { const e = errorPagos(almacen.sinEscritura.codigo); return reply.code(e.http).send({ error: e.codigo, mensaje: e.mensaje }); }
+    try { return await trabajo(); } catch (e) { return fallo(reply, e); }
+  };
+  const porClave = (p: PantallaVencimientosDTO) => new Map(p.filas.flatMap((f): [string, FilaVencimientoPago][] => (f.clave === null ? [] : [[f.clave, f]])));
 
   app.get('/api/pagos/vencimientos', pantalla);
 
-  app.post('/api/pagos/marcas', async (req, reply) => {
-    if (almacen === null) return pendiente(reply);
-    const v = validarMarcar(req.body, almacen.hoy);
+  app.post('/api/pagos/marcas', (req, reply) => escritura(reply, async () => {
+    const v = validarMarcar(req.body, almacen.hoy());
     if (!v.ok) return noValida(reply, v.errores);
-    const filas = new Map((await pantalla()).filas.map((f) => [f.vencimiento_id, f]));
-    const items: ItemMarca[] = [];
-    for (const id of v.datos.vencimientos) {
-      const f = filas.get(id);
-      if (!f) return error(reply, 'VENCIMIENTO_NO_ENCONTRADO');
-      if (f.marca !== null) return error(reply, 'YA_PAGADO');
-      // Forma por defecto: la del proveedor; un abono, COMPENSACION_ABONO (H6-3; también sin CIF).
-      const defecto = formaPorDefectoMarca(f);
-      if (v.datos.forma === null && defecto === 'SIN_DETERMINAR') return error(reply, 'FORMA_SIN_CIF');
-      items.push({ vencimiento_id: id, fecha_pago: v.datos.fecha_pago, forma: v.datos.forma ?? (defecto as FormaPago), origen: 'MANUAL' });
-    }
-    const r = almacen.marcar(items, quien);
-    return typeof r === 'string' ? error(reply, r) : reply.code(201).send({ marcas: r });
-  });
+    const filas = porClave(await pantalla());
+    const p = prepararMarcas(filas, v.datos);
+    if (!p.ok) throw errorPagos(p.codigo);
+    return reply.code(201).send({ marcas: await almacen.marcar(p.items, quien, (k) => filas.get(k)) });
+  }));
 
-  app.post('/api/pagos/marcas/domiciliados', async (req, reply) => {
-    if (almacen === null) return pendiente(reply);
+  app.post('/api/pagos/marcas/domiciliados', (req, reply) => escritura(reply, async () => {
     const v = validarDomiciliados(req.body);
     if (!v.ok) return noValida(reply, v.errores);
-    const filas = new Map((await pantalla()).filas.map((f) => [f.vencimiento_id, f]));
-    const items: ItemMarca[] = [];
-    for (const id of v.vencimientos) {
-      const f = filas.get(id);
-      if (!f) return error(reply, 'VENCIMIENTO_NO_ENCONTRADO');
-      if (f.estado_pago !== 'DOMICILIADO_PREVISTO' || f.fecha_vencimiento === null) return error(reply, 'NO_DOMICILIADO_PREVISTO');
-      items.push({ vencimiento_id: id, fecha_pago: f.fecha_vencimiento.slice(0, 10), forma: 'DOMICILIACION', origen: 'DOMICILIADOS' });
-    }
-    const r = almacen.marcar(items, quien);
-    return typeof r === 'string' ? error(reply, r) : reply.code(201).send({ marcas: r });
-  });
+    const filas = porClave(await pantalla());
+    const p = prepararDomiciliados(filas, v.vencimientos, almacen.hoy());
+    if (!p.ok) throw errorPagos(p.codigo);
+    return reply.code(201).send({ marcas: await almacen.marcar(p.items, quien, (k) => filas.get(k)) });
+  }));
 
-  app.put<{ Params: { id: string } }>('/api/pagos/marcas/:id/anular', async (req, reply) => {
-    if (almacen === null) return pendiente(reply);
+  app.put<{ Params: { id: string } }>('/api/pagos/marcas/:id/anular', (req, reply) => escritura(reply, async () => {
     if (!validarConfirmacion(req.body)) return noValida(reply, { confirmar: 'Confirma la anulación' });
-    const r = almacen.anular(req.params.id, quien);
-    return typeof r === 'string' ? error(reply, r) : { marca: r };
-  });
+    return { marca: await almacen.anular(req.params.id, quien) };
+  }));
 
-  app.put<{ Params: { cif: string } }>('/api/pagos/formas/:cif', async (req, reply) => {
-    if (almacen === null) return pendiente(reply);
+  app.put<{ Params: { cif: string } }>('/api/pagos/formas/:cif', (req, reply) => escritura(reply, async () => {
     const v = validarFormaProveedor(req.body);
     if (!v.ok || !esCifComparable(req.params.cif)) return noValida(reply, v.ok ? { cif: 'CIF no válido' } : v.errores);
     const p = await pantalla();
-    if (!p.proveedores.some((x) => x.cif === req.params.cif)) return error(reply, 'CIF_NO_ENCONTRADO');
-    const r = almacen.fijarForma(req.params.cif, v.forma, quien);
-    return typeof r === 'string' ? error(reply, r) : r;
-  });
+    if (!p.proveedores.some((x) => x.cif === req.params.cif)) throw errorPagos('CIF_NO_ENCONTRADO');
+    return almacen.fijarForma(req.params.cif, v.forma, quien);
+  }));
   return { pantalla };
 }

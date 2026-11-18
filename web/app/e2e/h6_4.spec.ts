@@ -90,7 +90,7 @@ test.describe('Calendario PC 1440', () => {
     // Segundo clic sobre la misma semana: quita el filtro.
     await page.locator('[data-semana="2026-11-02"]').click();
     await expect(chip).toHaveCount(0);
-    await expect(filas(page)).toHaveCount(12);
+    await expect(filas(page)).toHaveCount(13);
     // Mes: botón «Ver este mes en la lista».
     await page.locator('[data-mostrar-periodo]').click();
     await expect(chip).toHaveText(/Calendario: Noviembre de 2026/);
@@ -107,7 +107,7 @@ test.describe('Calendario PC 1440', () => {
     await expect(dia(page, '2026-11-04')).toHaveAttribute('data-color-dia', 'rojo');
     // Un filtro inválido en la URL no filtra (falla cerrado) y no muestra chip.
     await page.goto('/vencimientos?cal=semana:2026-11-04');
-    await expect(filas(page)).toHaveCount(12);
+    await expect(filas(page)).toHaveCount(13);
     await expect(chip).toHaveCount(0);
   });
 
@@ -161,12 +161,13 @@ test.describe('Calendario PC 1440', () => {
 
   test('lista: pestañas de Facturas con recuento, filtros nuevos (proveedor, sentido, importe, estado de la factura, revisión), búsqueda por importe y orden por columna, en la URL', async ({ page }) => {
     const pestana = (t: string) => page.getByRole('tab', { name: new RegExp(`^${t}`) });
-    await expect(page.locator('[data-pestana] .pestana-n')).toHaveText(['12', '6', '5', '2', '3']);
+    // H6-REAL: +V13 (FEDEFARMA: pendiente de conciliar, en revisión, no revisada por Pío).
+    await expect(page.locator('[data-pestana] .pestana-n')).toHaveText(['13', '6', '6', '3', '4']);
     await pestana('Conciliadas').click();
     await expect(filas(page)).toHaveCount(6);
     await expect(page).toHaveURL(/pestana=conciliadas/);
     await pestana('No revisadas por Pío').click();
-    await expect(filas(page)).toHaveCount(3);
+    await expect(filas(page)).toHaveCount(4);
     await pestana('Todas').click();
     await page.locator('select[name="proveedor"]').selectOption('A00000001');
     await expect(filas(page)).toHaveCount(7);
@@ -178,10 +179,10 @@ test.describe('Calendario PC 1440', () => {
     await expect(filas(page)).toHaveCount(1); // CF-2026-55811, 3.º vencimiento
     await page.getByRole('button', { name: 'Quitar filtros' }).click();
     await page.locator('select[name="factura"]').selectOption('norm:REQUIERE_REVISION');
-    await expect(filas(page)).toHaveCount(1);
+    await expect(filas(page)).toHaveCount(2);
     await page.locator('select[name="factura"]').selectOption('');
     await page.locator('select[name="revision"]').selectOption('PENDIENTE_REVISION_PIO');
-    await expect(filas(page)).toHaveCount(3);
+    await expect(filas(page)).toHaveCount(4);
     await page.locator('select[name="revision"]').selectOption('');
     await page.locator('input[name="q"]').fill('152,37');
     await expect(filas(page)).toHaveCount(2);
@@ -213,7 +214,9 @@ test.describe('Calendario REAL simulado: igual que la lista, solo lectura', () =
     const { readFileSync } = await import('node:fs');
     const { DIR_DTO } = await import('../server/adaptador_fixtures.ts');
     const { construirPantalla } = await import('../server/pagos/pagos.ts');
-    const real = construirPantalla(JSON.parse(readFileSync(join(DIR_DTO, 'vencimientos.json'), 'utf8')), null, { hoy: '2026-11-16', modo: 'REAL' });
+    // H6-REAL: REAL sin credencial de pagos (solo lectura) y sin marcas ni formas guardadas.
+    const real = construirPantalla(JSON.parse(readFileSync(join(DIR_DTO, 'vencimientos.json'), 'utf8')), null,
+      { hoy: '2026-11-16', modo: 'REAL', mensajeEscritura: 'Falta configurar la credencial de pagos' });
     await page.route('**/api/pagos/vencimientos', (r) => r.fulfill({ json: real }));
     await entrar(page, '/vencimientos');
     await expect(page.locator('[data-banner-pagos="real"]')).toBeVisible();

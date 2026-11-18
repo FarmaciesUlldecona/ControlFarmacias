@@ -57,7 +57,10 @@ test.describe('Detalle de factura PC 1440', () => {
     await expect(page.locator('[data-vencimiento] [data-sentido="CARGO"]')).toHaveText('cargo');
     for (const n of [3, 6]) {
       await abrirDetalle(page, F(n));
-      await expect(page.locator('[data-vencimiento] [data-sentido="NO_DOCUMENTADO"]')).toHaveText('sentido no documentado');
+      // H6-REAL: F06 tiene dos vencimientos (V08 y V13); los dos, sin sentido documentado.
+      const s = page.locator('[data-vencimiento] [data-sentido="NO_DOCUMENTADO"]');
+      await expect(s).toHaveCount(n === 6 ? 2 : 1);
+      for (const x of await s.all()) await expect(x).toHaveText('sentido no documentado');
     }
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_detalle_tipo_otro.png'), fullPage: true });
   });

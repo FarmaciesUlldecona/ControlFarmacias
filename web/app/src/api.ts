@@ -6,6 +6,8 @@ export interface EstadoApi {
   farmacia: string;
   solo_lectura: boolean;
   usuario: string;
+  /** H6-REAL-2: módulos con escritura activa en REAL (cada uno, solo si su credencial está configurada). */
+  escritura?: ('Trabajadores' | 'Pagos')[];
 }
 
 /**

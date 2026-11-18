@@ -28,8 +28,11 @@ function pantalla() {
 }
 
 describe('peor estado y color del día', () => {
-  test('prioridad de Marc: vencido sin pagar > domiciliado previsto > abono pendiente > pendiente > pagado', () => {
-    assert.deepEqual(ORDEN_PEOR.slice(0, 4), ['VENCIDO_SIN_PAGAR', 'DOMICILIADO_PREVISTO', 'ABONO_PENDIENTE_COMPENSAR', 'PENDIENTE']);
+  test('prioridad de Marc: vencido sin pagar > a revisar (H6-REAL) > domiciliado previsto > abono pendiente > pendiente > pagado', () => {
+    assert.deepEqual(ORDEN_PEOR.slice(0, 5), ['VENCIDO_SIN_PAGAR', 'A_REVISAR', 'DOMICILIADO_PREVISTO', 'ABONO_PENDIENTE_COMPENSAR', 'PENDIENTE']);
+    assert.equal(peorEstado(['PAGADO_MANUAL', 'A_REVISAR', 'DOMICILIADO_PREVISTO']), 'A_REVISAR');
+    assert.equal(COLOR_DIA.A_REVISAR, 'naranja');
+    assert.equal(grupoResumen({ estado_pago: 'A_REVISAR' }), 'revisar'); // nunca «pagado»
     assert.equal(peorEstado(['PAGADO_MANUAL', 'PENDIENTE', 'DOMICILIADO_PREVISTO']), 'DOMICILIADO_PREVISTO');
     assert.equal(peorEstado(['PENDIENTE', 'VENCIDO_SIN_PAGAR', 'ABONO_PENDIENTE_COMPENSAR']), 'VENCIDO_SIN_PAGAR');
     assert.equal(peorEstado(['PAGADO_MANUAL', 'ABONO_PENDIENTE_COMPENSAR']), 'ABONO_PENDIENTE_COMPENSAR');
@@ -298,11 +301,12 @@ describe('lista: pestañas, filtros y orden de Facturas', () => {
   const p = pantalla();
   test('pestañas por el estado de la factura, como Facturas', () => {
     const n = Object.fromEntries(PESTANAS_VENCIMIENTOS.map((t) => [t.clave, p.filas.filter(t.cumple).length]));
-    assert.deepEqual(n, { todas: 12, conciliadas: 6, pendientes: 5, revision: 2, 'no-revisadas': 3 });
+    // H6-REAL: +1 vencimiento de FEDEFARMA (F06: pendiente, en revisión, no revisada por Pío).
+    assert.deepEqual(n, { todas: 13, conciliadas: 6, pendientes: 6, revision: 3, 'no-revisadas': 4 });
   });
   test('proveedor por CIF (sin CIF: por nombre), sentido, importe (valor absoluto) y estado de la factura', () => {
     const ops = opcionesProveedor(p.filas);
-    assert.deepEqual(ops.map((o) => [o.clave, o.vencimientos]), [['B00000003', 3], ['A00000001', 7], ['sin-cif:fedefarma', 1], ['F30004444', 1]]);
+    assert.deepEqual(ops.map((o) => [o.clave, o.vencimientos]), [['B00000003', 3], ['A00000001', 7], ['sin-cif:fedefarma', 2], ['F30004444', 1]]);
     assert.match(ops.find((o) => o.clave === 'sin-cif:fedefarma')?.texto ?? '', /\(sin CIF\)$/);
     assert.equal(p.filas.filter((f) => claveProveedor(f) === 'A00000001').length, 7);
     assert.equal(cumpleImporte(-45.3, 'hasta200'), true);
@@ -310,7 +314,7 @@ describe('lista: pestañas, filtros y orden de Facturas', () => {
     assert.equal(cumpleImporte(null, 'sin'), true);
     assert.equal(cumpleImporte(472.22, '200a1000'), true);
     assert.equal(cumpleImporte(1000.01, 'mas1000'), true);
-    assert.equal(p.filas.filter((f) => cumpleEstadoFactura(f, 'norm:REQUIERE_REVISION')).length, 1);
+    assert.equal(p.filas.filter((f) => cumpleEstadoFactura(f, 'norm:REQUIERE_REVISION')).length, 2); // FEDEFARMA (V08 y V13)
     assert.equal(p.filas.filter((f) => cumpleEstadoFactura(f, 'conc:CONCILIADA')).length, 6);
   });
   test('búsqueda: importe del vencimiento o total de su factura (también con «,» y «€»), además de proveedor, CIF y nº', () => {
@@ -318,7 +322,8 @@ describe('lista: pestañas, filtros y orden de Facturas', () => {
     assert.deepEqual(q('152,37'), ['01', '10']);
     assert.deepEqual(q('45,30 €'), ['09', '12']);
     assert.deepEqual(q('568'), ['04', '05', '06', '11']); // total de la factura CF-2026-55811
-    assert.deepEqual(q('fedefarma'), ['08']);
+    assert.deepEqual(q('fedefarma'), ['08', '13']);
+    assert.deepEqual(q('96,80'), ['13']);
   });
   test('orden por columna: nulos al final, estable; estado por gravedad', () => {
     const ids = (fs: FilaVencimientoPago[]) => fs.map((f) => f.vencimiento_id.slice(-2));
@@ -329,7 +334,7 @@ describe('lista: pestañas, filtros y orden de Facturas', () => {
     assert.deepEqual(ids(ordenar(p.filas, 'estado', 'asc')).slice(0, 3), ['01', '10', '02']);
     assert.equal(ordenar(p.filas, 'estado', 'asc').at(-1)?.estado_pago, 'PAGADO_MANUAL');
     assert.equal(ordenar(p.filas, 'proveedor', 'asc')[0].proveedor_comercial, 'ALLIANCE');
-    assert.equal(ordenar(p.filas, 'desconocida', null).length, 12); // columna no válida: fecha
+    assert.equal(ordenar(p.filas, 'desconocida', null).length, 13); // columna no válida: fecha
     assert.equal(p.filas.find((f) => f.vencimiento_id === V(7))?.estado_pago, 'PAGADO_MANUAL');
   });
 });

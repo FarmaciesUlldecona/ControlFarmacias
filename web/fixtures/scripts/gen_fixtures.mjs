@@ -293,7 +293,17 @@ export const VENCIMIENTOS_H6_3 = [
   copiaH3a('09', { vencimiento_id: '90000000-0000-4000-8000-000000000012', orden: 2, fecha_vencimiento: '2026-10-29', importe: -20,
     literal: 'VTO. 29/10/2026  -20,00' }),
 ];
-const vencimientosBase = [...vencimientosH3a, ...VENCIMIENTOS_H6_3];
+/**
+ * H6-REAL (todo ficticio): F06 (FEDEFARMA, sin CIF) con un segundo vencimiento CON importe (96,80 €, 19/12/2026), para
+ * marcar un vencimiento sin CIF (el primero, V08, no tiene importe y no se puede marcar). Sentido no documentado (el de
+ * su factura): no suma en ningún total. Después del 02/11/2026 y del primero de F06: no cambia el «próximo vencimiento»
+ * de Facturas ni los próximos de Inicio. vencimientos_factura de F06: 2.
+ */
+export const VENCIMIENTOS_H6_REAL = [
+  copiaH3a('08', { vencimiento_id: '90000000-0000-4000-8000-000000000013', orden: 2, fecha_vencimiento: '2026-12-19', importe: 96.8,
+    literal: 'VTO. 19/12/2026  96,80' }),
+];
+const vencimientosBase = [...vencimientosH3a, ...VENCIMIENTOS_H6_3, ...VENCIMIENTOS_H6_REAL];
 const vencimientos = vencimientosBase.map(({ farmacia, importe_conocido, estado_pago, provenance, ...r }) => ({ // eslint-disable-line no-unused-vars
   ...r,
   vencimientos_factura: vencimientosBase.filter((x) => x.factura_id === r.factura_id).length,

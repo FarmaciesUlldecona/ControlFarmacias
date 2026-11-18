@@ -10,6 +10,8 @@
  *  - Cada bloque se lee en una transacción READ ONLY (REPEATABLE READ: una sola foto) que
  *    termina siempre con ROLLBACK.
  *  - Solo ejecuta las consultas del contrato (CONSULTAS), con farmacia fija PIO.
+ *  - H6-REAL: además, lectura de las tablas de pagos de la migración 35 (vencimientos_marcas_pago,
+ *    proveedores_forma_pago, pagos_historial; cf_lectura tiene SELECT en las tres) y su diagnóstico (solo recuentos).
  */
 import { X509Certificate } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -19,6 +21,7 @@ import {
   CATEGORIAS_TIPO_DOCUMENTAL, CONSULTAS, CONSULTAS_CHECK, FARMACIA, UUID_RE, contratoDesdeConsultas, resumenCasado, resumenDuplicados, resumenPar08C66676,
   type Contrato, type EjecutorBloque, type Fila, type NombreConsulta, type ValorDiagnostico,
 } from './contrato.ts';
+import { COLUMNAS_DIAGNOSTICO_PAGOS, SQL_PAGOS } from './pagos/sql.ts';
 
 export const RUTA_ENV_WEB = join(import.meta.dirname, '..', '.env.web');
 /** Ruta por defecto de la CA; configurable con CF_LECTURA_CA (absoluta o relativa a web/app). */
@@ -99,6 +102,10 @@ export interface AdaptadorReal {
    * falla, los demás siguen (antes compartían transacción y el error de uno abortaba todos).
    */
   diagnostico(nombre: NombreDiagnostico): Promise<Record<string, ValorDiagnostico>>;
+  /** H6-REAL: filas vigentes de marcas y formas, e historial, de PIO (cf_lectura tiene SELECT en las tres tablas). */
+  leerPagos(): Promise<{ marcas: Fila[]; formas: Fila[]; historial: Fila[] }>;
+  /** H6-REAL (check:real): recuentos de pagos (marcas vigentes, anuladas, a revisar, huérfanas; formas vigentes; historial). */
+  diagnosticoPagos(): Promise<Record<string, number>>;
   cerrar(): Promise<void>;
 }
 
@@ -266,6 +273,19 @@ export function crearAdaptadorReal(): AdaptadorReal {
           return validarDiagnostico(resumenPar08C66676(r.rows, columnasImporte));
         }
       }
+    }),
+    // H6-REAL: marcas, formas e historial de pagos con cf_lectura (READ ONLY, ROLLBACK). Solo PIO.
+    leerPagos: () => soloLectura(async (cliente) => ({
+      marcas: (await cliente.query<Fila>(SQL_PAGOS.marcasVigentes, [FARMACIA])).rows,
+      formas: (await cliente.query<Fila>(SQL_PAGOS.formasVigentes, [FARMACIA])).rows,
+      historial: (await cliente.query<Fila>(SQL_PAGOS.historial, [FARMACIA])).rows,
+    })),
+    diagnosticoPagos: () => soloLectura(async (cliente) => {
+      const r = await cliente.query<Fila>(SQL_PAGOS.diagnostico, [FARMACIA]);
+      if (r.rows.length !== 1) throw new Error(`DIAGNOSTICO_FILAS_INESPERADAS: ${r.rows.length}`);
+      const out: Record<string, number> = {};
+      for (const col of COLUMNAS_DIAGNOSTICO_PAGOS) out[col] = recuento(r.rows[0][col], col);
+      return out;
     }),
     cerrar: () => pool.end(),
   };

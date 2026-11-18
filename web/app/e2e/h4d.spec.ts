@@ -39,7 +39,7 @@ test.describe('Necesita tu atención PC 1440', () => {
   test('cabecera "N tipos, M casos" y orden fijo de grupos', async ({ page }) => {
     await abrirInicio(page);
     const at = page.locator('#atencion');
-    await expect(at.locator('[data-atencion-resumen]')).toHaveText('— 15 tipos, 26 casos');
+    await expect(at.locator('[data-atencion-resumen]')).toHaveText('— 15 tipos, 27 casos'); // H6-REAL: +V13 (sin sentido documentado)
     const claves = await at.locator('[data-grupo]').evaluateAll((els) => els.map((e) => e.getAttribute('data-grupo')));
     expect(claves).toEqual(ORDEN_ESPERADO);
     // Una fila por tipo con su número de casos; todo plegado al entrar.
@@ -114,15 +114,16 @@ test.describe('Necesita tu atención PC 1440', () => {
     await expect(g4).toHaveAttribute('data-orden', '4');
     await g4.locator('summary').click();
     const casos = g4.locator('[data-caso]');
-    await expect(casos).toHaveCount(3);
+    await expect(casos).toHaveCount(4); // H6-REAL: + el 2.º vencimiento de F06 (19/12)
     for (const t of await casos.locator('.caso-texto').allTextContents()) {
       expect(t).toBe('No se sabe si esta factura es un pago o un abono; no se suma en el cashflow');
     }
     await expect(g4.locator('code.codigo')).toHaveCount(0);
-    // Más reciente primero (fecha de vencimiento): F06 19/11, F03 14/11, F05 07/11.
-    await expect(casos.nth(0)).toContainText('19/11/2026');
-    await expect(casos.nth(2)).toContainText('07/11/2026');
-    await casos.nth(1).getByRole('link', { name: /^Abrir/ }).click();
+    // Más reciente primero (fecha de vencimiento): F06 19/12, F06 19/11, F03 14/11, F05 07/11.
+    await expect(casos.nth(0)).toContainText('19/12/2026');
+    await expect(casos.nth(1)).toContainText('19/11/2026');
+    await expect(casos.nth(3)).toContainText('07/11/2026');
+    await casos.nth(2).getByRole('link', { name: /^Abrir/ }).click();
     await expect(page).toHaveURL(new RegExp(`/facturas/${F(3)}$`));
     await page.goBack();
     const ne = page.locator('#atencion [data-grupo="INCIDENCIA_AVISO:SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE"]');

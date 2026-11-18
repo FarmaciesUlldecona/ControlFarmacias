@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { PAGO_SIN_DATOS } from '../contrato.ts';
-import type { FilaVencimientoPago, PantallaVencimientosDTO } from '../pagos/pagos.ts';
+import { esPagado, type FilaVencimientoPago, type PantallaVencimientosDTO } from '../pagos/pagos.ts';
 import {
   CONFIG_CASHFLOW, ERROR_H7_PENDIENTE, TEXTO_H7_PENDIENTE, type CashflowDTO, type DatosCashflow, type VencimientoCashflow,
 } from './cashflow.ts';
@@ -30,7 +30,8 @@ export function vencimientoCashflow(f: FilaVencimientoPago): VencimientoCashflow
     proveedor_comercial: f.proveedor_comercial,
     proveedor_nombre: f.proveedor_comercial ?? f.proveedor_razon_social ?? f.proveedor ?? 'Proveedor sin identificar',
     fecha_vencimiento: f.fecha_vencimiento, importe: f.importe, sentido: f.sentido, estado_pago: f.estado_pago,
-    fecha_pago: f.marca?.fecha_pago ?? null, cargo_negativo: f.cargo_negativo,
+    // H6-REAL: una marca «a revisar» (ya no coincide con el vencimiento) no cuenta como pagada.
+    fecha_pago: f.marca !== null && esPagado(f.estado_pago) ? f.marca.fecha_pago : null, cargo_negativo: f.cargo_negativo,
   };
 }
 

@@ -44,14 +44,15 @@ a:hover { color: #0f252e; }
   top: 0;
   max-height: 100vh;
   min-height: 100vh;
-  overflow-y: auto;
+  /* H6-REAL-2: en pantallas bajas el pie (sesión y rótulo de modo) queda siempre visible; solo el menú se desplaza. */
+  overflow: hidden;
   padding: 20px 14px;
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 .lateral-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.lateral-cuerpo { display: flex; flex-direction: column; gap: 18px; flex: 1; }
+.lateral-cuerpo { display: flex; flex-direction: column; gap: 18px; flex: 1; min-height: 0; }
 .marca { display: flex; align-items: center; gap: 10px; padding: 4px 8px; font-weight: 800; font-size: 17px; letter-spacing: -0.01em; }
 .marca-logo {
   width: 30px; height: 30px; border-radius: 8px; background: var(--primario); color: #fff;
@@ -60,7 +61,8 @@ a:hover { color: #0f252e; }
 .boton-menu { display: none; }
 .farmacia { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 10px; font-size: 13px; }
 
-.menu { display: flex; flex-direction: column; gap: 2px; }
+.menu { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.pie { flex: none; }
 .menu-grupo { display: flex; flex-direction: column; gap: 2px; }
 .menu-titulo { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tenue); padding: 10px 12px 2px; }
 .menu-grupo:first-child .menu-titulo { padding-top: 6px; }
@@ -84,6 +86,14 @@ a:hover { color: #0f252e; }
   font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
 }
 .boton-salir:hover { background: var(--primario-fondo); border-color: var(--primario); }
+/* H6-REAL-2: escritorio bajo (p. ej. 1440×900): menú algo más compacto para que quepa entero junto al pie.
+   Va detrás de .menu a / .menu-proximamente para prevalecer con la misma especificidad. */
+@media (min-width: 901px) and (max-height: 960px) {
+  .lateral-interior { padding-top: 16px; padding-bottom: 12px; gap: 14px; }
+  .lateral-cuerpo { gap: 14px; }
+  .menu a { min-height: 38px; }
+  .menu-proximamente { min-height: 34px; }
+}
 
 .principal { min-width: 0; padding: 28px 36px 56px; display: flex; flex-direction: column; gap: 24px; }
 
@@ -276,6 +286,7 @@ a:hover { color: #0f252e; }
   }
   .lateral-cuerpo { display: none; padding-top: 14px; }
   .lateral-cuerpo.abierto { display: flex; }
+  .menu { overflow: visible; } /* móvil: el menú desplegado ocupa su altura; la página desplaza */
   .principal { padding: 20px 16px 40px; gap: 18px; }
   .cabecera h1 { font-size: 24px; }
   .acciones { width: 100%; }

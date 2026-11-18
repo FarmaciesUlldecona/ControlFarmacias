@@ -77,7 +77,7 @@ test.describe('Resumen del periodo PC 1440', () => {
     expect(c.suma).toBe(c.total);
     await page.locator('[data-calendario-vencimientos]').screenshot({ path: join(CAPTURAS, 'pc1440_resumen_abonos.png') });
     // Día, semana y año: el resumen es del periodo visible y cuadra.
-    for (const [url, pagos] of [['/vencimientos?vista=dia&fecha=2026-11-04', '2'], ['/vencimientos?vista=semana', '2'], ['/vencimientos?vista=anio', '12']] as const) {
+    for (const [url, pagos] of [['/vencimientos?vista=dia&fecha=2026-11-04', '2'], ['/vencimientos?vista=semana', '2'], ['/vencimientos?vista=anio', '13']] as const) { // H6-REAL: +V13 (diciembre)
       await page.goto(url);
       await expect(r).toHaveAttribute('data-resumen-pagos', pagos);
       await expect(r).toHaveAttribute('data-resumen-cuadra', 'true');

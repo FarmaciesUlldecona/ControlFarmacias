@@ -6,8 +6,8 @@
  * pendientes, el sentido no documentado ni los cargos con importe negativo, que se cuentan aparte. Incluye lo ya
  * pagado: es todo lo que vence ese día. null si nada suma (nunca un 0 inventado).
  *
- * Color del periodo = peor estado (decisión de Marc): VENCIDO_SIN_PAGAR (rojo) > DOMICILIADO_PREVISTO (violeta) >
- * ABONO_PENDIENTE_COMPENSAR (azul) > PENDIENTE (neutro) > pagado (verde).
+ * Color del periodo = peor estado (decisión de Marc): VENCIDO_SIN_PAGAR (rojo) > A_REVISAR (naranja, H6-REAL) >
+ * DOMICILIADO_PREVISTO (violeta) > ABONO_PENDIENTE_COMPENSAR (azul) > PENDIENTE (neutro) > pagado (verde).
  *
  * Los vencimientos sin fecha no caben en el calendario: se cuentan aparte (sinFecha).
  *
@@ -28,16 +28,17 @@ import {
 
 /** Del peor al mejor. Pagado (a mano o por banco) es el mejor. */
 export const ORDEN_PEOR: readonly EstadoPagoVencimiento[] = [
-  'VENCIDO_SIN_PAGAR', 'DOMICILIADO_PREVISTO', 'ABONO_PENDIENTE_COMPENSAR', 'PENDIENTE', 'PAGADO_MANUAL', 'PAGADO_BANCO',
+  'VENCIDO_SIN_PAGAR', 'A_REVISAR', 'DOMICILIADO_PREVISTO', 'ABONO_PENDIENTE_COMPENSAR', 'PENDIENTE', 'PAGADO_MANUAL', 'PAGADO_BANCO',
 ];
-export type ColorDia = 'rojo' | 'domiciliado' | 'azul' | 'neutro' | 'verde';
+export type ColorDia = 'rojo' | 'naranja' | 'domiciliado' | 'azul' | 'neutro' | 'verde';
 export const COLOR_DIA: Readonly<Record<EstadoPagoVencimiento, ColorDia>> = {
-  VENCIDO_SIN_PAGAR: 'rojo', DOMICILIADO_PREVISTO: 'domiciliado', ABONO_PENDIENTE_COMPENSAR: 'azul',
+  VENCIDO_SIN_PAGAR: 'rojo', A_REVISAR: 'naranja', DOMICILIADO_PREVISTO: 'domiciliado', ABONO_PENDIENTE_COMPENSAR: 'azul',
   PENDIENTE: 'neutro', PAGADO_MANUAL: 'verde', PAGADO_BANCO: 'verde',
 };
 /** Leyenda del calendario, en el orden de prioridad. */
 export const LEYENDA_COLOR: readonly { color: ColorDia; texto: string }[] = [
   { color: 'rojo', texto: 'Vencido sin pagar' },
+  { color: 'naranja', texto: 'Marca a revisar' },
   { color: 'domiciliado', texto: 'Domiciliado previsto' },
   { color: 'azul', texto: 'Abono pendiente de compensar' },
   { color: 'neutro', texto: 'Pendiente' },
@@ -227,8 +228,9 @@ export function textoSinTotal(r: Pick<ResumenCalendario, 'total' | 'sin_importe'
  * vencido, sin marca); Falta por pagar = PENDIENTE (no vencido, cualquier forma, también domiciliación) +
  * VENCIDO_SIN_PAGAR; Abonos pendientes de compensar = ABONO_PENDIENTE_COMPENSAR (aparte). Un vencimiento, un grupo.
  */
-export type GrupoResumen = 'pagado' | 'domiciliado' | 'falta' | 'abonos';
-export const GRUPOS_RESUMEN: readonly GrupoResumen[] = ['pagado', 'domiciliado', 'falta', 'abonos'];
+export type GrupoResumen = 'pagado' | 'domiciliado' | 'falta' | 'abonos' | 'revisar';
+/** H6-REAL: «A revisar» (marca que ya no coincide con el vencimiento), su propio grupo: nunca como pagado. */
+export const GRUPOS_RESUMEN: readonly GrupoResumen[] = ['pagado', 'domiciliado', 'falta', 'abonos', 'revisar'];
 export function grupoResumen(f: Pick<FilaCalendario, 'estado_pago'>): GrupoResumen {
   const b = bloqueDe(f);
   return b === 'por_pagar' ? 'falta' : b;
