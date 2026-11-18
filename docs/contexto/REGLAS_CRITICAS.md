@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-18 (AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
+Actualizado: 2026-11-18 (HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
 `ACCESO_OK`; decisiones de Pio para Cashflow (H7): excepción de RITA solo con sus datos bancarios, lista cerrada de
 `cf_lectura` ampliada a `cf_cashflow_*` con la migración 37, estado de importación y signo del importe; H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
@@ -138,7 +138,7 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 |---|---|
 | Alliance / Cencora | Conserva tablas y secciones documentales `CARGOS`/`ABONOS`, fiscalidad, vencimientos y relaciones 1:1 inequívocas sin fusionar objetos. `SERVICIO BASICO` y `CONDIC. COMERCIAL` son `CARGO` solo por decisión funcional explícita de Pio. Fuera de esas pruebas, el sentido queda indeterminado. |
 | FEDEFARMA | `Total abonaments (consultar detalls)` se clasifica como `DEVOLUCION_MERCANCIA` sin derivar por ello el sentido. La cuota mensual de servicios cooperativos es `CONDICION_COOPERATIVA`; textos meramente registrales no crean movimientos. Conserva facturas internas segmentadas. |
-| HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos. |
+| HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos, salvo estas dos decisiones funcionales explícitas de Pio (2026-11-18, `pruebas/auditoria_hefame/DISENO.md` §0): el desfase de 80,00 de base S.R. de la factura de fin de mes es el **cargo cooperativo HEFAME**, fijo cada mes (H1), y `APROAFA` (aportación a la Asociación para la Promoción de la Asistencia Farmacéutica en España) es `CARGO` (H2). Un desfase distinto de 80,00, en otra clase, negativo o fuera del fin de mes, y un `APROAFA` negativo, fallan cerrados (H6, H7). La autoridad productiva de `hefame-local` sigue desactivada. |
 | COFARES | La elegibilidad local exige documento monopágina, segmentación determinista, filas completas y únicas, columnas inequívocas y evidencia integral. El sentido literal ausente no se infiere. El descuento por pronto pago sigue como gap funcional. |
 | Guimerà | Dispone de adaptadores OCR actual e histórico; el OCR solo se reintenta ante `PENDIENTE_OCR`. El routing no usa filename ni hash. |
 | DERMOFARM | Conserva evidencia y no inventa importes. La relación de abonos descontados en la primera factura del mes siguiente sigue pendiente de decisión funcional. |

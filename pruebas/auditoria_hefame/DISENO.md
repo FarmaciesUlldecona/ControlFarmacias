@@ -21,6 +21,8 @@ Etiquetas de certeza: `CONFIRMADO POR MEDICIÓN` (espejo local o lectura READ_ON
 | **H3** | `Resumen Liquidaciones Comerciales`: **`PENDIENTE`** (Pio) |
 | **H4** | Números de 9 dígitos que empiezan por `91`: **`PENDIENTE`** (Pio) |
 | **H5** | Factura del 30.09.2026: **`PENDIENTE`** de que Pio la suba al espejo |
+| **H6** | Un desfase de S.R. distinto de 80,00 en una factura de fin de mes **para el lector** (falla cerrado). Si HEFAME cambia la cuota, se actualiza con una decisión de Pio (§2.4) |
+| **H7** | Una fila `APROAFA` negativa **para el lector** (falla cerrado), sin invertir el sentido (§2.3) |
 
 Siguen también pendientes la tolerancia del control de la página 2 (§2.5) y las reglas de conciliación de §4.
 
@@ -81,7 +83,7 @@ Se aplica la misma fórmula por clase. El signo y el sentido salen del documento
     clases, el sentido es `null` (sin inferir); en ese caso lleva el importe con su signo por clase.
 - **`APROAFA`:** positivo, pequeño (0,11–0,26 de base) y siempre en la base No. Aparece en 4 facturas.
   **Decisión de Pio (H2, 2026-11-18):** es la aportación a la Asociación para la Promoción de la Asistencia
-  Farmacéutica en España y es un **CARGO**. El importe se toma del documento con su signo. `PROPUESTA`: si una fila
+  Farmacéutica en España y es un **CARGO**. El importe se toma del documento con su signo. **Decidido (H7):** si una fila
   `APROAFA` sale negativa, el lector falla cerrado en lugar de invertir el sentido.
 - **`Resumen Liquidaciones Comerciales`:** negativo y en la base S.R. Aparece en 2 facturas (−0,96 y −1,17 con
   impuestos). Su naturaleza está `PENDIENTE` (H3).
@@ -108,7 +110,7 @@ HEFAME**, **fijo cada mes**, de 80,00 € de base S.R. en la factura de fin de m
   - **Decidido (H1):** nombre «cargo cooperativo HEFAME» y periodicidad mensual, en la factura de fin de mes, con la
     evidencia de las 4 facturas.
   - Si el desfase aparece en otra clase, es negativo o no es de fin de mes, el lector falla cerrado.
-  - `PROPUESTA` (derivada de «fijo» en H1): un desfase de S.R. distinto de 80,00 en una factura de fin de mes también
+  - **Decidido (H6):** un desfase de S.R. distinto de 80,00 en una factura de fin de mes también
     falla cerrado. Si HEFAME cambia la cuota, se actualiza con una decisión de Pio.
 
 ### 2.5 Comprobación contra la página 2 (falla cerrado)
@@ -212,14 +214,13 @@ Hoy dice «número exacto e importe operativo». **Propuesta:**
 ## 5. Qué falta para la autoridad productiva
 
 1. **Decisiones de Pio:**
-   - **tomadas (2026-11-18, §0):** el cargo de 80,00 es el cargo cooperativo HEFAME, fijo cada mes (H1), y
-     `APROAFA` es un CARGO (H2);
+   - **tomadas (2026-11-18, §0):** el cargo de 80,00 es el cargo cooperativo HEFAME, fijo cada mes (H1);
+     `APROAFA` es un CARGO (H2); un desfase distinto de 80,00 (H6) y un `APROAFA` negativo (H7) paran el lector;
    - **pendientes:**
      - tolerancia del control de la página 2 (§2.5);
      - naturaleza de las liquidaciones comerciales (H3) y de los números `91…` (H4);
      - reglas de §4 (normalización, ventana y tolerancia por línea);
-     - la factura del 30.09, que Pio subirá al espejo (H5);
-     - las dos `PROPUESTAS` derivadas de H1 y H2: desfase distinto de 80,00 y `APROAFA` negativo fallan cerrados.
+     - la factura del 30.09, que Pio subirá al espejo (H5).
 2. **Código** (hito propio, con su suite). La farmacia se demuestra por el destinatario impreso (código de cliente,
    NIF y dirección del bloque de cliente), nunca por la carpeta del espejo ni por el nombre del fichero (S3/S5):
    - corrección del RE No. a 5,2 % en `hefame_economia.py`;
