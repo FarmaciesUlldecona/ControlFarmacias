@@ -1,6 +1,6 @@
 # Migración 37: defectos de extracción directos a REVISION. DISEÑO
 
-Estado: **DISEÑO CON LAS DECISIONES DE PIO D1–D4** (2026-11-18; recogidas el 2026-11-19). Sin código, sin migración y
+Estado: **DISEÑO CON LAS DECISIONES DE PIO D1–D7** (D1–D4 el 2026-11-18 y D5–D7 el 2026-11-19). Sin código, sin migración y
 sin tocar producción. Encargo de Pio del 2026-11-15, con el orden del 2026-11-16. Es la **migración 37** (renumerada el
 2026-11-19, decisión de Pio: R20 = 36, defectos = 37, Cashflow = 38): se despliega después de la 36.
 
@@ -20,6 +20,9 @@ sin tocar producción. Encargo de Pio del 2026-11-15, con el orden del 2026-11-1
 | **D2** | Reprocesado: **opción B**, una columna con la versión del lector en `normalizacion_ejecuciones` (§3) |
 | **D3** | Los **22 documentos en `REVISION`** de hoy **esperan a que cambie el lector** |
 | **D4** | El defecto **cuenta un intento** |
+| **D5** | **Lista de §2.1 confirmada (2026-11-19):** A (extracción) y B (identidad de farmacia) van **directas a `REVISION`**; C (almacenamiento) es **transitoria** |
+| **D6** | La versión del lector llega a la RPC por un **8.º parámetro** `p_lector jsonb` (opción (a) de §8) |
+| **D7** | **AUTORIZACIÓN EXPRESA DE PIO (2026-11-19):** nombrar el rol del sistema **SOLO** en `sql/migrations/37_*.sql` y su rollback (para el EXECUTE de la firma nueva). Tests, scripts y documentación no lo nombran; cualquier otro fichero, autorización nueva. Se registra en REGLAS_CRITICAS al implementar la 37 |
 
 ## 1. Situación actual
 
@@ -73,9 +76,9 @@ sin tocar producción. Encargo de Pio del 2026-11-15, con el orden del 2026-11-1
 - **Los huérfanos limpios** (2BI) siguen igual: `TRANSITORIO` con `CLAIM_HUERFANO`.
 - **La conciliación no cambia:** R7 y `MOTIVOS_DEFECTO_CONCILIACION` (`clasificacion_fallos.py:80-87`) siguen igual.
 
-### 2.1 Motivos de extracción frente a almacenamiento (para confirmar por Pio)
+### 2.1 Motivos de extracción frente a almacenamiento (confirmada por Pio, D5)
 
-`PROPUESTA`. Clasificación de los 23 motivos y los 2 códigos de `DEFECTO_DOCUMENTO` de hoy:
+Clasificación de los 23 motivos y los 2 códigos de `DEFECTO_DOCUMENTO` de hoy:
 
 **A. Extracción → `DEFECTO_DOCUMENTO`, directos a `REVISION` (15 motivos y 1 código).** Salen de leer el PDF o de
 validar lo leído; releer el mismo PDF con el mismo lector da lo mismo:
@@ -99,14 +102,14 @@ validar lo leído; releer el mismo PDF con el mismo lector da lo mismo:
 | `NINGUNA_FACTURA_AUTORIZABLE_AUTOMATICAMENTE` | ninguna factura del documento cumple la autoridad (`repositorios.py:290`) |
 | código `ErrorCompletitudDocumental` | completitud documental |
 
-**B. Identidad de farmacia → propuesta: extracción (`REVISION`) (2 motivos y 1 código).** Nacen de leer la farmacia
-del documento (`barrera_farmacia.py:159-170`); sin un lector nuevo no cambian. Pio decide si van con A o con C:
+**B. Identidad de farmacia → extracción (`REVISION`), DECIDIDO (D5) (2 motivos y 1 código).** Nacen de leer la
+farmacia del documento (`barrera_farmacia.py:159-170`); sin un lector nuevo no cambian:
 
-| Motivo | Propuesta |
+| Motivo | Decisión (D5) |
 |---|---|
-| `FARMACIA_DOCUMENTO_NO_DEMOSTRABLE` | A (`REVISION`) |
-| `FARMACIA_DOCUMENTO_CONTRADICTORIA` | A (`REVISION`) |
-| código `ErrorFarmaciaDocumental` | A (`REVISION`) |
+| `FARMACIA_DOCUMENTO_NO_DEMOSTRABLE` | `REVISION` |
+| `FARMACIA_DOCUMENTO_CONTRADICTORIA` | `REVISION` |
+| código `ErrorFarmaciaDocumental` | `REVISION` |
 
 **C. Almacenamiento → pasan a `TRANSITORIO`, con reintentos y espera (D1) (6 motivos).** Dependen de la copia en el
 almacenamiento o de su registro, y pueden ser una subida a medias:
@@ -133,8 +136,8 @@ con reintentos acabarán igualmente en `REVISION` al 4.º intento. Se proponen e
 
 - **Columna `lector`** (jsonb: `adaptador`, `version_adaptador` y `layout`, o null si el fallo es anterior a reconocer
   el layout) en `normalizacion_ejecuciones`. La rellena el worker en cada ejecución que falla.
-- **Cómo llega a la BD:** la RPC de fallo la tiene que recibir. Ver decisión 2 de §8 (la vía cambia lo que puede
-  nombrar la 37).
+- **Cómo llega a la BD (D6):** un 8.º parámetro `p_lector jsonb` de la RPC de fallo. La firma nueva necesita el
+  EXECUTE del rol del sistema, que la 37 puede nombrar por la autorización D7.
 - **Selección para reprocesar**, con un script de plan READ_ONLY `pruebas/auditoria_37/plan_reprocesado.py`:
   - documentos en `REVISION` con clase `DEFECTO_DOCUMENTO` cuyo último fallo tiene un `lector` distinto del vigente,
     o null;
@@ -152,7 +155,10 @@ con reintentos acabarán igualmente en `REVISION` al 4.º intento. Se proponen e
 
 - `normalizacion_ejecuciones.lector jsonb` (null por defecto; las filas existentes quedan en null, sin cambios).
 - `cf_registrar_fallo_normalizacion`: la rama de `DEFECTO_DOCUMENTO` deja `REVISION` en el primer fallo (§2) con el
-  `detalle` del historial ampliado, y guarda `lector` en la ejecución. La firma depende de la decisión 2 de §8.
+  `detalle` del historial ampliado, y guarda `lector` en la ejecución. **Firma nueva de 8 parámetros** con
+  `p_lector jsonb` (D6), con su EXECUTE para el rol del sistema (autorización D7) y nada para `anon`,
+  `authenticated` ni `PUBLIC`. La de 7 parámetros se mantiene y llama a la de 8 con `p_lector` null, para el
+  código anterior a la 37.
 - La de 6 parámetros, `cf_solicitar_reprocesado`, el claim, el selector y la persistencia no cambian (R4).
 - `comment on function` y `comment on column` actualizados.
 - **Rollback:** restaura el cuerpo de la 17 y quita la columna. No mueve documentos: los que entraron en `REVISION`
@@ -195,9 +201,9 @@ con reintentos acabarán igualmente en `REVISION` al 4.º intento. Se proponen e
   2. Pio apaga los dos flags;
   3. preflight READ_ONLY, `desplegar_37` una vez y postcheck;
   4. Pio vuelve a encender los flags.
-- **Orden respecto de la noche:** el código manda el `lector` a la RPC, así que el código no puede ir por delante de la
-  37 si la firma cambia (decisión 2 de §8). Como en R20, se propone que el código detecte la 37 con una sesión de solo
-  lectura y, sin ella, use la llamada de la 17.
+- **Orden respecto de la noche:** con la firma nueva (D6), el código no puede llamar a la de 8 parámetros antes de la
+  37. Como en R20, se propone que el código detecte la 37 con una sesión de solo lectura y, sin ella, use la
+  llamada de 7 parámetros de la 17.
 
 ## 7. Documentos canónicos
 
@@ -208,17 +214,16 @@ con reintentos acabarán igualmente en `REVISION` al 4.º intento. Se proponen e
   el primer fallo»; la vía de reprocesado por `lector` (§3).
 - **ESTADO_ACTUAL:** hito 37 en local y, después, 37-D.
 
-## 8. Decisiones que necesito de Pio
+## 8. Decisiones de Pio (2026-11-19, tomadas)
 
-1. **Lista de §2.1:** confirmar A (extracción, 15 motivos y `ErrorCompletitudDocumental`), B (identidad de farmacia,
-   propuesta con A) y C (almacenamiento, 6 motivos a `TRANSITORIO`).
-2. **Cómo llega el `lector` a la RPC de fallo (D2):**
-   - **(a) un 8.º parámetro `p_lector jsonb`:** es la vía limpia, pero la firma nueva necesita el EXECUTE del rol del
-     sistema, y la 37 **no** tiene autorización para nombrarlo (la vigente es solo para la 38). Haría falta una
-     autorización expresa de Pio para la 37 y su rollback;
+1. **Lista de §2.1: DECIDIDO (D5).** A y B, directas a `REVISION`; C, transitoria.
+2. **Cómo llega el `lector` a la RPC de fallo: DECIDIDO (D6), opción (a)**, con la autorización D7. Opciones que se
+   valoraron:
+   - **(a) un 8.º parámetro `p_lector jsonb`:** la vía limpia; la firma nueva necesita el EXECUTE del rol del
+     sistema, que Pio autorizó nombrar solo en la 37 y su rollback (D7);
    - **(b) la misma firma de 7 parámetros**, con el lector dentro de `p_error_detalle` en un formato fijo que la RPC
      separa. No nombra el rol, pero mezcla dos datos en un campo de texto.
-   **Propuesta: (a)**, si Pio autoriza nombrar el rol del sistema en la 37 y su rollback; si no, (b).
+   **Elegida: (a)** (D6, con la autorización D7).
 
 ## 9. Fuera de alcance
 

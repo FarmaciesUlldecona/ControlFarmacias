@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-19 (R20: migración 36 implementada solo en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-19 (36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -152,7 +152,7 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 |---|---|
 | Alliance / Cencora | Conserva tablas y secciones documentales `CARGOS`/`ABONOS`, fiscalidad, vencimientos y relaciones 1:1 inequívocas sin fusionar objetos. `SERVICIO BASICO` y `CONDIC. COMERCIAL` son `CARGO` solo por decisión funcional explícita de Pio. Fuera de esas pruebas, el sentido queda indeterminado. |
 | FEDEFARMA | `Total abonaments (consultar detalls)` se clasifica como `DEVOLUCION_MERCANCIA` sin derivar por ello el sentido. La cuota mensual de servicios cooperativos es `CONDICION_COOPERATIVA`; textos meramente registrales no crean movimientos. Conserva facturas internas segmentadas. |
-| HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos, salvo estas dos decisiones funcionales explícitas de Pio (2026-11-18, `pruebas/auditoria_hefame/DISENO.md` §0): el desfase de 80,00 de base S.R. de la factura de fin de mes es el **cargo cooperativo HEFAME**, fijo cada mes (H1), y `APROAFA` (aportación a la Asociación para la Promoción de la Asistencia Farmacéutica en España) es `CARGO` (H2). Un desfase distinto de 80,00, en otra clase, negativo o fuera del fin de mes, y un `APROAFA` negativo, fallan cerrados (H6, H7). La autoridad productiva de `hefame-local` sigue desactivada. |
+| HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos, salvo estas dos decisiones funcionales explícitas de Pio (2026-11-18, `pruebas/auditoria_hefame/DISENO.md` §0): el desfase de 80,00 de base S.R. de la factura de fin de mes es el **cargo cooperativo HEFAME**, fijo cada mes (H1), y `APROAFA` (aportación a la Asociación para la Promoción de la Asistencia Farmacéutica en España) es `CARGO` (H2). Un desfase distinto de 80,00, en otra clase, negativo o fuera del fin de mes, y un `APROAFA` negativo, fallan cerrados (H6, H7). Decisiones de Pio del 2026-11-19: `Resumen Liquidaciones Comerciales` son pequeños descuentos sobre especialidad (IVA 4 %, base S.R.) y son `ABONO` (H3); los números de 9 dígitos que empiezan por `91` son albaranes normales que Farmatic registra con numeración interna `Q…`/`R…`, y casan por numeración interna, importe y fecha con candidato único, como R15b (H4). La autoridad productiva de `hefame-local` sigue desactivada. |
 | COFARES | La elegibilidad local exige documento monopágina, segmentación determinista, filas completas y únicas, columnas inequívocas y evidencia integral. El sentido literal ausente no se infiere. El descuento por pronto pago sigue como gap funcional. |
 | Guimerà | Dispone de adaptadores OCR actual e histórico; el OCR solo se reintenta ante `PENDIENTE_OCR`. El routing no usa filename ni hash. |
 | DERMOFARM | Conserva evidencia y no inventa importes. La relación de abonos descontados en la primera factura del mes siguiente sigue pendiente de decisión funcional. |
@@ -349,8 +349,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
       número de una línea de otra factura; solo lo comprueba Python.
   - **Orden de despliegue:** primero la 24 y después conciliar con el código 2BE. Con la 23, una línea R17 se
     rechaza (`TOLERANCIA_REGLA_NO_COINCIDE`) y consume un intento.
-- Regla de Pio R20 (DECISIÓN DE PIO, 2026-11-19; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 36,
-  **solo local, sin desplegar**; diseño en `pruebas/auditoria_r20/DISENO.md`; origen: 08013495 / 08D79747):
+- Regla de Pio R20 (DECISIÓN DE PIO, 2026-11-19; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 36
+  **desplegada en producción** en el 36-D, 2026-11-19, con confirmación explícita de Pio; diseño en
+  `pruebas/auditoria_r20/DISENO.md`; origen: 08013495 / 08D79747):
   - **R20 línea = su albarán exacto + su variante con letra final:** una línea documental (cargo) que queda sin
     casar tras el 1:1 y R17 puede casar con la suma de **dos** albaranes de la misma recepción: el de su número
     **exacto** y su variante con **una letra final** (`08X99999` + `08X99999A`), los dos a ±15 días de la línea.

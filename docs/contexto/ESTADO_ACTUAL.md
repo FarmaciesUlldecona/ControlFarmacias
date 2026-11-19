@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-19 (R20: migración 36 implementada en local, sin desplegar; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-19 (36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -345,7 +345,7 @@ con confirmación expresa de Pio y lanzada una sola vez.
 
 ### R20: migración 36 implementada en local (2026-11-19)
 
-DECISIÓN DE PIO, `CONFIRMADO POR TEST` en PostgreSQL 17 local. **Sin desplegar.** Diseño en
+DECISIÓN DE PIO, `CONFIRMADO POR TEST` en PostgreSQL 17 local y **desplegada en producción** (36-D, abajo). Diseño en
 `pruebas/auditoria_r20/DISENO.md`; evidencias en `C:\ControlFarmacias\evidencias_r20\` (`SHA256SUMS.txt`).
 
 - **Regla:** una línea casa con su albarán exacto + su variante con letra final (misma recepción, R9, solo 1+1, sin
@@ -360,7 +360,20 @@ DECISIÓN DE PIO, `CONFIRMADO POR TEST` en PostgreSQL 17 local. **Sin desplegar.
 - **`desplegar_36.py`** ensayado con la imitación del `postgres` de Supabase; exige el commit ya subido.
 - **Verificación READ_ONLY con el código** sobre las 65 facturas de PIO: solo cambia 08013495 / 08D79747.
   Caso real: `CONCILIADA` −0,09.
-- `PENDIENTE`: despliegue 36-D, con confirmación de Pio por paso. Después, la noche concilia 08013495.
+- **36-D (2026-11-19, `CONFIRMADO EN PRODUCCIÓN`, confirmación explícita de Pio):** evidencias en
+  `C:\ControlFarmacias\evidencias_36_d\` y `C:\ControlFarmacias\evidencias_36_d_on\` (`SHA256SUMS.txt`).
+  - **Preflight READ_ONLY** con los flags apagados por Pio: puerta git abierta (785d70b en el remoto; SHA LF de
+    la 36 `ffe4b880…`, igual en el commit), sin noche en curso, precondiciones 5 de 5 y captura previa.
+  - **`desplegar_36` una sola vez** (12:10:00–12:10:03 UTC): **APLICADA**; datos sin cambios, columna marca y
+    función de validación R17 + R20.
+  - **Postcheck:** conteos y huellas de facturas, conciliaciones, detalles, configuración sin la marca y RPC de
+    persistencia idénticos. Ninguna fila con fecha en la ventana del despliegue (67 columnas de fecha). Solo
+    cambian la función de validación y `conciliacion_r20 = true`.
+  - **Simulación READ_ONLY:** 08013495 `CONCILIADA` −0,09 (1 línea R20) y 08013498 `CONCILIADA` 0,00.
+  - **Pio volvió a encender los flags.** La comprobación READ_ONLY da flags `true`, `conciliacion_r20 = true`
+    detectada, Luna `false`, solo PIO, 0 bloqueos, reclamaciones y documentos en NORMALIZANDO, y las puertas de
+    la noche REAL sin fallos, salvo las tareas de esa noche, que aún no habían corrido.
+  - `PENDIENTE`: la noche 19→20/11, la primera con R20, concilia 08013495 y 08013498.
 
 ### Puerta git con el main leído del remoto (2026-11-19)
 
