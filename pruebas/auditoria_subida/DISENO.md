@@ -1,7 +1,7 @@
 # Subida de facturas desde la web y «Actualizar ahora». DISEÑO
 
-Estado: **DISEÑO CON LAS DECISIONES DE PIO** (2026-11-19, §0). Sin código, sin migración y sin tocar producción. Petición de la web con las
-decisiones de Pio del encargo (2026-11-19). La bandeja de entrada (H9) queda para más adelante.
+Estado: **DISEÑO CON LAS DECISIONES DE PIO** (2026-11-19, §0; A1 cambiada por Pio el mismo día). Sin código, sin
+migración y sin tocar producción. Petición de la web con las decisiones de Pio del encargo (2026-11-19). La bandeja de entrada (H9) queda para más adelante.
 
 - **Etiquetas:** `CONFIRMADO POR CÓDIGO` (fichero:línea), `CONFIRMADO POR LECTURA` (listado del espejo, solo nombres y
   conteos, sin abrir PDF) y `PROPUESTA`. Lo que tiene que decidir Pio está en §4.
@@ -11,13 +11,15 @@ decisiones de Pio del encargo (2026-11-19). La bandeja de entrada (H9) queda par
 
 | Id | Decisión |
 |---|---|
-| **A1** | «Actualizar ahora» lanza **solo la importación y la sincronización**. La normalización y la conciliación siguen siendo de la noche. La modalidad «bajo demanda» es un **hito futuro** |
+| **A1** (cambiada) | El botón ejecuta el **circuito COMPLETO** (importar, sincronizar, normalizar y conciliar) en **modalidad «bajo demanda»**, dentro de la **migración 39**: varias ejecuciones al día **sin bloquear la noche**, con **las mismas puertas y límites** (§3.3) |
+| **V1** | **Velocidad**, también en la 39: **encadenar los pasos** (cada uno arranca al terminar el anterior), en el botón **y en la noche**, e **insertar en bloque** los albaranes de la sincronización. Tiempos medidos y estimados en §1.4 y §3.6 |
+| **E1** | «Evidencia en llamadas aparte»: **sigue `PENDIENTE`** (decisión de Pio, sin cambios) |
 | **S1** | Carpeta por **fecha de subida por defecto**, con opción de **elegir mes y decena** en la web |
 | **S2** | Tamaño máximo: **20 MB** |
 | **S3** | Nombre: **el original saneado** |
 | **S4** | Nombre repetido: **rechazo** (`NOMBRE_EXISTENTE`) |
-| **A2** | **Sí:** Pio da a `Usuari` permiso para **EJECUTAR** la tarea de sincronización, sin modificarla. Instrucciones en §5 |
-| **A3** | Caducidad de una petición: **10 minutos**. Tiempo máximo por tarea: **30 minutos** |
+| **A2** | **Sí:** `Usuari` puede **EJECUTAR** la tarea de sincronización, sin modificarla. **Ya lo tiene desde el hito 2AG** (comprobado hoy, §5): no hace falta ningún cambio |
+| **A3** | Caducidad de una petición: **10 minutos**. Tiempo máximo por paso: **30 minutos** |
 | **A4** | La cola va en la **migración 39**. **AUTORIZACIÓN EXPRESA DE PIO (2026-11-19):** nombrar el rol del sistema **SOLO** en `sql/migrations/39_*.sql` y su rollback (para el EXECUTE de las funciones de reclamar y cerrar). Tests, scripts y documentación no lo nombran; cualquier otro fichero, autorización nueva. Se registra en REGLAS_CRITICAS al implementar la 39 |
 | **S6** | Rol de la web para la cola: **nuevo, `cf_actualizar_web`** (solo `INSERT` y `SELECT` sobre la cola) |
 | **Orden** | **37 → 38 → 39.** Cada migración exige la anterior |
@@ -59,7 +61,24 @@ decisiones de Pio del encargo (2026-11-19). La bandeja de entrada (H9) queda par
 - **La noche admite una sola fila por fecha local** (`cf_noches_automaticas`, clave primaria `fecha`;
   `noche_automatica.py`, guard al empezar). Además, sus puertas exigen que la importación y la sincronización hayan
   corrido **esa noche**. **Lanzar la tarea Alliance de día ocuparía la fila de hoy y la noche de verdad pararía**
-  (`NOCHE_YA_EJECUTADA`). Ver decisión A1 de §4.
+  (`NOCHE_YA_EJECUTADA`). Por eso la modalidad «bajo demanda» lleva su propia fila (§3.3).
+
+### 1.4 Tiempos reales de cada paso
+
+`CONFIRMADO POR LECTURA READ_ONLY` (2026-11-19, marcas de tiempo de Supabase; sin leer `logs/`; el historial del
+Programador de tareas no devuelve eventos). Evidencias en `C:\ControlFarmacias\evidencias_tiempos\`
+(`SHA256SUMS.txt`). Horas locales:
+
+| Paso | Arranque | Medido | Notas |
+|---|---|---|---|
+| **Importación** (21:00) | 21:00:00 | primer documento a los **7–12 s**; después **~1,5 s por PDF nuevo** (4 documentos el 18/11: 21:00:07–21:00:12; 6 el 21/10: 8,4 s entre el primero y el último) | El arranque recorre el espejo, el índice y los hashes de Supabase. Cada PDF nuevo espera **1 s** fijo de tamaño estable (`importar_facturas_drive.py:609`). El final de la tarea no tiene marca |
+| **Sincronización** (21:30:30) | 21:30:30 | la resincronización registra cambios a los **19–29 s** (`albaranes_cambios.detectado_at`: 21:30:49 y 21:30:59 los días 9 y 10/11) | Los nuevos se guardan **uno a uno**, con una petición cada uno (`sincronizar_albaranes.py:86-113`). El final no tiene marca. Unos 30 albaranes nuevos al día (6.525 desde abril) |
+| **Noche** (22:15) | 22:15:03 | **63 s** la REAL del 18/11 (5 documentos y 3 conciliaciones); **19 s** las SOMBRA sin trabajo | Arranque, puertas y snapshot: ~18 s. Documento Alliance: hasta los 18 s; cada no soportado, ~1,5 s; cada conciliación, ~6–11 s (con su simulación); postcheck e informe, ~15 s |
+
+- **Tiempo de pared hoy:** de 21:00 a ~22:16, **unos 76 minutos**, de los que **el trabajo real es de unos 2–3
+  minutos**. El resto son esperas fijas entre tareas (30 y 45 minutos).
+- Lo que no tiene marca (final de la importación y de la sincronización) se medirá con el encadenado: cada paso
+  guarda su inicio y su fin (§3.4).
 
 ## 2. Subir una factura desde la web
 
@@ -144,65 +163,122 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 ### 3.2 Cómo se recoge la petición
 
 - **Una tarea programada nueva**, `ControlFarmacias - Actualizar ahora`, como `Usuari`, **cada 2 minutos** de 06:00 a
-  20:45 (fuera de la ventana de la noche). Ejecuta un módulo del circuito (p. ej. `actualizar_ahora.py`):
+  20:45 (fuera de la ventana de la noche). Ejecuta el módulo del circuito:
   1. **lee** con una sesión de solo lectura si hay una petición `EN_COLA`; si no hay, termina (una consulta, sin coste);
   2. **reclama** la petición (`EN_COLA` → `EN_MARCHA`) con una función atómica (`for update skip locked`); caducada →
     `RECHAZADA`;
-  3. **puertas**, las de la noche que aplican de día: puerta git (`ls-remote`), flags, Luna apagada y solo PIO,
-    0 bloqueos, 0 reclamaciones, 0 documentos en `NORMALIZANDO`, ninguna noche `EN_CURSO`, ninguna de las tres
-    tareas de la noche en marcha y hora fuera de 21:00–23:45. Una puerta falla → `RECHAZADA` con su motivo, sin lanzar nada;
-  4. **lanza las dos tareas programadas existentes (A1)**, una tras otra, y espera a que termine cada una (como
-    máximo **30 minutos** por tarea, A3): `Importar facturas` (Usuari) → `Sincronización ControlFarmacias`
-    (ControlFarmaciasRO; la identidad la pone el Programador de tareas, no el proceso). **Nunca lanza la tarea
-    Alliance** (§1.3). Una tarea con resultado distinto de 0, o que supera su tiempo → `ERROR` y no se lanza la
-    siguiente;
-  5. **cierra** la petición (`OK` o `ERROR`) con el resumen de recuentos.
+  3. ejecuta el **circuito encadenado** (§3.4) en modalidad `BAJO_DEMANDA` (§3.3);
+  4. **cierra** la petición (`OK` o `ERROR`) con el resumen de recuentos y los tiempos de cada paso.
 - **Por qué una tarea cada 2 minutos y no un servicio:** reutiliza el mismo mecanismo que la noche (Programador de
   tareas, `Usuari`), no deja un proceso vivo y, si falla, la siguiente vuelta lo ve. El retraso máximo es de 2
   minutos.
-- **Lanzar tareas** con `Start-ScheduledTask` y seguirlas con `Get-ScheduledTaskInfo`. Para lanzar la de
-  ControlFarmaciasRO, `Usuari` necesita permiso de ejecución sobre esa tarea (A2, §5).
-- **Lo que hace la noche después:** nada distinto. A las 21:00 y 21:30 vuelven a correr las dos tareas (no importan
-  dos veces: duplicado por hash) y a las 22:15 la noche normaliza y concilia lo que haya entrado.
 
-### 3.3 Estimación previa
+### 3.3 Modalidad «bajo demanda» (migración 39)
 
-- **Duración:** la de la última petición `OK` (`fin − inicio`). Si no hay ninguna, la suma de las últimas duraciones
-  de las dos tareas (Programador de tareas).
+`PROPUESTA` que concreta A1.
+
+- **El mismo orquestador** (`noche_automatica.py`) con una modalidad nueva, `BAJO_DEMANDA`, junto a `SOMBRA` y `REAL`.
+  Mismo código de normalización y conciliación, mismas puertas, mismos límites, mismas paradas y mismo postcheck por
+  fila. Lo que cambia:
+  - **Fila propia** en `cf_noches_automaticas` (ver B1 de §4): la 39 añade `modalidad` (`NOCHE` o `BAJO_DEMANDA`), un
+    `id` y `peticion_id`. La guarda de una noche por fecha pasa a un **índice único parcial** `(fecha) where modalidad =
+    'NOCHE'`: la noche sigue siendo una sola por fecha y las ejecuciones bajo demanda no la ocupan.
+  - **Puerta de pasos** en lugar de la de tareas: en vez de «las tareas han corrido esta noche», «la importación y la
+    sincronización de **esta ejecución** han terminado con código 0» (§3.4).
+  - **Límites:** los mismos que tendría la noche de ese día (`limites_por_historial`, calculados **solo con las
+    noches**); las ejecuciones bajo demanda no hacen crecer el historial (B2).
+  - **Ventana:** nunca entre 21:00 y 23:45; nunca con una noche o una ejecución `EN_CURSO`; al menos 15 minutos desde
+    el final de la anterior.
+  - **Informe:** en `noches_auto/<fecha>/bajo_demanda_<id>/`, con su SHA en la fila, igual que la noche.
+- **La noche no cambia de comportamiento:** su fila, su informe y sus puertas siguen igual. Solo cuenta lo que ya
+  hicieron las ejecuciones del día (documentos y facturas que ya no están en cola).
+
+### 3.4 Encadenado de los pasos (botón y noche)
+
+`PROPUESTA` que concreta V1.
+
+- **Un solo proceso del circuito** hace los tres pasos seguidos, cada uno al terminar el anterior:
+  1. **Importación**, en el mismo proceso (`Usuari`, como hoy);
+  2. **Sincronización**, lanzando la tarea existente `Sincronización ControlFarmacias` para que corra como
+     **ControlFarmaciasRO** (la identidad de Farmatic la pone el Programador de tareas, nunca el proceso). Se espera a
+     que termine (`Get-ScheduledTaskInfo`) y se exige resultado 0. `Usuari` ya puede lanzarla (§5);
+  3. **Normalización y conciliación** (`noche_automatica` con la modalidad que toque).
+  Un paso con resultado distinto de 0, o que supera 30 minutos (A3) → `ERROR` (botón) o `PARADA` (noche), y no se
+  lanza el siguiente.
+- **En la noche:** una sola tarea `ControlFarmacias - Circuito` a las 21:00 (`Usuari`) sustituye los disparadores de
+  las 21:30 y las 22:15. La tarea de sincronización se queda sin disparador propio: solo se lanza desde el circuito.
+  Los cambios de tareas los hace Pio, con instrucciones en el hito (B3).
+- **Tiempos por paso:** cada paso guarda su inicio y su fin en el informe y en la fila (la de la noche o la de la
+  ejecución). Así se mide lo que hoy no tiene marca (§1.4).
+
+### 3.5 Albaranes de la sincronización en bloque
+
+`PROPUESTA` que concreta V1.
+
+- Hoy la sincronización guarda **cada albarán nuevo con una petición** (`guardar_albaran`,
+  `sincronizar_albaranes.py:86-113`) y la resincronización aplica su plan fila a fila.
+- **Propuesta:** insertar los nuevos en **lotes** (p. ej., de 200) con una sola petición por lote, con las mismas
+  restricciones de la tabla. Si un lote falla (por ejemplo, por un duplicado), ese lote se repite fila a fila, como
+  hoy, para conservar el recuento exacto de nuevos y existentes. Los inserts de la resincronización van igual; las
+  actualizaciones siguen una a una (son pocas y llevan su historial).
+- **Farmatic no cambia:** la lectura sigue siendo la misma consulta READ_ONLY con la misma identidad.
+
+### 3.6 Estimación de tiempos
+
+`PROPUESTA` (estimación; se medirá con las marcas de §3.4):
+
+| Paso | Hoy | Con la 39 |
+|---|---|---|
+| Esperas entre pasos | 30 + 45 minutos | **0** (encadenado) |
+| Importación | 7–12 s + ~1,5 s por PDF | igual (la espera de 1 s por PDF protege de leer un PDF a medias) |
+| Sincronización | ~20–30 s hasta la resincronización, más una petición por albarán | **unos segundos menos**: ~30 albaranes al día pasan de ~30 peticiones a 1 |
+| Normalización y conciliación | 63 s con 5 + 3; 19 s sin trabajo | igual |
+| **Circuito completo** | **~76 minutos de pared** | **~2–3 minutos** con la carga de un día normal |
+
+- **Estimación que muestra el botón:** la duración de la última ejecución `OK` (`fin − inicio`). Si no hay ninguna, la
+  suma de los tiempos medidos de cada paso.
 - **Uso de IA:** hoy **0**. Luna está desactivada (`luna_habilitada = false`, comprobado hoy) y los extractores son
-  locales. Además, «Actualizar ahora» no normaliza (A1): la importación y la sincronización no usan IA. La web lo
-  muestra como «sin uso de IA».
+  locales. Si algún día se habilita Luna, la estimación saldría de los documentos en cola por su coste medio.
 
 ## 4. Decisiones de Pio
 
-Todas tomadas el 2026-11-19 (§0). Quedan para el hito de implementación:
+Tomadas el 2026-11-19 (§0). **Quedan para Pio:**
 
-- la migración 39 (cola, trigger, funciones de reclamar y cerrar, rol `cf_actualizar_web`) con su rollback y su
-  `desplegar_39`, ensayado con la imitación del `postgres` de Supabase; la autorización A4 se registra entonces en
+- **B1. Fila de las ejecuciones bajo demanda:** columnas `modalidad`, `id` y `peticion_id` en `cf_noches_automaticas`,
+  con el índice único parcial para la noche (propuesta: la web ya la lee con `cf_lectura`), o una tabla aparte
+  `cf_ejecuciones_bajo_demanda`.
+- **B2. Límites:** los mismos 5 + 5 (o los que tenga la noche ese día) **por ejecución** (propuesta), o un tope diario
+  compartido con la noche. Y si quieres un máximo de ejecuciones al día (propuesta: sin máximo; ya limitan la regla de
+  15 minutos y la ventana).
+- **B3. Tareas de la noche:** una sola tarea `ControlFarmacias - Circuito` a las 21:00 en lugar de las tres (propuesta),
+  quitando los disparadores de las 21:30 y las 22:15.
+- **B4. Tamaño del lote** de albaranes: propuesta 200.
+- **E1.** «Evidencia en llamadas aparte»: sigue `PENDIENTE`.
+
+Para el hito de implementación (la 39 va después de la 37 y la 38):
+
+- migración 39: cola, trigger, funciones de reclamar y cerrar, rol `cf_actualizar_web`, columnas de B1 y su rollback,
+  con `desplegar_39` ensayado con la imitación del `postgres` de Supabase; la autorización A4 se registra entonces en
   REGLAS_CRITICAS;
-- la tarea programada nueva y el módulo que recoge la petición;
+- código: modalidad `BAJO_DEMANDA`, circuito encadenado, lotes de albaranes, tarea del botón;
 - el servidor de subida de la web y la excepción de §2.3 en REGLAS_CRITICAS;
-- comprobar en local que `Usuari` puede lanzar la tarea de sincronización tras el permiso de §5, sin ejecutarla en
-  producción salvo con la confirmación de Pio.
+- la prueba de lanzar la sincronización desde el circuito, sin ejecutarla en producción salvo con la confirmación de
+  Pio.
 
-## 5. Instrucciones para Pio: permiso de `Usuari` para ejecutar la sincronización (A2)
+## 5. Permiso de `Usuari` para ejecutar la sincronización (A2)
 
-`PROPUESTA` de pasos. No los ejecuta Claude (las barreras del repositorio impiden a los agentes usar el Programador de
-tareas). Se hacen **una vez**, como administrador, fuera de 21:00–23:45:
+`CONFIRMADO POR LECTURA` (2026-11-19, solo lectura del descriptor de seguridad de la tarea, sin cambiarlo):
 
-1. **Copia de la ACL actual**, fuera del repositorio:
-   `icacls "C:\Windows\System32\Tasks\Sincronización ControlFarmacias" /save C:\ControlFarmacias\acl_tarea_sincronizacion.txt`
-2. **Conceder solo lectura y ejecución** a `Usuari` sobre el fichero de la tarea:
-   `icacls "C:\Windows\System32\Tasks\Sincronización ControlFarmacias" /grant "MOSTRADOR\Usuari:(RX)"`
-   - `RX` permite ver la tarea y lanzarla. **No** permite modificarla ni borrarla (no hay escritura).
-   - La tarea sigue ejecutándose como ControlFarmaciasRO con su contraseña guardada: `Usuari` no la conoce ni la
-     necesita.
-3. **Comprobación sin ejecutarla:** como `Usuari`, en PowerShell, `Get-ScheduledTask -TaskName "Sincronización ControlFarmacias"`
-   debe mostrarla, y `icacls` sobre el mismo fichero debe dar a `MOSTRADOR\Usuari` solo `(RX)`.
-4. **Prueba de ejecución:** se deja para el hito de implementación, con tu confirmación, porque lanzarla ejecuta la
-   sincronización real (solo lectura de Farmatic, escritura de albaranes en Supabase).
-5. **Vuelta atrás:** `icacls "C:\Windows\System32\Tasks\Sincronización ControlFarmacias" /remove:g "MOSTRADOR\Usuari"`
-   (o `/restore` con la copia del paso 1, desde `C:\Windows\System32\Tasks`).
+| Cuenta | Máscara | Ejecutar |
+|---|---|---|
+| `MOSTRADOR\Usuari` | `0x001200A9` (lectura + ejecución) | **sí** |
+| `MOSTRADOR\ControlFarmaciasRO` | `0x00120089` (lectura) | no |
+| `BUILTIN\Administradores`, `NT AUTHORITY\SYSTEM` | control total | sí |
 
-Si Windows no permitiera lanzar la tarea solo con `RX` sobre el fichero, la alternativa es fijar el descriptor de
-seguridad de la tarea con el Programador de tareas (COM). Se documentaría en el hito, con tu confirmación.
+- Es el permiso que se concedió en el **hito 2AG** (`pruebas/auditoria_2ag/reparar_acl_tarea_elevado.ps1`: añade
+  `TASK_EXECUTE` a la entrada de `Usuari` en el descriptor de seguridad de la tarea). `Usuari` no tiene escritura: no
+  puede modificar ni borrar la tarea.
+- **No hace falta que Pio haga nada.** Las instrucciones con `icacls` de la versión anterior de este diseño quedan
+  retiradas: el permiso de las tareas se gestiona en su descriptor de seguridad, como en el 2AG.
+- La tarea sigue ejecutándose como ControlFarmaciasRO con su contraseña guardada; `Usuari` no la conoce ni la
+  necesita.
