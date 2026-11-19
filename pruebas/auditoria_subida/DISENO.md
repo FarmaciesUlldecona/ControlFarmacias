@@ -14,6 +14,10 @@ migración y sin tocar producción. Petición de la web con las decisiones de Pi
 | **A1** (cambiada) | El botón ejecuta el **circuito COMPLETO** (importar, sincronizar, normalizar y conciliar) en **modalidad «bajo demanda»**, dentro de la **migración 39**: varias ejecuciones al día **sin bloquear la noche**, con **las mismas puertas y límites** (§3.3) |
 | **V1** | **Velocidad**, también en la 39: **encadenar los pasos** (cada uno arranca al terminar el anterior), en el botón **y en la noche**, e **insertar en bloque** los albaranes de la sincronización. Tiempos medidos y estimados en §1.4 y §3.6 |
 | **E1** | «Evidencia en llamadas aparte»: **sigue `PENDIENTE`** (decisión de Pio, sin cambios) |
+| **B1** | Las ejecuciones bajo demanda tienen **fila propia en `cf_noches_automaticas`** (columnas `modalidad`, `id` y `peticion_id`; índice único parcial para la noche) |
+| **B2** | **Mismos límites por ejecución**, **sin máximo diario**. La escalada 5 + 5 → 20 + 20 cuenta **SOLO las noches** |
+| **B3** | **Una sola tarea `ControlFarmacias - Circuito` a las 21:00.** La de Cashflow (23:45) sigue aparte |
+| **B4** | Albaranes en **lotes de 200** |
 | **S1** | Carpeta por **fecha de subida por defecto**, con opción de **elegir mes y decena** en la web |
 | **S2** | Tamaño máximo: **20 MB** |
 | **S3** | Nombre: **el original saneado** |
@@ -153,7 +157,8 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
   el motivo):
   - una sola petición a la vez: si hay una `EN_COLA` o `EN_MARCHA` → `RECHAZADA` (`YA_HAY_UNA_EN_CURSO`); además, un
     índice único parcial lo garantiza;
-  - entre las 21:00 y las 23:45 (Europe/Madrid) → `RECHAZADA` (`VENTANA_DE_LA_NOCHE`);
+  - dentro de las franjas prohibidas (Europe/Madrid, §3.7): **20:50–21:30** (circuito de la noche) y
+    **23:40–23:55** (Cashflow) → `RECHAZADA` (`VENTANA_DE_LA_NOCHE` o `VENTANA_CASHFLOW`);
   - si la anterior terminó hace menos de 15 minutos → `RECHAZADA` (`DEMASIADO_PRONTO`);
   - con una noche `EN_CURSO` en `cf_noches_automaticas` → `RECHAZADA`;
   - la web solo puede insertar `estado = EN_COLA` (el trigger fija el resto); no puede modificar ni borrar.
@@ -163,7 +168,8 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 ### 3.2 Cómo se recoge la petición
 
 - **Una tarea programada nueva**, `ControlFarmacias - Actualizar ahora`, como `Usuari`, **cada 2 minutos** de 06:00 a
-  20:45 (fuera de la ventana de la noche). Ejecuta el módulo del circuito:
+  23:58. Fuera de las franjas prohibidas (§3.7) recoge la petición; dentro de ellas termina sin hacer nada. Ejecuta el
+  módulo del circuito:
   1. **lee** con una sesión de solo lectura si hay una petición `EN_COLA`; si no hay, termina (una consulta, sin coste);
   2. **reclama** la petición (`EN_COLA` → `EN_MARCHA`) con una función atómica (`for update skip locked`); caducada →
     `RECHAZADA`;
@@ -180,15 +186,16 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 - **El mismo orquestador** (`noche_automatica.py`) con una modalidad nueva, `BAJO_DEMANDA`, junto a `SOMBRA` y `REAL`.
   Mismo código de normalización y conciliación, mismas puertas, mismos límites, mismas paradas y mismo postcheck por
   fila. Lo que cambia:
-  - **Fila propia** en `cf_noches_automaticas` (ver B1 de §4): la 39 añade `modalidad` (`NOCHE` o `BAJO_DEMANDA`), un
+  - **Fila propia** en `cf_noches_automaticas` (B1, decidido): la 39 añade `modalidad` (`NOCHE` o `BAJO_DEMANDA`), un
     `id` y `peticion_id`. La guarda de una noche por fecha pasa a un **índice único parcial** `(fecha) where modalidad =
     'NOCHE'`: la noche sigue siendo una sola por fecha y las ejecuciones bajo demanda no la ocupan.
   - **Puerta de pasos** en lugar de la de tareas: en vez de «las tareas han corrido esta noche», «la importación y la
     sincronización de **esta ejecución** han terminado con código 0» (§3.4).
-  - **Límites:** los mismos que tendría la noche de ese día (`limites_por_historial`, calculados **solo con las
-    noches**); las ejecuciones bajo demanda no hacen crecer el historial (B2).
-  - **Ventana:** nunca entre 21:00 y 23:45; nunca con una noche o una ejecución `EN_CURSO`; al menos 15 minutos desde
-    el final de la anterior.
+  - **Límites (B2, decidido):** los mismos que tendría la noche de ese día, **por ejecución** y **sin máximo
+    diario**. `limites_por_historial` cuenta **solo las filas `modalidad = 'NOCHE'`**: la escalada 5 + 5 → 20 + 20 no
+    avanza con las ejecuciones bajo demanda.
+  - **Ventana:** nunca dentro de las franjas prohibidas de §3.7; nunca con una noche o una ejecución `EN_CURSO`; al
+    menos 15 minutos desde el final de la anterior.
   - **Informe:** en `noches_auto/<fecha>/bajo_demanda_<id>/`, con su SHA en la fila, igual que la noche.
 - **La noche no cambia de comportamiento:** su fila, su informe y sus puertas siguen igual. Solo cuenta lo que ya
   hicieron las ejecuciones del día (documentos y facturas que ya no están en cola).
@@ -207,7 +214,8 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
   lanza el siguiente.
 - **En la noche:** una sola tarea `ControlFarmacias - Circuito` a las 21:00 (`Usuari`) sustituye los disparadores de
   las 21:30 y las 22:15. La tarea de sincronización se queda sin disparador propio: solo se lanza desde el circuito.
-  Los cambios de tareas los hace Pio, con instrucciones en el hito (B3).
+  La tarea de Cashflow (23:45) sigue aparte (B3, decidido). Los cambios de tareas los hace Pio, con instrucciones en el
+  hito.
 - **Tiempos por paso:** cada paso guarda su inicio y su fin en el informe y en la fila (la de la noche o la de la
   ejecución). Así se mide lo que hoy no tiene marca (§1.4).
 
@@ -217,7 +225,7 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 
 - Hoy la sincronización guarda **cada albarán nuevo con una petición** (`guardar_albaran`,
   `sincronizar_albaranes.py:86-113`) y la resincronización aplica su plan fila a fila.
-- **Propuesta:** insertar los nuevos en **lotes** (p. ej., de 200) con una sola petición por lote, con las mismas
+- **Decidido (B4):** insertar los nuevos en **lotes de 200** con una sola petición por lote, con las mismas
   restricciones de la tabla. Si un lote falla (por ejemplo, por un duplicado), ese lote se repite fila a fila, como
   hoy, para conservar el recuento exacto de nuevos y existentes. Los inserts de la resincronización van igual; las
   actualizaciones siguen una a una (son pocas y llevan su historial).
@@ -230,7 +238,7 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 | Paso | Hoy | Con la 39 |
 |---|---|---|
 | Esperas entre pasos | 30 + 45 minutos | **0** (encadenado) |
-| Importación | 7–12 s + ~1,5 s por PDF | igual (la espera de 1 s por PDF protege de leer un PDF a medias) |
+| Importación | 7–12 s + ~1,5 s por PDF | ~0,5 s por PDF con la propuesta de §3.8 (sin la espera fija de 1 s) |
 | Sincronización | ~20–30 s hasta la resincronización, más una petición por albarán | **unos segundos menos**: ~30 albaranes al día pasan de ~30 peticiones a 1 |
 | Normalización y conciliación | 63 s con 5 + 3; 19 s sin trabajo | igual |
 | **Circuito completo** | **~76 minutos de pared** | **~2–3 minutos** con la carga de un día normal |
@@ -240,19 +248,52 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 - **Uso de IA:** hoy **0**. Luna está desactivada (`luna_habilitada = false`, comprobado hoy) y los extractores son
   locales. Si algún día se habilita Luna, la estimación saldría de los documentos en cola por su coste medio.
 
+### 3.7 Franjas prohibidas del botón
+
+`PROPUESTA` (ajuste pedido por Pio). Con el circuito encadenado, la noche ocupa unos minutos y no hora y tres cuartos:
+
+| Franja | Por qué | Margen |
+|---|---|---|
+| **20:50–21:30** | El circuito de la noche arranca a las 21:00 y hoy tarda ~2–3 minutos (§3.6) | 10 minutos antes, para no arrancar una ejecución que llegue a las 21:00, y ~27 después para un día con mucha carga |
+| **23:40–23:55** | La tarea de Cashflow (23:45) va aparte (B3) | 5 minutos antes y 10 después |
+
+- **Si el circuito de la noche dura más** de lo previsto, el botón sigue rechazado por la regla «ninguna noche
+  `EN_CURSO`» (§3.1), aunque la franja haya terminado. La franja protege el arranque; `EN_CURSO` protege la
+  duración.
+- **Simétricamente**, si una ejecución bajo demanda sigue en marcha a las 21:00, el circuito de la noche **espera**
+  a que termine (con un máximo de 30 minutos) antes de empezar. Si no termina, la noche para con
+  `EJECUCION_BAJO_DEMANDA_EN_CURSO`, como cualquier puerta.
+- Con la regla de los 15 minutos, la última petición útil antes de la noche es la que termina hacia las 20:50.
+
+### 3.8 La espera fija de 1 s por PDF en la importación
+
+`CONFIRMADO POR CÓDIGO` y `PROPUESTA` (ajuste pedido por Pio).
+
+- **Hoy es la única comprobación de tamaño estable.** `validar_pdf_nuevo` mira el tamaño, espera 1 s y lo vuelve a
+  mirar (`importar_facturas_drive.py:600-619`). El índice compara tamaño y fecha **con la ejecución anterior**
+  (`:472-494`, `:1113-1143`), lo que sirve para saltarse lo ya importado, pero **no** comprueba que un fichero nuevo
+  haya terminado de escribirse. **Quitarla sin más no es seguro:** un PDF que Google Drive está bajando al espejo
+  podría importarse a medias.
+- Solo se paga por cada PDF **nuevo o modificado** (los ya importados se saltan por el índice): 4–6 s por noche.
+- **Propuesta: sustituirla por una comprobación sin espera, de la misma seguridad o más:**
+  1. **antigüedad:** si la última modificación del fichero tiene más de 60 s, se considera asentado sin esperar;
+     si es más reciente, se deja para la siguiente ejecución (no se importa a medias ni se espera);
+  2. **lectura sin cambios:** se toma tamaño y fecha de modificación antes de calcular el hash y otra vez después;
+     si cambian, el fichero no se importa en esta ejecución. Detecta un cambio **durante** la lectura, cosa que la
+     espera de 1 s no hace;
+  3. la cabecera `%PDF-` y el resto de validaciones siguen igual.
+- **Subidas desde la web:** el fichero aparece ya completo (temporal y renombrado, §2.2), con lo que pasa la
+  comprobación sin esperar.
+- Ahorro: ~1 s por PDF nuevo (4–6 s por noche). Es pequeño, pero quita la única espera fija del circuito.
+
 ## 4. Decisiones de Pio
 
-Tomadas el 2026-11-19 (§0). **Quedan para Pio:**
+Tomadas el 2026-11-19 (§0), incluidas B1–B4. **Quedan para Pio:**
 
-- **B1. Fila de las ejecuciones bajo demanda:** columnas `modalidad`, `id` y `peticion_id` en `cf_noches_automaticas`,
-  con el índice único parcial para la noche (propuesta: la web ya la lee con `cf_lectura`), o una tabla aparte
-  `cf_ejecuciones_bajo_demanda`.
-- **B2. Límites:** los mismos 5 + 5 (o los que tenga la noche ese día) **por ejecución** (propuesta), o un tope diario
-  compartido con la noche. Y si quieres un máximo de ejecuciones al día (propuesta: sin máximo; ya limitan la regla de
-  15 minutos y la ventana).
-- **B3. Tareas de la noche:** una sola tarea `ControlFarmacias - Circuito` a las 21:00 en lugar de las tres (propuesta),
-  quitando los disparadores de las 21:30 y las 22:15.
-- **B4. Tamaño del lote** de albaranes: propuesta 200.
+- **V2. Franjas prohibidas del botón (§3.7):** 20:50–21:30 y 23:40–23:55, con «ninguna noche `EN_CURSO`» para los días
+  largos y la noche esperando a una ejecución bajo demanda en marcha (máximo 30 minutos).
+- **I1. Espera de 1 s por PDF (§3.8):** sustituirla por antigüedad > 60 s y lectura sin cambios (propuesta), o dejarla
+  como está.
 - **E1.** «Evidencia en llamadas aparte»: sigue `PENDIENTE`.
 
 Para el hito de implementación (la 39 va después de la 37 y la 38):
