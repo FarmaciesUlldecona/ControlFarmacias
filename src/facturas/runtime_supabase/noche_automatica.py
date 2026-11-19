@@ -745,6 +745,14 @@ def puerta_git(raiz: Path = ROOT) -> tuple[str | None, list[str], dict]:
     return _puerta_git.puerta(raiz)
 
 
+def _r20_en_bd(conexion) -> bool:
+    """R20 (DECISION DE PIO, 2026-11-19): la 36 presente y su marca ``conciliacion_r20`` a true."""
+    from .lectura_readonly import r20_habilitada, sesion_lectura
+
+    with sesion_lectura(conexion) as lector:
+        return r20_habilitada(lector)
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 2 or argv[0] not in MODOS:
         raise SystemExit("uso: python -m src.facturas.runtime_supabase.noche_automatica <SOMBRA|REAL> <dir>")
@@ -763,7 +771,9 @@ def main(argv: list[str]) -> int:
             cliente=cliente,
             tareas=_tareas_productivas,
             puerta_git=puerta_git,
-            construir_worker=lambda cfg: construir_worker_automatico_productivo(cliente, cfg, WORKER_BASE, trabajo),
+            # R20 (migracion 36): el worker detecta la 36 con una sesion de solo lectura (information_schema).
+            construir_worker=lambda cfg: construir_worker_automatico_productivo(
+                cliente, cfg, WORKER_BASE, trabajo, r20_habilitada=lambda: _r20_en_bd(conexion)),
             directorio_informes=directorio,
         )
         return ejecutar_noche(argv[0], entorno)

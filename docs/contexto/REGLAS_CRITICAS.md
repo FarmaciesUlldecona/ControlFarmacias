@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-19 (numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-19 (R20: migración 36 implementada solo en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -349,6 +349,24 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
       número de una línea de otra factura; solo lo comprueba Python.
   - **Orden de despliegue:** primero la 24 y después conciliar con el código 2BE. Con la 23, una línea R17 se
     rechaza (`TOLERANCIA_REGLA_NO_COINCIDE`) y consume un intento.
+- Regla de Pio R20 (DECISIÓN DE PIO, 2026-11-19; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 36,
+  **solo local, sin desplegar**; diseño en `pruebas/auditoria_r20/DISENO.md`; origen: 08013495 / 08D79747):
+  - **R20 línea = su albarán exacto + su variante con letra final:** una línea documental (cargo) que queda sin
+    casar tras el 1:1 y R17 puede casar con la suma de **dos** albaranes de la misma recepción: el de su número
+    **exacto** y su variante con **una letra final** (`08X99999` + `08X99999A`), los dos a ±15 días de la línea.
+    - Mismas condiciones que R17: ninguno reservado (R15) ni casado por otra línea, y el número de la variante no es
+      una línea de otra factura; mismo proveedor (R9); PUC + PUC dentro de 0,05; solo 1+1; solo cargos; nunca HEFAME
+      ni abonos. En la práctica, solo Alliance (la letra final solo se define para Alliance).
+    - Falla cerrado contando juntas las parejas R17 y R20 de una línea: más de una → `AMBIGUO_R17`/`AMBIGUO_R20`; un
+      albarán en las parejas de dos líneas → `CONFLICTO_R17`/`CONFLICTO_R20`.
+    - Se persiste como dos detalles `UNO_A_VARIOS` (`regla: R20`). La BD los revalida en `cf_linea_r17_valida`,
+      redefinida por la 36 sin regenerar la RPC; el rechazo sigue siendo `LINEA_R17_NO_VALIDA`. **En R20 la BD sí
+      comprueba la ventana de ±15 días** (decisión de Pio). R11 cuenta la línea como un albarán casado.
+  - **Marca y conmutador:** `cf_configuracion.conciliacion_r20` (default `true`). El código usa R20 solo si la
+    detecta en la BD, con una sesión de solo lectura (`information_schema` y, solo si la columna existe, su valor). Sin
+    la 36, o con la marca a `false` (apaga R20 sin rollback), la línea sigue sin casar y la noche deja la factura para
+    revisar, sin reclamarla ni gastar intentos. Por eso el código puede subirse antes de desplegar la 36.
+  - **Primera conciliación tras el despliegue (36-D):** 08013495 la hace la noche (decisión de Pio).
 - Regla de Pio del Hito 2BG (2026-10-30; `CONFIRMADO POR TEST`, sin migración; aplicada en producción en la
   conciliación de 08007970 el 2026-10-30; diseño en `pruebas/auditoria_2bg/DISENO.md`):
   - **R19 ECO360 = grupo Alliance/SAFA en conciliación:** el proveedor de Farmatic «6- PLATAF. ECO360 AH»

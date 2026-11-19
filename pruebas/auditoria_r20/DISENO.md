@@ -1,7 +1,8 @@
 # R20: una línea del PDF = su albarán exacto + su variante con letra final (migración 36). DISEÑO
 
-Estado: **DISEÑO CON LAS DECISIONES DE PIO** (2026-11-19). Sin código, sin migración y sin tocar producción;
-producción solo con lecturas READ_ONLY de diagnóstico y medición.
+Estado: **IMPLEMENTADO EN LOCAL** (2026-11-19, `CONFIRMADO POR TEST` en PostgreSQL 17 local), con las decisiones de
+Pio (§0 y §8). Migración 36 **sin desplegar**; producción solo con lecturas READ_ONLY de diagnóstico, medición y
+verificación (§2.3).
 
 - **Origen:** primera noche `REAL` (18→19/11). 08013495 (Alliance, 14.163,25) queda para revisar con una diferencia de
   118,16. La línea 08D79747 (09/11, 118,25) está en Farmatic partida en `08D79747` (77,49) y `08D79747A` (40,76), de la
@@ -91,7 +92,21 @@ Medición READ_ONLY sobre Supabase (2026-11-19, `medicion.json`, sha `9b59b085�
   - rehacer el banco del espejo (PDF que no están en Supabase) con el código de `src`;
   - comprobar que no aparece ninguna otra línea R20 y que las 47 facturas del banco 2AZ no cambian.
 
-## 3. Implementación en Python (`PROPUESTA`)
+### 2.3 Verificación con el código de `src` (2026-11-19)
+
+`CONFIRMADO POR LECTURA READ_ONLY`. `pruebas/auditoria_r20/verificar_banco_r20.py` construye los detalles de cada
+factura de PIO con líneas de albarán (`construir_detalles` sobre el cliente de lectura del 2AT), con R20 apagado y
+encendido. Resultado (`verificacion_banco.json`, sha `d1dce320…`):
+
+- 65 facturas revisadas, 0 errores;
+- **un solo cambio:** 08013495 / 08D79747, de `SIN_COINCIDENCIA` a dos detalles `UNO_A_VARIOS` con regla R20
+  (297826 = 77,49 y 297825 = 40,76);
+- en las demás facturas, todos los detalles son iguales.
+
+El test del caso real (`test_r20.py`) reproduce con las mismas entradas (fixture READ_ONLY) `DIFERENCIA` 118,16 sin
+R20 y `CONCILIADA` −0,09 con R20, y comprueba que ninguna otra línea cambia.
+
+## 3. Implementación en Python (hecha)
 
 - **`src/facturas/runtime_supabase/conciliacion.py`:**
   - `_parejas_r20(documental, libres, …)`: A `EXACTA` y B `LETRA_FINAL` del mismo número, las dos a ±15 días, misma
@@ -102,9 +117,13 @@ Medición READ_ONLY sobre Supabase (2026-11-19, `medicion.json`, sha `9b59b085�
   - `detalles_desde_busqueda`: una línea R20 da dos detalles `UNO_A_VARIOS` con `regla: "R20"` y
     `papel_r20: NUMERO | LETRA_FINAL` en la provenance, cada uno con su PUC;
   - `buscar_albaranes_factura(…, r20_habilitada: bool = False)`. **Por defecto, apagada.**
-- **Detección de la 36 (B3)** en `repositorios.py`:
-  - el repositorio lee la marca de la 36 (§4) al construir los detalles y pasa `r20_habilitada`;
-  - si la marca no está o no se puede leer, R20 queda apagada;
+- **Detección de la 36 (B3)**, sin depender del cliente (instrucción de Pio):
+  - `lectura_readonly.r20_habilitada(lector)`: con una sesión de solo lectura consulta `information_schema` y, solo si
+    la columna existe, su valor. Así nunca aborta la transacción de solo lectura;
+  - `RepositorioRuntimeSupabase(cliente, r20_habilitada=...)` recibe esa detección de quien lo construye: la noche
+    (`noche_automatica._r20_en_bd`, con su conexión de lectura), la simulación de la noche, el simulador 2AT y el
+    worker de la serie 2BP. Los compositores la reciben como parámetro opcional;
+  - sin detección, o si falla, R20 queda apagada;
   - la línea queda `SIN_COINCIDENCIA`, la simulación da `DIFERENCIA` y la noche la deja para revisar sin reclamarla
     (`noche_automatica.py:467-482`): **no se gasta ningún intento**. Igual en la serie 2BP, que para si no simula
     `CONCILIADA`;
@@ -112,7 +131,7 @@ Medición READ_ONLY sobre Supabase (2026-11-19, `medicion.json`, sha `9b59b085�
     persistiría el worker.
 - **Simulador 2AT** (`auditoria_readonly._simular`): `resumen_detalles.lineas_r20` junto a `lineas_r17`.
 
-## 4. Migración 36 (`PROPUESTA`)
+## 4. Migración 36 (hecha, sin desplegar)
 
 `sql/migrations/36_cf_r20_letra_final.sql` y su rollback. Requiere la 35. Idempotente. **No nombra el rol del
 sistema** (N2).
@@ -142,7 +161,7 @@ sistema** (N2).
   - no toca conciliaciones: las líneas R20 ya persistidas siguen siendo válidas como datos, pero una nueva no
     persistiría (y el código, sin la marca, no la propone).
 
-## 5. Tests (`PROPUESTA`)
+## 5. Tests (hechos)
 
 - **`tests/facturas/runtime_supabase/test_r20.py`, sin BD:**
   - caso real 08D79747;
@@ -180,17 +199,16 @@ sistema** (N2).
   registrada el 2026-11-19).
 - **ESTADO_ACTUAL:** hito R20 en local y, después, 36-D.
 
-## 8. Decisiones que necesito de Pio
+## 8. Decisiones de Pio (2026-11-19, tomadas)
 
-1. **Marca de la 36 (B3):** columna `cf_configuracion.conciliacion_r20` (propuesta).
+1. **Marca de la 36 (B3): DECIDIDO, columna `cf_configuracion.conciliacion_r20`.**
    - Ventaja: el worker ya lee esa tabla, no hace falta ningún grant y la 36 no nombra el rol del sistema.
    - Coste: añade un valor a la fila de configuración, y el postcheck de 36-D lo espera.
    - Además, se puede usar como interruptor: `false` apaga R20 sin rollback.
    - Alternativa: una función marca. Necesitaría EXECUTE para el rol del sistema, que la 36 no puede nombrar (N2).
-2. **Primera conciliación de 08013495 tras 36-D:**
-   - **la noche (propuesta):** es su n.º 1, simulará `CONCILIADA` y seguirá con 08013498;
-   - o una tanda 2BP supervisada de 2.
-3. **¿Puede la columna apagar R20 (`false`) sin rollback?** Propuesta: sí, como un flag más.
+2. **Primera conciliación de 08013495 tras 36-D: DECIDIDO, la noche.** Es su n.º 1, simulará `CONCILIADA` y
+   seguirá con 08013498.
+3. **La columna a `false` apaga R20 sin rollback: DECIDIDO, sí**, como un flag más.
 
 ## 9. Fuera de alcance
 

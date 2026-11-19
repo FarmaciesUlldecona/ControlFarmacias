@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from src.facturas.motor_local.catalogo import ProveedorLocal
 
@@ -95,6 +95,7 @@ def construir_worker_automatico_productivo(
     configuracion: ConfiguracionRuntime,
     worker_id: str,
     directorio_trabajo: Path,
+    r20_habilitada: Callable[[], bool] | None = None,
 ) -> WorkerAutomatico:
     """Compone el worker de la ruta AUTOMATICA. Solo lo invoca el orquestador nocturno."""
     if configuracion.luna_habilitada:
@@ -103,7 +104,8 @@ def construir_worker_automatico_productivo(
         raise ValueError("SOLO_PIO_AUTORIZADA_EN_COMPOSITOR_AUTOMATICO")
     if not worker_id.strip():
         raise ValueError("WORKER_ID_OBLIGATORIO")
-    repositorio = RepositorioRuntimeSupabase(cliente)
+    # R20 (migracion 36): deteccion con una sesion de solo lectura; sin ella, R20 desactivada.
+    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=r20_habilitada)
     orquestador = OrquestadorExtraccionProductiva(
         extractor_especifico=ExtractorDocumentalAutorizadoAutomatico(),
         extractor_generico_local=None,

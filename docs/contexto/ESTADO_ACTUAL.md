@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-19 (diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-19 (R20: migración 36 implementada en local, sin desplegar; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -342,6 +342,25 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### R20: migración 36 implementada en local (2026-11-19)
+
+DECISIÓN DE PIO, `CONFIRMADO POR TEST` en PostgreSQL 17 local. **Sin desplegar.** Diseño en
+`pruebas/auditoria_r20/DISENO.md`; evidencias en `C:\ControlFarmacias\evidencias_r20\` (`SHA256SUMS.txt`).
+
+- **Regla:** una línea casa con su albarán exacto + su variante con letra final (misma recepción, R9, solo 1+1, sin
+  HEFAME ni abonos). En REGLAS_CRITICAS, «R20».
+- **Migración 36** `36_cf_r20_letra_final.sql` (+ rollback al esquema 35):
+  - redefine `cf_linea_r17_valida` sin regenerar la RPC, con el mismo rechazo, y comprueba en la BD la ventana de
+    ±15 días;
+  - añade la marca `cf_configuracion.conciliacion_r20` (a `false` apaga R20 sin rollback);
+  - no nombra el rol del sistema.
+- **Código:** R20 solo si la detecta una sesión de solo lectura (`information_schema` y, si existe, la columna). Sin la
+  36, la noche deja la factura para revisar sin gastar intentos (probado en local).
+- **`desplegar_36.py`** ensayado con la imitación del `postgres` de Supabase; exige el commit ya subido.
+- **Verificación READ_ONLY con el código** sobre las 65 facturas de PIO: solo cambia 08013495 / 08D79747.
+  Caso real: `CONCILIADA` −0,09.
+- `PENDIENTE`: despliegue 36-D, con confirmación de Pio por paso. Después, la noche concilia 08013495.
 
 ### Puerta git con el main leído del remoto (2026-11-19)
 

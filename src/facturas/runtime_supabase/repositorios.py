@@ -5,7 +5,7 @@ import json
 from dataclasses import asdict
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 from src.facturas.completitud_documental import validar_documento_antes_de_persistir
 
 from .clasificacion_fallos import clasificar_fallo, clasificar_fallo_conciliacion
@@ -121,8 +121,20 @@ class RepositorioRuntimeSupabase:
     RPC utilizadas y no se importa desde los procesos diarios existentes.
     """
 
-    def __init__(self, cliente: Any) -> None:
+    def __init__(self, cliente: Any, r20_habilitada: Callable[[], bool] | None = None) -> None:
         self._cliente = cliente
+        # R20 (migracion 36): quien construye el repositorio con una sesion de solo lectura aporta la deteccion
+        # (``lectura_readonly.r20_habilitada``: information_schema y, solo si existe, la columna). Sin ella, o si
+        # falla, R20 queda desactivada (falla cerrado: la linea sigue SIN_COINCIDENCIA, como sin la 36).
+        self._r20_habilitada = r20_habilitada
+
+    def r20_habilitada(self) -> bool:
+        if self._r20_habilitada is None:
+            return False
+        try:
+            return self._r20_habilitada() is True
+        except Exception:  # noqa: BLE001 - deteccion fallida = R20 desactivada
+            return False
 
     def obtener_configuracion(self) -> ConfiguracionRuntime:
         respuesta = (
@@ -465,8 +477,9 @@ class RepositorioRuntimeSupabase:
             farmatic_id_proveedor=farmatic_provider_id,
             ocupados=ocupados,
             numeros_otras_facturas=numeros_otras_facturas,
+            r20_habilitada=self.r20_habilitada(),
         )
-        # R17 (2BE, migracion 24): una linea puede dar dos detalles UNO_A_VARIOS.
+        # R17 (2BE, migracion 24) y R20 (migracion 36): una linea puede dar dos detalles UNO_A_VARIOS.
         details.extend(x for d, m in zip(documentaries, matches) for x in detalles_desde_busqueda(d, m))
         return tuple(details)
 
