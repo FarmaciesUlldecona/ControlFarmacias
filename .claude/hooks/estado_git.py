@@ -13,6 +13,7 @@ Solo usa la biblioteca estándar.
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 
@@ -74,6 +75,46 @@ def rutas_cambiadas(directorio: str = DIRECTORIO_PROYECTO) -> list[str]:
             rutas.append(campos[i])
             i += 1
     return sorted(set(rutas))
+
+
+# DECISIÓN DE PIO (2026-11-18): el revisor puede LEER (solo lectura, con Read) los ficheros de src/, sql/,
+# tests/ y pruebas/ que cite el diff; logs/, .env* y el resto, igual que antes.
+PREFIJOS_CITABLES = ("src", "sql", "tests", "pruebas")
+_RUTA_CITADA = re.compile(r"(?<![\w.\-/\\])(?:src|sql|tests|pruebas)[\\/][\w.\-\\/]+")
+MAXIMO_BYTES_NO_RASTREADO = 2_000_000
+
+
+def _no_rastreadas(directorio: str) -> list[str]:
+    salida = _git("ls-files", "--others", "--exclude-standard", "-z", directorio=directorio).decode("utf-8")
+    return [r for r in salida.split("\0") if r]
+
+
+def texto_diff(directorio: str = DIRECTORIO_PROYECTO) -> str:
+    """``git diff HEAD`` de los rastreados más el contenido de los no rastreados (su diff es el fichero entero)."""
+    partes = [_git("diff", "HEAD", "--no-color", "--no-ext-diff", directorio=directorio).decode("utf-8", "replace")]
+    for ruta in _no_rastreadas(directorio):
+        completa = os.path.join(directorio, ruta)
+        if os.path.isfile(completa) and os.path.getsize(completa) <= MAXIMO_BYTES_NO_RASTREADO:
+            with open(completa, "rb") as archivo:
+                partes.append(archivo.read().decode("utf-8", "replace"))
+    return "\n".join(partes)
+
+
+def _citable(relativa: str) -> bool:
+    partes = relativa.split("/")
+    return (partes[0] in PREFIJOS_CITABLES and ".." not in partes
+            and not any(p.lower().startswith(".env") for p in partes)
+            and "logs" not in (p.lower() for p in partes))
+
+
+def rutas_citadas(directorio: str = DIRECTORIO_PROYECTO) -> list[str]:
+    """Ficheros existentes de src/, sql/, tests/ y pruebas/ que nombra el texto del diff (relativos, con /)."""
+    rutas = set()
+    for encontrada in _RUTA_CITADA.findall(texto_diff(directorio)):
+        relativa = encontrada.replace("\\", "/").rstrip(".-/")
+        if _citable(relativa) and os.path.isfile(os.path.join(directorio, relativa)):
+            rutas.add(relativa)
+    return sorted(rutas)
 
 
 def detalle_cambios(directorio: str = DIRECTORIO_PROYECTO) -> dict:

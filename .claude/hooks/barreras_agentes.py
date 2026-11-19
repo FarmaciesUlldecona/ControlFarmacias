@@ -442,6 +442,13 @@ def lecturas_revisor(cwd: str) -> set[str]:
     return {normalizar(os.path.join(raiz, r), raiz) for r in rutas}
 
 
+def lecturas_citadas_revisor(cwd: str) -> set[str]:
+    """Ficheros de src/, sql/, tests/ y pruebas/ que cita el diff: solo Read (DECISIÓN DE PIO, 2026-11-18)."""
+
+    raiz = estado_git.raiz_repositorio(cwd)
+    return {normalizar(os.path.join(raiz, r), raiz) for r in estado_git.rutas_citadas(raiz)}
+
+
 # 2BS (T2): único script que el revisor ejecuta además de git. Responde, de solo lectura, si hay una suite en
 # verde para la huella actual, sin exponer el registro. Se compara con el comando en minúsculas.
 COMANDO_CONSULTA_SUITE = re.compile(
@@ -458,12 +465,16 @@ def politica_revisor(tool_name: str, tool_input: dict, cwd: str, politica: dict)
         ruta = tool_input.get("file_path") if tool_name == "Read" else tool_input.get("path")
         if not isinstance(ruta, str) or not ruta:
             return bloquear("lectura_fuera_de_diff", "revisor-reglas solo lee ficheros concretos.")
-        if normalizar(ruta, cwd) not in lecturas_revisor(cwd):
-            return bloquear(
-                "lectura_fuera_de_diff",
-                "revisor-reglas solo lee el diff, REGLAS_CRITICAS y los ficheros que toca el diff.",
-            )
-        return PERMITIR
+        objetivo = normalizar(ruta, cwd)
+        if objetivo in lecturas_revisor(cwd):
+            return PERMITIR
+        if tool_name == "Read" and objetivo in lecturas_citadas_revisor(cwd):
+            return PERMITIR
+        return bloquear(
+            "lectura_fuera_de_diff",
+            "revisor-reglas solo lee el diff, REGLAS_CRITICAS, los ficheros que toca el diff y, con Read, "
+            "los de src/, sql/, tests/ y pruebas/ que cita el diff.",
+        )
     if tool_name not in HERRAMIENTAS_SHELL:
         return bloquear("herramienta_no_permitida", f"revisor-reglas no puede usar {tool_name}.")
     comando = comando_shell(tool_input)

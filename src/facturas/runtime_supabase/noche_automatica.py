@@ -43,6 +43,7 @@ from .lectura_readonly import (
     simular_conciliacion,
 )
 from .modelos import ConfiguracionRuntime
+from . import puerta_git as _puerta_git
 
 ROOT = Path(__file__).resolve().parents[3]
 PROJECT_REF = "vklaiuytvegkelgyspxc"
@@ -95,7 +96,8 @@ class Entorno:
     abrir_lectura: Callable[[], ContextManager[LectorReadOnly]]
     cliente: Any
     tareas: Callable[[], dict]
-    puerta_git: Callable[[], tuple[str | None, list[str]]]
+    # (head, fallos) o (head, fallos, estado git para el informe: head, origin_local, origin_remoto).
+    puerta_git: Callable[[], tuple]
     construir_worker: Callable[[ConfiguracionRuntime], Any]
     directorio_informes: Path
     reloj: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.timezone.utc)
@@ -108,6 +110,7 @@ class Noche:
     modo: str
     inicio: dt.datetime
     commit: str | None = None
+    git: dict = field(default_factory=dict)
     limites: dict = field(default_factory=dict)
     resultado: str = "EN_CURSO"
     motivo: str | None = None
@@ -550,7 +553,8 @@ def _escribir_informe(entorno: Entorno, noche: Noche) -> str:
     carpeta.mkdir(parents=True, exist_ok=True)
     informe = {
         "fecha": noche.fecha.isoformat(), "modo": noche.modo, "inicio": noche.inicio.isoformat(),
-        "commit": noche.commit, "limites": noche.limites, "resultado": noche.resultado, "motivo": noche.motivo,
+        "commit": noche.commit, "git": noche.git, "limites": noche.limites, "resultado": noche.resultado,
+        "motivo": noche.motivo,
         "puertas": noche.puertas, "contadores": noche.contadores(), "documentos": noche.documentos,
         "conciliaciones": noche.conciliaciones, "para_revisar": noche.para_revisar, "sombra": noche.sombra,
         "postcheck": noche.postcheck, "cola_restante": noche.cola_restante,
@@ -580,8 +584,12 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
         raise ValueError(f"MODO_NO_ADMITIDO:{modo}")
     inicio = entorno.reloj()
     noche = Noche(fecha=entorno.fecha_local(inicio), modo=modo, inicio=inicio)
-    commit, fallos_git = entorno.puerta_git()
+    resultado_git = entorno.puerta_git()
+    commit, fallos_git = resultado_git[0], resultado_git[1]
     noche.commit = commit
+    if len(resultado_git) > 2:
+        g = resultado_git[2] or {}
+        noche.git = {k: g.get(k) for k in ("head", "origin_local", "origin_remoto")}
     with entorno.abrir_lectura() as lector:
         previas = _noches_previas(lector, noche.fecha)
     docs, conc = limites_por_historial(previas)
@@ -731,25 +739,10 @@ def _tareas_productivas() -> dict:
     return {"tareas": tareas if isinstance(tareas, list) else [tareas]}
 
 
-def puerta_git(raiz: Path = ROOT) -> tuple[str | None, list[str]]:
-    """Arbol limpio y HEAD = origin/main, o por delante solo con documentacion (REGLAS_CRITICAS)."""
-    def git(*args: str) -> str:
-        return subprocess.run(["git", *args], cwd=raiz, capture_output=True, text=True, check=True).stdout.strip()
-
-    try:
-        head, origen = git("rev-parse", "HEAD"), git("rev-parse", "origin/main")
-        fallos = []
-        if git("status", "--porcelain"):
-            fallos.append("GIT_ARBOL_NO_LIMPIO")
-        if head != origen:
-            ancestro = subprocess.run(["git", "merge-base", "--is-ancestor", "origin/main", "HEAD"], cwd=raiz,
-                                      capture_output=True).returncode == 0
-            pendientes = [p for p in git("diff", "--name-only", "origin/main..HEAD").splitlines() if p]
-            if not ancestro or any(not (p.startswith("docs/") or p.endswith(".md")) for p in pendientes):
-                fallos.append("GIT_HEAD_DISTINTO_DE_ORIGIN_MAIN")
-        return head, fallos
-    except Exception as exc:  # noqa: BLE001
-        return None, [f"GIT_NO_DETERMINABLE:{type(exc).__name__}"]
+def puerta_git(raiz: Path = ROOT) -> tuple[str | None, list[str], dict]:
+    """Arbol limpio y HEAD = main del remoto (leido con ls-remote), o por delante solo con documentacion
+    (REGLAS_CRITICAS); modulo comun ``puerta_git`` (2026-11-19). Devuelve (head, fallos, estado para el informe)."""
+    return _puerta_git.puerta(raiz)
 
 
 def main(argv: list[str]) -> int:

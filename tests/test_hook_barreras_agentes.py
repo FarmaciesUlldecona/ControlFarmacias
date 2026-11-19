@@ -989,6 +989,37 @@ def test_revisor_lee_solo_diff_reglas_y_ficheros_tocados(repo):
     assert glob.motivo == "herramienta_no_permitida"
 
 
+def test_revisor_lee_con_read_los_ficheros_citados_por_el_diff(repo):
+    """DECISIÓN DE PIO (2026-11-18): Read de src/, sql/, tests/ y pruebas/ citados por el diff; nada más."""
+    ruta, git = repo
+    for relativa in ("src/m.py", "sql/migrations/24_x.sql", "tests/t.py", "pruebas/a/DISENO.md", "src/no_citado.py",
+                     "docs/d.md", "otros/o.py", "src/.env.local", "src/logs/x.txt"):
+        (ruta / relativa).parent.mkdir(parents=True, exist_ok=True)
+        (ruta / relativa).write_text("x", encoding="utf-8")
+    (ruta / "a.txt").write_text("base\n", encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-q", "-m", "base3")
+    (ruta / "a.txt").write_text("base\nver src/m.py:12 y sql\\migrations\\24_x.sql; docs/d.md otros/o.py\n"
+                                "src/.env.local src/logs/x.txt src/inexistente.py ../src/no_citado.py\n",
+                                encoding="utf-8")
+    (ruta / "nuevo.md").write_text("ver `tests/t.py` y pruebas/a/DISENO.md.\n", encoding="utf-8")
+
+    def leer(herramienta, relativa):
+        clave = "file_path" if herramienta == "Read" else "path"
+        entrada = {"tool_name": herramienta, "tool_input": {clave: str(ruta / relativa), "pattern": "x"},
+                   "cwd": str(ruta), "agent_type": "revisor-reglas"}
+        return barreras.decidir(entrada, _politica())
+
+    assert estado_git.rutas_citadas(str(ruta)) == [
+        "pruebas/a/DISENO.md", "sql/migrations/24_x.sql", "src/m.py", "tests/t.py"]
+    for relativa in ("src/m.py", "sql/migrations/24_x.sql", "tests/t.py", "pruebas/a/DISENO.md"):
+        assert leer("Read", relativa).codigo == 0, relativa
+        assert leer("Grep", relativa).motivo == "lectura_fuera_de_diff", relativa
+    for relativa in ("src/no_citado.py", "docs/d.md", "otros/o.py", "src/logs/x.txt"):
+        assert leer("Read", relativa).motivo == "lectura_fuera_de_diff", relativa
+    assert leer("Read", "src/.env.local").codigo == 2
+
+
 @pytest.mark.parametrize(
     ("respuesta", "veredicto"),
     [

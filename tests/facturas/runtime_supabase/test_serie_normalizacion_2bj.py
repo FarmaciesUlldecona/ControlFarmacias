@@ -19,6 +19,9 @@ from pg17_local import ROOT, _lit, _registrar
 from test_ensayo_fase4_2at import _ClienteServiceRole, _ConexionPg17
 
 ROTO = b"%PDF-1.4\nno es un pdf valido 2BJ\n"
+# 2026-11-19: puerta git en la tanda (modulo comun puerta_git, main del remoto con ls-remote).
+GIT_LIMPIO = {"status": "", "head": "a" * 40, "origin_local": "a" * 40, "origin_remoto": "a" * 40,
+              "origin_conocido": True, "origin_ancestro": True, "cambios": []}
 
 
 def _modulo():
@@ -52,6 +55,17 @@ def test_defecto_previsto_pasa_a_revision_al_maximo_r3():
     assert m.resultado_esperado({"clase": "DEFECTO"}, 2, 4)["estado_lectura"] == "ERROR"
     assert m.resultado_esperado({"clase": "DEFECTO"}, 3, 4) == {
         "estado_lectura": "REVISION", "ultima_clase_fallo": "DEFECTO_DOCUMENTO", "intentos": 4, "facturas": []}
+
+
+@pytest.mark.parametrize("git, esperado", [
+    (GIT_LIMPIO, []),
+    ({**GIT_LIMPIO, "status": " M src/x.py"}, ["GIT_ARBOL_NO_LIMPIO"]),
+    ({**GIT_LIMPIO, "head": "b" * 40, "cambios": ["docs/a.md", "src/b.py"]}, ["GIT_COMMITS_NO_DOCUMENTALES:src/b.py"]),
+    ({**GIT_LIMPIO, "origin_remoto": "c" * 40, "origin_conocido": False}, ["GIT_ORIGEN_DESCONOCIDO_LOCALMENTE"]),
+    ({**GIT_LIMPIO, "origin_remoto": None, "error_origen": "OSError"}, ["GIT_ORIGEN_NO_DETERMINABLE:OSError"]),
+])
+def test_puerta_git_de_la_tanda(git, esperado):
+    assert _modulo().puerta_git(git) == esperado
 
 
 def test_postcheck_informa_trabajadores_aparte_sin_veredicto():
@@ -111,6 +125,7 @@ def _serie(pg17_nueva_base, tmp_path, monkeypatch, variante):
     monkeypatch.setattr(m, "_tareas", lambda: {"tareas": [
         {"nombre": n, "proxima": None, "ultima": None, "resultado": 0} for n in ar.TAREAS_ESPERADAS]})
     monkeypatch.setattr(m, "_cliente", lambda: cliente)
+    monkeypatch.setattr(m, "_estado_git", lambda: dict(GIT_LIMPIO))
     plan = tmp_path / "plan.json"
     assert m.plan(plan, mirror) == 0
     return SimpleNamespace(pg=pg, m=m, ids=ids, plan=plan, raiz=tmp_path / "serie", sentencias=sentencias,
@@ -163,6 +178,19 @@ def test_tanda_ejecuta_hasta_el_corte_alliance_con_postcheck_por_fila(serie):
     assert m.tanda(20, serie.plan, serie.raiz / "t02") == 3
     registro = _leer(serie.raiz / "t02" / "tanda.json")
     assert (registro["maximo"], registro["motivos"], registro["ejecuciones"]) == (20, ["COLA_VACIA"], [])
+    assert _huella(pg) == antes
+
+
+def test_parada_por_puerta_git_sin_escrituras(serie, monkeypatch):
+    """2026-11-19: el codigo local por delante del main del remoto para la tanda antes de reclamar nada."""
+    pg, m = serie.pg, serie.m
+    monkeypatch.setattr(m, "_estado_git", lambda: {**GIT_LIMPIO, "head": "b" * 40, "cambios": ["src/x.py"]})
+    antes = _huella(pg)
+    assert m.tanda(5, serie.plan, serie.raiz / "t01") == 3
+    registro = _leer(serie.raiz / "t01" / "tanda.json")
+    assert (registro["veredicto"], registro["motivos"], registro["ejecuciones"]) == (
+        "PARADA", ["GIT_COMMITS_NO_DOCUMENTALES:src/x.py"], [])
+    assert registro["git"]["origin_remoto"] == "a" * 40
     assert _huella(pg) == antes
 
 

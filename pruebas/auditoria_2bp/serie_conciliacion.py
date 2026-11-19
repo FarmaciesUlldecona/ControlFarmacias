@@ -14,8 +14,8 @@ albaranes que reservaria cada conciliacion prevista (R15) quedan ocupados para l
 previsto (CONCILIADA / DIFERENCIA y cuanto, o FALLO), la clave idempotente prevista y la huella de cada fila.
 
 ``tanda`` (guard exclusivo por tanda, sin reintentos; como maximo 5 la primera y 20 las siguientes): preflight
-READ_ONLY y snapshot por fila; puerta git (arbol limpio y HEAD = origin/main, o por delante solo con documentacion);
-para cada ejecucion, puertas (operacion, configuracion, MIGRACION 30 DESPLEGADA, tareas a 60 min o mas, n.o 1 del
+READ_ONLY y snapshot por fila; puerta git (arbol limpio y HEAD = main del remoto leido con ls-remote, o por
+delante solo con documentacion; modulo comun ``puerta_git``); para cada ejecucion, puertas (operacion, configuracion, MIGRACION 30 DESPLEGADA, tareas a 60 min o mas, n.o 1 del
 plan con la misma huella), nueva simulacion READ_ONLY del n.o 1 igual a la del plan y PARADA si no simula CONCILIADA
 (salvo decision de Pio registrada en el plan para esa factura y esa diferencia), UNA llamada a
 ``ejecutar_una_manual_conciliacion()`` y comprobacion (estado y conciliacion previstos, filas cambiadas solo de la
@@ -30,7 +30,6 @@ import hashlib
 import importlib.util
 import json
 import shutil
-import subprocess
 import sys
 import tempfile
 import traceback
@@ -47,6 +46,7 @@ import auditoria_readonly as ar  # noqa: E402
 from auditoria_readonly import (  # noqa: E402
     COLUMNAS_HUELLA, MODO_CLAIM, PROJECT_REF, SQL_SELECTOR_OFICIAL, SQL_TODAS_CON_FILTROS, _cuerpo_local,
     _cuerpo_remoto, _ejecutar_lectura, _escribir, _operacion, _puertas_operacion, _salida_fuera_del_repo)
+from src.facturas.runtime_supabase import puerta_git as _puerta_git  # noqa: E402
 from src.facturas.runtime_supabase.noche_automatica import TABLAS_PAGOS, TABLAS_TRABAJADORES  # noqa: E402
 
 # Tablas que escribe la web (Trabajadores; Pagos, H6): fuera del veredicto, informadas aparte.
@@ -253,35 +253,14 @@ def _factura(factura_id: str) -> dict:
 
 # --------------------------------------------------------------------------- git
 
-def _git(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
-
-
 def _estado_git() -> dict:
-    try:
-        return {"status": _git("status", "--porcelain"), "head": _git("rev-parse", "HEAD"),
-                "origin": _git("rev-parse", "origin/main"),
-                "origin_ancestro": subprocess.run(["git", "merge-base", "--is-ancestor", "origin/main", "HEAD"],
-                                                  cwd=ROOT).returncode == 0,
-                "cambios": _git("diff", "--name-only", "origin/main..HEAD").splitlines()}
-    except (OSError, subprocess.CalledProcessError) as exc:
-        return {"error": f"{type(exc).__name__}: {exc}"}
+    """Estado git con el main del remoto leido con ls-remote (modulo comun ``puerta_git``, 2026-11-19)."""
+    return _puerta_git.estado(ROOT)
 
 
 def puerta_git(g: dict) -> list[str]:
-    """Arbol limpio y HEAD = origin/main; excepcion de Pio (2BN-D): por delante solo con documentacion."""
-    if "error" in g:
-        return [f"GIT_NO_DETERMINABLE:{g['error']}"]
-    fallos = []
-    if g["status"]:
-        fallos.append("GIT_ARBOL_NO_LIMPIO")
-    if g["head"] != g["origin"]:
-        no_doc = [c for c in g["cambios"] if not (c.startswith("docs/") or c.endswith(".md"))]
-        if not g["origin_ancestro"]:
-            fallos.append("GIT_HEAD_NO_DESCIENDE_DE_ORIGIN")
-        elif no_doc:
-            fallos.append(f"GIT_COMMITS_NO_DOCUMENTALES:{','.join(no_doc[:10])}")
-    return fallos
+    """Arbol limpio y HEAD = main del remoto; excepcion de Pio (2BN-D): por delante solo con documentacion."""
+    return _puerta_git.evaluar(g)
 
 
 # --------------------------------------------------------------------------- comprobaciones (sin conexion)

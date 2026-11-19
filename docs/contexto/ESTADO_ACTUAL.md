@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-18 (AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
+Actualizado: 2026-11-19 (puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
 acceso de cf_pagos_web ACCESO_OK; decisiones de Pio para Cashflow (H7), en REGLAS_CRITICAS; H6: migración 35 de Pagos, marcas de pago, solo local, con desplegar_35 ensayado; AUTO-S:
@@ -342,6 +343,37 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Puerta git con el main leído del remoto (2026-11-19)
+
+Encargo de Pio, `CONFIRMADO POR TEST` (sin ejecución productiva). Módulo común
+`src/facturas/runtime_supabase/puerta_git.py` para la noche, las series 2BJ (que no tenía puerta git) y 2BP, y los
+despliegues `desplegar_31` a `desplegar_35`:
+
+- el main se lee con `git ls-remote` y no con la referencia local `origin/main`, que sin fetch podía dar un falso OK;
+- falla cerrado si el remoto no se puede leer o su sha no existe en local;
+- los despliegues exigen que el commit indicado esté ya en el main del remoto;
+- el informe de la noche registra head, origin_local y origin_remoto.
+
+Regla en REGLAS_CRITICAS, «Puerta git antes de una ejecución productiva». En el mismo commit, decisión de Pio: el
+revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que cita el diff.
+
+### Primera noche REAL 18→19/11 (revisión READ_ONLY, 2026-11-19)
+
+Evidencias en `C:\ControlFarmacias\evidencias_noche_real_1811\` y `C:\ControlFarmacias\evidencias_08013495\`
+(`SHA256SUMS.txt`).
+
+- **Tareas** a su hora con código 0. **Informe** `FIN_LIMITE`, sin puertas fallidas, commit abf102f; SHA iguales a su
+  `SHA256SUMS.txt` y a la fila `REAL`. **Postcheck por fila OK**: las 12 tablas coinciden con lo reclamado, sin filas
+  ajenas; Trabajadores y Pagos sin cambios.
+- **cedb06d0** `NORMALIZADA` al primer intento, con 08013495–98 y los mismos totales que el plan 2BJ; los 4 no
+  soportados, como estaba previsto.
+- **Conciliación:** 08013496 (diferencia 0,03) y 08013497 (0,00) `CONCILIADA`, igual que la simulación.
+  **08013495 queda para revisar** (diferencia 118,16): el albarán 08D79747 (118,25) está en Farmatic partido en
+  08D79747 (77,49) y 08D79747A (40,76), de la misma recepción; R17 no lo cubre. DECISIÓN DE PIO: regla R20 (diseño
+  pendiente). 08013498 sigue sin conciliar porque la noche para en 08013495.
+- Importadas el 18/11 la factura HEFAME `VTO 5.10.26` y sincronizados los albaranes HEFAME 914618399 (67,15) y
+  914621188 (33,57), del 20/10.
+
 ### Hito AUTO-ON: activación de la automatización Alliance (2026-11-18)
 
 CONFIRMACIÓN EXPLÍCITA DE PIO. Diseño en `pruebas/auditoria_auto_alliance/DISENO.md` (§4 y §8).
@@ -355,7 +387,7 @@ CONFIRMACIÓN EXPLÍCITA DE PIO. Diseño en `pruebas/auditoria_auto_alliance/DIS
   - conciliación: el n.º 1 se simula antes de reclamarlo; si no es Alliance, si no simula `CONCILIADA` o si tiene una
     revisión R18 pendiente, queda para revisar.
 - **Puertas, paradas, límites y vuelta atrás:** REGLAS_CRITICAS, «Automatización Alliance».
-- `PENDIENTE`: revisión READ_ONLY de la mañana del 19/11 (informe, postcheck y noche).
+- Revisión READ_ONLY de la mañana del 19/11: hecha (sección «Primera noche REAL 18→19/11»).
 
 ### Hito AUTO-S: noche de sombra 17→18/11 (2026-11-18)
 

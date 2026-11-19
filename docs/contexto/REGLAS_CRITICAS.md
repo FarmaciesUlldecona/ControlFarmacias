@@ -1,6 +1,8 @@
 # Reglas críticas
 
-Actualizado: 2026-11-18 (HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
+Actualizado: 2026-11-19 (puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
+cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
 `ACCESO_OK`; decisiones de Pio para Cashflow (H7): excepción de RITA solo con sus datos bancarios, lista cerrada de
 `cf_lectura` ampliada a `cf_cashflow_*` con la migración 37, estado de importación y signo del importe; H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
@@ -83,6 +85,18 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   HEAD == `origin/main`. **Excepción acotada (DECISIÓN DE PIO, 2026-11-05):** HEAD puede ir por delante de
   `origin/main` solo si los commits pendientes tocan exclusivamente documentación (`docs/` o `*.md`); se
   comprueba antes de cada tanda con `git diff --name-only origin/main..HEAD`. Cualquier otro archivo: PARA.
+  **El main del remoto se lee del remoto (encargo de Pio, 2026-11-19):** la noche, las series 2BJ y 2BP y los
+  despliegues usan el módulo común `src/facturas/runtime_supabase/puerta_git.py`, que lee el main con
+  `git ls-remote origin refs/heads/main` (20 s como máximo, sin pedir credenciales) y no la referencia local
+  `origin/main`, que sin fetch podía dar un falso OK (el 18/11 seguía en 885150d con 1ca8cc3 ya subido). Falla
+  cerrado: remoto ilegible → `GIT_ORIGEN_NO_DETERMINABLE`; sha del remoto que no existe en local (falta un fetch) →
+  `GIT_ORIGEN_DESCONOCIDO_LOCALMENTE`; el remoto debe ser ancestro de HEAD y lo pendiente solo documentación. La
+  puerta no hace fetch ni cambia referencias. El informe de la noche registra head, origin_local y origin_remoto.
+  **Despliegues:** el commit indicado debe estar ya contenido en el main del remoto (subido por Pio); si no,
+  `GIT_COMMIT_NO_SUBIDO` y no se conecta (scripts `desplegar_31` a `desplegar_35` y los siguientes).
+  **revisor-reglas (DECISIÓN DE PIO, 2026-11-18):** además del diff, REGLAS_CRITICAS y los ficheros que toca el diff,
+  puede LEER (solo con Read) los ficheros de `src/`, `sql/`, `tests/` y `pruebas/` que el diff cite por su ruta;
+  `logs/`, `.env*` y el resto siguen bloqueados.
 
 ## Extractores locales
 

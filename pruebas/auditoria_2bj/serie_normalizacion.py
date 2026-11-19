@@ -15,8 +15,9 @@ MANUAL_ONE_SHOT) y predice el resultado de cada documento con la cadena oficial 
 mirror con el mismo SHA (``pruebas/auditoria_2ay/banco_extraccion.py``): ``ALLIANCE`` (facturas, numeros y
 totales), ``NO_SOPORTADO``, ``DEFECTO`` o ``SIN_PREDICCION`` (no esta en el mirror o no se reconoce el motivo).
 
-``tanda`` (guard exclusivo por tanda, sin reintentos): preflight READ_ONLY y snapshot por fila; para cada
-ejecucion, puertas (flags y configuracion, 25, 27 desde el 2BL, 0 NORMALIZANDO, 0 huerfanos, 0 locks/claims/workers, tareas a
+``tanda`` (guard exclusivo por tanda, sin reintentos): preflight READ_ONLY y snapshot por fila; puerta git (arbol
+limpio y HEAD = main del remoto leido con ls-remote, o por delante solo con documentacion; modulo comun
+``puerta_git``, 2026-11-19); para cada ejecucion, puertas (flags y configuracion, 25, 27 desde el 2BL, 0 NORMALIZANDO, 0 huerfanos, 0 locks/claims/workers, tareas a
 60 min o mas, n.o 1 con prediccion y mismo SHA que en el plan), UNA llamada a ``ejecutar_una_manual()`` y
 comprobacion (estado previsto, facturas del plan, filas cambiadas solo del documento). Cualquier desviacion
 -> PARADA. Al final, y tambien al parar (2BK), postcheck 2AX por fila de toda la tanda. Salidas fuera del
@@ -43,6 +44,7 @@ sys.path.insert(0, str(ROOT / "pruebas/auditoria_2at"))
 
 from auditoria_readonly import (  # noqa: E402
     PROJECT_REF, _ejecutar_lectura, _escribir, _operacion, _puertas_operacion, _salida_fuera_del_repo)
+from src.facturas.runtime_supabase import puerta_git as _puerta_git  # noqa: E402
 from src.facturas.runtime_supabase.clasificacion_fallos import (  # noqa: E402
     DEFECTO_DOCUMENTO, NO_SOPORTADO, clasificar_fallo)
 from src.facturas.runtime_supabase.noche_automatica import TABLAS_PAGOS, TABLAS_TRABAJADORES  # noqa: E402
@@ -367,6 +369,16 @@ def _tandas_previas_ok(directorio: Path) -> int:
     return ok
 
 
+def _estado_git() -> dict:
+    """Estado git con el main del remoto leido con ls-remote (modulo comun ``puerta_git``, 2026-11-19)."""
+    return _puerta_git.estado(ROOT)
+
+
+def puerta_git(g: dict) -> list[str]:
+    """Arbol limpio y HEAD = main del remoto, o por delante solo con documentacion (REGLAS_CRITICAS)."""
+    return _puerta_git.evaluar(g)
+
+
 def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
     maximo = MAX_TANDA if _tandas_previas_ok(directorio) else MAX_PRIMERA
     if not 1 <= n <= maximo:
@@ -419,6 +431,12 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
     pre.update(_ejecutar_lectura(_leer_tanda)[1])
     _escribir(directorio / "snapshot_pre.json", pre)
     registro["preflight"] = {k: pre.get(k) for k in ("project_ref", "capturado_utc", "transaction_read_only")}
+    # Puerta git (2026-11-19, modulo comun con la noche y el 2BP): arbol limpio y HEAD = main del remoto leido
+    # con ls-remote, o por delante solo con documentacion.
+    registro["git"] = _estado_git()
+    fallos_git = puerta_git(registro["git"])
+    if fallos_git:
+        return cerrar("PARADA", fallos_git)
     try:
         cliente = _cliente()
     except SystemExit as exc:

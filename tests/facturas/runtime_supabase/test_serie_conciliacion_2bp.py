@@ -22,7 +22,9 @@ from test_ensayo_fase4_2at import _ClienteServiceRole, _ConexionPg17
 from test_integracion_pg17_2az import _operacionales_sinteticos, _preparar_2ao, _solo_primera
 from test_integracion_pg17_2be import _recepcion_50898
 
-GIT_LIMPIO = {"status": "", "head": "a" * 40, "origin": "a" * 40, "origin_ancestro": True, "cambios": []}
+# 2026-11-19: el main del remoto se lee con ls-remote (modulo comun puerta_git).
+GIT_LIMPIO = {"status": "", "head": "a" * 40, "origin_local": "a" * 40, "origin_remoto": "a" * 40,
+              "origin_conocido": True, "origin_ancestro": True, "cambios": []}
 
 
 def _modulo():
@@ -42,6 +44,12 @@ def _modulo():
     ({**GIT_LIMPIO, "head": "b" * 40, "cambios": ["docs/a.md", "src/b.py"]}, ["GIT_COMMITS_NO_DOCUMENTALES:src/b.py"]),
     ({**GIT_LIMPIO, "head": "b" * 40, "origin_ancestro": False}, ["GIT_HEAD_NO_DESCIENDE_DE_ORIGIN"]),
     ({"error": "sin git"}, ["GIT_NO_DETERMINABLE:sin git"]),
+    ({**GIT_LIMPIO, "origin_remoto": None, "error_origen": "TimeoutExpired"},
+     ["GIT_ORIGEN_NO_DETERMINABLE:TimeoutExpired"]),
+    ({**GIT_LIMPIO, "origin_remoto": "c" * 40, "origin_conocido": False}, ["GIT_ORIGEN_DESCONOCIDO_LOCALMENTE"]),
+    # La referencia local desfasada ya no decide: manda el remoto.
+    ({**GIT_LIMPIO, "origin_local": "a" * 40, "origin_remoto": "c" * 40, "origin_ancestro": False},
+     ["GIT_HEAD_NO_DESCIENDE_DE_ORIGIN"]),
 ])
 def test_puerta_git(git, esperado):
     assert _modulo().puerta_git(git) == esperado
