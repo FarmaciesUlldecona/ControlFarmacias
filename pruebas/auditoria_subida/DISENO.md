@@ -18,6 +18,8 @@ migración y sin tocar producción. Petición de la web con las decisiones de Pi
 | **B2** | **Mismos límites por ejecución**, **sin máximo diario**. La escalada 5 + 5 → 20 + 20 cuenta **SOLO las noches** |
 | **B3** | **Una sola tarea `ControlFarmacias - Circuito` a las 21:00.** La de Cashflow (23:45) sigue aparte |
 | **B4** | Albaranes en **lotes de 200** |
+| **V2** | Franjas prohibidas del botón: **20:50–21:30** y **23:40–23:55**, con «ninguna noche `EN_CURSO`» para los días largos y la noche esperando (máximo 30 minutos) a una ejecución bajo demanda en marcha (§3.7) |
+| **I1** | La espera fija de 1 s por PDF se **sustituye** por **antigüedad > 60 s** y **tamaño y fecha de modificación sin cambios antes y después del hash** (§3.8) |
 | **S1** | Carpeta por **fecha de subida por defecto**, con opción de **elegir mes y decena** en la web |
 | **S2** | Tamaño máximo: **20 MB** |
 | **S3** | Nombre: **el original saneado** |
@@ -250,7 +252,7 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 
 ### 3.7 Franjas prohibidas del botón
 
-`PROPUESTA` (ajuste pedido por Pio). Con el circuito encadenado, la noche ocupa unos minutos y no hora y tres cuartos:
+**Decidido (V2, 2026-11-19).** Con el circuito encadenado, la noche ocupa unos minutos y no hora y tres cuartos:
 
 | Franja | Por qué | Margen |
 |---|---|---|
@@ -267,7 +269,7 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 
 ### 3.8 La espera fija de 1 s por PDF en la importación
 
-`CONFIRMADO POR CÓDIGO` y `PROPUESTA` (ajuste pedido por Pio).
+`CONFIRMADO POR CÓDIGO`. **Decidido (I1, 2026-11-19):** se sustituye la espera como se describe abajo.
 
 - **Hoy es la única comprobación de tamaño estable.** `validar_pdf_nuevo` mira el tamaño, espera 1 s y lo vuelve a
   mirar (`importar_facturas_drive.py:600-619`). El índice compara tamaño y fecha **con la ejecución anterior**
@@ -275,7 +277,7 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
   haya terminado de escribirse. **Quitarla sin más no es seguro:** un PDF que Google Drive está bajando al espejo
   podría importarse a medias.
 - Solo se paga por cada PDF **nuevo o modificado** (los ya importados se saltan por el índice): 4–6 s por noche.
-- **Propuesta: sustituirla por una comprobación sin espera, de la misma seguridad o más:**
+- **Decidido (I1): sustituirla por una comprobación sin espera, de la misma seguridad o más:**
   1. **antigüedad:** si la última modificación del fichero tiene más de 60 s, se considera asentado sin esperar;
      si es más reciente, se deja para la siguiente ejecución (no se importa a medias ni se espera);
   2. **lectura sin cambios:** se toma tamaño y fecha de modificación antes de calcular el hash y otra vez después;
@@ -288,12 +290,8 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 
 ## 4. Decisiones de Pio
 
-Tomadas el 2026-11-19 (§0), incluidas B1–B4. **Quedan para Pio:**
+Tomadas el 2026-11-19 (§0), incluidas B1–B4, V2 e I1. **Queda para Pio:**
 
-- **V2. Franjas prohibidas del botón (§3.7):** 20:50–21:30 y 23:40–23:55, con «ninguna noche `EN_CURSO`» para los días
-  largos y la noche esperando a una ejecución bajo demanda en marcha (máximo 30 minutos).
-- **I1. Espera de 1 s por PDF (§3.8):** sustituirla por antigüedad > 60 s y lectura sin cambios (propuesta), o dejarla
-  como está.
 - **E1.** «Evidencia en llamadas aparte»: sigue `PENDIENTE`.
 
 Para el hito de implementación (la 39 va después de la 37 y la 38):
