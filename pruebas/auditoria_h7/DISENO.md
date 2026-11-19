@@ -1,4 +1,4 @@
-# H7: importación del Excel de cashflow de Pio a Supabase (migración 37). DISEÑO
+# H7: importación del Excel de cashflow de Pio a Supabase (migración 38). DISEÑO
 
 Estado: **DISEÑO CON LAS DECISIONES DE PIO C1–C8** (2026-11-17), **EXCEL VERIFICADO Y DECISIONES E1–E7**
 (2026-11-18, §0 y §1). Sin código, sin migración y sin tocar producción.
@@ -8,12 +8,12 @@ Estado: **DISEÑO CON LAS DECISIONES DE PIO C1–C8** (2026-11-17), **EXCEL VERI
 - **Decisiones de Pio ya tomadas (2026-11-17)** y registradas en REGLAS_CRITICAS, sección «Cashflow (H7)» (96a871b):
   - el Excel es la referencia (gold standard); nunca se escribe en él;
   - RITA entra en Cashflow **solo** con sus datos bancarios del Excel, y sus facturas siguen desactivadas;
-  - la lista cerrada de `cf_lectura` se amplía con las tablas `cf_cashflow_*` en la migración 37;
+  - la lista cerrada de `cf_lectura` se amplía con las tablas `cf_cashflow_*` en la migración 38;
   - la importación queda en `OK` o `ERROR`, y el importe conserva el signo de la celda;
   - se importa cada noche y, además, a mano cuando Pio lo lance.
-- **Añadidos del chat del circuito:** la migración es la 37, porque la 36 está reservada para los defectos directos a
-  REVISION; `TABLAS_CASHFLOW` en los postchecks; tarea nocturna como `Usuari`, sin solaparse con las demás; rol del
-  sistema nombrado solo en la 37 y su rollback (autorización concedida por Pio el 2026-11-17, C3).
+- **Añadidos del chat del circuito:** la migración es la 38 (renumerada el 2026-11-19, decisión de Pio: R20 = 36,
+  defectos directos a REVISION = 37, Cashflow = 38); `TABLAS_CASHFLOW` en los postchecks; tarea nocturna como `Usuari`,
+  sin solaparse con las demás; rol del sistema nombrado solo en la 38 y su rollback (C3, reconfirmada el 2026-11-19).
 - **Etiquetas:** lo que se afirma del esquema actual está `CONFIRMADO POR CÓDIGO` (con fichero:línea). Lo que se
   afirma del Excel está `CONFIRMADO POR VERIFICACIÓN` (§1, 2026-11-18). Lo demás es `PROPUESTA`.
 
@@ -25,7 +25,7 @@ Donde las secciones siguientes dicen `PROPUESTA` para C1–C8, queda decidido.
 |---|---|
 | **C1** | **Ruta:** carpeta `C:\GoogleDrive\CASHFLOW`. El fichero es el **único** `.xlsm` cuyo nombre empieza por `CASHFLOW` (el nombre puede variar). Si hay más de uno o ninguno, la importación es `ERROR`. Se ignoran los temporales `~$` (§2.1) |
 | **C2** | Tarea nocturna a las **23:45** (§5.1) |
-| **C3** | **AUTORIZACIÓN EXPRESA DE PIO** para nombrar el rol del sistema **solo** en `sql/migrations/37_*.sql` y su rollback. Tests, scripts y documentación no lo nombran; cualquier otro fichero, autorización nueva. Se registra en REGLAS_CRITICAS al implementar la 37 (§3.6) |
+| **C3** | **AUTORIZACIÓN EXPRESA DE PIO** (2026-11-17; reconfirmada el 2026-11-19 tras renumerar) para nombrar el rol del sistema **solo** en `sql/migrations/38_*.sql` y su rollback. Tests, scripts y documentación no lo nombran; cualquier otro fichero, autorización nueva. Se registra en REGLAS_CRITICAS al implementar la 38 (§3.6) |
 | **C4** | Sí: fila `CASHFLOW = {PIO, RITA}` en `cf_modulos_farmacias` (§3.1) |
 | **C5** | Categoría nueva: `ERROR` hasta que Pio la acepte con la importación manual (§2.4) |
 | **C6** | Mismo fichero que la última importación: no se escribe nada y el informe dice `SIN_CAMBIOS` (§2.5) |
@@ -150,17 +150,17 @@ Si el SHA-256 es igual al de la última importación registrada, sea `OK` o `ERR
 dice `SIN_CAMBIOS`. Así un `ERROR` no se repite cada noche. Al corregir el Excel, cambia la huella y se vuelve a
 importar.
 
-## 3. Esquema propuesto (migración 37)
+## 3. Esquema propuesto (migración 38)
 
 Se mantienen los nombres de tablas y columnas de la petición. Las diferencias están en §3.7.
 
 ### 3.1 Permiso por módulo
 
-- `cf_modulos_farmacias` solo admite el módulo `TRABAJADORES` (`31_cf_trabajadores.sql:31-34`). La 37 amplía el check a
+- `cf_modulos_farmacias` solo admite el módulo `TRABAJADORES` (`31_cf_trabajadores.sql:31-34`). La 38 amplía el check a
   `('TRABAJADORES', 'CASHFLOW')` e inserta `CASHFLOW = {PIO, RITA}` (C4).
 - `cf_configuracion.farmacias_habilitadas` no cambia (`{PIO}`), y facturas, albaranes y conciliación siguen solo PIO.
 - **Efecto en los postchecks:** `cf_modulos_farmacias` está en `TABLAS_TRABAJADORES`. Su fila nueva y su check
-  ampliado son un cambio dentro del alcance de la 37, que `desplegar_37` y su postcheck esperan; para las noches se
+  ampliado son un cambio dentro del alcance de la 38, que `desplegar_38` y su postcheck esperan; para las noches se
   informa aparte, como el resto de Trabajadores.
 - Alternativa: una tabla propia de Cashflow, que no toca la de Trabajadores. **No se propone**, porque la web ya usa
   `cf_modulos_farmacias`.
@@ -241,9 +241,9 @@ En los dos, `farmacia` se copia de la cuenta (null en `SL`) y un check comprueba
   any(m.farmacias))`. Así `SL` es visible para PIO y para RITA. Las importaciones no tienen farmacia: son visibles
   para `cf_lectura`.
 - **Ningún rol de la web** (`cf_trabajadores_web`, `cf_pagos_web`) tiene privilegios sobre estas tablas.
-- **Rol del sistema (C3):** la 37 le quita los privilegios por defecto de Supabase sobre las tablas y la secuencia
+- **Rol del sistema (C3):** la 38 le quita los privilegios por defecto de Supabase sobre las tablas y la secuencia
   nuevas, y le da EXECUTE solo sobre la RPC. Para eso hay que nombrarlo.
-  - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-17, C3)**, limitada a `sql/migrations/37_*.sql` y su rollback. Tests,
+  - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-17, C3; reconfirmada el 2026-11-19 tras renumerar)**, limitada a `sql/migrations/38_*.sql` y su rollback. Tests,
     scripts y documentación no lo nombran.
 - `anon`, `authenticated` y `public` no tienen nada.
 
@@ -269,7 +269,7 @@ En los dos, `farmacia` se copia de la cuenta (null en `SL`) y un check comprueba
 - **Puertas** (las mismas en los dos modos):
   - ninguna de las tres tareas en ejecución;
   - ninguna noche `EN_CURSO` en `cf_noches_automaticas`;
-  - la migración 37 presente;
+  - la migración 38 presente;
   - la ruta configurada existe.
   Si una falla, no escribe nada y termina con código distinto de 0.
 - **Postcheck propio por fila (2AX):** antes y después de la escritura. Solo pueden cambiar las tablas `cf_cashflow_*`
@@ -321,7 +321,7 @@ Igual que `TABLAS_PAGOS` (COD-1611):
   - Se lee aparte con `snapshot_aparte` (`noche_automatica.py:306-311`).
   - Se informa en `postcheck["cashflow"]`, con `afecta_al_veredicto: False`.
 - **Series 2BJ y 2BP:** se tratan igual que `TABLAS_PAGOS`: fuera del criterio por fila e informadas aparte.
-- **Orden:** este cambio va en el commit de la 37 (o antes), y siempre antes de desplegarla.
+- **Orden:** este cambio va en el commit de la 38 (o antes), y siempre antes de desplegarla.
 
 ## 7. Plan de hitos
 
@@ -329,8 +329,8 @@ Igual que `TABLAS_PAGOS` (COD-1611):
 2. **Hecho:** decisiones de Pio C1–C8 (2026-11-17), verificación del Excel real (2026-11-18, §1, READ_ONLY, sobre
    una copia fuera del repositorio) y decisiones de Pio E1–E7 (2026-11-18, §0).
 3. **H7, solo local:**
-   - migración 37 y su rollback (falla cerrado si hay importaciones);
-   - `desplegar_37.py`, ensayado con la imitación del `postgres` de Supabase;
+   - migración 38 y su rollback (falla cerrado si hay importaciones);
+   - `desplegar_38.py`, ensayado con la imitación del `postgres` de Supabase;
    - `importar_cashflow.py`, con tests sobre un Excel ficticio generado en el test (ningún dato real en el
      repositorio): estructura cambiada, fórmula sin valor, cuadre roto, cuadre con `RS` positivos y negativos,
      categoría nueva, mismo hash, decenas, signo, vigente, texto de fórmula y solo espacios como vacío, otro texto como
@@ -339,7 +339,7 @@ Igual que `TABLAS_PAGOS` (COD-1611):
    - `TABLAS_CASHFLOW` en la noche y las series;
    - suite completa y revisor PASS.
 4. **H7-D:**
-   - preflight READ_ONLY, `desplegar_37` una vez con la confirmación de Pio, y postcheck por fila;
+   - preflight READ_ONLY, `desplegar_38` una vez con la confirmación de Pio, y postcheck por fila;
    - primera importación `--manual --simular`; después, la real `--manual`;
    - creación de la tarea, con la confirmación de Pio.
 5. **Web:** pasa de FIXTURES a lectura real con `cf_lectura` cuando haya una importación `OK` vigente.

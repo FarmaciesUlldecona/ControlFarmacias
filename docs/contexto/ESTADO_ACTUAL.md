@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-19 (puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-19 (diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -369,8 +369,8 @@ Evidencias en `C:\ControlFarmacias\evidencias_noche_real_1811\` y `C:\ControlFar
   soportados, como estaba previsto.
 - **Conciliación:** 08013496 (diferencia 0,03) y 08013497 (0,00) `CONCILIADA`, igual que la simulación.
   **08013495 queda para revisar** (diferencia 118,16): el albarán 08D79747 (118,25) está en Farmatic partido en
-  08D79747 (77,49) y 08D79747A (40,76), de la misma recepción; R17 no lo cubre. DECISIÓN DE PIO: regla R20 (diseño
-  pendiente). 08013498 sigue sin conciliar porque la noche para en 08013495.
+  08D79747 (77,49) y 08D79747A (40,76), de la misma recepción; R17 no lo cubre. DECISIÓN DE PIO: regla R20, migración 36
+  (diseño en `pruebas/auditoria_r20/DISENO.md`, 2026-11-19). 08013498 sigue sin conciliar porque la noche para en 08013495.
 - Importadas el 18/11 la factura HEFAME `VTO 5.10.26` y sincronizados los albaranes HEFAME 914618399 (67,15) y
   914621188 (33,57), del 20/10.
 
@@ -505,7 +505,7 @@ Revisión READ_ONLY (evidencias en `C:\ControlFarmacias\evidencias_noche_1611\`,
 - **Defectos de extracción directos a REVISION: NO implementado, PARADO.** El paso a `REVISION` o a `ERROR` con
   backoff lo decide el RPC de producción `cf_registrar_fallo_normalizacion`
   (`17_cf_replay_y_fallos_no_bloqueantes.sql:516-528`); Python solo envía la clase. Requiere una migración, con
-  preflight y despliegue. **DECISIÓN DE PIO (2026-11-16): migración aparte, la 36, después de la 35.** Hasta
+  preflight y despliegue. **DECISIÓN DE PIO (2026-11-16): migración aparte, la 36, después de la 35** (renumerada como 37 el 2026-11-19, decisión de Pio: R20 = 36). Hasta
   entonces sigue la regla D3 vigente (R3).
 - **D3 (2026-11-16, confirmación de Pio):** tanda_05 de 13, `TANDA_OK` y postcheck 2AX OK; 10 defectos a
   `REVISION` (4 de 4) y 3 en `ERROR` (3 de 4, reclamables el 17/11 desde las 16:34 local). Evidencias en

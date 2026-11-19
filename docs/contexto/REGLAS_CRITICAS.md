@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-19 (puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-19 (numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -536,8 +536,13 @@ Decisiones de Pio (2026-11-17). Módulo **NO IMPLEMENTADO** en este repositorio:
 - **Excepción de farmacia:** RITA es visible en el módulo CASHFLOW **SOLO** con sus datos bancarios del Excel
   importado. Sus facturas siguen desactivadas: `cf_configuracion.farmacias_habilitadas` no cambia y facturas,
   albaranes, normalización y conciliación siguen solo PIO. La excepción es propia del módulo, nunca global.
-- **Lista cerrada de `cf_lectura`:** se amplía con las tablas `cf_cashflow_*` cuando existan (migración 37). Hasta
+- **Lista cerrada de `cf_lectura`:** se amplía con las tablas `cf_cashflow_*` cuando existan (migración 38). Hasta
   entonces no cambia.
+- **Numeración (DECISIÓN DE PIO, 2026-11-19):** R20 = migración 36, defectos de extracción directos a REVISION = 37,
+  Cashflow = 38 (antes 36 y 37). Cada migración exige la anterior.
+- **AUTORIZACIÓN EXPRESA DE PIO (C3, 2026-11-17; reconfirmada el 2026-11-19 tras renumerar):** nombrar el rol del
+  sistema **SOLO** en `sql/migrations/38_*.sql` y su rollback. Tests, scripts y documentación no lo nombran; cualquier
+  otro fichero, autorización nueva.
 - **Importación:** su estado es `OK` o `ERROR`. El importe conserva el signo de la celda del Excel; no se deduce ni se
   invierte.
 
