@@ -149,7 +149,7 @@ def huella_cambios(directorio: str = DIRECTORIO_PROYECTO) -> str:
 # probado; la barrera de commit la exige.
 
 NOMBRE_SUITES = "suites.jsonl"
-ALCANCES = ("parcial", "rapida", "completa")
+ALCANCES = ("parcial", "rapida", "completa", "historica", "total")
 
 
 def ruta_suites() -> str:
@@ -168,17 +168,187 @@ def suite_exigida(rutas: list[str]) -> str:
 
 def suite_valida(huella: str, exigida: str, ruta: str | None = None,
                  repositorio: str = DIRECTORIO_PROYECTO) -> dict | None:
-    """Última ejecución registrada sobre ``huella`` con alcance suficiente, o None.
+    """Última ejecución registrada sobre ``huella`` con alcance suficiente (``CUBRE``), o None.
 
     Una ejecución de menor alcance posterior no la invalida; una de alcance suficiente posterior sí (si
-    falla, la última manda).
+    falla, la última manda). Hito SUITE: para commits, ``suites_para_commit``.
     """
+    return _ultima(_registros_suite(ruta, repositorio), huella, exigida)
+
+
+# --- Hito SUITE: completa sin histórica, reparación e histórica ---------------
+#
+# pruebas/auditoria_suite/DISENO.md (decisiones de Pio D1-D8, 2026-11-20). Alcances del registro:
+# ``total`` (sin -m), ``completa`` (-m "not historica"), ``historica`` (-m historica), ``rapida`` y ``parcial``.
+
+CUBRE = {"rapida": ("rapida", "completa", "total"), "completa": ("completa", "total"),
+         "historica": ("historica", "total")}
+INFRAESTRUCTURA_TESTS = ("tests/conftest.py", "tests/facturas/runtime_supabase/pg17_local.py",
+                         "tests/registro_suite.py", "tests/consultar_suite.py")
+CONFTEST_HISTORICA = "tests/facturas/runtime_supabase/conftest.py"
+MAXIMO_FALLADOS_REPETICION = 3
+DIAS_HISTORICA = 7
+_RUTAS_HISTORICA = re.compile(
+    r"^(sql/|tests/facturas/runtime_supabase/(pg17_local|conftest)\.py$|pruebas/auditoria_2at/"
+    r"|pruebas/.*/(desplegar_[^/]*|preflight[^/]*)\.py$|src/facturas/runtime_supabase/puerta_git\.py$)")
+
+
+def _registros_suite(ruta: str | None, repositorio: str) -> list[dict]:
     clave = clave_repositorio(repositorio)
-    minimo = ALCANCES.index(exigida)
-    validas = [r for r in leer_uso(ruta or ruta_suites())
-               if r.get("repositorio") == clave and r.get("huella") == huella
-               and r.get("alcance") in ALCANCES and ALCANCES.index(r["alcance"]) >= minimo]
+    return [r for r in leer_uso(ruta or ruta_suites()) if r.get("repositorio") == clave]
+
+
+def _ultima(registros: list[dict], huella: str, exigida: str) -> dict | None:
+    validas = [r for r in registros if r.get("huella") == huella and r.get("alcance") in CUBRE[exigida]]
     return validas[-1] if validas else None
+
+
+def modulos_historicos(repositorio: str = DIRECTORIO_PROYECTO) -> set[str]:
+    """Módulos con tests de ``SUITE_HISTORICA`` (leído con ``ast``, sin importar el conftest)."""
+    import ast
+    try:
+        with open(os.path.join(repositorio, CONFTEST_HISTORICA), encoding="utf-8") as archivo:
+            arbol = ast.parse(archivo.read())
+        for nodo in arbol.body:
+            if isinstance(nodo, ast.Assign) and any(getattr(t, "id", None) == "SUITE_HISTORICA"
+                                                    for t in nodo.targets):
+                return {f"tests/facturas/runtime_supabase/{m}" for m in ast.literal_eval(nodo.value)}
+    except (OSError, SyntaxError, ValueError):
+        pass
+    return set()
+
+
+def historica_exigida(rutas: list[str], repositorio: str = DIRECTORIO_PROYECTO) -> str:
+    """``exacta`` si el cambio toca rutas de despliegue o módulos históricos; si no, ``semanal``."""
+    modulos = modulos_historicos(repositorio)
+    normalizadas = [r.replace("\\", "/") for r in rutas]
+    if any(_RUTAS_HISTORICA.search(r) or r in modulos for r in normalizadas) or not modulos:
+        return "exacta"
+    return "semanal"
+
+
+def _fecha(texto) -> "datetime.datetime | None":
+    import datetime
+    try:
+        fecha = datetime.datetime.fromisoformat(str(texto))
+    except ValueError:
+        return None
+    return fecha if fecha.tzinfo else None
+
+
+def historica_valida(huella: str, modo: str, ruta: str | None = None, repositorio: str = DIRECTORIO_PROYECTO,
+                     ahora=None) -> dict | None:
+    """``exacta``: la última histórica (o total) sobre la huella. ``semanal``: la última histórica (o total) del
+    repositorio, si terminó hace 7 días o menos. Devuelve la línea (verde o no) o None."""
+    import datetime
+    registros = _registros_suite(ruta, repositorio)
+    if modo == "exacta":
+        return _ultima(registros, huella, "historica")
+    historicas = [r for r in registros if r.get("alcance") in CUBRE["historica"] and r.get("huella")]
+    if not historicas:
+        return None
+    ultima = historicas[-1]
+    fin = _fecha(ultima.get("ts_fin"))
+    ahora = ahora or datetime.datetime.now(datetime.timezone.utc)
+    if fin is None or ahora - fin > datetime.timedelta(days=DIAS_HISTORICA):
+        return None
+    return ultima
+
+
+def _diferencias(rutas_a: list, rutas_b: list) -> set[str]:
+    a = {r[0]: r[1] for r in rutas_a or []}
+    b = {r[0]: r[1] for r in rutas_b or []}
+    return {r for r in set(a) | set(b) if a.get(r) != b.get(r)}
+
+
+def _es_modulo_de_test(ruta: str) -> bool:
+    ruta = ruta.replace("\\", "/")
+    return (ruta.startswith("tests/") and ruta not in INFRAESTRUCTURA_TESTS
+            and os.path.basename(ruta).startswith("test_") and ruta.endswith(".py"))
+
+
+def _cubre_modulo(parcial: dict, modulo: str) -> bool:
+    """La parcial ejecutó el módulo entero: lo pasó como argumento, sin -k/-m ni deseleccionados, y todo lo
+    colectado se ejecutó."""
+    args = [str(a).replace("\\", "/").rstrip("/") for a in parcial.get("args") or []]
+    nodeids = parcial.get("nodeids") or []
+    return (any(a == modulo or a.endswith("/" + modulo) or modulo.endswith("/" + a) and a.endswith(".py")
+                for a in args)
+            and not parcial.get("keyword") and not parcial.get("markexpr") and not parcial.get("deselected")
+            and parcial.get("ejecutados") == parcial.get("colectados")
+            and any(n.split("::", 1)[0] == modulo for n in nodeids))
+
+
+def completa_valida(detalle: dict, ruta: str | None = None, repositorio: str = DIRECTORIO_PROYECTO) -> dict | None:
+    """Suite completa sobre el estado exacto, directa o por la regla de reparación (DISENO §2.4).
+
+    Devuelve la línea que vale (con ``via``: ``directa``, ``reparacion_a`` o ``reparacion_b``) o, si no vale
+    ninguna, la última completa sobre la huella (roja) o None.
+    """
+    huella = huella_de(detalle)
+    registros = _registros_suite(ruta, repositorio)
+    directa = _ultima(registros, huella, "completa")
+    if directa is not None and directa.get("verde"):
+        return {**directa, "via": "directa"}
+    indices = [i for i, r in enumerate(registros) if r.get("alcance") in CUBRE["completa"]
+               and r.get("base") == detalle["base"] and r.get("huella")]
+    if not indices:
+        return directa
+    i0 = indices[-1]
+    origen = registros[i0]
+    fallados = origen.get("fallados") or []
+    if origen.get("verde") or not fallados:
+        return directa
+    parciales = [r for r in registros[i0 + 1:] if r.get("alcance") == "parcial" and r.get("huella") == huella
+                 and r.get("base") == detalle["base"]]
+    if not parciales:
+        return directa
+    if origen.get("huella") == huella:
+        primera = parciales[0]
+        if (len(fallados) <= MAXIMO_FALLADOS_REPETICION and primera.get("verde")
+                and set(fallados) <= set(primera.get("nodeids") or [])):
+            return {**primera, "via": "reparacion_a"}
+        return directa
+    cambiadas = _diferencias(origen.get("rutas"), detalle["rutas"])
+    if not cambiadas or not all(_es_modulo_de_test(r) for r in cambiadas):
+        return directa
+    ultima = parciales[-1]
+    vivos = [r.replace("\\", "/") for r in cambiadas
+             if dict((x[0], x[1]) for x in detalle["rutas"]).get(r) != "BORRADO"]
+    if (ultima.get("verde") and set(fallados) <= set(ultima.get("nodeids") or [])
+            and all(_cubre_modulo(ultima, m) for m in vivos)):
+        return {**ultima, "via": "reparacion_b"}
+    return directa
+
+
+def suites_para_commit(rutas: list[str], ruta: str | None = None, repositorio: str = DIRECTORIO_PROYECTO,
+                       detalle: dict | None = None, ahora=None) -> dict:
+    """Lo que exige la barrera de commit (y T2) sobre el estado exacto de los cambios.
+
+    Documentación: la rápida (o más). Código: la completa (directa o por reparación) en verde y la histórica en
+    verde, sobre la misma huella si el cambio toca rutas de despliegue o módulos históricos, o de 7 días o menos.
+    """
+    detalle = detalle if detalle is not None else detalle_cambios(repositorio)
+    huella = huella_de(detalle)
+    exigida = suite_exigida(rutas)
+    if exigida == "rapida":
+        suite = _ultima(_registros_suite(ruta, repositorio), huella, "rapida")
+        return {"exigida": exigida, "suite": suite, "historica_modo": None, "historica": None,
+                "ok": bool(suite and suite.get("verde"))}
+    suite = completa_valida(detalle, ruta, repositorio)
+    modo = historica_exigida(rutas, repositorio)
+    historica = historica_valida(huella, modo, ruta, repositorio, ahora)
+    return {"exigida": exigida, "suite": suite, "historica_modo": modo, "historica": historica,
+            "ok": bool(suite and suite.get("verde") and historica and historica.get("verde"))}
+
+
+RE_DESPLIEGUE = re.compile(r"\bpython[\w.]*\s[^|;&]*\bdesplegar_\d+(\.py)?\b")
+
+
+def es_despliegue(texto: str) -> bool:
+    """Ejecución de un script ``desplegar_<n>`` (no una lectura ni pytest)."""
+    texto = texto.casefold()
+    return bool(RE_DESPLIEGUE.search(texto)) and "pytest" not in texto
 
 
 def leer_uso(ruta: str | None = None) -> list[dict]:

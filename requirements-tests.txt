@@ -1,0 +1,5 @@
+# Dependencias de la suite de tests, con version fija (Hito SUITE, decision de Pio D1, 2026-11-20).
+# pytest.ini exige la misma version de pytest-xdist con required_plugins: si falta o es otra, pytest no arranca.
+pytest==9.1.1
+pytest-xdist==3.8.0
+execnet==2.1.2

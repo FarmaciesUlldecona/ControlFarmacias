@@ -1,6 +1,6 @@
 # Hito SUITE: suite paralela, suite histórica y regla de reparación. DISEÑO
 
-Estado: **DISEÑO DECIDIDO** (2026-11-20, decisiones de Pio D1–D8 en §0). Sin código todavía. Solo toca la forma de
+Estado: **IMPLEMENTADO** (2026-11-20, decisiones de Pio D1–D8 en §0; medición en §5). Solo toca la forma de
 ejecutar y registrar los tests y la barrera de commit (`.claude/`); **no toca producción, Supabase ni Farmatic**.
 
 - **Origen:** la suite completa tarda ~41 min (3154 passed en 41:14, 2026-11-19). La parte `pg17_local` (697 tests,
@@ -16,7 +16,7 @@ ejecutar y registrar los tests y la barrera de commit (`.claude/`); **no toca pr
 | **D2** | Número de workers **tras medir 4, 8 y 12**; previsto 8 |
 | **D3** | Reparto **por familia de plantillas** (`--dist loadgroup`) |
 | **D4** | Suite **histórica**: obligatoria **antes de cada despliegue**, **por rutas tocadas** y **semanal vía la barrera** |
-| **D5** | **Un contenedor TCP por worker** para los ensayos, separado de los contenedores sin red |
+| **D5** | **Un contenedor TCP por worker** para los ensayos, separado de los contenedores sin red. **Corregida por Pio (2026-11-20, tras la histórica):** un contenedor TCP **limpio por módulo** (§2.3) |
 | **D6** | Regla de reparación (a): **1 repetición** y **como máximo 3 tests** |
 | **D7** | `tests/conftest.py`, `tests/facturas/runtime_supabase/pg17_local.py`, `tests/registro_suite.py` y `tests/consultar_suite.py` **cuentan como código** en la regla (b) |
 | **D8** | Este diseño, en `pruebas/auditoria_suite/DISENO.md` (commit solo de documentación) |
@@ -90,12 +90,15 @@ ejecutar y registrar los tests y la barrera de commit (`.claude/`); **no toca pr
 - **Al desplegar una migración nueva**, sus ensayos pasan a `SUITE_HISTORICA` en el commit que registra el
   despliegue (el «D»). Hasta entonces van en la suite de cada commit.
 
-### 2.3 Contenedor TCP por worker (D5)
+### 2.3 Contenedor TCP limpio por módulo (D5, corregida)
 
-- Fixture de sesión nueva, `pg17_contenedor_tcp`, en el `conftest.py` de `runtime_supabase`, con el mismo arranque
-  que hoy (puerto **solo en 127.0.0.1**, tmpfs) y sustituyendo a los dos contenedores de módulo.
-- Los dos módulos van en la **misma familia**: en una ejecución hay como máximo un contenedor TCP y las
-  plantillas 18 y 19 se construyen una vez.
+- Fixture única, `pg17_contenedor_tcp`, en el `conftest.py` de `runtime_supabase`, con el mismo arranque que antes
+  (puerto **solo en 127.0.0.1**, tmpfs) y sustituyendo a los dos contenedores de módulo de 2AX y 2AZ. Los módulos que
+  importan la fixture de 2AZ la usan igual.
+- **Por módulo, no por worker** (`MEDIDO`, 2026-11-20): con uno por worker, la histórica dio 126 de 127. El ensayo
+  de la 29 comprueba, como en producción, que su rol aún no existe; otro módulo anterior del mismo worker ya lo
+  había creado en el clúster (los roles son comunes a todas sus bases). Pio decidió volver al contenedor limpio
+  por módulo. Casi todos los ensayos TCP son históricos, así que solo encarece la histórica.
 - Sigue separado de los contenedores sin red: mezclar ambos rompería el modo certificado.
 
 ### 2.4 Regla de reparación (D6 y D7)
@@ -153,5 +156,20 @@ Toca `.claude/` y REGLAS_CRITICAS: **pedirá el OK de Pio**. Instalar pytest-xdi
 
 ## 5. Medición
 
-`PENDIENTE`: se completa en la implementación, con la suite `completa` nueva con 4, 8 y 12 workers y el valor por
-defecto elegido.
+`MEDIDO` (2026-11-20, este equipo: 24 núcleos, Docker con 16 GB). Por decisión de Pio se mide solo con 4 y 8
+workers (sin 12).
+
+| Suite | Workers | Resultado | Tiempo |
+|---|---|---|---|
+| Rápida (`-m "not pg17_local"`) | 8 | 2470 passed | 0:49 (antes 2:05) |
+| Completa nueva (`-m "not historica"`) | 4 | 3077 passed | 11:57 |
+| Completa nueva (`-m "not historica"`) | 8 | 3077 passed | **9:09** (antes, la completa: 41:14) |
+
+- **Valor por defecto: 8** (`pytest.ini`). Con 8 workers la suma de tiempos por test es de ~71 min y el reparto
+  queda cerca del ideal (~8:50). La familia más larga, la serie 2BP (~8,3 min en paralelo), marca el mínimo: más
+  workers apenas ganarían.
+- **Coste del paralelismo:** cada test tarda más en paralelo (la competencia por Docker y `docker exec`). Por eso
+  8 workers rinden ~4,5 veces lo de la serie y no 8.
+- **Familias:** cada módulo `pg17_local` es su propia familia, salvo los tres de Trabajadores (31, 33 y 34), que
+  comparten la cadena de plantillas y van juntos. La serie 2BP queda sola.
+- La histórica (127 tests) se mide con la suite final del hito.

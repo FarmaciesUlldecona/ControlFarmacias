@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# Hito SUITE: también ``historica_exigida`` (``exacta``/``semanal``/null) e ``historica`` (resumen de la línea).
 CAMPOS_SUITE = ("alcance", "verde", "passed", "failed", "errors", "skipped", "ts_inicio", "ts_fin",
                 "arbol_cambiado_durante_la_suite")
 
@@ -33,12 +34,12 @@ def _estado_git():
 def consultar(repositorio: Path = ROOT, ruta_suites: str | None = None) -> dict:
     eg = _estado_git()
     detalle = eg.detalle_cambios(str(repositorio))
-    huella = eg.huella_de(detalle)
     rutas = [ruta for ruta, _ in detalle["rutas"]]
-    exigida = eg.suite_exigida(rutas)
-    suite = eg.suite_valida(huella, exigida, ruta_suites, str(repositorio))
+    # Hito SUITE: las mismas reglas que la barrera de commit (completa directa o por reparación + histórica).
+    estado = eg.suites_para_commit(rutas, ruta_suites, str(repositorio), detalle=detalle)
+    exigida, suite, historica = estado["exigida"], estado["suite"], estado["historica"]
     pasa = bool(
-        rutas and suite
+        rutas and suite and estado["ok"]
         and suite.get("verde") is True
         and suite.get("arbol_cambiado_durante_la_suite") is False
         and suite.get("base") == detalle["base"]
@@ -48,7 +49,9 @@ def consultar(repositorio: Path = ROOT, ruta_suites: str | None = None) -> dict:
         "base": detalle["base"],
         "rutas": rutas,
         "exigida": exigida,
-        "suite": None if suite is None else {c: suite.get(c) for c in CAMPOS_SUITE},
+        "suite": None if suite is None else {**{c: suite.get(c) for c in CAMPOS_SUITE}, "via": suite.get("via")},
+        "historica_exigida": estado["historica_modo"],
+        "historica": None if historica is None else {c: historica.get(c) for c in CAMPOS_SUITE},
         "t2": "PASS" if pasa else "FAIL",
     }
 

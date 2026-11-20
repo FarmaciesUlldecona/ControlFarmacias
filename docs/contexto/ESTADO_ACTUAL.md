@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-19 (36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-20 (Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -342,6 +342,26 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Hito SUITE: suite paralela, histórica y regla de reparación (2026-11-20)
+
+- **Decisiones de Pio D1–D8** y medición en `pruebas/auditoria_suite/DISENO.md`; reglas en REGLAS_CRITICAS («Pruebas»).
+- pytest-xdist 3.8.0 (`requirements-tests.txt`), 8 workers por defecto, reparto por familia de plantillas y un
+  contenedor TCP limpio por módulo para los ensayos (D5 corregida: uno por worker rompía el ensayo de la 29).
+- **Medido:** la completa nueva (`-m "not historica"`) tarda 9:09 con 8 workers (11:57 con 4), frente a 41:14 de la
+  completa anterior; la rápida, 0:49.
+- Suite histórica: 127 tests (ensayos de despliegue y rollbacks de 17–36), exigida por rutas tocadas, cada 7 días y
+  antes de cada despliegue.
+- Regla de reparación (a) y (b) en la barrera de commit y en T2. No toca producción, Supabase ni Farmatic.
+
+### Noche REAL 19→20/11, primera con R20 (revisión READ_ONLY, 2026-11-20)
+
+- `NOCHE_OK`, 21:15:04–21:15:51 UTC, sin puertas fallidas, informe con SHA256 coincidente y `POSTCHECK_OK` sin filas
+  ajenas. 4 documentos reclamados: 3 no soportados y 1 defecto (`9c9668ae`, abono de DERMOFARM,
+  `EXTRACCION_LOCAL_ERROR`, reintento programado; los defectos directos a REVISION llegan con la 37).
+- **08013495 CONCILIADA (−0,09)** con las dos líneas `UNO_A_VARIOS` de R20 (08D79747 77,49 + 08D79747A 40,76) y
+  **08013498 CONCILIADA (0,00)**, iguales a la simulación de 36-D. Queda 1 factura sin conciliar (HEFAME, excluida).
+- Evidencia: `C:\ControlFarmacias\evidencias_noche_r20_1911\` (SHA256SUMS).
 
 ### R20: migración 36 implementada en local (2026-11-19)
 

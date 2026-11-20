@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-19 (36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-20 (Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -655,8 +655,9 @@ módulos parciales.
   en producción por un `ALTER ROLE … NOSUPERUSER` que local aceptaba como superusuario. Se aplica a los
   despliegues pendientes desde el 2BN-D (los ya desplegados no se reensayan).
 - **Norma de Pio de tests antes de commit (Hito 2BE-D, 2026-10-29), sin excepciones:**
-  - **suite completa con `pg17_local`** (`pytest tests/ --basetemp=<propio>`, con Docker disponible: ningún
-    test `pg17_local` omitido) si el commit toca `src/`, `sql/`, scripts de despliegue o cualquier código que
+  - **suite completa con `pg17_local`** (desde el Hito SUITE, `pytest tests/ -m "not historica" --basetemp=<propio>`,
+    en paralelo, con Docker disponible: ningún test `pg17_local` omitido) **más la histórica** cuando la exige el
+    Hito SUITE (abajo), si el commit toca `src/`, `sql/`, scripts de despliegue o cualquier código que
     acceda a Supabase o Farmatic, también las herramientas de `pruebas/`;
   - si solo toca documentación: **suite rápida** (`pytest tests/ -m "not pg17_local" --basetemp=<propio>`);
   - en la duda: suite completa.
@@ -665,7 +666,8 @@ módulos parciales.
   - **Evidencia mecánica (Hito 2BH, 2026-10-30):** cada ejecución de pytest añade una línea a
     `logs/agentes/suites.jsonl` (`tests/registro_suite.py`) con la huella exacta del árbol probado (la de la
     barrera de commit, calculada al empezar y al terminar), passed/failed/errors/skipped, fechas, alcance
-    (`completa`, `rapida` o `parcial`) y `verde`. «Documentación» = ficheros `.md` fuera de `.claude/`.
+    (`total`, `completa`, `historica`, `rapida` o `parcial`, Hito SUITE) y `verde`. «Documentación» = ficheros
+    `.md` fuera de `.claude/`.
     - La **barrera de commit** exige una línea con la huella actual, alcance suficiente y en verde
       (`commit_sin_suite`, `commit_suite_roja`).
     - `revisor-reglas` (T2) comprueba una línea con `base` = HEAD, `rutas` = `git status`, alcance suficiente y
@@ -685,6 +687,42 @@ módulos parciales.
       tabla, cuenta como FAIL; un PASS cuya tabla trae alguna regla INCONCLUSO cuenta como INCONCLUSO. Hooks:
       `registrar_uso_agente.py` (`veredicto_revisor`, `reglas_inconclusas`), `estado_git.py`
       (`_veredicto_grupo`) y `barreras_agentes.py` (`barrera_commit`).
+- **Hito SUITE (DECISIONES DE PIO D1–D8, 2026-11-20; diseño y medición en `pruebas/auditoria_suite/DISENO.md`):**
+  - **Suite paralela:** pytest-xdist **3.8.0**, fijado en `requirements-tests.txt` y exigido por `pytest.ini`
+    (`required_plugins`); `addopts = -n 8 --dist loadgroup` (8 tras medir 4 y 8 workers, D2). Cada worker tiene su
+    propio contenedor `pg17_local` sin red; los ensayos de despliegue usan **un contenedor TCP limpio por módulo**
+    (solo 127.0.0.1; D5 corregida por Pio: uno por worker no vale, porque los roles son comunes al clúster). Reparto
+    por **familia de plantillas** (`FAMILIAS`, D3). `-n 0` ejecuta en serie.
+  - **Alcances del registro:** `total` (sin `-m`), **`completa`** (`-m "not historica"`, la de cada commit de
+    código), `historica` (`-m historica`), `rapida` (`-m "not pg17_local"`) y `parcial`. Con xdist solo escribe el
+    proceso principal.
+  - **Suite histórica (D4):** ensayos de despliegue y rollbacks de migraciones ya desplegadas, en `SUITE_HISTORICA`
+    (`tests/facturas/runtime_supabase/conftest.py`). Al desplegar una migración, sus ensayos entran ahí en el
+    commit del «D». La barrera exige la histórica (o total) en verde:
+    - **sobre la misma huella** si el cambio toca `sql/`, `pg17_local.py`, ese `conftest.py`, un `desplegar_*` o
+      `preflight*` de `pruebas/`, `pruebas/auditoria_2at/`, `puerta_git.py` o un módulo de `SUITE_HISTORICA`;
+    - **de 7 días o menos** (la última del repositorio) en cualquier otro commit de código;
+    - **antes de cada despliegue:** la barrera bloquea la ejecución de un script `desplegar_<n>` sin histórica en
+      verde sobre la huella actual (`despliegue_sin_historica`).
+  - **Regla de reparación (D6, D7):** una ejecución parcial en verde equivale a la `completa` sobre su huella si,
+    respecto de la última `completa`/`total` roja con la misma base:
+    - **(a)** el árbol no ha cambiado, la roja tiene **como máximo 3** fallados y la **primera** parcial posterior
+      los ejecuta todos (**1 repetición**);
+    - **(b)** solo cambian módulos `tests/**/test_*.py` y la parcial ejecuta todos los fallados y **enteros** los
+      módulos cambiados (como argumento, sin `-k`/`-m` ni deseleccionados). `tests/conftest.py`,
+      `tests/facturas/runtime_supabase/pg17_local.py`, `tests/registro_suite.py`, `tests/consultar_suite.py` y
+      cualquier otro fichero de `tests/` que no sea un módulo `test_*.py` **cuentan como código**;
+    - **(c)** si toca código: suite completa.
+    
+    T2 (`tests/consultar_suite.py`) aplica las mismas reglas. Hooks: `estado_git.py` (`completa_valida`,
+    `historica_valida`, `suites_para_commit`, `es_despliegue`) y `barreras_agentes.py` (`barrera_commit`,
+    `barrera_despliegue`; `commit_sin_historica`, `commit_historica_roja`).
+  - **Excepciones expresas de Pio (2026-11-20, Hito SUITE):** Read y Edit, **sin scripts por Bash**, sobre los
+    ficheros que nombran el registro de suites por ser su infraestructura —
+    `tests/test_registro_suite_2bh.py` (solo para un fichero temporal en `tmp_path`),
+    `.claude/hooks/barreras_agentes.py`, `.claude/hooks/estado_git.py`, `tests/test_hook_barreras_agentes.py` y
+    `tests/consultar_suite.py`— y ejecutar sus tests con pytest. Nada se lee ni se escribe en `logs/agentes`.
+    Cualquier otro fichero que lo nombre: autorización nueva.
 - Pytest debe usar directorios temporales mediante `CONTROLFARMACIAS_LOG_DIR` y
   `CONTROLFARMACIAS_DATA_DIR`.
 - Los tests no pueden conectarse a Farmatic/Supabase reales ni escribir en

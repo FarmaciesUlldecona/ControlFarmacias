@@ -244,8 +244,16 @@ def _suites(tmp_path, *registros):
     return str(ruta)
 
 
+def _historica_semanal():
+    """Hito SUITE: histórica en verde de hoy (sobre otra huella), la que exige la barrera en un commit de código
+    que no toca rutas de despliegue."""
+    import datetime
+    return {"huella": "h_historica", "alcance": "historica", "verde": True,
+            "ts_fin": datetime.datetime.now().astimezone().isoformat(timespec="seconds")}
+
+
 def _suite_completa_verde(tmp_path, huella="h1"):
-    return _suites(tmp_path, {"huella": huella, "alcance": "completa", "verde": True})
+    return _suites(tmp_path, _historica_semanal(), {"huella": huella, "alcance": "completa", "verde": True})
 
 
 def test_commit_sin_revision_bloqueado(tmp_path):
@@ -437,7 +445,7 @@ def test_commit_con_suite_roja_bloqueado(tmp_path):
 
 
 def test_una_ejecucion_parcial_posterior_no_invalida_la_completa(tmp_path):
-    suites = _suites(tmp_path, {"huella": "h1", "alcance": "completa", "verde": True},
+    suites = _suites(tmp_path, _historica_semanal(), {"huella": "h1", "alcance": "completa", "verde": True},
                      {"huella": "h1", "alcance": "parcial", "verde": False, "failed": 3, "errors": 0})
     assert barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], suites).codigo == 0
 
@@ -1259,12 +1267,14 @@ def repo_con_cambios(repo):
 def test_consulta_suite_pass_sin_exponer_el_registro(repo_con_cambios, tmp_path_factory):
     ruta = repo_con_cambios
     otra = _linea_suite(ruta, huella="otra", base="otra")
-    registro = _registro_suites(tmp_path_factory, otra, _linea_suite(ruta))
+    # Hito SUITE: el repositorio de prueba no tiene SUITE_HISTORICA, así que la histórica se exige exacta.
+    registro = _registro_suites(tmp_path_factory, otra, _linea_suite(ruta, alcance="historica"), _linea_suite(ruta))
     respuesta = _consulta().consultar(ruta, registro)
     assert respuesta["t2"] == "PASS"
-    assert respuesta["exigida"] == "completa"
+    assert respuesta["exigida"] == "completa" and respuesta["historica_exigida"] == "exacta"
+    assert respuesta["suite"]["via"] == "directa" and respuesta["historica"]["verde"] is True
     assert respuesta["rutas"] == ["a.txt", "nuevo.py"]
-    assert set(respuesta["suite"]) == set(_consulta().CAMPOS_SUITE)
+    assert set(respuesta["suite"]) == set(_consulta().CAMPOS_SUITE) | {"via"}
     assert "secreto" not in json.dumps(respuesta) and "otra" not in json.dumps(respuesta)
 
 
