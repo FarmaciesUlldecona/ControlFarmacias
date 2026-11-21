@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-21 (migración 37: defectos de extracción directos a REVISION, solo en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-21 (37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -343,9 +343,9 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
-### Migración 37: defectos de extracción directos a REVISION, solo en local (2026-11-21)
+### Migración 37: defectos de extracción directos a REVISION, implementada en local (2026-11-21)
 
-DECISIONES DE PIO D1–D7, `CONFIRMADO POR TEST` en PostgreSQL 17 local, **sin desplegar**. Diseño en
+DECISIONES DE PIO D1–D7, `CONFIRMADO POR TEST` en PostgreSQL 17 local y **desplegada en producción** (37-D, abajo). Diseño en
 `pruebas/auditoria_37/DISENO.md`; reglas en REGLAS_CRITICAS («Persistencia y conciliación», migración 37).
 
 - **Migración 37** `37_cf_defectos_directos_a_revision.sql` (+ rollback al esquema 36): columna
@@ -361,8 +361,29 @@ DECISIONES DE PIO D1–D7, `CONFIRMADO POR TEST` en PostgreSQL 17 local, **sin d
   `DEFECTO_DOCUMENTO`. La regla de la 17 trata las dos clases igual, así que el estado y los intentos no cambian.
 - **`desplegar_37.py`** ensayado con la imitación del `postgres` de Supabase: aplicada, segundo intento revertido y
   rollback con la imitación. Exige el commit ya subido y los flags apagados.
-- `PENDIENTE`: 37-D (Pio apaga los flags, preflight READ_ONLY, `desplegar_37` una vez, postcheck y Pio los vuelve a
-  encender) y el plan de reprocesado por lector (§3 del diseño).
+- **37-D (2026-11-21, `CONFIRMADO EN PRODUCCIÓN`, confirmación explícita de Pio):** evidencias en
+  `C:\ControlFarmacias\evidencias_37_d\` (`SHA256SUMS.txt`).
+  - **Preflight READ_ONLY** con los flags apagados por Pio: puerta git abierta (1289091 en el remoto; SHA LF de la
+    37 `5a3f2c3d…66017e`, igual en el commit), sin noche en curso, precondiciones 5 de 5 y captura previa. La firma
+    de 7 parámetros tiene un solo beneficiario de EXECUTE además del propietario (el mismo que la de 6) y nada para
+    anon, authenticated ni PUBLIC.
+  - **Barrera de despliegue:** el primer intento lo paró `despliegue_sin_historica`, porque la huella de la suite
+    cambia con el commit. Con el OK de Pio se repitió la histórica sobre 1289091 (127 passed). Mejora anotada: huella
+    por contenido del árbol (`PENDIENTE` de orden de Pio).
+  - **`desplegar_37` una sola vez** (10:11:23–10:11:29 UTC): **APLICADA**; precondiciones 5 de 5 y las
+    postcondiciones ciertas (datos sin cambios, columna `lector`, firma de 8 con su regla y privilegios, firma de 7
+    como envoltorio).
+  - **Postcheck por fila:** conteos (201 documentos, 273 ejecuciones, 754 historial, 67 facturas, 72
+    conciliaciones) y huellas fila a fila idénticos, con la configuración, la ACL de la firma de 7 y la de 6 y el
+    reprocesado. Ninguna fila con fecha en la ventana del despliegue (67 columnas de fecha). Solo cambian la firma
+    de 8 (regla `DEFECTO_DIRECTO_A_REVISION`, security definer, propietario postgres, el mismo beneficiario que la de
+    7 y nada para anon, authenticated ni PUBLIC), la de 7 (ahora envoltorio SQL con el lector null) y la columna
+    `lector` (jsonb, admite null, sin valor por defecto, 0 filas con lector). `defectos_37_en_bd` = `true`.
+  - **Pio volvió a encender los flags.** La comprobación READ_ONLY da flags `true`, `conciliacion_r20 = true`, la 37
+    detectada, Luna `false`, solo PIO, 0 bloqueos, reclamaciones y documentos en NORMALIZANDO, límites 20 + 20 y las
+    puertas de la noche REAL sin fallos, salvo las tareas de esa noche, que aún no habían corrido.
+  - `PENDIENTE`: la noche 21→22/11, la primera con la 37 y con 20 + 20 (si `9c9668ae` vuelve a fallar, pasa a
+    `REVISION` con 3 intentos y su lector), y el plan de reprocesado por lector (§3 del diseño).
 
 ### Noche REAL 20→21/11, primera con el código de SUITE (revisión READ_ONLY, 2026-11-21)
 

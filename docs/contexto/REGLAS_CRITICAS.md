@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-21 (migración 37: defectos de extracción directos a `REVISION`, solo en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-21 (37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -186,8 +186,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - Clasificación de motivos: `runtime_supabase/clasificacion_fallos.py`; un motivo
     desconocido es `TRANSITORIO`, nunca `NO_SOPORTADO`.
 - **Migración 37: defectos de extracción directos a `REVISION`** (DECISIONES DE PIO D1–D7, 2026-11-15, 2026-11-18
-  y 2026-11-19; diseño en `pruebas/auditoria_37/DISENO.md`). `CONFIRMADO POR TEST` en PostgreSQL 17 local; **sin
-  desplegar** (37-D pendiente de confirmación de Pio).
+  y 2026-11-19; diseño en `pruebas/auditoria_37/DISENO.md`). `CONFIRMADO POR TEST` en PostgreSQL 17 local y
+  **desplegada en producción** en el 37-D, 2026-11-21, con confirmación explícita de Pio (`APLICADA`, postcheck por
+  fila OK; ver ESTADO_ACTUAL). Rige la R3 revisada.
   - **R3 revisada (con la 37 en la BD):** `DEFECTO_DOCUMENTO` suma un intento (D4) y pasa a `REVISION` en el
     primer fallo, sin espera; el historial lo marca con `regla: DEFECTO_DIRECTO_A_REVISION`. `TRANSITORIO` y
     `NO_SOPORTADO`, sin cambios. Sin la 37 rige la R3 de la 17.
