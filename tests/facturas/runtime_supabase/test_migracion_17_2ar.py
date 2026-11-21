@@ -9,6 +9,7 @@ import pytest
 from src.facturas.runtime_supabase.clasificacion_fallos import (
     CLASES_FALLO,
     DEFECTO_DOCUMENTO,
+    MOTIVOS_ALMACENAMIENTO,
     MOTIVOS_DEFECTO_DOCUMENTO,
     MOTIVOS_NO_SOPORTADO,
     NO_SOPORTADO,
@@ -29,7 +30,8 @@ ROLLBACK = ROOT / "sql/migrations/17_cf_replay_y_fallos_no_bloqueantes.rollback.
     ("DocumentoNoAptoManual", "PROVEEDOR_NO_RECONOCIDO", NO_SOPORTADO),
     ("DocumentoNoAptoManual", "REQUIERE_OCR_O_LUNA_NO_AUTORIZADO", NO_SOPORTADO),
     ("DocumentoNoAptoManual", "ADAPTACION_NO_CERTIFICADA", NO_SOPORTADO),
-    ("DocumentoNoAptoManual", "SHA256_NO_COINCIDE", DEFECTO_DOCUMENTO),
+    # 37 (D5): los motivos de almacenamiento (lista C) son TRANSITORIO.
+    ("DocumentoNoAptoManual", "SHA256_NO_COINCIDE", TRANSITORIO),
     ("DocumentoNoAptoManual", "EXTRACCION_LOCAL_ERROR", DEFECTO_DOCUMENTO),
     ("DocumentoNoAptoManual", "OBJETO_STORAGE_NO_DISPONIBLE:RuntimeError", TRANSITORIO),
     ("ValueError", "NINGUNA_FACTURA_AUTORIZABLE_AUTOMATICAMENTE", DEFECTO_DOCUMENTO),
@@ -62,7 +64,9 @@ def test_todos_los_motivos_del_compositor_estan_clasificados():
     # TRANSITORIO documentado en DISENO.md 2AR.
     transitorios = {"OBJETO_STORAGE_NO_DISPONIBLE", "CAMPOS_NO_SOLICITADOS"}
     assert all(clasificar_fallo("DocumentoNoAptoManual", m) == TRANSITORIO for m in transitorios)
-    sin_clasificar = motivos - MOTIVOS_NO_SOPORTADO - MOTIVOS_DEFECTO_DOCUMENTO - transitorios
+    # 37 (D5): los de almacenamiento (lista C) estan clasificados como TRANSITORIO.
+    assert all(clasificar_fallo("DocumentoNoAptoManual", m) == TRANSITORIO for m in MOTIVOS_ALMACENAMIENTO)
+    sin_clasificar = motivos - MOTIVOS_NO_SOPORTADO - MOTIVOS_DEFECTO_DOCUMENTO - MOTIVOS_ALMACENAMIENTO - transitorios
     assert sin_clasificar == set()
 
 

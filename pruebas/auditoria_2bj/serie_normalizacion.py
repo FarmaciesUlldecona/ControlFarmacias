@@ -7,8 +7,10 @@ solo con el cliente del .env y el compositor manual del 2AP; sin Farmatic):
 
 Decisiones de Pio (2026-10-30, ``pruebas/auditoria_2bj/DISENO.md``): la primera tanda tiene como maximo 5
 ejecuciones y las siguientes como maximo 20; cada tanda termina al persistir un documento Alliance; los defectos
-de extraccion previstos por el plan consumen intentos (R3) y no son parada; ejecuta Claude con confirmacion
-expresa de Pio por tanda.
+de extraccion previstos por el plan no son parada; ejecuta Claude con confirmacion expresa de Pio por tanda.
+Migracion 37 (decisiones de Pio D1-D7): con la 37 en la BD un defecto de extraccion pasa a REVISION en el primer
+fallo (cuenta un intento, D4); sin ella, consume intentos como antes (R3). Los motivos de almacenamiento son
+TRANSITORIO (lista C) y quedan SIN_PREDICCION en el plan.
 
 ``plan`` no escribe nada: lee la cola en el ordering oficial (el del nucleo de la migracion 16, modo
 MANUAL_ONE_SHOT) y predice el resultado de cada documento con la cadena oficial en memoria sobre el PDF del
@@ -47,6 +49,7 @@ from auditoria_readonly import (  # noqa: E402
 from src.facturas.runtime_supabase import puerta_git as _puerta_git  # noqa: E402
 from src.facturas.runtime_supabase.clasificacion_fallos import (  # noqa: E402
     DEFECTO_DOCUMENTO, NO_SOPORTADO, clasificar_fallo)
+from src.facturas.runtime_supabase.lectura_readonly import SQL_MIGRACION_37, defectos_37_en_bd  # noqa: E402
 from src.facturas.runtime_supabase.noche_automatica import TABLAS_PAGOS, TABLAS_TRABAJADORES  # noqa: E402
 
 # Tablas que escribe la web (Trabajadores; Pagos, H6): fuera del veredicto, informadas aparte.
@@ -217,6 +220,8 @@ def _estado_operativo(lector) -> dict:
         f"select documento_id::text, prevision from public.cf_huerfanos_normalizacion('{GRACIA_HUERFANOS}')")]
         if out["migracion_25"] else None)
     out["max_intentos"] = lector.valor("select normalizacion_max_intentos from public.cf_configuracion where id")
+    # Migracion 37: firma de 8 parametros y columna lector (solo catalogo).
+    out["migracion_37"] = lector.valor(SQL_MIGRACION_37)
     out["cola"] = [list(r) for r in lector.filas(SQL_COLA)]
     return out
 
@@ -269,7 +274,9 @@ def puertas(estado: dict, plan_docs: dict, referencia: dict, tareas: dict, ahora
     return fallos
 
 
-def resultado_esperado(prediccion: dict, intentos_antes: int, max_intentos: int) -> dict:
+def resultado_esperado(prediccion: dict, intentos_antes: int, max_intentos: int, defectos_37: bool = False) -> dict:
+    """Con la 37 (``defectos_37``) un defecto de extraccion pasa a REVISION en el primer fallo, sin depender de
+    ``max_intentos``; sin ella, ERROR con espera o REVISION al maximo (R3, regla de la 17)."""
     clase = prediccion["clase"]
     if clase == "ALLIANCE":
         return {"estado_lectura": "NORMALIZADA", "estado_persistencia": "COMPLETA",
@@ -278,7 +285,7 @@ def resultado_esperado(prediccion: dict, intentos_antes: int, max_intentos: int)
     if clase == "NO_SOPORTADO":
         return {"estado_lectura": "PROVEEDOR_NO_SOPORTADO", "ultima_clase_fallo": NO_SOPORTADO,
                 "intentos": intentos_antes, "facturas": []}
-    return {"estado_lectura": "REVISION" if intentos_antes + 1 >= max_intentos else "ERROR",
+    return {"estado_lectura": "REVISION" if defectos_37 or intentos_antes + 1 >= max_intentos else "ERROR",
             "ultima_clase_fallo": DEFECTO_DOCUMENTO, "intentos": intentos_antes + 1, "facturas": []}
 
 
@@ -354,7 +361,10 @@ def _ejecutar_una(cliente, directorio: Path):
     from src.facturas.runtime_supabase.repositorios import RepositorioRuntimeSupabase
 
     configuracion = RepositorioRuntimeSupabase(cliente).obtener_configuracion()
-    return construir_worker_manual_productivo(cliente, configuracion, WORKER_BASE, directorio).ejecutar_una_manual()
+    # Migracion 37: la firma de 8 parametros solo si una sesion READ_ONLY la detecta (como R20 en el 2BP).
+    return construir_worker_manual_productivo(
+        cliente, configuracion, WORKER_BASE, directorio,
+        defectos_37=lambda: _ejecutar_lectura(lambda l: {"d": defectos_37_en_bd(l)})[1]["d"]).ejecutar_una_manual()
 
 
 # --------------------------------------------------------------------------- tanda
@@ -451,7 +461,8 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
             return cerrar("PARADA", fallos)
         documento_id = anterior["cola"][0][0]
         previsto = plan_docs[documento_id]["prediccion"]
-        esperado = resultado_esperado(previsto, anterior["cola"][0][4], anterior["max_intentos"])
+        esperado = resultado_esperado(previsto, anterior["cola"][0][4], anterior["max_intentos"],
+                                      anterior.get("migracion_37") is True)
         ejecucion = {"documento_id": documento_id, "clase": previsto["clase"], "esperado": esperado,
                      "inicio_utc": _ahora()}
         registro["ejecuciones"].append(ejecucion)

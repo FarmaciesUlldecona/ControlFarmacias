@@ -209,6 +209,21 @@ def r20_habilitada(lector: Any) -> bool:
     return lector.valor(SQL_VALOR_R20) is True
 
 
+FIRMA_FALLO_37 = "public.cf_registrar_fallo_normalizacion(uuid,text,text,text,text,text,text,jsonb)"
+SQL_MIGRACION_37 = (
+    f"select to_regprocedure('{FIRMA_FALLO_37}') is not null and exists (select 1 from information_schema.columns "
+    "where table_schema = 'public' and table_name = 'normalizacion_ejecuciones' and column_name = 'lector')")
+
+
+def defectos_37_en_bd(lector: Any) -> bool:
+    """Migracion 37 (DECISIONES DE PIO D5-D7, 2026-11-19): la firma de 8 parametros y la columna ``lector`` presentes.
+
+    Solo catalogo (``to_regprocedure`` e ``information_schema``, nunca fallan): no aborta la transaccion de solo
+    lectura. Sin la 37 el codigo llama a la firma de 7 parametros de la 17, como antes.
+    """
+    return lector.valor(SQL_MIGRACION_37) is True
+
+
 def simular_conciliacion(lector: LectorReadOnly, factura_id: str, disparador: str = "AUTOMATICO") -> dict[str, Any]:
     """Camino de ``WorkerConciliacion._procesar`` sin claim ni escrituras (copia del 2AT con ``disparador``)."""
     from src.facturas.completitud_documental import validar_documento_antes_de_persistir

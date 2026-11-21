@@ -2,8 +2,14 @@
 
 NO_SOPORTADO: falta de soporte de proveedor/layout/capacidad; el documento pasa a
 PROVEEDOR_NO_SOPORTADO y solo vuelve a la cola por reprocesado explicito.
-DEFECTO_DOCUMENTO y TRANSITORIO: reintentos acotados con backoff y REVISION al
-maximo. Un motivo desconocido nunca se trata como no soportado.
+DEFECTO_DOCUMENTO (migracion 37, decisiones de Pio D1 y D5): solo los motivos de
+EXTRACCION (lista A) y de IDENTIDAD DE FARMACIA (lista B); con la 37 en la BD pasan a
+REVISION en el primer fallo (sin la 37, reintentos como TRANSITORIO). Solo vuelven por
+reprocesado explicito cuando cambie el lector.
+TRANSITORIO: reintentos acotados con backoff y REVISION al maximo; incluye los motivos
+de ALMACENAMIENTO (lista C, ``MOTIVOS_ALMACENAMIENTO``), que pueden ser una subida a
+medias. Un motivo desconocido es TRANSITORIO, nunca no soportado ni defecto.
+Listas: pruebas/auditoria_37/DISENO.md, seccion 2.1.
 """
 from __future__ import annotations
 
@@ -23,30 +29,36 @@ MOTIVOS_NO_SOPORTADO = frozenset({
     "ADAPTADOR_MULTIFACTURA_NO_CERTIFICADO",
 })
 
+# Lista A (extraccion) y lista B (identidad de farmacia): directos a REVISION con la 37 (D5).
 MOTIVOS_DEFECTO_DOCUMENTO = frozenset({
-    "SHA256_NO_COINCIDE",
-    "SHA256_REGISTRADO_INVALIDO",
-    "RUTA_STORAGE_NO_COINCIDE_CON_CLAIM",
-    "RUTA_STORAGE_NO_SEGURA",
-    "OBJETO_STORAGE_VACIO",
-    "DOCUMENTO_RECLAMADO_NO_LOCALIZADO",
     "EXTRACCION_LOCAL_ERROR",
-    "DOCUMENTO_INCOMPLETO",
-    "INVENTARIO_DOCUMENTAL_INVALIDO",
-    "SEGMENTO_DUPLICADO_O_AUSENTE",
-    "RANGO_FACTURA_INVALIDO",
-    "PROVENANCE_INCOMPLETA",
-    "SEGMENTOS_SOLAPADOS",
-    "EVIDENCIA_FUERA_DE_FACTURA",
-    "COBERTURA_DOCUMENTAL_INCOMPLETA",
-    "SELECCION_NO_PERTENECE_AL_DOCUMENTO",
     "EXTRACCION_INCOMPLETA_REQUIERE_REVISION",
-    "FARMACIA_DOCUMENTO_NO_DEMOSTRABLE",
-    "FARMACIA_DOCUMENTO_CONTRADICTORIA",
-    "NINGUNA_FACTURA_AUTORIZABLE_AUTOMATICAMENTE",
     "CAMPOS_PENDIENTES_TRAS_EXTRACCION",
     "DOCUMENTO_NORMALIZADO_AUSENTE",
+    "DOCUMENTO_INCOMPLETO",
+    "COBERTURA_DOCUMENTAL_INCOMPLETA",
+    "INVENTARIO_DOCUMENTAL_INVALIDO",
     "INVENTARIO_RELECTURA_INCOMPATIBLE",
+    "SEGMENTO_DUPLICADO_O_AUSENTE",
+    "SEGMENTOS_SOLAPADOS",
+    "RANGO_FACTURA_INVALIDO",
+    "EVIDENCIA_FUERA_DE_FACTURA",
+    "SELECCION_NO_PERTENECE_AL_DOCUMENTO",
+    "PROVENANCE_INCOMPLETA",
+    "NINGUNA_FACTURA_AUTORIZABLE_AUTOMATICAMENTE",
+    # Lista B: identidad de farmacia.
+    "FARMACIA_DOCUMENTO_NO_DEMOSTRABLE",
+    "FARMACIA_DOCUMENTO_CONTRADICTORIA",
+})
+
+# Lista C (almacenamiento, D1 y D5): TRANSITORIO, con reintentos y espera (R3).
+MOTIVOS_ALMACENAMIENTO = frozenset({
+    "SHA256_NO_COINCIDE",
+    "SHA256_REGISTRADO_INVALIDO",
+    "OBJETO_STORAGE_VACIO",
+    "DOCUMENTO_RECLAMADO_NO_LOCALIZADO",
+    "RUTA_STORAGE_NO_COINCIDE_CON_CLAIM",
+    "RUTA_STORAGE_NO_SEGURA",
 })
 # 2BL: IDEMPOTENCIA_PAYLOAD_DISTINTO es un conflicto con una ejecucion ya registrada, no un defecto del
 # documento (en la serie 2BJ fue un fallo de persistencia tomado por repeticion): queda como TRANSITORIO.
@@ -63,6 +75,8 @@ def clasificar_fallo(codigo: str | None, detalle: str | None) -> str:
     motivo = texto.split(":", 1)[0].strip()
     if motivo in MOTIVOS_NO_SOPORTADO:
         return NO_SOPORTADO
+    if motivo in MOTIVOS_ALMACENAMIENTO:
+        return TRANSITORIO
     if motivo in MOTIVOS_DEFECTO_DOCUMENTO:
         return DEFECTO_DOCUMENTO
     if "INVENTARIO_RELECTURA_INCOMPATIBLE" in texto:

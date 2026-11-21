@@ -205,7 +205,13 @@ def _ultima_ejecucion(lector: LectorReadOnly, documento_id: str) -> dict:
         return {}
     fila = json.loads(filas[0][0])
     return {k: (v[:300] if isinstance(v, str) else v) for k, v in fila.items()
-            if k in ("estado", "error_codigo", "error_mensaje", "motivo", "clase_fallo", "disparador", "intento")}
+            if k in ("estado", "error_codigo", "error_detalle", "error_mensaje", "motivo", "clase_fallo", "disparador",
+                     "intento", "lector")}
+
+
+def motivo_defecto(ejecucion: dict) -> str | None:
+    """37 (DISENO §5): el motivo literal del fallo (``EXTRACCION_LOCAL_ERROR``, ...) para el para_revisar."""
+    return str(ejecucion.get("error_detalle") or "").split(":", 1)[0].strip() or None
 
 
 def _factura(lector: LectorReadOnly, factura_id: str) -> dict:
@@ -460,7 +466,8 @@ def _fase_normalizacion(entorno: Entorno, noche: Noche, worker, limite: int, fin
         noche.documentos.append(registro)
         if clase == "DEFECTO":
             noche.para_revisar.append({"tipo": "DEFECTO", "documento_id": previsto, "estado": estado,
-                                       "intentos": despues["intentos"], "ejecucion": ejecucion})
+                                       "intentos": despues["intentos"], "motivo": motivo_defecto(ejecucion),
+                                       "ejecucion": ejecucion})
     noche.fin_por_limite = True
 
 
@@ -753,6 +760,14 @@ def _r20_en_bd(conexion) -> bool:
         return r20_habilitada(lector)
 
 
+def _37_en_bd(conexion) -> bool:
+    """Migracion 37 (DECISIONES DE PIO D5-D7): la firma de 8 parametros y la columna ``lector`` presentes."""
+    from .lectura_readonly import defectos_37_en_bd, sesion_lectura
+
+    with sesion_lectura(conexion) as lector:
+        return defectos_37_en_bd(lector)
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 2 or argv[0] not in MODOS:
         raise SystemExit("uso: python -m src.facturas.runtime_supabase.noche_automatica <SOMBRA|REAL> <dir>")
@@ -771,9 +786,10 @@ def main(argv: list[str]) -> int:
             cliente=cliente,
             tareas=_tareas_productivas,
             puerta_git=puerta_git,
-            # R20 (migracion 36): el worker detecta la 36 con una sesion de solo lectura (information_schema).
+            # R20 (migracion 36) y migracion 37: el worker detecta cada una con una sesion de solo lectura (catalogo).
             construir_worker=lambda cfg: construir_worker_automatico_productivo(
-                cliente, cfg, WORKER_BASE, trabajo, r20_habilitada=lambda: _r20_en_bd(conexion)),
+                cliente, cfg, WORKER_BASE, trabajo, r20_habilitada=lambda: _r20_en_bd(conexion),
+                defectos_37=lambda: _37_en_bd(conexion)),
             directorio_informes=directorio,
         )
         return ejecutar_noche(argv[0], entorno)

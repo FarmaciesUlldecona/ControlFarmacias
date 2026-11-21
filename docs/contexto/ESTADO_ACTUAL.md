@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-20 (Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-21 (migración 37: defectos de extracción directos a REVISION, solo en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -342,6 +342,37 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Migración 37: defectos de extracción directos a REVISION, solo en local (2026-11-21)
+
+DECISIONES DE PIO D1–D7, `CONFIRMADO POR TEST` en PostgreSQL 17 local, **sin desplegar**. Diseño en
+`pruebas/auditoria_37/DISENO.md`; reglas en REGLAS_CRITICAS («Persistencia y conciliación», migración 37).
+
+- **Migración 37** `37_cf_defectos_directos_a_revision.sql` (+ rollback al esquema 36): columna
+  `normalizacion_ejecuciones.lector` y firma de 8 parámetros de `cf_registrar_fallo_normalizacion` (`p_lector`): un
+  `DEFECTO_DOCUMENTO` pasa a `REVISION` en el primer fallo, con `regla: DEFECTO_DIRECTO_A_REVISION` en el historial.
+  La de 7 parámetros llama a la de 8 con el lector null (la usan el código anterior y la 25). Nombra el rol del
+  sistema solo para el EXECUTE de la firma nueva (autorización D7). Ningún dato cambia.
+- **Código:** listas A y B de defecto y lista C de almacenamiento como `TRANSITORIO` (`clasificacion_fallos.py`);
+  el worker guarda el lector autorizado (`alliance-local` 1.3.1) con el layout reconocido; el 8.º parámetro, solo si
+  una sesión de solo lectura detecta la 37 (`defectos_37_en_bd`), en la noche y en la serie 2BJ; sin ella, la
+  llamada de siempre. La noche añade el motivo al `para_revisar`; la 2BJ predice `REVISION` al primer fallo con la 37.
+- **Efecto sin la 37:** los 6 motivos de almacenamiento se registran como `TRANSITORIO` en vez de
+  `DEFECTO_DOCUMENTO`. La regla de la 17 trata las dos clases igual, así que el estado y los intentos no cambian.
+- **`desplegar_37.py`** ensayado con la imitación del `postgres` de Supabase: aplicada, segundo intento revertido y
+  rollback con la imitación. Exige el commit ya subido y los flags apagados.
+- `PENDIENTE`: 37-D (Pio apaga los flags, preflight READ_ONLY, `desplegar_37` una vez, postcheck y Pio los vuelve a
+  encender) y el plan de reprocesado por lector (§3 del diseño).
+
+### Noche REAL 20→21/11, primera con el código de SUITE (revisión READ_ONLY, 2026-11-21)
+
+- `NOCHE_OK`, 21:15:04–21:15:27 UTC, commit 038d889 (igual en el remoto), límites 5 + 5, sin puertas fallidas;
+  informe con SHA coincidente y `POSTCHECK_OK` sin filas ajenas (1 documento, 2 historial y 1 ejecución).
+- Un solo documento reclamado: el abono de DERMOFARM `9c9668ae`, 2.º intento, otra vez `DocumentoNoAptoManual` /
+  `EXTRACCION_LOCAL_ERROR`; `ERROR` con reintento a las 03:15 UTC del 21/11. Nada que conciliar (66 `CONCILIADA` y
+  la de HEFAME, excluida).
+- Es la 3.ª noche REAL buena seguida (18/11 `FIN_LIMITE`, 19/11 y 20/11 `NOCHE_OK`): la próxima corre con 20 + 20.
+- Evidencia: `C:\ControlFarmacias\evidencias_noche_2011\` (SHA256SUMS).
 
 ### Hito SUITE: suite paralela, histórica y regla de reparación (2026-11-20)
 

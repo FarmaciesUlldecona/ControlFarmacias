@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-20 (Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-21 (migración 37: defectos de extracción directos a `REVISION`, solo en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -185,6 +185,32 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
     `PENDIENTE`/`ERROR` y los backoff futuros; la migración 17 no redefine el claim.
   - Clasificación de motivos: `runtime_supabase/clasificacion_fallos.py`; un motivo
     desconocido es `TRANSITORIO`, nunca `NO_SOPORTADO`.
+- **Migración 37: defectos de extracción directos a `REVISION`** (DECISIONES DE PIO D1–D7, 2026-11-15, 2026-11-18
+  y 2026-11-19; diseño en `pruebas/auditoria_37/DISENO.md`). `CONFIRMADO POR TEST` en PostgreSQL 17 local; **sin
+  desplegar** (37-D pendiente de confirmación de Pio).
+  - **R3 revisada (con la 37 en la BD):** `DEFECTO_DOCUMENTO` suma un intento (D4) y pasa a `REVISION` en el
+    primer fallo, sin espera; el historial lo marca con `regla: DEFECTO_DIRECTO_A_REVISION`. `TRANSITORIO` y
+    `NO_SOPORTADO`, sin cambios. Sin la 37 rige la R3 de la 17.
+  - **Motivos (D5):** lista A, de extracción (15 motivos y el código `ErrorCompletitudDocumental`), y lista B, de
+    identidad de farmacia (`FARMACIA_DOCUMENTO_NO_DEMOSTRABLE`, `FARMACIA_DOCUMENTO_CONTRADICTORIA` y el código
+    `ErrorFarmaciaDocumental`): `DEFECTO_DOCUMENTO`. Lista C, de almacenamiento (`SHA256_NO_COINCIDE`,
+    `SHA256_REGISTRADO_INVALIDO`, `OBJETO_STORAGE_VACIO`, `DOCUMENTO_RECLAMADO_NO_LOCALIZADO`,
+    `RUTA_STORAGE_NO_COINCIDE_CON_CLAIM`, `RUTA_STORAGE_NO_SEGURA`): `TRANSITORIO`, con reintentos y espera. Un
+    motivo nuevo solo pasa a defecto con una decisión de Pio.
+  - **Lector (D2, D6):** columna `normalizacion_ejecuciones.lector` (adaptador, versión y layout del extractor
+    autorizado; layout null si el fallo es anterior a reconocerlo; null en las ejecuciones anteriores a la 37). Llega
+    por un 8.º parámetro `p_lector` de `cf_registrar_fallo_normalizacion`. La firma de 7 parámetros se conserva y
+    llama a la de 8 con el lector null.
+  - **El código usa el 8.º parámetro solo si detecta la 37** con una sesión de solo lectura (catálogo:
+    `lectura_readonly.defectos_37_en_bd`), como R20; sin ella, la llamada de 7 parámetros de siempre.
+  - **Reprocesado:** un documento en `REVISION` por defecto solo vuelve a la cola con `cf_solicitar_reprocesado`,
+    acción de Pio, cuando cambie el lector (§3 del diseño). Nunca automático. Los 22 en `REVISION` de antes de la
+    37 esperan a ese cambio (D3).
+  - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-19, D7):** nombrar el rol del sistema **solo** en
+    `sql/migrations/37_cf_defectos_directos_a_revision.sql` y su rollback, para el EXECUTE de la firma nueva.
+    `desplegar_37.py` lo comprueba sin nombrarlo (mismos beneficiarios que la firma de 7 parámetros y nada para
+    anon, authenticated ni PUBLIC). Tests, scripts y documentación no lo nombran; cualquier otro fichero,
+    autorización nueva.
 - Reglas aprobadas por Pio para la migración 18 (Hito 2AV, 2026-09-25;
   `CONFIRMADO POR TEST` en PostgreSQL 17 local y `CONFIRMADO EN PRODUCCIÓN`,
   desplegada en el Hito 2AW el 2026-09-28; primera conciliación manual one-shot
@@ -403,7 +429,8 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - **PARADA ante cualquier desviación del plan:** excepción, huérfano, resultado o facturas distintos, fila
     ajena cambiada, n.º 1 fuera del plan o sin predicción, o puerta fallida. Se aplica el postcheck 2AX por
     fila de cada tanda.
-  - Los defectos de extracción previstos por el plan consumen intentos (R3) y no son parada.
+  - Los defectos de extracción previstos por el plan no son parada. Con la 37 en la BD pasan a `REVISION` en el
+    primer fallo; sin ella, consumen intentos (R3 de la 17).
   - Conciliación posterior: un n.º 1 que simula DIFERENCIA → PARADA y Pio decide caso a caso (serie de
     conciliación **no implementada**).
 - Diseño del Hito 2BR (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 30 **desplegada en

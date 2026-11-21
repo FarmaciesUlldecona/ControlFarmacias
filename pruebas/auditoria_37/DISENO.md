@@ -1,7 +1,7 @@
 # Migración 37: defectos de extracción directos a REVISION. DISEÑO
 
-Estado: **DISEÑO CON LAS DECISIONES DE PIO D1–D7** (D1–D4 el 2026-11-18 y D5–D7 el 2026-11-19). Sin código, sin migración y
-sin tocar producción. Encargo de Pio del 2026-11-15, con el orden del 2026-11-16. Es la **migración 37** (renumerada el
+Estado: **IMPLEMENTADA EN LOCAL (2026-11-21)**, con las decisiones de Pio D1–D7 (D1–D4 el 2026-11-18 y D5–D7 el
+2026-11-19); `CONFIRMADO POR TEST` en PostgreSQL 17 local, sin desplegar (37-D pendiente). Implementación: §10. Encargo de Pio del 2026-11-15, con el orden del 2026-11-16. Es la **migración 37** (renumerada el
 2026-11-19, decisión de Pio: R20 = 36, defectos = 37, Cashflow = 38): se despliega después de la 36.
 
 - **Decisión de Pio (2026-11-15):**
@@ -230,3 +230,26 @@ con reintentos acabarán igualmente en `REVISION` al 4.º intento. Se proponen e
 - La conciliación (R7) y sus reintentos.
 - Cambiar la lista de motivos de defecto, salvo lo de §2.1.
 - Reprocesar nada en este hito.
+
+## 10. Implementación (2026-11-21)
+
+`CONFIRMADO POR TEST` en PostgreSQL 17 local; sin tocar producción.
+
+- **Migración** `sql/migrations/37_cf_defectos_directos_a_revision.sql` y su rollback, como en §4. La firma de 8
+  parámetros valida que `p_lector` sea null o un objeto (`LECTOR_NO_VALIDO`).
+- **Lector (§3):** el worker guarda el lector autorizado de su compositor (`adaptador` y `version_adaptador`:
+  `alliance-local` 1.3.1 en la ruta automática y en la manual) con el `layout` del último paso que lo reconoció, o
+  null si el fallo es anterior a reconocerlo (por ejemplo, `EXTRACCION_LOCAL_ERROR`). Sin lector autorizado, el
+  fallo va sin lector.
+- **Detección (§6):** `lectura_readonly.defectos_37_en_bd` (firma de 8 parámetros y columna, solo catálogo). La noche
+  y la serie 2BJ la inyectan en el repositorio; sin la 37, la llamada de 7 parámetros.
+- **Clasificación (§2.1):** listas A y B en `MOTIVOS_DEFECTO_DOCUMENTO` y lista C en `MOTIVOS_ALMACENAMIENTO`
+  (`TRANSITORIO`).
+- **Noche:** `para_revisar` añade `motivo` y la ejecución incluye `error_detalle` y `lector`.
+- **`desplegar_37.py`:** el propietario de la firma nueva es quien despliega (postgres en Supabase), como en
+  `desplegar_35`. Comprueba que sus beneficiarios son los de la firma de 7 parámetros. Si en producción la de 7
+  tuviera otros beneficiarios, la postcondición fallaría y el despliegue se revertiría. El preflight de 37-D debe
+  leerlos antes.
+- **Pendiente:** el plan de reprocesado `plan_reprocesado.py` (§3), que no hace falta para desplegar.
+- **Tests:** `tests/facturas/runtime_supabase/test_defectos_37.py` (unitarios) y `test_integracion_pg17_37.py`
+  (PostgreSQL 17 local y ensayo del despliegue).
