@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-22 (38-B, primera simulación con el Excel real, SIMULADO_ERROR sin escribir nada, E2 ampliada a "=" y corrección del Excel en origen por Pio; 38-B, decisiones de Pio sobre DISENO §10: categoría nueva por todas las importaciones OK anteriores y C7 en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, .bat de la tarea de las 23:45 sin crear la tarea, ensayos de la 37 y la 38 en la histórica y docstring de la 2BP; H7-D: migración 38 de Cashflow desplegada en producción, APLICADA, postcheck por fila OK, prueba de acceso de cf_lectura ACCESO_OK y flags encendidos de nuevo; H7: migración 38 de Cashflow implementada en local, con desplegar_38 ensayado y prueba de acceso de cf_lectura; 2026-11-21, 37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-22 (Cashflow: primera importación MANUAL REAL OK, vigente, postcheck solo Cashflow, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y verificada, esquema para la web; 38-B, primera simulación con el Excel real, SIMULADO_ERROR sin escribir nada, E2 ampliada a "=" y corrección del Excel en origen por Pio; 38-B, decisiones de Pio sobre DISENO §10: categoría nueva por todas las importaciones OK anteriores y C7 en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, .bat de la tarea de las 23:45 sin crear la tarea, ensayos de la 37 y la 38 en la histórica y docstring de la 2BP; H7-D: migración 38 de Cashflow desplegada en producción, APLICADA, postcheck por fila OK, prueba de acceso de cf_lectura ACCESO_OK y flags encendidos de nuevo; H7: migración 38 de Cashflow implementada en local, con desplegar_38 ensayado y prueba de acceso de cf_lectura; 2026-11-21, 37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -398,7 +398,7 @@ reglas en REGLAS_CRITICAS («Cashflow (H7)»).
     - puertas de la noche REAL abiertas salvo las tareas de esta noche, aún no ejecutadas;
     - límites 20 + 20;
     - `TABLAS_CASHFLOW` fuera del snapshot del veredicto y su snapshot aparte leído sin error.
-- **38-B (2026-11-22, `CONFIRMADO POR TEST` en local; nada ejecutado contra producción):** orden de Pio y contrato
+- **38-B (2026-11-22, `CONFIRMADO POR TEST` en local; primera importación REAL `CONFIRMADO EN PRODUCCIÓN`, abajo):** orden de Pio y contrato
   en `pruebas/auditoria_h7/DISENO.md` §10.
   - **`src/cashflow/importar_cashflow.py`:** C1 (único `.xlsm` que empieza por `CASHFLOW`), copia estable, C6, E1–E7,
     C5 y modos `SIMULAR` y `REAL`, orígenes `NOCHE` y `MANUAL`. La única escritura es la RPC de la 38.
@@ -424,8 +424,36 @@ reglas en REGLAS_CRITICAS («Cashflow (H7)»).
     - Un cuadre al céntimo fuera de margen (PÍO, 2025-07-11). **DECISIÓN DE PIO:** sin margen por saldo; Pio corrige
       en origen `PÍO:P226` (texto), `PÍO:D4` (saldo inicial con más de 2 decimales), `PÍO:BH222` y `RITA:BH21`
       (importes de fórmula con 3 decimales).
-  - `PENDIENTE`: Pio corrige el Excel; nueva `MANUAL SIMULAR` con `--aceptar-categorias-nuevas` y, si sale bien, la
-    `MANUAL REAL`, con su confirmación; después, crear la tarea de las 23:45.
+  - **Segunda simulación (Google Drive estaba colgado desde el 18/11; Pio lo reinició):** fichero `CASHFLOWW.xlsm`,
+    hash `340e0756…`. Falla en `PÍO:P226`, con las mismas cuatro celdas a corregir.
+  - **Pio corrige el Excel:** vacía `PÍO:P226`, deja `PÍO:D4` con 2 decimales y corrige `PÍO:BH222`, un importe
+    tecleado. `RITA:BH21` es `=PÍO!BH222` y se corrige sola.
+  - **Tercera simulación:** `SIMULADO_OK`, hash `07e43eca…bc21`. 5131 importes y 539 saldos; cuadre exacto y al
+    céntimo en todas las decenas; ningún aviso de redondeo; 13 celdas `=` y 3 de solo espacios, vacías; 67
+    categorías nuevas. Evidencias en `C:\ControlFarmacias\evidencias_38b_simular_3\`.
+  - **Primera importación REAL (2026-11-22, 14:55–14:56 UTC, `CONFIRMADO EN PRODUCCIÓN`, confirmación explícita de
+    Pio):** `MANUAL REAL --aceptar-categorias-nuevas`, una sola vez. Antes de lanzarla se comprobó que el hash del
+    original era `07e43eca…bc21`. Evidencias en `C:\ControlFarmacias\evidencias_38b_real\` (`SHA256SUMS.txt`).
+    - **Resultado:** `OK`. La importación `ee1228fa…` es la vigente y no hay anterior. Se guardaron 5131 importes
+      (PÍO 3209, RITA 1922) y 539 saldos (180, 180 y 179), igual que en la simulación. El postcheck del importador
+      dio `POSTCHECK_OK`.
+    - **Postcheck READ_ONLY de las 38 tablas de `public`:** solo cambian `cf_cashflow_importaciones`, `_importes` y
+      `_saldos`. Las cuentas fijas, facturas, Pagos, Trabajadores, `cf_modulos_farmacias` y la noche no cambian. Los
+      flags siguen igual; 0 locks, claims y NORMALIZANDO.
+    - **Prueba de acceso de `cf_lectura` con datos (terminal de Pio):** `ACCESO_OK`.
+      - Conteos 3/1/5131/539.
+      - Saldos de PIO, RITA y SL; importes de PIO y RITA.
+      - `CASHFLOW` PIO/RITA; facturas solo de PIO.
+      - Inserción, actualización, borrado y la función de importación, rechazados con 42501.
+  - **Tarea «ControlFarmacias - Importar Cashflow»:** creada por Pio el 2026-11-22 y verificada en solo lectura.
+    - Configuración: `Usuari` con contraseña, nivel limitado; diaria a las 23:45 (Windows la anuncia a las
+      23:45:45, como a la de Alliance a las 22:15:15); límite de 30 minutos; una instancia; sin «iniciar en cuanto
+      sea posible»; acción `C:\ControlFarmacias\Programa\ejecutar_importacion_cashflow.bat`.
+    - **Puerta C7:** la noche y los preflights la leen y no bloquean. Los preflights paran desde 60 minutos antes de
+      su próxima ejecución (22:45), como con las demás tareas.
+  - **Esquema para la web:** `docs/web/ESQUEMA_CASHFLOW.md`.
+  - `PENDIENTE` (apuntado por Pio, no para hoy): aviso si el Excel no cambia en N días, por si Google Drive vuelve a
+    colgarse.
 
 ### Migración 37: defectos de extracción directos a REVISION, implementada en local (2026-11-21)
 
