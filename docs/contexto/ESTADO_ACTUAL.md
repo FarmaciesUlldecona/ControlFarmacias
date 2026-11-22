@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-21 (37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-22 (H7: migración 38 de Cashflow implementada en local, sin desplegar, con desplegar_38 ensayado y prueba de acceso de cf_lectura; 2026-11-21, 37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -342,6 +342,32 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### H7: migración 38 de Cashflow, solo en local (2026-11-22)
+
+DECISIONES DE PIO C1–C8, E1–E7, las dos propuestas de redondeo y las respuestas del 2026-11-22. `CONFIRMADO POR
+TEST` en PostgreSQL 17 local, **sin desplegar**. Diseño en `pruebas/auditoria_h7/DISENO.md`; reglas en
+REGLAS_CRITICAS («Cashflow (H7)»).
+
+- **Migración 38** `38_cf_cashflow.sql` (+ rollback al esquema 37, que falla cerrado con datos):
+  - las tablas `cf_cashflow_cuentas` (fija: PIO, RITA y SL), `cf_cashflow_importaciones`, `cf_cashflow_importes` y
+    `cf_cashflow_saldos`, todas de solo inserción;
+  - la RPC `cf_cashflow_registrar_importacion`, que valida en la BD cabecera, cuentas, decenas, categorías, importes y
+    saldos al céntimo, hash nuevo y el cuadre E1 (0,005 por importe redondeado, ninguno por saldo);
+  - `CASHFLOW = {PIO, RITA}` en `cf_modulos_farmacias`;
+  - `SELECT` de `cf_lectura` con RLS por módulo.
+  Nombra el rol del sistema solo para quitarle lo nuevo y darle EXECUTE sobre la RPC (autorización C3). Ningún dato
+  cambia salvo la fila `CASHFLOW`.
+- **`desplegar_38.py`:** 6 precondiciones y postcondiciones fila a fila (datos, estructura y RLS, privilegios y ACL,
+  RPC con los mismos beneficiarios que la firma de 8 parámetros de la 37, propietario). Ensayado con la imitación del
+  `postgres` de Supabase: aplicada, segundo intento revertido y rollback con la imitación.
+- **`probar_acceso_cf_lectura_cashflow.py`:** para después del despliegue; probado contra PostgreSQL 17 local.
+- **Postchecks:** `TABLAS_CASHFLOW` en la noche y en las series 2BJ y 2BP, informado aparte, sin veredicto.
+- **Barrera:** `despliegue_sin_historica` bloquea cualquier Bash que nombre `desplegar_<n>`, aunque no lo ejecute.
+  Mejora anotada: distinguir ejecutarlo de nombrarlo (`PENDIENTE` de orden de Pio). Mientras tanto, `desplegar_38.py`
+  solo con Read/Edit y solo lo cargan los tests.
+- `PENDIENTE`: el hito 38-B (`importar_cashflow.py`, con las categorías nuevas C5) y H7-D (preflight READ_ONLY,
+  `desplegar_38` una vez con confirmación de Pio, postcheck, prueba de acceso y tarea de las 23:45).
 
 ### Migración 37: defectos de extracción directos a REVISION, implementada en local (2026-11-21)
 

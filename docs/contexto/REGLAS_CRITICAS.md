@@ -1,11 +1,11 @@
 # Reglas críticas
 
-Actualizado: 2026-11-21 (37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-22 (H7: migración 38 de Cashflow implementada en local, sin desplegar, con RPC de solo inserción, cuadre sin margen por saldo y `TABLAS_CASHFLOW` en los postchecks, decisiones de Pio; 2026-11-21, 37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
 `ACCESO_OK`; decisiones de Pio para Cashflow (H7): excepción de RITA solo con sus datos bancarios, lista cerrada de
-`cf_lectura` ampliada a `cf_cashflow_*` con la migración 37, estado de importación y signo del importe; H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
+`cf_lectura` ampliada a `cf_cashflow_*` con la migración 38 (renumerada), estado de importación y signo del importe; H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
 autorización de Pio para nombrar el rol del sistema solo en la 35 y su rollback; 2026-11-16, COD-1611: tablas de Pagos
 fuera del veredicto de los postchecks y tarea de Alliance en la puerta de tareas; migración 34 desplegada en producción, hito TRAB-34-D; TRAB-34: migración 34 de
 Trabajadores, guardias y festivos de TA3, solo local, y
@@ -578,13 +578,39 @@ antes con la imitación del `postgres` de Supabase.
 
 ## Cashflow (H7)
 
-Decisiones de Pio (2026-11-17). Módulo **NO IMPLEMENTADO** en este repositorio: sin esquema ni migración todavía.
+Decisiones de Pio (2026-11-17, C1–C8; 2026-11-18, E1–E7 y las dos propuestas de redondeo; 2026-11-22, respuestas
+del hito H7). Diseño en `pruebas/auditoria_h7/DISENO.md`. **Migración 38 implementada en local** (`CONFIRMADO POR
+TEST` en PostgreSQL 17 local), **sin desplegar** (H7-D, con confirmación de Pio). El script de importación
+(`importar_cashflow.py`) es el hito 38-B, aparte.
 
 - **Excepción de farmacia:** RITA es visible en el módulo CASHFLOW **SOLO** con sus datos bancarios del Excel
   importado. Sus facturas siguen desactivadas: `cf_configuracion.farmacias_habilitadas` no cambia y facturas,
   albaranes, normalización y conciliación siguen solo PIO. La excepción es propia del módulo, nunca global.
-- **Lista cerrada de `cf_lectura`:** se amplía con las tablas `cf_cashflow_*` cuando existan (migración 38). Hasta
-  entonces no cambia.
+- **Lista cerrada de `cf_lectura`:** la migración 38 la amplía con las cuatro tablas `cf_cashflow_*` (`SELECT`, con
+  RLS sin funciones security definer, regla del 2BN): cuentas, saldos e importes visibles si su farmacia está en el
+  módulo `CASHFLOW` o no tienen farmacia (`SL`); importaciones, todas. Ningún rol de la web, ni anon ni
+  authenticated, tiene privilegios sobre ellas.
+- **Permiso por módulo (C4):** `cf_modulos_farmacias` admite `CASHFLOW = {PIO, RITA}`; Trabajadores filtra por su
+  propio módulo y no cambia.
+- **Solo inserción:** nadie escribe directamente en las tablas. La única escritura es la RPC
+  `cf_cashflow_registrar_importacion` (security definer, EXECUTE solo para el rol del sistema), que vuelve a validarlo
+  todo en la BD y falla cerrado sin escribir nada. Un trigger rechaza `UPDATE` (`SOLO_INSERCION`), `DELETE` y
+  `TRUNCATE` (`BORRADO_NO_PERMITIDO`); la única excepción es el cambio de `vigente` que hace la RPC. Una sola
+  importación vigente; un hash no se importa dos veces; un `ERROR` no tiene importes ni saldos ni es vigente.
+- **Cuadre (E1):** saldo inicial + Σ`RE` − Σ`RS` = saldo según fórmulas, con el signo de la celda (un `RS` positivo
+  es una salida). En la BD, margen de 0,005 por importe redondeado de esa cuenta y decena (propuesta aprobada) y
+  **ninguno por saldo redondeado** (decisión de Pio, 2026-11-22). Importes y saldos llegan al céntimo.
+- **Decenas:** empiezan el día 1, 11 o 21 y acaban el 10, el 20 o el último día del mes. E5: la decena sin saldo
+  (primera de `SL`) no lleva importes. E7: el saldo de bancos vacío o distinto del de fórmulas nunca es error.
+- **Categorías nuevas (C5):** las controla el script de importación (38-B); la RPC no las comprueba (decisión de
+  Pio, 2026-11-22).
+- **Postchecks:** `TABLAS_CASHFLOW` en la noche y en las series 2BJ y 2BP, fuera del criterio por fila e informadas
+  aparte (`postcheck["cashflow"]`), sin afectar al veredicto, como Pagos.
+- **Despliegue y acceso:** `pruebas/auditoria_h7/desplegar_38.py` (ensayado con la imitación del `postgres` de
+  Supabase) y `pruebas/auditoria_h7/probar_acceso_cf_lectura_cashflow.py` (tras el despliegue, terminal de Pio).
+  Por orden de Pio (2026-11-22), `desplegar_38.py` solo se toca con Read/Edit y solo lo cargan los tests de
+  `pytest tests/...`.
+- **Rollback** al esquema 37: falla cerrado si hay alguna importación (`ROLLBACK_38_CASHFLOW_CON_DATOS`).
 - **Numeración (DECISIÓN DE PIO, 2026-11-19):** R20 = migración 36, defectos de extracción directos a REVISION = 37,
   Cashflow = 38 (antes 36 y 37). Cada migración exige la anterior.
 - **AUTORIZACIÓN EXPRESA DE PIO (C3, 2026-11-17; reconfirmada el 2026-11-19 tras renumerar):** nombrar el rol del

@@ -78,8 +78,13 @@ TABLAS_TRABAJADORES = frozenset({
 # de pago por proveedor, escritas por la web con su propio rol. Igual que Trabajadores: se informan aparte y no hacen
 # fallar el veredicto. Solo se leen las tablas que existen (hasta desplegar la 35, ninguna).
 TABLAS_PAGOS = frozenset({"vencimientos_marcas_pago", "proveedores_forma_pago", "pagos_historial"})
-# Fuera del snapshot 2AX: la propia tabla de resumen, Trabajadores y Pagos (se leen aparte, ``snapshot_aparte``).
-TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES | TABLAS_PAGOS
+# Cashflow (H7, migracion 38; decision de Pio, pruebas/auditoria_h7/DISENO.md §6): importaciones del Excel de cashflow,
+# ajenas a facturas. Como Pagos: se informan aparte y no hacen fallar el veredicto. Solo se leen las que existen.
+TABLAS_CASHFLOW = frozenset({"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
+                             "cf_cashflow_saldos"})
+# Fuera del snapshot 2AX: la propia tabla de resumen, Trabajadores, Pagos y Cashflow (se leen aparte,
+# ``snapshot_aparte``).
+TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES | TABLAS_PAGOS | TABLAS_CASHFLOW
 
 CODIGO_OK, CODIGO_PARADA, CODIGO_YA_EJECUTADA = 0, 3, 4
 
@@ -320,8 +325,13 @@ def snapshot_pagos(entorno: Entorno) -> dict:
     return snapshot_aparte(entorno, TABLAS_PAGOS)
 
 
+def snapshot_cashflow(entorno: Entorno) -> dict:
+    """Huella por fila de las tablas de Cashflow (H7; ver ``snapshot_aparte``)."""
+    return snapshot_aparte(entorno, TABLAS_CASHFLOW)
+
+
 def snapshot_aparte(entorno: Entorno, tablas: frozenset[str]) -> dict:
-    """Huella por fila de tablas que escribe la web (Trabajadores, Pagos), en su propia sesion READ_ONLY.
+    """Huella por fila de tablas ajenas a facturas (Trabajadores, Pagos, Cashflow), en su propia sesion READ_ONLY.
 
     Solo informativo: si no se puede leer (por ejemplo, sin privilegio de lectura) se anota el error y la noche sigue;
     nunca comparte la transaccion del snapshot 2AX.
@@ -339,7 +349,8 @@ def snapshot_aparte(entorno: Entorno, tablas: frozenset[str]) -> dict:
 
 
 def cambios_trabajadores(pre: dict | None, post: dict | None) -> dict:
-    """Filas cambiadas, nuevas o desaparecidas por tabla (Trabajadores o Pagos). Se informa aparte; no es veredicto."""
+    """Filas cambiadas, nuevas o desaparecidas por tabla (Trabajadores, Pagos o Cashflow). Se informa aparte; no es
+    veredicto."""
     informe: dict = {"afecta_al_veredicto": False}
     if not pre or not post or "error" in pre or "error" in post:
         informe["no_comparable"] = {"pre": (pre or {}).get("error", "AUSENTE" if not pre else None),
@@ -615,6 +626,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
     pre: dict | None = None
     pre_trabajadores: dict | None = None
     pre_pagos: dict | None = None
+    pre_cashflow: dict | None = None
     try:
         with entorno.abrir_lectura() as lector:
             cfg, op, marcas = _configuracion(lector), _operacion(lector), _marcas(lector)
@@ -625,6 +637,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
             pre = snapshot_por_fila(lector)
         pre_trabajadores = snapshot_trabajadores(entorno)
         pre_pagos = snapshot_pagos(entorno)
+        pre_cashflow = snapshot_cashflow(entorno)
         fin = inicio + dt.timedelta(minutes=MINUTOS_MAXIMOS)
         if modo == "SOMBRA":
             _fase_sombra(entorno, noche, docs, conc)
@@ -665,6 +678,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
             # Despues de cerrar la sesion anterior: las sesiones comparten conexion y no se anidan.
             noche.postcheck["trabajadores"] = cambios_trabajadores(pre_trabajadores, snapshot_trabajadores(entorno))
             noche.postcheck["pagos"] = cambios_trabajadores(pre_pagos, snapshot_pagos(entorno))
+            noche.postcheck["cashflow"] = cambios_trabajadores(pre_cashflow, snapshot_cashflow(entorno))
         if noche.postcheck and noche.postcheck.get("veredicto") != "POSTCHECK_OK":
             noche.resultado = "PARADA"
             noche.motivo = ((noche.motivo + "; ") if noche.motivo else "") + noche.postcheck["veredicto"]

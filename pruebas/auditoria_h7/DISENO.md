@@ -1,7 +1,8 @@
 # H7: importación del Excel de cashflow de Pio a Supabase (migración 38). DISEÑO
 
 Estado: **DISEÑO CON LAS DECISIONES DE PIO C1–C8** (2026-11-17), **EXCEL VERIFICADO Y DECISIONES E1–E7**
-(2026-11-18, §0 y §1). Sin código, sin migración y sin tocar producción.
+(2026-11-18, §0 y §1). **Migración 38 implementada en local** (2026-11-22, §9), sin desplegar; el script de
+importación es el hito 38-B.
 
 - **Origen:** petición de la web (H7 Cashflow). La pantalla ya está hecha en FIXTURES contra el contrato de la petición
   (commit H7 en `web/fase1`, que no se ha leído para este diseño).
@@ -351,3 +352,31 @@ Igual que `TABLAS_PAGOS` (COD-1611):
   no un extracto.
 - Facturas de RITA: siguen desactivadas.
 - Previsiones y avisos: los calcula la web; el sistema no los guarda.
+
+## 9. Implementación de la 38 (2026-11-22)
+
+Respuestas de Pio del 2026-11-22:
+1. `importar_cashflow.py` queda fuera: hito 38-B aparte.
+2. `TABLAS_CASHFLOW` en la noche y las series 2BJ/2BP en este commit, informado aparte como Pagos, sin veredicto.
+3. Saldos: cerrado, **sin margen por saldo redondeado**. La extensión de E3 (§2.3: redondear saldos con aviso) la
+   hace el script; la RPC rechaza saldos con más de 2 decimales y no les da margen en el cuadre.
+4. Categorías nuevas (C5): en el script (38-B); la RPC no las comprueba.
+5. `probar_acceso_cf_lectura_cashflow.py` en este commit.
+
+Las dos propuestas de redondeo (§2.3 y §3.5) quedan **aprobadas** (2026-11-18). Concreción del contrato de la RPC
+(`sql/migrations/38_cf_cashflow.sql`):
+- `p_importacion`: `archivo_nombre`, `archivo_hash`, `origen`, `estado`, `detalle_error` y `filas`; cualquier otra
+  clave es `CLAVE_NO_ADMITIDA`.
+- `p_importes`: `cuenta`, `decena_inicio`, `decena_fin`, `categoria`, `concepto`, `importe`, `fila_excel` y
+  `redondeado` (no se guarda; da 0,005 de margen en el cuadre de su cuenta y decena). La farmacia la pone la RPC
+  desde la cuenta.
+- `p_saldos`: `cuenta`, `decena_inicio`, `saldo_inicial`, `saldo_formulas` y `saldo_bancos`.
+- Rechazos (todos sin escribir nada):
+  - de forma: `IMPORTACION_NO_VALIDA`, `IMPORTES_O_SALDOS_NO_VALIDOS`, `IMPORTE_INCOMPLETO`, `SALDO_INCOMPLETO`;
+  - de cabecera y recuento: `HASH_YA_IMPORTADO`, `ERROR_CON_DATOS`, `FILAS_NO_COINCIDEN`, `IMPORTACION_OK_VACIA`;
+  - de contenido: `CUENTA_DESCONOCIDA`, `DECENA_NO_VALIDA`, `CATEGORIA_SIN_PREFIJO`, `IMPORTE_CERO`,
+    `IMPORTE_CON_MAS_DE_2_DECIMALES`, `SALDO_CON_MAS_DE_2_DECIMALES`, `SALDO_REPETIDO`, `IMPORTES_SIN_SALDO` y
+    `CUADRE_NO_VALIDO`;
+  - y los checks de la tabla (nombre sin ruta, hash, origen, estado).
+- Una importación `OK` sin importes o sin saldos se rechaza (`IMPORTACION_OK_VACIA`). Es más cerrado que §3.5; el
+  Excel real tiene importes en PÍO y RITA (§1).

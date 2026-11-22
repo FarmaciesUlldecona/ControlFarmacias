@@ -117,7 +117,7 @@ def test_despliegue_falla_cerrado(commit, extra, fallo):
 DESPLIEGUES_3X = ("pruebas/auditoria_trab/desplegar_31.py", "pruebas/auditoria_auto_alliance/desplegar_32.py",
                   "pruebas/auditoria_trab/desplegar_33.py", "pruebas/auditoria_trab/desplegar_34.py",
                   "pruebas/auditoria_h6/desplegar_35.py", "pruebas/auditoria_r20/desplegar_36.py",
-                  "pruebas/auditoria_37/desplegar_37.py")
+                  "pruebas/auditoria_37/desplegar_37.py", "pruebas/auditoria_h7/desplegar_38.py")
 
 
 @pytest.mark.parametrize("relativa", DESPLIEGUES_3X)

@@ -50,10 +50,11 @@ from src.facturas.runtime_supabase import puerta_git as _puerta_git  # noqa: E40
 from src.facturas.runtime_supabase.clasificacion_fallos import (  # noqa: E402
     DEFECTO_DOCUMENTO, NO_SOPORTADO, clasificar_fallo)
 from src.facturas.runtime_supabase.lectura_readonly import SQL_MIGRACION_37, defectos_37_en_bd  # noqa: E402
-from src.facturas.runtime_supabase.noche_automatica import TABLAS_PAGOS, TABLAS_TRABAJADORES  # noqa: E402
+from src.facturas.runtime_supabase.noche_automatica import (  # noqa: E402
+    TABLAS_CASHFLOW, TABLAS_PAGOS, TABLAS_TRABAJADORES)
 
-# Tablas que escribe la web (Trabajadores; Pagos, H6): fuera del veredicto, informadas aparte.
-TABLAS_WEB = TABLAS_TRABAJADORES | TABLAS_PAGOS
+# Tablas ajenas a facturas (Trabajadores; Pagos, H6; Cashflow, H7): fuera del veredicto, informadas aparte.
+TABLAS_WEB = TABLAS_TRABAJADORES | TABLAS_PAGOS | TABLAS_CASHFLOW
 
 
 def _cargar(nombre: str, ruta: str):
@@ -311,10 +312,16 @@ def cambios_pagos(antes: dict, despues: dict) -> dict[str, int]:
     return cambios_trabajadores(antes, despues, TABLAS_PAGOS)
 
 
+def cambios_cashflow(antes: dict, despues: dict) -> dict[str, int]:
+    """Filas de Cashflow (H7) cambiadas, nuevas o borradas por tabla: se informan aparte, sin veredicto (DISENO §6)."""
+    return cambios_trabajadores(antes, despues, TABLAS_CASHFLOW)
+
+
 def diferencias_filas(antes: dict, despues: dict, documentos: set[str], cambiables: set[str]) -> list[str]:
     """Criterio 2AX por fila: solo filas nuevas de ``documentos`` y cambios en sus filas de ``cambiables``.
 
-    Las tablas de Trabajadores y Pagos no cuentan (las escribe la web); se informan con ``cambios_trabajadores``."""
+    Las tablas de Trabajadores, Pagos y Cashflow no cuentan (ajenas a facturas); se informan con
+    ``cambios_trabajadores``."""
     problemas = []
     for tabla in sorted((set(antes) | set(despues)) - TABLAS_WEB):
         a, b = antes.get(tabla, {}), despues.get(tabla, {})
@@ -422,7 +429,10 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
                                                   "filas_cambiadas_por_tabla": cambios_trabajadores(pre["filas"],
                                                                                                     post["filas"])},
                                  "pagos": {"afecta_al_veredicto": False,
-                                           "filas_cambiadas_por_tabla": cambios_pagos(pre["filas"], post["filas"])}}
+                                           "filas_cambiadas_por_tabla": cambios_pagos(pre["filas"], post["filas"])},
+                                 "cashflow": {"afecta_al_veredicto": False,
+                                              "filas_cambiadas_por_tabla": cambios_cashflow(pre["filas"],
+                                                                                            post["filas"])}}
         return problemas
 
     def cerrar(veredicto: str, motivos: list[str]) -> int:

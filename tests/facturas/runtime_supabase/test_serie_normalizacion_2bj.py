@@ -98,6 +98,21 @@ def test_postcheck_informa_pagos_aparte_sin_veredicto():
     assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == ["FILA_BORRADA:albaranes:a1"]
 
 
+def test_postcheck_informa_cashflow_aparte_sin_veredicto():
+    """H7 (DISENO §6, decision de Pio 2026-11-22): Cashflow se informa aparte, como Pagos, sin veredicto."""
+    m = _modulo()
+    assert m.TABLAS_CASHFLOW == {"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
+                                 "cf_cashflow_saldos"}
+    assert m.TABLAS_CASHFLOW <= m.TABLAS_WEB
+    antes = {"cf_cashflow_importaciones": {}, "cf_cashflow_importes": {}, "albaranes": {"a1": ["ha", None]}}
+    despues = {"cf_cashflow_importaciones": {"i1": ["hi", None]}, "cf_cashflow_importes": {"1": ["h1", None]},
+               "cf_cashflow_saldos": {"1": ["hs", None]}, "albaranes": {"a1": ["ha", None]}}
+    assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == []
+    assert m.cambios_cashflow(antes, despues) == {"cf_cashflow_importaciones": 1, "cf_cashflow_importes": 1,
+                                                  "cf_cashflow_saldos": 1}
+    assert m.cambios_pagos(antes, despues) == {} and m.cambios_trabajadores(antes, despues) == {}
+
+
 # --------------------------------------------------------------------------- PostgreSQL 17 local
 
 @pytest.fixture
@@ -207,7 +222,8 @@ def test_parada_por_resultado_distinto_del_plan(serie):
     assert registro["postcheck"] == {"veredicto": "POSTCHECK_OK", "problemas": [],
                                      "documentos": [serie.ids["hefame"]], "corte_alliance": False,
                                      "trabajadores": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}},
-                                     "pagos": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
+                                     "pagos": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}},
+                                     "cashflow": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
     assert (serie.raiz / "t01" / "snapshot_post.json").exists()
 
 

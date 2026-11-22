@@ -171,6 +171,44 @@ def test_pagos_fuera_del_2ax_y_comparados_aparte():
         "pagos_historial": 1, "vencimientos_marcas_pago": 1}}
 
 
+def test_cashflow_fuera_del_2ax_y_comparado_aparte():
+    """H7 (DISENO §6, decision de Pio 2026-11-22): Cashflow se informa aparte, como Pagos, sin veredicto."""
+    assert na.TABLAS_CASHFLOW == {"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
+                                  "cf_cashflow_saldos"}
+    assert na.TABLAS_CASHFLOW <= na.TABLAS_FUERA_DEL_SNAPSHOT
+    assert not na.TABLAS_CASHFLOW & (na.TABLAS_TRABAJADORES | na.TABLAS_PAGOS)
+    pre = {"tablas": {"cf_cashflow_importaciones": {}}}
+    post = {"tablas": {"cf_cashflow_importaciones": {"i1": "h1"}, "cf_cashflow_saldos": {"1": "h"}}}
+    assert na.cambios_trabajadores(pre, post) == {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {
+        "cf_cashflow_importaciones": 1, "cf_cashflow_saldos": 1}}
+
+
+def test_snapshot_cashflow_solo_lee_tablas_de_cashflow_existentes():
+    """Hasta desplegar la 38 no existe ninguna: el snapshot de Cashflow queda vacio y no falla."""
+    consultas = []
+
+    class _Lector:
+        def filas(self, sql, params=None):
+            consultas.append(sql)
+            if "information_schema.tables" in sql:
+                return [("facturas",), ("pagos_historial",), ("cf_cashflow_saldos",)]
+            return [("1", "h1")]
+
+    class _Ctx:
+        def __enter__(self):
+            return _Lector()
+
+        def __exit__(self, *a):
+            return False
+
+    class _Entorno:
+        def abrir_lectura(self):
+            return _Ctx()
+
+    assert na.snapshot_cashflow(_Entorno()) == {"tablas": {"cf_cashflow_saldos": {"1": "h1"}}}
+    assert not any("pagos_historial" in c or "facturas" in c for c in consultas[1:])
+
+
 def test_snapshot_pagos_solo_lee_tablas_de_pagos_existentes():
     """Hasta desplegar la 35 no existe ninguna: el snapshot de Pagos queda vacio y no falla."""
     consultas = []
