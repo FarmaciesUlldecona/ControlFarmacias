@@ -16,6 +16,8 @@ Una importacion:
   detalle de codigos y posiciones de celda, nunca conceptos ni categorias. Si la RPC rechaza un ``OK`` (vuelve a
   validarlo todo en la BD), se registra un ``ERROR`` aparte con su codigo.
 - Sin fichero, con mas de uno o con una copia inestable no hay hash que registrar: solo informe (codigo 2).
+- E2 (y su ampliacion, decision de Pio del 2026-11-22): en un importe, el texto de formula, el de solo espacios y el
+  contenido exactamente "=" cuentan como vacios (el "=" con aviso y recuento propios); otro texto es ERROR.
 - Categorias nuevas (C5; decision de Pio del 2026-11-22): una (cuenta, categoria) que no aparece en ninguna
   importacion OK anterior de esa cuenta (no solo en la vigente). Sin
   ``--aceptar-categorias-nuevas`` (solo en MANUAL) no se escribe nada (codigo 4): asi Pio puede aceptar ese mismo
@@ -101,6 +103,8 @@ class Lectura:
     por_cuenta: dict = field(default_factory=dict)
     avisos_redondeo: list[dict] = field(default_factory=list)
     celdas_texto_vacias: list[str] = field(default_factory=list)
+    # E2 ampliada (decision de Pio, 2026-11-22): importe cuyo contenido es exactamente "=", vacio con aviso.
+    celdas_igual_vacias: list[str] = field(default_factory=list)
     decenas_sin_saldo_e5: list[str] = field(default_factory=list)
     hojas_ignoradas: list[str] = field(default_factory=list)
 
@@ -191,6 +195,10 @@ def _valor_importe(hoja: _Hoja, fila: int, col: int, lectura: Lectura):
     if isinstance(v, str):
         if (fila, col) in hoja.formulas or not v.strip():
             lectura.celdas_texto_vacias.append(hoja.celda(fila, col))
+            return None
+        if v == "=":
+            # E2 ampliada (decision de Pio, 2026-11-22): exactamente "=" cuenta como vacia, con aviso y recuento.
+            lectura.celdas_igual_vacias.append(hoja.celda(fila, col))
             return None
         raise ErrorExcel(f"TEXTO_EN_IMPORTE:{hoja.celda(fila, col)}")
     if not _es_numero(v):
@@ -553,6 +561,8 @@ def _importar(origen: str, modo: str, aceptar: bool, entorno: Entorno, informe: 
         "por_cuenta": lectura.por_cuenta, "importes": len(lectura.importes), "saldos": len(lectura.saldos),
         "avisos_redondeo": lectura.avisos_redondeo,
         "celdas_texto_vacias": {"n": len(lectura.celdas_texto_vacias), "posiciones": lectura.celdas_texto_vacias},
+        "avisos_celdas_igual_vacias": {"n": len(lectura.celdas_igual_vacias),
+                                       "posiciones": lectura.celdas_igual_vacias},
         "decenas_sin_saldo_e5": lectura.decenas_sin_saldo_e5, "hojas_ignoradas": len(lectura.hojas_ignoradas)}
     nuevas = {(f["cuenta"], f["categoria"]) for f in lectura.importes} - previas["categorias_conocidas"]
     informe["categorias_nuevas"] = len(nuevas)
@@ -646,6 +656,7 @@ def _escribir_informe(entorno: Entorno, informe: dict, inicio: dt.datetime) -> s
         f"Detalle: {informe.get('detalle_error') or '-'}",
         f"Importes: {lectura.get('importes', 0)}; saldos: {lectura.get('saldos', 0)}; "
         f"avisos de redondeo: {len(lectura.get('avisos_redondeo', []))}; "
+        f"celdas '=' vacias: {(lectura.get('avisos_celdas_igual_vacias') or {}).get('n', 0)}; "
         f"categorias nuevas: {informe.get('categorias_nuevas', '-')}",
         f"Registrado: {informe.get('registrado')}; postcheck: "
         f"{(informe.get('postcheck') or {}).get('veredicto', 'NO_EJECUTADO')}",

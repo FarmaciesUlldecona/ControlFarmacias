@@ -21,6 +21,10 @@ import zipfile
 from pathlib import Path
 
 HOJA_PIO = "P" + chr(0xCD) + "O"
+
+
+class Texto(str):
+    """Texto literal aunque empiece por '=' (openpyxl lo tomaria por formula): como las celdas '=' del Excel real."""
 COLUMNAS = {"D": (dt.datetime(2026, 1, 1), dt.datetime(2026, 1, 10)),
             "E": (dt.datetime(2026, 1, 11), dt.datetime(2026, 1, 20)),
             "F": (dt.datetime(2026, 1, 21), dt.datetime(2026, 1, 31)),
@@ -85,7 +89,10 @@ def guardar(ruta: Path, hojas: dict[str, dict], cacheados: dict[tuple[str, str],
     for nombre, celdas in hojas.items():
         ws = libro.create_sheet(nombre)
         for celda, valor in celdas.items():
-            if valor is not None:
+            if isinstance(valor, Texto):
+                ws[celda].value = str(valor)
+                ws[celda].data_type = "s"
+            elif valor is not None:
                 ws[celda] = valor
     ruta.parent.mkdir(parents=True, exist_ok=True)
     libro.save(ruta)

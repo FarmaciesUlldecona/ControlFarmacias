@@ -128,6 +128,29 @@ def test_texto_de_formula_y_solo_espacios_cuentan_como_vacias(tmp_path):
     assert len(lectura.importes) == 7
 
 
+def test_un_importe_que_es_exactamente_igual_cuenta_como_vacio_con_aviso(tmp_path):
+    """E2 ampliada (decision de Pio, 2026-11-22): contenido exactamente '=' (texto, no formula) = vacio, con aviso."""
+    def cambiar(hojas, _):
+        hojas[HOJA_PIO]["E6"] = ef.Texto("=")
+        hojas["RITA"]["F5"] = ef.Texto("=")
+    lectura = _leer(tmp_path, cambiar)
+    assert lectura.celdas_igual_vacias == [f"{HOJA_PIO}:E6", "RITA:F5"]
+    assert lectura.celdas_texto_vacias == [] and len(lectura.importes) == 7
+
+
+@pytest.mark.parametrize("texto", ["==", "= ", " =", "=x", "-"])
+def test_otro_texto_parecido_sigue_siendo_error(tmp_path, texto):
+    def cambiar(hojas, _):
+        hojas["RITA"]["E5"] = ef.Texto(texto)
+    assert _error(tmp_path, cambiar) == "TEXTO_EN_IMPORTE:RITA:E5"
+
+
+def test_un_igual_en_un_saldo_sigue_siendo_error(tmp_path):
+    def cambiar(hojas, _):
+        hojas["RITA"]["E10"] = ef.Texto("=")
+    assert _error(tmp_path, cambiar) == "TEXTO_EN_SALDO:RITA:E10"
+
+
 @pytest.mark.parametrize("valor, codigo", [("ver nota", "TEXTO_EN_IMPORTE"), (True, "TIPO_NO_ADMITIDO")])
 def test_otro_texto_o_tipo_en_un_importe_es_error(tmp_path, valor, codigo):
     def cambiar(hojas, _):

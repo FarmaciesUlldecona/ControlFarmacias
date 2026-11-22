@@ -184,6 +184,20 @@ def test_redondeo_llega_a_la_rpc_con_su_margen(cf):
                      "where cuenta = 'PIO' and decena_inicio = '2026-01-11'") == "1450.01"
 
 
+def test_celdas_igual_vacias_con_aviso_en_el_informe_y_se_importa(cf):
+    """E2 ampliada (decision de Pio, 2026-11-22): '=' exacto en un importe cuenta como vacio, con aviso y recuento."""
+    def cambiar(hojas, _):
+        hojas[HOJA_PIO]["F6"] = ef.Texto("=")
+        hojas["RITA"]["E5"] = ef.Texto("=")
+    _excel(cf, cambiar)
+    codigo, informe = cf.importar("MANUAL", "REAL", True)
+    assert (codigo, informe["resultado"]) == (ic.CODIGO_OK, "OK"), informe
+    assert informe["lectura"]["avisos_celdas_igual_vacias"] == {"n": 2, "posiciones": [f"{HOJA_PIO}:F6", "RITA:E5"]}
+    assert cf.pg.sql(CONTEOS) == "1|7|11"
+    resumen = next((cf.tmp / "cf" / "informes").rglob("resumen.txt")).read_text(encoding="utf-8")
+    assert "celdas '=' vacias: 2" in resumen
+
+
 # --------------------------------------------------------------------------- C6 y versiones
 
 
