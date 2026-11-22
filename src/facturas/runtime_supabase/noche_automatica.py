@@ -55,6 +55,8 @@ LIMITES_PLENOS = (20, 20)
 NOCHES_BUENAS_PARA_PLENOS = 3
 MINUTOS_MAXIMOS = 60
 TAREAS_PREVIAS = ("ControlFarmacias - Importar facturas", "Sincronización ControlFarmacias")
+# C7 (H7): la de Cashflow (23:45) no es previa ni obligatoria; solo no puede estar en ejecucion.
+TAREA_CASHFLOW = "ControlFarmacias - Importar Cashflow"
 RESULTADO_EN_EJECUCION = 267009
 # Valores certificados (R11, 2AZ; tolerancia documental 0,05).
 TOLERANCIAS_CERTIFICADAS = {
@@ -437,6 +439,12 @@ def puertas_tareas(info: dict, fecha: dt.date) -> list[str]:
             momento = momento.replace(tzinfo=dt.timezone.utc)
         if momento.astimezone().date() != fecha:
             fallos.append(f"TAREA_NO_EJECUTADA_ESTA_NOCHE:{nombre}:{ultima}")
+    # C7 (H7, DISENO §5.2; orden de Pio del 2026-11-22): la tarea de Cashflow no es obligatoria (puede no existir);
+    # solo se exige que no este en ejecucion.
+    cashflow = por_nombre.get(unicodedata.normalize("NFC", TAREA_CASHFLOW))
+    if cashflow is not None and (cashflow.get("estado") == "Running"
+                                 or cashflow.get("resultado") == RESULTADO_EN_EJECUCION):
+        fallos.append(f"TAREA_EN_EJECUCION:{TAREA_CASHFLOW}")
     return fallos
 
 
@@ -750,6 +758,12 @@ def _tareas_productivas() -> dict:
         " [pscustomobject]@{ nombre = $n;"
         "  ultima = $(if ($i.LastRunTime) { $i.LastRunTime.ToUniversalTime().ToString('o') } else { $null });"
         "  resultado = $i.LastTaskResult } });"
+        # C7: la tarea de Cashflow solo si existe (no es obligatoria), con su estado actual.
+        f"$c = Get-ScheduledTask -TaskName '{TAREA_CASHFLOW}' -ErrorAction SilentlyContinue;"
+        " if ($c) { $ci = $c | Get-ScheduledTaskInfo -ErrorAction Stop;"
+        f"  $t += [pscustomobject]@{{ nombre = '{TAREA_CASHFLOW}'; estado = [string]$c.State;"
+        "  ultima = $(if ($ci.LastRunTime) { $ci.LastRunTime.ToUniversalTime().ToString('o') } else { $null });"
+        "  resultado = $ci.LastTaskResult } };"
         "ConvertTo-Json -InputObject $t -Depth 3")
     codificado = base64.b64encode(ps.encode("utf-16-le")).decode("ascii")
     r = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-EncodedCommand", codificado],

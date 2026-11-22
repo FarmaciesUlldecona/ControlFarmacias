@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-22 (38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, con la RPC de la 38 como única escritura, C5 sin escribir nada hasta la manual y la tarea de las 23:45 sin crear; H7-D: migración 38 de Cashflow desplegada en producción, confirmación explícita de Pio, y prueba de acceso de cf_lectura ACCESO_OK; H7: migración 38 de Cashflow implementada en local, con RPC de solo inserción, cuadre sin margen por saldo y `TABLAS_CASHFLOW` en los postchecks, decisiones de Pio; 2026-11-21, 37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-22 (38-B, decisiones de Pio: categoría nueva = ausente de toda importación OK anterior de esa cuenta, y C7 «Cashflow no en ejecución» en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, con la RPC de la 38 como única escritura, C5 sin escribir nada hasta la manual y la tarea de las 23:45 sin crear; H7-D: migración 38 de Cashflow desplegada en producción, confirmación explícita de Pio, y prueba de acceso de cf_lectura ACCESO_OK; H7: migración 38 de Cashflow implementada en local, con RPC de solo inserción, cuadre sin margen por saldo y `TABLAS_CASHFLOW` en los postchecks, decisiones de Pio; 2026-11-21, 37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -607,16 +607,19 @@ entran en `SUITE_HISTORICA` en el commit del 38-B, no en el de su «D».
 - **Decenas:** empiezan el día 1, 11 o 21 y acaban el 10, el 20 o el último día del mes. E5: la decena sin saldo
   (primera de `SL`) no lleva importes. E7: el saldo de bancos vacío o distinto del de fórmulas nunca es error.
 - **Categorías nuevas (C5):** las controla el script de importación (38-B); la RPC no las comprueba (decisión de
-  Pio, 2026-11-22). Un par (cuenta, categoría) sin importes en la importación vigente es nuevo. La noche no escribe
-  nada (código 4); solo la importación manual con `--aceptar-categorias-nuevas` los acepta (`PROPUESTA` del 38-B:
-  no se registra como `ERROR`, para que el mismo fichero pueda aceptarse).
+  Pio, 2026-11-22). **DECISIÓN DE PIO (2026-11-22):** un par (cuenta, categoría) es nuevo si no aparece en ninguna
+  importación `OK` anterior de esa cuenta (no solo en la vigente). La noche no escribe nada (código 4) y no se
+  registra como `ERROR`, para que el mismo fichero pueda aceptarse; solo la importación manual con
+  `--aceptar-categorias-nuevas` los acepta.
+- **Tarea de Cashflow en las puertas (C7; orden de Pio del 2026-11-22):** no es obligatoria ni previa, pero la noche
+  y los preflights (2AT, 2BD-D en adelante y las series 2BJ/2BP) paran si está en ejecución.
 - **Script de importación (38-B):** `python -m src.cashflow.importar_cashflow <NOCHE|MANUAL> <SIMULAR|REAL>
   [--aceptar-categorias-nuevas]`. Su **única escritura es la RPC de la 38**, con el cliente del sistema de la noche;
   nunca un `INSERT`. Lee en sesión READ_ONLY; nunca abre ni escribe el original (trabaja sobre una copia estable fuera
   del repositorio). `SIMULAR` no escribe en la BD. Puertas: git en `REAL`, ninguna tarea en ejecución, ninguna noche
   `EN_CURSO`, la 38 presente y la carpeta C1. Postcheck por fila antes y después: solo cambian las filas de esa
   importación. Informe sin conceptos ni categorías. Lanzarlo pide confirmación (regla `ask` `*importar_cashflow*`).
-  Las concreciones que no están en C1–C8 ni E1–E7 están en DISENO §10 como `PROPUESTA` para Pio.
+  Concreciones en DISENO §10: las cuatro primeras, decididas por Pio el 2026-11-22; el resto, `PROPUESTA`.
 - **Postchecks:** `TABLAS_CASHFLOW` en la noche y en las series 2BJ y 2BP, fuera del criterio por fila e informadas
   aparte (`postcheck["cashflow"]`), sin afectar al veredicto, como Pagos.
 - **Despliegue y acceso:** `pruebas/auditoria_h7/desplegar_38.py` (ensayado con la imitación del `postgres` de

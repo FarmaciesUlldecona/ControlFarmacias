@@ -16,7 +16,8 @@ Una importacion:
   detalle de codigos y posiciones de celda, nunca conceptos ni categorias. Si la RPC rechaza un ``OK`` (vuelve a
   validarlo todo en la BD), se registra un ``ERROR`` aparte con su codigo.
 - Sin fichero, con mas de uno o con una copia inestable no hay hash que registrar: solo informe (codigo 2).
-- Categorias nuevas (C5): una (cuenta, categoria) que no esta en la importacion vigente. Sin
+- Categorias nuevas (C5; decision de Pio del 2026-11-22): una (cuenta, categoria) que no aparece en ninguna
+  importacion OK anterior de esa cuenta (no solo en la vigente). Sin
   ``--aceptar-categorias-nuevas`` (solo en MANUAL) no se escribe nada (codigo 4): asi Pio puede aceptar ese mismo
   fichero, cuyo hash quedaria bloqueado si se registrara como ``ERROR``.
 - Informe en ``C:\\ControlFarmacias\\cashflow\\informes\\<fecha>\\<hora>_<origen>_<modo>\\`` (informe.json,
@@ -414,9 +415,10 @@ def _lecturas_previas(lector) -> dict:
                           "order by importado_at desc, id desc limit 1")
     out["ultimo_hash"] = ultima[0][0] if ultima else None
     out["hashes"] = {r[0] for r in lector.filas("select archivo_hash from public.cf_cashflow_importaciones")}
-    out["categorias_vigentes"] = {(r[0], r[1]) for r in lector.filas(
+    # C5 (decision de Pio, 2026-11-22): conocidas = las de cualquier importacion OK anterior, por cuenta.
+    out["categorias_conocidas"] = {(r[0], r[1]) for r in lector.filas(
         "select distinct i.cuenta, i.categoria from public.cf_cashflow_importes i "
-        "join public.cf_cashflow_importaciones m on m.id = i.importacion_id where m.vigente")}
+        "join public.cf_cashflow_importaciones m on m.id = i.importacion_id where m.estado = 'OK'")}
     out["hay_vigente"] = lector.valor("select count(*) from public.cf_cashflow_importaciones where vigente") == 1
     return out
 
@@ -552,7 +554,7 @@ def _importar(origen: str, modo: str, aceptar: bool, entorno: Entorno, informe: 
         "avisos_redondeo": lectura.avisos_redondeo,
         "celdas_texto_vacias": {"n": len(lectura.celdas_texto_vacias), "posiciones": lectura.celdas_texto_vacias},
         "decenas_sin_saldo_e5": lectura.decenas_sin_saldo_e5, "hojas_ignoradas": len(lectura.hojas_ignoradas)}
-    nuevas = {(f["cuenta"], f["categoria"]) for f in lectura.importes} - previas["categorias_vigentes"]
+    nuevas = {(f["cuenta"], f["categoria"]) for f in lectura.importes} - previas["categorias_conocidas"]
     informe["categorias_nuevas"] = len(nuevas)
     informe["hay_vigente"] = previas["hay_vigente"]
     if nuevas and not aceptar:

@@ -406,15 +406,20 @@ crearla (la tarea no se crea). `CONFIRMADO POR TEST` en local; nada se ha ejecut
 | `PARADA` (puertas, hash de una importación anterior, resultado incierto de la RPC, postcheck) | nada, salvo que el postcheck falle tras escribir | 3 |
 | `CATEGORIAS_NUEVAS_SIN_ACEPTAR` (C5) | nada | 4 |
 
-- **Concreciones del script** (`PROPUESTA` para Pio: no están en las decisiones C1–C8 ni E1–E7):
-  1. Sin fichero, con más de uno o con una copia inestable no hay hash: el `ERROR` va solo al informe, no a la BD.
-  2. **C5:** una categoría nueva no se registra como `ERROR`, porque su hash quedaría bloqueado (único) y Pio no
-     podría aceptar ese mismo fichero. Se informa y no se escribe nada hasta la manual con la opción. Cuenta como
-     nueva cada par (cuenta, categoría) sin importes en la importación vigente; en la primera importación, todas.
-  3. **C6 ampliado:** si el hash es el de una importación anterior que no es la última (el Excel ha vuelto a una
-     versión ya importada), la RPC lo rechazaría (`HASH_YA_IMPORTADO`): `PARADA` sin escribir.
-  4. **Resultado incierto** (error sin código de la RPC, por ejemplo un corte de red): `PARADA`, sin registrar un
-     `ERROR` aparte; el postcheck dice si llegó a escribirse.
+- **Concreciones del script.** DECISIONES DE PIO (2026-11-22) sobre las cinco primeras:
+  1. **APROBADA.** Sin fichero, con más de uno o con una copia inestable no hay hash: el `ERROR` va solo al informe,
+     no a la BD.
+  2. **APROBADA CON CAMBIO. C5:** una categoría nueva no se registra como `ERROR`, porque su hash quedaría bloqueado
+     (único) y Pio no podría aceptar ese mismo fichero. Se informa y no se escribe nada hasta la manual con la opción.
+     **Categoría nueva = un par (cuenta, categoría) que no aparece en ninguna importación `OK` anterior de esa
+     cuenta** (no solo en la vigente). En la primera importación, todas; un `ERROR` no tiene importes y no hace
+     conocida ninguna.
+  3. **APROBADA. C6 ampliado:** si el hash es el de una importación anterior que no es la última (el Excel ha vuelto
+     a una versión ya importada), la RPC lo rechazaría (`HASH_YA_IMPORTADO`): `PARADA` sin escribir.
+  4. **APROBADA. Resultado incierto** (error sin código de la RPC, por ejemplo un corte de red): `PARADA`, sin
+     registrar un `ERROR` aparte; el postcheck dice si llegó a escribirse.
+
+  `PROPUESTA` (sin decisión expresa de Pio):
   5. **Filas sin categoría:** solo pueden tener fórmulas (totales, cuadre). Un número tecleado en una de ellas es
      `IMPORTE_SIN_CATEGORIA`.
   6. **Saldos:** el texto de fórmula o solo espacios cuenta como vacío (E2); otro texto es `TEXTO_EN_SALDO`. La E5 se
@@ -429,5 +434,9 @@ crearla (la tarea no se crea). `CONFIRMADO POR TEST` en local; nada se ha ejecut
   vigente de la anterior).
 - **Informe:** `C:\ControlFarmacias\cashflow\informes\<fecha>\<hora>_<origen>_<modo>\`, copias en
   `C:\ControlFarmacias\cashflow\copias\`. Sin conceptos ni categorías.
-- **C7 `PENDIENTE`:** la comprobación «Cashflow no en ejecución» en la puerta de la noche y de los preflights se
-  añade con la creación de la tarea, que hoy no existe.
+- **C7 (orden de Pio del 2026-11-22: se añade ya, antes de crear la tarea):** «Cashflow no en ejecución» en la
+  puerta de la noche (`noche_automatica.puertas_tareas`; `_tareas_productivas` lee la tarea solo si existe) y de los
+  preflights: `auditoria_2bd_d/preflight_readonly` (lo heredan los preflights 2BE-D en adelante y las series 2BJ y
+  2BP) y `auditoria_2at/auditoria_readonly` (ya la leía por el comodín `*ControlFarmacias*`). La tarea no es
+  obligatoria ni previa: si no existe o terminó con error, la puerta pasa. En los preflights rige además el margen de
+  60 minutos antes de su próxima ejecución, como para las demás.

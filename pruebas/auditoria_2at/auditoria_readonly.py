@@ -51,6 +51,9 @@ FLAGS_ESPERADOS = [False, False, False, "{PIO}"]
 # La tarea de Alliance (22:15, noche_automatica) tambien es obligatoria en la puerta (encargo de Pio, 2026-11-15).
 TAREAS_ESPERADAS = ("ControlFarmacias - Importar facturas", "Sincronización ControlFarmacias",
                     "ControlFarmacias - Automatizacion Alliance")
+# C7 (H7, orden de Pio del 2026-11-22): la tarea de Cashflow no es obligatoria; ``_tareas`` la lee si existe (entra en
+# '*ControlFarmacias*') y ``_puertas_tareas`` para si esta en ejecucion, como con cualquier otra.
+TAREA_CASHFLOW = "ControlFarmacias - Importar Cashflow"
 MARGEN_TAREAS = timedelta(minutes=60)
 
 # Columnas declaradas ANTES de ejecutar. Se incluyen tambien las columnas tecnicas
