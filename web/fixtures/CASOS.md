@@ -680,6 +680,62 @@ H6-3 (decisiones de Marc): abonos y cargos negativos.
 | Sin importe | V08 (y V06) | No marcable: «no tiene importe (importe pendiente): no se puede marcar hasta que se complete». La API responde 409 VENCIMIENTO_SIN_IMPORTE |
 | A revisar (prueba) | Marca de V2 con importe 427,22 (vale 472,22) y de V10 con fecha 03/11 (vence 04/11); huérfana de F04 con orden 9 | Contador «A revisar» 3; cabecera y resumen «A revisar» 624,59 €; sección «Marcas a revisar sin vencimiento» |
 
+## H8: R20 y «para revisar» de la noche (migración 36)
+
+- **R20 (albarán partido en Farmatic):** una línea del PDF = 2 detalles UNO_A_VARIOS con el mismo `factura_albaran_extraido_id`: el número exacto (papel_r20 NUMERO, clase EXACTA, coincidencia literal) y su variante (LETRA_FINAL). «Cómo casó»: «Albarán partido en Farmatic» y, como secundario, los dos números. Una sola diferencia y un estado por línea; «N albaranes con diferencia» la cuenta una vez. Lo aplicado suma lo mismo que la línea de H3a: el explicado no cambia (472,15 €).
+- **Noche:** fila de `cf_noches_automaticas` del 01/11/2026 (`NOCHE_H8`). Solo se muestran los elementos de PIO. Las facturas siguen en PENDIENTE_CONCILIAR: no suman en «Necesita tu atención».
+- **Configuración:** `conciliacion_r20` = true.
+
+| Caso | Datos | Efecto |
+|---|---|---|
+| R20 que coincide | F02 línea 08X20004: 08X20004 (100,00) + 08D20004 (56,73); PDF 156,74 | Diferencia 0,01, Coincide. Suma de Farmatic 156,73 € |
+| R20 con diferencia | F02 línea 08X20002: 08X20002 (30,00) + 08D20002 (13,09); el PDF pasa a 44,30 | Diferencia 1,21, Diferencia. F02 pasa a «1 albarán con diferencia» (antes ninguno), 5 líneas «Mismo número» (antes 7), 6 coinciden (antes 7) y 10 albaranes de Farmatic (antes 8). Las segundas filas llevan orden 9 y 10 |
+| DIFERENCIA (2 decimales) | F08 AL-26-100231, «118.1600» | «Diferencia simulada de 118,16 €» |
+| DIFERENCIA (4 decimales) | F03 CF-2026-55810, «2.0350» | «Diferencia simulada de 2,0350 €» |
+| NO_ALLIANCE | F07 CF-AB-2026-0912 | «Proveedor aún sin conciliación automática» |
+| R18_PENDIENTE | F06 FD-26/04471, fallo y r18 | «Pendiente de la regla R18»; fallo y r18 en la evidencia técnica |
+| DEFECTO | PDF D09, 3 intentos | «Documento con defecto tras 3 intentos»; enlace a Facturas |
+| Tipo no previsto | F03, TIPO_FUTURO_PRUEBA | «Elemento de la noche sin descripción (ver evidencia técnica)» |
+| Otra farmacia | Factura inexistente en PIO | No sale |
+
+### H8: pantalla Conciliación (doble comprobación)
+
+- **Marcas (datos existentes):**
+  - ✓ conciliada: F01, F02 (dif. 0,07 €) y F04;
+  - ✗ con diferencia: F03 (41,90 €; vence el 14/11, el vencimiento próximo con diferencia) y F07 (no se puede comprobar);
+  - ○ pendiente: F06 y F08;
+  - ! en revisión: F05.
+  - Banco: siempre «○ sin datos bancarios».
+  - «revisar (noche)» en F03, F06, F07 y F08.
+- **Resumen en €:**
+  - verificado doble 0;
+  - solo albaranes 3 facturas (1.192,64 €);
+  - ninguna 4 (770,22 €);
+  - 1 sin importe (F06), fuera de los totales.
+- **Bandeja por dinero en riesgo:** F08 (04/11) → F05 (07/11) → F03 (14/11) → F07 (21/11) → F06 (19/11, sin importe). Va agrupada por proveedor, en el orden de su factura de más riesgo.
+- **Sin factura (`SIN_FACTURA_H8`):**
+  - con conciliación automática y más de 30 días (alerta): Cofares 77501 (51 días) y 77502 (35 días, sin importe). En total 2 albaranes y 84,30 €;
+  - H8-2, «Leído, sin conciliación automática» (gris): Fedefarma (F06 no tiene conciliación), 3 albaranes y 455,00 €;
+  - H8-2, excluidos por no estar ya en Farmatic: 2 albaranes, 130,50 €;
+  - en plazo: Cofares 77510 y Alliance 08X29001;
+  - Alliance: 412 albaranes anteriores a lo que cubren sus facturas leídas;
+  - sin lector: ISDIN, Distribuciones Beta y «Proveedor sin identificar» (gris, nunca alerta);
+  - H8-3, forma agregada (una fila por grupo y proveedor, `DETALLE_ALERTA` y `TOTAL`): Fedefarma tiene además 6 albaranes anteriores (512,80 €); Hefame (id 9, ficticio) tiene conciliación automática pero no tiene fecha de inicio de lectura: 2 albaranes (96,40 €), nota naranja «Revísalo», nunca alerta;
+  - H8-3, total: 454 albaranes (más de 50), 42.460,25 €, 5 sin importe. Los nueve grupos (`GRUPOS_SIN_FACTURA`) suman el total.
+  - H8-4:
+    - la fecha de inicio de los proveedores con conciliación es la de su albarán reservado más antiguo;
+    - literales con el prefijo de Farmatic, mostrados con el nombre comercial o sin el prefijo: «1.- SAFA» → ALLIANCE, «3.- HEFAME» → HEFAME, «37.- LABORATORIOS ISDIN (FICTICIO)» → sin «37.- »;
+    - Hefame (id 9): 134 anteriores (9.876,50 €);
+    - «sin poder comprobar»: LOGISTAPHARMA (id 7), 1 albarán, 23,40 €;
+    - traspasos entre farmacias (grupo gris aparte, `TRASPASOS_ENTRE_FARMACIAS`): «4.- FFARMACIA RITA» (id 40), 12 albaranes, 1.840,00 €;
+    - total: 599 albaranes, 54.103,75 €, 5 sin importe; los diez grupos suman el total.
+  - H8-5:
+    - cada proveedor es un desplegable plegado; su detalle (los 100 más antiguos) llega en filas `DETALLE_*` por (grupo, proveedor): alerta, sin poder comprobar (LG-26-0141), leído (FD-ALB-3301/3302/3303), pendiente de automatizar y traspasos (TR-001…012);
+    - «2.- COFARES» (id 41) pendiente de automatizar: 6 albaranes, 742,10 €; en la cobertura va en la misma fila que sus facturas leídas, no como «sin lector» aparte;
+    - «12.- HPLUS CONSUMO» (id 42): 3 albaranes, 87,60 €; se muestra como HEFAME (decisión de Pío, 22/11/2026), con «HPLUS CONSUMO» debajo, y en la cobertura va en la fila HEFAME;
+    - total: 608 albaranes, 54.933,45 €, 5 sin importe.
+- **Inicio:** las alertas (1 duplicado, 1 no en Farmatic, 2 correcciones) salen de «Necesita tu atención»: 15 tipos y 27 casos pasan a 12 tipos y 23 casos. Quedan como recuento con enlace a Conciliación → Albaranes.
+
 ## H7: pantalla Cashflow (fixtures/cashflow/cashflow.json; tablas pendientes del circuito)
 
 Datos ficticios con la forma del contrato del circuito (`cf_cashflow_importaciones`, `cf_cashflow_cuentas`, `cf_cashflow_importes`, `cf_cashflow_saldos`), generados por `fixtures/scripts/gen_cashflow.mjs` (`npm run fixtures:cashflow`; check_fixtures comprueba que están al día). Sustituyen al cashflow por semanas de H3a (`dto/cashflow_semanas.json` ya no se usa). Fecha de referencia 16/11/2026 (la de la semilla de pagos). El cálculo es `server/cashflow/cashflow.ts` (servidor, front y pruebas).

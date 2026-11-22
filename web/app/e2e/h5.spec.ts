@@ -301,10 +301,12 @@ test.describe('Detalle PC 1440', () => {
   test('tipos de casado en texto llano: exacto, letra final, ECO360, final documental, Hefame, ambiguo, cargos y abonos', async ({ page }) => {
     await abrirDetalle(page, 2);
     const alb = page.locator('[data-seccion="albaranes"]');
-    await expect(alb.locator('[data-casado="NUMERO:EXACTA"]')).toHaveCount(7);
+    // H8: las líneas 2 y 4 de F02 son ahora R20 (albarán partido): 5 exactas y 10 albaranes de Farmatic (8 + 2 variantes).
+    await expect(alb.locator('[data-casado="NUMERO:EXACTA"]')).toHaveCount(5);
+    await expect(alb.locator('[data-casado="R20:PARTIDO"]')).toHaveCount(2);
     await expect(alb.locator('[data-casado="NUMERO:LETRA_FINAL"]')).toHaveText('Mismo número con una letra final (Alliance: 08C52171A = 08C52171)');
     await expect(alb.locator('[data-nota-casado]')).toHaveText('Albarán de la plataforma ECO360: Farmatic lo registra como compra a Alliance');
-    await expect(alb.locator('[data-origen-aplicado="PUC"]')).toHaveCount(8);
+    await expect(alb.locator('[data-origen-aplicado="PUC"]')).toHaveCount(10);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_detalle_F02.png'), fullPage: true });
 
     await abrirDetalle(page, 4);
@@ -360,8 +362,9 @@ test.describe('Detalle PC 1440', () => {
     await expect(sinPdf).toHaveClass(/\bn\b/); // gris
     await expect(alb.locator('[data-no-consta="pdf"]')).toHaveCount(1);
     await expect(alb.locator('[data-no-consta="diferencia"]')).toHaveCount(1);
-    await expect(alb.locator('[data-estado-linea="COINCIDE"]')).toHaveCount(7);
-    await expect(page.locator('[data-aviso-detalle="lineas-con-diferencia"]')).toHaveCount(0);
+    // H8: la línea 2 de F02 (R20) tiene 1,21 € de diferencia: 6 coinciden y un aviso «1 albarán con diferencia».
+    await expect(alb.locator('[data-estado-linea="COINCIDE"]')).toHaveCount(6);
+    await expect(page.locator('[data-aviso-detalle="lineas-con-diferencia"]')).toHaveText(/^1 albarán con diferencia/);
     // F07 línea 5: sin casar y el PDF sin importe → «Sin contraparte en Farmatic»; tres importes no consta.
     await abrirDetalle(page, 7);
     const sinFar = alb.locator('[data-estado-linea="NO_EVALUABLE"]');

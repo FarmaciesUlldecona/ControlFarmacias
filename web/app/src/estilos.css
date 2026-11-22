@@ -253,6 +253,23 @@ a:hover { color: #0f252e; }
 .casos-detalle .caso { grid-template-columns: minmax(0, 1fr); padding-left: 0; }
 .casos-detalle .caso:first-child { border-top: 0; }
 
+/* H8: «Revisar: detectado por la noche» (naranja: revisar; nunca rojo ni reclamación) */
+.noche { border-left: 3px solid var(--naranja); }
+.noche h2 { display: flex; align-items: center; gap: 8px; }
+.noche-casos { padding-left: 0; margin-bottom: 0; }
+.noche-casos .caso { padding-left: 0; }
+.noche-casos .caso:first-child { border-top: 0; }
+.noche-evidencia { font-size: 12px; color: var(--tenue); }
+.noche-evidencia summary { cursor: pointer; width: fit-content; }
+.noche-evidencia ul { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.noche-evidencia .codigo { overflow-wrap: anywhere; white-space: normal; }
+.noche-resumen {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 18px;
+  border-left: 3px solid var(--gris); font-size: 14px;
+}
+.noche-resumen.borde-naranja { border-left-color: var(--naranja); }
+.noche-resumen-texto { flex: 1 1 260px; min-width: 0; }
+
 /* H4d: nombre largo de proveedor en una línea con "…" (completo en title); nunca cortado a mitad de palabra */
 .nombre-truncado { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .tabla-fija { table-layout: fixed; }

@@ -10,7 +10,11 @@ import {
   gruposDuplicadoFarmatic, idProveedorR9, numeroAlbaranBase,
   TEXTO_INCIDENCIA, cifFactura, etiquetaYAlias, grupoProveedor, normalizarCif, resumenDuplicados, resumenPar08C66676,
   CATEGORIAS_TIPO_DOCUMENTAL, CODIGOS_SOLO_DETALLE, TEXTO_SIN_TRADUCCION, categoriaTipoDocumental, sentidoDocumental, textoIncidencia,
+  construirAtencion, DIAS_ALERTA_SIN_FACTURA, GRUPOS_SIN_FACTURA, TRASPASOS_ENTRE_FARMACIAS, literalFarmaticSinPrefijo, BANCO_SIN_DATOS,
 } from '../../app/server/contrato.ts';
+import {
+  bandejaAlbaranes, cabeceraAlbaranes, claveNombreProveedor, coberturaProveedores, marcaAlbaranes, recuentoAlertas, resumenDoble,
+} from '../../app/server/conciliacion.ts';
 import { FICHEROS_DTO } from '../../app/server/adaptador_fixtures.ts';
 import { ETIQUETAS_CLASE_NUMERO, ETIQUETAS_ESTADO_MATCHING, PDF_ORIGINAL, resumenCasado, vencimientoProximo } from '../../app/server/contrato.ts';
 import {
@@ -99,11 +103,17 @@ comprobar('consultas: solo objetos de la lista cerrada 2BN, sin v_dashboard_diar
 });
 
 // --- Reglas transversales ------------------------------------------------------
-comprobar('farmacia: solo PIO (ningún RITA)', () => {
+// H8-4 (decisión A de Marc): única excepción, acotada: en los albaranes de PIO, la otra farmacia figura como proveedor de
+// Farmatic (traspaso). Solo en sin_factura.traspasos[i], solo farmacia_origen y proveedor, y solo con los valores de
+// TRASPASOS_ENTRE_FARMACIAS (farmacia y literal sin prefijo). Cualquier otro RITA sigue fallando.
+const RUTA_TRASPASO = /^\$\.conciliacionBandeja\.sin_factura\.traspasos\[\d+\]\.(farmacia_origen|proveedor)$/;
+const valorTraspasoPermitido = (ruta, v) => RUTA_TRASPASO.test(ruta)
+  && TRASPASOS_ENTRE_FARMACIAS.some((t) => v === t.farmacia || v === literalFarmaticSinPrefijo(t.literal_farmatic));
+comprobar('farmacia: solo PIO (ningún RITA; excepción acotada: traspasos entre farmacias)', () => {
   const malos = [];
   recorrer(dto, (k, v, ruta) => {
     if ((k === 'farmacia' || k === 'farmacia_activa') && v !== 'PIO') malos.push(ruta);
-    if (typeof v === 'string' && /\bRITA\b/.test(v)) malos.push(ruta);
+    if (typeof v === 'string' && /\bRITA\b/.test(v) && !valorTraspasoPermitido(ruta, v)) malos.push(ruta);
   });
   return si(malos.length === 0, malos.slice(0, 5).join(', '));
 });
@@ -460,7 +470,11 @@ comprobar('H4d: cabecera "N tipos, M casos" y una fila por tipo', () => {
   const g = inicio.atencion.grupos;
   const claves = new Set(g.map((x) => x.clave));
   return si(inicio.atencion.tipos === g.length && inicio.atencion.casos === casosAtencion.length && claves.size === g.length
-    && g.length === 15 && casosAtencion.length === 27 /* H6-REAL: +1 vencimiento sin sentido (V13) */, JSON.stringify([inicio.atencion.tipos, inicio.atencion.casos]));
+    // H6-REAL: +1 vencimiento sin sentido (V13). H8: las alertas de albaranes (1 duplicado, 1 no en Farmatic y 2
+    // correcciones: grupos 3, 5 y 8) salen de Inicio a Conciliación → 12 tipos, 23 casos.
+    && g.length === 12 && casosAtencion.length === 23
+    && !g.some((x) => ['DUPLICADO_FARMATIC', 'ALBARAN_NO_EN_FARMATIC', 'CORRECCION_APROBADA'].includes(x.categoria)) && inicio.alertas.length === 4,
+  JSON.stringify([inicio.atencion.tipos, inicio.atencion.casos]));
 });
 comprobar('H4d: orden fijo de grupos (1 diferencia … 8 correcciones) y casos del más reciente al más antiguo', () => {
   const g = inicio.atencion.grupos;
@@ -470,10 +484,13 @@ comprobar('H4d: orden fijo de grupos (1 diferencia … 8 correcciones) y casos d
   const casosOrdenados = g.every((x) => x.casos.every((c, i) => i === 0 || (x.casos[i - 1].fecha ?? '') >= (c.fecha ?? '')));
   // Dentro de 6 y 7 (un grupo por código): el grupo con el caso más reciente primero.
   const de7 = g.filter((x) => x.orden === 7).map((x) => x.clave.split(':')[1]);
-  return si(ordenado && casosOrdenados && isDeepStrictEqual(primeros, ['DIFERENCIA_ALBARANES', 'DOCUMENTOS_DEFECTO', 'DUPLICADO_FARMATIC', 'VENCIMIENTO_SIN_SENTIDO', 'ALBARAN_NO_EN_FARMATIC'])
+  // H8: sin los grupos de alertas (3, 5 y 8), que están en Conciliación. construirAtencion los sigue sabiendo ordenar.
+  const conAlertas = construirAtencion([], [], [], inicio.alertas, []).map((x) => x.orden);
+  return si(ordenado && casosOrdenados && isDeepStrictEqual(primeros, ['DIFERENCIA_ALBARANES', 'DOCUMENTOS_DEFECTO', 'VENCIMIENTO_SIN_SENTIDO',
+    'INCIDENCIA_ERROR:REQUIERE_REVISION', 'INCIDENCIA_ERROR:SEGUNDA_LECTURA_FALLIDA'])
     && isDeepStrictEqual(de7, ['SENTIDO_NO_DOCUMENTADO', 'IMPORTE_VENCIMIENTO_NO_DOCUMENTADO', 'SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE',
       'CANDIDATO_ALBARAN_NO_PROMOVIDO', 'POSIBLE_DUPLICADO', 'CODIGO_FICTICIO_SIN_TRADUCCION'])
-    && g.find((x) => x.orden === 8).clave === 'CORRECCION_APROBADA', JSON.stringify(g.map((x) => [x.orden, x.clave])));
+    && !g.some((x) => x.orden === 8) && isDeepStrictEqual(conAlertas, [3, 5, 8]), JSON.stringify(g.map((x) => [x.orden, x.clave])));
 });
 comprobar('H4d: colores (1–2 y ERROR rojo; revisión, 3–5 y AVISO naranja; correcciones gris; duplicado y sentido nunca rojo)', () => {
   const malos = inicio.atencion.grupos.filter((g) => {
@@ -586,17 +603,19 @@ comprobar('configuración: interruptores apagados, solo PIO, R11 0,05/0,01/0,50'
 // --- Casos H5: pantalla Facturas ----------------------------------------------------
 const lineasTodas = Object.values(facturaDetalle).flatMap((x) => x.lineas);
 comprobar('H5: diccionario de tipos de casado completo, con texto llano y fuente (fichero:línea)', () => {
-  const malos = Object.entries(DICCIONARIO_CASADO).filter(([k]) => k !== 'ESTADO:SIN_DESCRIPCION').filter(([, e]) => !e.texto || /^[A-Z_:]+$/.test(e.texto) || !/^[A-Z0-9]+:|\.sql:|^[0-9a-f]{7}:[a-z0-9_/]+\.py:\d/.test(e.fuente)); // H5-5: commit:fichero:línea
+  // H5-5: commit:fichero:línea; H8: R20 cita su migración («migración 36»).
+  const malos = Object.entries(DICCIONARIO_CASADO).filter(([k]) => k !== 'ESTADO:SIN_DESCRIPCION').filter(([, e]) => !e.texto || /^[A-Z_:]+$/.test(e.texto) || !/^[A-Z0-9]+:|\.sql:|^[0-9a-f]{7}:[a-z0-9_/]+\.py:\d|^migración \d+$/.test(e.fuente));
   return si(malos.length === 0 && Object.keys(DICCIONARIO_CASADO).length >= 20, malos.map(([k]) => k).join(', '));
 });
 comprobar('H5-2: las fixtures cubren las formas de casado (principal) y los tipos de relación (secundario)', () => {
   const claves = new Set(lineasTodas.map(claveCasado));
   const faltan = ['NUMERO:EXACTA', 'NUMERO:LETRA_FINAL', 'NUMERO:FINAL_DOCUMENTAL', 'NUMERO:INTERNO', 'HEFAME:EXACTO_ECONOMICO',
-    'MOVIMIENTO', 'MOVIMIENTO:SIN_SENTIDO', 'SIN:SIN_COINCIDENCIA', 'SIN:AMBIGUO'].filter((k) => !claves.has(k));
+    'MOVIMIENTO', 'MOVIMIENTO:SIN_SENTIDO', 'SIN:SIN_COINCIDENCIA', 'SIN:AMBIGUO', 'R20:PARTIDO'].filter((k) => !claves.has(k));
   const rel = new Set(lineasTodas.map(claveRelacion));
   const faltanRel = ['UNO_A_UNO', 'UNO_A_VARIOS', 'MOVIMIENTO_NO_FARMATIC', 'SIN_COINCIDENCIA'].filter((k) => !rel.has(k));
   // R17: principal = forma del número de cada albarán (su número / numeración interna), secundario = misma recepción.
-  const r17 = lineasTodas.filter((l) => l.tipo_relacion === 'UNO_A_VARIOS').map(claveCasado).join();
+  // H8: R20 también es UNO_A_VARIOS; la regla los distingue.
+  const r17 = lineasTodas.filter((l) => l.tipo_relacion === 'UNO_A_VARIOS' && l.regla === 'R17').map(claveCasado).join();
   return si(faltan.length === 0 && faltanRel.length === 0 && r17 === 'NUMERO:EXACTA,NUMERO:INTERNO'
     && !claves.has('SIN:OTRO') && !claves.has('NUMERO:OTRO') && Object.keys(RELACION_CASADO).every((k) => RELACION_CASADO[k].texto && RELACION_CASADO[k].fuente),
   `faltan ${[...faltan, ...faltanRel].join(', ')} · r17 ${r17}`);
@@ -642,7 +661,8 @@ comprobar('H5-7: estados por línea en la web (texto y color), aviso «N albaran
     // F03: línea 1 (casada) + línea 4 (sin casar); R17 (dos detalles) cuenta como una línea y está en COINCIDE.
     && a3?.texto === '2 albaranes con diferencia' && a3.detalle === 'De ellos, 1 sin casar en Farmatic'
     && a5?.texto === '4 albaranes con diferencia' && a5.detalle.includes(TEXTO_HEFAME_BASES)
-    && a7?.texto === '2 albaranes con diferencia' && a2 === undefined
+    // H8: F02 línea 2 (R20, dos detalles) en DIFERENCIA: cuenta una vez.
+    && a7?.texto === '2 albaranes con diferencia' && a2?.texto === '1 albarán con diferencia' && a2.detalle === null
     && TEXTO_HEFAME_BASES === 'El motor compara la base neta del PDF (sin IVA) con el importe de Farmatic (con IVA): la diferencia incluye el IVA y el recargo';
   return si(ok, `${malos.join(', ')} | ${JSON.stringify([a3, a5, a7, a2])}`);
 });
@@ -706,7 +726,9 @@ comprobar('H5-3: diccionario de estado_matching = valores que escribe el motor (
   const ok = isDeepStrictEqual(claves, [...ETIQUETAS_ESTADO_MATCHING].sort())
     && Object.entries(ESTADOS_MATCHING).every(([k, e]) => e.texto && !/^[A-Z_]+$/.test(e.texto)
       // H5-5: los de la versión anterior citan commit:fichero:línea; los actuales, conciliacion.py (C:).
-      && (ESTADOS_VERSION_ANTERIOR.includes(k) ? /^e18acf0:pruebas\/auditoria_2[tv]\/[a-z0-9_]+\.py:\d/.test(e.fuente) : /^C:\d/.test(e.fuente)))
+      // H8: MATCH_R20, su migración.
+      && (ESTADOS_VERSION_ANTERIOR.includes(k) ? /^e18acf0:pruebas\/auditoria_2[tv]\/[a-z0-9_]+\.py:\d/.test(e.fuente)
+        : k === 'MATCH_R20' ? e.fuente === 'migración 36' : /^C:\d/.test(e.fuente)))
     && DICCIONARIO_CASADO['ESTADO:SIN_DESCRIPCION'].texto === 'Estado del motor sin descripción (ver evidencia técnica)'
     && textoEstadoMatching('MATCH_UNICO') !== null && textoEstadoMatching('ESTADO_FUTURO_PRUEBA') === null;
   return si(ok, claves.join(', '));
@@ -766,6 +788,174 @@ comprobar('H5: R17 en F03: dos detalles UNO_A_VARIOS con el mismo albarán docum
     && isDeepStrictEqual(r17.map((x) => x.importe_aplicado), [60, 38.7]) && g.length === 3 && g[1].detalles.length === 2
     && d.albaranes_extraidos.length === 3, JSON.stringify(r17.map((x) => [x.orden, x.papel_r17, x.importe_aplicado])));
 });
+// --- H8 (migración 36): R20 y «para revisar» de la noche -----------------------------------------------------------
+comprobar('H8: R20 en F02: una línea = 2 filas UNO_A_VARIOS (mismo albarán documental), exacto + variante; importes del motor', () => {
+  const d = facturaDetalle[F(2)];
+  const r20 = d.lineas.filter((x) => x.regla === 'R20');
+  const g = agruparLineas(d.lineas.filter((x) => x.tipo_relacion !== 'MOVIMIENTO_NO_FARMATIC')).filter((x) => x.detalles.some((l) => l.regla === 'R20'));
+  const malos = [];
+  for (const x of g) {
+    const [a, b] = x.detalles;
+    if (x.detalles.length !== 2 || a.factura_albaran_extraido_id !== b.factura_albaran_extraido_id) malos.push('pareja');
+    if (!x.detalles.every((l) => l.tipo_relacion === 'UNO_A_VARIOS' && l.estado_matching === 'MATCH_R20')) malos.push('tipo');
+    if (a.papel_r20 !== 'NUMERO' || a.clase_numero !== 'EXACTA' || a.coincidencia_numero_literal !== true) malos.push('exacto');
+    if (b.papel_r20 !== 'LETRA_FINAL' || b.clase_numero !== 'LETRA_FINAL' || b.coincidencia_numero_literal !== false) malos.push('variante');
+    if (a.importe_documental !== b.importe_documental || a.diferencia !== b.diferencia || a.estado_linea !== b.estado_linea) malos.push('comunes');
+    if (x.detalles.some((l) => l.importe_farmatic !== l.importe_aplicado)) malos.push('farmatic');
+  }
+  const [l2, l4] = g;
+  const suma = (x) => Math.round((x.detalles[0].importe_farmatic + x.detalles[1].importe_farmatic) * 100) / 100;
+  const ok = malos.length === 0 && r20.length === 4 && g.length === 2
+    && l2.documental.numero === '08X20002' && suma(l2) === 43.09 && l2.detalles[0].diferencia === 1.21 && l2.detalles[0].estado_linea === 'DIFERENCIA'
+    && l4.documental.numero === '08X20004' && suma(l4) === 156.73 && l4.detalles[0].diferencia === 0.01 && l4.detalles[0].estado_linea === 'COINCIDE'
+    && g.every((x) => x.detalles.every((l) => claveCasado(l) === 'R20:PARTIDO'))
+    && DICCIONARIO_CASADO['R20:PARTIDO'].texto === 'Albarán partido en Farmatic' && DICCIONARIO_CASADO['R20:PARTIDO'].fuente === 'migración 36'
+    // R17 sigue siendo R17 (la regla distingue).
+    && facturaDetalle[F(3)].lineas.filter((l) => l.tipo_relacion === 'UNO_A_VARIOS').every((l) => claveCasado(l).startsWith('NUMERO:'))
+    // El explicado de la conciliación no cambia: lo aplicado de F02 suma lo mismo que antes de R20.
+    && Math.round(d.lineas.reduce((s, l) => s + (l.importe_aplicado ?? 0), 0) * 100) / 100 === 472.15;
+  return si(ok, `${malos.join(',')} ${JSON.stringify(g.map((x) => [x.documental.numero, x.detalles.map((l) => [l.orden, l.papel_r20, l.importe_farmatic, l.diferencia, l.estado_linea])]))}`
+    + ` aplicado=${d.lineas.reduce((s, l) => s + (l.importe_aplicado ?? 0), 0)}`);
+});
+comprobar('H8: «para revisar» de la noche (01/11/2026): solo PIO, los cuatro tipos con texto llano y el valor del motor sin recalcular', () => {
+  const r = conciliacionBandeja.revisar_noche;
+  const t = (tipo) => r.elementos.filter((e) => e.tipo === tipo).map((e) => e.texto);
+  const ok = r.fecha === '2026-11-01' && r.lista_valida && isDeepStrictEqual(inicio.revisar_noche, r)
+    && r.elementos.length === 6 && !r.elementos.some((e) => e.numero_factura === 'OTRA-FARMACIA')
+    && isDeepStrictEqual(t('DIFERENCIA').sort(), ['Diferencia simulada de 118,16 €', 'Diferencia simulada de 2,0350 €'])
+    && isDeepStrictEqual(t('NO_ALLIANCE'), ['Proveedor aún sin conciliación automática'])
+    && isDeepStrictEqual(t('R18_PENDIENTE'), ['Pendiente de la regla R18'])
+    && isDeepStrictEqual(t('DEFECTO'), ['Documento con defecto tras 3 intentos'])
+    && r.elementos.find((e) => e.tipo === 'R18_PENDIENTE').evidencia.fallo === 'R18_SIN_EVIDENCIA_FICTICIO'
+    && r.elementos.find((e) => e.tipo === 'R18_PENDIENTE').evidencia.r18?.estado === 'PENDIENTE'
+    && r.elementos.find((e) => e.tipo === 'OTRO')?.tipo_literal === 'TIPO_FUTURO_PRUEBA'
+    && r.elementos.find((e) => e.tipo === 'DEFECTO').enlace === '/facturas' && r.elementos.find((e) => e.tipo === 'DEFECTO').archivo_nombre !== null
+    && r.elementos.filter((e) => e.factura_id !== null).every((e) => e.enlace === `/facturas/${e.factura_id}`)
+    && isDeepStrictEqual(r.por_tipo, { DIFERENCIA: 2, NO_ALLIANCE: 1, R18_PENDIENTE: 1, DEFECTO: 1, OTRO: 1 })
+    // La noche no reclama: las facturas siguen en PENDIENTE_CONCILIAR (y no suma en «Necesita tu atención»).
+    && r.elementos.filter((e) => e.factura_id !== null).every((e) => facturaDetalle[e.factura_id].factura.estado_conciliacion_cf === 'PENDIENTE_CONCILIAR')
+    && configuracion.conciliacion_r20 === true
+    && CONSULTAS_POR_BLOQUE.inicio.includes('noche_revisar') && CONSULTAS_POR_BLOQUE.conciliacionBandeja.includes('noche_revisar')
+    && OBJETOS_PERMITIDOS.includes('cf_noches_automaticas');
+  return si(ok, JSON.stringify({ fecha: r.fecha, n: r.elementos.length, por_tipo: r.por_tipo, textos: r.elementos.map((e) => e.texto) }));
+});
+// --- H8: pantalla Conciliación (doble comprobación) -------------------------------------------------------------
+comprobar('H8: doble comprobación: las cuatro marcas de albaranes, banco siempre «sin datos bancarios», resumen en € y sin importe fuera', () => {
+  const fs = conciliacionBandeja.facturas;
+  const m = (n) => marcaAlbaranes(fs.find((x) => x.factura_id === F(n))).clave;
+  const marcas = [1, 2, 3, 4, 5, 6, 7, 8].map(m);
+  const r = resumenDoble(fs);
+  const f2 = fs.find((x) => x.factura_id === F(2));
+  const ok = isDeepStrictEqual(marcas, ['CONCILIADA', 'CONCILIADA', 'DIFERENCIA', 'CONCILIADA', 'REVISION', 'PENDIENTE', 'DIFERENCIA', 'PENDIENTE'])
+    && fs.every((x) => isDeepStrictEqual(x.banco, BANCO_SIN_DATOS))
+    && marcaAlbaranes(f2).diferencia_motor === f2.conciliacion.diferencia // la del motor, sin recalcular
+    && marcaAlbaranes(fs.find((x) => x.factura_id === F(3))).diferencia_motor === 41.9
+    && r.verificado_doble.facturas === 0 && r.verificado_doble.importe === null && r.solo_albaranes.facturas === 3
+    && r.sin_importe === fs.filter((x) => x.importe_total === null).length && r.sin_importe > 0
+    && r.solo_albaranes.facturas + r.ninguna.facturas + r.sin_importe === fs.length
+    && fs.find((x) => x.factura_id === F(3)).vencimiento_proximo.fecha_vencimiento === '2026-11-14' // vencimiento próximo con diferencia
+    && conciliacionBandeja.hoy === '2026-11-02' && conciliacionBandeja.proveedores_filtro.length > 0
+    && fs.every((x) => x.proveedor_grupo && x.proveedor_etiqueta);
+  return si(ok, JSON.stringify({ marcas, r }));
+});
+comprobar('H8: Albaranes: cabecera, bandeja por proveedor → motivo ordenada por dinero en riesgo, cobertura con «sin lector» y alertas', () => {
+  const c = cabeceraAlbaranes(conciliacionBandeja);
+  const b = bandejaAlbaranes(conciliacionBandeja.facturas);
+  const orden = b.flatMap((g) => g.motivos.flatMap((m) => m.facturas.map((x) => x.factura_id.slice(-2))));
+  const motivos = Object.fromEntries(b.flatMap((g) => g.motivos.flatMap((m) => m.facturas.map((x) => [x.factura_id.slice(-2), m.clave]))));
+  const cob = coberturaProveedores(conciliacionBandeja.facturas, conciliacionBandeja.sin_factura);
+  const ra = recuentoAlertas(conciliacionBandeja);
+  const ok = c.conciliadas === 3 && c.pendientes === 4 && c.en_revision === 1 && c.cobertura.sin_importe === 1
+    && isDeepStrictEqual(orden, ['08', '05', '03', '07', '06'])
+    && motivos['05'] === 'REVISION' && motivos['03'] === 'NO_LOCALIZADO' && motivos['08'] === 'PENDIENTE'
+    && cob.filter((x) => x.tipo === 'SIN_LECTOR').length === 3 && cob.findIndex((x) => x.tipo === 'SIN_LECTOR') === cob.filter((x) => x.tipo === 'LECTOR').length
+    && ra.duplicados === 1 && ra.no_en_farmatic === 1 && ra.correcciones === 2;
+  return si(ok, JSON.stringify({ c, orden, motivos, ra }));
+});
+comprobar('H8: Sin factura: con lector > 30 días → alerta (antigüedad e importe); recientes y anteriores sin alerta; sin lector gris; sin proveedor nunca alerta', () => {
+  const sf = conciliacionBandeja.sin_factura;
+  const cof = sf.con_lector.find((p) => p.clave === '1');
+  const all = sf.con_lector.find((p) => p.clave === '2');
+  // H8-2: Fedefarma (F06, sin conciliación) → «Leído, sin conciliación automática», nunca alerta; 2 ausentes excluidos.
+  const ok = DIAS_ALERTA_SIN_FACTURA === 30 && sf.dias_alerta === 30
+    && sf.totales.alertas === 2 && sf.totales.importe_alertas === 84.3 && sf.totales.alertas_sin_importe === 1
+    && isDeepStrictEqual(sf.con_lector.filter((p) => p.alertas.length).map((p) => p.clave), ['1'])
+    && !sf.con_lector.some((p) => p.clave === '4')
+    && isDeepStrictEqual(sf.leido_sin_conciliacion.map((p) => [p.clave, p.proveedor, p.albaranes, p.importe]), [['4', 'FEDEFARMA', 3, 455]])
+    && conciliacionBandeja.facturas.find((x) => x.factura_id === F(6)).conciliacion === null
+    && isDeepStrictEqual(sf.excluidos_ausentes, { albaranes: 2, importe: 130.5, sin_importe: 0 })
+    && isDeepStrictEqual(cof.alertas.map((a) => [a.numero_albaran, a.dias, a.importe]), [['77501', 51, 84.3], ['77502', 35, null]])
+    && cof.recientes.albaranes === 1 && cof.recientes.importe === 120
+    && all.alertas.length === 0 && all.recientes.albaranes === 1 && all.anteriores.albaranes === 412 && all.anteriores.sin_importe === 3
+    // H8-5: más COFARES (41) y HPLUS CONSUMO (42) pendientes de automatizar.
+    && isDeepStrictEqual(sf.sin_lector.map((s) => [s.clave, s.identificado]), [['37', true], ['41', true], ['88', true], ['42', true], [null, false]])
+    && sf.sin_lector[4].proveedor === 'Proveedor sin identificar' && sf.totales.sin_lector.albaranes === 34
+    && sf.con_lector.every((p) => !/^Proveedor \d/.test(p.proveedor));
+  return si(ok, JSON.stringify({ totales: sf.totales, con: sf.con_lector.map((p) => [p.clave, p.proveedor, p.alertas.length]) }));
+});
+comprobar('H8-3/H8-4/H8-5: Sin factura: grupos exhaustivos y excluyentes que suman el total (608 > 50); sin poder comprobar y anteriores de leído visibles', () => {
+  const sf = conciliacionBandeja.sin_factura;
+  const suma = GRUPOS_SIN_FACTURA.reduce((a, g) => a + sf.grupos[g].albaranes, 0);
+  const sumaImp = Math.round(GRUPOS_SIN_FACTURA.reduce((a, g) => a + (sf.grupos[g].importe ?? 0), 0) * 100) / 100;
+  const sumaSin = GRUPOS_SIN_FACTURA.reduce((a, g) => a + sf.grupos[g].sin_importe, 0);
+  const log = sf.con_lector.find((p) => p.clave === '7');
+  const fed = sf.leido_sin_conciliacion.find((p) => p.clave === '4');
+  const ok = isDeepStrictEqual(Object.keys(sf.grupos), [...GRUPOS_SIN_FACTURA])
+    && sf.total.albaranes === 608 && suma === 608 && sumaImp === 54933.45 && sf.total.importe === 54933.45 && sumaSin === sf.total.sin_importe
+    && sf.limite_detalle === 100 && sf.con_lector.every((p) => p.alertas.length === Math.min(p.alertas_total, 100))
+    && log?.sin_desde.albaranes === 1 && log.alertas_total === 0
+    && fed?.anteriores.albaranes === 6 && fed.albaranes === 3;
+  return si(ok, JSON.stringify({ total: sf.total, suma, sumaImp, sumaSin }));
+});
+comprobar('H8-4: Sin factura: nombres comerciales sin prefijo de Farmatic, traspasos entre farmacias aparte y fuera de la cobertura', () => {
+  const sf = conciliacionBandeja.sin_factura;
+  const nombre = (k) => sf.con_lector.find((p) => p.clave === k)?.proveedor;
+  const cob = coberturaProveedores(conciliacionBandeja.facturas, sf);
+  const ok = nombre('2') === 'ALLIANCE' && nombre('9') === 'HEFAME' && nombre('7') === 'LOGISTAPHARMA'
+    && sf.con_lector.find((p) => p.clave === '9').anteriores.albaranes === 134
+    && sf.sin_lector.find((s) => s.clave === '37').proveedor === 'LABORATORIOS ISDIN (FICTICIO)'
+    && [...sf.con_lector, ...sf.sin_lector, ...sf.leido_sin_conciliacion].every((p) => !/^\s*\d+\s*\.?\s*-/.test(p.proveedor))
+    && isDeepStrictEqual(sf.traspasos.map((t) => [t.clave, t.farmacia_origen, t.proveedor, t.albaranes, t.importe]), [['40', 'RITA', 'FFARMACIA RITA', 12, 1840]])
+    && !sf.sin_lector.some((s) => s.clave === '40')
+    && !cob.some((f) => f.clave.includes('40') || (f.tipo === 'SIN_LECTOR' && /RITA/.test(f.proveedor)))
+    && TRASPASOS_ENTRE_FARMACIAS.length === 1 && TRASPASOS_ENTRE_FARMACIAS[0].farmacia === 'RITA';
+  return si(ok, JSON.stringify({ con: sf.con_lector.map((p) => [p.clave, p.proveedor]), traspasos: sf.traspasos }));
+});
+comprobar('H8-5: Sin factura: detalle por bloque (≤ 100, del más antiguo al más reciente) que cuadra con su recuento; HPLUS = HEFAME', () => {
+  const sf = conciliacionBandeja.sin_factura;
+  const bloques = [
+    ...sf.con_lector.filter((p) => p.alertas_total > 0).map((p) => ['alerta', p.clave, p.alertas_total, p.alertas]),
+    ...sf.con_lector.filter((p) => p.sin_desde.albaranes > 0).map((p) => ['sin_desde', p.clave, p.sin_desde.albaranes, p.detalle_sin_desde]),
+    ...sf.leido_sin_conciliacion.map((p) => ['leido', p.clave, p.albaranes, p.detalle]),
+    ...sf.sin_lector.map((p) => ['pendiente', p.clave, p.albaranes, p.detalle]),
+    ...sf.traspasos.map((p) => ['traspaso', p.clave, p.albaranes, p.detalle]),
+  ];
+  const ordenado = (xs) => xs.every((a, i) => i === 0 || a.dias === null || (xs[i - 1].dias !== null && xs[i - 1].dias >= a.dias));
+  const malos = bloques.filter(([, , n, xs]) => xs.length !== Math.min(n, sf.limite_detalle) || !ordenado(xs)).map(([b, k]) => `${b}:${k}`);
+  const hplus = sf.sin_lector.find((s) => s.clave === '42');
+  const isdin = sf.sin_lector.find((s) => s.clave === '37');
+  const ok = malos.length === 0 && bloques.length === 9
+    && hplus?.proveedor === 'HEFAME' && hplus.literal_farmatic === 'HPLUS CONSUMO'
+    && sf.con_lector.find((p) => p.clave === '2').literal_farmatic === 'SAFA' && isdin.literal_farmatic === null
+    && isdin.detalle[0].dias === 37 && isdin.detalle[0].numero_albaran === 'IS-001'
+    && sf.sin_lector.find((s) => s.clave === '88').detalle[0].importe === null
+    && sf.leido_sin_conciliacion[0].detalle.map((a) => a.numero_albaran).join() === 'FD-ALB-3301,FD-ALB-3302,FD-ALB-3303';
+  return si(ok, JSON.stringify({ malos, n: bloques.length, hplus, isdin: isdin?.detalle[0] }));
+});
+comprobar('H8-5: Cobertura: una fila por nombre comercial (COFARES con sus pendientes de Farmatic en la misma fila; HPLUS en HEFAME); sin duplicados', () => {
+  const sf = conciliacionBandeja.sin_factura;
+  const cob = coberturaProveedores(conciliacionBandeja.facturas, sf);
+  const nombre = (f) => (f.tipo === 'LECTOR' ? f.nombre_mostrado : f.proveedor);
+  const claves = cob.map((f) => `${f.tipo === 'SIN_LECTOR' && f.clave === 'farmatic:sin_identificar' ? 'sin:' : ''}${claveNombreProveedor(nombre(f))}`);
+  const cof = cob.filter((f) => /COFARES/.test(nombre(f)));
+  const hef = cob.filter((f) => /HEFAME/.test(nombre(f)));
+  const ok = new Set(claves).size === claves.length
+    && cof.length === 1 && cof[0].tipo === 'LECTOR' && isDeepStrictEqual(cof[0].pendientes, { albaranes: 6, importe: 742.1, sin_importe: 0 })
+    && hef.length === 1 && hef[0].tipo === 'LECTOR' && isDeepStrictEqual(hef[0].pendientes, { albaranes: 3, importe: 87.6, sin_importe: 0 })
+    && isDeepStrictEqual(cob.filter((f) => f.tipo === 'SIN_LECTOR').map((f) => [f.proveedor, f.albaranes]),
+      [['LABORATORIOS ISDIN (FICTICIO)', 18], ['DISTRIBUCIONES BETA (FICTICIO)', 5], ['Proveedor sin identificar', 2]]);
+  return si(ok, JSON.stringify(cob.map((f) => [f.tipo, nombre(f), f.tipo === 'LECTOR' ? f.pendientes : f.albaranes])));
+});
 comprobar('H5: listado: hoy, vencimiento próximo y "+N", importe pendiente, posible duplicado', () => {
   const f = (n) => facturas.facturas.find((x) => x.factura_id === F(n));
   const ok = facturas.hoy === '2026-11-02'
@@ -812,8 +1002,12 @@ comprobar('H5: historial en texto llano (eventos de las fixtures traducidos)', (
 
 // --- Casos H5-8 --------------------------------------------------------------------
 comprobar('H5-8: equivalencias de nombre comercial con fuente src/ fichero:línea; sin equivalencia o en conflicto → null', () => {
+  // H8-5: única fuente que no es src/: HPLUS CONSUMO → HEFAME, decisión de Pío (22/11/2026), solo por su CIF y su literal.
+  const DECISION_PIO = 'decisión de Pío, 22/11/2026';
+  const porDecision = [...Object.entries(COMERCIAL_POR_CIF), ...Object.entries(COMERCIAL_POR_LITERAL)].filter(([, e]) => e.fuente === DECISION_PIO);
   const fuentes = [...Object.values(COMERCIAL_POR_CIF), ...Object.values(COMERCIAL_POR_LITERAL)]
-    .every((e) => /^src\/facturas\/[\w/]+\.py:\d+$/.test(e.fuente) && /^[A-Z][A-Z ]*$/.test(e.nombre));
+    .every((e) => (/^src\/facturas\/[\w/]+\.py:\d+$/.test(e.fuente) || e.fuente === DECISION_PIO) && /^[A-Z][A-Z ]*$/.test(e.nombre))
+    && isDeepStrictEqual(porDecision.map(([k, e]) => [k, e.nombre]), [['B30462451', 'HEFAME'], ['HPLUSCONSUMO', 'HEFAME']]);
   const casos = [
     [nombreComercial('F30004444', null), 'HEFAME'], [nombreComercial('f-30.004.444', 'Otro literal'), 'HEFAME'],
     [nombreComercial(null, 'HDAD.FMCTCA.MEDIT.,S.C.L.'), 'HEFAME'], [nombreComercial('A50004324', null), 'ALLIANCE'],
@@ -823,6 +1017,9 @@ comprobar('H5-8: equivalencias de nombre comercial con fuente src/ fichero:líne
     [nombreComercial(null, 'FEDEFARMA'), null], [nombreComercial('B00000003', 'LABORATORIO X'), null],
     [nombreComercial('F30004444', 'ALLIANCE HEALTHCARE'), null], // CIF y literal en conflicto: falla cerrado
     [nombreComercial(null, null), null],
+    // H8-5: HPLUS CONSUMO = HEFAME (decisión de Pío), por CIF y por literal; la razón social real sigue debajo.
+    [nombreComercial('B30462451', 'HPLUS CONSUMO, S.L.'), 'HEFAME'], [nombreComercial(null, 'HPLUS CONSUMO SL'), 'HEFAME'],
+    [razonSocialSecundaria('HEFAME', 'HPLUS CONSUMO, S.L.'), 'HPLUS CONSUMO, S.L.'],
     [razonSocialSecundaria('HEFAME', 'HDAD.FMCTCA.MEDIT.,S.C.L.'), 'HDAD.FMCTCA.MEDIT.,S.C.L.'], [razonSocialSecundaria('HEFAME', 'Hefame'), null],
     [razonSocialSecundaria(null, 'COFARES'), null],
   ];

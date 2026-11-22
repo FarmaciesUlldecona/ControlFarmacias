@@ -84,6 +84,8 @@ export interface EntradaCasado {
 const FUENTE_EXACTO = 'e18acf0:pruebas/auditoria_2t/flujo_controlado.py:210,370; e18acf0:pruebas/auditoria_2v/conciliar_08009277.py:72,197';
 const FUENTE_ECONOMICO_UNICO = 'e18acf0:pruebas/auditoria_2t/flujo_controlado.py:211,370; e18acf0:pruebas/auditoria_2v/conciliar_08009277.py:73,197; '
   + 'e18acf0:pruebas/auditoria_2t/resultado.md:36-40';
+/** H8: fuente de R20 (provenance estado_matching MATCH_R20, regla R20, papel_r20, clase_numero). */
+export const FUENTE_R20 = 'migración 36';
 /** H5-5: estados de una versión anterior del motor (no los escribe el código actual). */
 export const ESTADOS_VERSION_ANTERIOR = ['EXACTO', 'ECONOMICO_UNICO'] as const;
 
@@ -102,6 +104,8 @@ export const DICCIONARIO_CASADO = {
   'NUMERO:OTRO': { texto: 'Casado (forma del número no registrada)', color: 'verde', fuente: 'M:46; S:60' },
   // Hefame: número exacto e importe (estado_matching EXACTO_ECONOMICO, C:370)
   'HEFAME:EXACTO_ECONOMICO': { texto: 'Mismo número e importe (Hefame)', color: 'verde', fuente: 'C:327-349,370' },
+  // H8: R20, una línea del PDF partida en dos albaranes de Farmatic (el número exacto y su variante con letra).
+  'R20:PARTIDO': { texto: 'Albarán partido en Farmatic', color: 'verde', fuente: FUENTE_R20 },
   // H5-5: estados escritos por una versión anterior del motor (scripts de los hitos 2T/2V; ya no están en el código).
   'ANTERIOR:EXACTO': { texto: 'Un único albarán; el motor anterior lo dio por número coincidente (versión anterior del motor)', color: 'verde', fuente: FUENTE_EXACTO },
   'ANTERIOR:ECONOMICO_UNICO': { texto: 'Un único albarán por importe; el número no es idéntico (versión anterior del motor)', color: 'verde', fuente: FUENTE_ECONOMICO_UNICO },
@@ -155,6 +159,7 @@ export const ESTADOS_MATCHING = {
   MATCH_UNICO: { texto: 'Un único albarán de Farmatic cumple los criterios del motor', fuente: 'C:367-373' },
   EXACTO_ECONOMICO: { texto: 'Hefame: mismo número e importe compatible', fuente: 'C:327-349,370' },
   MATCH_R17: { texto: 'Pareja de la misma recepción que suma el importe (R17)', fuente: 'C:497-525,564-568,588' },
+  MATCH_R20: { texto: 'Una línea del PDF repartida en dos albaranes de Farmatic: el número exacto y su variante (R20)', fuente: FUENTE_R20 },
   SIN_COINCIDENCIA: { texto: DICCIONARIO_CASADO['SIN:SIN_COINCIDENCIA'].texto, fuente: 'C:374-375' },
   AMBIGUO: { texto: DICCIONARIO_CASADO['SIN:AMBIGUO'].texto, fuente: 'C:361-363,375' },
   AMBIGUO_R17: { texto: DICCIONARIO_CASADO['SIN:AMBIGUO_R17'].texto, fuente: 'C:557-558' },
@@ -169,7 +174,28 @@ export const ESTADOS_MATCHING = {
   ECONOMICO_UNICO: { texto: 'Versión anterior del motor: un único albarán de Farmatic por importe, sin número idéntico', fuente: FUENTE_ECONOMICO_UNICO, version_anterior: true },
 } as const;
 /** Estados con los que la línea queda casada (el resto, sin casar). EXACTO/ECONOMICO_UNICO: MATCH_UNICO antiguo. */
-const ESTADOS_CASADOS = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', ...ESTADOS_VERSION_ANTERIOR];
+const ESTADOS_CASADOS = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', 'MATCH_R20', ...ESTADOS_VERSION_ANTERIOR];
+
+/** H8: detalle de una línea R20 (estado_matching MATCH_R20 o regla R20; la regla distingue R20 de R17). */
+export function esR20(l: Pick<LineaConciliacion, 'estado_matching' | 'regla'>): boolean {
+  return l.estado_matching === 'MATCH_R20' || l.regla === 'R20';
+}
+
+/**
+ * H8: los dos números de Farmatic de una línea R20, el exacto primero (papel_r20 NUMERO o coincidencia literal) y la
+ * variante después: «08013495 / 08D79747». Sin número: «sin número».
+ */
+export function numerosR20(detalles: readonly LineaConciliacion[]): string {
+  const rango = (l: LineaConciliacion) => (l.papel_r20 === 'NUMERO' ? 0 : l.papel_r20 === 'LETRA_FINAL' ? 1 : l.coincidencia_numero_literal ? 0 : 1);
+  return [...detalles].sort((a, b) => rango(a) - rango(b) || (a.orden ?? 0) - (b.orden ?? 0))
+    .map((l) => l.numero_albaran_farmatic ?? 'sin número').join(' / ');
+}
+
+/** H8: importe de Farmatic de la línea del PDF = suma de sus detalles (R20: los dos). null si alguno no consta (nunca 0). */
+export function importeFarmaticLinea(detalles: readonly LineaConciliacion[]): Importe {
+  if (detalles.length === 0 || detalles.some((l) => l.importe_farmatic === null)) return null;
+  return Math.round(detalles.reduce((a, l) => a + (l.importe_farmatic as number), 0) * 10000) / 10000;
+}
 /** clase_numero que puede escribir el motor (C:117,170-207). */
 const CLASES_NUMERO = ['EXACTA', 'LETRA_FINAL', 'FINAL_DOCUMENTAL', 'INTERNO', 'PROVEEDOR', 'SIN_PATRON', 'NO_DISPONIBLE', 'DIFERENTE'];
 
@@ -179,7 +205,7 @@ export function estadoSinDescripcion(l: Pick<LineaConciliacion, 'estado_matching
     || (l.clase_numero !== null && !CLASES_NUMERO.includes(l.clase_numero));
 }
 
-export function claveCasado(l: Pick<LineaConciliacion, 'tipo_relacion' | 'estado_matching' | 'clase_numero' | 'coincidencia_numero' | 'sentido_documental'>): ClaveCasado {
+export function claveCasado(l: Pick<LineaConciliacion, 'tipo_relacion' | 'estado_matching' | 'clase_numero' | 'coincidencia_numero' | 'sentido_documental'> & Partial<Pick<LineaConciliacion, 'regla'>>): ClaveCasado {
   if (l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC') {
     if (l.sentido_documental === null) return 'MOVIMIENTO:SIN_SENTIDO';
     return l.sentido_documental === 'ABONO' ? 'MOVIMIENTO:ABONO' : 'MOVIMIENTO';
@@ -193,6 +219,8 @@ export function claveCasado(l: Pick<LineaConciliacion, 'tipo_relacion' | 'estado
   }
   // H5-5: estado de la versión anterior del motor (no guardaba clase_numero): su propio texto.
   if (l.estado_matching === 'EXACTO' || l.estado_matching === 'ECONOMICO_UNICO') return `ANTERIOR:${l.estado_matching}`;
+  // H8: R20 (albarán partido en Farmatic): dato principal propio; los dos números van como secundario (tipoCasado).
+  if (esR20({ estado_matching: l.estado_matching, regla: l.regla ?? null })) return 'R20:PARTIDO';
   // Casado (1 a 1, R17 o varios a 1): la forma del número es el dato principal.
   const clase = l.clase_numero ?? (l.coincidencia_numero === 'EXACTA' ? 'EXACTA' : null);
   if (l.estado_matching === 'EXACTO_ECONOMICO' && (clase === null || clase === 'EXACTA')) return 'HEFAME:EXACTO_ECONOMICO';
@@ -211,11 +239,16 @@ export function claveRelacion(l: Pick<LineaConciliacion, 'tipo_relacion'>): Clav
 
 export interface Casado extends EntradaCasado { clave: ClaveCasado; relacion: ClaveRelacion; relacion_texto: string; notas: string[] }
 
-export function tipoCasado(l: LineaConciliacion): Casado {
+/**
+ * `pareja`: los detalles de la misma línea del PDF (agruparLineas). H8: en R20 el secundario son los dos números de
+ * Farmatic («08013495 / 08D79747») en lugar del tipo de relación.
+ */
+export function tipoCasado(l: LineaConciliacion, pareja?: readonly LineaConciliacion[]): Casado {
   const clave = claveCasado(l);
   const relacion = claveRelacion(l);
   const e: EntradaCasado = DICCIONARIO_CASADO[clave];
-  return { clave, ...e, relacion, relacion_texto: RELACION_CASADO[relacion].texto, notas: esEco360(l) ? [NOTA_ECO360.texto] : [] };
+  const relacion_texto = clave === 'R20:PARTIDO' ? numerosR20(pareja && pareja.length > 0 ? pareja : [l]) : RELACION_CASADO[relacion].texto;
+  return { clave, ...e, relacion, relacion_texto, notas: esEco360(l) ? [NOTA_ECO360.texto] : [] };
 }
 
 // ---------------------------------------------------------------------------

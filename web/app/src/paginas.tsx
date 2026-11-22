@@ -10,7 +10,7 @@ function EstadoContrato({ bloque, carga }: { bloque: string; carga: Carga<unknow
   return <span className="insignia g" data-contrato-ok={bloque}>Contrato {bloque}: datos recibidos</span>;
 }
 
-function EnConstruccion({ bloque, carga, children }: { bloque: string; carga: Carga<unknown>; children?: ReactNode }) {
+export function EnConstruccion({ bloque, carga, children }: { bloque: string; carga: Carga<unknown>; children?: ReactNode }) {
   return (
     <section className="tarjeta en-construccion" aria-label="En construcción">
       <div className="en-construccion-titulo">

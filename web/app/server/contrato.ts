@@ -26,7 +26,7 @@
  *
  * Solo sintaxis TypeScript borrable (Node la ejecuta sin compilar).
  */
-import { nombreComercial, nombreComercialGrupo } from './proveedor_comercial.ts';
+import { nombreComercial, nombreComercialGrupo, razonSocialSecundaria } from './proveedor_comercial.ts';
 
 export const FARMACIA = 'PIO';
 
@@ -175,8 +175,10 @@ export interface LineaConciliacion {
   diferencia: Importe;
   /** H5: provenance.papel_r17 (NUMERO | INTERNO) en los detalles UNO_A_VARIOS de R17. */
   papel_r17: string | null;
-  /** H5: provenance.regla literal (p. ej. R17). */
+  /** H5: provenance.regla literal (p. ej. R17; H8: R20). */
   regla: string | null;
+  /** H8: provenance.papel_r20 (NUMERO | LETRA_FINAL) en los dos detalles UNO_A_VARIOS de R20 (migración 36). */
+  papel_r20: string | null;
   /** H5: albaranes.proveedor literal (para reconocer la plataforma ECO360, R19). */
   farmatic_proveedor: string | null;
   /** H5: facturas_movimientos.descripcion_literal y categoria (cargos y abonos sin albarán). */
@@ -293,6 +295,222 @@ export interface NombreProveedor {
   proveedor_razon_social: string | null;
 }
 
+/**
+ * H8: días sin factura a partir de los cuales un albarán de un proveedor con lector es alerta. Único punto de
+ * configuración (lo usan la pestaña «Sin factura» y el diagnóstico de check:real).
+ */
+export const DIAS_ALERTA_SIN_FACTURA = 30;
+/**
+ * H8-3: máximo de albaranes en alerta que se traen con detalle por proveedor (los más antiguos). Los recuentos e importes
+ * nunca dependen de este límite: se agregan en SQL sobre todos los albaranes.
+ */
+export const LIMITE_DETALLE_ALERTA = 100;
+
+/**
+ * H8-3: grupos de «Sin factura», exhaustivos y excluyentes (un solo `case` en SQL, con `else`): cada albarán no reservado
+ * cae en exactamente uno y la suma de todos es el total.
+ *  - AUTO_*: proveedor con facturas leídas y conciliación automática: ALERTA (más de DIAS_ALERTA_SIN_FACTURA días),
+ *    RECIENTE (en plazo), ANTERIOR (anterior a lo que cubren sus facturas leídas, o sin fecha) y SIN_DESDE (con
+ *    conciliación automática pero sin fecha de inicio de lectura: la alerta no se puede evaluar; revisión, no alerta);
+ *  - LEIDO / LEIDO_ANTERIOR: facturas leídas sin conciliación automática (desde lo que cubren / anteriores o sin fecha);
+ *  - SIN_LECTOR (proveedor identificado sin facturas leídas) y SIN_PROVEEDOR (sin proveedor comparable);
+ *  - AUSENTE: último evento de presencia en Farmatic AUSENTE (excluidos, solo recuento).
+ */
+export const GRUPOS_SIN_FACTURA = ['AUTO_ALERTA', 'AUTO_RECIENTE', 'AUTO_ANTERIOR', 'AUTO_SIN_DESDE', 'LEIDO', 'LEIDO_ANTERIOR',
+  'SIN_LECTOR', 'SIN_PROVEEDOR', 'TRASPASO', 'AUSENTE'] as const;
+export type GrupoSinFactura = (typeof GRUPOS_SIN_FACTURA)[number];
+/**
+ * H8-5: grupos con detalle por albarán (desplegable de cada proveedor) y su clase de fila en la consulta. Los demás
+ * (recientes, anteriores, ausentes) solo se cuentan.
+ */
+export const CLASE_DETALLE_SIN_FACTURA = {
+  AUTO_ALERTA: 'DETALLE_ALERTA', AUTO_SIN_DESDE: 'DETALLE_SIN_DESDE', LEIDO: 'DETALLE_LEIDO', SIN_LECTOR: 'DETALLE_SIN_LECTOR',
+  SIN_PROVEEDOR: 'DETALLE_SIN_PROVEEDOR', TRASPASO: 'DETALLE_TRASPASO',
+} as const satisfies Partial<Record<GrupoSinFactura, string>>;
+type GrupoConDetalle = keyof typeof CLASE_DETALLE_SIN_FACTURA;
+const GRUPO_DE_CLASE_DETALLE = new Map(Object.entries(CLASE_DETALLE_SIN_FACTURA).map(([g, c]) => [c as string, g as GrupoConDetalle]));
+/** H8-3: columna del diagnóstico sin_factura de cada grupo (check:real). */
+export const COLUMNA_DIAGNOSTICO_GRUPO: Record<GrupoSinFactura, string> = {
+  AUTO_ALERTA: 'con_conciliacion_alerta', AUTO_RECIENTE: 'con_conciliacion_recientes', AUTO_ANTERIOR: 'con_conciliacion_anteriores',
+  AUTO_SIN_DESDE: 'con_conciliacion_sin_desde', LEIDO: 'leido_sin_conciliacion', LEIDO_ANTERIOR: 'leido_sin_conciliacion_anteriores',
+  SIN_LECTOR: 'sin_lector', SIN_PROVEEDOR: 'sin_proveedor', TRASPASO: 'traspasos_entre_farmacias', AUSENTE: 'excluidos_ausentes',
+};
+
+/**
+ * H8-4: clave de un literal de proveedor de Farmatic: mayúsculas, solo A-Z/0-9 y sin el prefijo numérico de Farmatic
+ * («4.- FFARMACIA RITA» → «FFARMACIARITA»). La misma expresión en SQL: SQL_CLAVE_LITERAL_FARMATIC.
+ */
+export function claveLiteralFarmatic(v: string | null): string | null {
+  const t = (v ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^[0-9]+/, '');
+  return t === '' ? null : t;
+}
+function SQL_CLAVE_LITERAL_FARMATIC(col: string): string {
+  return `regexp_replace(upper(regexp_replace(coalesce(${col}, ''), '[^A-Za-z0-9]', '', 'g')), '^[0-9]+', '')`;
+}
+
+/**
+ * H8-4 (decisión A de Marc): traspasos entre farmacias. ÚNICO punto de configuración del proveedor de Farmatic que es
+ * otra farmacia del grupo: en el Farmatic de PIO, RITA figura como «4.- FFARMACIA RITA» (literal tal cual, con la doble
+ * F). Se identifica por la clave del literal (claveLiteralFarmatic). Sus albaranes van al grupo gris TRASPASO: nunca
+ * alerta, fuera de «pendiente de automatizar» y de la cobertura.
+ */
+export const TRASPASOS_ENTRE_FARMACIAS: readonly { farmacia: string; literal_farmatic: string }[] = [
+  { farmacia: 'RITA', literal_farmatic: '4.- FFARMACIA RITA' },
+];
+const CLAVES_TRASPASO = TRASPASOS_ENTRE_FARMACIAS.map((t) => {
+  const c = claveLiteralFarmatic(t.literal_farmatic);
+  if (c === null || !/^[A-Z0-9]+$/.test(c)) throw new Error('TRASPASO_CONFIGURACION_NO_VALIDA');
+  return c;
+});
+
+/** H8-4: literal de Farmatic sin el prefijo numérico («1.- SAFA» → «SAFA»). */
+export function literalFarmaticSinPrefijo(v: string | null): string | null {
+  const t = (v ?? '').replace(/^\s*\d+\s*\.?\s*-\s*/, '').trim();
+  return t === '' ? null : t;
+}
+/**
+ * H8-4: nombre de un proveedor de Farmatic: el comercial (equivalencias de proveedor_comercial.ts por el literal:
+ * «1.- SAFA» → ALLIANCE, «3.- HEFAME» → HEFAME); si no hay correspondencia, el literal sin prefijo.
+ */
+export function nombreProveedorFarmatic(literal: string | null): string | null {
+  return nombreComercial(null, literalFarmaticSinPrefijo(literal)) ?? nombreComercial(null, literal) ?? literalFarmaticSinPrefijo(literal);
+}
+
+export interface AlbaranSinFactura {
+  id_contador: number | null;
+  numero_albaran: string | null;
+  fecha: string | null;
+  /** PUC de Farmatic (null = no consta, nunca 0). */
+  importe: Importe;
+  /** Días desde la fecha del albarán hasta hoy (H8-5: null si el albarán no tiene fecha). */
+  dias: number | null;
+}
+export interface ResumenAlbaranes { albaranes: number; importe: Importe; sin_importe: number }
+/**
+ * H8-5: cada proveedor de «Sin factura» es un desplegable; su detalle son los LIMITE_DETALLE_ALERTA albaranes más
+ * antiguos de su bloque (del más antiguo al más reciente, los sin fecha al final); el recuento y el importe son de
+ * todos. `literal_farmatic`: el literal de Farmatic sin prefijo, solo si no coincide con el nombre mostrado (razón
+ * social debajo, como en las facturas).
+ */
+export interface ConDetalleSinFactura { detalle: AlbaranSinFactura[]; literal_farmatic: string | null }
+
+/**
+ * Proveedor «con lector»: el mismo proveedor (id R9; ECO360 154 = Alliance 2, R19) tiene facturas leídas en el
+ * sistema. Solo cuenta desde la fecha que cubren sus facturas leídas (`desde`: el albarán documental más antiguo de
+ * esas facturas; si no hay, su primera factura). Lo anterior va aparte, sin alerta.
+ */
+export interface ProveedorConLector {
+  clave: string;
+  proveedor: string;
+  desde: string | null;
+  /**
+   * Más de DIAS_ALERTA_SIN_FACTURA días sin factura: alerta naranja. Detalle de los LIMITE_DETALLE_ALERTA más antiguos
+   * (del más antiguo al más reciente); el recuento y el importe son de todos (H8-3).
+   */
+  alertas: AlbaranSinFactura[];
+  alertas_total: number;
+  importe_alertas: Importe;
+  alertas_sin_importe: number;
+  /** Aún dentro del plazo: sin alerta. */
+  recientes: ResumenAlbaranes;
+  /** Anteriores a `desde` o sin fecha: sin alerta. H8-4: `desde` = su albarán reservado más antiguo. */
+  anteriores: ResumenAlbaranes;
+  /** H8-3/H8-4: ningún albarán reservado con fecha: no hay fecha de inicio y la alerta no se puede comprobar. */
+  sin_desde: ResumenAlbaranes;
+  /** H8-5: detalle de los «sin poder comprobar» (los LIMITE_DETALLE_ALERTA más antiguos). */
+  detalle_sin_desde: AlbaranSinFactura[];
+  /** H8-5: literal de Farmatic sin prefijo si difiere del nombre mostrado. */
+  literal_farmatic: string | null;
+}
+/** «Pendiente de automatizar» (gris): sin facturas leídas, o proveedor que no se puede determinar con certeza. */
+export interface ProveedorSinLector extends ResumenAlbaranes, ConDetalleSinFactura {
+  clave: string | null;
+  proveedor: string;
+  /** false si el albarán no trae proveedor comparable: nunca alerta. */
+  identificado: boolean;
+  fecha_ultima: string | null;
+}
+/**
+ * H8-2: proveedor con facturas leídas pero sin conciliación automática (ninguna conciliación vigente reserva albaranes
+ * suyos): gris propio, nunca alerta. Cuenta desde la fecha que cubren sus facturas leídas, como los de con lector.
+ */
+export interface ProveedorLeidoSinConciliacion extends ResumenAlbaranes, ConDetalleSinFactura {
+  clave: string;
+  proveedor: string;
+  desde: string | null;
+  fecha_ultima: string | null;
+  /** H8-3: anteriores a `desde` o sin fecha (antes no se mostraban: los grupos deben sumar el total). */
+  anteriores: ResumenAlbaranes;
+}
+/** H8-4: traspasos entre farmacias (TRASPASOS_ENTRE_FARMACIAS): gris aparte, nunca alerta. */
+export interface ProveedorTraspaso extends ResumenAlbaranes, ConDetalleSinFactura {
+  clave: string | null;
+  /** Farmacia del grupo que figura como proveedor en el Farmatic de PIO (p. ej. RITA). No es la farmacia de los datos. */
+  farmacia_origen: string;
+  proveedor: string;
+  fecha_ultima: string | null;
+}
+export interface SinFactura {
+  dias_alerta: number;
+  /** H8-4: traspasos entre farmacias, fuera de «pendiente de automatizar» y de la cobertura. */
+  traspasos: ProveedorTraspaso[];
+  /** H8-3: máximo de albaranes con detalle por proveedor (H8-5: en cada bloque: alerta, sin poder comprobar, leído,
+   *  pendiente de automatizar y traspasos). */
+  limite_detalle: number;
+  /** H8-3: todos los albaranes no reservados (ausentes incluidos), contados aparte en SQL. */
+  total: ResumenAlbaranes;
+  /** H8-3: recuento e importe por grupo; la suma de los albaranes de todos los grupos es `total.albaranes`. */
+  grupos: Record<GrupoSinFactura, ResumenAlbaranes>;
+  /** Con lector y con conciliación automática (H8-2): los únicos que pueden dar alerta. */
+  con_lector: ProveedorConLector[];
+  leido_sin_conciliacion: ProveedorLeidoSinConciliacion[];
+  sin_lector: ProveedorSinLector[];
+  /** H8-2: albaranes cuyo último evento de presencia en Farmatic es AUSENTE: fuera de todo, solo recuento. */
+  excluidos_ausentes: ResumenAlbaranes;
+  totales: {
+    alertas: number; importe_alertas: Importe; alertas_sin_importe: number;
+    leido_sin_conciliacion: ResumenAlbaranes; sin_lector: ResumenAlbaranes;
+  };
+}
+
+/**
+ * H8 (migración 36): «para revisar» de la noche automática. La factura sigue en PENDIENTE_CONCILIAR, sin incidencia ni
+ * conciliación: la noche no la reclama. Se muestra en naranja, nunca en rojo ni como reclamación.
+ */
+export type TipoRevisarNoche = 'DIFERENCIA' | 'NO_ALLIANCE' | 'R18_PENDIENTE' | 'DEFECTO' | 'OTRO';
+export const TIPOS_REVISAR_NOCHE = ['DIFERENCIA', 'NO_ALLIANCE', 'R18_PENDIENTE', 'DEFECTO', 'OTRO'] as const;
+
+export interface ElementoRevisarNoche {
+  tipo: TipoRevisarNoche;
+  /** Literal del campo `tipo` (OTRO: el valor no previsto, solo si tiene forma de código; si no, null). */
+  tipo_literal: string | null;
+  /** Texto llano por tipo (textoRevisarNoche). */
+  texto: string;
+  factura_id: string | null;
+  numero_factura: string | null;
+  documento_id: string | null;
+  archivo_nombre: string | null;
+  /** Nombre comercial / razón social de la factura (como en Inicio); null si es un documento. */
+  proveedor_comercial: string | null;
+  proveedor_razon_social: string | null;
+  /** /facturas/<id> o, para un documento, /facturas (los PDF sin factura están en esa pantalla). */
+  enlace: string;
+  /** Evidencia técnica literal (resultado_simulado, diferencia, fallo, r18; estado, intentos, ejecucion). */
+  evidencia: Record<string, unknown>;
+}
+
+export interface RevisarNoche {
+  /** Fecha (YYYY-MM-DD) de la noche más reciente; null si todavía no hay ninguna. */
+  fecha: string | null;
+  /**
+   * false si la noche existe pero para_revisar no es una lista (null u otra cosa): falla cerrado, nunca «nada para
+   * revisar»; la pantalla lo dice en naranja.
+   */
+  lista_valida: boolean;
+  elementos: ElementoRevisarNoche[];
+  por_tipo: Record<TipoRevisarNoche, number>;
+}
+
 // ---------------------------------------------------------------------------
 // DTO por bloque
 // ---------------------------------------------------------------------------
@@ -320,6 +538,8 @@ export interface InicioDTO extends Cabecera {
   atencion: { tipos: number; casos: number; grupos: GrupoAtencion[] };
   alertas: Alerta[];
   luna_mes: { ejecuciones: number; coste: Importe };
+  /** H8: «para revisar» de la última noche (Inicio: solo recuento y enlace a Conciliación). */
+  revisar_noche: RevisarNoche;
   pago: EstadoPago;
 }
 
@@ -424,17 +644,41 @@ export interface FacturaDetalleDTO extends Cabecera {
  */
 export const PDF_ORIGINAL = { disponible: false, motivo: 'CF_LECTURA_SIN_ACCESO_A_STORAGE' } as const;
 
-export interface FacturaBandeja extends FacturaResumen {
+/**
+ * H8: segunda comprobación de la factura, banco ↔ pago (Norma 43, futura). Hoy siempre SIN_DATOS_BANCARIOS (gris);
+ * PAGADO_BANCO queda reservado en el contrato para cuando exista la conciliación bancaria.
+ */
+export type EstadoBancoClave = 'SIN_DATOS_BANCARIOS' | 'PAGADO_BANCO';
+export interface EstadoBanco { estado: EstadoBancoClave; texto: string; color: Color; fecha_pago: string | null }
+export const BANCO_SIN_DATOS: EstadoBanco = { estado: 'SIN_DATOS_BANCARIOS', texto: 'sin datos bancarios', color: 'gris', fecha_pago: null };
+
+export interface FacturaBandeja extends FacturaResumen, NombreProveedor {
   prioridad: number;
   color: Color;
   lineas: LineaConciliacion[];
   lineas_por_estado: Record<string, number>;
+  /** H8: grupo de proveedor (mismo criterio que Facturas y Proveedores) para el filtro y la bandeja por proveedor. */
+  proveedor_grupo: string;
+  proveedor_etiqueta: string;
+  /** H8: próximo vencimiento (vencimientoProximo, como Facturas); null si la factura no documenta vencimientos. */
+  vencimiento_proximo: Vencimiento | null;
+  vencimiento_vencido: boolean;
+  /** H8: marca 2 de la doble comprobación (banco ↔ pago). */
+  banco: EstadoBanco;
 }
 
 export interface ConciliacionBandejaDTO extends Cabecera {
+  /** H8: fecha de referencia (generado_at, YYYY-MM-DD) para vencimientos y antigüedad. */
+  hoy: string;
   resumen: Record<string, number>;
   facturas: FacturaBandeja[];
+  /** H8: opciones del filtro de proveedor (como Facturas). */
+  proveedores_filtro: OpcionFiltroProveedor[];
   alertas: Alerta[];
+  /** H8: albaranes de Farmatic que ninguna conciliación vigente ha reservado (pestaña «Sin factura»). */
+  sin_factura: SinFactura;
+  /** H8: «para revisar» de la última noche, con sus elementos y enlaces. */
+  revisar_noche: RevisarNoche;
 }
 
 /**
@@ -546,6 +790,8 @@ export interface ConfiguracionDTO extends Cabecera {
   normalizacion_backoff: string[];
   conciliacion_max_intentos: number | null;
   conciliacion_backoff: string[];
+  /** H8 (migración 36): interruptor de la regla R20. null si el valor no es un sí/no reconocible (nunca se inventa). */
+  conciliacion_r20: boolean | null;
   updated_at: string | null;
 }
 
@@ -579,6 +825,9 @@ export const OBJETOS_PERMITIDOS = [
   'conciliacion_albaranes_reservados', 'albaranes', 'albaranes_cambios', 'albaranes_aprobaciones',
   'albaranes_aprobaciones_aplicadas', 'proveedores', 'proveedores_alias', 'cf_configuracion',
   'v_facturas_listado', 'v_dashboard_diario', 'v_vencimientos_calendario', 'v_proveedores_estado',
+  // H8 (migración 36): la noche automática y su lista «para revisar» (cf_configuracion.conciliacion_r20 es una columna
+  // del objeto ya permitido cf_configuracion).
+  'cf_noches_automaticas',
 ] as const;
 /** Permitidos por el rol pero vetados por la web. */
 export const OBJETOS_VETADOS = ['v_dashboard_diario'] as const;
@@ -622,6 +871,90 @@ function SQL_ID_PROVEEDOR_R9(col: string): string {
         else nullif(btrim(${col}), '')
     end`;
 }
+
+/**
+ * H8: proveedor «con lector» en SQL, igual que idProveedorLector: id R9 y la correspondencia existente ECO360 (154) =
+ * Alliance (2) (R19, conciliacion.py:41-46,164-167).
+ */
+function SQL_ID_PROVEEDOR_LECTOR(col: string): string {
+  return `(case when ${SQL_ID_PROVEEDOR_R9(col)} = '154' then '2' else ${SQL_ID_PROVEEDOR_R9(col)} end)`;
+}
+
+/**
+ * H8: CTE comunes de «Sin factura» (consulta albaranes_sin_factura y diagnóstico de check:real):
+ *  - lect: proveedores con facturas leídas de PIO y la fecha desde la que las cubren;
+ *  - res: albaranes reservados por alguna conciliación vigente;
+ *  - auto (H8-2): proveedores con conciliación automática (al menos un albarán suyo reservado por una vigente). H8-4: su
+ *    fecha de inicio (`desde`) es la del albarán reservado más antiguo de ese proveedor (id Farmatic con R9, ECO360 =
+ *    Alliance), porque en REAL las facturas no traen el id de Farmatic y lect quedaba vacío para SAFA, HEFAME…;
+ *    «sin fecha de inicio» solo si ninguno de sus albaranes reservados tiene fecha;
+ *  - TRASPASO (H8-4): el proveedor de Farmatic es otra farmacia del grupo (TRASPASOS_ENTRE_FARMACIAS);
+ *  - aus (H8-2): albaranes cuyo último evento de presencia en Farmatic es AUSENTE;
+ *  - a0: albaranes de PIO no reservados (con la marca `ausente`);
+ *  - g (H8-3): cada albarán de a0 con su grupo (GRUPOS_SIN_FACTURA) en un único `case` con `else`: exhaustivo y
+ *    excluyente. lect y auto tienen una fila por idp, así que los left join no duplican albaranes.
+ * H8-3, causa del fallo en REAL: el diagnóstico contaba en con_lector todo albarán de un proveedor de `auto`, pero los
+ * tramos exigían `a.fecha >= l.desde` o `a.fecha < l.desde`; si el proveedor estaba en `auto` y no en `lect` (o con
+ * desde null), `l.desde` era null, ninguna comparación era cierta y el albarán no entraba en ningún tramo.
+ */
+const CTE_SIN_FACTURA = `lect as (
+    select ${SQL_ID_PROVEEDOR_LECTOR('f.id_proveedor_albaranes')} as idp,
+           coalesce(min(fae.fecha_albaran)::date, min(f.fecha_factura)::date) as desde
+      from public.facturas f
+      cross join hab
+      left join public.facturas_albaranes_extraidos fae on fae.factura_id = f.id
+     where f.farmacia = $1 and ${SQL_ID_PROVEEDOR_LECTOR('f.id_proveedor_albaranes')} is not null
+     group by 1
+),
+res as (
+    select distinct r.albaran_id_contador as id_contador
+      from public.conciliacion_albaranes_reservados r
+      join public.conciliaciones c on c.id = r.conciliacion_id and c.es_actual
+     where r.albaran_farmacia = $1
+),
+auto as (
+    select ${SQL_ID_PROVEEDOR_LECTOR('ar.id_proveedor')} as idp, min(ar.fecha)::date as desde
+      from res
+      join public.albaranes ar on ar.farmacia = $1 and ar.id_contador = res.id_contador
+     where ${SQL_ID_PROVEEDOR_LECTOR('ar.id_proveedor')} is not null
+     group by 1
+),
+aus as (
+    select u.id_contador
+      from (select distinct on (c.id_contador) c.id_contador, c.valor_nuevo
+              from public.albaranes_cambios c
+             where c.farmacia = $1 and c.campo = 'presencia'
+             order by c.id_contador, c.id desc) u
+     where u.valor_nuevo = 'AUSENTE'
+),
+a0 as (
+    select a.id_contador, a.numero_albaran, a.proveedor, a.fecha::date as fecha, a.importe_puc,
+           ${SQL_ID_PROVEEDOR_LECTOR('a.id_proveedor')} as idp,
+           exists (select 1 from aus where aus.id_contador = a.id_contador) as ausente
+      from public.albaranes a
+      cross join hab
+     where a.farmacia = $1
+       and not exists (select 1 from res where res.id_contador = a.id_contador)
+),
+g as (
+    select a0.id_contador, a0.numero_albaran, a0.proveedor, a0.fecha, a0.importe_puc, a0.idp,
+           (case when u.idp is not null then u.desde else l.desde end) as desde,
+           case
+             when a0.ausente then 'AUSENTE'
+             when ${CLAVES_TRASPASO.length ? `${SQL_CLAVE_LITERAL_FARMATIC('a0.proveedor')} in (${CLAVES_TRASPASO.map((c) => `'${c}'`).join(', ')})` : 'false'} then 'TRASPASO'
+             when a0.idp is null then 'SIN_PROVEEDOR'
+             when u.idp is not null and u.desde is null then 'AUTO_SIN_DESDE'
+             when u.idp is not null and (a0.fecha is null or a0.fecha < u.desde) then 'AUTO_ANTERIOR'
+             when u.idp is not null and a0.fecha < current_date - ${Number(DIAS_ALERTA_SIN_FACTURA)} then 'AUTO_ALERTA'
+             when u.idp is not null then 'AUTO_RECIENTE'
+             when l.idp is not null and (l.desde is null or a0.fecha is null or a0.fecha < l.desde) then 'LEIDO_ANTERIOR'
+             when l.idp is not null then 'LEIDO'
+             else 'SIN_LECTOR'
+           end::text as grupo
+      from a0
+      left join lect l on l.idp = a0.idp
+      left join auto u on u.idp = a0.idp
+)`;
 
 /** Tipo documental comparable en SQL (igual que tipoDocumentalComparable): mayúsculas y sin espacios en los extremos. */
 function SQL_TIPO_DOCUMENTAL(f: string): string {
@@ -710,6 +1043,7 @@ select
     a.importe_puc, a.importe_pvp,
     cd.importe_farmatic, cd.importe_aplicado, cd.diferencia,
     cd.provenance ->> 'papel_r17' as papel_r17, cd.provenance ->> 'regla' as regla,
+    cd.provenance ->> 'papel_r20' as papel_r20,
     a.proveedor as farmatic_proveedor,
     fm.descripcion_literal as concepto_movimiento, fm.categoria as categoria_movimiento,
     fae.importe_total as albaran_importe_total, fae.importe_base as albaran_importe_base,
@@ -777,7 +1111,8 @@ const OBJ_INCIDENCIAS = ['facturas_incidencias', 'facturas', 'documentos_factura
  */
 export const PATRON_CODIGO_DIAGNOSTICO = /^[A-Z0-9_]{1,40}$/;
 export const ETIQUETAS_CLASE_NUMERO = ['EXACTA', 'LETRA_FINAL', 'FINAL_DOCUMENTAL', 'INTERNO', 'PROVEEDOR', 'SIN_PATRON', 'NO_DISPONIBLE', 'DIFERENTE'] as const;
-export const ETIQUETAS_ESTADO_MATCHING = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', 'SIN_COINCIDENCIA', 'AMBIGUO', 'AMBIGUO_R17',
+// H8: MATCH_R20 (albarán partido en Farmatic, migración 36) es etiqueta fija.
+export const ETIQUETAS_ESTADO_MATCHING = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', 'MATCH_R20', 'SIN_COINCIDENCIA', 'AMBIGUO', 'AMBIGUO_R17',
   'CONFLICTO_R17', 'ALBARAN_YA_CONCILIADO', 'NUMERO_PROVEEDOR_DISTINTO', 'NUMERO_AUSENTE', 'NO_DEMOSTRABLE',
   'NUMERO_EXACTO_ECONOMIA_INCOMPATIBLE',
   // H5-5: versión anterior del motor (scripts 2T/2V, commit e18acf0; ver ESTADOS_MATCHING en detalle.ts).
@@ -987,6 +1322,7 @@ select c.farmacias_habilitadas, c.normalizacion_automatica, c.conciliacion_autom
        c.normalizacion_backoff::text[] as normalizacion_backoff,
        c.conciliacion_max_intentos,
        c.conciliacion_backoff::text[] as conciliacion_backoff,
+       c.conciliacion_r20,
        c.updated_at
 from public.cf_configuracion c
 cross join hab
@@ -1003,6 +1339,57 @@ from public.normalizacion_ejecuciones ne
 join public.documentos_facturas d on d.id = ne.documento_id
 cross join hab
 where d.farmacia = $1 and ne.created_at >= date_trunc('month', now())`,
+  },
+
+  /**
+   * H8 (migración 36): la noche automática más reciente (una fila por noche, `fecha`) y su lista `para_revisar` (jsonb).
+   * Los elementos se filtran a PIO en construirRevisarNoche (factura o documento de PIO); el resto no se muestra.
+   */
+  noche_revisar: {
+    objetos: ['cf_noches_automaticas', 'cf_configuracion'],
+    porFactura: false,
+    sql: `with ${HAB}
+select n.fecha::text as fecha, n.para_revisar
+from public.cf_noches_automaticas n
+cross join hab
+order by n.fecha desc
+limit 1`,
+  },
+
+  /**
+   * H8, pestaña «Sin factura»: albaranes de Farmatic de PIO que ninguna conciliación vigente ha reservado.
+   * H8-3: agregado en SQL; nada depende de cuántos albaranes haya:
+   *  - una fila por (grupo, proveedor) con recuento, importe, sin importe, última fecha y `desde` (clase = grupo de
+   *    GRUPOS_SIN_FACTURA, asignado en el `case` de g);
+   *  - DETALLE_ALERTA: los LIMITE_DETALLE_ALERTA albaranes en alerta más antiguos de cada proveedor (solo detalle);
+   *    H8-5: lo mismo en cada grupo de CLASE_DETALLE_SIN_FACTURA (DETALLE_SIN_DESDE, DETALLE_LEIDO, DETALLE_SIN_LECTOR,
+   *    DETALLE_SIN_PROVEEDOR, DETALLE_TRASPASO), por (grupo, proveedor), los sin fecha al final;
+   *  - TOTAL: recuento e importe de todos los albaranes no reservados, contado directamente sobre a0 (sin grupos), para
+   *    que construirSinFactura compruebe que los grupos suman el total (falla cerrado si no).
+   * Proveedor con lector: mismo id R9, ECO360 154 = Alliance 2.
+   */
+  albaranes_sin_factura: {
+    objetos: ['albaranes', 'albaranes_cambios', 'conciliacion_albaranes_reservados', 'conciliaciones', 'facturas', 'facturas_albaranes_extraidos', 'cf_configuracion'],
+    porFactura: false,
+    sql: `with ${HAB},
+${CTE_SIN_FACTURA}
+select g.grupo as clase, g.idp, null::bigint as id_contador, null::text as numero_albaran, min(g.proveedor)::text as proveedor,
+       max(g.fecha)::text as fecha, sum(g.importe_puc)::numeric as importe, count(*)::bigint as albaranes,
+       count(*) filter (where g.importe_puc is null)::bigint as sin_importe, min(g.desde)::text as desde
+  from g
+ group by g.grupo, g.idp
+union all
+select (case d.grupo ${Object.entries(CLASE_DETALLE_SIN_FACTURA).map(([g, c]) => `when '${g}' then '${c}'`).join(' ')} end)::text,
+       d.idp, d.id_contador::bigint, d.numero_albaran::text, d.proveedor::text, d.fecha::text,
+       d.importe_puc::numeric, 1::bigint, (d.importe_puc is null)::int::bigint, d.desde::text
+  from (select g.*, row_number() over (partition by g.grupo, g.idp order by g.fecha nulls last, g.id_contador) as orden_detalle
+          from g where g.grupo in (${Object.keys(CLASE_DETALLE_SIN_FACTURA).map((g) => `'${g}'`).join(', ')})) d
+ where d.orden_detalle <= ${Number(LIMITE_DETALLE_ALERTA)}
+union all
+select 'TOTAL', null, null, null, null, null, sum(a0.importe_puc)::numeric, count(*)::bigint,
+       count(*) filter (where a0.importe_puc is null)::bigint, null
+  from a0
+order by 1, 2, 6`,
   },
 
   alertas_albaran_no_en_farmatic: {
@@ -1294,6 +1681,64 @@ select count(*) as lineas,
        count(*) filter (where v.diferencia is null) as diferencia_null
 from v`,
   },
+  /**
+   * H8: «para revisar» de la última noche, solo recuentos: si hay noche, si la lista no es un array, elementos totales,
+   * por tipo (de PIO: factura o documento de PIO), otros tipos y fuera de PIO. Nunca fechas, ids ni valores.
+   */
+  diagnostico_noche: {
+    objetos: ['cf_noches_automaticas', 'facturas', 'documentos_facturas', 'cf_configuracion'],
+    porFactura: false,
+    sql: `with ${HAB},
+ult as (
+    select n.para_revisar
+      from public.cf_noches_automaticas n
+      cross join hab
+     order by n.fecha desc
+     limit 1
+),
+e as (
+    select x.value as el, (x.value ->> 'tipo')::text as tipo
+      from ult
+      cross join lateral jsonb_array_elements(
+          case when jsonb_typeof(ult.para_revisar) = 'array' then ult.para_revisar else '[]'::jsonb end) x
+),
+p as (
+    select e.tipo,
+           (exists (select 1 from public.facturas f where f.farmacia = $1 and f.id::text = e.el ->> 'factura_id')
+            or exists (select 1 from public.documentos_facturas d where d.farmacia = $1 and d.id::text = e.el ->> 'documento_id')) as pio
+      from e
+)
+select (select count(*) from ult) as noches,
+       (select count(*) from ult where coalesce(jsonb_typeof(ult.para_revisar), 'null') <> 'array') as lista_no_valida,
+       count(*) as elementos,
+       count(*) filter (where p.pio and p.tipo = 'DIFERENCIA') as diferencia,
+       count(*) filter (where p.pio and p.tipo = 'NO_ALLIANCE') as no_alliance,
+       count(*) filter (where p.pio and p.tipo = 'R18_PENDIENTE') as r18_pendiente,
+       count(*) filter (where p.pio and p.tipo = 'DEFECTO') as defecto,
+       count(*) filter (where p.pio and (p.tipo is null
+                          or p.tipo not in ('DIFERENCIA', 'NO_ALLIANCE', 'R18_PENDIENTE', 'DEFECTO'))) as otros_tipos,
+       count(*) filter (where not p.pio) as fuera_de_pio
+from p`,
+  },
+  /**
+   * H8: «Sin factura», solo recuentos. H8-3: el total se cuenta directamente sobre a0 y cada grupo de GRUPOS_SIN_FACTURA
+   * sobre g (mismo `case` que la pestaña); resumenSinFactura exige que los grupos sumen el total. El plazo es
+   * DIAS_ALERTA_SIN_FACTURA (entero fijo del código).
+   */
+  diagnostico_sin_factura: {
+    objetos: ['albaranes', 'albaranes_cambios', 'conciliacion_albaranes_reservados', 'conciliaciones', 'facturas', 'facturas_albaranes_extraidos', 'cf_configuracion'],
+    porFactura: false,
+    sql: `with ${HAB},
+${CTE_SIN_FACTURA}
+select (select count(*) from a0) as total,
+${GRUPOS_SIN_FACTURA.map((gr) => `       count(*) filter (where g.grupo = '${gr}') as ${COLUMNA_DIAGNOSTICO_GRUPO[gr]},`).join('\n')}
+       count(distinct g.idp) filter (where g.grupo in (${GRUPOS_SIN_FACTURA.filter((gr) => gr.startsWith('AUTO_')).map((gr) => `'${gr}'`).join(', ')})) as proveedores_con_conciliacion,
+       count(distinct g.idp) filter (where g.grupo in ('LEIDO', 'LEIDO_ANTERIOR')) as proveedores_leido_sin_conciliacion,
+       count(distinct g.idp) filter (where g.grupo = 'SIN_LECTOR') as proveedores_sin_lector,
+       count(distinct g.idp) filter (where g.grupo = 'AUTO_SIN_DESDE') as proveedores_con_conciliacion_sin_desde,
+       count(distinct coalesce(g.idp, '')) filter (where g.grupo = 'TRASPASO') as proveedores_traspaso
+from g`,
+  },
   diagnostico_par_08c66676: {
     objetos: ['albaranes', 'cf_configuracion'],
     porFactura: false,
@@ -1393,13 +1838,16 @@ const ALERTAS: NombreConsulta[] = ['alertas_albaran_no_en_farmatic', 'alertas_du
 
 /** Consultas que necesita cada bloque. */
 export const CONSULTAS_POR_BLOQUE: Record<Bloque, NombreConsulta[]> = {
-  inicio: ['documentos', 'facturas', 'vencimientos', 'incidencias_abiertas', 'luna_mes', ...ALERTAS],
+  // H8: + noche_revisar (recuento y enlace de «para revisar» de la noche automática).
+  inicio: ['documentos', 'facturas', 'vencimientos', 'incidencias_abiertas', 'luna_mes', ...ALERTAS, 'noche_revisar'],
   // H5: + vencimientos (próximo y "+N") e incidencias abiertas (insignia "posible duplicado").
   facturas: ['facturas', 'documentos', 'vencimientos', 'incidencias_abiertas'],
   facturaDetalle: ['factura_cabecera', 'factura_lineas', 'factura_impuestos', 'factura_vencimientos',
     'factura_albaranes_extraidos', 'factura_movimientos', 'factura_ajustes', 'factura_incidencias', 'factura_historial',
     'factura_otras_pdf'],
-  conciliacionBandeja: ['facturas', 'lineas', ...ALERTAS],
+  // H8: + documentos (elementos DEFECTO de la noche) y noche_revisar.
+  // H8 (pantalla Conciliación): + vencimientos (próximo vencimiento, «se cobra el») y albaranes sin factura.
+  conciliacionBandeja: ['facturas', 'lineas', ...ALERTAS, 'documentos', 'noche_revisar', 'vencimientos', 'albaranes_sin_factura'],
   vencimientos: ['vencimientos'],
   // H4b: agrupación por CIF; el catálogo `proveedores` no interviene (vacío en producción).
   proveedores: ['facturas', 'documentos'],
@@ -1446,6 +1894,12 @@ function textoReq(v: unknown, campo: string): string {
 function booleano(v: unknown): boolean | null {
   if (v === null || v === undefined) return null;
   return v === true || v === 't' || v === 'true';
+}
+/** H8: sí/no solo si el valor lo es sin duda (boolean o 't'/'f'/'true'/'false'); cualquier otro valor → null. */
+function siNoEstricto(v: unknown): boolean | null {
+  if (v === true || v === 't' || v === 'true') return true;
+  if (v === false || v === 'f' || v === 'false') return false;
+  return null;
 }
 function listaTexto(v: unknown): string[] {
   if (v === null || v === undefined) return [];
@@ -1607,6 +2061,7 @@ export function aLinea(r: Fila): LineaConciliacion {
     diferencia: importe(r.diferencia),
     papel_r17: texto(r.papel_r17),
     regla: texto(r.regla),
+    papel_r20: texto(r.papel_r20),
     farmatic_proveedor: texto(r.farmatic_proveedor),
     concepto_movimiento: texto(r.concepto_movimiento),
     categoria_movimiento: texto(r.categoria_movimiento),
@@ -2188,6 +2643,297 @@ function ahora(): string {
   return new Date().toISOString();
 }
 
+// ---------------------------------------------------------------------------
+// H8: «para revisar» de la noche automática (cf_noches_automaticas.para_revisar, migración 36)
+// ---------------------------------------------------------------------------
+
+/**
+ * Diferencia simulada del motor (texto con 4 decimales, p. ej. "118.1600") en euros, SIN recalcular: 2 decimales, o los
+ * 4 si el 3.º y el 4.º no son cero ("118.1600" → "118,16"; "0.0349" → "0,0349"; "-1234.5000" → "-1.234,50").
+ * null si el valor no es un decimal legible o trae cifras no nulas más allá del 4.º decimal (se ve en la evidencia).
+ */
+export function formatoDiferenciaNoche(v: unknown): string | null {
+  const s = typeof v === 'number' && Number.isFinite(v) ? String(v) : typeof v === 'string' ? v.trim() : null;
+  if (s === null) return null;
+  const m = /^(-?)(\d+)(?:\.(\d+))?$/.exec(s);
+  if (!m) return null;
+  const dec = (m[3] ?? '').padEnd(4, '0');
+  if (/[1-9]/.test(dec.slice(4))) return null;
+  const enteros = m[2].replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const decimales = dec.slice(2, 4) === '00' ? dec.slice(0, 2) : dec.slice(0, 4);
+  return `${m[1]}${enteros},${decimales}`;
+}
+
+export const TEXTO_REVISAR_NOCHE = {
+  NO_ALLIANCE: 'Proveedor aún sin conciliación automática',
+  R18_PENDIENTE: 'Pendiente de la regla R18',
+  OTRO: 'Elemento de la noche sin descripción (ver evidencia técnica)',
+} as const;
+
+/** Texto llano de un elemento de la noche (valor del motor tal cual; nunca se recalcula). */
+export function textoRevisarNoche(tipo: TipoRevisarNoche, el: Record<string, unknown>): string {
+  if (tipo === 'DIFERENCIA') {
+    const v = formatoDiferenciaNoche(el.diferencia);
+    return v === null ? 'Diferencia simulada (valor en la evidencia técnica)' : `Diferencia simulada de ${v} €`;
+  }
+  if (tipo === 'DEFECTO') {
+    const n = el.intentos;
+    const intentos = typeof n === 'number' ? n : typeof n === 'string' && /^\d+$/.test(n) ? Number(n) : null;
+    return intentos === null || !Number.isSafeInteger(intentos) ? 'Documento con defecto'
+      : `Documento con defecto tras ${intentos} ${intentos === 1 ? 'intento' : 'intentos'}`;
+  }
+  return TEXTO_REVISAR_NOCHE[tipo];
+}
+
+// ---------------------------------------------------------------------------
+// H8: albaranes de Farmatic sin factura (pestaña «Sin factura»)
+// ---------------------------------------------------------------------------
+
+/** Proveedor con lector en TS, igual que SQL_ID_PROVEEDOR_LECTOR: id R9 y ECO360 (154) = Alliance (2). */
+export function idProveedorLector(v: string | null): string | null {
+  const r = idProveedorR9(v);
+  return r === '154' ? '2' : r;
+}
+
+/** Días enteros entre dos fechas YYYY-MM-DD (hoy − fecha), en UTC para no depender del huso. */
+export function diasEntre(fecha: string, hoy: string): number {
+  return Math.round((Date.parse(`${hoy.slice(0, 10)}T00:00:00Z`) - Date.parse(`${fecha.slice(0, 10)}T00:00:00Z`)) / 86_400_000);
+}
+
+const resumenVacio = (): ResumenAlbaranes => ({ albaranes: 0, importe: null, sin_importe: 0 });
+function sumarResumen(r: ResumenAlbaranes, albaranes: number, importeV: Importe, sinImporte: number): void {
+  r.albaranes += albaranes;
+  r.sin_importe += sinImporte;
+  if (importeV !== null) r.importe = Math.round(((r.importe ?? 0) + importeV) * 10000) / 10000;
+}
+const porImporte = (a: Importe, b: Importe) => (a === null ? 1 : 0) - (b === null ? 1 : 0) || (b ?? 0) - (a ?? 0);
+
+/**
+ * Pestaña «Sin factura». Con lector: los albaranes de más de `dias` días son alerta (naranja), con su antigüedad e
+ * importe; los recientes y los anteriores a lo que cubren las facturas leídas solo se cuentan. Sin lector (o sin
+ * proveedor comparable): gris, una línea por proveedor. Importe ausente = null (se cuenta aparte), nunca 0.
+ * H8-3: las filas llegan agregadas por (grupo, proveedor); el grupo lo asigna el SQL (también la alerta, con
+ * current_date) y aquí solo se calcula la antigüedad del detalle para mostrarla. Falla cerrado si una clase no se
+ * reconoce, si falta el TOTAL, si los grupos no suman el total o si el detalle no es el esperado.
+ */
+export function construirSinFactura(rows: Fila[], facts: FacturaResumen[], hoy: string, dias = DIAS_ALERTA_SIN_FACTURA): SinFactura {
+  // Nombre del proveedor con lector: el comercial de sus facturas (si lo hay); si no, el literal de Farmatic.
+  const nombreDe = new Map<string, string>();
+  for (const fa of facts) {
+    const idp = idProveedorLector(fa.id_proveedor_albaranes);
+    if (idp === null || nombreDe.has(idp)) continue;
+    // H8-4: solo el nombre comercial; si no lo hay, el del literal de Farmatic (nombreProveedorFarmatic).
+    const nombre = nombreProveedorFactura(fa).proveedor_comercial;
+    if (nombre) nombreDe.set(idp, nombre);
+  }
+  // H8-5: literal de Farmatic sin prefijo debajo del nombre, solo si dice otra cosa (p. ej. ALLIANCE · SAFA).
+  const secundario = (nombre: string, literalFarmatic: string | null) => razonSocialSecundaria(nombre, literalFarmaticSinPrefijo(literalFarmatic));
+  const con = new Map<string, ProveedorConLector>();
+  const conDe = (idp: string, literal: string | null, literalFarmatic: string | null, desde: string | null): ProveedorConLector => {
+    const nombre = nombreDe.get(idp) ?? literal ?? `Proveedor ${idp}`;
+    const p = con.get(idp) ?? { clave: idp, proveedor: nombre, desde, alertas: [],
+      alertas_total: 0, importe_alertas: null, alertas_sin_importe: 0, recientes: resumenVacio(), anteriores: resumenVacio(),
+      sin_desde: resumenVacio(), detalle_sin_desde: [], literal_farmatic: secundario(nombre, literalFarmatic) };
+    if (p.desde === null && desde !== null) p.desde = desde;
+    con.set(idp, p);
+    return p;
+  };
+  const leidosMap = new Map<string, ProveedorLeidoSinConciliacion>();
+  const leidoDe = (idp: string, literal: string | null, literalFarmatic: string | null, desde: string | null): ProveedorLeidoSinConciliacion => {
+    const nombre = nombreDe.get(idp) ?? literal ?? `Proveedor ${idp}`;
+    const p = leidosMap.get(idp) ?? { clave: idp, proveedor: nombre, desde,
+      albaranes: 0, importe: null, sin_importe: 0, fecha_ultima: null, anteriores: resumenVacio(), detalle: [],
+      literal_farmatic: secundario(nombre, literalFarmatic) };
+    if (p.desde === null && desde !== null) p.desde = desde;
+    leidosMap.set(idp, p);
+    return p;
+  };
+  // H8-5: detalle por (grupo, proveedor) y el recuento con el que debe cuadrar.
+  const claveDetalle = (g: GrupoConDetalle, idp: string | null) => `${g}|${idp ?? ''}`;
+  const destinoDetalle = new Map<string, { n: number; xs: AlbaranSinFactura[] }>();
+  const esperarDetalle = (g: GrupoConDetalle, idp: string | null, n: number, xs: AlbaranSinFactura[]) => {
+    const k = claveDetalle(g, idp);
+    const e = destinoDetalle.get(k);
+    if (e === undefined) destinoDetalle.set(k, { n, xs });
+    else if (e.xs !== xs) throw new Error(`SIN_FACTURA_DETALLE_NO_CUADRA: ${g}`);
+    else e.n += n;
+  };
+  const detalle = new Map<string, AlbaranSinFactura[]>();
+  const sin: ProveedorSinLector[] = [];
+  const traspasos: ProveedorTraspaso[] = [];
+  const grupos = Object.fromEntries(GRUPOS_SIN_FACTURA.map((g) => [g, resumenVacio()])) as Record<GrupoSinFactura, ResumenAlbaranes>;
+  const esGrupo = (c: string | null): c is GrupoSinFactura => (GRUPOS_SIN_FACTURA as readonly string[]).includes(c ?? '');
+  let total: ResumenAlbaranes | null = null;
+  for (const r of rows) {
+    const clase = texto(r.clase);
+    const idp = texto(r.idp);
+    const desde = texto(r.desde)?.slice(0, 10) ?? null;
+    const n = cuenta(r.albaranes);
+    const sinImp = cuenta(r.sin_importe);
+    const imp = importe(r.importe);
+    const literalFarmatic = texto(r.proveedor);
+    // H8-4: nombre comercial por el literal de Farmatic, o el literal sin el prefijo numérico.
+    const literal = nombreProveedorFarmatic(literalFarmatic);
+    const fecha = texto(r.fecha)?.slice(0, 10) ?? null;
+    if (clase === 'TOTAL') {
+      if (total !== null) throw new Error('SIN_FACTURA_TOTAL_DUPLICADO');
+      total = { albaranes: n, importe: imp, sin_importe: sinImp };
+      continue;
+    }
+    const grupoDetalle = GRUPO_DE_CLASE_DETALLE.get(clase ?? '');
+    if (grupoDetalle !== undefined) {
+      // H8-5: el detalle sin proveedor solo existe en SIN_PROVEEDOR y en TRASPASO (que puede ir sin id).
+      if (idp === null && grupoDetalle !== 'SIN_PROVEEDOR' && grupoDetalle !== 'TRASPASO') throw new Error(`SIN_FACTURA_FILA_NO_RECONOCIDA: ${clase} sin proveedor`);
+      if (idp !== null && grupoDetalle === 'SIN_PROVEEDOR') throw new Error(`SIN_FACTURA_FILA_NO_RECONOCIDA: ${clase} con proveedor`);
+      const k = claveDetalle(grupoDetalle, idp);
+      detalle.set(k, [...(detalle.get(k) ?? []), { id_contador: entero(r.id_contador), numero_albaran: texto(r.numero_albaran),
+        fecha, importe: imp, dias: fecha === null ? null : diasEntre(fecha, hoy) }]);
+      continue;
+    }
+    if (!esGrupo(clase)) throw new Error(`SIN_FACTURA_FILA_NO_RECONOCIDA: ${clase ?? 'null'}`);
+    // SIN_PROVEEDOR va sin proveedor y AUSENTE puede ir con o sin él; el resto necesita proveedor (falla cerrado).
+    // H8-4: TRASPASO se reconoce por el literal y puede ir sin id.
+    if (idp === null && clase !== 'SIN_PROVEEDOR' && clase !== 'AUSENTE' && clase !== 'TRASPASO') throw new Error(`SIN_FACTURA_FILA_NO_RECONOCIDA: ${clase} sin proveedor`);
+    sumarResumen(grupos[clase], n, imp, sinImp);
+    switch (clase) {
+      case 'AUTO_ALERTA': {
+        const p = conDe(idp!, literal, literalFarmatic, desde);
+        p.alertas_total += n;
+        p.alertas_sin_importe += sinImp;
+        if (imp !== null) p.importe_alertas = Math.round(((p.importe_alertas ?? 0) + imp) * 10000) / 10000;
+        esperarDetalle('AUTO_ALERTA', idp, n, p.alertas);
+        break;
+      }
+      case 'AUTO_RECIENTE': sumarResumen(conDe(idp!, literal, literalFarmatic, desde).recientes, n, imp, sinImp); break;
+      case 'AUTO_ANTERIOR': sumarResumen(conDe(idp!, literal, literalFarmatic, desde).anteriores, n, imp, sinImp); break;
+      case 'AUTO_SIN_DESDE': {
+        const p = conDe(idp!, literal, literalFarmatic, desde);
+        sumarResumen(p.sin_desde, n, imp, sinImp);
+        esperarDetalle('AUTO_SIN_DESDE', idp, n, p.detalle_sin_desde);
+        break;
+      }
+      case 'LEIDO': {
+        const p = leidoDe(idp!, literal, literalFarmatic, desde);
+        sumarResumen(p, n, imp, sinImp);
+        if (fecha !== null && (p.fecha_ultima === null || fecha > p.fecha_ultima)) p.fecha_ultima = fecha;
+        esperarDetalle('LEIDO', idp, n, p.detalle);
+        break;
+      }
+      case 'LEIDO_ANTERIOR': sumarResumen(leidoDe(idp!, literal, literalFarmatic, desde).anteriores, n, imp, sinImp); break;
+      case 'SIN_LECTOR':
+      case 'SIN_PROVEEDOR': {
+        const nombre = idp === null ? 'Proveedor sin identificar' : literal ?? `Proveedor ${idp}`;
+        const s: ProveedorSinLector = { clave: idp, proveedor: nombre, identificado: idp !== null, albaranes: n, importe: imp,
+          sin_importe: sinImp, fecha_ultima: fecha, detalle: [], literal_farmatic: idp === null ? null : secundario(nombre, literalFarmatic) };
+        sin.push(s);
+        esperarDetalle(clase, idp, n, s.detalle);
+        break;
+      }
+      case 'TRASPASO': {
+        // La farmacia sale de la misma configuración que usó el SQL; si el literal no casa, falla cerrado.
+        const i = CLAVES_TRASPASO.indexOf(claveLiteralFarmatic(literalFarmatic) ?? '');
+        if (i < 0) throw new Error('SIN_FACTURA_TRASPASO_NO_CONFIGURADO');
+        const farmacia = TRASPASOS_ENTRE_FARMACIAS[i].farmacia;
+        const nombre = literal ?? farmacia;
+        const t: ProveedorTraspaso = { clave: idp, farmacia_origen: farmacia, proveedor: nombre, albaranes: n, importe: imp, sin_importe: sinImp,
+          fecha_ultima: fecha, detalle: [], literal_farmatic: secundario(nombre, literalFarmatic) };
+        traspasos.push(t);
+        esperarDetalle('TRASPASO', idp, n, t.detalle);
+        break;
+      }
+      case 'AUSENTE': break;
+    }
+  }
+  // Falla cerrado: el total contado aparte en SQL tiene que ser la suma de los grupos.
+  if (total === null) throw new Error('SIN_FACTURA_SIN_TOTAL');
+  const suma = GRUPOS_SIN_FACTURA.reduce((a, g) => a + grupos[g].albaranes, 0);
+  if (suma !== total.albaranes) throw new Error(`SIN_FACTURA_GRUPOS_NO_CUADRAN: total=${total.albaranes} suma_grupos=${suma}`);
+  // Detalle (H8-3 alertas; H8-5 todos los bloques con desplegable): los LIMITE_DETALLE_ALERTA más antiguos de cada
+  // (grupo, proveedor), ni más ni menos; un detalle sin su fila de grupo falla cerrado.
+  for (const k of detalle.keys()) if (!destinoDetalle.has(k)) throw new Error('SIN_FACTURA_DETALLE_NO_CUADRA');
+  for (const [k, { n, xs }] of destinoDetalle) {
+    const ys = detalle.get(k) ?? [];
+    if (ys.length !== Math.min(n, LIMITE_DETALLE_ALERTA)) throw new Error('SIN_FACTURA_DETALLE_NO_CUADRA');
+    // Del más antiguo al más reciente; los sin fecha al final.
+    xs.push(...[...ys].sort((a, b) => (a.dias === null ? 1 : 0) - (b.dias === null ? 1 : 0) || (b.dias ?? 0) - (a.dias ?? 0)
+      || (a.numero_albaran ?? '').localeCompare(b.numero_albaran ?? '')));
+  }
+  const conLector = [...con.values()];
+  const leidos = [...leidosMap.values()];
+  conLector.sort((a, b) => porImporte(a.importe_alertas, b.importe_alertas) || b.alertas_total - a.alertas_total || a.proveedor.localeCompare(b.proveedor));
+  sin.sort((a, b) => porImporte(a.importe, b.importe) || b.albaranes - a.albaranes || a.proveedor.localeCompare(b.proveedor));
+  leidos.sort((a, b) => porImporte(a.importe, b.importe) || b.albaranes - a.albaranes || a.proveedor.localeCompare(b.proveedor));
+  const totalSin = resumenVacio();
+  sumarResumen(totalSin, grupos.SIN_LECTOR.albaranes, grupos.SIN_LECTOR.importe, grupos.SIN_LECTOR.sin_importe);
+  sumarResumen(totalSin, grupos.SIN_PROVEEDOR.albaranes, grupos.SIN_PROVEEDOR.importe, grupos.SIN_PROVEEDOR.sin_importe);
+  return {
+    dias_alerta: dias,
+    limite_detalle: LIMITE_DETALLE_ALERTA,
+    total,
+    grupos,
+    traspasos: traspasos.sort((a, b) => porImporte(a.importe, b.importe) || a.proveedor.localeCompare(b.proveedor)),
+    con_lector: conLector,
+    leido_sin_conciliacion: leidos,
+    sin_lector: sin,
+    excluidos_ausentes: { ...grupos.AUSENTE },
+    totales: {
+      alertas: grupos.AUTO_ALERTA.albaranes,
+      importe_alertas: grupos.AUTO_ALERTA.importe,
+      alertas_sin_importe: grupos.AUTO_ALERTA.sin_importe,
+      leido_sin_conciliacion: { ...grupos.LEIDO },
+      sin_lector: totalSin,
+    },
+  };
+}
+
+/**
+ * Lista «para revisar» de la noche más reciente, filtrada a PIO: un elemento con factura_id solo si esa factura es de
+ * PIO; si no tiene factura_id, con documento_id solo si el documento es de PIO; sin ninguno de los dos, fuera (no se
+ * puede enlazar ni demostrar la farmacia: falla cerrado).
+ */
+export function construirRevisarNoche(filasNoche: Fila[], facts: FacturaResumen[], docs: DocumentoPdf[]): RevisarNoche {
+  const por_tipo = Object.fromEntries(TIPOS_REVISAR_NOCHE.map((t) => [t, 0])) as Record<TipoRevisarNoche, number>;
+  const fila = filasNoche[0];
+  if (fila === undefined) return { fecha: null, lista_valida: true, elementos: [], por_tipo };
+  const fecha = texto(fila.fecha)?.slice(0, 10) ?? null;
+  let lista: unknown = fila.para_revisar;
+  if (typeof lista === 'string') { try { lista = JSON.parse(lista); } catch { lista = null; } }
+  if (!Array.isArray(lista)) return { fecha, lista_valida: false, elementos: [], por_tipo };
+  const factDe = new Map(facts.map((f) => [f.factura_id.toLowerCase(), f]));
+  const docDe = new Map(docs.map((d) => [d.documento_id.toLowerCase(), d]));
+  const elementos: ElementoRevisarNoche[] = [];
+  for (const x of lista) {
+    if (x === null || typeof x !== 'object' || Array.isArray(x)) continue;
+    const el = x as Record<string, unknown>;
+    const lit = typeof el.tipo === 'string' ? el.tipo : null;
+    const tipo: TipoRevisarNoche = lit !== null && (TIPOS_REVISAR_NOCHE as readonly string[]).includes(lit) && lit !== 'OTRO'
+      ? lit as TipoRevisarNoche : 'OTRO';
+    const fid = typeof el.factura_id === 'string' ? el.factura_id.toLowerCase() : null;
+    const did = typeof el.documento_id === 'string' ? el.documento_id.toLowerCase() : null;
+    const fa = fid !== null ? factDe.get(fid) : undefined;
+    const doc = fid === null && did !== null ? docDe.get(did) : undefined;
+    if (fa === undefined && doc === undefined) continue;
+    const nombre = fa ? nombreProveedorFactura(fa) : { proveedor_comercial: null, proveedor_razon_social: null };
+    elementos.push({
+      tipo,
+      tipo_literal: tipo === 'OTRO' ? (lit !== null && PATRON_CODIGO_DIAGNOSTICO.test(lit) ? lit : null) : lit,
+      texto: textoRevisarNoche(tipo, el),
+      factura_id: fa?.factura_id ?? null,
+      numero_factura: fa ? (typeof el.numero_factura === 'string' ? el.numero_factura : fa.numero_factura) : null,
+      documento_id: fa ? fa.documento_id : (doc as DocumentoPdf).documento_id,
+      archivo_nombre: fa ? null : (doc as DocumentoPdf).archivo_nombre,
+      ...nombre,
+      enlace: fa ? enlaceFactura(fa.factura_id) : '/facturas',
+      evidencia: Object.fromEntries(Object.entries(el).filter(([k]) => !['tipo', 'factura_id', 'documento_id', 'numero_factura'].includes(k))),
+    });
+    por_tipo[tipo] += 1;
+  }
+  const orden = (t: TipoRevisarNoche) => TIPOS_REVISAR_NOCHE.indexOf(t);
+  elementos.sort((a, b) => orden(a.tipo) - orden(b.tipo)
+    || (a.numero_factura ?? a.archivo_nombre ?? '').localeCompare(b.numero_factura ?? b.archivo_nombre ?? ''));
+  return { fecha, lista_valida: true, elementos, por_tipo };
+}
+
 /**
  * H5: vencimiento del listado de Facturas. El primero con fecha >= hoy; si todos los fechados han pasado, el último
  * (vencido); si ninguno tiene fecha, el primero por orden. No recalcula importes: el importe null sigue null.
@@ -2216,7 +2962,9 @@ export const construir = {
     conciliacion.NO_APLICA = facts.filter((x) => x.requiere_conciliacion_albaranes === false).length;
     const hoy = generado_at.slice(0, 10);
     const alertas = construirAlertas(f);
-    const grupos = construirAtencion(facts, docs, inc, alertas, venc);
+    // H8: las alertas de albaranes (duplicados, albarán no en Farmatic, correcciones) salen en Conciliación; en Inicio
+    // solo su recuento con enlace (fuera de «Necesita tu atención»).
+    const grupos = construirAtencion(facts, docs, inc, [], venc);
     // Posible duplicado: con todas las incidencias abiertas (también las que no salen en Inicio).
     const dup = facturasPosibleDuplicado(filas(f, 'incidencias_abiertas').map(aIncidencia), alertas);
     return {
@@ -2252,6 +3000,7 @@ export const construir = {
       atencion: { tipos: grupos.length, casos: grupos.reduce((a, g) => a + g.casos.length, 0), grupos },
       alertas,
       luna_mes: { ejecuciones: cuenta(luna.ejecuciones_luna), coste: importe(luna.coste_luna) },
+      revisar_noche: construirRevisarNoche(filas(f, 'noche_revisar'), facts, docs),
       pago: PAGO_SIN_DATOS,
     };
   },
@@ -2358,6 +3107,13 @@ export const construir = {
       lista.push(l);
       porFactura.set(l.factura_id, lista);
     }
+    // H8: grupo de proveedor (como Facturas), próximo vencimiento y marca de banco.
+    const hoy = generado_at.slice(0, 10);
+    const grupos = agruparFacturasPorProveedor(facts);
+    const grupoDe = new Map<string, { clave: string; etiqueta: string }>();
+    for (const g of grupos) for (const fa of g.facturas) grupoDe.set(fa.factura_id, { clave: g.grupo.clave, etiqueta: g.etiqueta });
+    const vencDe = new Map<string, Vencimiento[]>();
+    for (const v of filas(f, 'vencimientos').map(aVencimiento)) vencDe.set(v.factura_id, [...(vencDe.get(v.factura_id) ?? []), v]);
     const bandeja: FacturaBandeja[] = facts.map((fa) => {
       const ls = porFactura.get(fa.factura_id) ?? [];
       const res = fa.conciliacion?.resultado ?? null;
@@ -2368,12 +3124,21 @@ export const construir = {
       else if (fa.estado_conciliacion_cf === 'PENDIENTE_CONCILIAR' && res !== null && res !== 'CONCILIADA') { prioridad = 2; color = 'rojo'; }
       else if (fa.estado_conciliacion_cf === 'PENDIENTE_CONCILIAR') { prioridad = 3; color = 'azul'; }
       else if (fa.estado_conciliacion_cf === 'CONCILIADA') { prioridad = 5; color = 'verde'; }
-      return { ...fa, prioridad, color, lineas: ls, lineas_por_estado: contar(ls.map((l) => l.estado_linea), ESTADOS_LINEA) };
+      const g = grupoDe.get(fa.factura_id) as { clave: string; etiqueta: string };
+      const { proximo, vencido } = vencimientoProximo(vencDe.get(fa.factura_id) ?? [], hoy);
+      return {
+        ...fa, ...nombreProveedorFactura(fa), prioridad, color, lineas: ls, lineas_por_estado: contar(ls.map((l) => l.estado_linea), ESTADOS_LINEA),
+        proveedor_grupo: g.clave, proveedor_etiqueta: g.etiqueta, vencimiento_proximo: proximo, vencimiento_vencido: vencido, banco: BANCO_SIN_DATOS,
+      };
     });
     bandeja.sort((a, b) => a.prioridad - b.prioridad || (b.fecha_factura ?? '').localeCompare(a.fecha_factura ?? '') || a.factura_id.localeCompare(b.factura_id));
     const resumen = contar(facts.map((x) => x.estado_conciliacion_cf), ESTADOS_CONCILIACION);
     resumen.NO_APLICA = facts.filter((x) => x.requiere_conciliacion_albaranes === false).length;
-    return { farmacia: FARMACIA, generado_at, resumen, facturas: bandeja, alertas: construirAlertas(f) };
+    return { farmacia: FARMACIA, generado_at, hoy, resumen, facturas: bandeja,
+      proveedores_filtro: grupos.map((x) => ({ clave: x.grupo.clave, etiqueta: x.etiqueta, comercial: x.comercial, sin_cif: x.grupo.sin_cif, facturas: x.facturas.length })),
+      alertas: construirAlertas(f),
+      sin_factura: construirSinFactura(filas(f, 'albaranes_sin_factura'), facts, hoy),
+      revisar_noche: construirRevisarNoche(filas(f, 'noche_revisar'), facts, filas(f, 'documentos').map(aDocumento)) };
   },
 
   vencimientos(f: Filas, generado_at: string = ahora()): VencimientosDTO {
@@ -2473,6 +3238,7 @@ export const construir = {
       normalizacion_backoff: listaTexto(r.normalizacion_backoff),
       conciliacion_max_intentos: entero(r.conciliacion_max_intentos),
       conciliacion_backoff: listaTexto(r.conciliacion_backoff),
+      conciliacion_r20: siNoEstricto(r.conciliacion_r20),
       updated_at: texto(r.updated_at),
     };
   },

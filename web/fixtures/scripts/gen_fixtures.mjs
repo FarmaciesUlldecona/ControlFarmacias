@@ -370,6 +370,40 @@ function r17F03(l) {
   ];
 }
 /**
+ * H8 (migración 36), F02 (Alliance): R20, una línea del PDF = 2 filas con el mismo factura_albaran_extraido_id
+ * (tipo_relacion UNO_A_VARIOS, como R17): el albarán con el número exacto (papel_r20 NUMERO, clase EXACTA, coincidencia
+ * literal) y su variante (LETRA_FINAL, sin coincidencia literal). Lo aplicado suma lo mismo que la línea H3a: el
+ * explicado de la conciliación no cambia.
+ *  - línea 4 (08X20004, 156,73 aplicados): 100,00 + 56,73 → diferencia 0,01, COINCIDE;
+ *  - línea 2 (08X20002, 43,09 aplicados): 30,00 + 13,09; el PDF trae 44,30 (AJUSTES_PDF_H5_7) → 1,21, DIFERENCIA.
+ * La segunda fila lleva el orden de la línea hasta ordenSegundaFilaR20 (así las dos reciben el mismo ajuste del PDF); después,
+ * un orden propio tras los de F02 (9 y 10), sin mover los demás (agruparLineas la une a su línea por el albarán documental).
+ */
+export const R20_F02 = {
+  4: { exacto: 100, variante: ['08D20004', 56.73], contador: 900141, detalle: '10000000-0000-4000-8000-000000000141', orden: 10 },
+  2: { exacto: 30, variante: ['08D20002', 13.09], contador: 900142, detalle: '10000000-0000-4000-8000-000000000142', orden: 9 },
+};
+const r2 = (v) => Math.round(v * 100) / 100;
+function r20F02(l) {
+  const c = R20_F02[l.orden];
+  const comun = { tipo_relacion: 'UNO_A_VARIOS', estado_matching: 'MATCH_R20', regla: 'R20', coincidencia_numero: null, papel_r17: null };
+  const { exacto } = c;
+  const [numeroVariante, variante] = c.variante;
+  return [
+    { ...l, ...comun, papel_r20: 'NUMERO', clase_numero: 'EXACTA', coincidencia_numero_literal: true,
+      numero_albaran_farmatic: l.numero_albaran_documental, importe_puc: exacto, importe_pvp: r2(exacto * 1.35), importe_aplicado: exacto },
+    { ...l, ...comun, detalle_id: c.detalle, papel_r20: 'LETRA_FINAL', clase_numero: 'LETRA_FINAL', coincidencia_numero_literal: false,
+      albaran_id_contador: c.contador, numero_albaran_farmatic: numeroVariante,
+      importe_puc: variante, importe_pvp: r2(variante * 1.35), importe_aplicado: variante },
+  ];
+}
+/** H8: orden propio de la segunda fila de cada línea R20 (un orden por detalle, como la persistencia). */
+function ordenSegundaFilaR20(ls) {
+  const orden = new Map(Object.values(R20_F02).map((c) => [c.detalle, c.orden]));
+  return ls.map((l) => (orden.has(l.detalle_id) ? { ...l, orden: orden.get(l.detalle_id) } : l));
+}
+
+/**
  * H5-2: forma de producción de las líneas.
  *  - Aquí se dejan null importe_documental, importe_farmatic y diferencia; H5-7: valoresPorLinea los rellena después como
  *    la migración 30 (antes de la 30 la persistencia solo escribía importe_aplicado, 24_cf_r17_recepcion.sql:338-354).
@@ -403,10 +437,11 @@ function lineasH5(ls) {
   for (const l0 of ls) {
     const mov = l0.factura_movimiento_id ? MOVIMIENTOS[l0.factura_movimiento_id] : null;
     // sentido_documental como la consulta: coalesce(fae.tipo_movimiento, fm.sentido) (H3a lo dejaba null en F04).
-    let l = { ...l0, sentido_documental: l0.sentido_documental ?? mov?.sentido ?? null, papel_r17: null, regla: null, farmatic_proveedor: null,
+    let l = { ...l0, sentido_documental: l0.sentido_documental ?? mov?.sentido ?? null, papel_r17: null, papel_r20: null, regla: null, farmatic_proveedor: null,
       concepto_movimiento: mov?.descripcion_literal ?? null, categoria_movimiento: mov?.categoria ?? null };
     for (const [factura, orden, campos] of AJUSTES_LINEAS_H5) if (l.factura_id === factura && l.orden === orden) l = { ...l, ...campos };
     if (l.factura_id === FX('03') && l.orden === 2) { out.push(...r17F03(l).map(formaProduccion)); continue; }
+    if (l.factura_id === FX('02') && Object.hasOwn(R20_F02, l.orden)) { out.push(...r20F02(l).map(formaProduccion)); continue; }
     if (l.factura_id === FX('03') && l.orden === 3) l = { ...l, orden: 4 };
     out.push(formaProduccion(l));
     if (l.factura_id === FX('07') && l.orden === 1) extrasF07.push(...sinCasarF07(l).map(formaProduccion));
@@ -414,10 +449,10 @@ function lineasH5(ls) {
   // Las líneas sin casar de F07 van tras las suyas (mismo orden que la consulta: factura_id, orden).
   const ultimaF07 = out.findLastIndex((x) => x.factura_id === FX('07'));
   out.splice(ultimaF07 + 1, 0, ...extrasF07);
-  return valoresPorLinea(out.map((l) => {
+  return ordenSegundaFilaR20(valoresPorLinea(out.map((l) => {
     const a = AJUSTES_PDF_H5_7.find(([f, o]) => l.factura_id === f && l.orden === o);
     return a ? { ...l, ...a[2] } : l;
-  }));
+  })));
 }
 /**
  * H5-7: importes del PDF (facturas_albaranes_extraidos) ajustados para cubrir los estados por línea (todo ficticio):
@@ -429,6 +464,8 @@ const AJUSTES_PDF_H5_7 = [
   [FX('03'), 1, { albaran_importe_total: 234.65 }],
   [FX('02'), 6, { albaran_importe_total: null, albaran_importe_base: null }],
   [FX('07'), 5, { albaran_importe_total: null, albaran_importe_base: null }],
+  // H8: F02 línea 2 (R20): el PDF trae 44,30 € y los dos albaranes suman 43,09 → diferencia 1,21 (DIFERENCIA).
+  [FX('02'), 2, { albaran_importe_total: 44.3, albaran_importe_base: base114(44.3) }],
 ];
 
 /**
@@ -492,8 +529,107 @@ const lineas = lineasH5(lineasH3a.map(({ farmacia, es_actual, ...r }) => r)); //
 const incidenciasAbiertas = incidenciasH3a.filter((i) => i.estado === 'ABIERTA').map(sinFarmacia);
 const luna = detalle.filter((r) => r.uso_luna);
 
+/**
+ * H8 (migración 36): la noche automática más reciente (01/11/2026, antes de generado_at) y su lista «para revisar»,
+ * con la forma de la consulta noche_revisar (fecha, para_revisar jsonb). Todo ficticio. Las facturas siguen en
+ * PENDIENTE_CONCILIAR (la noche no las reclama). Cubre:
+ *  - DIFERENCIA de F08 «118.1600» → 118,16 € (2 decimales) y de F03 «2.0350» → 2,0350 € (4: el 3.º y 4.º no son cero);
+ *  - NO_ALLIANCE (F07), R18_PENDIENTE (F06, con fallo y r18 en la evidencia) y DEFECTO (PDF D09 tras 3 intentos);
+ *  - un tipo no previsto (F03: «sin descripción») y un elemento de otra farmacia (factura inexistente en PIO: no sale).
+ */
+export const NOCHE_H8 = {
+  fecha: '2026-11-01',
+  para_revisar: [
+    { tipo: 'DIFERENCIA', factura_id: FX('08'), numero_factura: 'AL-26-100231', resultado_simulado: 'DIFERENCIA', diferencia: '118.1600', fallo: null, r18: null },
+    { tipo: 'DIFERENCIA', factura_id: FX('03'), numero_factura: 'CF-2026-55810', resultado_simulado: 'DIFERENCIA', diferencia: '2.0350', fallo: null, r18: null },
+    { tipo: 'NO_ALLIANCE', factura_id: FX('07'), numero_factura: 'CF-AB-2026-0912', resultado_simulado: null, diferencia: null, fallo: 'PROVEEDOR_SIN_CONCILIACION_AUTOMATICA', r18: null },
+    { tipo: 'R18_PENDIENTE', factura_id: FX('06'), numero_factura: 'FD-26/04471', resultado_simulado: 'NO_EVALUABLE', diferencia: null,
+      fallo: 'R18_SIN_EVIDENCIA_FICTICIO', r18: { estado: 'PENDIENTE', ficticio: true } },
+    { tipo: 'DEFECTO', documento_id: D(9), estado: 'ERROR', intentos: 3, ejecucion: 'e0000000-0000-4000-8000-000000000809' },
+    { tipo: 'TIPO_FUTURO_PRUEBA', factura_id: FX('03'), numero_factura: 'CF-2026-55810', fallo: null },
+    { tipo: 'DIFERENCIA', factura_id: 'f0000000-0000-4000-8000-000000000099', numero_factura: 'OTRA-FARMACIA', diferencia: '9.9900' },
+  ],
+};
+
+/**
+ * H8, pestaña «Sin factura»: filas con la forma de la consulta albaranes_sin_factura (todo ficticio; hoy = 02/11/2026,
+ * plazo 30 días). `desde` (lo que cubren las facturas leídas de cada proveedor) es ficticio: en REAL lo calcula la consulta.
+ *  - Cofares (id 1, con lector): 77501 (12/09, 51 días, 84,30) y 77502 (28/09, 35 días, sin importe) → alerta;
+ *    77510 (25/10, 8 días) → reciente, sin alerta.
+ *  - Fedefarma (id 4): facturas leídas (F06) pero sin conciliación automática (H8-2) → gris «Leído, sin conciliación
+ *    automática»: 3 albaranes, 455,00 € (FD-ALB-3301, de 38 días, ya no es alerta).
+ *  - H8-2: 2 albaranes (130,50 €) cuyo último evento de presencia es AUSENTE → excluidos, solo recuento.
+ *  - Alliance (id 2, con lector; ECO360 154 cuenta como 2): 08X29001 (28/10) reciente; 412 anteriores a lo que cubren
+ *    sus facturas leídas (sin alerta).
+ *  - Sin lector (gris): ISDIN (id 37, 18 albaranes) y Distribuciones Beta (id 88, 5, uno sin importe); 2 albaranes sin
+ *    proveedor comparable («Proveedor sin identificar», nunca alerta).
+ * H8-3: forma agregada de la consulta (una fila por grupo y proveedor; DETALLE_ALERTA para el detalle; TOTAL contado
+ * aparte). Además: Fedefarma tiene 6 albaranes anteriores a lo que cubren sus facturas (512,80 €) y Hefame (id 9,
+ * ficticio) tiene conciliación automática pero sin fecha de inicio de lectura: 2 albaranes (96,40 €), nota naranja.
+ * Total: 454 albaranes (más de 50), 42.460,25 €, 5 sin importe; los grupos suman el total.
+ * H8-4: literales de Farmatic con el prefijo numérico. `desde` de los proveedores con conciliación = su albarán reservado
+ * más antiguo. Hefame (id 9, «3.- HEFAME») pasa a 134 anteriores (9.876,50 €) y se muestra como HEFAME; «sin poder
+ * comprobar» queda en LOGISTAPHARMA (id 7, ningún albarán conciliado con fecha): 1 albarán, 23,40 €. Traspasos entre
+ * farmacias: «4.- FFARMACIA RITA» (id 40), 12 albaranes, 1.840,00 €. Total: 599 albaranes, 54.103,75 €, 5 sin importe.
+ * H8-5: cada bloque con desplegable trae su detalle (los más antiguos, hasta 100): sin poder comprobar (LOGISTAPHARMA),
+ * leído (Fedefarma), pendiente de automatizar (ISDIN, Beta, sin identificar, y los nuevos) y traspasos (RITA).
+ * Nuevos pendientes de automatizar: «2.- COFARES» (id 41, 6 albaranes, 742,10 €), que en la cobertura va en la misma
+ * fila que sus facturas leídas (antes salía dos veces), y «12.- HPLUS CONSUMO» (id 42, 3 albaranes, 87,60 €), que se
+ * muestra como HEFAME (decisión de Pío) y va en la fila HEFAME de la cobertura.
+ * Total: 608 albaranes, 54.933,45 €, 5 sin importe.
+ */
+const sf = (clase, idp, extra) => ({ clase, idp, id_contador: null, numero_albaran: null, proveedor: null, fecha: null, importe: null,
+  albaranes: 1, sin_importe: 0, desde: null, ...extra });
+const restarDias = (f, n) => new Date(Date.parse(`${f}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);
+/** H8-5: n filas de detalle, del más antiguo (ultima − (n−1)·paso días) a `ultima`; los `sinImporte` primeros sin importe. */
+function detallesSf(clase, idp, proveedor, { n, ultima, importe, sinImporte = 0, base, prefijo, paso = 2 }) {
+  const conImporte = n - sinImporte;
+  const cent = Math.round(importe * 100);
+  const cada = Math.floor(cent / conImporte);
+  return Array.from({ length: n }, (_, i) => {
+    const sin = i < sinImporte;
+    const k = i - sinImporte;
+    const imp = sin ? null : (k === conImporte - 1 ? cent - cada * (conImporte - 1) : cada) / 100;
+    return sf(clase, idp, { id_contador: base + i, numero_albaran: `${prefijo}${String(i + 1).padStart(3, '0')}`, proveedor,
+      fecha: restarDias(ultima, (n - 1 - i) * paso), importe: imp, sin_importe: sin ? 1 : 0 });
+  });
+}
+export const SIN_FACTURA_H8 = [
+  sf('AUTO_ALERTA', '1', { proveedor: 'COFARES', fecha: '2026-09-28', importe: 84.3, albaranes: 2, sin_importe: 1, desde: '2026-09-01' }),
+  sf('AUTO_RECIENTE', '1', { proveedor: 'COFARES', fecha: '2026-10-25', importe: 120, desde: '2026-09-01' }),
+  sf('AUTO_RECIENTE', '2', { proveedor: '1.- SAFA', fecha: '2026-10-28', importe: 64.1, desde: '2026-10-06' }),
+  sf('AUTO_ANTERIOR', '2', { proveedor: '1.- SAFA', fecha: '2026-10-05', importe: 38211.4, albaranes: 412, sin_importe: 3, desde: '2026-10-06' }),
+  sf('AUTO_ANTERIOR', '9', { proveedor: '3.- HEFAME', fecha: '2026-09-30', importe: 9876.5, albaranes: 134, desde: '2026-10-01' }),
+  sf('AUTO_SIN_DESDE', '7', { proveedor: '7.- LOGISTAPHARMA', fecha: '2026-10-14', importe: 23.4 }),
+  sf('LEIDO', '4', { proveedor: 'FEDEFARMA', fecha: '2026-10-29', importe: 455, albaranes: 3, desde: '2026-09-20' }),
+  sf('LEIDO_ANTERIOR', '4', { proveedor: 'FEDEFARMA', fecha: '2026-09-18', importe: 512.8, albaranes: 6, desde: '2026-09-20' }),
+  sf('SIN_LECTOR', '37', { proveedor: '37.- LABORATORIOS ISDIN (FICTICIO)', fecha: '2026-10-30', importe: 2430.55, albaranes: 18 }),
+  sf('SIN_LECTOR', '88', { proveedor: 'DISTRIBUCIONES BETA (FICTICIO)', fecha: '2026-10-21', importe: 310, albaranes: 5, sin_importe: 1 }),
+  sf('SIN_PROVEEDOR', null, { proveedor: 'VARIOS', fecha: '2026-10-11', importe: 45.2, albaranes: 2 }),
+  sf('SIN_LECTOR', '41', { proveedor: '2.- COFARES', fecha: '2026-10-31', importe: 742.1, albaranes: 6 }),
+  sf('SIN_LECTOR', '42', { proveedor: '12.- HPLUS CONSUMO', fecha: '2026-10-26', importe: 87.6, albaranes: 3 }),
+  sf('TRASPASO', '40', { proveedor: '4.- FFARMACIA RITA', fecha: '2026-10-27', importe: 1840, albaranes: 12 }),
+  sf('AUSENTE', null, { importe: 130.5, albaranes: 2 }),
+  sf('DETALLE_ALERTA', '1', { id_contador: 950001, numero_albaran: '77501', proveedor: 'COFARES', fecha: '2026-09-12', importe: 84.3, desde: '2026-09-01' }),
+  sf('DETALLE_ALERTA', '1', { id_contador: 950002, numero_albaran: '77502', proveedor: 'COFARES', fecha: '2026-09-28', importe: null, sin_importe: 1, desde: '2026-09-01' }),
+  // H8-5: detalle de los demás bloques con desplegable.
+  sf('DETALLE_SIN_DESDE', '7', { id_contador: 960001, numero_albaran: 'LG-26-0141', proveedor: '7.- LOGISTAPHARMA', fecha: '2026-10-14', importe: 23.4 }),
+  sf('DETALLE_LEIDO', '4', { id_contador: 960011, numero_albaran: 'FD-ALB-3301', proveedor: 'FEDEFARMA', fecha: '2026-09-25', importe: 200, desde: '2026-09-20' }),
+  sf('DETALLE_LEIDO', '4', { id_contador: 960012, numero_albaran: 'FD-ALB-3302', proveedor: 'FEDEFARMA', fecha: '2026-10-12', importe: 130, desde: '2026-09-20' }),
+  sf('DETALLE_LEIDO', '4', { id_contador: 960013, numero_albaran: 'FD-ALB-3303', proveedor: 'FEDEFARMA', fecha: '2026-10-29', importe: 125, desde: '2026-09-20' }),
+  ...detallesSf('DETALLE_SIN_LECTOR', '37', '37.- LABORATORIOS ISDIN (FICTICIO)', { n: 18, ultima: '2026-10-30', importe: 2430.55, base: 960100, prefijo: 'IS-' }),
+  ...detallesSf('DETALLE_SIN_LECTOR', '88', 'DISTRIBUCIONES BETA (FICTICIO)', { n: 5, ultima: '2026-10-21', importe: 310, sinImporte: 1, base: 960200, prefijo: 'DB-' }),
+  ...detallesSf('DETALLE_SIN_LECTOR', '41', '2.- COFARES', { n: 6, ultima: '2026-10-31', importe: 742.1, base: 960300, prefijo: 'CO-' }),
+  ...detallesSf('DETALLE_SIN_LECTOR', '42', '12.- HPLUS CONSUMO', { n: 3, ultima: '2026-10-26', importe: 87.6, base: 960400, prefijo: 'HP-' }),
+  ...detallesSf('DETALLE_SIN_PROVEEDOR', null, 'VARIOS', { n: 2, ultima: '2026-10-11', importe: 45.2, base: 960500, prefijo: 'SP-' }),
+  ...detallesSf('DETALLE_TRASPASO', '40', '4.- FFARMACIA RITA', { n: 12, ultima: '2026-10-27', importe: 1840, base: 960600, prefijo: 'TR-' }),
+  sf('TOTAL', null, { importe: 54933.45, albaranes: 608, sin_importe: 5 }),
+];
+
 const comunes = {
   documentos,
+  noche_revisar: [NOCHE_H8],
+  albaranes_sin_factura: SIN_FACTURA_H8,
   facturas,
   vencimientos,
   lineas,
@@ -503,7 +639,8 @@ const comunes = {
     id: p.id, codigo: p.codigo, nombre: p.nombre, farmatic_id_proveedor: p.farmatic_id_proveedor,
     extractor_codigo: p.extractor_codigo, nivel_confianza: p.nivel_confianza, activo: p.activo, alias: p.alias ?? [],
   })), sinFarmacia(PROVEEDOR_BEIERSDORF)].sort((a, b) => a.nombre.localeCompare(b.nombre)),
-  configuracion: h3a('configuracion'),
+  // H8: interruptor de R20 (cf_configuracion.conciliacion_r20, migración 36).
+  configuracion: h3a('configuracion').map((c) => ({ ...c, conciliacion_r20: true })),
   alertas_albaran_no_en_farmatic: ALERTA_AUSENTE,
   alertas_duplicado_farmatic: ALERTA_DUPLICADO,
   alertas_correcciones_aprobadas: ALERTA_CORRECCIONES,

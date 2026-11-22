@@ -175,7 +175,7 @@ def test_4_4_error_persistente_backoff_y_revision(base, tmp_path):
     assert estado["estado_lectura"] == "REVISION"
     assert estado["proximo_reintento_at"] is None and estado["bloqueado_por"] is None
     assert base.sql(f"select intentos_fallo_normalizacion, ultima_clase_fallo from public.documentos_facturas "
-                    f"where id={_lit(defectuoso)}") == "4|DEFECTO_DOCUMENTO"
+                    f"where id={_lit(defectuoso)}") == "4|TRANSITORIO"  # 37 (D5): almacenamiento, transitorio
     ejecuciones = _ejecuciones(base, defectuoso)
     assert [(e["estado"], e["error_detalle"]) for e in ejecuciones] == [("ERROR", "SHA256_NO_COINCIDE")] * 4
     claves = [e["idempotency_key"] for e in ejecuciones]

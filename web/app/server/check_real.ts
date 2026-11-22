@@ -19,11 +19,19 @@
  * TRABAJADORES = PIO/RITA (sí/no) y años de convenio_anual (y los que faltan de 2026–2028).
  * H6-REAL: DIAGNOSTICO pagos con cf_lectura (marcas vigentes, anuladas, a revisar —huérfanas incluidas— y huérfanas;
  * formas por CIF vigentes; filas de historial) y DIAGNOSTICO credencial_pagos con cf_pagos_web (conecta sí/no, en READ ONLY).
+ * H8 (migración 36): MATCH_R20 es etiqueta fija del diagnóstico casado; DIAGNOSTICO noche: «para revisar» de la última
+ * noche automática por tipo (diferencia, no_alliance, r18_pendiente, defecto, otros_tipos; fuera_de_pio aparte);
+ * DIAGNOSTICO sin_factura: albaranes no reservados por ninguna conciliación vigente: total y un recuento por grupo
+ * exhaustivo y excluyente (H8-3): con conciliación automática (alerta, recientes, anteriores, sin fecha de inicio), leído sin
+ * conciliación automática (y anteriores), sin lector, sin proveedor y excluidos por no estar ya en Farmatic (AUSENTE);
+ * proveedores por bloque. Si los grupos no suman el total, ERROR y una línea RECUENTOS con los mismos números.
+ * H8-4: fecha de inicio de los proveedores con conciliación = su albarán reservado más antiguo (anteriores por esa fecha);
+ * grupo traspasos_entre_farmacias; proveedores_con_conciliacion_sin_desde y proveedores_traspaso (debería ser 1).
  * Solo recuentos, sí/no o nombres de columna; nunca valores.
  * Código de salida: 0 si todas OK; 1 si alguna falla (también sin conexión); 2 si falta .env.web o está incompleto.
  */
 import { CONSULTAS, type NombreConsulta } from './contrato.ts';
-import { NOMBRES_DIAGNOSTICO, crearAdaptadorReal, type AdaptadorReal } from './adaptador_real.ts';
+import { ErrorRecuentosIncoherentes, NOMBRES_DIAGNOSTICO, crearAdaptadorReal, type AdaptadorReal } from './adaptador_real.ts';
 import { configuracionRrhh, crearAdaptadorRrhhReal, crearPoolRrhh, leerEnvWeb } from './rrhh/adaptador_real.ts';
 import { configuracionPagos, crearAlmacenPagosReal, crearPoolPagos } from './pagos/adaptador_real.ts';
 
@@ -74,6 +82,9 @@ for (const nombre of NOMBRES_DIAGNOSTICO) {
   } catch (e) {
     fallos += 1;
     console.log(`DIAGNOSTICO ${nombre} ${error(e)}`);
+    // H8-3: si los recuentos no cuadran, se imprimen igualmente (solo números) para ver la diferencia.
+    const r = e instanceof ErrorRecuentosIncoherentes ? e.recuentos : null;
+    if (r) console.log(`DIAGNOSTICO ${nombre} RECUENTOS ${Object.entries(r).map(([k, v]) => `${k}=${Number.isSafeInteger(v) ? v : 'no_numero'}`).join(' ')}`);
   }
 }
 

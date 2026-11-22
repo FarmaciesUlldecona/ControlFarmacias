@@ -371,14 +371,21 @@ def barrera_global(tool_name: str, tool_input: dict, cwd: str) -> Decision:
             return bloquear("registro_agentes", BLOQUEO_REGISTRO)
         if es_git_commit(texto):
             return barrera_commit()
+        if estado_git.es_despliegue(texto):
+            return barrera_despliegue()
 
     return PERMITIR
 
 
-def barrera_commit(huella_actual=None, ruta_uso=None, rutas_cambiadas=None, ruta_suites=None) -> Decision:
+def barrera_commit(huella_actual=None, ruta_uso=None, rutas_cambiadas=None, ruta_suites=None, detalle=None,
+                   ahora=None) -> Decision:
     # Revisiones agrupadas por huella al leer (uso.jsonl es append-only): PASS
     # solo si todas las líneas de la huella actual son PASS.
-    huella = huella_actual if huella_actual is not None else estado_git.huella_cambios()
+    if huella_actual is None:
+        detalle = detalle if detalle is not None else estado_git.detalle_cambios()
+        huella = estado_git.huella_de(detalle)
+    else:
+        huella = huella_actual
     if not estado_git.hay_revisiones(ruta_uso):
         return bloquear(
             "commit_sin_revisor",
@@ -402,14 +409,17 @@ def barrera_commit(huella_actual=None, ruta_uso=None, rutas_cambiadas=None, ruta
             "alguna revisión de revisor-reglas sobre estos cambios no es PASS.",
         )
     # 2BH: norma de tests antes de commit, con el registro que escribe pytest (logs/agentes/suites.jsonl).
+    # Hito SUITE: código = completa (-m "not historica"; directa o por la regla de reparación, que necesita el
+    # árbol de cada fichero, ``detalle``) + histórica (exacta por rutas tocadas o de 7 días o menos).
     rutas = rutas_cambiadas if rutas_cambiadas is not None else estado_git.rutas_cambiadas()
-    exigida = estado_git.suite_exigida(rutas)
-    suite = estado_git.suite_valida(huella, exigida, ruta_suites)
+    estado = _suites_exigidas(rutas, huella, detalle, ruta_suites, ahora)
+    exigida, suite = estado["exigida"], estado["suite"]
     if suite is None:
         return bloquear(
             "commit_sin_suite",
             f"no hay una suite {exigida} registrada sobre el estado exacto de los cambios; "
-            "ejecuta pytest tests/ con --basetemp propio" + (" (con Docker)" if exigida == "completa" else
+            "ejecuta pytest tests/ con --basetemp propio" + (' -m "not historica" (con Docker)'
+                                                              if exigida == "completa" else
                                                               ' -m "not pg17_local"') + ".",
         )
     if not suite.get("verde"):
@@ -417,6 +427,49 @@ def barrera_commit(huella_actual=None, ruta_uso=None, rutas_cambiadas=None, ruta
             "commit_suite_roja",
             f"la última suite {suite.get('alcance')} sobre estos cambios no está en verde "
             f"(failed {suite.get('failed')}, errors {suite.get('errors')}).",
+        )
+    if exigida == "completa":
+        historica, modo = estado["historica"], estado["historica_modo"]
+        if historica is None:
+            return bloquear(
+                "commit_sin_historica",
+                ("el cambio toca rutas de despliegue o módulos históricos: hace falta la suite histórica sobre "
+                 "el estado exacto de los cambios" if modo == "exacta" else
+                 f"no hay una suite histórica de los últimos {estado_git.DIAS_HISTORICA} días")
+                + "; ejecuta pytest tests/ -m historica con --basetemp propio (con Docker).",
+            )
+        if not historica.get("verde"):
+            return bloquear(
+                "commit_historica_roja",
+                f"la última suite histórica exigida no está en verde (failed {historica.get('failed')}, "
+                f"errors {historica.get('errors')}).",
+            )
+    return PERMITIR
+
+
+def _suites_exigidas(rutas, huella, detalle, ruta_suites, ahora) -> dict:
+    if detalle is not None:
+        return estado_git.suites_para_commit(rutas, ruta_suites, detalle=detalle, ahora=ahora)
+    # Solo con la huella (sin árbol): sin regla de reparación.
+    exigida = estado_git.suite_exigida(rutas)
+    suite = estado_git.suite_valida(huella, exigida, ruta_suites)
+    if exigida == "rapida":
+        return {"exigida": exigida, "suite": suite, "historica_modo": None, "historica": None}
+    modo = estado_git.historica_exigida(rutas)
+    return {"exigida": exigida, "suite": suite, "historica_modo": modo,
+            "historica": estado_git.historica_valida(huella, modo, ruta_suites, ahora=ahora)}
+
+
+def barrera_despliegue(huella_actual=None, ruta_suites=None) -> Decision:
+    """Hito SUITE (D4): antes de cada despliegue, histórica (o total) en verde sobre la huella actual (el árbol
+    exacto que se despliega)."""
+    huella = huella_actual if huella_actual is not None else estado_git.huella_cambios()
+    historica = estado_git.historica_valida(huella, "exacta", ruta_suites)
+    if historica is None or not historica.get("verde"):
+        return bloquear(
+            "despliegue_sin_historica",
+            "antes de cada despliegue hace falta la suite histórica en verde sobre el árbol exacto que se "
+            "despliega; ejecuta pytest tests/ -m historica con --basetemp propio (con Docker).",
         )
     return PERMITIR
 
@@ -442,6 +495,13 @@ def lecturas_revisor(cwd: str) -> set[str]:
     return {normalizar(os.path.join(raiz, r), raiz) for r in rutas}
 
 
+def lecturas_citadas_revisor(cwd: str) -> set[str]:
+    """Ficheros de src/, sql/, tests/ y pruebas/ que cita el diff: solo Read (DECISIÓN DE PIO, 2026-11-18)."""
+
+    raiz = estado_git.raiz_repositorio(cwd)
+    return {normalizar(os.path.join(raiz, r), raiz) for r in estado_git.rutas_citadas(raiz)}
+
+
 # 2BS (T2): único script que el revisor ejecuta además de git. Responde, de solo lectura, si hay una suite en
 # verde para la huella actual, sin exponer el registro. Se compara con el comando en minúsculas.
 COMANDO_CONSULTA_SUITE = re.compile(
@@ -458,12 +518,16 @@ def politica_revisor(tool_name: str, tool_input: dict, cwd: str, politica: dict)
         ruta = tool_input.get("file_path") if tool_name == "Read" else tool_input.get("path")
         if not isinstance(ruta, str) or not ruta:
             return bloquear("lectura_fuera_de_diff", "revisor-reglas solo lee ficheros concretos.")
-        if normalizar(ruta, cwd) not in lecturas_revisor(cwd):
-            return bloquear(
-                "lectura_fuera_de_diff",
-                "revisor-reglas solo lee el diff, REGLAS_CRITICAS y los ficheros que toca el diff.",
-            )
-        return PERMITIR
+        objetivo = normalizar(ruta, cwd)
+        if objetivo in lecturas_revisor(cwd):
+            return PERMITIR
+        if tool_name == "Read" and objetivo in lecturas_citadas_revisor(cwd):
+            return PERMITIR
+        return bloquear(
+            "lectura_fuera_de_diff",
+            "revisor-reglas solo lee el diff, REGLAS_CRITICAS, los ficheros que toca el diff y, con Read, "
+            "los de src/, sql/, tests/ y pruebas/ que cita el diff.",
+        )
     if tool_name not in HERRAMIENTAS_SHELL:
         return bloquear("herramienta_no_permitida", f"revisor-reglas no puede usar {tool_name}.")
     comando = comando_shell(tool_input)

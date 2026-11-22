@@ -43,6 +43,7 @@ from .lectura_readonly import (
     simular_conciliacion,
 )
 from .modelos import ConfiguracionRuntime
+from . import puerta_git as _puerta_git
 
 ROOT = Path(__file__).resolve().parents[3]
 PROJECT_REF = "vklaiuytvegkelgyspxc"
@@ -77,8 +78,13 @@ TABLAS_TRABAJADORES = frozenset({
 # de pago por proveedor, escritas por la web con su propio rol. Igual que Trabajadores: se informan aparte y no hacen
 # fallar el veredicto. Solo se leen las tablas que existen (hasta desplegar la 35, ninguna).
 TABLAS_PAGOS = frozenset({"vencimientos_marcas_pago", "proveedores_forma_pago", "pagos_historial"})
-# Fuera del snapshot 2AX: la propia tabla de resumen, Trabajadores y Pagos (se leen aparte, ``snapshot_aparte``).
-TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES | TABLAS_PAGOS
+# Cashflow (H7, migracion 38; decision de Pio, pruebas/auditoria_h7/DISENO.md §6): importaciones del Excel de cashflow,
+# ajenas a facturas. Como Pagos: se informan aparte y no hacen fallar el veredicto. Solo se leen las que existen.
+TABLAS_CASHFLOW = frozenset({"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
+                             "cf_cashflow_saldos"})
+# Fuera del snapshot 2AX: la propia tabla de resumen, Trabajadores, Pagos y Cashflow (se leen aparte,
+# ``snapshot_aparte``).
+TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES | TABLAS_PAGOS | TABLAS_CASHFLOW
 
 CODIGO_OK, CODIGO_PARADA, CODIGO_YA_EJECUTADA = 0, 3, 4
 
@@ -95,7 +101,8 @@ class Entorno:
     abrir_lectura: Callable[[], ContextManager[LectorReadOnly]]
     cliente: Any
     tareas: Callable[[], dict]
-    puerta_git: Callable[[], tuple[str | None, list[str]]]
+    # (head, fallos) o (head, fallos, estado git para el informe: head, origin_local, origin_remoto).
+    puerta_git: Callable[[], tuple]
     construir_worker: Callable[[ConfiguracionRuntime], Any]
     directorio_informes: Path
     reloj: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.timezone.utc)
@@ -108,6 +115,7 @@ class Noche:
     modo: str
     inicio: dt.datetime
     commit: str | None = None
+    git: dict = field(default_factory=dict)
     limites: dict = field(default_factory=dict)
     resultado: str = "EN_CURSO"
     motivo: str | None = None
@@ -202,7 +210,13 @@ def _ultima_ejecucion(lector: LectorReadOnly, documento_id: str) -> dict:
         return {}
     fila = json.loads(filas[0][0])
     return {k: (v[:300] if isinstance(v, str) else v) for k, v in fila.items()
-            if k in ("estado", "error_codigo", "error_mensaje", "motivo", "clase_fallo", "disparador", "intento")}
+            if k in ("estado", "error_codigo", "error_detalle", "error_mensaje", "motivo", "clase_fallo", "disparador",
+                     "intento", "lector")}
+
+
+def motivo_defecto(ejecucion: dict) -> str | None:
+    """37 (DISENO §5): el motivo literal del fallo (``EXTRACCION_LOCAL_ERROR``, ...) para el para_revisar."""
+    return str(ejecucion.get("error_detalle") or "").split(":", 1)[0].strip() or None
 
 
 def _factura(lector: LectorReadOnly, factura_id: str) -> dict:
@@ -311,8 +325,13 @@ def snapshot_pagos(entorno: Entorno) -> dict:
     return snapshot_aparte(entorno, TABLAS_PAGOS)
 
 
+def snapshot_cashflow(entorno: Entorno) -> dict:
+    """Huella por fila de las tablas de Cashflow (H7; ver ``snapshot_aparte``)."""
+    return snapshot_aparte(entorno, TABLAS_CASHFLOW)
+
+
 def snapshot_aparte(entorno: Entorno, tablas: frozenset[str]) -> dict:
-    """Huella por fila de tablas que escribe la web (Trabajadores, Pagos), en su propia sesion READ_ONLY.
+    """Huella por fila de tablas ajenas a facturas (Trabajadores, Pagos, Cashflow), en su propia sesion READ_ONLY.
 
     Solo informativo: si no se puede leer (por ejemplo, sin privilegio de lectura) se anota el error y la noche sigue;
     nunca comparte la transaccion del snapshot 2AX.
@@ -330,7 +349,8 @@ def snapshot_aparte(entorno: Entorno, tablas: frozenset[str]) -> dict:
 
 
 def cambios_trabajadores(pre: dict | None, post: dict | None) -> dict:
-    """Filas cambiadas, nuevas o desaparecidas por tabla (Trabajadores o Pagos). Se informa aparte; no es veredicto."""
+    """Filas cambiadas, nuevas o desaparecidas por tabla (Trabajadores, Pagos o Cashflow). Se informa aparte; no es
+    veredicto."""
     informe: dict = {"afecta_al_veredicto": False}
     if not pre or not post or "error" in pre or "error" in post:
         informe["no_comparable"] = {"pre": (pre or {}).get("error", "AUSENTE" if not pre else None),
@@ -457,7 +477,8 @@ def _fase_normalizacion(entorno: Entorno, noche: Noche, worker, limite: int, fin
         noche.documentos.append(registro)
         if clase == "DEFECTO":
             noche.para_revisar.append({"tipo": "DEFECTO", "documento_id": previsto, "estado": estado,
-                                       "intentos": despues["intentos"], "ejecucion": ejecucion})
+                                       "intentos": despues["intentos"], "motivo": motivo_defecto(ejecucion),
+                                       "ejecucion": ejecucion})
     noche.fin_por_limite = True
 
 
@@ -550,7 +571,8 @@ def _escribir_informe(entorno: Entorno, noche: Noche) -> str:
     carpeta.mkdir(parents=True, exist_ok=True)
     informe = {
         "fecha": noche.fecha.isoformat(), "modo": noche.modo, "inicio": noche.inicio.isoformat(),
-        "commit": noche.commit, "limites": noche.limites, "resultado": noche.resultado, "motivo": noche.motivo,
+        "commit": noche.commit, "git": noche.git, "limites": noche.limites, "resultado": noche.resultado,
+        "motivo": noche.motivo,
         "puertas": noche.puertas, "contadores": noche.contadores(), "documentos": noche.documentos,
         "conciliaciones": noche.conciliaciones, "para_revisar": noche.para_revisar, "sombra": noche.sombra,
         "postcheck": noche.postcheck, "cola_restante": noche.cola_restante,
@@ -580,8 +602,12 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
         raise ValueError(f"MODO_NO_ADMITIDO:{modo}")
     inicio = entorno.reloj()
     noche = Noche(fecha=entorno.fecha_local(inicio), modo=modo, inicio=inicio)
-    commit, fallos_git = entorno.puerta_git()
+    resultado_git = entorno.puerta_git()
+    commit, fallos_git = resultado_git[0], resultado_git[1]
     noche.commit = commit
+    if len(resultado_git) > 2:
+        g = resultado_git[2] or {}
+        noche.git = {k: g.get(k) for k in ("head", "origin_local", "origin_remoto")}
     with entorno.abrir_lectura() as lector:
         previas = _noches_previas(lector, noche.fecha)
     docs, conc = limites_por_historial(previas)
@@ -600,6 +626,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
     pre: dict | None = None
     pre_trabajadores: dict | None = None
     pre_pagos: dict | None = None
+    pre_cashflow: dict | None = None
     try:
         with entorno.abrir_lectura() as lector:
             cfg, op, marcas = _configuracion(lector), _operacion(lector), _marcas(lector)
@@ -610,6 +637,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
             pre = snapshot_por_fila(lector)
         pre_trabajadores = snapshot_trabajadores(entorno)
         pre_pagos = snapshot_pagos(entorno)
+        pre_cashflow = snapshot_cashflow(entorno)
         fin = inicio + dt.timedelta(minutes=MINUTOS_MAXIMOS)
         if modo == "SOMBRA":
             _fase_sombra(entorno, noche, docs, conc)
@@ -650,6 +678,7 @@ def ejecutar_noche(modo: str, entorno: Entorno) -> int:
             # Despues de cerrar la sesion anterior: las sesiones comparten conexion y no se anidan.
             noche.postcheck["trabajadores"] = cambios_trabajadores(pre_trabajadores, snapshot_trabajadores(entorno))
             noche.postcheck["pagos"] = cambios_trabajadores(pre_pagos, snapshot_pagos(entorno))
+            noche.postcheck["cashflow"] = cambios_trabajadores(pre_cashflow, snapshot_cashflow(entorno))
         if noche.postcheck and noche.postcheck.get("veredicto") != "POSTCHECK_OK":
             noche.resultado = "PARADA"
             noche.motivo = ((noche.motivo + "; ") if noche.motivo else "") + noche.postcheck["veredicto"]
@@ -731,25 +760,26 @@ def _tareas_productivas() -> dict:
     return {"tareas": tareas if isinstance(tareas, list) else [tareas]}
 
 
-def puerta_git(raiz: Path = ROOT) -> tuple[str | None, list[str]]:
-    """Arbol limpio y HEAD = origin/main, o por delante solo con documentacion (REGLAS_CRITICAS)."""
-    def git(*args: str) -> str:
-        return subprocess.run(["git", *args], cwd=raiz, capture_output=True, text=True, check=True).stdout.strip()
+def puerta_git(raiz: Path = ROOT) -> tuple[str | None, list[str], dict]:
+    """Arbol limpio y HEAD = main del remoto (leido con ls-remote), o por delante solo con documentacion
+    (REGLAS_CRITICAS); modulo comun ``puerta_git`` (2026-11-19). Devuelve (head, fallos, estado para el informe)."""
+    return _puerta_git.puerta(raiz)
 
-    try:
-        head, origen = git("rev-parse", "HEAD"), git("rev-parse", "origin/main")
-        fallos = []
-        if git("status", "--porcelain"):
-            fallos.append("GIT_ARBOL_NO_LIMPIO")
-        if head != origen:
-            ancestro = subprocess.run(["git", "merge-base", "--is-ancestor", "origin/main", "HEAD"], cwd=raiz,
-                                      capture_output=True).returncode == 0
-            pendientes = [p for p in git("diff", "--name-only", "origin/main..HEAD").splitlines() if p]
-            if not ancestro or any(not (p.startswith("docs/") or p.endswith(".md")) for p in pendientes):
-                fallos.append("GIT_HEAD_DISTINTO_DE_ORIGIN_MAIN")
-        return head, fallos
-    except Exception as exc:  # noqa: BLE001
-        return None, [f"GIT_NO_DETERMINABLE:{type(exc).__name__}"]
+
+def _r20_en_bd(conexion) -> bool:
+    """R20 (DECISION DE PIO, 2026-11-19): la 36 presente y su marca ``conciliacion_r20`` a true."""
+    from .lectura_readonly import r20_habilitada, sesion_lectura
+
+    with sesion_lectura(conexion) as lector:
+        return r20_habilitada(lector)
+
+
+def _37_en_bd(conexion) -> bool:
+    """Migracion 37 (DECISIONES DE PIO D5-D7): la firma de 8 parametros y la columna ``lector`` presentes."""
+    from .lectura_readonly import defectos_37_en_bd, sesion_lectura
+
+    with sesion_lectura(conexion) as lector:
+        return defectos_37_en_bd(lector)
 
 
 def main(argv: list[str]) -> int:
@@ -770,7 +800,10 @@ def main(argv: list[str]) -> int:
             cliente=cliente,
             tareas=_tareas_productivas,
             puerta_git=puerta_git,
-            construir_worker=lambda cfg: construir_worker_automatico_productivo(cliente, cfg, WORKER_BASE, trabajo),
+            # R20 (migracion 36) y migracion 37: el worker detecta cada una con una sesion de solo lectura (catalogo).
+            construir_worker=lambda cfg: construir_worker_automatico_productivo(
+                cliente, cfg, WORKER_BASE, trabajo, r20_habilitada=lambda: _r20_en_bd(conexion),
+                defectos_37=lambda: _37_en_bd(conexion)),
             directorio_informes=directorio,
         )
         return ejecutar_noche(argv[0], entorno)

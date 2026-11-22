@@ -8,14 +8,15 @@ const CAPTURAS = join(import.meta.dirname, '..', '..', 'docs', 'capturas', 'h4d'
 const F = (n: number) => `f0000000-0000-4000-8000-0000000000${String(n).padStart(2, '0')}`;
 
 /** Orden fijo de grupos (decisión de Pío): 1–5 una fila; 6 y 7 una por código; 8 correcciones (H4d-2: sin grupo 9). */
+// H8: los grupos de alertas de albaranes (DUPLICADO_FARMATIC, ALBARAN_NO_EN_FARMATIC, CORRECCION_APROBADA) salen de
+// Inicio: su detalle está en Conciliación → Albaranes; en Inicio, solo su recuento con enlace.
 const ORDEN_ESPERADO = [
-  'DIFERENCIA_ALBARANES', 'DOCUMENTOS_DEFECTO', 'DUPLICADO_FARMATIC', 'VENCIMIENTO_SIN_SENTIDO', 'ALBARAN_NO_EN_FARMATIC',
+  'DIFERENCIA_ALBARANES', 'DOCUMENTOS_DEFECTO', 'VENCIMIENTO_SIN_SENTIDO',
   'INCIDENCIA_ERROR:REQUIERE_REVISION', 'INCIDENCIA_ERROR:SEGUNDA_LECTURA_FALLIDA', 'INCIDENCIA_ERROR:VALOR_SIN_EVIDENCIA',
   // H4d-3: las incidencias de sentido del motor, cada código en su grupo del nivel 7.
   'INCIDENCIA_AVISO:SENTIDO_NO_DOCUMENTADO', 'INCIDENCIA_AVISO:IMPORTE_VENCIMIENTO_NO_DOCUMENTADO',
   'INCIDENCIA_AVISO:SENTIDO_NO_ETIQUETADO_DOCUMENTALMENTE', 'INCIDENCIA_AVISO:CANDIDATO_ALBARAN_NO_PROMOVIDO',
   'INCIDENCIA_AVISO:POSIBLE_DUPLICADO', 'INCIDENCIA_AVISO:CODIGO_FICTICIO_SIN_TRADUCCION',
-  'CORRECCION_APROBADA',
 ];
 /** H4d-2: informativos que solo salen en el detalle de su factura. */
 const SOLO_DETALLE: [string, number][] = [
@@ -39,7 +40,8 @@ test.describe('Necesita tu atención PC 1440', () => {
   test('cabecera "N tipos, M casos" y orden fijo de grupos', async ({ page }) => {
     await abrirInicio(page);
     const at = page.locator('#atencion');
-    await expect(at.locator('[data-atencion-resumen]')).toHaveText('— 15 tipos, 27 casos'); // H6-REAL: +V13 (sin sentido documentado)
+    // H6-REAL: +V13 (sin sentido documentado). H8: sin los 3 grupos de alertas (4 casos) → 12 tipos, 23 casos.
+    await expect(at.locator('[data-atencion-resumen]')).toHaveText('— 12 tipos, 23 casos');
     const claves = await at.locator('[data-grupo]').evaluateAll((els) => els.map((e) => e.getAttribute('data-grupo')));
     expect(claves).toEqual(ORDEN_ESPERADO);
     // Una fila por tipo con su número de casos; todo plegado al entrar.
@@ -60,7 +62,9 @@ test.describe('Necesita tu atención PC 1440', () => {
     for (const [clave, color] of colores) expect(color, clave as string).toBe(esperado(clave as string));
     for (const [clave, color] of colores) if (/DUPLICADO|SENTIDO/.test(clave as string)) expect(color).not.toBe('rojo');
     await expect(page.locator('#atencion [data-grupo="DIFERENCIA_ALBARANES"]')).toHaveClass(/borde-rojo/);
-    await expect(page.locator('#atencion [data-grupo="CORRECCION_APROBADA"]')).toHaveClass(/borde-gris/);
+    // H8: las correcciones aprobadas ya no salen aquí (recuento con enlace a Conciliación).
+    await expect(page.locator('#atencion [data-grupo="CORRECCION_APROBADA"]')).toHaveCount(0);
+    await expect(page.locator('[data-alertas-inicio]')).toContainText('2 correcciones aprobadas');
     const rev = page.locator('#atencion [data-grupo="INCIDENCIA_ERROR:REQUIERE_REVISION"]');
     await expect(rev.locator('.grupo-titulo')).toHaveText('Facturas con datos por revisar');
     await expect(rev).toHaveClass(/borde-naranja/);

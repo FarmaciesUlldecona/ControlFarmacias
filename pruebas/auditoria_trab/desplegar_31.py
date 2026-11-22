@@ -216,5 +216,16 @@ def main(commit: str, esperado: str, salida: Path) -> None:
         raise SystemExit(registro.get("error"))
 
 
+def cli(argv: list[str]) -> None:
+    """Entrada de linea de ordenes: antes de nada, el commit indicado debe estar ya en el main del remoto (leido con
+    ls-remote; modulo comun ``puerta_git``, 2026-11-19). ``main`` sigue siendo ensayable sin remoto."""
+    if len(argv) != 3:
+        raise SystemExit(__doc__)
+    sys.path.insert(0, str(ROOT))
+    from src.facturas.runtime_supabase.puerta_git import exigir_commit_en_origen
+    exigir_commit_en_origen(argv[0], ROOT)
+    main(argv[0], argv[1], Path(argv[2]))
+
+
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], Path(sys.argv[3]))
+    cli(sys.argv[1:])

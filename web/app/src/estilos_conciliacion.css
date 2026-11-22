@@ -1,0 +1,123 @@
+/* H8: pantalla Conciliación (doble comprobación). Colores de la norma: verde OK, azul pendiente, naranja revisión,
+   rojo incidencia, gris neutro. Tema claro. */
+.conciliacion { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.cc-panel { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.cc-fase { font-size: 12px; max-width: 11em; line-height: 1.3; }
+.cc-nota { margin: -6px 0 0; font-size: 13px; }
+
+/* Resumen en euros y cifras */
+.cc-tramos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.cc-tramo { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; border-left: 3px solid var(--gris); min-width: 0; }
+.cc-tramo.c-verde { border-left-color: var(--verde); } .cc-tramo.c-azul { border-left-color: var(--azul); }
+.cc-tramo.c-naranja { border-left-color: var(--naranja); } .cc-tramo.c-gris { border-left-color: var(--gris); }
+.cc-tramo-titulo { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--tenue); }
+.cc-tramo-importe { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; gap: 2px; }
+.cc-tramo-nota { font-size: 12px; font-weight: 500; letter-spacing: 0; }
+
+/* Marcas de la doble comprobación */
+.cc-marca { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.cc-simbolo {
+  display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px;
+  font-size: 12px; font-weight: 800; flex: none;
+}
+.cc-verde { color: var(--verde-texto); } .cc-verde .cc-simbolo { background: var(--verde-fondo); }
+.cc-rojo { color: var(--rojo-texto); } .cc-rojo .cc-simbolo { background: var(--rojo-fondo); }
+.cc-azul { color: var(--azul-texto); } .cc-azul .cc-simbolo { background: var(--azul-fondo); }
+.cc-naranja { color: var(--naranja-texto); } .cc-naranja .cc-simbolo { background: var(--naranja-fondo); }
+.cc-gris { color: var(--gris-texto); } .cc-gris .cc-simbolo { background: var(--gris-fondo); }
+.cc-marca-celda { display: inline-flex; flex-direction: column; gap: 2px; }
+.cc-marca-con-noche { display: inline-flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 10px; }
+.cc-venc { display: inline-flex; flex-direction: column; gap: 2px; font-variant-numeric: tabular-nums; }
+.cc-tabla td { vertical-align: top; }
+/* H8-4: primera y última columna con el mismo margen interior que la tarjeta de filtros (16 px). */
+.cc-tabla th:first-child, .cc-tabla td:first-child { padding-left: 16px; }
+.cc-tabla th:last-child, .cc-tabla td:last-child { padding-right: 16px; }
+
+/* Móvil: tarjetas */
+.cc-tarjetas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.cc-tarjeta { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cc-tarjeta-cabecera, .cc-tarjeta-linea { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.cc-tarjeta-marcas { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 13px; }
+
+/* Cobertura por proveedor */
+.cc-cobertura { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.cc-cob-fila { display: grid; grid-template-columns: minmax(140px, 1.2fr) minmax(120px, 2fr) minmax(0, 2fr); gap: 6px 16px; align-items: center; font-size: 14px; }
+.cc-cob-nombre { font-weight: 600; min-width: 0; overflow-wrap: anywhere; display: inline-flex; flex-direction: column; }
+.cc-cob-cifra { font-size: 13px; font-variant-numeric: tabular-nums; }
+.cc-barra { height: 10px; }
+.cc-sin-lector .insignia { justify-self: start; }
+
+/* Bandeja por proveedor → motivo */
+.cc-bandeja { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cc-bandeja-proveedor { padding: 12px 0; border-top: 1px solid var(--borde-suave); display: flex; flex-direction: column; gap: 8px; }
+.cc-bandeja-proveedor:first-child { border-top: 0; padding-top: 0; }
+.cc-bandeja-cabecera { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 14px; }
+.cc-motivo { display: flex; flex-direction: column; gap: 6px; padding-left: 12px; }
+.cc-motivo .insignia { align-self: flex-start; }
+.cc-motivo-facturas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.cc-motivo-facturas li { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: 4px 14px; align-items: baseline; font-size: 14px; }
+.cc-motivo-facturas .num { text-align: right; font-variant-numeric: tabular-nums; }
+.cc-cobra { font-size: 13px; font-weight: 600; }
+
+/* Alertas */
+.cc-alertas-tipo h3 { margin: 4px 0 6px; font-size: 15px; font-weight: 700; }
+.cc-alertas-tipo .caso-texto { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Sin factura */
+.cc-sf-alertas { border-left: 3px solid var(--naranja); }
+.cc-sf-alertas h2, .cc-banco h2, [data-sf-sin-lector] h2, [data-sf-leido] h2, [data-sf-traspasos] h2 { display: flex; align-items: center; gap: 8px; }
+.cc-sf-proveedores { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.cc-sf-tabla { margin-top: 6px; }
+.cc-sf-tabla .numero { white-space: nowrap; }
+.cc-sf-notas { margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.cc-sf-notas.cc-naranja { font-weight: 600; }
+.cc-sf-truncado { margin: 0; font-size: 13px; }
+
+/* H8-5: cada proveedor es un desplegable, plegado por defecto. */
+.cc-sf-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cc-sf-lista > li { border-top: 1px solid var(--borde-suave); }
+.cc-sf-lista > li:first-child { border-top: 0; }
+.cc-sf-desplegable { min-width: 0; }
+.cc-sf-cabecera {
+  display: grid; grid-template-columns: 16px minmax(0, 2fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.3fr) auto;
+  gap: 4px 14px; align-items: baseline; padding: 10px 0; cursor: pointer; list-style: none; font-size: 14px;
+}
+.cc-sf-cabecera::-webkit-details-marker { display: none; }
+.cc-sf-cabecera::before {
+  content: ''; width: 7px; height: 7px; border-right: 2px solid var(--tenue); border-bottom: 2px solid var(--tenue);
+  transform: rotate(-45deg); align-self: center; transition: transform 0.15s ease;
+}
+.cc-sf-desplegable[open] > .cc-sf-cabecera::before { transform: rotate(45deg); }
+.cc-sf-cabecera:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; border-radius: 4px; }
+.cc-sf-cabecera .num { text-align: right; font-variant-numeric: tabular-nums; display: inline-flex; flex-direction: column; align-items: flex-end; }
+.cc-sf-cabecera .insignia { justify-self: end; }
+.cc-sf-cuerpo { padding: 0 0 12px 30px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cc-sf-explicacion { margin: 0; font-size: 13px; font-weight: 600; }
+.cc-cob-pendientes { display: block; margin-top: 2px; font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .cc-sf-cabecera::before { transition: none; } }
+
+/* Banco */
+.cc-banco-lista { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+
+@media (max-width: 900px) {
+  .cc-fase { max-width: none; flex-basis: 100%; }
+  /* Las cuatro pestañas siempre a la vista: en dos filas, sin desplazamiento lateral escondido. */
+  .conciliacion .pestanas:not(.pestanas-movil) { flex-wrap: wrap; overflow-x: visible; padding-bottom: 0; }
+  .cc-tramos { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  .cc-tramo-importe { font-size: 20px; }
+  /* H8-4: tarjetas de la doble comprobación con el mismo margen interior que la tarjeta de filtros en móvil (12 px). */
+  .cc-tarjeta { padding-left: 12px; padding-right: 12px; }
+  .cc-cob-fila { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .cc-motivo { padding-left: 0; }
+  .cc-motivo-facturas li { grid-template-columns: minmax(0, 1fr) auto; }
+  .cc-motivo-facturas .cc-cobra, .cc-motivo-facturas li > .tenue { grid-column: 1 / -1; }
+  .cc-sf-tabla { display: block; overflow-x: auto; }
+  /* H8-5: cabecera del desplegable en dos columnas: nombre e importe; debajo, nº, antigüedad y estado. */
+  .cc-sf-cabecera { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  .cc-sf-cabecera::before { flex: none; }
+  .cc-sf-cabecera > .cc-cob-nombre { flex: 1 1 0; min-width: 0; order: 0; }
+  .cc-sf-cabecera > .num { order: 0; }
+  .cc-sf-cabecera > .tenue, .cc-sf-cabecera > .insignia { order: 1; }
+  .cc-sf-cabecera > [data-sf-n] { margin-left: 21px; }
+  .cc-sf-cuerpo { padding-left: 0; }
+}

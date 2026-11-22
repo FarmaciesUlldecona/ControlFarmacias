@@ -261,7 +261,7 @@ function Tarjeta({ f, opcion }: { f: FacturaListado; opcion: OpcionFiltroProveed
 // Página
 // ---------------------------------------------------------------------------
 
-function Selector({ nombre, etiqueta, valor, onChange, opciones, todos }: {
+export function Selector({ nombre, etiqueta, valor, onChange, opciones, todos }: {
   nombre: string; etiqueta: string; valor: string; onChange: (v: string) => void;
   opciones: { valor: string; texto: string; grupo?: string }[]; todos: string;
 }) {

@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from src.facturas.motor_local.catalogo import ProveedorLocal
 
@@ -39,6 +39,12 @@ from .worker_normalizacion import WorkerNormalizacion
 AUTORIDAD_COMPOSITOR_AUTOMATICO: Mapping[ProveedorLocal, tuple[str, str]] = MappingProxyType({
     ProveedorLocal.ALLIANCE: ("alliance-local", "1.3.1"),
 })
+
+
+def lector_autorizado_automatico() -> dict:
+    """Migracion 37 (D2): el lector con autoridad en la ruta automatica, que se guarda con cada fallo."""
+    [(adaptador, version)] = AUTORIDAD_COMPOSITOR_AUTOMATICO.values()
+    return {"adaptador": adaptador, "version_adaptador": version}
 
 
 def autoridad_automatica_habilitada(layout: str | None, version: str | None) -> bool:
@@ -95,6 +101,8 @@ def construir_worker_automatico_productivo(
     configuracion: ConfiguracionRuntime,
     worker_id: str,
     directorio_trabajo: Path,
+    r20_habilitada: Callable[[], bool] | None = None,
+    defectos_37: Callable[[], bool] | None = None,
 ) -> WorkerAutomatico:
     """Compone el worker de la ruta AUTOMATICA. Solo lo invoca el orquestador nocturno."""
     if configuracion.luna_habilitada:
@@ -103,7 +111,9 @@ def construir_worker_automatico_productivo(
         raise ValueError("SOLO_PIO_AUTORIZADA_EN_COMPOSITOR_AUTOMATICO")
     if not worker_id.strip():
         raise ValueError("WORKER_ID_OBLIGATORIO")
-    repositorio = RepositorioRuntimeSupabase(cliente)
+    # R20 (migracion 36) y migracion 37: deteccion con una sesion de solo lectura; sin ella, R20 desactivada y fallo
+    # con la firma de 7 parametros.
+    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=r20_habilitada, defectos_37=defectos_37)
     orquestador = OrquestadorExtraccionProductiva(
         extractor_especifico=ExtractorDocumentalAutorizadoAutomatico(),
         extractor_generico_local=None,
@@ -118,6 +128,7 @@ def construir_worker_automatico_productivo(
         campos_requeridos=CAMPOS_REQUERIDOS_MANUAL,
         worker_id=worker_id,
         ensamblar_documento=ensamblar_documento_manual,
+        lector_autorizado=lector_autorizado_automatico(),
     )
     conciliacion = construir_worker_conciliacion(
         repositorio,

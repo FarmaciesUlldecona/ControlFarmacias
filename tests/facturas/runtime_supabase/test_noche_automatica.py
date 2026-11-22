@@ -6,6 +6,7 @@ se prueba en ``test_integracion_pg17_32_auto_alliance.py``.
 from __future__ import annotations
 
 import datetime as dt
+import json
 import subprocess
 from decimal import Decimal
 from pathlib import Path
@@ -170,6 +171,44 @@ def test_pagos_fuera_del_2ax_y_comparados_aparte():
         "pagos_historial": 1, "vencimientos_marcas_pago": 1}}
 
 
+def test_cashflow_fuera_del_2ax_y_comparado_aparte():
+    """H7 (DISENO §6, decision de Pio 2026-11-22): Cashflow se informa aparte, como Pagos, sin veredicto."""
+    assert na.TABLAS_CASHFLOW == {"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
+                                  "cf_cashflow_saldos"}
+    assert na.TABLAS_CASHFLOW <= na.TABLAS_FUERA_DEL_SNAPSHOT
+    assert not na.TABLAS_CASHFLOW & (na.TABLAS_TRABAJADORES | na.TABLAS_PAGOS)
+    pre = {"tablas": {"cf_cashflow_importaciones": {}}}
+    post = {"tablas": {"cf_cashflow_importaciones": {"i1": "h1"}, "cf_cashflow_saldos": {"1": "h"}}}
+    assert na.cambios_trabajadores(pre, post) == {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {
+        "cf_cashflow_importaciones": 1, "cf_cashflow_saldos": 1}}
+
+
+def test_snapshot_cashflow_solo_lee_tablas_de_cashflow_existentes():
+    """Hasta desplegar la 38 no existe ninguna: el snapshot de Cashflow queda vacio y no falla."""
+    consultas = []
+
+    class _Lector:
+        def filas(self, sql, params=None):
+            consultas.append(sql)
+            if "information_schema.tables" in sql:
+                return [("facturas",), ("pagos_historial",), ("cf_cashflow_saldos",)]
+            return [("1", "h1")]
+
+    class _Ctx:
+        def __enter__(self):
+            return _Lector()
+
+        def __exit__(self, *a):
+            return False
+
+    class _Entorno:
+        def abrir_lectura(self):
+            return _Ctx()
+
+    assert na.snapshot_cashflow(_Entorno()) == {"tablas": {"cf_cashflow_saldos": {"1": "h1"}}}
+    assert not any("pagos_historial" in c or "facturas" in c for c in consultas[1:])
+
+
 def test_snapshot_pagos_solo_lee_tablas_de_pagos_existentes():
     """Hasta desplegar la 35 no existe ninguna: el snapshot de Pagos queda vacio y no falla."""
     consultas = []
@@ -203,6 +242,17 @@ class _LectorRoto:
 
     def __exit__(self, *_):
         return False
+
+
+def test_informe_registra_head_y_origen_local_y_remoto(tmp_path):
+    entorno = na.Entorno(abrir_lectura=_LectorRoto, cliente=None, tareas=dict, puerta_git=lambda: (None, []),
+                         construir_worker=lambda cfg: None, directorio_informes=tmp_path)
+    noche = na.Noche(fecha=dt.date(2026, 11, 19), modo="REAL", inicio=dt.datetime(2026, 11, 19, 21, 15,
+                                                                                  tzinfo=dt.timezone.utc))
+    noche.git = {"head": "a" * 40, "origin_local": "b" * 40, "origin_remoto": "a" * 40}
+    na._escribir_informe(entorno, noche)
+    informe = json.loads((tmp_path / "2026-11-19" / "informe.json").read_text(encoding="utf-8"))
+    assert informe["git"] == noche.git
 
 
 def test_snapshot_trabajadores_no_corta_la_noche():
@@ -330,8 +380,9 @@ def repos(tmp_path):
 
 
 def test_puerta_git_limpia_e_igual(repos):
-    commit, fallos = na.puerta_git(repos)
+    commit, fallos, estado = na.puerta_git(repos)
     assert fallos == [] and len(commit) == 40
+    assert estado["head"] == estado["origin_local"] == estado["origin_remoto"] == commit
 
 
 def test_puerta_git_arbol_sucio(repos):
@@ -348,11 +399,39 @@ def test_puerta_git_por_delante_solo_documentacion(repos):
     (repos / "b.py").write_text("y = 1\n", encoding="utf-8")
     _git(repos, "add", ".")
     _git(repos, "commit", "-q", "-m", "codigo")
-    assert na.puerta_git(repos)[1] == ["GIT_HEAD_DISTINTO_DE_ORIGIN_MAIN"]
+    assert na.puerta_git(repos)[1] == ["GIT_COMMITS_NO_DOCUMENTALES:b.py"]
+
+
+def test_puerta_git_lee_el_remoto_y_no_la_referencia_local(repos, tmp_path):
+    """Caso del 18/11: HEAD con codigo subido por otro clon y la referencia local origin/main sin fetch."""
+    (repos / "b.py").write_text("y = 1\n", encoding="utf-8")
+    _git(repos, "add", ".")
+    _git(repos, "commit", "-q", "-m", "codigo")
+    _git(repos, "push", "-q", "origin", "main")
+    _git(repos, "update-ref", "refs/remotes/origin/main", "HEAD~1")  # referencia local desfasada
+    commit, fallos, estado = na.puerta_git(repos)
+    assert fallos == [] and estado["origin_remoto"] == commit != estado["origin_local"]
+    # Al reves: otro clon sube codigo; la referencia local dice "igual" pero el remoto va por delante.
+    otro = tmp_path / "otro"
+    subprocess.run(["git", "clone", "-q", _git(repos, "remote", "get-url", "origin"), str(otro)], check=True,
+                   capture_output=True)
+    (otro / "c.py").write_text("z = 1\n", encoding="utf-8")
+    _git(otro, "add", ".")
+    _git(otro, "commit", "-q", "-m", "otro")
+    _git(otro, "push", "-q", "origin", "main")
+    assert na.puerta_git(repos)[1] == ["GIT_ORIGEN_DESCONOCIDO_LOCALMENTE"]
+    _git(repos, "fetch", "-q", "origin")
+    assert na.puerta_git(repos)[1] == ["GIT_HEAD_NO_DESCIENDE_DE_ORIGIN"]
+
+
+def test_puerta_git_remoto_inaccesible(repos):
+    _git(repos, "remote", "set-url", "origin", str(repos.parent / "no_existe.git"))
+    commit, fallos, _ = na.puerta_git(repos)
+    assert len(commit) == 40 and fallos[0].startswith("GIT_ORIGEN_NO_DETERMINABLE")
 
 
 def test_puerta_git_sin_repositorio(tmp_path):
-    commit, fallos = na.puerta_git(tmp_path)
+    commit, fallos, _ = na.puerta_git(tmp_path)
     assert commit is None and fallos[0].startswith("GIT_NO_DETERMINABLE")
 
 

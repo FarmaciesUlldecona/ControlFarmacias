@@ -7,16 +7,19 @@ solo con el cliente del .env y el compositor manual del 2AP; sin Farmatic):
 
 Decisiones de Pio (2026-10-30, ``pruebas/auditoria_2bj/DISENO.md``): la primera tanda tiene como maximo 5
 ejecuciones y las siguientes como maximo 20; cada tanda termina al persistir un documento Alliance; los defectos
-de extraccion previstos por el plan consumen intentos (R3) y no son parada; ejecuta Claude con confirmacion
-expresa de Pio por tanda.
+de extraccion previstos por el plan no son parada; ejecuta Claude con confirmacion expresa de Pio por tanda.
+Migracion 37 (decisiones de Pio D1-D7): con la 37 en la BD un defecto de extraccion pasa a REVISION en el primer
+fallo (cuenta un intento, D4); sin ella, consume intentos como antes (R3). Los motivos de almacenamiento son
+TRANSITORIO (lista C) y quedan SIN_PREDICCION en el plan.
 
 ``plan`` no escribe nada: lee la cola en el ordering oficial (el del nucleo de la migracion 16, modo
 MANUAL_ONE_SHOT) y predice el resultado de cada documento con la cadena oficial en memoria sobre el PDF del
 mirror con el mismo SHA (``pruebas/auditoria_2ay/banco_extraccion.py``): ``ALLIANCE`` (facturas, numeros y
 totales), ``NO_SOPORTADO``, ``DEFECTO`` o ``SIN_PREDICCION`` (no esta en el mirror o no se reconoce el motivo).
 
-``tanda`` (guard exclusivo por tanda, sin reintentos): preflight READ_ONLY y snapshot por fila; para cada
-ejecucion, puertas (flags y configuracion, 25, 27 desde el 2BL, 0 NORMALIZANDO, 0 huerfanos, 0 locks/claims/workers, tareas a
+``tanda`` (guard exclusivo por tanda, sin reintentos): preflight READ_ONLY y snapshot por fila; puerta git (arbol
+limpio y HEAD = main del remoto leido con ls-remote, o por delante solo con documentacion; modulo comun
+``puerta_git``, 2026-11-19); para cada ejecucion, puertas (flags y configuracion, 25, 27 desde el 2BL, 0 NORMALIZANDO, 0 huerfanos, 0 locks/claims/workers, tareas a
 60 min o mas, n.o 1 con prediccion y mismo SHA que en el plan), UNA llamada a ``ejecutar_una_manual()`` y
 comprobacion (estado previsto, facturas del plan, filas cambiadas solo del documento). Cualquier desviacion
 -> PARADA. Al final, y tambien al parar (2BK), postcheck 2AX por fila de toda la tanda. Salidas fuera del
@@ -43,12 +46,15 @@ sys.path.insert(0, str(ROOT / "pruebas/auditoria_2at"))
 
 from auditoria_readonly import (  # noqa: E402
     PROJECT_REF, _ejecutar_lectura, _escribir, _operacion, _puertas_operacion, _salida_fuera_del_repo)
+from src.facturas.runtime_supabase import puerta_git as _puerta_git  # noqa: E402
 from src.facturas.runtime_supabase.clasificacion_fallos import (  # noqa: E402
     DEFECTO_DOCUMENTO, NO_SOPORTADO, clasificar_fallo)
-from src.facturas.runtime_supabase.noche_automatica import TABLAS_PAGOS, TABLAS_TRABAJADORES  # noqa: E402
+from src.facturas.runtime_supabase.lectura_readonly import SQL_MIGRACION_37, defectos_37_en_bd  # noqa: E402
+from src.facturas.runtime_supabase.noche_automatica import (  # noqa: E402
+    TABLAS_CASHFLOW, TABLAS_PAGOS, TABLAS_TRABAJADORES)
 
-# Tablas que escribe la web (Trabajadores; Pagos, H6): fuera del veredicto, informadas aparte.
-TABLAS_WEB = TABLAS_TRABAJADORES | TABLAS_PAGOS
+# Tablas ajenas a facturas (Trabajadores; Pagos, H6; Cashflow, H7): fuera del veredicto, informadas aparte.
+TABLAS_WEB = TABLAS_TRABAJADORES | TABLAS_PAGOS | TABLAS_CASHFLOW
 
 
 def _cargar(nombre: str, ruta: str):
@@ -215,6 +221,8 @@ def _estado_operativo(lector) -> dict:
         f"select documento_id::text, prevision from public.cf_huerfanos_normalizacion('{GRACIA_HUERFANOS}')")]
         if out["migracion_25"] else None)
     out["max_intentos"] = lector.valor("select normalizacion_max_intentos from public.cf_configuracion where id")
+    # Migracion 37: firma de 8 parametros y columna lector (solo catalogo).
+    out["migracion_37"] = lector.valor(SQL_MIGRACION_37)
     out["cola"] = [list(r) for r in lector.filas(SQL_COLA)]
     return out
 
@@ -267,7 +275,9 @@ def puertas(estado: dict, plan_docs: dict, referencia: dict, tareas: dict, ahora
     return fallos
 
 
-def resultado_esperado(prediccion: dict, intentos_antes: int, max_intentos: int) -> dict:
+def resultado_esperado(prediccion: dict, intentos_antes: int, max_intentos: int, defectos_37: bool = False) -> dict:
+    """Con la 37 (``defectos_37``) un defecto de extraccion pasa a REVISION en el primer fallo, sin depender de
+    ``max_intentos``; sin ella, ERROR con espera o REVISION al maximo (R3, regla de la 17)."""
     clase = prediccion["clase"]
     if clase == "ALLIANCE":
         return {"estado_lectura": "NORMALIZADA", "estado_persistencia": "COMPLETA",
@@ -276,7 +286,7 @@ def resultado_esperado(prediccion: dict, intentos_antes: int, max_intentos: int)
     if clase == "NO_SOPORTADO":
         return {"estado_lectura": "PROVEEDOR_NO_SOPORTADO", "ultima_clase_fallo": NO_SOPORTADO,
                 "intentos": intentos_antes, "facturas": []}
-    return {"estado_lectura": "REVISION" if intentos_antes + 1 >= max_intentos else "ERROR",
+    return {"estado_lectura": "REVISION" if defectos_37 or intentos_antes + 1 >= max_intentos else "ERROR",
             "ultima_clase_fallo": DEFECTO_DOCUMENTO, "intentos": intentos_antes + 1, "facturas": []}
 
 
@@ -302,10 +312,16 @@ def cambios_pagos(antes: dict, despues: dict) -> dict[str, int]:
     return cambios_trabajadores(antes, despues, TABLAS_PAGOS)
 
 
+def cambios_cashflow(antes: dict, despues: dict) -> dict[str, int]:
+    """Filas de Cashflow (H7) cambiadas, nuevas o borradas por tabla: se informan aparte, sin veredicto (DISENO §6)."""
+    return cambios_trabajadores(antes, despues, TABLAS_CASHFLOW)
+
+
 def diferencias_filas(antes: dict, despues: dict, documentos: set[str], cambiables: set[str]) -> list[str]:
     """Criterio 2AX por fila: solo filas nuevas de ``documentos`` y cambios en sus filas de ``cambiables``.
 
-    Las tablas de Trabajadores y Pagos no cuentan (las escribe la web); se informan con ``cambios_trabajadores``."""
+    Las tablas de Trabajadores, Pagos y Cashflow no cuentan (ajenas a facturas); se informan con
+    ``cambios_trabajadores``."""
     problemas = []
     for tabla in sorted((set(antes) | set(despues)) - TABLAS_WEB):
         a, b = antes.get(tabla, {}), despues.get(tabla, {})
@@ -352,7 +368,10 @@ def _ejecutar_una(cliente, directorio: Path):
     from src.facturas.runtime_supabase.repositorios import RepositorioRuntimeSupabase
 
     configuracion = RepositorioRuntimeSupabase(cliente).obtener_configuracion()
-    return construir_worker_manual_productivo(cliente, configuracion, WORKER_BASE, directorio).ejecutar_una_manual()
+    # Migracion 37: la firma de 8 parametros solo si una sesion READ_ONLY la detecta (como R20 en el 2BP).
+    return construir_worker_manual_productivo(
+        cliente, configuracion, WORKER_BASE, directorio,
+        defectos_37=lambda: _ejecutar_lectura(lambda l: {"d": defectos_37_en_bd(l)})[1]["d"]).ejecutar_una_manual()
 
 
 # --------------------------------------------------------------------------- tanda
@@ -365,6 +384,16 @@ def _tandas_previas_ok(directorio: Path) -> int:
         except (OSError, ValueError):
             pass
     return ok
+
+
+def _estado_git() -> dict:
+    """Estado git con el main del remoto leido con ls-remote (modulo comun ``puerta_git``, 2026-11-19)."""
+    return _puerta_git.estado(ROOT)
+
+
+def puerta_git(g: dict) -> list[str]:
+    """Arbol limpio y HEAD = main del remoto, o por delante solo con documentacion (REGLAS_CRITICAS)."""
+    return _puerta_git.evaluar(g)
 
 
 def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
@@ -400,7 +429,10 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
                                                   "filas_cambiadas_por_tabla": cambios_trabajadores(pre["filas"],
                                                                                                     post["filas"])},
                                  "pagos": {"afecta_al_veredicto": False,
-                                           "filas_cambiadas_por_tabla": cambios_pagos(pre["filas"], post["filas"])}}
+                                           "filas_cambiadas_por_tabla": cambios_pagos(pre["filas"], post["filas"])},
+                                 "cashflow": {"afecta_al_veredicto": False,
+                                              "filas_cambiadas_por_tabla": cambios_cashflow(pre["filas"],
+                                                                                            post["filas"])}}
         return problemas
 
     def cerrar(veredicto: str, motivos: list[str]) -> int:
@@ -419,6 +451,12 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
     pre.update(_ejecutar_lectura(_leer_tanda)[1])
     _escribir(directorio / "snapshot_pre.json", pre)
     registro["preflight"] = {k: pre.get(k) for k in ("project_ref", "capturado_utc", "transaction_read_only")}
+    # Puerta git (2026-11-19, modulo comun con la noche y el 2BP): arbol limpio y HEAD = main del remoto leido
+    # con ls-remote, o por delante solo con documentacion.
+    registro["git"] = _estado_git()
+    fallos_git = puerta_git(registro["git"])
+    if fallos_git:
+        return cerrar("PARADA", fallos_git)
     try:
         cliente = _cliente()
     except SystemExit as exc:
@@ -433,7 +471,8 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
             return cerrar("PARADA", fallos)
         documento_id = anterior["cola"][0][0]
         previsto = plan_docs[documento_id]["prediccion"]
-        esperado = resultado_esperado(previsto, anterior["cola"][0][4], anterior["max_intentos"])
+        esperado = resultado_esperado(previsto, anterior["cola"][0][4], anterior["max_intentos"],
+                                      anterior.get("migracion_37") is True)
         ejecucion = {"documento_id": documento_id, "clase": previsto["clase"], "esperado": esperado,
                      "inicio_utc": _ahora()}
         registro["ejecuciones"].append(ejecucion)

@@ -5,7 +5,7 @@ import json
 from dataclasses import asdict
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Protocol
+from typing import Any, Callable, Mapping, Protocol
 from src.facturas.completitud_documental import validar_documento_antes_de_persistir
 
 from .clasificacion_fallos import clasificar_fallo, clasificar_fallo_conciliacion
@@ -82,6 +82,8 @@ class RepositorioNormalizacion(Protocol):
         worker_id: str,
         disparador: str,
         idempotency_key: str,
+        *,
+        lector: Mapping[str, Any] | None = None,
     ) -> None: ...
 
 
@@ -121,8 +123,37 @@ class RepositorioRuntimeSupabase:
     RPC utilizadas y no se importa desde los procesos diarios existentes.
     """
 
-    def __init__(self, cliente: Any) -> None:
+    def __init__(
+        self,
+        cliente: Any,
+        r20_habilitada: Callable[[], bool] | None = None,
+        defectos_37: Callable[[], bool] | None = None,
+    ) -> None:
         self._cliente = cliente
+        # R20 (migracion 36): quien construye el repositorio con una sesion de solo lectura aporta la deteccion
+        # (``lectura_readonly.r20_habilitada``: information_schema y, solo si existe, la columna). Sin ella, o si
+        # falla, R20 queda desactivada (falla cerrado: la linea sigue SIN_COINCIDENCIA, como sin la 36).
+        self._r20_habilitada = r20_habilitada
+        # Migracion 37 (D6): la firma de 8 parametros (``p_lector``) solo si quien construye el repositorio detecta la
+        # 37 con una sesion de solo lectura (``lectura_readonly.defectos_37_en_bd``). Sin ella, o si falla, la llamada
+        # de 7 parametros de la 17, como antes (falla cerrado: nunca una firma que la BD quiza no tiene).
+        self._defectos_37 = defectos_37
+
+    def r20_habilitada(self) -> bool:
+        if self._r20_habilitada is None:
+            return False
+        try:
+            return self._r20_habilitada() is True
+        except Exception:  # noqa: BLE001 - deteccion fallida = R20 desactivada
+            return False
+
+    def defectos_37(self) -> bool:
+        if self._defectos_37 is None:
+            return False
+        try:
+            return self._defectos_37() is True
+        except Exception:  # noqa: BLE001 - deteccion fallida = firma de 7 parametros
+            return False
 
     def obtener_configuracion(self) -> ConfiguracionRuntime:
         respuesta = (
@@ -294,8 +325,10 @@ class RepositorioRuntimeSupabase:
         worker_id: str,
         disparador: str,
         idempotency_key: str,
+        *,
+        lector: Mapping[str, Any] | None = None,
     ) -> None:
-        self._cliente.rpc("cf_registrar_fallo_normalizacion", {
+        payload = {
             "p_documento_id": documento.documento_id,
             "p_worker_id": worker_id,
             "p_disparador": disparador,
@@ -303,7 +336,10 @@ class RepositorioRuntimeSupabase:
             "p_error_codigo": codigo,
             "p_error_detalle": detalle,
             "p_clase_fallo": clasificar_fallo(codigo, detalle),
-        }).execute()
+        }
+        if self.defectos_37():
+            payload["p_lector"] = dict(lector) if lector is not None else None
+        self._cliente.rpc("cf_registrar_fallo_normalizacion", payload).execute()
 
     def reclamar_factura(self, worker_id: str) -> FacturaTrabajo | None:
         return self._reclamar_factura("cf_reclamar_factura_conciliacion", worker_id)
@@ -465,8 +501,9 @@ class RepositorioRuntimeSupabase:
             farmatic_id_proveedor=farmatic_provider_id,
             ocupados=ocupados,
             numeros_otras_facturas=numeros_otras_facturas,
+            r20_habilitada=self.r20_habilitada(),
         )
-        # R17 (2BE, migracion 24): una linea puede dar dos detalles UNO_A_VARIOS.
+        # R17 (2BE, migracion 24) y R20 (migracion 36): una linea puede dar dos detalles UNO_A_VARIOS.
         details.extend(x for d, m in zip(documentaries, matches) for x in detalles_desde_busqueda(d, m))
         return tuple(details)
 

@@ -244,8 +244,16 @@ def _suites(tmp_path, *registros):
     return str(ruta)
 
 
+def _historica_semanal():
+    """Hito SUITE: histórica en verde de hoy (sobre otra huella), la que exige la barrera en un commit de código
+    que no toca rutas de despliegue."""
+    import datetime
+    return {"huella": "h_historica", "alcance": "historica", "verde": True,
+            "ts_fin": datetime.datetime.now().astimezone().isoformat(timespec="seconds")}
+
+
 def _suite_completa_verde(tmp_path, huella="h1"):
-    return _suites(tmp_path, {"huella": huella, "alcance": "completa", "verde": True})
+    return _suites(tmp_path, _historica_semanal(), {"huella": huella, "alcance": "completa", "verde": True})
 
 
 def test_commit_sin_revision_bloqueado(tmp_path):
@@ -437,7 +445,7 @@ def test_commit_con_suite_roja_bloqueado(tmp_path):
 
 
 def test_una_ejecucion_parcial_posterior_no_invalida_la_completa(tmp_path):
-    suites = _suites(tmp_path, {"huella": "h1", "alcance": "completa", "verde": True},
+    suites = _suites(tmp_path, _historica_semanal(), {"huella": "h1", "alcance": "completa", "verde": True},
                      {"huella": "h1", "alcance": "parcial", "verde": False, "failed": 3, "errors": 0})
     assert barreras.barrera_commit("h1", _pass(tmp_path), ["src/x.py"], suites).codigo == 0
 
@@ -989,6 +997,37 @@ def test_revisor_lee_solo_diff_reglas_y_ficheros_tocados(repo):
     assert glob.motivo == "herramienta_no_permitida"
 
 
+def test_revisor_lee_con_read_los_ficheros_citados_por_el_diff(repo):
+    """DECISIÓN DE PIO (2026-11-18): Read de src/, sql/, tests/ y pruebas/ citados por el diff; nada más."""
+    ruta, git = repo
+    for relativa in ("src/m.py", "sql/migrations/24_x.sql", "tests/t.py", "pruebas/a/DISENO.md", "src/no_citado.py",
+                     "docs/d.md", "otros/o.py", "src/.env.local", "src/logs/x.txt"):
+        (ruta / relativa).parent.mkdir(parents=True, exist_ok=True)
+        (ruta / relativa).write_text("x", encoding="utf-8")
+    (ruta / "a.txt").write_text("base\n", encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-q", "-m", "base3")
+    (ruta / "a.txt").write_text("base\nver src/m.py:12 y sql\\migrations\\24_x.sql; docs/d.md otros/o.py\n"
+                                "src/.env.local src/logs/x.txt src/inexistente.py ../src/no_citado.py\n",
+                                encoding="utf-8")
+    (ruta / "nuevo.md").write_text("ver `tests/t.py` y pruebas/a/DISENO.md.\n", encoding="utf-8")
+
+    def leer(herramienta, relativa):
+        clave = "file_path" if herramienta == "Read" else "path"
+        entrada = {"tool_name": herramienta, "tool_input": {clave: str(ruta / relativa), "pattern": "x"},
+                   "cwd": str(ruta), "agent_type": "revisor-reglas"}
+        return barreras.decidir(entrada, _politica())
+
+    assert estado_git.rutas_citadas(str(ruta)) == [
+        "pruebas/a/DISENO.md", "sql/migrations/24_x.sql", "src/m.py", "tests/t.py"]
+    for relativa in ("src/m.py", "sql/migrations/24_x.sql", "tests/t.py", "pruebas/a/DISENO.md"):
+        assert leer("Read", relativa).codigo == 0, relativa
+        assert leer("Grep", relativa).motivo == "lectura_fuera_de_diff", relativa
+    for relativa in ("src/no_citado.py", "docs/d.md", "otros/o.py", "src/logs/x.txt"):
+        assert leer("Read", relativa).motivo == "lectura_fuera_de_diff", relativa
+    assert leer("Read", "src/.env.local").codigo == 2
+
+
 @pytest.mark.parametrize(
     ("respuesta", "veredicto"),
     [
@@ -1228,12 +1267,14 @@ def repo_con_cambios(repo):
 def test_consulta_suite_pass_sin_exponer_el_registro(repo_con_cambios, tmp_path_factory):
     ruta = repo_con_cambios
     otra = _linea_suite(ruta, huella="otra", base="otra")
-    registro = _registro_suites(tmp_path_factory, otra, _linea_suite(ruta))
+    # Hito SUITE: el repositorio de prueba no tiene SUITE_HISTORICA, así que la histórica se exige exacta.
+    registro = _registro_suites(tmp_path_factory, otra, _linea_suite(ruta, alcance="historica"), _linea_suite(ruta))
     respuesta = _consulta().consultar(ruta, registro)
     assert respuesta["t2"] == "PASS"
-    assert respuesta["exigida"] == "completa"
+    assert respuesta["exigida"] == "completa" and respuesta["historica_exigida"] == "exacta"
+    assert respuesta["suite"]["via"] == "directa" and respuesta["historica"]["verde"] is True
     assert respuesta["rutas"] == ["a.txt", "nuevo.py"]
-    assert set(respuesta["suite"]) == set(_consulta().CAMPOS_SUITE)
+    assert set(respuesta["suite"]) == set(_consulta().CAMPOS_SUITE) | {"via"}
     assert "secreto" not in json.dumps(respuesta) and "otra" not in json.dumps(respuesta)
 
 

@@ -9,6 +9,7 @@ import { PaginaCalendario } from './calendario.tsx';
 import { PaginaGuardias } from './guardias.tsx';
 import { PaginaVencimientos } from './vencimientos.tsx';
 import { PaginaCashflow } from './cashflow.tsx';
+import { PaginaConciliacion } from './conciliacion.tsx';
 
 /** Pantallas de la fase 1. En H3b: cabecera + "En construcción". */
 export const PANTALLAS = [
@@ -36,7 +37,8 @@ export default function App() {
             element={p.ruta === '/' ? <PaginaInicio />
               : p.ruta === '/facturas' ? <PaginaFacturas />
               : p.ruta === '/vencimientos' ? <PaginaVencimientos />
-              : p.ruta === '/cashflow' ? <PaginaCashflow /> : <PaginaEnConstruccion pantalla={p} />}
+              : p.ruta === '/cashflow' ? <PaginaCashflow />
+              : p.ruta === '/conciliacion' ? <PaginaConciliacion /> : <PaginaEnConstruccion pantalla={p} />}
           />
         ))}
         <Route path="/facturas/:id" element={<PaginaDetalle />} />

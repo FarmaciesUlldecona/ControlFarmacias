@@ -18,7 +18,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import pg from 'pg';
 import {
-  CATEGORIAS_TIPO_DOCUMENTAL, CONSULTAS, CONSULTAS_CHECK, FARMACIA, UUID_RE, contratoDesdeConsultas, resumenCasado, resumenDuplicados, resumenPar08C66676,
+  CATEGORIAS_TIPO_DOCUMENTAL, COLUMNA_DIAGNOSTICO_GRUPO, CONSULTAS, CONSULTAS_CHECK, FARMACIA, GRUPOS_SIN_FACTURA, UUID_RE, contratoDesdeConsultas, resumenCasado, resumenDuplicados, resumenPar08C66676,
   type Contrato, type EjecutorBloque, type Fila, type NombreConsulta, type ValorDiagnostico,
 } from './contrato.ts';
 import { COLUMNAS_DIAGNOSTICO_PAGOS, SQL_PAGOS } from './pagos/sql.ts';
@@ -124,7 +124,52 @@ const COLUMNAS_VENCIMIENTOS = ['vencimientos', 'vencimientos_importe_null', 'ven
   'vencimientos_abono_sin_fecha'];
 /** H5-4: diagnósticos de la comprobación REAL, en orden de impresión; cada uno en su propia transacción. */
 export const NOMBRES_DIAGNOSTICO = ['vencimientos', 'documentos', 'tipo_documento', 'sentido', 'casado', 'estado_linea', 'duplicados',
-  'par_08C66676'] as const;
+  'par_08C66676', 'noche', 'sin_factura'] as const;
+/**
+ * H8: albaranes no reservados por ninguna conciliación vigente (solo recuentos). H8-3: el total (contado aparte) y un
+ * recuento por grupo de GRUPOS_SIN_FACTURA, exhaustivos y excluyentes; después, proveedores por bloque.
+ */
+const COLUMNAS_GRUPOS_SIN_FACTURA = GRUPOS_SIN_FACTURA.map((g) => COLUMNA_DIAGNOSTICO_GRUPO[g]);
+// H8-4: + traspasos entre farmacias (grupo) y proveedores con conciliación sin fecha de inicio y de traspaso (el de
+// traspaso debería ser 1: confirma que la configuración identifica un único proveedor de Farmatic).
+export const COLUMNAS_SIN_FACTURA = ['total', ...COLUMNAS_GRUPOS_SIN_FACTURA, 'proveedores_con_conciliacion',
+  'proveedores_leido_sin_conciliacion', 'proveedores_sin_lector', 'proveedores_con_conciliacion_sin_desde', 'proveedores_traspaso'];
+
+/**
+ * H8-3: error de recuentos incoherentes que lleva los recuentos (solo números) para que check:real los imprima igualmente
+ * y se vea la diferencia.
+ */
+export class ErrorRecuentosIncoherentes extends Error {
+  readonly recuentos: Record<string, number>;
+  constructor(nombre: string, recuentos: Record<string, number>) {
+    super(`DIAGNOSTICO_RECUENTOS_INCOHERENTES: ${nombre}`);
+    this.recuentos = recuentos;
+  }
+}
+
+/** H8: resumen del diagnóstico sin_factura. Falla cerrado si no son recuentos o si los grupos no suman el total. */
+export function resumenSinFactura(fila: Record<string, unknown>): Record<string, number> {
+  const d: Record<string, number> = {};
+  for (const col of COLUMNAS_SIN_FACTURA) d[col] = recuento(fila[col], col);
+  const suma = COLUMNAS_GRUPOS_SIN_FACTURA.reduce((a, c) => a + d[c], 0);
+  if (suma !== d.total) throw new ErrorRecuentosIncoherentes('sin_factura', { ...d, suma_grupos: suma, diferencia: Math.abs(d.total - suma) });
+  return d;
+}
+/** H8: «para revisar» de la última noche (migración 36), solo recuentos. */
+export const COLUMNAS_NOCHE = ['noches', 'lista_no_valida', 'elementos', 'diferencia', 'no_alliance', 'r18_pendiente', 'defecto',
+  'otros_tipos', 'fuera_de_pio'];
+
+/**
+ * H8: resumen del diagnóstico noche (una fila de recuentos). Falla cerrado si algún valor no es un recuento o si los
+ * tipos y fuera_de_pio no reparten exactamente los elementos.
+ */
+export function resumenNoche(fila: Record<string, unknown>): Record<string, number> {
+  const d: Record<string, number> = {};
+  for (const col of COLUMNAS_NOCHE) d[col] = recuento(fila[col], col);
+  const suma = d.diferencia + d.no_alliance + d.r18_pendiente + d.defecto + d.otros_tipos + d.fuera_de_pio;
+  if (suma !== d.elementos || d.noches > 1 || d.lista_no_valida > d.noches) throw new Error('DIAGNOSTICO_RECUENTOS_INCOHERENTES: noche');
+  return d;
+}
 /** H5-7: líneas vigentes por estado de línea (migración 30) y con diferencia null. */
 export const COLUMNAS_ESTADO_LINEA = ['lineas', 'coincide', 'diferencia', 'no_evaluable', 'sin_valor', 'otros_valores', 'diferencia_null'];
 export type NombreDiagnostico = (typeof NOMBRES_DIAGNOSTICO)[number];
@@ -272,6 +317,8 @@ export function crearAdaptadorReal(): AdaptadorReal {
           const columnasImporte = r.fields.filter((f) => OID_IMPORTE.has(f.dataTypeID)).map((f) => f.name);
           return validarDiagnostico(resumenPar08C66676(r.rows, columnasImporte));
         }
+        case 'noche': return validarDiagnostico(resumenNoche(await una(CONSULTAS_CHECK.diagnostico_noche.sql)));
+        case 'sin_factura': return validarDiagnostico(resumenSinFactura(await una(CONSULTAS_CHECK.diagnostico_sin_factura.sql)));
       }
     }),
     // H6-REAL: marcas, formas e historial de pagos con cf_lectura (READ ONLY, ROLLBACK). Solo PIO.

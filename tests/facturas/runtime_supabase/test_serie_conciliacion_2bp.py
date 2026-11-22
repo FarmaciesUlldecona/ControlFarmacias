@@ -22,7 +22,9 @@ from test_ensayo_fase4_2at import _ClienteServiceRole, _ConexionPg17
 from test_integracion_pg17_2az import _operacionales_sinteticos, _preparar_2ao, _solo_primera
 from test_integracion_pg17_2be import _recepcion_50898
 
-GIT_LIMPIO = {"status": "", "head": "a" * 40, "origin": "a" * 40, "origin_ancestro": True, "cambios": []}
+# 2026-11-19: el main del remoto se lee con ls-remote (modulo comun puerta_git).
+GIT_LIMPIO = {"status": "", "head": "a" * 40, "origin_local": "a" * 40, "origin_remoto": "a" * 40,
+              "origin_conocido": True, "origin_ancestro": True, "cambios": []}
 
 
 def _modulo():
@@ -42,6 +44,12 @@ def _modulo():
     ({**GIT_LIMPIO, "head": "b" * 40, "cambios": ["docs/a.md", "src/b.py"]}, ["GIT_COMMITS_NO_DOCUMENTALES:src/b.py"]),
     ({**GIT_LIMPIO, "head": "b" * 40, "origin_ancestro": False}, ["GIT_HEAD_NO_DESCIENDE_DE_ORIGIN"]),
     ({"error": "sin git"}, ["GIT_NO_DETERMINABLE:sin git"]),
+    ({**GIT_LIMPIO, "origin_remoto": None, "error_origen": "TimeoutExpired"},
+     ["GIT_ORIGEN_NO_DETERMINABLE:TimeoutExpired"]),
+    ({**GIT_LIMPIO, "origin_remoto": "c" * 40, "origin_conocido": False}, ["GIT_ORIGEN_DESCONOCIDO_LOCALMENTE"]),
+    # La referencia local desfasada ya no decide: manda el remoto.
+    ({**GIT_LIMPIO, "origin_local": "a" * 40, "origin_remoto": "c" * 40, "origin_ancestro": False},
+     ["GIT_HEAD_NO_DESCIENDE_DE_ORIGIN"]),
 ])
 def test_puerta_git(git, esperado):
     assert _modulo().puerta_git(git) == esperado
@@ -74,6 +82,21 @@ def test_postcheck_informa_pagos_aparte_sin_veredicto():
     assert m.cambios_trabajadores(antes, despues) == {}
     despues["albaranes"] = {}
     assert m.diferencias_filas(antes, despues, set()) == ["FILA_BORRADA:albaranes:a1"]
+
+
+def test_postcheck_informa_cashflow_aparte_sin_veredicto():
+    """H7 (DISENO §6, decision de Pio 2026-11-22): Cashflow se informa aparte, como Pagos, sin veredicto."""
+    m = _modulo()
+    assert m.TABLAS_CASHFLOW == {"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
+                                 "cf_cashflow_saldos"}
+    assert m.TABLAS_CASHFLOW <= m.TABLAS_WEB
+    antes = {"cf_cashflow_importaciones": {}, "cf_cashflow_importes": {}, "albaranes": {"a1": ["ha", None]}}
+    despues = {"cf_cashflow_importaciones": {"i1": ["hi", None]}, "cf_cashflow_importes": {"1": ["h1", None]},
+               "cf_cashflow_saldos": {"1": ["hs", None]}, "albaranes": {"a1": ["ha", None]}}
+    assert m.diferencias_filas(antes, despues, set()) == []
+    assert m.cambios_cashflow(antes, despues) == {"cf_cashflow_importaciones": 1, "cf_cashflow_importes": 1,
+                                                  "cf_cashflow_saldos": 1}
+    assert m.cambios_pagos(antes, despues) == {} and m.cambios_trabajadores(antes, despues) == {}
 
 
 def _prev(**kw):
@@ -245,7 +268,8 @@ def test_para_si_el_numero_1_simula_diferencia(serie_diferencia):
     assert registro["ejecuciones"][0]["no_ejecutada"] is True and "retorno" not in registro["ejecuciones"][0]
     assert registro["postcheck"] == {"veredicto": "POSTCHECK_OK", "problemas": [], "facturas": [],
                                      "trabajadores": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}},
-                                     "pagos": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
+                                     "pagos": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}},
+                                     "cashflow": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
     assert _huella(serie.pg) == antes
 
 

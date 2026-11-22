@@ -55,25 +55,27 @@ test.describe('Inicio PC 1440', () => {
     await expect(filas.first()).toContainText('04/11/2026');
   });
 
-  test('necesita tu atención: alertas (duplicado regla B) e incidencias con enlace', async ({ page }) => {
+  test('necesita tu atención: incidencias con enlace; alertas (duplicado regla B) solo como recuento → Conciliación', async ({ page }) => {
     await abrirInicio(page);
     const at = page.locator('#atencion');
     // H4d: agrupado; primero "Diferencia con albaranes" (rojo).
     await expect(at.locator('[data-grupo]').first()).toHaveAttribute('data-grupo', 'DIFERENCIA_ALBARANES');
     await expect(at.locator('[data-grupo]').first()).toHaveClass(/borde-rojo/);
-    const dup = at.locator('[data-grupo="DUPLICADO_FARMATIC"]');
-    await dup.locator('summary').click();
-    await expect(dup.locator('[data-caso]')).toHaveCount(1);
-    await expect(dup).toContainText('08C66676');
-    await expect(dup).toContainText('57,40 €');
-    await expect(at).not.toContainText('08C70015');
     const dif = at.locator('[data-grupo="DIFERENCIA_ALBARANES"]');
     await dif.locator('summary').click();
     await expect(dif).toContainText('Diferencia según el motor: 41,90 €');
+    // H8: las alertas de albaranes ya no están en «Necesita tu atención»; su detalle completo, en Conciliación → Albaranes.
+    await expect(at.locator('[data-grupo="DUPLICADO_FARMATIC"], [data-grupo="ALBARAN_NO_EN_FARMATIC"]')).toHaveCount(0);
+    await page.locator('[data-alertas-inicio]').getByRole('link', { name: 'Ver en Conciliación' }).click();
+    await expect(page).toHaveURL(/\/conciliacion\?pestana=albaranes$/);
+    const dup = page.locator('[data-alerta="POSIBLE_DUPLICADO_FARMATIC"]');
+    await expect(dup).toHaveCount(1);
+    await expect(dup).toContainText('08C66676');
+    await dup.locator('[data-alerta-detalle] summary').click();
+    await expect(dup.locator('[data-alerta-detalle]')).toContainText('importe_puc: 57.4');
+    await expect(page.locator('#alertas')).not.toContainText('08C70015');
     // Enlace a destino: el albarán fuera de Farmatic abre su factura.
-    const fuera = at.locator('[data-grupo="ALBARAN_NO_EN_FARMATIC"]');
-    await fuera.locator('summary').click();
-    await fuera.getByRole('link', { name: /^Abrir/ }).click();
+    await page.locator('[data-alerta="ALBARAN_FACTURADO_NO_EN_FARMATIC"]').getByRole('link', { name: /^Abrir/ }).click();
     await expect(page).toHaveURL(/\/facturas\/f0000000-0000-4000-8000-000000000001$/);
   });
 

@@ -192,6 +192,38 @@ class ClienteLectura:
         return _ConsultaLectura(self._lector, nombre)
 
 
+SQL_COLUMNA_R20 = ("select exists (select 1 from information_schema.columns where table_schema = 'public' "
+                   "and table_name = 'cf_configuracion' and column_name = 'conciliacion_r20')")
+SQL_VALOR_R20 = "select conciliacion_r20 is true from public.cf_configuracion where id"
+
+
+def r20_habilitada(lector: Any) -> bool:
+    """R20 (DECISION DE PIO, 2026-11-19): activa solo si la 36 esta en la BD y su marca es ``true``.
+
+    Primero ``information_schema`` (nunca falla); la columna se lee solo si existe, para no abortar la transaccion
+    de solo lectura. Sin la 36, o con ``conciliacion_r20 = false``, R20 queda desactivada. ``lector`` es cualquier
+    sesion de solo lectura con ``valor`` (``LectorReadOnly`` o el lector del 2AT).
+    """
+    if lector.valor(SQL_COLUMNA_R20) is not True:
+        return False
+    return lector.valor(SQL_VALOR_R20) is True
+
+
+FIRMA_FALLO_37 = "public.cf_registrar_fallo_normalizacion(uuid,text,text,text,text,text,text,jsonb)"
+SQL_MIGRACION_37 = (
+    f"select to_regprocedure('{FIRMA_FALLO_37}') is not null and exists (select 1 from information_schema.columns "
+    "where table_schema = 'public' and table_name = 'normalizacion_ejecuciones' and column_name = 'lector')")
+
+
+def defectos_37_en_bd(lector: Any) -> bool:
+    """Migracion 37 (DECISIONES DE PIO D5-D7, 2026-11-19): la firma de 8 parametros y la columna ``lector`` presentes.
+
+    Solo catalogo (``to_regprocedure`` e ``information_schema``, nunca fallan): no aborta la transaccion de solo
+    lectura. Sin la 37 el codigo llama a la firma de 7 parametros de la 17, como antes.
+    """
+    return lector.valor(SQL_MIGRACION_37) is True
+
+
 def simular_conciliacion(lector: LectorReadOnly, factura_id: str, disparador: str = "AUTOMATICO") -> dict[str, Any]:
     """Camino de ``WorkerConciliacion._procesar`` sin claim ni escrituras (copia del 2AT con ``disparador``)."""
     from src.facturas.completitud_documental import validar_documento_antes_de_persistir
@@ -202,7 +234,7 @@ def simular_conciliacion(lector: LectorReadOnly, factura_id: str, disparador: st
     from .repositorios import RepositorioRuntimeSupabase, clave_idempotente_conciliacion, payload_conciliacion
 
     cliente = ClienteLectura(lector)
-    repositorio = RepositorioRuntimeSupabase(cliente)
+    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=lambda: r20_habilitada(lector))
     fila = json.loads(lector.valor("select to_jsonb(f)::text from public.facturas f where f.id = %s",
                                    (factura_id,)))
     factura = FacturaTrabajo(

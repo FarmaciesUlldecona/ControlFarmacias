@@ -5,7 +5,7 @@ import json
 import uuid
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Mapping
 from src.facturas.completitud_documental import validar_documento_antes_de_persistir
 
 from .extraccion_productiva import OrquestadorExtraccionProductiva
@@ -25,6 +25,22 @@ class WorkerNormalizacion:
     campos_requeridos: frozenset[str]
     worker_id: str
     ensamblar_documento: EnsambladorDocumento | None = None
+    # Migracion 37 (D2/D6): lector autorizado del compositor (``adaptador`` y ``version_adaptador``). En cada fallo se
+    # guarda con el ``layout`` reconocido (null si el fallo es anterior a reconocerlo). Sin el, el fallo va sin lector.
+    lector_autorizado: Mapping[str, Any] | None = None
+
+    def _lector(self, resultado) -> dict | None:
+        if self.lector_autorizado is None:
+            return None
+        layouts = [paso.provenance.get("layout") for paso in getattr(resultado, "pasos", ())
+                   if paso.provenance.get("layout")]
+        return {**self.lector_autorizado, "layout": layouts[-1] if layouts else None}
+
+    def _fallar(self, documento, codigo, detalle, worker_id, disparador, idempotency_key, resultado) -> None:
+        lector = self._lector(resultado)
+        # Sin lector, la misma llamada de siempre (los repositorios anteriores a la 37 no conocen ``lector``).
+        extra = {"lector": lector} if lector is not None else {}
+        self.repositorio.fallar_ejecucion(documento, codigo, detalle, worker_id, disparador, idempotency_key, **extra)
 
     def _worker_de_ejecucion(self) -> str:
         """2BI: id unico por ejecucion (base + sufijo). Un claim solo lo puede cerrar la ejecucion que lo
@@ -55,6 +71,7 @@ class WorkerNormalizacion:
         worker_id: str,
     ) -> bool:
         idempotency_key = f"normalizacion:{documento.documento_id}:{disparador}:fallo"
+        resultado = None
         try:
             ruta = self.materializar_pdf(documento)
             resultado = self.orquestador.extraer(ruta, self.campos_requeridos)
@@ -98,28 +115,15 @@ class WorkerNormalizacion:
             )
             return True
         except Exception as exc:
-            self.repositorio.fallar_ejecucion(
-                documento,
-                type(exc).__name__,
-                str(exc),
-                worker_id,
-                disparador,
-                idempotency_key,
-            )
+            self._fallar(documento, type(exc).__name__, str(exc), worker_id, disparador, idempotency_key, resultado)
             return False
         except (KeyboardInterrupt, SystemExit) as exc:
             # 2BI: Ctrl+C o salida forzada tras el claim. Se registra el fallo (cuenta como intento, R3)
             # para no dejar un claim huerfano y se relanza; si el registro tambien falla, el claim queda
             # para la recuperacion (migracion 25), y la interrupcion original no se pierde.
             try:
-                self.repositorio.fallar_ejecucion(
-                    documento,
-                    type(exc).__name__,
-                    str(exc) or type(exc).__name__,
-                    worker_id,
-                    disparador,
-                    idempotency_key,
-                )
+                self._fallar(documento, type(exc).__name__, str(exc) or type(exc).__name__, worker_id, disparador,
+                             idempotency_key, resultado)
             except Exception:
                 pass
             raise

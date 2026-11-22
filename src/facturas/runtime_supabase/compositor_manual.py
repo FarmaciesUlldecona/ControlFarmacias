@@ -57,6 +57,13 @@ class DocumentoNoAptoManual(ValueError):
     requiere_revision = True
 
 
+def lector_autorizado_manual() -> dict:
+    """Migracion 37 (D2): el lector con autoridad manual (adaptador y su version del registro local)."""
+    [proveedor] = AUTORIDAD_COMPOSITOR_MANUAL
+    [entrada] = [e for e in REGISTRO_ADAPTADORES_LOCALES if e.proveedor == proveedor]
+    return {"adaptador": AUTORIDAD_COMPOSITOR_MANUAL[proveedor], "version_adaptador": entrada.version}
+
+
 def proveedor_por_layout(layout: str | None) -> ProveedorLocal | None:
     for entrada in REGISTRO_ADAPTADORES_LOCALES:
         if entrada.adapter_id == layout:
@@ -219,6 +226,8 @@ def construir_worker_manual_productivo(
     configuracion: ConfiguracionRuntime,
     worker_id: str,
     directorio_trabajo: Path,
+    r20_habilitada: Callable[[], bool] | None = None,
+    defectos_37: Callable[[], bool] | None = None,
 ) -> WorkerAutomatico:
     """Compone el worker manual productivo. Solo debe invocarse ``ejecutar_una_manual``."""
     if configuracion.luna_habilitada:
@@ -227,7 +236,9 @@ def construir_worker_manual_productivo(
         raise ValueError("SOLO_PIO_AUTORIZADA_EN_COMPOSITOR_MANUAL")
     if not worker_id.strip():
         raise ValueError("WORKER_ID_OBLIGATORIO")
-    repositorio = RepositorioRuntimeSupabase(cliente)
+    # R20 (migracion 36) y migracion 37: deteccion con una sesion de solo lectura; sin ella, R20 desactivada y fallo
+    # con la firma de 7 parametros.
+    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=r20_habilitada, defectos_37=defectos_37)
     orquestador = OrquestadorExtraccionProductiva(
         extractor_especifico=ExtractorDocumentalAutorizado(),
         extractor_generico_local=None,
@@ -242,6 +253,7 @@ def construir_worker_manual_productivo(
         campos_requeridos=CAMPOS_REQUERIDOS_MANUAL,
         worker_id=worker_id,
         ensamblar_documento=ensamblar_documento_manual,
+        lector_autorizado=lector_autorizado_manual(),
     )
     conciliacion = construir_worker_conciliacion(
         repositorio,

@@ -1,6 +1,7 @@
 # Estado actual
 
-Actualizado: 2026-11-18 (AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
+Actualizado: 2026-11-22 (38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, .bat de la tarea de las 23:45 sin crear la tarea, ensayos de la 37 y la 38 en la histórica y docstring de la 2BP; H7-D: migración 38 de Cashflow desplegada en producción, APLICADA, postcheck por fila OK, prueba de acceso de cf_lectura ACCESO_OK y flags encendidos de nuevo; H7: migración 38 de Cashflow implementada en local, con desplegar_38 ensayado y prueba de acceso de cf_lectura; 2026-11-21, 37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
 acceso de cf_pagos_web ACCESO_OK; decisiones de Pio para Cashflow (H7), en REGLAS_CRITICAS; H6: migración 35 de Pagos, marcas de pago, solo local, con desplegar_35 ensayado; AUTO-S:
@@ -342,6 +343,213 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### H7: migración 38 de Cashflow (2026-11-22)
+
+DECISIONES DE PIO C1–C8, E1–E7, las dos propuestas de redondeo y las respuestas del 2026-11-22. `CONFIRMADO POR
+TEST` en PostgreSQL 17 local y **desplegada en producción** (H7-D, abajo). Diseño en `pruebas/auditoria_h7/DISENO.md`;
+reglas en REGLAS_CRITICAS («Cashflow (H7)»).
+
+- **Migración 38** `38_cf_cashflow.sql` (+ rollback al esquema 37, que falla cerrado con datos):
+  - las tablas `cf_cashflow_cuentas` (fija: PIO, RITA y SL), `cf_cashflow_importaciones`, `cf_cashflow_importes` y
+    `cf_cashflow_saldos`, todas de solo inserción;
+  - la RPC `cf_cashflow_registrar_importacion`, que valida en la BD cabecera, cuentas, decenas, categorías, importes y
+    saldos al céntimo, hash nuevo y el cuadre E1 (0,005 por importe redondeado, ninguno por saldo);
+  - `CASHFLOW = {PIO, RITA}` en `cf_modulos_farmacias`;
+  - `SELECT` de `cf_lectura` con RLS por módulo.
+  Nombra el rol del sistema solo para quitarle lo nuevo y darle EXECUTE sobre la RPC (autorización C3). Ningún dato
+  cambia salvo la fila `CASHFLOW`.
+- **`desplegar_38.py`:** 6 precondiciones y postcondiciones fila a fila (datos, estructura y RLS, privilegios y ACL,
+  RPC con los mismos beneficiarios que la firma de 8 parámetros de la 37, propietario). Ensayado con la imitación del
+  `postgres` de Supabase: aplicada, segundo intento revertido y rollback con la imitación.
+- **`probar_acceso_cf_lectura_cashflow.py`:** para después del despliegue; probado contra PostgreSQL 17 local.
+- **Postchecks:** `TABLAS_CASHFLOW` en la noche y en las series 2BJ y 2BP, informado aparte, sin veredicto.
+- **Barrera:** `despliegue_sin_historica` bloquea cualquier Bash que nombre `desplegar_<n>`, aunque no lo ejecute.
+  Mejora anotada: distinguir ejecutarlo de nombrarlo (`PENDIENTE` de orden de Pio). Mientras tanto, `desplegar_38.py`
+  solo con Read/Edit y, fuera de su única ejecución en el H7-D, solo lo cargan los tests.
+- **H7-D (2026-11-22, `CONFIRMADO EN PRODUCCIÓN`, confirmación explícita de Pio):** evidencias en
+  `C:\ControlFarmacias\evidencias_h7_d\` (`SHA256SUMS.txt`). Los scripts READ_ONLY del preflight y del postcheck
+  llevan consultas propias y no importan `desplegar_38`.
+  - **Preflight READ_ONLY** (10:09 UTC) con los flags apagados por Pio:
+    - puerta git abierta (3e1486b en el remoto; SHA LF de la 38 `d48633aa…9883`, igual en el commit);
+    - sin noche hoy ni noches en curso; 0 locks, claims y NORMALIZANDO; ningún worker;
+    - precondiciones 6 de 6 y huella fila a fila de las 34 tablas base de `public`;
+    - la firma de 8 parámetros de la 37 tiene un solo beneficiario de EXECUTE además del propietario.
+  - **Barrera de despliegue:** el primer intento lo paró `despliegue_sin_historica` antes de conectar. Con el OK
+    previo de Pio se repitió la histórica sobre 3e1486b (127 passed).
+  - **`desplegar_38` una sola vez:** **APLICADA**, con las precondiciones 6 de 6 y todas las postcondiciones
+    ciertas (datos sin cambios, estructura y RLS, privilegios y ACL, RPC y beneficiarios, propietario).
+  - **Postcheck por fila READ_ONLY:** `POSTCHECK_OK`.
+    - Ninguna tabla previa cambia salvo `cf_modulos_farmacias`: TRABAJADORES igual y `CASHFLOW = {PIO, RITA}`, con
+      el check ampliado.
+    - Aparecen las 4 tablas: cuentas fijas PIO/PÍO, RITA y SL, y vacías importaciones, importes y saldos.
+    - Cada una tiene RLS y 1 política de `cf_lectura`; hay los dos únicos y 8 triggers de solo inserción.
+    - La RPC es security definer, con `search_path` fijo y propietario postgres. Tiene el mismo beneficiario único
+      que la firma de 8, cuya ACL no cambia, y nada para anon, authenticated, `cf_lectura` ni PUBLIC.
+    - `cf_lectura` lee las 4 y no escribe en `public`. Secuencias y función del trigger, solo el propietario.
+    - Ninguna fila con fecha en la ventana del despliegue (68 columnas de fecha).
+  - **Prueba de acceso** (terminal de Pio, pooler, puerto 5432): `ACCESO_OK`.
+    - Conecta como `cf_lectura`, con solo lectura por defecto.
+    - Ve las cuentas PIO, RITA y SL, `CASHFLOW` PIO/RITA y facturas solo de PIO.
+    - Inserción de importación, `UPDATE` de cuentas, `DELETE` de saldos y la RPC fallan con 42501.
+    - Conteos 3/0/0/0.
+  - **Flags encendidos de nuevo por Pio.** Comprobación READ_ONLY (10:22 UTC):
+    - flags true y `conciliacion_r20` true; la 37, la R20 y la 38 detectadas; Luna false; solo PIO;
+    - 0 locks, claims y NORMALIZANDO;
+    - puertas de la noche REAL abiertas salvo las tareas de esta noche, aún no ejecutadas;
+    - límites 20 + 20;
+    - `TABLAS_CASHFLOW` fuera del snapshot del veredicto y su snapshot aparte leído sin error.
+- **38-B (2026-11-22, `CONFIRMADO POR TEST` en local; nada ejecutado contra producción):** orden de Pio y contrato
+  en `pruebas/auditoria_h7/DISENO.md` §10.
+  - **`src/cashflow/importar_cashflow.py`:** C1 (único `.xlsm` que empieza por `CASHFLOW`), copia estable, C6, E1–E7,
+    C5 y modos `SIMULAR` y `REAL`, orígenes `NOCHE` y `MANUAL`. La única escritura es la RPC de la 38.
+  - **Tests** con Excel ficticio generado en el test (ningún dato real): `test_cashflow_38b.py` (lectura, sin BD) y
+    `test_integracion_pg17_38b_cashflow.py` (contra PostgreSQL 17 local, con la RPC llamada por el rol del sistema).
+  - **`ejecutar_importacion_cashflow.bat`** (`NOCHE REAL`, registro en `logs\importacion_cashflow.log`). La tarea
+    «ControlFarmacias - Importar Cashflow» **no está creada**: la crea Pio con su confirmación.
+  - **`SUITE_HISTORICA`:** entran los ensayos y rollbacks de la 37 y de la 38 (DECISIÓN DE PIO, 2026-11-22,
+    excepción a la regla de que entran en el commit del «D»).
+  - **Docstring de la serie 2BP:** Cashflow ya no figura como escrito por la web.
+  - **Permisos:** regla `ask` `*importar_cashflow*` en `.claude/settings.json` (PowerShell y Bash), como
+    `*guardar_albaranes*`, porque el módulo escribe en Supabase.
+  - `PENDIENTE`: Pio revisa las concreciones de DISENO §10 (`PROPUESTA`); primera importación `MANUAL SIMULAR` con
+    `--aceptar-categorias-nuevas` y, si sale bien, la `MANUAL REAL`, con su confirmación; después, la tarea de las
+    23:45 y la comprobación C7 («Cashflow no en ejecución») en la puerta de la noche y de los preflights.
+
+### Migración 37: defectos de extracción directos a REVISION, implementada en local (2026-11-21)
+
+DECISIONES DE PIO D1–D7, `CONFIRMADO POR TEST` en PostgreSQL 17 local y **desplegada en producción** (37-D, abajo). Diseño en
+`pruebas/auditoria_37/DISENO.md`; reglas en REGLAS_CRITICAS («Persistencia y conciliación», migración 37).
+
+- **Migración 37** `37_cf_defectos_directos_a_revision.sql` (+ rollback al esquema 36): columna
+  `normalizacion_ejecuciones.lector` y firma de 8 parámetros de `cf_registrar_fallo_normalizacion` (`p_lector`): un
+  `DEFECTO_DOCUMENTO` pasa a `REVISION` en el primer fallo, con `regla: DEFECTO_DIRECTO_A_REVISION` en el historial.
+  La de 7 parámetros llama a la de 8 con el lector null (la usan el código anterior y la 25). Nombra el rol del
+  sistema solo para el EXECUTE de la firma nueva (autorización D7). Ningún dato cambia.
+- **Código:** listas A y B de defecto y lista C de almacenamiento como `TRANSITORIO` (`clasificacion_fallos.py`);
+  el worker guarda el lector autorizado (`alliance-local` 1.3.1) con el layout reconocido; el 8.º parámetro, solo si
+  una sesión de solo lectura detecta la 37 (`defectos_37_en_bd`), en la noche y en la serie 2BJ; sin ella, la
+  llamada de siempre. La noche añade el motivo al `para_revisar`; la 2BJ predice `REVISION` al primer fallo con la 37.
+- **Efecto sin la 37:** los 6 motivos de almacenamiento se registran como `TRANSITORIO` en vez de
+  `DEFECTO_DOCUMENTO`. La regla de la 17 trata las dos clases igual, así que el estado y los intentos no cambian.
+- **`desplegar_37.py`** ensayado con la imitación del `postgres` de Supabase: aplicada, segundo intento revertido y
+  rollback con la imitación. Exige el commit ya subido y los flags apagados.
+- **37-D (2026-11-21, `CONFIRMADO EN PRODUCCIÓN`, confirmación explícita de Pio):** evidencias en
+  `C:\ControlFarmacias\evidencias_37_d\` (`SHA256SUMS.txt`).
+  - **Preflight READ_ONLY** con los flags apagados por Pio: puerta git abierta (1289091 en el remoto; SHA LF de la
+    37 `5a3f2c3d…66017e`, igual en el commit), sin noche en curso, precondiciones 5 de 5 y captura previa. La firma
+    de 7 parámetros tiene un solo beneficiario de EXECUTE además del propietario (el mismo que la de 6) y nada para
+    anon, authenticated ni PUBLIC.
+  - **Barrera de despliegue:** el primer intento lo paró `despliegue_sin_historica`, porque la huella de la suite
+    cambia con el commit. Con el OK de Pio se repitió la histórica sobre 1289091 (127 passed). Mejora anotada: huella
+    por contenido del árbol (`PENDIENTE` de orden de Pio).
+  - **`desplegar_37` una sola vez** (10:11:23–10:11:29 UTC): **APLICADA**; precondiciones 5 de 5 y las
+    postcondiciones ciertas (datos sin cambios, columna `lector`, firma de 8 con su regla y privilegios, firma de 7
+    como envoltorio).
+  - **Postcheck por fila:** conteos (201 documentos, 273 ejecuciones, 754 historial, 67 facturas, 72
+    conciliaciones) y huellas fila a fila idénticos, con la configuración, la ACL de la firma de 7 y la de 6 y el
+    reprocesado. Ninguna fila con fecha en la ventana del despliegue (67 columnas de fecha). Solo cambian la firma
+    de 8 (regla `DEFECTO_DIRECTO_A_REVISION`, security definer, propietario postgres, el mismo beneficiario que la de
+    7 y nada para anon, authenticated ni PUBLIC), la de 7 (ahora envoltorio SQL con el lector null) y la columna
+    `lector` (jsonb, admite null, sin valor por defecto, 0 filas con lector). `defectos_37_en_bd` = `true`.
+  - **Pio volvió a encender los flags.** La comprobación READ_ONLY da flags `true`, `conciliacion_r20 = true`, la 37
+    detectada, Luna `false`, solo PIO, 0 bloqueos, reclamaciones y documentos en NORMALIZANDO, límites 20 + 20 y las
+    puertas de la noche REAL sin fallos, salvo las tareas de esa noche, que aún no habían corrido.
+  - `PENDIENTE`: la noche 21→22/11, la primera con la 37 y con 20 + 20 (si `9c9668ae` vuelve a fallar, pasa a
+    `REVISION` con 3 intentos y su lector), y el plan de reprocesado por lector (§3 del diseño).
+
+### Noche REAL 20→21/11, primera con el código de SUITE (revisión READ_ONLY, 2026-11-21)
+
+- `NOCHE_OK`, 21:15:04–21:15:27 UTC, commit 038d889 (igual en el remoto), límites 5 + 5, sin puertas fallidas;
+  informe con SHA coincidente y `POSTCHECK_OK` sin filas ajenas (1 documento, 2 historial y 1 ejecución).
+- Un solo documento reclamado: el abono de DERMOFARM `9c9668ae`, 2.º intento, otra vez `DocumentoNoAptoManual` /
+  `EXTRACCION_LOCAL_ERROR`; `ERROR` con reintento a las 03:15 UTC del 21/11. Nada que conciliar (66 `CONCILIADA` y
+  la de HEFAME, excluida).
+- Es la 3.ª noche REAL buena seguida (18/11 `FIN_LIMITE`, 19/11 y 20/11 `NOCHE_OK`): la próxima corre con 20 + 20.
+- Evidencia: `C:\ControlFarmacias\evidencias_noche_2011\` (SHA256SUMS).
+
+### Hito SUITE: suite paralela, histórica y regla de reparación (2026-11-20)
+
+- **Decisiones de Pio D1–D8** y medición en `pruebas/auditoria_suite/DISENO.md`; reglas en REGLAS_CRITICAS («Pruebas»).
+- pytest-xdist 3.8.0 (`requirements-tests.txt`), 8 workers por defecto, reparto por familia de plantillas y un
+  contenedor TCP limpio por módulo para los ensayos (D5 corregida: uno por worker rompía el ensayo de la 29).
+- **Medido:** la completa nueva (`-m "not historica"`) tarda 9:09 con 8 workers (11:57 con 4), frente a 41:14 de la
+  completa anterior; la rápida, 0:49.
+- Suite histórica: 127 tests (ensayos de despliegue y rollbacks de 17–36), exigida por rutas tocadas, cada 7 días y
+  antes de cada despliegue. Desde el 38-B (2026-11-22), 139: entran los de la 37 y la 38.
+- Regla de reparación (a) y (b) en la barrera de commit y en T2. No toca producción, Supabase ni Farmatic.
+
+### Noche REAL 19→20/11, primera con R20 (revisión READ_ONLY, 2026-11-20)
+
+- `NOCHE_OK`, 21:15:04–21:15:51 UTC, sin puertas fallidas, informe con SHA256 coincidente y `POSTCHECK_OK` sin filas
+  ajenas. 4 documentos reclamados: 3 no soportados y 1 defecto (`9c9668ae`, abono de DERMOFARM,
+  `EXTRACCION_LOCAL_ERROR`, reintento programado; los defectos directos a REVISION llegan con la 37).
+- **08013495 CONCILIADA (−0,09)** con las dos líneas `UNO_A_VARIOS` de R20 (08D79747 77,49 + 08D79747A 40,76) y
+  **08013498 CONCILIADA (0,00)**, iguales a la simulación de 36-D. Queda 1 factura sin conciliar (HEFAME, excluida).
+- Evidencia: `C:\ControlFarmacias\evidencias_noche_r20_1911\` (SHA256SUMS).
+
+### R20: migración 36 implementada en local (2026-11-19)
+
+DECISIÓN DE PIO, `CONFIRMADO POR TEST` en PostgreSQL 17 local y **desplegada en producción** (36-D, abajo). Diseño en
+`pruebas/auditoria_r20/DISENO.md`; evidencias en `C:\ControlFarmacias\evidencias_r20\` (`SHA256SUMS.txt`).
+
+- **Regla:** una línea casa con su albarán exacto + su variante con letra final (misma recepción, R9, solo 1+1, sin
+  HEFAME ni abonos). En REGLAS_CRITICAS, «R20».
+- **Migración 36** `36_cf_r20_letra_final.sql` (+ rollback al esquema 35):
+  - redefine `cf_linea_r17_valida` sin regenerar la RPC, con el mismo rechazo, y comprueba en la BD la ventana de
+    ±15 días;
+  - añade la marca `cf_configuracion.conciliacion_r20` (a `false` apaga R20 sin rollback);
+  - no nombra el rol del sistema.
+- **Código:** R20 solo si la detecta una sesión de solo lectura (`information_schema` y, si existe, la columna). Sin la
+  36, la noche deja la factura para revisar sin gastar intentos (probado en local).
+- **`desplegar_36.py`** ensayado con la imitación del `postgres` de Supabase; exige el commit ya subido.
+- **Verificación READ_ONLY con el código** sobre las 65 facturas de PIO: solo cambia 08013495 / 08D79747.
+  Caso real: `CONCILIADA` −0,09.
+- **36-D (2026-11-19, `CONFIRMADO EN PRODUCCIÓN`, confirmación explícita de Pio):** evidencias en
+  `C:\ControlFarmacias\evidencias_36_d\` y `C:\ControlFarmacias\evidencias_36_d_on\` (`SHA256SUMS.txt`).
+  - **Preflight READ_ONLY** con los flags apagados por Pio: puerta git abierta (785d70b en el remoto; SHA LF de
+    la 36 `ffe4b880…`, igual en el commit), sin noche en curso, precondiciones 5 de 5 y captura previa.
+  - **`desplegar_36` una sola vez** (12:10:00–12:10:03 UTC): **APLICADA**; datos sin cambios, columna marca y
+    función de validación R17 + R20.
+  - **Postcheck:** conteos y huellas de facturas, conciliaciones, detalles, configuración sin la marca y RPC de
+    persistencia idénticos. Ninguna fila con fecha en la ventana del despliegue (67 columnas de fecha). Solo
+    cambian la función de validación y `conciliacion_r20 = true`.
+  - **Simulación READ_ONLY:** 08013495 `CONCILIADA` −0,09 (1 línea R20) y 08013498 `CONCILIADA` 0,00.
+  - **Pio volvió a encender los flags.** La comprobación READ_ONLY da flags `true`, `conciliacion_r20 = true`
+    detectada, Luna `false`, solo PIO, 0 bloqueos, reclamaciones y documentos en NORMALIZANDO, y las puertas de
+    la noche REAL sin fallos, salvo las tareas de esa noche, que aún no habían corrido.
+  - `PENDIENTE`: la noche 19→20/11, la primera con R20, concilia 08013495 y 08013498.
+
+### Puerta git con el main leído del remoto (2026-11-19)
+
+Encargo de Pio, `CONFIRMADO POR TEST` (sin ejecución productiva). Módulo común
+`src/facturas/runtime_supabase/puerta_git.py` para la noche, las series 2BJ (que no tenía puerta git) y 2BP, y los
+despliegues `desplegar_31` a `desplegar_35`:
+
+- el main se lee con `git ls-remote` y no con la referencia local `origin/main`, que sin fetch podía dar un falso OK;
+- falla cerrado si el remoto no se puede leer o su sha no existe en local;
+- los despliegues exigen que el commit indicado esté ya en el main del remoto;
+- el informe de la noche registra head, origin_local y origin_remoto.
+
+Regla en REGLAS_CRITICAS, «Puerta git antes de una ejecución productiva». En el mismo commit, decisión de Pio: el
+revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que cita el diff.
+
+### Primera noche REAL 18→19/11 (revisión READ_ONLY, 2026-11-19)
+
+Evidencias en `C:\ControlFarmacias\evidencias_noche_real_1811\` y `C:\ControlFarmacias\evidencias_08013495\`
+(`SHA256SUMS.txt`).
+
+- **Tareas** a su hora con código 0. **Informe** `FIN_LIMITE`, sin puertas fallidas, commit abf102f; SHA iguales a su
+  `SHA256SUMS.txt` y a la fila `REAL`. **Postcheck por fila OK**: las 12 tablas coinciden con lo reclamado, sin filas
+  ajenas; Trabajadores y Pagos sin cambios.
+- **cedb06d0** `NORMALIZADA` al primer intento, con 08013495–98 y los mismos totales que el plan 2BJ; los 4 no
+  soportados, como estaba previsto.
+- **Conciliación:** 08013496 (diferencia 0,03) y 08013497 (0,00) `CONCILIADA`, igual que la simulación.
+  **08013495 queda para revisar** (diferencia 118,16): el albarán 08D79747 (118,25) está en Farmatic partido en
+  08D79747 (77,49) y 08D79747A (40,76), de la misma recepción; R17 no lo cubre. DECISIÓN DE PIO: regla R20, migración 36
+  (diseño en `pruebas/auditoria_r20/DISENO.md`, 2026-11-19). 08013498 sigue sin conciliar porque la noche para en 08013495.
+- Importadas el 18/11 la factura HEFAME `VTO 5.10.26` y sincronizados los albaranes HEFAME 914618399 (67,15) y
+  914621188 (33,57), del 20/10.
+
 ### Hito AUTO-ON: activación de la automatización Alliance (2026-11-18)
 
 CONFIRMACIÓN EXPLÍCITA DE PIO. Diseño en `pruebas/auditoria_auto_alliance/DISENO.md` (§4 y §8).
@@ -355,7 +563,7 @@ CONFIRMACIÓN EXPLÍCITA DE PIO. Diseño en `pruebas/auditoria_auto_alliance/DIS
   - conciliación: el n.º 1 se simula antes de reclamarlo; si no es Alliance, si no simula `CONCILIADA` o si tiene una
     revisión R18 pendiente, queda para revisar.
 - **Puertas, paradas, límites y vuelta atrás:** REGLAS_CRITICAS, «Automatización Alliance».
-- `PENDIENTE`: revisión READ_ONLY de la mañana del 19/11 (informe, postcheck y noche).
+- Revisión READ_ONLY de la mañana del 19/11: hecha (sección «Primera noche REAL 18→19/11»).
 
 ### Hito AUTO-S: noche de sombra 17→18/11 (2026-11-18)
 
@@ -473,7 +681,7 @@ Revisión READ_ONLY (evidencias en `C:\ControlFarmacias\evidencias_noche_1611\`,
 - **Defectos de extracción directos a REVISION: NO implementado, PARADO.** El paso a `REVISION` o a `ERROR` con
   backoff lo decide el RPC de producción `cf_registrar_fallo_normalizacion`
   (`17_cf_replay_y_fallos_no_bloqueantes.sql:516-528`); Python solo envía la clase. Requiere una migración, con
-  preflight y despliegue. **DECISIÓN DE PIO (2026-11-16): migración aparte, la 36, después de la 35.** Hasta
+  preflight y despliegue. **DECISIÓN DE PIO (2026-11-16): migración aparte, la 36, después de la 35** (renumerada como 37 el 2026-11-19, decisión de Pio: R20 = 36). Hasta
   entonces sigue la regla D3 vigente (R3).
 - **D3 (2026-11-16, confirmación de Pio):** tanda_05 de 13, `TANDA_OK` y postcheck 2AX OK; 10 defectos a
   `REVISION` (4 de 4) y 3 en `ERROR` (3 de 4, reclamables el 17/11 desde las 16:34 local). Evidencias en

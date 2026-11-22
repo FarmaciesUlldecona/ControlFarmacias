@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import type { CasoAtencion, Color, Importe, InicioDTO, VencimientoInicio } from '../server/contrato.ts';
 import { useApiRecargable } from './api.ts';
 import { NombreProveedor } from './ui.tsx';
+import { RevisarNocheResumen } from './revisar_noche.tsx';
+import { recuentoAlertas } from '../server/conciliacion.ts';
 import { euros, fechaCorta, fechaLarga, hora, plural, porcentaje } from './formato.ts';
 
 const CLASE: Record<Color, string> = { verde: 'g', azul: 'b', naranja: 'o', rojo: 'r', gris: 'n' };
@@ -204,6 +206,29 @@ function Atencion({ d }: { d: InicioDTO }) {
 }
 
 // ---------------------------------------------------------------------------
+// H8: alertas de albaranes, solo recuento con enlace a Conciliación
+// ---------------------------------------------------------------------------
+
+function AlertasResumen({ d }: { d: InicioDTO }) {
+  const r = recuentoAlertas(d);
+  const partes = [
+    r.duplicados ? plural(r.duplicados, 'duplicado en Farmatic', 'duplicados en Farmatic') : null,
+    r.no_en_farmatic ? plural(r.no_en_farmatic, 'albarán facturado que ya no está en Farmatic', 'albaranes facturados que ya no están en Farmatic') : null,
+    r.correcciones ? plural(r.correcciones, 'corrección aprobada', 'correcciones aprobadas') : null,
+  ].filter((x): x is string => x !== null);
+  const naranja = r.duplicados + r.no_en_farmatic > 0;
+  return (
+    <section className={`tarjeta noche-resumen borde-${naranja ? 'naranja' : 'gris'}`} aria-label="Alertas de albaranes" data-alertas-inicio={r.total}>
+      <span className={`punto ${naranja ? 'po' : 'pn'}`} aria-hidden="true" />
+      <span className="noche-resumen-texto">
+        {r.total === 0 ? 'Sin alertas de albaranes' : <>Alertas de albaranes: <strong>{partes.join(' · ')}</strong></>}
+      </span>
+      {r.total > 0 && <Link to="/conciliacion?pestana=albaranes" className="enlace-bloque">Ver en Conciliación</Link>}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Página
 // ---------------------------------------------------------------------------
 
@@ -241,6 +266,10 @@ export function PaginaInicio() {
             <Cobertura d={d} />
             <Vencimientos d={d} />
           </div>
+          {/* H8: «para revisar» de la noche automática: solo recuento y enlace (naranja; no suma en «Necesita tu atención»). */}
+          <RevisarNocheResumen r={d.revisar_noche} />
+          {/* H8: alertas de albaranes (detalle completo en Conciliación → Albaranes): solo recuento y enlace. */}
+          <AlertasResumen d={d} />
           <Atencion d={d} />
           <p className="tenue pie-inicio">
             {/* H5: con 0 lecturas, "IA no utilizada este mes" (nunca "0 lecturas" ni coste). */}

@@ -15,7 +15,6 @@ import importlib.util
 import json
 import subprocess
 import sys
-import time
 import types
 import uuid
 from decimal import Decimal
@@ -452,26 +451,10 @@ def _sql_precondiciones() -> str:
 
 
 @pytest.fixture(scope="module")
-def contenedor_tcp():
-    if pgl._docker("image", "inspect", pgl.IMAGEN, comprobar=False).returncode:
-        pytest.skip("imagen local no disponible")
-    nombre = "cf-pg17-ensayo2az-" + uuid.uuid4().hex[:8]
-    pgl._docker("run", "-d", "--rm", "--name", nombre, "--label", "controlfarmacias.certificacion=pg17_local",
-                "-p", "127.0.0.1::5432", "--tmpfs", "/var/lib/postgresql/data",
-                "-e", "POSTGRES_PASSWORD=local-only", pgl.IMAGEN)
-    try:
-        listos = 0
-        for _ in range(240):
-            ok = pgl._docker("exec", nombre, "psql", "-U", "postgres", "-qAt", "-c", "select 1",
-                             comprobar=False).returncode == 0
-            listos = listos + 1 if ok else 0
-            if listos >= 6:
-                break
-            time.sleep(0.5)
-        puerto = int(pgl._docker("port", nombre, "5432/tcp").stdout.strip().rsplit(":", 1)[1])
-        yield nombre, puerto, pgl.construir_plantilla(nombre, "19")
-    finally:
-        pgl._docker("rm", "-f", nombre, comprobar=False)
+def contenedor_tcp(pg17_contenedor_tcp):
+    """Hito SUITE (D5): contenedor TCP limpio por modulo (``conftest.pg17_contenedor_tcp``)."""
+    nombre, puerto = pg17_contenedor_tcp
+    return nombre, puerto, pgl.construir_plantilla(nombre, "19")
 
 
 def test_ensayo_completo_despliegue_20_y_segundo_intento_revierte(contenedor_tcp, tmp_path, monkeypatch):

@@ -8,6 +8,7 @@
  *  2. Por el literal, solo con las equivalencias de identidad del motor (canonicalizarProveedor, conciliacion.py:34-51,
  *     124-141) y el literal fijo que escribe el adaptador COFARES (cofares.py:211, sin CIF).
  * Si CIF y literal dan nombres distintos: null (falla cerrado; se muestra el literal).
+ * H8-5: única excepción a «sale de src/»: HPLUS CONSUMO → HEFAME, con fuente «decisión de Pío, 22/11/2026».
  */
 
 /**
@@ -56,9 +57,11 @@ export const COMERCIAL_POR_CIF: Readonly<Record<string, EquivalenciaComercial>> 
   B66438722: { nombre: 'TOTALCARE', fuente: 'src/facturas/motor_local/adaptadores/gold_pequenos.py:486' },
   // gold_pequenos.py:509-512, 520 (AdaptadorLoreal: NIF A28050359); catalogo.py:17
   A28050359: { nombre: 'LOREAL', fuente: 'src/facturas/motor_local/adaptadores/gold_pequenos.py:520' },
-  // hplus_consumo.py:39 (NIF legal B30462451); catalogo.py:10. No se agrupa en HEFAME: grupos_funcionales.py:47-56
-  // exige además layout y contenido de consumibles, que la web no ve.
-  B30462451: { nombre: 'HPLUS CONSUMO', fuente: 'src/facturas/motor_local/adaptadores/hplus_consumo.py:39' },
+  // hplus_consumo.py:39 (NIF legal B30462451); catalogo.py:10. H8-5: se MUESTRA como HEFAME por decisión de Pío
+  // (22/11/2026): son las bolsas de papel que compra a Hefame y llegan como otro proveedor. Solo presentación (nombre,
+  // filtros, cobertura, Sin factura): el motor, sus grupos funcionales (grupos_funcionales.py:47-56) y la conciliación
+  // no cambian. La razón social real (HPLUS CONSUMO) se sigue mostrando debajo.
+  B30462451: { nombre: 'HEFAME', fuente: 'decisión de Pío, 22/11/2026' },
 };
 
 /** Literal canonicalizado (canonicalizarProveedor) → nombre comercial. */
@@ -69,6 +72,9 @@ export const COMERCIAL_POR_LITERAL: Readonly<Record<string, EquivalenciaComercia
   HEFAMEMERCANCIA: { nombre: 'HEFAME', fuente: 'src/facturas/runtime_supabase/conciliacion.py:47' },
   // Literal fijo del adaptador COFARES (cofares.py:211 "GRUPO COFARES", sin NIF; ProveedorLocal.COFARES, registro.py:53)
   GRUPOCOFARES: { nombre: 'COFARES', fuente: 'src/facturas/motor_local/adaptadores/cofares.py:211' },
+  // H8-5: literal de HPLUS CONSUMO (sin sufijo societario; también en Farmatic) → HEFAME, decisión de Pío (22/11/2026).
+  // No es un alias de identidad del motor (no entra en ALIAS_HEFAME ni en canonicalizarProveedor).
+  HPLUSCONSUMO: { nombre: 'HEFAME', fuente: 'decisión de Pío, 22/11/2026' },
 };
 
 /** Nombre comercial de una factura (o null: se muestra el literal del PDF). */

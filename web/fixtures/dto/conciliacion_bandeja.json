@@ -1,6 +1,7 @@
 {
   "farmacia": "PIO",
   "generado_at": "2026-11-02T08:00:00+00:00",
+  "hoy": "2026-11-02",
   "resumen": {
     "PENDIENTE_CONCILIAR": 4,
     "CONCILIADA": 3,
@@ -67,6 +68,8 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
+      "proveedor_comercial": "HEFAME",
+      "proveedor_razon_social": "HDAD.FMCTCA.MEDIT.,S.C.L.",
       "prioridad": 1,
       "color": "naranja",
       "lineas": [
@@ -100,6 +103,7 @@
           "diferencia": -14.86,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -137,6 +141,7 @@
           "diferencia": -9.07,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -174,6 +179,7 @@
           "diferencia": -3.15,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -211,6 +217,7 @@
           "diferencia": 21.05,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -223,6 +230,39 @@
         "COINCIDE": 0,
         "DIFERENCIA": 4,
         "NO_EVALUABLE": 0
+      },
+      "proveedor_grupo": "cif:F30004444",
+      "proveedor_etiqueta": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000007",
+        "factura_id": "f0000000-0000-4000-8000-000000000005",
+        "numero_factura": "HF-0563-889120",
+        "tipo_documento": "FACTURA",
+        "tipo_documento_documental": null,
+        "sentido": "NO_DOCUMENTADO",
+        "proveedor": "HEFAME",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-07",
+        "importe": 288,
+        "importe_conocido": true,
+        "literal": "VENCE 07.11.2026",
+        "importe_factura": 288,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "REVISION_CONCILIACION",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "banco": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris",
+        "fecha_pago": null
       }
     },
     {
@@ -284,6 +324,8 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
       "prioridad": 2,
       "color": "rojo",
       "lineas": [
@@ -317,6 +359,7 @@
           "diferencia": 0,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -354,6 +397,7 @@
           "diferencia": null,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": "REGULARIZACION",
           "categoria_movimiento": "DESCONOCIDA",
@@ -391,6 +435,7 @@
           "diferencia": -30,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -428,6 +473,7 @@
           "diferencia": -40,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -465,6 +511,7 @@
           "diferencia": null,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -477,6 +524,39 @@
         "COINCIDE": 1,
         "DIFERENCIA": 2,
         "NO_EVALUABLE": 2
+      },
+      "proveedor_grupo": "cif:A00000001",
+      "proveedor_etiqueta": "COFARES",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000009",
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "numero_factura": "CF-AB-2026-0912",
+        "tipo_documento": "ABONO",
+        "tipo_documento_documental": "ABONO",
+        "sentido": "ABONO",
+        "proveedor": "COFARES",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-21",
+        "importe": -45.3,
+        "importe_conocido": true,
+        "literal": "VTO. 21/11/2026  -45,30",
+        "importe_factura": -45.3,
+        "vencimientos_factura": 2,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "banco": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris",
+        "fecha_pago": null
       }
     },
     {
@@ -538,6 +618,8 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
       "prioridad": 2,
       "color": "rojo",
       "lineas": [
@@ -571,6 +653,7 @@
           "diferencia": 0.1,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -608,6 +691,7 @@
           "diferencia": 0,
           "papel_r17": "NUMERO",
           "regla": "R17",
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -645,6 +729,7 @@
           "diferencia": 0,
           "papel_r17": "INTERNO",
           "regla": "R17",
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -682,6 +767,7 @@
           "diferencia": 41.9,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -694,6 +780,39 @@
         "COINCIDE": 2,
         "DIFERENCIA": 2,
         "NO_EVALUABLE": 0
+      },
+      "proveedor_grupo": "cif:A00000001",
+      "proveedor_etiqueta": "COFARES",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000003",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "tipo_documento": "FACTURA_RECTIFICATIVA",
+        "tipo_documento_documental": "FACTURA_RECTIFICATIVA",
+        "sentido": "NO_DOCUMENTADO",
+        "proveedor": "COFARES",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-14",
+        "importe": 375.15,
+        "importe_conocido": true,
+        "literal": "Vencimiento 14-11-2026",
+        "importe_factura": 375.15,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "banco": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris",
+        "fecha_pago": null
       }
     },
     {
@@ -737,6 +856,8 @@
       "incidencias_abiertas": 2,
       "incidencias_bloqueantes": 1,
       "updated_at": "2026-10-28T08:00:00+00:00",
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "FEDEFARMA",
       "prioridad": 3,
       "color": "azul",
       "lineas": [],
@@ -744,6 +865,39 @@
         "COINCIDE": 0,
         "DIFERENCIA": 0,
         "NO_EVALUABLE": 0
+      },
+      "proveedor_grupo": "id:4",
+      "proveedor_etiqueta": "FEDEFARMA",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000008",
+        "factura_id": "f0000000-0000-4000-8000-000000000006",
+        "numero_factura": "FD-26/04471",
+        "tipo_documento": "OTRO",
+        "tipo_documento_documental": "OTRO",
+        "sentido": "NO_DOCUMENTADO",
+        "proveedor": "FEDEFARMA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-19",
+        "importe": null,
+        "importe_conocido": false,
+        "literal": "Vto: 19/11/2026",
+        "importe_factura": null,
+        "vencimientos_factura": 2,
+        "estado_normalizacion": "REQUIERE_REVISION",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "banco": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris",
+        "fecha_pago": null
       }
     },
     {
@@ -787,6 +941,8 @@
       "incidencias_abiertas": 1,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
       "prioridad": 3,
       "color": "azul",
       "lineas": [],
@@ -794,6 +950,39 @@
         "COINCIDE": 0,
         "DIFERENCIA": 0,
         "NO_EVALUABLE": 0
+      },
+      "proveedor_grupo": "cif:B00000003",
+      "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000010",
+        "factura_id": "f0000000-0000-4000-8000-000000000008",
+        "numero_factura": "AL-26-100231",
+        "tipo_documento": "OTRO",
+        "tipo_documento_documental": "FACTURA_DUPLICADO",
+        "sentido": "CARGO",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-04",
+        "importe": 152.37,
+        "importe_conocido": true,
+        "literal": "VTO. 04/11/2026",
+        "importe_factura": 152.37,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "PENDIENTE_CONCILIAR",
+        "estado_revision": "PENDIENTE_REVISION_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "banco": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris",
+        "fecha_pago": null
       }
     },
     {
@@ -855,6 +1044,8 @@
       "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
+      "proveedor_comercial": null,
+      "proveedor_razon_social": "COFARES",
       "prioridad": 5,
       "color": "verde",
       "lineas": [
@@ -888,6 +1079,7 @@
           "diferencia": 0,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -925,6 +1117,7 @@
           "diferencia": 0,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -962,6 +1155,7 @@
           "diferencia": 0,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -999,6 +1193,7 @@
           "diferencia": null,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": "SERVICIO INTEGRAL DE DISTRIBUCION",
           "categoria_movimiento": "SERVICIO_OPERATIVO",
@@ -1011,6 +1206,39 @@
         "COINCIDE": 3,
         "DIFERENCIA": 0,
         "NO_EVALUABLE": 1
+      },
+      "proveedor_grupo": "cif:A00000001",
+      "proveedor_etiqueta": "COFARES",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000005",
+        "factura_id": "f0000000-0000-4000-8000-000000000004",
+        "numero_factura": "CF-2026-55811",
+        "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
+        "proveedor": "COFARES",
+        "orden": 2,
+        "fecha_vencimiento": "2026-11-15",
+        "importe": 150,
+        "importe_conocido": true,
+        "literal": "15/11/2026  150,00",
+        "importe_factura": 568.05,
+        "vencimientos_factura": 4,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "VALIDADA_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "banco": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris",
+        "fecha_pago": null
       }
     },
     {
@@ -1072,6 +1300,8 @@
       "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "Alliance Healthcare España",
       "prioridad": 5,
       "color": "verde",
       "lineas": [
@@ -1105,6 +1335,7 @@
           "diferencia": 0.01,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1118,10 +1349,10 @@
           "intento": 1,
           "detalle_id": "10000000-0000-4000-8000-000000000004",
           "orden": 2,
-          "tipo_relacion": "UNO_A_UNO",
-          "estado_linea": "COINCIDE",
-          "estado_matching": "MATCH_UNICO",
-          "coincidencia_numero": "EXACTA",
+          "tipo_relacion": "UNO_A_VARIOS",
+          "estado_linea": "DIFERENCIA",
+          "estado_matching": "MATCH_R20",
+          "coincidencia_numero": null,
           "clase_numero": "EXACTA",
           "coincidencia_numero_literal": true,
           "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000004",
@@ -1129,24 +1360,63 @@
           "numero_albaran_documental": "08X20002",
           "fecha_albaran_documental": "2026-10-06",
           "sentido_documental": "CARGO",
-          "importe_documental": 43.1,
+          "importe_documental": 44.3,
           "albaran_farmacia": "PIO",
           "albaran_id_contador": 900104,
           "numero_albaran_farmatic": "08X20002",
           "fecha_albaran_farmatic": "2026-10-06",
           "farmatic_id_proveedor": "0002",
-          "importe_puc": 43.09,
-          "importe_pvp": 58.17,
-          "importe_farmatic": 43.09,
-          "importe_aplicado": 43.09,
-          "diferencia": 0.01,
+          "importe_puc": 30,
+          "importe_pvp": 40.5,
+          "importe_farmatic": 30,
+          "importe_aplicado": 30,
+          "diferencia": 1.21,
           "papel_r17": null,
-          "regla": null,
+          "regla": "R20",
+          "papel_r20": "NUMERO",
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
-          "albaran_importe_total": 43.1,
-          "albaran_importe_base": 38.69,
+          "albaran_importe_total": 44.3,
+          "albaran_importe_base": 39.77,
+          "magnitud_usada": null
+        },
+        {
+          "factura_id": "f0000000-0000-4000-8000-000000000002",
+          "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+          "intento": 1,
+          "detalle_id": "10000000-0000-4000-8000-000000000142",
+          "orden": 9,
+          "tipo_relacion": "UNO_A_VARIOS",
+          "estado_linea": "DIFERENCIA",
+          "estado_matching": "MATCH_R20",
+          "coincidencia_numero": null,
+          "clase_numero": "LETRA_FINAL",
+          "coincidencia_numero_literal": false,
+          "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000004",
+          "factura_movimiento_id": null,
+          "numero_albaran_documental": "08X20002",
+          "fecha_albaran_documental": "2026-10-06",
+          "sentido_documental": "CARGO",
+          "importe_documental": 44.3,
+          "albaran_farmacia": "PIO",
+          "albaran_id_contador": 900142,
+          "numero_albaran_farmatic": "08D20002",
+          "fecha_albaran_farmatic": "2026-10-06",
+          "farmatic_id_proveedor": "0002",
+          "importe_puc": 13.09,
+          "importe_pvp": 17.67,
+          "importe_farmatic": 13.09,
+          "importe_aplicado": 13.09,
+          "diferencia": 1.21,
+          "papel_r17": null,
+          "regla": "R20",
+          "papel_r20": "LETRA_FINAL",
+          "farmatic_proveedor": null,
+          "concepto_movimiento": null,
+          "categoria_movimiento": null,
+          "albaran_importe_total": 44.3,
+          "albaran_importe_base": 39.77,
           "magnitud_usada": null
         },
         {
@@ -1179,6 +1449,7 @@
           "diferencia": 0.01,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1192,10 +1463,10 @@
           "intento": 1,
           "detalle_id": "10000000-0000-4000-8000-000000000006",
           "orden": 4,
-          "tipo_relacion": "UNO_A_UNO",
+          "tipo_relacion": "UNO_A_VARIOS",
           "estado_linea": "COINCIDE",
-          "estado_matching": "MATCH_UNICO",
-          "coincidencia_numero": "EXACTA",
+          "estado_matching": "MATCH_R20",
+          "coincidencia_numero": null,
           "clase_numero": "EXACTA",
           "coincidencia_numero_literal": true,
           "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000006",
@@ -1209,13 +1480,52 @@
           "numero_albaran_farmatic": "08X20004",
           "fecha_albaran_farmatic": "2026-10-08",
           "farmatic_id_proveedor": "0002",
-          "importe_puc": 156.73,
-          "importe_pvp": 211.59,
-          "importe_farmatic": 156.73,
-          "importe_aplicado": 156.73,
+          "importe_puc": 100,
+          "importe_pvp": 135,
+          "importe_farmatic": 100,
+          "importe_aplicado": 100,
           "diferencia": 0.01,
           "papel_r17": null,
-          "regla": null,
+          "regla": "R20",
+          "papel_r20": "NUMERO",
+          "farmatic_proveedor": null,
+          "concepto_movimiento": null,
+          "categoria_movimiento": null,
+          "albaran_importe_total": 156.74,
+          "albaran_importe_base": 140.7,
+          "magnitud_usada": null
+        },
+        {
+          "factura_id": "f0000000-0000-4000-8000-000000000002",
+          "conciliacion_id": "c0000000-0000-4000-8000-000000000102",
+          "intento": 1,
+          "detalle_id": "10000000-0000-4000-8000-000000000141",
+          "orden": 10,
+          "tipo_relacion": "UNO_A_VARIOS",
+          "estado_linea": "COINCIDE",
+          "estado_matching": "MATCH_R20",
+          "coincidencia_numero": null,
+          "clase_numero": "LETRA_FINAL",
+          "coincidencia_numero_literal": false,
+          "factura_albaran_extraido_id": "b0000000-0000-4000-8000-000000000006",
+          "factura_movimiento_id": null,
+          "numero_albaran_documental": "08X20004",
+          "fecha_albaran_documental": "2026-10-08",
+          "sentido_documental": "CARGO",
+          "importe_documental": 156.74,
+          "albaran_farmacia": "PIO",
+          "albaran_id_contador": 900141,
+          "numero_albaran_farmatic": "08D20004",
+          "fecha_albaran_farmatic": "2026-10-08",
+          "farmatic_id_proveedor": "0002",
+          "importe_puc": 56.73,
+          "importe_pvp": 76.59,
+          "importe_farmatic": 56.73,
+          "importe_aplicado": 56.73,
+          "diferencia": 0.01,
+          "papel_r17": null,
+          "regla": "R20",
+          "papel_r20": "LETRA_FINAL",
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1253,6 +1563,7 @@
           "diferencia": 0.01,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1290,6 +1601,7 @@
           "diferencia": null,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1327,6 +1639,7 @@
           "diferencia": 0.01,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": "6PLATAFECO360AH",
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1364,6 +1677,7 @@
           "diferencia": 0,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1374,8 +1688,41 @@
       ],
       "lineas_por_estado": {
         "COINCIDE": 7,
-        "DIFERENCIA": 0,
+        "DIFERENCIA": 2,
         "NO_EVALUABLE": 1
+      },
+      "proveedor_grupo": "cif:B00000003",
+      "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000002",
+        "factura_id": "f0000000-0000-4000-8000-000000000002",
+        "numero_factura": "AL-26-100577",
+        "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-11",
+        "importe": 472.22,
+        "importe_conocido": true,
+        "literal": "VTO. 11/11/2026",
+        "importe_factura": 472.22,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "NO_REQUERIDA",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "banco": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris",
+        "fecha_pago": null
       }
     },
     {
@@ -1437,6 +1784,8 @@
       "incidencias_abiertas": 3,
       "incidencias_bloqueantes": 0,
       "updated_at": "2026-10-28T08:00:00+00:00",
+      "proveedor_comercial": "ALLIANCE",
+      "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
       "prioridad": 5,
       "color": "verde",
       "lineas": [
@@ -1470,6 +1819,7 @@
           "diferencia": 0,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1507,6 +1857,7 @@
           "diferencia": 0,
           "papel_r17": null,
           "regla": null,
+          "papel_r20": null,
           "farmatic_proveedor": null,
           "concepto_movimiento": null,
           "categoria_movimiento": null,
@@ -1519,7 +1870,70 @@
         "COINCIDE": 2,
         "DIFERENCIA": 0,
         "NO_EVALUABLE": 0
+      },
+      "proveedor_grupo": "cif:B00000003",
+      "proveedor_etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "vencimiento_proximo": {
+        "vencimiento_id": "90000000-0000-4000-8000-000000000001",
+        "factura_id": "f0000000-0000-4000-8000-000000000001",
+        "numero_factura": "AL-26-100231",
+        "tipo_documento": "FACTURA",
+        "tipo_documento_documental": "FACTURA",
+        "sentido": "CARGO",
+        "proveedor": "ALLIANCEHEALTHCARECENCORA",
+        "orden": 1,
+        "fecha_vencimiento": "2026-11-04",
+        "importe": 152.37,
+        "importe_conocido": true,
+        "literal": "VTO. 04/11/2026",
+        "importe_factura": 152.37,
+        "vencimientos_factura": 1,
+        "estado_normalizacion": "NORMALIZADA",
+        "estado_conciliacion_cf": "CONCILIADA",
+        "estado_revision": "VALIDADA_PIO",
+        "pago": {
+          "estado": "SIN_DATOS_BANCARIOS",
+          "texto": "sin datos bancarios",
+          "color": "gris"
+        }
+      },
+      "vencimiento_vencido": false,
+      "banco": {
+        "estado": "SIN_DATOS_BANCARIOS",
+        "texto": "sin datos bancarios",
+        "color": "gris",
+        "fecha_pago": null
       }
+    }
+  ],
+  "proveedores_filtro": [
+    {
+      "clave": "cif:B00000003",
+      "etiqueta": "ALLIANCEHEALTHCARECENCORA",
+      "comercial": "ALLIANCE",
+      "sin_cif": false,
+      "facturas": 3
+    },
+    {
+      "clave": "cif:A00000001",
+      "etiqueta": "COFARES",
+      "comercial": null,
+      "sin_cif": false,
+      "facturas": 3
+    },
+    {
+      "clave": "cif:F30004444",
+      "etiqueta": "HDAD.FMCTCA.MEDIT.,S.C.L.",
+      "comercial": "HEFAME",
+      "sin_cif": false,
+      "facturas": 1
+    },
+    {
+      "clave": "id:4",
+      "etiqueta": "FEDEFARMA",
+      "comercial": null,
+      "sin_cif": true,
+      "facturas": 1
     }
   ],
   "alertas": [
@@ -1651,5 +2065,773 @@
         }
       }
     }
-  ]
+  ],
+  "sin_factura": {
+    "dias_alerta": 30,
+    "limite_detalle": 100,
+    "total": {
+      "albaranes": 608,
+      "importe": 54933.45,
+      "sin_importe": 5
+    },
+    "grupos": {
+      "AUTO_ALERTA": {
+        "albaranes": 2,
+        "importe": 84.3,
+        "sin_importe": 1
+      },
+      "AUTO_RECIENTE": {
+        "albaranes": 2,
+        "importe": 184.1,
+        "sin_importe": 0
+      },
+      "AUTO_ANTERIOR": {
+        "albaranes": 546,
+        "importe": 48087.9,
+        "sin_importe": 3
+      },
+      "AUTO_SIN_DESDE": {
+        "albaranes": 1,
+        "importe": 23.4,
+        "sin_importe": 0
+      },
+      "LEIDO": {
+        "albaranes": 3,
+        "importe": 455,
+        "sin_importe": 0
+      },
+      "LEIDO_ANTERIOR": {
+        "albaranes": 6,
+        "importe": 512.8,
+        "sin_importe": 0
+      },
+      "SIN_LECTOR": {
+        "albaranes": 32,
+        "importe": 3570.25,
+        "sin_importe": 1
+      },
+      "SIN_PROVEEDOR": {
+        "albaranes": 2,
+        "importe": 45.2,
+        "sin_importe": 0
+      },
+      "TRASPASO": {
+        "albaranes": 12,
+        "importe": 1840,
+        "sin_importe": 0
+      },
+      "AUSENTE": {
+        "albaranes": 2,
+        "importe": 130.5,
+        "sin_importe": 0
+      }
+    },
+    "traspasos": [
+      {
+        "clave": "40",
+        "farmacia_origen": "RITA",
+        "proveedor": "FFARMACIA RITA",
+        "albaranes": 12,
+        "importe": 1840,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-10-27",
+        "detalle": [
+          {
+            "id_contador": 960600,
+            "numero_albaran": "TR-001",
+            "fecha": "2026-10-05",
+            "importe": 153.33,
+            "dias": 28
+          },
+          {
+            "id_contador": 960601,
+            "numero_albaran": "TR-002",
+            "fecha": "2026-10-07",
+            "importe": 153.33,
+            "dias": 26
+          },
+          {
+            "id_contador": 960602,
+            "numero_albaran": "TR-003",
+            "fecha": "2026-10-09",
+            "importe": 153.33,
+            "dias": 24
+          },
+          {
+            "id_contador": 960603,
+            "numero_albaran": "TR-004",
+            "fecha": "2026-10-11",
+            "importe": 153.33,
+            "dias": 22
+          },
+          {
+            "id_contador": 960604,
+            "numero_albaran": "TR-005",
+            "fecha": "2026-10-13",
+            "importe": 153.33,
+            "dias": 20
+          },
+          {
+            "id_contador": 960605,
+            "numero_albaran": "TR-006",
+            "fecha": "2026-10-15",
+            "importe": 153.33,
+            "dias": 18
+          },
+          {
+            "id_contador": 960606,
+            "numero_albaran": "TR-007",
+            "fecha": "2026-10-17",
+            "importe": 153.33,
+            "dias": 16
+          },
+          {
+            "id_contador": 960607,
+            "numero_albaran": "TR-008",
+            "fecha": "2026-10-19",
+            "importe": 153.33,
+            "dias": 14
+          },
+          {
+            "id_contador": 960608,
+            "numero_albaran": "TR-009",
+            "fecha": "2026-10-21",
+            "importe": 153.33,
+            "dias": 12
+          },
+          {
+            "id_contador": 960609,
+            "numero_albaran": "TR-010",
+            "fecha": "2026-10-23",
+            "importe": 153.33,
+            "dias": 10
+          },
+          {
+            "id_contador": 960610,
+            "numero_albaran": "TR-011",
+            "fecha": "2026-10-25",
+            "importe": 153.33,
+            "dias": 8
+          },
+          {
+            "id_contador": 960611,
+            "numero_albaran": "TR-012",
+            "fecha": "2026-10-27",
+            "importe": 153.37,
+            "dias": 6
+          }
+        ],
+        "literal_farmatic": null
+      }
+    ],
+    "con_lector": [
+      {
+        "clave": "1",
+        "proveedor": "COFARES",
+        "desde": "2026-09-01",
+        "alertas": [
+          {
+            "id_contador": 950001,
+            "numero_albaran": "77501",
+            "fecha": "2026-09-12",
+            "importe": 84.3,
+            "dias": 51
+          },
+          {
+            "id_contador": 950002,
+            "numero_albaran": "77502",
+            "fecha": "2026-09-28",
+            "importe": null,
+            "dias": 35
+          }
+        ],
+        "alertas_total": 2,
+        "importe_alertas": 84.3,
+        "alertas_sin_importe": 1,
+        "recientes": {
+          "albaranes": 1,
+          "importe": 120,
+          "sin_importe": 0
+        },
+        "anteriores": {
+          "albaranes": 0,
+          "importe": null,
+          "sin_importe": 0
+        },
+        "sin_desde": {
+          "albaranes": 0,
+          "importe": null,
+          "sin_importe": 0
+        },
+        "detalle_sin_desde": [],
+        "literal_farmatic": null
+      },
+      {
+        "clave": "2",
+        "proveedor": "ALLIANCE",
+        "desde": "2026-10-06",
+        "alertas": [],
+        "alertas_total": 0,
+        "importe_alertas": null,
+        "alertas_sin_importe": 0,
+        "recientes": {
+          "albaranes": 1,
+          "importe": 64.1,
+          "sin_importe": 0
+        },
+        "anteriores": {
+          "albaranes": 412,
+          "importe": 38211.4,
+          "sin_importe": 3
+        },
+        "sin_desde": {
+          "albaranes": 0,
+          "importe": null,
+          "sin_importe": 0
+        },
+        "detalle_sin_desde": [],
+        "literal_farmatic": "SAFA"
+      },
+      {
+        "clave": "9",
+        "proveedor": "HEFAME",
+        "desde": "2026-10-01",
+        "alertas": [],
+        "alertas_total": 0,
+        "importe_alertas": null,
+        "alertas_sin_importe": 0,
+        "recientes": {
+          "albaranes": 0,
+          "importe": null,
+          "sin_importe": 0
+        },
+        "anteriores": {
+          "albaranes": 134,
+          "importe": 9876.5,
+          "sin_importe": 0
+        },
+        "sin_desde": {
+          "albaranes": 0,
+          "importe": null,
+          "sin_importe": 0
+        },
+        "detalle_sin_desde": [],
+        "literal_farmatic": null
+      },
+      {
+        "clave": "7",
+        "proveedor": "LOGISTAPHARMA",
+        "desde": null,
+        "alertas": [],
+        "alertas_total": 0,
+        "importe_alertas": null,
+        "alertas_sin_importe": 0,
+        "recientes": {
+          "albaranes": 0,
+          "importe": null,
+          "sin_importe": 0
+        },
+        "anteriores": {
+          "albaranes": 0,
+          "importe": null,
+          "sin_importe": 0
+        },
+        "sin_desde": {
+          "albaranes": 1,
+          "importe": 23.4,
+          "sin_importe": 0
+        },
+        "detalle_sin_desde": [
+          {
+            "id_contador": 960001,
+            "numero_albaran": "LG-26-0141",
+            "fecha": "2026-10-14",
+            "importe": 23.4,
+            "dias": 19
+          }
+        ],
+        "literal_farmatic": null
+      }
+    ],
+    "leido_sin_conciliacion": [
+      {
+        "clave": "4",
+        "proveedor": "FEDEFARMA",
+        "desde": "2026-09-20",
+        "albaranes": 3,
+        "importe": 455,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-10-29",
+        "anteriores": {
+          "albaranes": 6,
+          "importe": 512.8,
+          "sin_importe": 0
+        },
+        "detalle": [
+          {
+            "id_contador": 960011,
+            "numero_albaran": "FD-ALB-3301",
+            "fecha": "2026-09-25",
+            "importe": 200,
+            "dias": 38
+          },
+          {
+            "id_contador": 960012,
+            "numero_albaran": "FD-ALB-3302",
+            "fecha": "2026-10-12",
+            "importe": 130,
+            "dias": 21
+          },
+          {
+            "id_contador": 960013,
+            "numero_albaran": "FD-ALB-3303",
+            "fecha": "2026-10-29",
+            "importe": 125,
+            "dias": 4
+          }
+        ],
+        "literal_farmatic": null
+      }
+    ],
+    "sin_lector": [
+      {
+        "clave": "37",
+        "proveedor": "LABORATORIOS ISDIN (FICTICIO)",
+        "identificado": true,
+        "albaranes": 18,
+        "importe": 2430.55,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-10-30",
+        "detalle": [
+          {
+            "id_contador": 960100,
+            "numero_albaran": "IS-001",
+            "fecha": "2026-09-26",
+            "importe": 135.03,
+            "dias": 37
+          },
+          {
+            "id_contador": 960101,
+            "numero_albaran": "IS-002",
+            "fecha": "2026-09-28",
+            "importe": 135.03,
+            "dias": 35
+          },
+          {
+            "id_contador": 960102,
+            "numero_albaran": "IS-003",
+            "fecha": "2026-09-30",
+            "importe": 135.03,
+            "dias": 33
+          },
+          {
+            "id_contador": 960103,
+            "numero_albaran": "IS-004",
+            "fecha": "2026-10-02",
+            "importe": 135.03,
+            "dias": 31
+          },
+          {
+            "id_contador": 960104,
+            "numero_albaran": "IS-005",
+            "fecha": "2026-10-04",
+            "importe": 135.03,
+            "dias": 29
+          },
+          {
+            "id_contador": 960105,
+            "numero_albaran": "IS-006",
+            "fecha": "2026-10-06",
+            "importe": 135.03,
+            "dias": 27
+          },
+          {
+            "id_contador": 960106,
+            "numero_albaran": "IS-007",
+            "fecha": "2026-10-08",
+            "importe": 135.03,
+            "dias": 25
+          },
+          {
+            "id_contador": 960107,
+            "numero_albaran": "IS-008",
+            "fecha": "2026-10-10",
+            "importe": 135.03,
+            "dias": 23
+          },
+          {
+            "id_contador": 960108,
+            "numero_albaran": "IS-009",
+            "fecha": "2026-10-12",
+            "importe": 135.03,
+            "dias": 21
+          },
+          {
+            "id_contador": 960109,
+            "numero_albaran": "IS-010",
+            "fecha": "2026-10-14",
+            "importe": 135.03,
+            "dias": 19
+          },
+          {
+            "id_contador": 960110,
+            "numero_albaran": "IS-011",
+            "fecha": "2026-10-16",
+            "importe": 135.03,
+            "dias": 17
+          },
+          {
+            "id_contador": 960111,
+            "numero_albaran": "IS-012",
+            "fecha": "2026-10-18",
+            "importe": 135.03,
+            "dias": 15
+          },
+          {
+            "id_contador": 960112,
+            "numero_albaran": "IS-013",
+            "fecha": "2026-10-20",
+            "importe": 135.03,
+            "dias": 13
+          },
+          {
+            "id_contador": 960113,
+            "numero_albaran": "IS-014",
+            "fecha": "2026-10-22",
+            "importe": 135.03,
+            "dias": 11
+          },
+          {
+            "id_contador": 960114,
+            "numero_albaran": "IS-015",
+            "fecha": "2026-10-24",
+            "importe": 135.03,
+            "dias": 9
+          },
+          {
+            "id_contador": 960115,
+            "numero_albaran": "IS-016",
+            "fecha": "2026-10-26",
+            "importe": 135.03,
+            "dias": 7
+          },
+          {
+            "id_contador": 960116,
+            "numero_albaran": "IS-017",
+            "fecha": "2026-10-28",
+            "importe": 135.03,
+            "dias": 5
+          },
+          {
+            "id_contador": 960117,
+            "numero_albaran": "IS-018",
+            "fecha": "2026-10-30",
+            "importe": 135.04,
+            "dias": 3
+          }
+        ],
+        "literal_farmatic": null
+      },
+      {
+        "clave": "41",
+        "proveedor": "COFARES",
+        "identificado": true,
+        "albaranes": 6,
+        "importe": 742.1,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-10-31",
+        "detalle": [
+          {
+            "id_contador": 960300,
+            "numero_albaran": "CO-001",
+            "fecha": "2026-10-21",
+            "importe": 123.68,
+            "dias": 12
+          },
+          {
+            "id_contador": 960301,
+            "numero_albaran": "CO-002",
+            "fecha": "2026-10-23",
+            "importe": 123.68,
+            "dias": 10
+          },
+          {
+            "id_contador": 960302,
+            "numero_albaran": "CO-003",
+            "fecha": "2026-10-25",
+            "importe": 123.68,
+            "dias": 8
+          },
+          {
+            "id_contador": 960303,
+            "numero_albaran": "CO-004",
+            "fecha": "2026-10-27",
+            "importe": 123.68,
+            "dias": 6
+          },
+          {
+            "id_contador": 960304,
+            "numero_albaran": "CO-005",
+            "fecha": "2026-10-29",
+            "importe": 123.68,
+            "dias": 4
+          },
+          {
+            "id_contador": 960305,
+            "numero_albaran": "CO-006",
+            "fecha": "2026-10-31",
+            "importe": 123.7,
+            "dias": 2
+          }
+        ],
+        "literal_farmatic": null
+      },
+      {
+        "clave": "88",
+        "proveedor": "DISTRIBUCIONES BETA (FICTICIO)",
+        "identificado": true,
+        "albaranes": 5,
+        "importe": 310,
+        "sin_importe": 1,
+        "fecha_ultima": "2026-10-21",
+        "detalle": [
+          {
+            "id_contador": 960200,
+            "numero_albaran": "DB-001",
+            "fecha": "2026-10-13",
+            "importe": null,
+            "dias": 20
+          },
+          {
+            "id_contador": 960201,
+            "numero_albaran": "DB-002",
+            "fecha": "2026-10-15",
+            "importe": 77.5,
+            "dias": 18
+          },
+          {
+            "id_contador": 960202,
+            "numero_albaran": "DB-003",
+            "fecha": "2026-10-17",
+            "importe": 77.5,
+            "dias": 16
+          },
+          {
+            "id_contador": 960203,
+            "numero_albaran": "DB-004",
+            "fecha": "2026-10-19",
+            "importe": 77.5,
+            "dias": 14
+          },
+          {
+            "id_contador": 960204,
+            "numero_albaran": "DB-005",
+            "fecha": "2026-10-21",
+            "importe": 77.5,
+            "dias": 12
+          }
+        ],
+        "literal_farmatic": null
+      },
+      {
+        "clave": "42",
+        "proveedor": "HEFAME",
+        "identificado": true,
+        "albaranes": 3,
+        "importe": 87.6,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-10-26",
+        "detalle": [
+          {
+            "id_contador": 960400,
+            "numero_albaran": "HP-001",
+            "fecha": "2026-10-22",
+            "importe": 29.2,
+            "dias": 11
+          },
+          {
+            "id_contador": 960401,
+            "numero_albaran": "HP-002",
+            "fecha": "2026-10-24",
+            "importe": 29.2,
+            "dias": 9
+          },
+          {
+            "id_contador": 960402,
+            "numero_albaran": "HP-003",
+            "fecha": "2026-10-26",
+            "importe": 29.2,
+            "dias": 7
+          }
+        ],
+        "literal_farmatic": "HPLUS CONSUMO"
+      },
+      {
+        "clave": null,
+        "proveedor": "Proveedor sin identificar",
+        "identificado": false,
+        "albaranes": 2,
+        "importe": 45.2,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-10-11",
+        "detalle": [
+          {
+            "id_contador": 960500,
+            "numero_albaran": "SP-001",
+            "fecha": "2026-10-09",
+            "importe": 22.6,
+            "dias": 24
+          },
+          {
+            "id_contador": 960501,
+            "numero_albaran": "SP-002",
+            "fecha": "2026-10-11",
+            "importe": 22.6,
+            "dias": 22
+          }
+        ],
+        "literal_farmatic": null
+      }
+    ],
+    "excluidos_ausentes": {
+      "albaranes": 2,
+      "importe": 130.5,
+      "sin_importe": 0
+    },
+    "totales": {
+      "alertas": 2,
+      "importe_alertas": 84.3,
+      "alertas_sin_importe": 1,
+      "leido_sin_conciliacion": {
+        "albaranes": 3,
+        "importe": 455,
+        "sin_importe": 0
+      },
+      "sin_lector": {
+        "albaranes": 34,
+        "importe": 3615.45,
+        "sin_importe": 1
+      }
+    }
+  },
+  "revisar_noche": {
+    "fecha": "2026-11-01",
+    "lista_valida": true,
+    "elementos": [
+      {
+        "tipo": "DIFERENCIA",
+        "tipo_literal": "DIFERENCIA",
+        "texto": "Diferencia simulada de 118,16 €",
+        "factura_id": "f0000000-0000-4000-8000-000000000008",
+        "numero_factura": "AL-26-100231",
+        "documento_id": "d0000000-0000-4000-8000-000000000007",
+        "archivo_nombre": null,
+        "proveedor_comercial": "ALLIANCE",
+        "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000008",
+        "evidencia": {
+          "resultado_simulado": "DIFERENCIA",
+          "diferencia": "118.1600",
+          "fallo": null,
+          "r18": null
+        }
+      },
+      {
+        "tipo": "DIFERENCIA",
+        "tipo_literal": "DIFERENCIA",
+        "texto": "Diferencia simulada de 2,0350 €",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "archivo_nombre": null,
+        "proveedor_comercial": null,
+        "proveedor_razon_social": "COFARES",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000003",
+        "evidencia": {
+          "resultado_simulado": "DIFERENCIA",
+          "diferencia": "2.0350",
+          "fallo": null,
+          "r18": null
+        }
+      },
+      {
+        "tipo": "NO_ALLIANCE",
+        "tipo_literal": "NO_ALLIANCE",
+        "texto": "Proveedor aún sin conciliación automática",
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "numero_factura": "CF-AB-2026-0912",
+        "documento_id": "d0000000-0000-4000-8000-000000000006",
+        "archivo_nombre": null,
+        "proveedor_comercial": null,
+        "proveedor_razon_social": "COFARES",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000007",
+        "evidencia": {
+          "resultado_simulado": null,
+          "diferencia": null,
+          "fallo": "PROVEEDOR_SIN_CONCILIACION_AUTOMATICA",
+          "r18": null
+        }
+      },
+      {
+        "tipo": "R18_PENDIENTE",
+        "tipo_literal": "R18_PENDIENTE",
+        "texto": "Pendiente de la regla R18",
+        "factura_id": "f0000000-0000-4000-8000-000000000006",
+        "numero_factura": "FD-26/04471",
+        "documento_id": "d0000000-0000-4000-8000-000000000005",
+        "archivo_nombre": null,
+        "proveedor_comercial": null,
+        "proveedor_razon_social": "FEDEFARMA",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000006",
+        "evidencia": {
+          "resultado_simulado": "NO_EVALUABLE",
+          "diferencia": null,
+          "fallo": "R18_SIN_EVIDENCIA_FICTICIO",
+          "r18": {
+            "estado": "PENDIENTE",
+            "ficticio": true
+          }
+        }
+      },
+      {
+        "tipo": "DEFECTO",
+        "tipo_literal": "DEFECTO",
+        "texto": "Documento con defecto tras 3 intentos",
+        "factura_id": null,
+        "numero_factura": null,
+        "documento_id": "d0000000-0000-4000-8000-000000000009",
+        "archivo_nombre": "Escaneo_ilegible_2610.pdf",
+        "proveedor_comercial": null,
+        "proveedor_razon_social": null,
+        "enlace": "/facturas",
+        "evidencia": {
+          "estado": "ERROR",
+          "intentos": 3,
+          "ejecucion": "e0000000-0000-4000-8000-000000000809"
+        }
+      },
+      {
+        "tipo": "OTRO",
+        "tipo_literal": "TIPO_FUTURO_PRUEBA",
+        "texto": "Elemento de la noche sin descripción (ver evidencia técnica)",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "archivo_nombre": null,
+        "proveedor_comercial": null,
+        "proveedor_razon_social": "COFARES",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000003",
+        "evidencia": {
+          "fallo": null
+        }
+      }
+    ],
+    "por_tipo": {
+      "DIFERENCIA": 2,
+      "NO_ALLIANCE": 1,
+      "R18_PENDIENTE": 1,
+      "DEFECTO": 1,
+      "OTRO": 1
+    }
+  }
 }

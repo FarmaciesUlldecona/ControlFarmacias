@@ -117,7 +117,7 @@ describe('SQL de diagnósticos (salvaguardas del 22P02 de H5-3)', () => {
 
   test('cada diagnóstico tiene nombre propio (una línea y una transacción por diagnóstico)', () => {
     assert.deepEqual([...NOMBRES_DIAGNOSTICO], ['vencimientos', 'documentos', 'tipo_documento', 'sentido', 'casado', 'estado_linea',
-      'duplicados', 'par_08C66676']);
+      'duplicados', 'par_08C66676', 'noche', 'sin_factura']); // H8: + noche y sin_factura
   });
 
   test('estado_linea (H5-7): solo text, sin jsonb; un valor no previsto solo suma en otros_valores', () => {

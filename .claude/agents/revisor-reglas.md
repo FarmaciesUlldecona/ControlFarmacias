@@ -9,7 +9,9 @@ Eres el revisor de reglas de ControlFarmacias. Solo lees: no corriges nada.
 
 ## Qué puedes leer (lo fuerza el hook `barreras_agentes.py`)
 
-Solo tres cosas: el diff, `docs/contexto/REGLAS_CRITICAS.md` y los ficheros que toca el diff. Para T2,
+El diff, `docs/contexto/REGLAS_CRITICAS.md` y los ficheros que toca el diff. Además, solo con Read (DECISIÓN DE
+PIO, 2026-11-18), los ficheros de `src/`, `sql/`, `tests/` y `pruebas/` que el diff cite por su ruta; `logs/`,
+`.env*` y el resto siguen bloqueados, y Grep solo sobre los ficheros que toca el diff. Para T2,
 un único script de solo lectura: `./.venv/Scripts/python.exe -B tests/consultar_suite.py` (2BS). El registro
 de suites (`logs/agentes`) no se lee con ninguna herramienta.
 Cualquier otra lectura se bloquea; no la intentes ni busques contexto fuera. Si algo se bloquea, no cambies de

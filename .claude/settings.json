@@ -146,6 +146,8 @@
       "Bash(*supabase*)",
       "PowerShell(*guardar_albaranes*)",
       "Bash(*guardar_albaranes*)",
+      "PowerShell(*importar_cashflow*)",
+      "Bash(*importar_cashflow*)",
       "PowerShell(*pruebas/*)",
       "Bash(*pruebas/*)",
       "PowerShell(*pruebas\\*)",

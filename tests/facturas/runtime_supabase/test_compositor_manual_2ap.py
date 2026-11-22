@@ -570,7 +570,8 @@ def test_extremo_a_extremo_sha_incorrecto_libera_lock(tmp_path):
     supabase.registrar("doc-2", _pdf(ALLIANCE))
     _worker(supabase, tmp_path).ejecutar_una_manual()
     assert supabase.fallos[0]["p_error_detalle"] == "SHA256_NO_COINCIDE"
-    assert supabase.fallos[0]["p_clase_fallo"] == "DEFECTO_DOCUMENTO"
+    # 37 (D5): almacenamiento -> TRANSITORIO, con reintentos (mismo estado e intentos que antes).
+    assert supabase.fallos[0]["p_clase_fallo"] == "TRANSITORIO"
     assert (supabase.documentos[0]["estado"], supabase.documentos[0]["intentos_fallo"]) == ("ERROR", 1)
     assert supabase.facturas == {} and supabase.locks == {}
     assert supabase.documentos[1]["estado"] == "PENDIENTE"

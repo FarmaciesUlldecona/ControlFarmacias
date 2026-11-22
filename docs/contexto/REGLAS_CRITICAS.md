@@ -1,9 +1,11 @@
 # Reglas críticas
 
-Actualizado: 2026-11-18 (AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
+Actualizado: 2026-11-22 (38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, con la RPC de la 38 como única escritura, C5 sin escribir nada hasta la manual y la tarea de las 23:45 sin crear; H7-D: migración 38 de Cashflow desplegada en producción, confirmación explícita de Pio, y prueba de acceso de cf_lectura ACCESO_OK; H7: migración 38 de Cashflow implementada en local, con RPC de solo inserción, cuadre sin margen por saldo y `TABLAS_CASHFLOW` en los postchecks, decisiones de Pio; 2026-11-21, 37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
+cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
 `ACCESO_OK`; decisiones de Pio para Cashflow (H7): excepción de RITA solo con sus datos bancarios, lista cerrada de
-`cf_lectura` ampliada a `cf_cashflow_*` con la migración 37, estado de importación y signo del importe; H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
+`cf_lectura` ampliada a `cf_cashflow_*` con la migración 38 (renumerada), estado de importación y signo del importe; H6: migración 35 de Pagos, marcas de pago y forma de pago por proveedor, solo local, y
 autorización de Pio para nombrar el rol del sistema solo en la 35 y su rollback; 2026-11-16, COD-1611: tablas de Pagos
 fuera del veredicto de los postchecks y tarea de Alliance en la puerta de tareas; migración 34 desplegada en producción, hito TRAB-34-D; TRAB-34: migración 34 de
 Trabajadores, guardias y festivos de TA3, solo local, y
@@ -83,6 +85,18 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   HEAD == `origin/main`. **Excepción acotada (DECISIÓN DE PIO, 2026-11-05):** HEAD puede ir por delante de
   `origin/main` solo si los commits pendientes tocan exclusivamente documentación (`docs/` o `*.md`); se
   comprueba antes de cada tanda con `git diff --name-only origin/main..HEAD`. Cualquier otro archivo: PARA.
+  **El main del remoto se lee del remoto (encargo de Pio, 2026-11-19):** la noche, las series 2BJ y 2BP y los
+  despliegues usan el módulo común `src/facturas/runtime_supabase/puerta_git.py`, que lee el main con
+  `git ls-remote origin refs/heads/main` (20 s como máximo, sin pedir credenciales) y no la referencia local
+  `origin/main`, que sin fetch podía dar un falso OK (el 18/11 seguía en 885150d con 1ca8cc3 ya subido). Falla
+  cerrado: remoto ilegible → `GIT_ORIGEN_NO_DETERMINABLE`; sha del remoto que no existe en local (falta un fetch) →
+  `GIT_ORIGEN_DESCONOCIDO_LOCALMENTE`; el remoto debe ser ancestro de HEAD y lo pendiente solo documentación. La
+  puerta no hace fetch ni cambia referencias. El informe de la noche registra head, origin_local y origin_remoto.
+  **Despliegues:** el commit indicado debe estar ya contenido en el main del remoto (subido por Pio); si no,
+  `GIT_COMMIT_NO_SUBIDO` y no se conecta (scripts `desplegar_31` a `desplegar_35` y los siguientes).
+  **revisor-reglas (DECISIÓN DE PIO, 2026-11-18):** además del diff, REGLAS_CRITICAS y los ficheros que toca el diff,
+  puede LEER (solo con Read) los ficheros de `src/`, `sql/`, `tests/` y `pruebas/` que el diff cite por su ruta;
+  `logs/`, `.env*` y el resto siguen bloqueados.
 
 ## Extractores locales
 
@@ -138,7 +152,7 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 |---|---|
 | Alliance / Cencora | Conserva tablas y secciones documentales `CARGOS`/`ABONOS`, fiscalidad, vencimientos y relaciones 1:1 inequívocas sin fusionar objetos. `SERVICIO BASICO` y `CONDIC. COMERCIAL` son `CARGO` solo por decisión funcional explícita de Pio. Fuera de esas pruebas, el sentido queda indeterminado. |
 | FEDEFARMA | `Total abonaments (consultar detalls)` se clasifica como `DEVOLUCION_MERCANCIA` sin derivar por ello el sentido. La cuota mensual de servicios cooperativos es `CONDICION_COOPERATIVA`; textos meramente registrales no crean movimientos. Conserva facturas internas segmentadas. |
-| HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos. |
+| HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos, salvo estas dos decisiones funcionales explícitas de Pio (2026-11-18, `pruebas/auditoria_hefame/DISENO.md` §0): el desfase de 80,00 de base S.R. de la factura de fin de mes es el **cargo cooperativo HEFAME**, fijo cada mes (H1), y `APROAFA` (aportación a la Asociación para la Promoción de la Asistencia Farmacéutica en España) es `CARGO` (H2). Un desfase distinto de 80,00, en otra clase, negativo o fuera del fin de mes, y un `APROAFA` negativo, fallan cerrados (H6, H7). Decisiones de Pio del 2026-11-19: `Resumen Liquidaciones Comerciales` son pequeños descuentos sobre especialidad (IVA 4 %, base S.R.) y son `ABONO` (H3); los números de 9 dígitos que empiezan por `91` son albaranes normales que Farmatic registra con numeración interna `Q…`/`R…`, y casan por numeración interna, importe y fecha con candidato único, como R15b (H4). La autoridad productiva de `hefame-local` sigue desactivada. |
 | COFARES | La elegibilidad local exige documento monopágina, segmentación determinista, filas completas y únicas, columnas inequívocas y evidencia integral. El sentido literal ausente no se infiere. El descuento por pronto pago sigue como gap funcional. |
 | Guimerà | Dispone de adaptadores OCR actual e histórico; el OCR solo se reintenta ante `PENDIENTE_OCR`. El routing no usa filename ni hash. |
 | DERMOFARM | Conserva evidencia y no inventa importes. La relación de abonos descontados en la primera factura del mes siguiente sigue pendiente de decisión funcional. |
@@ -171,6 +185,33 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
     `PENDIENTE`/`ERROR` y los backoff futuros; la migración 17 no redefine el claim.
   - Clasificación de motivos: `runtime_supabase/clasificacion_fallos.py`; un motivo
     desconocido es `TRANSITORIO`, nunca `NO_SOPORTADO`.
+- **Migración 37: defectos de extracción directos a `REVISION`** (DECISIONES DE PIO D1–D7, 2026-11-15, 2026-11-18
+  y 2026-11-19; diseño en `pruebas/auditoria_37/DISENO.md`). `CONFIRMADO POR TEST` en PostgreSQL 17 local y
+  **desplegada en producción** en el 37-D, 2026-11-21, con confirmación explícita de Pio (`APLICADA`, postcheck por
+  fila OK; ver ESTADO_ACTUAL). Rige la R3 revisada.
+  - **R3 revisada (con la 37 en la BD):** `DEFECTO_DOCUMENTO` suma un intento (D4) y pasa a `REVISION` en el
+    primer fallo, sin espera; el historial lo marca con `regla: DEFECTO_DIRECTO_A_REVISION`. `TRANSITORIO` y
+    `NO_SOPORTADO`, sin cambios. Sin la 37 rige la R3 de la 17.
+  - **Motivos (D5):** lista A, de extracción (15 motivos y el código `ErrorCompletitudDocumental`), y lista B, de
+    identidad de farmacia (`FARMACIA_DOCUMENTO_NO_DEMOSTRABLE`, `FARMACIA_DOCUMENTO_CONTRADICTORIA` y el código
+    `ErrorFarmaciaDocumental`): `DEFECTO_DOCUMENTO`. Lista C, de almacenamiento (`SHA256_NO_COINCIDE`,
+    `SHA256_REGISTRADO_INVALIDO`, `OBJETO_STORAGE_VACIO`, `DOCUMENTO_RECLAMADO_NO_LOCALIZADO`,
+    `RUTA_STORAGE_NO_COINCIDE_CON_CLAIM`, `RUTA_STORAGE_NO_SEGURA`): `TRANSITORIO`, con reintentos y espera. Un
+    motivo nuevo solo pasa a defecto con una decisión de Pio.
+  - **Lector (D2, D6):** columna `normalizacion_ejecuciones.lector` (adaptador, versión y layout del extractor
+    autorizado; layout null si el fallo es anterior a reconocerlo; null en las ejecuciones anteriores a la 37). Llega
+    por un 8.º parámetro `p_lector` de `cf_registrar_fallo_normalizacion`. La firma de 7 parámetros se conserva y
+    llama a la de 8 con el lector null.
+  - **El código usa el 8.º parámetro solo si detecta la 37** con una sesión de solo lectura (catálogo:
+    `lectura_readonly.defectos_37_en_bd`), como R20; sin ella, la llamada de 7 parámetros de siempre.
+  - **Reprocesado:** un documento en `REVISION` por defecto solo vuelve a la cola con `cf_solicitar_reprocesado`,
+    acción de Pio, cuando cambie el lector (§3 del diseño). Nunca automático. Los 22 en `REVISION` de antes de la
+    37 esperan a ese cambio (D3).
+  - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-19, D7):** nombrar el rol del sistema **solo** en
+    `sql/migrations/37_cf_defectos_directos_a_revision.sql` y su rollback, para el EXECUTE de la firma nueva.
+    `desplegar_37.py` lo comprueba sin nombrarlo (mismos beneficiarios que la firma de 7 parámetros y nada para
+    anon, authenticated ni PUBLIC). Tests, scripts y documentación no lo nombran; cualquier otro fichero,
+    autorización nueva.
 - Reglas aprobadas por Pio para la migración 18 (Hito 2AV, 2026-09-25;
   `CONFIRMADO POR TEST` en PostgreSQL 17 local y `CONFIRMADO EN PRODUCCIÓN`,
   desplegada en el Hito 2AW el 2026-09-28; primera conciliación manual one-shot
@@ -335,6 +376,25 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
       número de una línea de otra factura; solo lo comprueba Python.
   - **Orden de despliegue:** primero la 24 y después conciliar con el código 2BE. Con la 23, una línea R17 se
     rechaza (`TOLERANCIA_REGLA_NO_COINCIDE`) y consume un intento.
+- Regla de Pio R20 (DECISIÓN DE PIO, 2026-11-19; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 36
+  **desplegada en producción** en el 36-D, 2026-11-19, con confirmación explícita de Pio; diseño en
+  `pruebas/auditoria_r20/DISENO.md`; origen: 08013495 / 08D79747):
+  - **R20 línea = su albarán exacto + su variante con letra final:** una línea documental (cargo) que queda sin
+    casar tras el 1:1 y R17 puede casar con la suma de **dos** albaranes de la misma recepción: el de su número
+    **exacto** y su variante con **una letra final** (`08X99999` + `08X99999A`), los dos a ±15 días de la línea.
+    - Mismas condiciones que R17: ninguno reservado (R15) ni casado por otra línea, y el número de la variante no es
+      una línea de otra factura; mismo proveedor (R9); PUC + PUC dentro de 0,05; solo 1+1; solo cargos; nunca HEFAME
+      ni abonos. En la práctica, solo Alliance (la letra final solo se define para Alliance).
+    - Falla cerrado contando juntas las parejas R17 y R20 de una línea: más de una → `AMBIGUO_R17`/`AMBIGUO_R20`; un
+      albarán en las parejas de dos líneas → `CONFLICTO_R17`/`CONFLICTO_R20`.
+    - Se persiste como dos detalles `UNO_A_VARIOS` (`regla: R20`). La BD los revalida en `cf_linea_r17_valida`,
+      redefinida por la 36 sin regenerar la RPC; el rechazo sigue siendo `LINEA_R17_NO_VALIDA`. **En R20 la BD sí
+      comprueba la ventana de ±15 días** (decisión de Pio). R11 cuenta la línea como un albarán casado.
+  - **Marca y conmutador:** `cf_configuracion.conciliacion_r20` (default `true`). El código usa R20 solo si la
+    detecta en la BD, con una sesión de solo lectura (`information_schema` y, solo si la columna existe, su valor). Sin
+    la 36, o con la marca a `false` (apaga R20 sin rollback), la línea sigue sin casar y la noche deja la factura para
+    revisar, sin reclamarla ni gastar intentos. Por eso el código puede subirse antes de desplegar la 36.
+  - **Primera conciliación tras el despliegue (36-D):** 08013495 la hace la noche (decisión de Pio).
 - Regla de Pio del Hito 2BG (2026-10-30; `CONFIRMADO POR TEST`, sin migración; aplicada en producción en la
   conciliación de 08007970 el 2026-10-30; diseño en `pruebas/auditoria_2bg/DISENO.md`):
   - **R19 ECO360 = grupo Alliance/SAFA en conciliación:** el proveedor de Farmatic «6- PLATAF. ECO360 AH»
@@ -370,7 +430,8 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - **PARADA ante cualquier desviación del plan:** excepción, huérfano, resultado o facturas distintos, fila
     ajena cambiada, n.º 1 fuera del plan o sin predicción, o puerta fallida. Se aplica el postcheck 2AX por
     fila de cada tanda.
-  - Los defectos de extracción previstos por el plan consumen intentos (R3) y no son parada.
+  - Los defectos de extracción previstos por el plan no son parada. Con la 37 en la BD pasan a `REVISION` en el
+    primer fallo; sin ella, consumen intentos (R3 de la 17).
   - Conciliación posterior: un n.º 1 que simula DIFERENCIA → PARADA y Pio decide caso a caso (serie de
     conciliación **no implementada**).
 - Diseño del Hito 2BR (2026-11-09; `CONFIRMADO POR TEST` en PostgreSQL 17 local; migración 30 **desplegada en
@@ -517,13 +578,58 @@ antes con la imitación del `postgres` de Supabase.
 
 ## Cashflow (H7)
 
-Decisiones de Pio (2026-11-17). Módulo **NO IMPLEMENTADO** en este repositorio: sin esquema ni migración todavía.
+Decisiones de Pio (2026-11-17, C1–C8; 2026-11-18, E1–E7 y las dos propuestas de redondeo; 2026-11-22, respuestas
+del hito H7). Diseño en `pruebas/auditoria_h7/DISENO.md`. **Migración 38** `CONFIRMADO POR TEST` en PostgreSQL 17
+local y **desplegada en producción** en el H7-D, 2026-11-22, con confirmación explícita de Pio (`APLICADA`, postcheck
+por fila OK, prueba de acceso de `cf_lectura` `ACCESO_OK`; ver ESTADO_ACTUAL). El script de importación
+(`src/cashflow/importar_cashflow.py`, hito 38-B) está implementado en local (`CONFIRMADO POR TEST`) y **no se ha
+ejecutado contra producción**: las tablas siguen vacías salvo las cuentas fijas. La tarea de las 23:45 no existe;
+la crea Pio, con su confirmación. **Excepción (DECISIÓN DE PIO, 2026-11-22):** los ensayos de la 37 y de la 38
+entran en `SUITE_HISTORICA` en el commit del 38-B, no en el de su «D».
 
 - **Excepción de farmacia:** RITA es visible en el módulo CASHFLOW **SOLO** con sus datos bancarios del Excel
   importado. Sus facturas siguen desactivadas: `cf_configuracion.farmacias_habilitadas` no cambia y facturas,
   albaranes, normalización y conciliación siguen solo PIO. La excepción es propia del módulo, nunca global.
-- **Lista cerrada de `cf_lectura`:** se amplía con las tablas `cf_cashflow_*` cuando existan (migración 37). Hasta
-  entonces no cambia.
+- **Lista cerrada de `cf_lectura`:** la migración 38 la amplía con las cuatro tablas `cf_cashflow_*` (`SELECT`, con
+  RLS sin funciones security definer, regla del 2BN): cuentas, saldos e importes visibles si su farmacia está en el
+  módulo `CASHFLOW` o no tienen farmacia (`SL`); importaciones, todas. Ningún rol de la web, ni anon ni
+  authenticated, tiene privilegios sobre ellas.
+- **Permiso por módulo (C4):** `cf_modulos_farmacias` admite `CASHFLOW = {PIO, RITA}`; Trabajadores filtra por su
+  propio módulo y no cambia.
+- **Solo inserción:** nadie escribe directamente en las tablas. La única escritura es la RPC
+  `cf_cashflow_registrar_importacion` (security definer, EXECUTE solo para el rol del sistema), que vuelve a validarlo
+  todo en la BD y falla cerrado sin escribir nada. Un trigger rechaza `UPDATE` (`SOLO_INSERCION`), `DELETE` y
+  `TRUNCATE` (`BORRADO_NO_PERMITIDO`); la única excepción es el cambio de `vigente` que hace la RPC. Una sola
+  importación vigente; un hash no se importa dos veces; un `ERROR` no tiene importes ni saldos ni es vigente.
+- **Cuadre (E1):** saldo inicial + Σ`RE` − Σ`RS` = saldo según fórmulas, con el signo de la celda (un `RS` positivo
+  es una salida). En la BD, margen de 0,005 por importe redondeado de esa cuenta y decena (propuesta aprobada) y
+  **ninguno por saldo redondeado** (decisión de Pio, 2026-11-22). Importes y saldos llegan al céntimo.
+- **Decenas:** empiezan el día 1, 11 o 21 y acaban el 10, el 20 o el último día del mes. E5: la decena sin saldo
+  (primera de `SL`) no lleva importes. E7: el saldo de bancos vacío o distinto del de fórmulas nunca es error.
+- **Categorías nuevas (C5):** las controla el script de importación (38-B); la RPC no las comprueba (decisión de
+  Pio, 2026-11-22). Un par (cuenta, categoría) sin importes en la importación vigente es nuevo. La noche no escribe
+  nada (código 4); solo la importación manual con `--aceptar-categorias-nuevas` los acepta (`PROPUESTA` del 38-B:
+  no se registra como `ERROR`, para que el mismo fichero pueda aceptarse).
+- **Script de importación (38-B):** `python -m src.cashflow.importar_cashflow <NOCHE|MANUAL> <SIMULAR|REAL>
+  [--aceptar-categorias-nuevas]`. Su **única escritura es la RPC de la 38**, con el cliente del sistema de la noche;
+  nunca un `INSERT`. Lee en sesión READ_ONLY; nunca abre ni escribe el original (trabaja sobre una copia estable fuera
+  del repositorio). `SIMULAR` no escribe en la BD. Puertas: git en `REAL`, ninguna tarea en ejecución, ninguna noche
+  `EN_CURSO`, la 38 presente y la carpeta C1. Postcheck por fila antes y después: solo cambian las filas de esa
+  importación. Informe sin conceptos ni categorías. Lanzarlo pide confirmación (regla `ask` `*importar_cashflow*`).
+  Las concreciones que no están en C1–C8 ni E1–E7 están en DISENO §10 como `PROPUESTA` para Pio.
+- **Postchecks:** `TABLAS_CASHFLOW` en la noche y en las series 2BJ y 2BP, fuera del criterio por fila e informadas
+  aparte (`postcheck["cashflow"]`), sin afectar al veredicto, como Pagos.
+- **Despliegue y acceso:** `pruebas/auditoria_h7/desplegar_38.py` (ensayado con la imitación del `postgres` de
+  Supabase y ejecutado una sola vez en el H7-D) y `pruebas/auditoria_h7/probar_acceso_cf_lectura_cashflow.py`
+  (terminal de Pio). Por orden de Pio (2026-11-22), `desplegar_38.py` solo se toca con Read/Edit y, fuera de su única
+  ejecución en el H7-D, solo lo cargan los tests de `pytest tests/...`. No se vuelve a ejecutar: con la 38 aplicada,
+  su precondición 1 falla cerrado.
+- **Rollback** al esquema 37: falla cerrado si hay alguna importación (`ROLLBACK_38_CASHFLOW_CON_DATOS`).
+- **Numeración (DECISIÓN DE PIO, 2026-11-19):** R20 = migración 36, defectos de extracción directos a REVISION = 37,
+  Cashflow = 38 (antes 36 y 37). Cada migración exige la anterior.
+- **AUTORIZACIÓN EXPRESA DE PIO (C3, 2026-11-17; reconfirmada el 2026-11-19 tras renumerar):** nombrar el rol del
+  sistema **SOLO** en `sql/migrations/38_*.sql` y su rollback. Tests, scripts y documentación no lo nombran; cualquier
+  otro fichero, autorización nueva.
 - **Importación:** su estado es `OK` o `ERROR`. El importe conserva el signo de la celda del Excel; no se deduce ni se
   invierte.
 
@@ -617,8 +723,9 @@ módulos parciales.
   en producción por un `ALTER ROLE … NOSUPERUSER` que local aceptaba como superusuario. Se aplica a los
   despliegues pendientes desde el 2BN-D (los ya desplegados no se reensayan).
 - **Norma de Pio de tests antes de commit (Hito 2BE-D, 2026-10-29), sin excepciones:**
-  - **suite completa con `pg17_local`** (`pytest tests/ --basetemp=<propio>`, con Docker disponible: ningún
-    test `pg17_local` omitido) si el commit toca `src/`, `sql/`, scripts de despliegue o cualquier código que
+  - **suite completa con `pg17_local`** (desde el Hito SUITE, `pytest tests/ -m "not historica" --basetemp=<propio>`,
+    en paralelo, con Docker disponible: ningún test `pg17_local` omitido) **más la histórica** cuando la exige el
+    Hito SUITE (abajo), si el commit toca `src/`, `sql/`, scripts de despliegue o cualquier código que
     acceda a Supabase o Farmatic, también las herramientas de `pruebas/`;
   - si solo toca documentación: **suite rápida** (`pytest tests/ -m "not pg17_local" --basetemp=<propio>`);
   - en la duda: suite completa.
@@ -627,7 +734,8 @@ módulos parciales.
   - **Evidencia mecánica (Hito 2BH, 2026-10-30):** cada ejecución de pytest añade una línea a
     `logs/agentes/suites.jsonl` (`tests/registro_suite.py`) con la huella exacta del árbol probado (la de la
     barrera de commit, calculada al empezar y al terminar), passed/failed/errors/skipped, fechas, alcance
-    (`completa`, `rapida` o `parcial`) y `verde`. «Documentación» = ficheros `.md` fuera de `.claude/`.
+    (`total`, `completa`, `historica`, `rapida` o `parcial`, Hito SUITE) y `verde`. «Documentación» = ficheros
+    `.md` fuera de `.claude/`.
     - La **barrera de commit** exige una línea con la huella actual, alcance suficiente y en verde
       (`commit_sin_suite`, `commit_suite_roja`).
     - `revisor-reglas` (T2) comprueba una línea con `base` = HEAD, `rutas` = `git status`, alcance suficiente y
@@ -647,6 +755,42 @@ módulos parciales.
       tabla, cuenta como FAIL; un PASS cuya tabla trae alguna regla INCONCLUSO cuenta como INCONCLUSO. Hooks:
       `registrar_uso_agente.py` (`veredicto_revisor`, `reglas_inconclusas`), `estado_git.py`
       (`_veredicto_grupo`) y `barreras_agentes.py` (`barrera_commit`).
+- **Hito SUITE (DECISIONES DE PIO D1–D8, 2026-11-20; diseño y medición en `pruebas/auditoria_suite/DISENO.md`):**
+  - **Suite paralela:** pytest-xdist **3.8.0**, fijado en `requirements-tests.txt` y exigido por `pytest.ini`
+    (`required_plugins`); `addopts = -n 8 --dist loadgroup` (8 tras medir 4 y 8 workers, D2). Cada worker tiene su
+    propio contenedor `pg17_local` sin red; los ensayos de despliegue usan **un contenedor TCP limpio por módulo**
+    (solo 127.0.0.1; D5 corregida por Pio: uno por worker no vale, porque los roles son comunes al clúster). Reparto
+    por **familia de plantillas** (`FAMILIAS`, D3). `-n 0` ejecuta en serie.
+  - **Alcances del registro:** `total` (sin `-m`), **`completa`** (`-m "not historica"`, la de cada commit de
+    código), `historica` (`-m historica`), `rapida` (`-m "not pg17_local"`) y `parcial`. Con xdist solo escribe el
+    proceso principal.
+  - **Suite histórica (D4):** ensayos de despliegue y rollbacks de migraciones ya desplegadas, en `SUITE_HISTORICA`
+    (`tests/facturas/runtime_supabase/conftest.py`). Al desplegar una migración, sus ensayos entran ahí en el
+    commit del «D». La barrera exige la histórica (o total) en verde:
+    - **sobre la misma huella** si el cambio toca `sql/`, `pg17_local.py`, ese `conftest.py`, un `desplegar_*` o
+      `preflight*` de `pruebas/`, `pruebas/auditoria_2at/`, `puerta_git.py` o un módulo de `SUITE_HISTORICA`;
+    - **de 7 días o menos** (la última del repositorio) en cualquier otro commit de código;
+    - **antes de cada despliegue:** la barrera bloquea la ejecución de un script `desplegar_<n>` sin histórica en
+      verde sobre la huella actual (`despliegue_sin_historica`).
+  - **Regla de reparación (D6, D7):** una ejecución parcial en verde equivale a la `completa` sobre su huella si,
+    respecto de la última `completa`/`total` roja con la misma base:
+    - **(a)** el árbol no ha cambiado, la roja tiene **como máximo 3** fallados y la **primera** parcial posterior
+      los ejecuta todos (**1 repetición**);
+    - **(b)** solo cambian módulos `tests/**/test_*.py` y la parcial ejecuta todos los fallados y **enteros** los
+      módulos cambiados (como argumento, sin `-k`/`-m` ni deseleccionados). `tests/conftest.py`,
+      `tests/facturas/runtime_supabase/pg17_local.py`, `tests/registro_suite.py`, `tests/consultar_suite.py` y
+      cualquier otro fichero de `tests/` que no sea un módulo `test_*.py` **cuentan como código**;
+    - **(c)** si toca código: suite completa.
+    
+    T2 (`tests/consultar_suite.py`) aplica las mismas reglas. Hooks: `estado_git.py` (`completa_valida`,
+    `historica_valida`, `suites_para_commit`, `es_despliegue`) y `barreras_agentes.py` (`barrera_commit`,
+    `barrera_despliegue`; `commit_sin_historica`, `commit_historica_roja`).
+  - **Excepciones expresas de Pio (2026-11-20, Hito SUITE):** Read y Edit, **sin scripts por Bash**, sobre los
+    ficheros que nombran el registro de suites por ser su infraestructura —
+    `tests/test_registro_suite_2bh.py` (solo para un fichero temporal en `tmp_path`),
+    `.claude/hooks/barreras_agentes.py`, `.claude/hooks/estado_git.py`, `tests/test_hook_barreras_agentes.py` y
+    `tests/consultar_suite.py`— y ejecutar sus tests con pytest. Nada se lee ni se escribe en `logs/agentes`.
+    Cualquier otro fichero que lo nombre: autorización nueva.
 - Pytest debe usar directorios temporales mediante `CONTROLFARMACIAS_LOG_DIR` y
   `CONTROLFARMACIAS_DATA_DIR`.
 - Los tests no pueden conectarse a Farmatic/Supabase reales ni escribir en

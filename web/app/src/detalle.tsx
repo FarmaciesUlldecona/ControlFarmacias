@@ -8,7 +8,7 @@ import {
 } from '../server/contrato.ts';
 import {
   ESTADO_LINEA, TEXTO_HEFAME_BASES, agruparLineas, avisosFactura, baseAlbaran, claveEstadoLinea, etiquetaConciliacion, lineasConDiferencia, origenAplicado, etiquetaNormalizacion, etiquetaResultadoMotor, etiquetaRevision,
-  textoEstadoMatching, textoEvento, tipoCasado, type BaseAlbaran, type GrupoLinea,
+  textoEstadoMatching, textoEvento, tipoCasado, esR20, importeFarmaticLinea, type BaseAlbaran, type GrupoLinea,
 } from '../server/detalle.ts';
 import { useApi } from './api.ts';
 import { euros, fechaCorta, fechaHora, plural, tipoPorcentaje } from './formato.ts';
@@ -155,8 +155,8 @@ function Fiscalidad({ d }: { d: FacturaDetalleDTO }) {
 }
 
 /** "Cómo casó": forma de casar el número como dato principal; el tipo de relación, secundario. */
-function Casado({ l }: { l: LineaConciliacion }) {
-  const c = tipoCasado(l);
+function Casado({ l, pareja }: { l: LineaConciliacion; pareja?: readonly LineaConciliacion[] }) {
+  const c = tipoCasado(l, pareja);
   return (
     <span className="casado">
       <Insignia color={c.color} data-casado={c.clave}>{c.texto}</Insignia>
@@ -215,9 +215,23 @@ function valoresComunes(g: GrupoLinea): boolean {
   return resto.every((l) => l.importe_documental === a.importe_documental && l.diferencia === a.diferencia && l.estado_linea === a.estado_linea);
 }
 
+/** H8: línea R20 (albarán partido en Farmatic): sus detalles llevan MATCH_R20 o regla R20. */
+const grupoR20 = (g: GrupoLinea) => g.detalles.length > 1 && g.detalles.every(esR20);
+
+/** H8: importe de Farmatic de la línea R20 = suma de los dos albaranes (no consta si falta alguno; nunca 0). */
+function SumaFarmaticR20({ g }: { g: GrupoLinea }) {
+  const v = importeFarmaticLinea(g.detalles);
+  return (
+    <span className="tenue nota-celda" data-suma-farmatic-r20>
+      Farmatic, suma de los {g.detalles.length}: {v === null ? 'no consta' : euros(v)}
+    </span>
+  );
+}
+
 function FilasGrupo({ g, base }: { g: GrupoLinea; base: BaseAlbaran }) {
   const n = g.detalles.length;
   const comun = valoresComunes(g);
+  const r20 = grupoR20(g);
   return (
     <>
       {g.detalles.map((l, i) => {
@@ -228,6 +242,7 @@ function FilasGrupo({ g, base }: { g: GrupoLinea; base: BaseAlbaran }) {
               <td rowSpan={n} className="linea-pdf">
                 <span className="numero">{g.documental.numero ?? 'sin número'}</span>
                 <span className="tenue nota-celda">{fechaCorta(g.documental.fecha)}{g.documental.sentido === 'ABONO' ? ' · abono' : ''}</span>
+                {r20 && <SumaFarmaticR20 g={g} />}
               </td>
             )}
             {celdaLinea(<ImporteLinea v={l.importe_documental} dato="pdf" />)}
@@ -242,7 +257,8 @@ function FilasGrupo({ g, base }: { g: GrupoLinea; base: BaseAlbaran }) {
             <td className="num"><span data-aplicado><ImporteLinea v={l.importe_farmatic} dato="farmatic" /><OrigenFarmatic l={l} /></span></td>
             {celdaLinea(<DiferenciaLinea l={l} />)}
             {celdaLinea(<EstadoLinea l={l} />, 'estado-linea')}
-            <td><Casado l={l} /></td>
+            {/* H8: R20 = un solo «cómo casó» para la línea (los dos números como secundario). */}
+            {r20 ? (i === 0 && <td rowSpan={n}><Casado l={l} pareja={g.detalles} /></td>) : <td><Casado l={l} /></td>}
             {i === 0 && <td rowSpan={n} className="num"><BasePdf g={g} base={base} /></td>}
           </tr>
         );
@@ -269,9 +285,16 @@ function AlbaranesLista({ grupos, base, explicado }: { grupos: GrupoLinea[]; bas
                   <span><span className="tenue">Farmatic</span> {l.numero_albaran_farmatic ?? '—'}</span>
                   <span className="la-importe"><span data-aplicado><ImporteLinea v={l.importe_farmatic} dato="farmatic" /><OrigenFarmatic l={l} /></span><span className="th-base">{e.farmatic.base}</span></span>
                 </div>
-                <Casado l={l} />
+                {!grupoR20(g) && <Casado l={l} />}
               </div>
             ))}
+            {/* H8: R20, un solo «cómo casó» y la suma de Farmatic de la línea. */}
+            {grupoR20(g) && (
+              <div className="la-farmatic">
+                <Casado l={g.detalles[0]} pareja={g.detalles} />
+                <SumaFarmaticR20 g={g} />
+              </div>
+            )}
             {(valoresComunes(g) ? [g.detalles[0]] : g.detalles).map((l) => (
               <div key={`dif-${l.detalle_id}`} className="la-fila">
                 <span><span className="tenue">Diferencia del motor</span> <DiferenciaLinea l={l} /></span>
@@ -541,7 +564,7 @@ function Evidencia({ d }: { d: FacturaDetalleDTO }) {
       {d.lineas.length > 0 && (
         <ul className="evidencia-lineas" aria-label="Códigos por línea">
           {d.lineas.map((l) => (
-            <li key={l.detalle_id}><code className="codigo">{[l.orden, l.tipo_relacion, l.estado_linea, l.estado_matching, l.clase_numero, l.regla, l.papel_r17].filter((x) => x !== null && x !== undefined).join(' · ')}</code></li>
+            <li key={l.detalle_id}><code className="codigo">{[l.orden, l.tipo_relacion, l.estado_linea, l.estado_matching, l.clase_numero, l.regla, l.papel_r17, l.papel_r20].filter((x) => x !== null && x !== undefined).join(' · ')}</code></li>
           ))}
         </ul>
       )}

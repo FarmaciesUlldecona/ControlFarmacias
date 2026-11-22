@@ -187,8 +187,8 @@
     }
   ],
   "atencion": {
-    "tipos": 15,
-    "casos": 27,
+    "tipos": 12,
+    "casos": 23,
     "grupos": [
       {
         "clave": "DIFERENCIA_ALBARANES",
@@ -272,28 +272,6 @@
         ]
       },
       {
-        "clave": "DUPLICADO_FARMATIC",
-        "categoria": "DUPLICADO_FARMATIC",
-        "orden": 3,
-        "titulo": "Duplicados en Farmatic",
-        "color": "naranja",
-        "casos": [
-          {
-            "proveedor": "ALLIANCE HEALTHCARE (FICTICIO)",
-            "proveedor_comercial": null,
-            "proveedor_razon_social": null,
-            "codigo": null,
-            "fecha": "2026-10-21",
-            "factura_id": null,
-            "documento_id": null,
-            "enlace": "/conciliacion",
-            "texto": "El albarán 08C66676 está 2 veces en Farmatic con el mismo importe",
-            "referencia": "08C66676, 08C66676A",
-            "importe_duplicado": 57.4
-          }
-        ]
-      },
-      {
         "clave": "VENCIMIENTO_SIN_SENTIDO",
         "categoria": "VENCIMIENTO_SIN_SENTIDO",
         "orden": 4,
@@ -347,27 +325,6 @@
             "factura_id": "f0000000-0000-4000-8000-000000000005",
             "documento_id": "d0000000-0000-4000-8000-000000000004",
             "enlace": "/facturas/f0000000-0000-4000-8000-000000000005"
-          }
-        ]
-      },
-      {
-        "clave": "ALBARAN_NO_EN_FARMATIC",
-        "categoria": "ALBARAN_NO_EN_FARMATIC",
-        "orden": 5,
-        "titulo": "Albarán facturado que ya no está en Farmatic",
-        "color": "naranja",
-        "casos": [
-          {
-            "proveedor": "ALLIANCEHEALTHCARECENCORA",
-            "proveedor_comercial": "ALLIANCE",
-            "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
-            "codigo": null,
-            "fecha": "2026-10-30T03:00:00+00:00",
-            "factura_id": "f0000000-0000-4000-8000-000000000001",
-            "documento_id": null,
-            "enlace": "/facturas/f0000000-0000-4000-8000-000000000001",
-            "texto": "El albarán 08X10002 está en una factura, pero ya no aparece en Farmatic",
-            "referencia": "AL-26-100231"
           }
         ]
       },
@@ -619,39 +576,6 @@
             "enlace": "/facturas/f0000000-0000-4000-8000-000000000005"
           }
         ]
-      },
-      {
-        "clave": "CORRECCION_APROBADA",
-        "categoria": "CORRECCION_APROBADA",
-        "orden": 8,
-        "titulo": "Correcciones de albarán aprobadas",
-        "color": "gris",
-        "casos": [
-          {
-            "proveedor": "FEDEFARMA (FICTICIO)",
-            "proveedor_comercial": null,
-            "proveedor_razon_social": null,
-            "codigo": null,
-            "fecha": "2026-10-31T09:00:00+00:00",
-            "factura_id": null,
-            "documento_id": null,
-            "enlace": "/conciliacion",
-            "texto": "La corrección aprobada del albarán FD-ALB-55120 está pendiente de aplicar",
-            "referencia": "FD-ALB-55120"
-          },
-          {
-            "proveedor": "ALLIANCE HEALTHCARE (FICTICIO)",
-            "proveedor_comercial": null,
-            "proveedor_razon_social": null,
-            "codigo": null,
-            "fecha": "2026-10-29T10:05:00+00:00",
-            "factura_id": null,
-            "documento_id": null,
-            "enlace": "/conciliacion",
-            "texto": "Se aplicó la corrección aprobada del albarán 08X10050A",
-            "referencia": "08X10050A"
-          }
-        ]
       }
     ]
   },
@@ -788,6 +712,126 @@
   "luna_mes": {
     "ejecuciones": 1,
     "coste": 0.0184
+  },
+  "revisar_noche": {
+    "fecha": "2026-11-01",
+    "lista_valida": true,
+    "elementos": [
+      {
+        "tipo": "DIFERENCIA",
+        "tipo_literal": "DIFERENCIA",
+        "texto": "Diferencia simulada de 118,16 €",
+        "factura_id": "f0000000-0000-4000-8000-000000000008",
+        "numero_factura": "AL-26-100231",
+        "documento_id": "d0000000-0000-4000-8000-000000000007",
+        "archivo_nombre": null,
+        "proveedor_comercial": "ALLIANCE",
+        "proveedor_razon_social": "ALLIANCEHEALTHCARECENCORA",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000008",
+        "evidencia": {
+          "resultado_simulado": "DIFERENCIA",
+          "diferencia": "118.1600",
+          "fallo": null,
+          "r18": null
+        }
+      },
+      {
+        "tipo": "DIFERENCIA",
+        "tipo_literal": "DIFERENCIA",
+        "texto": "Diferencia simulada de 2,0350 €",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "archivo_nombre": null,
+        "proveedor_comercial": null,
+        "proveedor_razon_social": "COFARES",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000003",
+        "evidencia": {
+          "resultado_simulado": "DIFERENCIA",
+          "diferencia": "2.0350",
+          "fallo": null,
+          "r18": null
+        }
+      },
+      {
+        "tipo": "NO_ALLIANCE",
+        "tipo_literal": "NO_ALLIANCE",
+        "texto": "Proveedor aún sin conciliación automática",
+        "factura_id": "f0000000-0000-4000-8000-000000000007",
+        "numero_factura": "CF-AB-2026-0912",
+        "documento_id": "d0000000-0000-4000-8000-000000000006",
+        "archivo_nombre": null,
+        "proveedor_comercial": null,
+        "proveedor_razon_social": "COFARES",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000007",
+        "evidencia": {
+          "resultado_simulado": null,
+          "diferencia": null,
+          "fallo": "PROVEEDOR_SIN_CONCILIACION_AUTOMATICA",
+          "r18": null
+        }
+      },
+      {
+        "tipo": "R18_PENDIENTE",
+        "tipo_literal": "R18_PENDIENTE",
+        "texto": "Pendiente de la regla R18",
+        "factura_id": "f0000000-0000-4000-8000-000000000006",
+        "numero_factura": "FD-26/04471",
+        "documento_id": "d0000000-0000-4000-8000-000000000005",
+        "archivo_nombre": null,
+        "proveedor_comercial": null,
+        "proveedor_razon_social": "FEDEFARMA",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000006",
+        "evidencia": {
+          "resultado_simulado": "NO_EVALUABLE",
+          "diferencia": null,
+          "fallo": "R18_SIN_EVIDENCIA_FICTICIO",
+          "r18": {
+            "estado": "PENDIENTE",
+            "ficticio": true
+          }
+        }
+      },
+      {
+        "tipo": "DEFECTO",
+        "tipo_literal": "DEFECTO",
+        "texto": "Documento con defecto tras 3 intentos",
+        "factura_id": null,
+        "numero_factura": null,
+        "documento_id": "d0000000-0000-4000-8000-000000000009",
+        "archivo_nombre": "Escaneo_ilegible_2610.pdf",
+        "proveedor_comercial": null,
+        "proveedor_razon_social": null,
+        "enlace": "/facturas",
+        "evidencia": {
+          "estado": "ERROR",
+          "intentos": 3,
+          "ejecucion": "e0000000-0000-4000-8000-000000000809"
+        }
+      },
+      {
+        "tipo": "OTRO",
+        "tipo_literal": "TIPO_FUTURO_PRUEBA",
+        "texto": "Elemento de la noche sin descripción (ver evidencia técnica)",
+        "factura_id": "f0000000-0000-4000-8000-000000000003",
+        "numero_factura": "CF-2026-55810",
+        "documento_id": "d0000000-0000-4000-8000-000000000003",
+        "archivo_nombre": null,
+        "proveedor_comercial": null,
+        "proveedor_razon_social": "COFARES",
+        "enlace": "/facturas/f0000000-0000-4000-8000-000000000003",
+        "evidencia": {
+          "fallo": null
+        }
+      }
+    ],
+    "por_tipo": {
+      "DIFERENCIA": 2,
+      "NO_ALLIANCE": 1,
+      "R18_PENDIENTE": 1,
+      "DEFECTO": 1,
+      "OTRO": 1
+    }
   },
   "pago": {
     "estado": "SIN_DATOS_BANCARIOS",

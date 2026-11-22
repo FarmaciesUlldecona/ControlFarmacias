@@ -19,6 +19,9 @@ from pg17_local import ROOT, _lit, _registrar
 from test_ensayo_fase4_2at import _ClienteServiceRole, _ConexionPg17
 
 ROTO = b"%PDF-1.4\nno es un pdf valido 2BJ\n"
+# 2026-11-19: puerta git en la tanda (modulo comun puerta_git, main del remoto con ls-remote).
+GIT_LIMPIO = {"status": "", "head": "a" * 40, "origin_local": "a" * 40, "origin_remoto": "a" * 40,
+              "origin_conocido": True, "origin_ancestro": True, "cambios": []}
 
 
 def _modulo():
@@ -54,6 +57,17 @@ def test_defecto_previsto_pasa_a_revision_al_maximo_r3():
         "estado_lectura": "REVISION", "ultima_clase_fallo": "DEFECTO_DOCUMENTO", "intentos": 4, "facturas": []}
 
 
+@pytest.mark.parametrize("git, esperado", [
+    (GIT_LIMPIO, []),
+    ({**GIT_LIMPIO, "status": " M src/x.py"}, ["GIT_ARBOL_NO_LIMPIO"]),
+    ({**GIT_LIMPIO, "head": "b" * 40, "cambios": ["docs/a.md", "src/b.py"]}, ["GIT_COMMITS_NO_DOCUMENTALES:src/b.py"]),
+    ({**GIT_LIMPIO, "origin_remoto": "c" * 40, "origin_conocido": False}, ["GIT_ORIGEN_DESCONOCIDO_LOCALMENTE"]),
+    ({**GIT_LIMPIO, "origin_remoto": None, "error_origen": "OSError"}, ["GIT_ORIGEN_NO_DETERMINABLE:OSError"]),
+])
+def test_puerta_git_de_la_tanda(git, esperado):
+    assert _modulo().puerta_git(git) == esperado
+
+
 def test_postcheck_informa_trabajadores_aparte_sin_veredicto():
     """Mejora aprobada por Pio (2026-11-13): Trabajadores se informa aparte y no hace fallar el postcheck."""
     m = _modulo()
@@ -84,6 +98,21 @@ def test_postcheck_informa_pagos_aparte_sin_veredicto():
     assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == ["FILA_BORRADA:albaranes:a1"]
 
 
+def test_postcheck_informa_cashflow_aparte_sin_veredicto():
+    """H7 (DISENO §6, decision de Pio 2026-11-22): Cashflow se informa aparte, como Pagos, sin veredicto."""
+    m = _modulo()
+    assert m.TABLAS_CASHFLOW == {"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
+                                 "cf_cashflow_saldos"}
+    assert m.TABLAS_CASHFLOW <= m.TABLAS_WEB
+    antes = {"cf_cashflow_importaciones": {}, "cf_cashflow_importes": {}, "albaranes": {"a1": ["ha", None]}}
+    despues = {"cf_cashflow_importaciones": {"i1": ["hi", None]}, "cf_cashflow_importes": {"1": ["h1", None]},
+               "cf_cashflow_saldos": {"1": ["hs", None]}, "albaranes": {"a1": ["ha", None]}}
+    assert m.diferencias_filas(antes, despues, set(), {"documentos_facturas"}) == []
+    assert m.cambios_cashflow(antes, despues) == {"cf_cashflow_importaciones": 1, "cf_cashflow_importes": 1,
+                                                  "cf_cashflow_saldos": 1}
+    assert m.cambios_pagos(antes, despues) == {} and m.cambios_trabajadores(antes, despues) == {}
+
+
 # --------------------------------------------------------------------------- PostgreSQL 17 local
 
 @pytest.fixture
@@ -111,6 +140,7 @@ def _serie(pg17_nueva_base, tmp_path, monkeypatch, variante):
     monkeypatch.setattr(m, "_tareas", lambda: {"tareas": [
         {"nombre": n, "proxima": None, "ultima": None, "resultado": 0} for n in ar.TAREAS_ESPERADAS]})
     monkeypatch.setattr(m, "_cliente", lambda: cliente)
+    monkeypatch.setattr(m, "_estado_git", lambda: dict(GIT_LIMPIO))
     plan = tmp_path / "plan.json"
     assert m.plan(plan, mirror) == 0
     return SimpleNamespace(pg=pg, m=m, ids=ids, plan=plan, raiz=tmp_path / "serie", sentencias=sentencias,
@@ -166,6 +196,19 @@ def test_tanda_ejecuta_hasta_el_corte_alliance_con_postcheck_por_fila(serie):
     assert _huella(pg) == antes
 
 
+def test_parada_por_puerta_git_sin_escrituras(serie, monkeypatch):
+    """2026-11-19: el codigo local por delante del main del remoto para la tanda antes de reclamar nada."""
+    pg, m = serie.pg, serie.m
+    monkeypatch.setattr(m, "_estado_git", lambda: {**GIT_LIMPIO, "head": "b" * 40, "cambios": ["src/x.py"]})
+    antes = _huella(pg)
+    assert m.tanda(5, serie.plan, serie.raiz / "t01") == 3
+    registro = _leer(serie.raiz / "t01" / "tanda.json")
+    assert (registro["veredicto"], registro["motivos"], registro["ejecuciones"]) == (
+        "PARADA", ["GIT_COMMITS_NO_DOCUMENTALES:src/x.py"], [])
+    assert registro["git"]["origin_remoto"] == "a" * 40
+    assert _huella(pg) == antes
+
+
 def test_parada_por_resultado_distinto_del_plan(serie):
     plan = _leer(serie.plan)
     plan["documentos"][0]["prediccion"] = {"clase": "DEFECTO", "motivo": "EXTRACCION_LOCAL_ERROR"}
@@ -179,7 +222,8 @@ def test_parada_por_resultado_distinto_del_plan(serie):
     assert registro["postcheck"] == {"veredicto": "POSTCHECK_OK", "problemas": [],
                                      "documentos": [serie.ids["hefame"]], "corte_alliance": False,
                                      "trabajadores": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}},
-                                     "pagos": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
+                                     "pagos": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}},
+                                     "cashflow": {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}}
     assert (serie.raiz / "t01" / "snapshot_post.json").exists()
 
 

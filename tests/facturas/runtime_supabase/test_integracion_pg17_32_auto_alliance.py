@@ -307,6 +307,8 @@ def test_noche_sombra_solo_escribe_su_fila(entorno_noche, tmp_path):
     assert informe["postcheck"]["filas_cambiadas_por_tabla"] == {}
     # Mejora aprobada por Pio (2026-11-13): Trabajadores, leido aparte e informativo.
     assert informe["postcheck"]["trabajadores"] == {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}
+    # H7: Cashflow, leido aparte e informativo (sin la 38, ninguna tabla).
+    assert informe["postcheck"]["cashflow"] == {"afecta_al_veredicto": False, "filas_cambiadas_por_tabla": {}}
     assert alliance in [d["documento_id"] for d in informe["sombra"]["documentos_que_reclamaria"]]
     assert informe["sombra"]["conciliacion_n1"]["factura_id"] == ids["08007969"]
     assert informe["sombra"]["conciliacion_n1"]["resultado"] == "CONCILIADA"

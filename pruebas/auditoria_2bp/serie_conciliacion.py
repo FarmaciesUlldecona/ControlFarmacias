@@ -14,8 +14,8 @@ albaranes que reservaria cada conciliacion prevista (R15) quedan ocupados para l
 previsto (CONCILIADA / DIFERENCIA y cuanto, o FALLO), la clave idempotente prevista y la huella de cada fila.
 
 ``tanda`` (guard exclusivo por tanda, sin reintentos; como maximo 5 la primera y 20 las siguientes): preflight
-READ_ONLY y snapshot por fila; puerta git (arbol limpio y HEAD = origin/main, o por delante solo con documentacion);
-para cada ejecucion, puertas (operacion, configuracion, MIGRACION 30 DESPLEGADA, tareas a 60 min o mas, n.o 1 del
+READ_ONLY y snapshot por fila; puerta git (arbol limpio y HEAD = main del remoto leido con ls-remote, o por
+delante solo con documentacion; modulo comun ``puerta_git``); para cada ejecucion, puertas (operacion, configuracion, MIGRACION 30 DESPLEGADA, tareas a 60 min o mas, n.o 1 del
 plan con la misma huella), nueva simulacion READ_ONLY del n.o 1 igual a la del plan y PARADA si no simula CONCILIADA
 (salvo decision de Pio registrada en el plan para esa factura y esa diferencia), UNA llamada a
 ``ejecutar_una_manual_conciliacion()`` y comprobacion (estado y conciliacion previstos, filas cambiadas solo de la
@@ -30,7 +30,6 @@ import hashlib
 import importlib.util
 import json
 import shutil
-import subprocess
 import sys
 import tempfile
 import traceback
@@ -47,10 +46,12 @@ import auditoria_readonly as ar  # noqa: E402
 from auditoria_readonly import (  # noqa: E402
     COLUMNAS_HUELLA, MODO_CLAIM, PROJECT_REF, SQL_SELECTOR_OFICIAL, SQL_TODAS_CON_FILTROS, _cuerpo_local,
     _cuerpo_remoto, _ejecutar_lectura, _escribir, _operacion, _puertas_operacion, _salida_fuera_del_repo)
-from src.facturas.runtime_supabase.noche_automatica import TABLAS_PAGOS, TABLAS_TRABAJADORES  # noqa: E402
+from src.facturas.runtime_supabase import puerta_git as _puerta_git  # noqa: E402
+from src.facturas.runtime_supabase.noche_automatica import (  # noqa: E402
+    TABLAS_CASHFLOW, TABLAS_PAGOS, TABLAS_TRABAJADORES)
 
-# Tablas que escribe la web (Trabajadores; Pagos, H6): fuera del veredicto, informadas aparte.
-TABLAS_WEB = TABLAS_TRABAJADORES | TABLAS_PAGOS
+# Tablas ajenas a facturas (Trabajadores; Pagos, H6; Cashflow, H7): fuera del veredicto, informadas aparte.
+TABLAS_WEB = TABLAS_TRABAJADORES | TABLAS_PAGOS | TABLAS_CASHFLOW
 
 
 def _cargar(nombre: str, ruta: str):
@@ -253,35 +254,14 @@ def _factura(factura_id: str) -> dict:
 
 # --------------------------------------------------------------------------- git
 
-def _git(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
-
-
 def _estado_git() -> dict:
-    try:
-        return {"status": _git("status", "--porcelain"), "head": _git("rev-parse", "HEAD"),
-                "origin": _git("rev-parse", "origin/main"),
-                "origin_ancestro": subprocess.run(["git", "merge-base", "--is-ancestor", "origin/main", "HEAD"],
-                                                  cwd=ROOT).returncode == 0,
-                "cambios": _git("diff", "--name-only", "origin/main..HEAD").splitlines()}
-    except (OSError, subprocess.CalledProcessError) as exc:
-        return {"error": f"{type(exc).__name__}: {exc}"}
+    """Estado git con el main del remoto leido con ls-remote (modulo comun ``puerta_git``, 2026-11-19)."""
+    return _puerta_git.estado(ROOT)
 
 
 def puerta_git(g: dict) -> list[str]:
-    """Arbol limpio y HEAD = origin/main; excepcion de Pio (2BN-D): por delante solo con documentacion."""
-    if "error" in g:
-        return [f"GIT_NO_DETERMINABLE:{g['error']}"]
-    fallos = []
-    if g["status"]:
-        fallos.append("GIT_ARBOL_NO_LIMPIO")
-    if g["head"] != g["origin"]:
-        no_doc = [c for c in g["cambios"] if not (c.startswith("docs/") or c.endswith(".md"))]
-        if not g["origin_ancestro"]:
-            fallos.append("GIT_HEAD_NO_DESCIENDE_DE_ORIGIN")
-        elif no_doc:
-            fallos.append(f"GIT_COMMITS_NO_DOCUMENTALES:{','.join(no_doc[:10])}")
-    return fallos
+    """Arbol limpio y HEAD = main del remoto; excepcion de Pio (2BN-D): por delante solo con documentacion."""
+    return _puerta_git.evaluar(g)
 
 
 # --------------------------------------------------------------------------- comprobaciones (sin conexion)
@@ -353,9 +333,15 @@ def cambios_pagos(antes: dict, despues: dict) -> dict[str, int]:
     return cambios_trabajadores(antes, despues, TABLAS_PAGOS)
 
 
+def cambios_cashflow(antes: dict, despues: dict) -> dict[str, int]:
+    """Filas de Cashflow (H7) cambiadas, nuevas o borradas por tabla: se informan aparte, sin veredicto (DISENO §6)."""
+    return cambios_trabajadores(antes, despues, TABLAS_CASHFLOW)
+
+
 def diferencias_filas(antes: dict, despues: dict, facturas: set[str]) -> list[str]:
     """Criterio 2AX por fila: solo filas nuevas de ``facturas``, cambios en sus filas de ``CAMBIABLES`` y bajas de
-    sus reservas (R15). Las tablas de Trabajadores y Pagos no cuentan (las escribe la web); se informan con
+    sus reservas (R15). Las tablas de Trabajadores, Pagos y Cashflow no cuentan (son ajenas a facturas: Trabajadores y
+    Pagos las escribe la web; Cashflow, solo la RPC de importacion del Excel); se informan con
     ``cambios_trabajadores``."""
     problemas = []
     for tabla in sorted((set(antes) | set(despues)) - TABLAS_WEB):
@@ -403,9 +389,14 @@ def _ejecutar_una(cliente, directorio: Path):
     from src.facturas.runtime_supabase.compositor_manual import construir_worker_manual_productivo
     from src.facturas.runtime_supabase.repositorios import RepositorioRuntimeSupabase
 
+    from src.facturas.runtime_supabase.lectura_readonly import r20_habilitada
+
     configuracion = RepositorioRuntimeSupabase(cliente).obtener_configuracion()
     worker_id = f"{WORKER_BASE}-{uuid.uuid4().hex[:8]}"
-    return construir_worker_manual_productivo(cliente, configuracion, worker_id, directorio) \
+    # R20 (migracion 36): la misma deteccion READ_ONLY que la simulacion del plan (``ar._simular``).
+    return construir_worker_manual_productivo(
+        cliente, configuracion, worker_id, directorio,
+        r20_habilitada=lambda: _ejecutar_lectura(lambda lector: {"r20": r20_habilitada(lector)})[1]["r20"]) \
         .ejecutar_una_manual_conciliacion()
 
 
@@ -453,7 +444,10 @@ def tanda(n: int, plan_ruta: Path, directorio: Path) -> int:
                                                   "filas_cambiadas_por_tabla": cambios_trabajadores(pre["filas"],
                                                                                                     post["filas"])},
                                  "pagos": {"afecta_al_veredicto": False,
-                                           "filas_cambiadas_por_tabla": cambios_pagos(pre["filas"], post["filas"])}}
+                                           "filas_cambiadas_por_tabla": cambios_pagos(pre["filas"], post["filas"])},
+                                 "cashflow": {"afecta_al_veredicto": False,
+                                              "filas_cambiadas_por_tabla": cambios_cashflow(pre["filas"],
+                                                                                            post["filas"])}}
         return problemas
 
     def cerrar(veredicto: str, motivos: list[str]) -> int:
