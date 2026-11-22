@@ -108,6 +108,18 @@ SUITE_HISTORICA = {
         "test_ensayo_completo_despliegue_36_y_segundo_intento_revierte",
         "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_36_es_de_solo_lectura",
         "test_postcondiciones_en_la_plantilla_36"),
+    # 37-D (2026-11-21) y H7-D (2026-11-22): por decision de Pio entran en el commit del 38-B.
+    "test_integracion_pg17_37.py": (
+        "test_rollback_37_devuelve_exactamente_el_esquema_36",
+        "test_rollback_con_un_documento_ya_en_revision_lo_deja_ahi",
+        "test_ensayo_completo_despliegue_37_y_segundo_intento_revierte",
+        "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_37_es_de_solo_lectura",
+        "test_postcondiciones_en_la_plantilla_37"),
+    "test_integracion_pg17_38_cashflow.py": (
+        "test_rollback_38_devuelve_exactamente_el_esquema_37", "test_rollback_falla_cerrado_con_datos",
+        "test_ensayo_completo_despliegue_38_y_segundo_intento_revierte",
+        "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_38_es_de_solo_lectura",
+        "test_postcondiciones_en_la_plantilla_38"),
 }
 
 # Modulo pg17_local -> familia (grupo xdist_group). Los modulos sin entrada forman su propia familia. Medicion del

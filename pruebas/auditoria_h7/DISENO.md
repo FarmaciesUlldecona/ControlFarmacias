@@ -1,8 +1,9 @@
 # H7: importación del Excel de cashflow de Pio a Supabase (migración 38). DISEÑO
 
 Estado: **DISEÑO CON LAS DECISIONES DE PIO C1–C8** (2026-11-17), **EXCEL VERIFICADO Y DECISIONES E1–E7**
-(2026-11-18, §0 y §1). **Migración 38 implementada en local** (2026-11-22, §9), sin desplegar; el script de
-importación es el hito 38-B.
+(2026-11-18, §0 y §1). **Migración 38 implementada en local** (2026-11-22, §9) y **desplegada en producción**
+(H7-D, 2026-11-22). **Script de importación implementado en local** (hito 38-B, 2026-11-22, §10), sin ejecutar contra
+producción; la tarea de las 23:45 no está creada.
 
 - **Origen:** petición de la web (H7 Cashflow). La pantalla ya está hecha en FIXTURES contra el contrato de la petición
   (commit H7 en `web/fase1`, que no se ha leído para este diseño).
@@ -262,7 +263,7 @@ En los dos, `farmacia` se copia de la cuenta (null en `SL`) y un check comprueba
 
 ## 4. Script de importación
 
-`src/cashflow/importar_cashflow.py` (`PROPUESTA`; sin código en este hito).
+`src/cashflow/importar_cashflow.py` (implementado en el hito 38-B; contrato en §10).
 
 - **Modos:**
   - `--noche` lo lanza la tarea;
@@ -379,4 +380,54 @@ Las dos propuestas de redondeo (§2.3 y §3.5) quedan **aprobadas** (2026-11-18)
     `CUADRE_NO_VALIDO`;
   - y los checks de la tabla (nombre sin ruta, hash, origen, estado).
 - Una importación `OK` sin importes o sin saldos se rechaza (`IMPORTACION_OK_VACIA`). Es más cerrado que §3.5; el
-  Excel real tiene importes en PÍO y RITA (§1).
+  Excel real tiene importes en PÍO y RITA (§1). Decisión de Pio (2026-11-22): se mantiene.
+
+## 10. Implementación del 38-B (2026-11-22)
+
+Orden de Pio del 2026-11-22: script según §7.3, tests con Excel ficticio contra PostgreSQL 17 local, ensayos de la 37
+y de la 38 en `SUITE_HISTORICA`, docstring de la serie 2BP y `.bat` de la tarea de las 23:45 con el comando para
+crearla (la tarea no se crea). `CONFIRMADO POR TEST` en local; nada se ha ejecutado contra producción.
+
+- **Uso:** `python -m src.cashflow.importar_cashflow <NOCHE|MANUAL> <SIMULAR|REAL> [--aceptar-categorias-nuevas]`.
+  La opción solo se admite con `MANUAL`. `SIMULAR` lee, valida e informa sin escribir nada en la BD (sí hace la
+  copia del Excel). La tarea lanza `NOCHE REAL` con `ejecutar_importacion_cashflow.bat`.
+- **Escritura:** solo la RPC de la 38, con el cliente del sistema de la noche (mismas credenciales, sin variables
+  nuevas); nunca un `INSERT`. Lecturas en una sesión READ_ONLY. Farmatic no interviene.
+- **Puertas:** las de §4 más la puerta git en `REAL` (la misma que la noche). La propia tarea de Cashflow en
+  ejecución no para el origen `NOCHE`.
+- **Resultados y códigos de salida:**
+
+| Resultado | Escribe en la BD | Código |
+|---|---|---|
+| `OK` (importación vigente) | cabecera, importes y saldos | 0 |
+| `SIN_CAMBIOS` (C6), `SIMULADO_OK` | nada | 0 |
+| `ERROR` por el Excel o por un rechazo de la RPC (`RPC_RECHAZO:<código>`) | solo la cabecera | 2 |
+| `ERROR` sin fichero, ambiguo o copia inestable; `SIMULADO_ERROR` | nada (solo el informe) | 2 |
+| `PARADA` (puertas, hash de una importación anterior, resultado incierto de la RPC, postcheck) | nada, salvo que el postcheck falle tras escribir | 3 |
+| `CATEGORIAS_NUEVAS_SIN_ACEPTAR` (C5) | nada | 4 |
+
+- **Concreciones del script** (`PROPUESTA` para Pio: no están en las decisiones C1–C8 ni E1–E7):
+  1. Sin fichero, con más de uno o con una copia inestable no hay hash: el `ERROR` va solo al informe, no a la BD.
+  2. **C5:** una categoría nueva no se registra como `ERROR`, porque su hash quedaría bloqueado (único) y Pio no
+     podría aceptar ese mismo fichero. Se informa y no se escribe nada hasta la manual con la opción. Cuenta como
+     nueva cada par (cuenta, categoría) sin importes en la importación vigente; en la primera importación, todas.
+  3. **C6 ampliado:** si el hash es el de una importación anterior que no es la última (el Excel ha vuelto a una
+     versión ya importada), la RPC lo rechazaría (`HASH_YA_IMPORTADO`): `PARADA` sin escribir.
+  4. **Resultado incierto** (error sin código de la RPC, por ejemplo un corte de red): `PARADA`, sin registrar un
+     `ERROR` aparte; el postcheck dice si llegó a escribirse.
+  5. **Filas sin categoría:** solo pueden tener fórmulas (totales, cuadre). Un número tecleado en una de ellas es
+     `IMPORTE_SIN_CATEGORIA`.
+  6. **Saldos:** el texto de fórmula o solo espacios cuenta como vacío (E2); otro texto es `TEXTO_EN_SALDO`. La E5 se
+     aplica si en la primera decena de `SL` falta el saldo inicial o el de fórmulas.
+  7. **Plantillas `Banco_N`:** una fórmula sin valor guardado en una fila de categoría es `ERROR`, igual que un
+     importe distinto de 0 (E4).
+  8. **Cuadre de la RPC repetido en el script:** con los valores al céntimo, 0,005 por importe redondeado y ninguno
+     por saldo (`CUADRE_REDONDEADO_NO_VALIDO`); así `SIMULAR` predice lo que la RPC rechazaría. Un importe que
+     redondea a 0 es `IMPORTE_CERO_TRAS_REDONDEO`.
+- **Postcheck por fila:** antes y después de la RPC, todas las tablas de `public` del snapshot 2AX de la noche
+  (cualquier fila cambiada es `FILAS_AJENAS`) y las de Cashflow (solo la cabecera nueva, sus importes y saldos y el
+  vigente de la anterior).
+- **Informe:** `C:\ControlFarmacias\cashflow\informes\<fecha>\<hora>_<origen>_<modo>\`, copias en
+  `C:\ControlFarmacias\cashflow\copias\`. Sin conceptos ni categorías.
+- **C7 `PENDIENTE`:** la comprobación «Cashflow no en ejecución» en la puerta de la noche y de los preflights se
+  añade con la creación de la tarea, que hoy no existe.

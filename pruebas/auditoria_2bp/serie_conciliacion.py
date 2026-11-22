@@ -340,7 +340,8 @@ def cambios_cashflow(antes: dict, despues: dict) -> dict[str, int]:
 
 def diferencias_filas(antes: dict, despues: dict, facturas: set[str]) -> list[str]:
     """Criterio 2AX por fila: solo filas nuevas de ``facturas``, cambios en sus filas de ``CAMBIABLES`` y bajas de
-    sus reservas (R15). Las tablas de Trabajadores, Pagos y Cashflow no cuentan (las escribe la web); se informan con
+    sus reservas (R15). Las tablas de Trabajadores, Pagos y Cashflow no cuentan (son ajenas a facturas: Trabajadores y
+    Pagos las escribe la web; Cashflow, solo la RPC de importacion del Excel); se informan con
     ``cambios_trabajadores``."""
     problemas = []
     for tabla in sorted((set(antes) | set(despues)) - TABLAS_WEB):
