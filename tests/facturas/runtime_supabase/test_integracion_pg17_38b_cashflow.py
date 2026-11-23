@@ -375,6 +375,8 @@ def test_puertas_paran_sin_escribir(cf, preparar, origen, modo, fallo):
     codigo, informe = cf.importar(origen, modo)
     assert (codigo, informe["resultado"]) == (ic.CODIGO_PARADA, "PARADA")
     assert fallo in informe["puertas"]
+    # Orden de Pio del 2026-11-23: el texto del error de las tareas (saneado) queda en el informe.
+    assert informe.get("tareas_error") == ("sin acceso" if fallo == "TAREAS_NO_DETERMINABLES" else None)
     assert cf.cliente.rpcs == [] and cf.pg.sql(CONTEOS) == "0|0|0"
 
 

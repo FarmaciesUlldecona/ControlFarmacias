@@ -52,7 +52,15 @@ ORIGENES = ("NOCHE", "MANUAL")
 MODOS = ("SIMULAR", "REAL")
 OPCION_ACEPTAR = "--aceptar-categorias-nuevas"
 TAREA_CASHFLOW = "ControlFarmacias - Importar Cashflow"
-RPC = "cf_cashflow_registrar_importacion"
+# Tareas que la puerta consulta, cada una por su nombre exacto (orden de Pio del 2026-11-23: el comodin
+# '*ControlFarmacias*' dio TAREAS_NO_DETERMINABLES en la primera ejecucion de la tarea, la noche del 22/11). La de
+# sincronizacion lleva tilde (U+00F3): se compone con chr para que el fuente sea ASCII.
+TAREAS_CONSULTADAS = ("ControlFarmacias - Importar facturas", "Sincronizaci" + chr(0xF3) + "n ControlFarmacias",
+                      "ControlFarmacias - Automatizacion Alliance", TAREA_CASHFLOW)
+# LastTaskResult de una tarea en ejecucion (SCHED_S_TASK_RUNNING), el mismo criterio que la noche y los preflights.
+RESULTADO_EN_EJECUCION = 267009
+MAX_TEXTO_ERROR = 400
+RPC ="cf_cashflow_registrar_importacion"
 TABLAS_CASHFLOW = ("cf_cashflow_cuentas", "cf_cashflow_importaciones", "cf_cashflow_importes", "cf_cashflow_saldos")
 FIRMA_RPC = "public.cf_cashflow_registrar_importacion(jsonb,jsonb,jsonb)"
 # La hoja de PIO lleva tilde (U+00CD): se compone con chr para que el fuente sea ASCII.
@@ -492,7 +500,46 @@ def _llamar_rpc(cliente, cabecera: dict, importes: list[dict], saldos: list[dict
 # --------------------------------------------------------------------------- importacion
 
 
-def _puertas(entorno: Entorno, origen: str, modo: str, previas: dict) -> list[str]:
+_PATRONES_SENSIBLES = (
+    (re.compile(r"[A-Za-z]:\\[^\s\"'<>|]*"), "<ruta>"),
+    (re.compile(r"\\\\[^\s\"'<>|]+"), "<ruta>"),
+    (re.compile(r"\bS-1-[0-9-]+"), "<sid>"),
+    (re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"), "<correo>"),
+    (re.compile(r"\b[\w.-]+\\[\w.$-]+"), "<cuenta>"),
+)
+
+
+def sanear_texto_error(texto: str) -> str:
+    """Texto de error de PowerShell para el informe, sin datos sensibles (orden de Pio del 2026-11-23).
+
+    Si llega serializado (CLIXML de ``powershell -EncodedCommand`` con stderr redirigido), se toman solo los fragmentos
+    de error. Se quitan las lineas que repiten el script (``At line``, ``+ ...``), salvo ``CategoryInfo`` y
+    ``FullyQualifiedErrorId``; rutas, SID, correos y cuentas ``DOMINIO\\usuario`` se enmascaran; un solo renglon de
+    como mucho MAX_TEXTO_ERROR caracteres."""
+    texto = texto or ""
+    inicio_clixml = texto.find("#< CLIXML")
+    if inicio_clixml >= 0:
+        partes = re.findall(r'<S S="Error">(.*?)</S>', texto[inicio_clixml:], flags=re.S)
+        texto = texto[:inicio_clixml] + "".join(partes)
+        texto = re.sub(r"_x([0-9A-Fa-f]{4})_", lambda m: chr(int(m.group(1), 16)), texto)
+        texto = (texto.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&apos;", "'")
+                 .replace("&amp;", "&"))
+    lineas = []
+    for linea in texto.splitlines():
+        limpia = linea.strip()
+        if not limpia or limpia.startswith("At line:") or limpia.startswith("En l"):
+            continue
+        if limpia.startswith("+") and not re.match(r"\+\s*(CategoryInfo|FullyQualifiedErrorId)\b", limpia):
+            continue
+        lineas.append(limpia.lstrip("+ ").strip())
+    resultado = " | ".join(lineas)
+    for patron, sustituto in _PATRONES_SENSIBLES:
+        resultado = patron.sub(sustituto, resultado)
+    resultado = re.sub(r"\s+", " ", resultado).strip()
+    return resultado[:MAX_TEXTO_ERROR] or "SIN_DETALLE"
+
+
+def _puertas(entorno: Entorno, origen: str, modo: str, previas: dict, informe: dict | None = None) -> list[str]:
     fallos = []
     if modo == "REAL":
         resultado_git = entorno.puerta_git()
@@ -500,9 +547,13 @@ def _puertas(entorno: Entorno, origen: str, modo: str, previas: dict) -> list[st
     info = entorno.tareas()
     if "error" in info:
         fallos.append("TAREAS_NO_DETERMINABLES")
+        if informe is not None:
+            informe["tareas_error"] = sanear_texto_error(str(info["error"]))
     else:
         for tarea in info.get("tareas", []):
-            if tarea.get("estado") == "Running" and not (origen == "NOCHE" and tarea.get("nombre") == TAREA_CASHFLOW):
+            en_ejecucion = (tarea.get("estado") == "Running"
+                            or tarea.get("resultado") == RESULTADO_EN_EJECUCION)
+            if en_ejecucion and not (origen == "NOCHE" and tarea.get("nombre") == TAREA_CASHFLOW):
                 fallos.append(f"TAREA_EN_EJECUCION:{tarea.get('nombre')}")
     if previas.get("noches_en_curso"):
         fallos.append(f"NOCHE_EN_CURSO:{previas['noches_en_curso']}")
@@ -531,7 +582,7 @@ def importar(origen: str, modo: str, aceptar_categorias_nuevas: bool, entorno: E
 def _importar(origen: str, modo: str, aceptar: bool, entorno: Entorno, informe: dict) -> int:
     with entorno.abrir_lectura() as lector:
         previas = _lecturas_previas(lector)
-    informe["puertas"] = _puertas(entorno, origen, modo, previas)
+    informe["puertas"] = _puertas(entorno, origen, modo, previas, informe)
     if informe["puertas"]:
         informe["resultado"] = "PARADA"
         informe["motivo"] = "PUERTAS"
@@ -654,6 +705,7 @@ def _escribir_informe(entorno: Entorno, informe: dict, inicio: dt.datetime) -> s
         + (f" - {informe['motivo']}" if informe.get("motivo") else ""),
         f"Fichero: {informe.get('archivo_nombre', '-')} ({(informe.get('archivo_hash') or '-')[:12]})",
         f"Detalle: {informe.get('detalle_error') or '-'}",
+        *([f"Error de tareas: {informe['tareas_error']}"] if informe.get("tareas_error") else []),
         f"Importes: {lectura.get('importes', 0)}; saldos: {lectura.get('saldos', 0)}; "
         f"avisos de redondeo: {len(lectura.get('avisos_redondeo', []))}; "
         f"celdas '=' vacias: {(lectura.get('avisos_celdas_igual_vacias') or {}).get('n', 0)}; "
@@ -672,10 +724,18 @@ def _escribir_informe(entorno: Entorno, informe: dict, inicio: dt.datetime) -> s
 
 
 def _tareas_productivas() -> dict:
-    """Estado de las tareas de ControlFarmacias, solo lectura (Get-ScheduledTask)."""
+    """Estado de las tareas de ControlFarmacias, solo lectura, cada una por su nombre exacto (orden de Pio del
+    2026-11-23; mismo patron que ``noche_automatica._tareas_productivas``, que funciona dentro de su tarea).
+
+    ``Get-ScheduledTaskInfo -ErrorAction Stop``: si alguna de TAREAS_CONSULTADAS no se puede leer (o no existe), la
+    puerta falla cerrada con el texto del error. El estado (``Get-ScheduledTask`` por nombre) es complementario: en
+    ejecucion = estado Running o LastTaskResult 267009."""
+    nombres = ",".join("'" + n.replace("'", "''") + "'" for n in TAREAS_CONSULTADAS)
     ps = ("[Console]::OutputEncoding = [Text.Encoding]::UTF8;"
-          "$t = @(Get-ScheduledTask -TaskName '*ControlFarmacias*' -ErrorAction Stop | ForEach-Object {"
-          " [pscustomobject]@{ nombre = $_.TaskName; estado = [string]$_.State } });"
+          f"$t = @(foreach ($n in @({nombres})) {{ $i = Get-ScheduledTaskInfo -TaskName $n -ErrorAction Stop;"
+          " $s = Get-ScheduledTask -TaskName $n -ErrorAction SilentlyContinue;"
+          " [pscustomobject]@{ nombre = $n; estado = $(if ($s) { [string]$s.State } else { $null });"
+          "  resultado = $i.LastTaskResult } });"
           "ConvertTo-Json -InputObject $t -Depth 3")
     codificado = base64.b64encode(ps.encode("utf-16-le")).decode("ascii")
     try:
@@ -684,9 +744,16 @@ def _tareas_productivas() -> dict:
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {"error": type(exc).__name__}
     if r.returncode:
-        return {"error": r.stderr.decode("utf-8", "replace").strip()[:500]}
-    tareas = json.loads(r.stdout.decode("utf-8-sig") or "[]")
-    return {"tareas": tareas if isinstance(tareas, list) else [tareas]}
+        return {"error": f"CODIGO_{r.returncode}: " + r.stderr.decode("utf-8", "replace")}
+    try:
+        tareas = json.loads(r.stdout.decode("utf-8-sig") or "[]")
+    except ValueError:
+        return {"error": "SALIDA_NO_JSON"}
+    tareas = tareas if isinstance(tareas, list) else [tareas]
+    leidas = sorted(unicodedata.normalize("NFC", str(t.get("nombre"))) for t in tareas if isinstance(t, dict))
+    if leidas != sorted(unicodedata.normalize("NFC", n) for n in TAREAS_CONSULTADAS):
+        return {"error": "TAREAS_INCOMPLETAS"}
+    return {"tareas": tareas}
 
 
 def main(argv: list[str]) -> int:
@@ -711,7 +778,7 @@ def main(argv: list[str]) -> int:
         codigo, informe = importar(posicionales[0], posicionales[1], OPCION_ACEPTAR in opciones, entorno)
     finally:
         conexion.close()
-    print(json.dumps({k: informe.get(k) for k in ("resultado", "motivo", "detalle_error", "registrado",
+    print(json.dumps({k: informe.get(k) for k in ("resultado", "motivo", "detalle_error", "tareas_error", "registrado",
                                                   "categorias_nuevas", "informe_sha256")}, ensure_ascii=False))
     return codigo
 

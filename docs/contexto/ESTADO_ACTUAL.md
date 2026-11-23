@@ -451,6 +451,13 @@ reglas en REGLAS_CRITICAS («Cashflow (H7)»).
       sea posible»; acción `C:\ControlFarmacias\Programa\ejecutar_importacion_cashflow.bat`.
     - **Puerta C7:** la noche y los preflights la leen y no bloquean. Los preflights paran desde 60 minutos antes de
       su próxima ejecución (22:45), como con las demás tareas.
+    - **Primera ejecución (noche del 22/11, 23:45): `PARADA` por `TAREAS_NO_DETERMINABLES`**, código 3, sin
+      escribir nada; la vigente sigue siendo la importación `MANUAL`. Dentro de la tarea falló la lectura de las
+      tareas por el comodín `*ControlFarmacias*`; desde una sesión interactiva del mismo usuario funcionaba. La causa
+      exacta no quedó registrada, porque el informe guardaba solo el código.
+    - **Corrección (orden de Pio del 2026-11-23), `CONFIRMADO POR TEST`:** el importador lee cada tarea por su
+      nombre exacto, con el mismo patrón que la noche (que sí funciona dentro de su tarea). Además guarda en el
+      informe el texto del error, saneado (`tareas_error`). Queda pendiente verificarlo lanzando la tarea a mano.
   - **Esquema para la web:** `docs/web/ESQUEMA_CASHFLOW.md`.
   - `PENDIENTE` (apuntado por Pio, no para hoy): aviso si el Excel no cambia en N días, por si Google Drive vuelve a
     colgarse.

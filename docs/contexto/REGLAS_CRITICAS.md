@@ -630,7 +630,11 @@ entran en `SUITE_HISTORICA` en el commit del 38-B, no en el de su «D».
   [--aceptar-categorias-nuevas]`. Su **única escritura es la RPC de la 38**, con el cliente del sistema de la noche;
   nunca un `INSERT`. Lee en sesión READ_ONLY; nunca abre ni escribe el original (trabaja sobre una copia estable fuera
   del repositorio). `SIMULAR` no escribe en la BD. Puertas: git en `REAL`, ninguna tarea en ejecución, ninguna noche
-  `EN_CURSO`, la 38 presente y la carpeta C1. Postcheck por fila antes y después: solo cambian las filas de esa
+  `EN_CURSO`, la 38 presente y la carpeta C1. **Puerta de tareas (orden de Pio del 2026-11-23):** lee cada tarea de
+  ControlFarmacias por su nombre exacto, como la noche (nunca por comodín). Las cuatro tareas son obligatorias: si
+  alguna no se puede leer o falta, para con `TAREAS_NO_DETERMINABLES`. Una tarea está en ejecución si su estado es
+  `Running` o su último resultado es 267009. El texto del error de PowerShell queda en el informe (`tareas_error`),
+  saneado: sin rutas, SID, correos ni cuentas. Postcheck por fila antes y después: solo cambian las filas de esa
   importación. Informe sin conceptos ni categorías. Lanzarlo pide confirmación (regla `ask` `*importar_cashflow*`).
   Concreciones en DISENO §10: las cuatro primeras, decididas por Pio el 2026-11-22; el resto, `PROPUESTA`.
 - **Postchecks:** `TABLAS_CASHFLOW` en la noche y en las series 2BJ y 2BP, fuera del criterio por fila e informadas
