@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-22 (Cashflow: primera importación MANUAL REAL OK, vigente, postcheck solo Cashflow, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y verificada, esquema para la web; 38-B, primera simulación con el Excel real, SIMULADO_ERROR sin escribir nada, E2 ampliada a "=" y corrección del Excel en origen por Pio; 38-B, decisiones de Pio sobre DISENO §10: categoría nueva por todas las importaciones OK anteriores y C7 en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, .bat de la tarea de las 23:45 sin crear la tarea, ensayos de la 37 y la 38 en la histórica y docstring de la 2BP; H7-D: migración 38 de Cashflow desplegada en producción, APLICADA, postcheck por fila OK, prueba de acceso de cf_lectura ACCESO_OK y flags encendidos de nuevo; H7: migración 38 de Cashflow implementada en local, con desplegar_38 ensayado y prueba de acceso de cf_lectura; 2026-11-21, 37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-23 (carga Alliance abril–mayo: corte de la importación de PDF a 2026-04-01 sin ABRIL 26\1A DESENA, solo local, y hook de identidad Farmatic sin los nombres de la importación de facturas; Cashflow: puerta de tareas por nombre, tarea verificada a mano y segunda importación 6b093e12 vigente; 2026-11-22, Cashflow: primera importación MANUAL REAL OK, vigente, postcheck solo Cashflow, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y verificada, esquema para la web; 38-B, primera simulación con el Excel real, SIMULADO_ERROR sin escribir nada, E2 ampliada a "=" y corrección del Excel en origen por Pio; 38-B, decisiones de Pio sobre DISENO §10: categoría nueva por todas las importaciones OK anteriores y C7 en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, .bat de la tarea de las 23:45 sin crear la tarea, ensayos de la 37 y la 38 en la histórica y docstring de la 2BP; H7-D: migración 38 de Cashflow desplegada en producción, APLICADA, postcheck por fila OK, prueba de acceso de cf_lectura ACCESO_OK y flags encendidos de nuevo; H7: migración 38 de Cashflow implementada en local, con desplegar_38 ensayado y prueba de acceso de cf_lectura; 2026-11-21, 37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -343,6 +343,29 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Carga Alliance abril–mayo: corte de la importación de PDF a 2026-04-01 (2026-11-23)
+
+DECISIÓN DE PIO (b) del 2026-11-22, concretada el 2026-11-23. `CONFIRMADO POR TEST`; sin ejecutar todavía contra
+producción.
+- **Corte:** `FECHA_INICIO_IMPORTACION` baja de 2026-06-01 a **2026-04-01** (`src/facturas/importar_facturas_drive.py`).
+- **Excepción:** la subcarpeta `ABRIL 26\1A DESENA` queda fuera, porque su factura de Alliance es del 21–31/03 y
+  no tiene albaranes en Farmatic (`SUBCARPETAS_EXCLUIDAS`, `subcarpeta_excluida()`). La exclusión vale para el
+  recorrido de PDF y para el manifiesto PIO (`manifiesto_pio.clasificar_ruta_indice`).
+- **Inventario READ_ONLY (Drive y Supabase), 2026-11-23:** entrarían 53 PDF nuevos.
+  - 51 son de abril y mayo. El cuarto PDF de `MAIG 26\3A DESENA` ya estaba importado (mismo hash).
+  - Los otros 2 ya estaban en Drive dentro del corte anterior, en `JUNY 26\2A DESENA` y `NOVEMBRE 26\3A DESENA`.
+  - Alliance por contenido (`AdaptadorAlliance.reconocer()` y CIF A50004324): 7, todos `RECONOCIDO`. Son uno por
+    decena de abril 2A y 3A y de mayo 1A, 2A y 3A, más el de junio 2A y el de noviembre 3A.
+  - Hay 3 PDF que no son de Alliance y cuyo texto nativo no se puede leer.
+  - Evidencias en `C:\ControlFarmacias\evidencias_carga_abril_mayo\`.
+- **Plan (DECISIÓN DE PIO, 2026-11-23):** tandas manuales hoy, antes de las 21:00, con los flags apagados:
+  importación manual de PDF, serie 2BJ y serie 2BP. Reserva: si a las 19:30 no han terminado, se encienden los
+  flags y la noche recoge el resto (20 + 20).
+- **Hook de identidad Farmatic (DECISIÓN DE PIO, 2026-11-23):** `importar_facturas_drive` y
+  `ejecutar_importacion_facturas` salen de sus patrones, porque no abren conexión con Farmatic ni usan sus
+  credenciales. Siguen con su regla `ask`. La sincronización y los módulos de Farmatic siguen exigiendo
+  `ControlFarmaciasRO`.
+
 ### H7: migración 38 de Cashflow (2026-11-22)
 
 DECISIONES DE PIO C1–C8, E1–E7, las dos propuestas de redondeo y las respuestas del 2026-11-22. `CONFIRMADO POR
@@ -455,9 +478,23 @@ reglas en REGLAS_CRITICAS («Cashflow (H7)»).
       escribir nada; la vigente sigue siendo la importación `MANUAL`. Dentro de la tarea falló la lectura de las
       tareas por el comodín `*ControlFarmacias*`; desde una sesión interactiva del mismo usuario funcionaba. La causa
       exacta no quedó registrada, porque el informe guardaba solo el código.
-    - **Corrección (orden de Pio del 2026-11-23), `CONFIRMADO POR TEST`:** el importador lee cada tarea por su
-      nombre exacto, con el mismo patrón que la noche (que sí funciona dentro de su tarea). Además guarda en el
-      informe el texto del error, saneado (`tareas_error`). Queda pendiente verificarlo lanzando la tarea a mano.
+    - **Corrección (orden de Pio del 2026-11-23, ba8174d), `CONFIRMADO EN PRODUCCIÓN`:** el importador lee cada
+      tarea por su nombre exacto, con el mismo patrón que la noche (que sí funciona dentro de su tarea). Además
+      guarda en el informe el texto del error, saneado (`tareas_error`).
+    - **Ejecución a mano de la tarea (Pio, 2026-11-23 11:02), `CONFIRMADO EN PRODUCCIÓN`:** LastTaskResult 0,
+      informe `110244181_NOCHE_REAL`, `OK`, sin puertas fallidas ni `tareas_error`. La puerta de tareas por
+      nombre funcionó dentro de la tarea.
+  - **Segunda importación: `6b093e12` (NOCHE, tarea lanzada a mano, 2026-11-23), `OK` y vigente.**
+    - Fichero `CASHFLOWW (2).xlsm`, hash `cbe664b1…4993`: 5138 importes (PIO 3211, RITA 1927) y 539 saldos.
+      Cuadre exacto y al céntimo en todas las decenas; 0 categorías nuevas; sin avisos de redondeo.
+    - Antes, la primera simulación de ese Excel dio `SIMULADO_ERROR` (`FORMULA_SIN_VALOR`, 8 celdas de RITA y 1
+      de SL) sin escribir nada: el fichero no lo había guardado Excel de escritorio. Pio lo recalculó y lo guardó
+      en Excel, y la nueva simulación dio `SIMULADO_OK`.
+    - La importación anterior `ee1228fa` queda conservada y no vigente; sus importes y saldos tienen la misma
+      huella que el 22/11.
+    - Postcheck READ_ONLY: `POSTCHECK_OK` del importador. Contraste con las huellas del 22/11: fuera de Cashflow
+      solo cambiaron tablas de la noche del 22/11, sin filas posteriores a la ejecución. Evidencias en
+      `C:\ControlFarmacias\evidencias_cashflow_tarea_2311\`.
   - **Esquema para la web:** `docs/web/ESQUEMA_CASHFLOW.md`.
   - `PENDIENTE` (apuntado por Pio, no para hoy): aviso si el Excel no cambia en N días, por si Google Drive vuelve a
     colgarse.

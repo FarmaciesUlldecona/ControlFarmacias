@@ -122,9 +122,8 @@ COMANDOS_SENSIBLES = [
     ("Bash", "python -m src.importar_albaranes_historicos"),
     ("Bash", "python -m src.probar_albaranes"),
     ("PowerShell", "python -m src.database.explorar_base_datos"),
-    ("PowerShell", "python -m src.facturas.importar_facturas_drive"),
     ("PowerShell", "cmd /c ejecutar_sincronizacion.bat"),
-    ("Bash", "cmd //c EJECUTAR_IMPORTACION_FACTURAS.BAT"),
+    ("Bash", "cmd //c EJECUTAR_SINCRONIZACION.BAT"),
     ("Bash", "python -c 'import pyodbc'"),
     ("PowerShell", "sqlcmd -S MOSTRADOR -Q \"SELECT 1\""),
     ("PowerShell", "Invoke-Sqlcmd -Query 'SELECT 1'"),
@@ -180,6 +179,44 @@ def test_comando_no_sensible_no_consulta_identidad(comando):
     codigo, mensaje = hook.decidir(_entrada(comando), _identidad_prohibida)
 
     assert (codigo, mensaje) == (0, "")
+
+
+# Decision de Pio (2026-11-23): la importacion de PDF de Drive no toca Farmatic; sus nombres ya no exigen la
+# identidad RO (siguen con regla ask en settings.json).
+COMANDOS_IMPORTACION_FACTURAS = [
+    ("PowerShell", "python -m src.facturas.importar_facturas_drive"),
+    ("Bash", "./.venv/Scripts/python.exe -m pytest tests/facturas/test_importar_facturas_drive.py"),
+    ("Bash", "git add src/facturas/importar_facturas_drive.py"),
+    ("Bash", "cmd //c EJECUTAR_IMPORTACION_FACTURAS.BAT"),
+    ("PowerShell", "Get-Content ejecutar_importacion_facturas.bat"),
+]
+
+
+@pytest.mark.parametrize(("herramienta", "comando"), COMANDOS_IMPORTACION_FACTURAS)
+def test_importacion_de_facturas_pasa_como_usuari_sin_consultar_identidad(herramienta, comando):
+    assert hook.decidir(_entrada(comando, herramienta), _identidad_prohibida) == (0, "")
+
+
+@pytest.mark.parametrize("comando", [
+    "python -m src.facturas.importar_facturas_drive && python -m src.sincronizar_albaranes",
+    "Get-Content ejecutar_importacion_facturas.bat; cmd /c ejecutar_sincronizacion.bat",
+    "python -c 'from src.database.conexion_sql import obtener_conexion'  # importar_facturas_drive",
+])
+def test_nombrar_la_importacion_no_desbloquea_farmatic(comando):
+    codigo, mensaje = hook.decidir(_entrada(comando), _identidad_fija("mostrador\\usuari"))
+    assert codigo == 2 and "BLOQUEADO" in mensaje
+
+
+def test_la_importacion_de_facturas_no_usa_farmatic():
+    """Justificacion de la exclusion: el modulo y su .bat no usan Farmatic (si cambiara, el test de deriva lo
+    exigiria en PATRONES)."""
+    modulo = (RAIZ / "src" / "facturas" / "importar_facturas_drive.py").read_text(encoding="utf-8")
+    assert USO_DE_FARMATIC.search(modulo) is None
+    bat = (RAIZ / "ejecutar_importacion_facturas.bat").read_text(encoding="utf-8")
+    assert hook.patron_sensible(bat) is None
+    assert "importar_facturas_drive" not in hook.PATRONES
+    assert "ejecutar_importacion_facturas" not in hook.PATRONES
+    assert "ejecutar_sincronizacion" in hook.PATRONES and "sincronizar_albaranes" in hook.PATRONES
 
 
 def test_monitor_websocket_sin_comando_permite():

@@ -60,7 +60,7 @@ TAREAS_CONSULTADAS = ("ControlFarmacias - Importar facturas", "Sincronizaci" + c
 # LastTaskResult de una tarea en ejecucion (SCHED_S_TASK_RUNNING), el mismo criterio que la noche y los preflights.
 RESULTADO_EN_EJECUCION = 267009
 MAX_TEXTO_ERROR = 400
-RPC ="cf_cashflow_registrar_importacion"
+RPC = "cf_cashflow_registrar_importacion"
 TABLAS_CASHFLOW = ("cf_cashflow_cuentas", "cf_cashflow_importaciones", "cf_cashflow_importes", "cf_cashflow_saldos")
 FIRMA_RPC = "public.cf_cashflow_registrar_importacion(jsonb,jsonb,jsonb)"
 # La hoja de PIO lleva tilde (U+00CD): se compone con chr para que el fuente sea ASCII.
