@@ -66,6 +66,8 @@ class AlbaranDocumentalTrabajo:
     importe_re_derivado: Decimal | None = None
     importe_comparable_operativo: Decimal | None = None
     provenance: Mapping[str, Any] | None = None
+    # R22 (D6, Pio 2026-11-24): concepto/laboratorio literal de la linea (``facturas_albaranes_extraidos.descripcion``).
+    concepto_literal: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -961,3 +963,83 @@ def conciliar_importes(
         albaranes_casados=casados,
         regla_tolerancia=regla.como_dict(casados) if regla is not None else None,
     )
+
+
+def aplicar_r22(
+    detalles: Iterable[DetalleConciliacion],
+    documentales: Iterable[AlbaranDocumentalTrabajo],
+    candidatos: Iterable[CandidatoAlbaranSupabase],
+) -> tuple[DetalleConciliacion, ...]:
+    """R22 (DECISION DE PIO, 2026-11-24; caso E, 08005257): cargo sin albaran anulado por su abono en el mismo documento.
+
+    Una linea documental ``CARGO`` que sigue ``SIN_COINCIDENCIA`` tras el 1:1, R17 y R20, con numero, y **sin ningun
+    albaran** de ese numero en los candidatos leidos (cualquier proveedor; ``EXACTA``, ``LETRA_FINAL`` o
+    ``FINAL_DOCUMENTAL``, con la lectura Alliance, la mas amplia) queda explicada por un movimiento ``ABONO`` del MISMO
+    documento (la misma factura) del MISMO concepto/laboratorio (D6: el literal de la linea, ``descripcion``, igual al
+    del movimiento, sin distinguir mayusculas ni espacios; los dos no vacios) y por importe exactamente opuesto (al
+    centimo de cuatro decimales). Neto del par: 0.
+
+    - La linea pasa a ``MOVIMIENTO_NO_FARMATIC`` con su importe (sin albaran ni reserva; la BD la trata como
+      NO_EVALUABLE, ``30_cf_detalle_por_linea.sql:51-66``); el abono conserva su detalle. Los dos llevan
+      ``regla: R22`` y la referencia del otro.
+    - Falla cerrado: una linea con mas de un abono posible, o un abono con mas de una linea posible, deja todo igual.
+    - No busca en Farmatic. Sin linea o sin abono, los detalles no cambian.
+    """
+    detalles = tuple(detalles)
+    por_id = {d.id: d for d in documentales}
+    candidatos = tuple(candidatos)
+
+    def sin_albaran(documental: AlbaranDocumentalTrabajo) -> bool:
+        return bool((documental.numero or "").strip()) and not any(
+            clasificar_numero_albaran(documental.numero, row.numero_albaran, alliance=True) in COINCIDENCIAS_NUMERO
+            for row in candidatos)
+
+    def concepto(valor: Any) -> str:
+        return " ".join(str(valor or "").split()).upper()
+
+    lineas = {}
+    for i, d in enumerate(detalles):
+        doc = por_id.get(d.factura_albaran_extraido_id) if d.factura_albaran_extraido_id else None
+        if (d.tipo_relacion == TipoRelacionConciliacion.SIN_COINCIDENCIA and doc is not None
+                and doc.sentido == "CARGO" and doc.importe is not None and dinero(doc.importe) > 0
+                and concepto(doc.concepto_literal) and sin_albaran(doc)):
+            lineas[i] = (dinero(doc.importe), concepto(doc.concepto_literal))
+    abonos = {
+        i: (-dinero(d.importe_aplicado), concepto(d.provenance.get("concepto_literal")))
+        for i, d in enumerate(detalles)
+        if d.tipo_relacion == TipoRelacionConciliacion.MOVIMIENTO_NO_FARMATIC and d.factura_movimiento_id
+        and d.provenance.get("sentido") == "ABONO" and d.provenance.get("magnitud_usada") == "IMPORTE"
+        and dinero(d.importe_aplicado) < 0 and concepto(d.provenance.get("concepto_literal"))
+    }
+    # Par = mismo (importe, concepto): importe exactamente opuesto y mismo concepto/laboratorio.
+    opciones_linea = {i: [j for j, par in abonos.items() if par == clave] for i, clave in lineas.items()}
+    opciones_abono = {j: [i for i, clave in lineas.items() if clave == par] for j, par in abonos.items()}
+    nuevos = list(detalles)
+    for i, opciones in opciones_linea.items():
+        if len(opciones) != 1 or len(opciones_abono[opciones[0]]) != 1:
+            continue
+        j = opciones[0]
+        linea, abono, doc = detalles[i], detalles[j], por_id[detalles[i].factura_albaran_extraido_id]
+        importe, concepto_par = lineas[i]
+        nuevos[i] = DetalleConciliacion(
+            tipo_relacion=TipoRelacionConciliacion.MOVIMIENTO_NO_FARMATIC,
+            importe_aplicado=importe,
+            factura_albaran_extraido_id=linea.factura_albaran_extraido_id,
+            importe_documental=linea.importe_documental,
+            provenance={
+                "fuente": "R22_CARGO_ANULADO_POR_ABONO",
+                "regla": "R22",
+                "estado_matching_previo": linea.provenance.get("estado_matching"),
+                "numero_documental": doc.numero,
+                "fecha_documental": doc.fecha.isoformat() if doc.fecha else None,
+                "importe_documental": str(importe),
+                "concepto_literal": doc.concepto_literal,
+                "concepto_par": concepto_par,
+                "factura_movimiento_id_par": abono.factura_movimiento_id,
+                "neto_par": str(importe + dinero(abono.importe_aplicado)),
+            },
+        )
+        nuevos[j] = replace(abono, provenance={
+            **dict(abono.provenance), "regla": "R22",
+            "factura_albaran_extraido_id_par": linea.factura_albaran_extraido_id})
+    return tuple(nuevos)

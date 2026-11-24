@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-22 (Cashflow en producción: primera importación MANUAL REAL OK con confirmación explícita de Pio, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y esquema para la web; Cashflow, decisiones de Pio tras la primera simulación: E2 ampliada a la celda de importe exactamente "=" y cuadre sin margen por saldo, con corrección del Excel en origen; presentaciones de la web, decisiones de Pio: HPLUS CONSUMO = HEFAME solo como nombre comercial y decisión 6A, albaranes de PIO de `4.- FFARMACIA RITA` como traspasos sin factura, aparte y sin alerta; 38-B, decisiones de Pio: categoría nueva = ausente de toda importación OK anterior de esa cuenta, y C7 «Cashflow no en ejecución» en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, con la RPC de la 38 como única escritura, C5 sin escribir nada hasta la manual y la tarea de las 23:45 sin crear; H7-D: migración 38 de Cashflow desplegada en producción, confirmación explícita de Pio, y prueba de acceso de cf_lectura ACCESO_OK; H7: migración 38 de Cashflow implementada en local, con RPC de solo inserción, cuadre sin margen por saldo y `TABLAS_CASHFLOW` en los postchecks, decisiones de Pio; 2026-11-21, 37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-24 (decisiones de Pio: `alliance-local` 1.3.2 con autoridad en la noche, ABONOS CLUBS = `ABONO` solo con importe negativo y R22 acotada al mismo documento y concepto; 2026-11-22, Cashflow en producción: primera importación MANUAL REAL OK con confirmación explícita de Pio, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y esquema para la web; Cashflow, decisiones de Pio tras la primera simulación: E2 ampliada a la celda de importe exactamente "=" y cuadre sin margen por saldo, con corrección del Excel en origen; presentaciones de la web, decisiones de Pio: HPLUS CONSUMO = HEFAME solo como nombre comercial y decisión 6A, albaranes de PIO de `4.- FFARMACIA RITA` como traspasos sin factura, aparte y sin alerta; 38-B, decisiones de Pio: categoría nueva = ausente de toda importación OK anterior de esa cuenta, y C7 «Cashflow no en ejecución» en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, con la RPC de la 38 como única escritura, C5 sin escribir nada hasta la manual y la tarea de las 23:45 sin crear; H7-D: migración 38 de Cashflow desplegada en producción, confirmación explícita de Pio, y prueba de acceso de cf_lectura ACCESO_OK; H7: migración 38 de Cashflow implementada en local, con RPC de solo inserción, cuadre sin margen por saldo y `TABLAS_CASHFLOW` en los postchecks, decisiones de Pio; 2026-11-21, 37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -121,7 +121,11 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   `runtime_supabase/compositor_automatico.py`, autoridad `alliance-local` 1.3.0, y
   el orquestador `runtime_supabase/noche_automatica.py`). **Versión certificada
   actualizada (DECISIÓN DE PIO, 2026-11-14):** `alliance-local` **1.3.1** (R10 con
-  `ENCARGO`); la 1.3.0 ya no tiene autoridad en la ruta automática. **ACTIVADA EN AUTO-ON
+  `ENCARGO`); la 1.3.0 ya no tiene autoridad en la ruta automática. **Versión certificada
+  actualizada (DECISIÓN DE PIO, 2026-11-24):** `alliance-local` **1.3.2** (ABONOS CLUBS, ver «Reglas
+  confirmadas por proveedor»), con autoridad en la noche; la 1.3.1 ya no tiene autoridad en la ruta
+  automática. Banco completo 1.3.1 frente a 1.3.2 (94 documentos): solo cambia un movimiento ABONOS CLUBS
+  en 08006123, 08014713 y 08001115 (evidencias en `C:\ControlFarmacias\evidencias_abonos_clubs\`). **ACTIVADA EN AUTO-ON
   (CONFIRMACIÓN EXPLÍCITA DE PIO, 2026-11-18):** la tarea de las 22:15 ejecuta el orquestador en
   modo `REAL`; los flags `normalizacion_automatica` y `conciliacion_automatica` los enciende
   Pio en el editor SQL y son el interruptor general (ver «Automatización Alliance»).
@@ -150,7 +154,7 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 
 | Proveedor | Regla vigente confirmada |
 |---|---|
-| Alliance / Cencora | Conserva tablas y secciones documentales `CARGOS`/`ABONOS`, fiscalidad, vencimientos y relaciones 1:1 inequívocas sin fusionar objetos. `SERVICIO BASICO` y `CONDIC. COMERCIAL` son `CARGO` solo por decisión funcional explícita de Pio. Fuera de esas pruebas, el sentido queda indeterminado. |
+| Alliance / Cencora | Conserva tablas y secciones documentales `CARGOS`/`ABONOS`, fiscalidad, vencimientos y relaciones 1:1 inequívocas sin fusionar objetos. `SERVICIO BASICO` y `CONDIC. COMERCIAL` son `CARGO` solo por decisión funcional explícita de Pio. `ABONOS CLUBS` es `ABONO` **solo si el importe de la fila es negativo** (DECISIÓN DE PIO, 2026-11-24; adaptador 1.3.2), con el literal en el adaptador y después de la sección y de las relaciones documentales, que prevalecen; con importe positivo o nulo queda indeterminado. Fuera de esas pruebas, el sentido queda indeterminado. |
 | FEDEFARMA | `Total abonaments (consultar detalls)` se clasifica como `DEVOLUCION_MERCANCIA` sin derivar por ello el sentido. La cuota mensual de servicios cooperativos es `CONDICION_COOPERATIVA`; textos meramente registrales no crean movimientos. Conserva facturas internas segmentadas. |
 | HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos, salvo estas dos decisiones funcionales explícitas de Pio (2026-11-18, `pruebas/auditoria_hefame/DISENO.md` §0): el desfase de 80,00 de base S.R. de la factura de fin de mes es el **cargo cooperativo HEFAME**, fijo cada mes (H1), y `APROAFA` (aportación a la Asociación para la Promoción de la Asistencia Farmacéutica en España) es `CARGO` (H2). Un desfase distinto de 80,00, en otra clase, negativo o fuera del fin de mes, y un `APROAFA` negativo, fallan cerrados (H6, H7). Decisiones de Pio del 2026-11-19: `Resumen Liquidaciones Comerciales` son pequeños descuentos sobre especialidad (IVA 4 %, base S.R.) y son `ABONO` (H3); los números de 9 dígitos que empiezan por `91` son albaranes normales que Farmatic registra con numeración interna `Q…`/`R…`, y casan por numeración interna, importe y fecha con candidato único, como R15b (H4). La autoridad productiva de `hefame-local` sigue desactivada. |
 | COFARES | La elegibilidad local exige documento monopágina, segmentación determinista, filas completas y únicas, columnas inequívocas y evidencia integral. El sentido literal ausente no se infiere. El descuento por pronto pago sigue como gap funcional. |
@@ -402,6 +406,20 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
     la 36, o con la marca a `false` (apaga R20 sin rollback), la línea sigue sin casar y la noche deja la factura para
     revisar, sin reclamarla ni gastar intentos. Por eso el código puede subirse antes de desplegar la 36.
   - **Primera conciliación tras el despliegue (36-D):** 08013495 la hace la noche (decisión de Pio).
+- Regla de Pio R22 (DECISIÓN DE PIO, 2026-11-24; `CONFIRMADO POR TEST`, también en PostgreSQL 17 local, sin
+  migración; diseño en `pruebas/auditoria_r21/DISENO.md` §3; origen: 08005257 / 08B45588):
+  - **R22 cargo sin albarán anulado por su abono:** una línea documental `CARGO` que queda sin casar tras el 1:1, R17
+    y R20, con número, y **sin ningún albarán de ese número** entre los candidatos leídos queda explicada, con neto 0,
+    por un movimiento `ABONO` del **mismo documento** (la misma factura) que cumple a la vez:
+    - **mismo concepto/laboratorio (D6):** el literal de la línea (`facturas_albaranes_extraidos.descripcion`) igual al
+      del movimiento (`descripcion_literal`), sin distinguir mayúsculas ni espacios; los dos no vacíos;
+    - **importe exactamente opuesto**, a cuatro decimales, por importe (no por base).
+  - Falla cerrado: una línea con más de un abono posible, o un abono con más de una línea posible, deja todo igual
+    (la línea sigue `SIN_COINCIDENCIA`). No se busca en Farmatic.
+  - Se persiste la línea como `MOVIMIENTO_NO_FARMATIC` por su importe, con su origen documental y sin albarán ni
+    reserva (la BD lo admite: 14 y 30, `NO_EVALUABLE`); el abono conserva su detalle. Los dos llevan `regla: R22`, la
+    referencia del otro y el concepto. R11 no cuenta el par como albarán casado. Sin conmutador en la BD (D7): se
+    desactiva revirtiendo el código.
 - Regla de Pio del Hito 2BG (2026-10-30; `CONFIRMADO POR TEST`, sin migración; aplicada en producción en la
   conciliación de 08007970 el 2026-10-30; diseño en `pruebas/auditoria_2bg/DISENO.md`):
   - **R19 ECO360 = grupo Alliance/SAFA en conciliación:** el proveedor de Farmatic «6- PLATAF. ECO360 AH»
@@ -480,7 +498,9 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 - Los disparadores permitidos son `AUTOMATICO`, `REPROCESADO` y
   `MANUAL_ONE_SHOT`.
 - Una diferencia documental nunca genera automáticamente movimientos, sentidos,
-  categorías ni explicaciones.
+  categorías ni explicaciones. Única excepción: R22 (DECISIÓN DE PIO, 2026-11-24), que solo
+  explica con neto 0 un cargo sin albarán con su abono del mismo documento y concepto, por
+  importe exactamente opuesto; no crea movimientos ni sentidos.
 - **Sentido de los vencimientos (decisión de Pio, 2026-11-08):** se toma de
   `datos_extraidos.tipo_documento.valor`, NUNCA de la columna `tipo_documento`. `FACTURA` o
   `FACTURA_DUPLICADO` = cargo; `ABONO` = abono; `FACTURA_RECTIFICATIVA`, vacío u `OTRO` = no documentado (no se

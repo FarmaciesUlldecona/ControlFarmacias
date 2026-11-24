@@ -101,7 +101,7 @@ def test_r10_08007971_promueve_los_3_directo():
     raw = _raw(local, "08007971")
     assert [a["numero_albaran"]["valor"] for a in raw["albaranes"]] == ["08C18299", "08M24229", "08M25574"]
     assert not [i for i in raw["incidencias"] if i["codigo"] == "CANDIDATO_ALBARAN_NO_PROMOVIDO"]
-    assert local.documento["layout_version"] == "1.3.1"
+    assert local.documento["layout_version"] == "1.3.2"
     assert doc["metadata_tecnica"]["version_normalizador"] == "multifactura-local-2"
 
 

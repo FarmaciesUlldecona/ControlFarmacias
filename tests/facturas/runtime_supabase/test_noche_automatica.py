@@ -283,14 +283,16 @@ def test_numeros_de_un_cambio_r18():
 
 def test_autoridad_automatica_solo_alliance_certificada():
     assert dict(AUTORIDAD_COMPOSITOR_AUTOMATICO) and all(
-        v == ("alliance-local", "1.3.1") for v in AUTORIDAD_COMPOSITOR_AUTOMATICO.values())
-    assert autoridad_automatica_habilitada("alliance-local", "1.3.1") is True
+        v == ("alliance-local", "1.3.2") for v in AUTORIDAD_COMPOSITOR_AUTOMATICO.values())
+    assert autoridad_automatica_habilitada("alliance-local", "1.3.2") is True
+    # Pio, 2026-11-24: la 1.3.1 (sin "ABONOS CLUBS" -> ABONO) deja de estar certificada para la ruta automatica.
+    assert autoridad_automatica_habilitada("alliance-local", "1.3.1") is False
     # Pio, 2026-11-14: la 1.3.0 (sin "ENCARGO") deja de estar certificada para la ruta automatica.
     assert autoridad_automatica_habilitada("alliance-local", "1.3.0") is False
     assert autoridad_automatica_habilitada("alliance-local", "1.2.0") is False
     assert autoridad_automatica_habilitada("alliance-local", None) is False
     for layout in ("hefame-local", "cofares-local", "fedefarma-local", None, "inventado"):
-        assert autoridad_automatica_habilitada(layout, "1.3.1") is False
+        assert autoridad_automatica_habilitada(layout, "1.3.2") is False
     # El compositor manual no cambia.
     assert autoridad_manual_habilitada("alliance-local") is True
 

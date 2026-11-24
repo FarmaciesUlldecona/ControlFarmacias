@@ -26,6 +26,7 @@ from .conciliacion import (
     CandidatoAlbaranSupabase,
     MovimientoDocumentalTrabajo,
     VENTANA_FECHA_DIAS,
+    aplicar_r22,
     buscar_albaranes_factura,
     construir_detalles_movimientos_documentales,
     detalles_desde_busqueda,
@@ -439,7 +440,7 @@ class RepositorioRuntimeSupabase:
         if usa_mercancia:
             extracted_response = (
                 self._cliente.table("facturas_albaranes_extraidos")
-                .select("id,numero_albaran,fecha_albaran,importe_total,tipo_movimiento")
+                .select("id,numero_albaran,fecha_albaran,importe_total,tipo_movimiento,descripcion")
                 .eq("factura_id", factura.factura_id)
                 .order("orden")
                 .execute()
@@ -489,6 +490,7 @@ class RepositorioRuntimeSupabase:
                 fecha=date.fromisoformat(row["fecha_albaran"]) if row.get("fecha_albaran") else None,
                 importe=Decimal(str(row["importe_total"])) if row.get("importe_total") is not None else None,
                 sentido=str(row["tipo_movimiento"]) if row.get("tipo_movimiento") else None,
+                concepto_literal=str(row["descripcion"]) if row.get("descripcion") else None,
             )
             for row in extracted_rows
         )
@@ -505,7 +507,8 @@ class RepositorioRuntimeSupabase:
         )
         # R17 (2BE, migracion 24) y R20 (migracion 36): una linea puede dar dos detalles UNO_A_VARIOS.
         details.extend(x for d, m in zip(documentaries, matches) for x in detalles_desde_busqueda(d, m))
-        return tuple(details)
+        # R22 (Pio, 2026-11-24): cargo sin albaran anulado por su abono del mismo documento y concepto; falla cerrado.
+        return aplicar_r22(details, documentaries, candidates)
 
     def _albaranes_ausentes_en_farmatic(self, farmacia: str) -> set[int]:
         """2BD: IdContador cuyo ultimo evento de presencia en ``albaranes_cambios`` es AUSENTE."""
