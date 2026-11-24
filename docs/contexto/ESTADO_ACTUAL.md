@@ -379,7 +379,14 @@ POR TEST`; sin migración, sin producción y sin push. Diseño, re-simulación y
 - **08005707:** R18 no permite aprobar una línea con 3 albaranes. Pio decide R21 como migración 40 (diseño en
   `pruebas/auditoria_r21/DISENO.md` §9, sin código). Con «mismo día» literal no cierra (Q039320/2026 es del 06/05):
   decisión R21-D1 pendiente.
-- `PENDIENTE`: decisiones R21-D1 a D8; re-normalización de 08006123 (D5).
+- **Decisiones de Pio (24/11, noche):** R21-D1 aprobada (mismo día **o** misma recepción que A) y R21-D2 a D8 como
+  se recomiendan; implementación y despliegue el 25/11. **Numeración pendiente:** cada migración exige la anterior
+  y la 39 no existe; se recomienda R21 = 39, H7b = 40 y «Actualizar ahora» después (`pruebas/auditoria_r21/DISENO.md`
+  §9.10).
+- **H7b (previsión de Cashflow):** diseño rehecho sobre la petición de la web (`pruebas/auditoria_h7b/DISENO.md`),
+  con las decisiones de Pio en REGLAS_CRITICAS («Cashflow (H7)», no implementadas). Decisiones H7B-D1 a D8
+  pendientes. Lista cerrada de `cf_lectura` en `pruebas/auditoria_2bn/DISENO.md` con las cuatro tablas de la 38.
+- `PENDIENTE`: numeración 39/40; decisiones H7B; re-normalización de 08006123 (D5).
 
 ### Carga Alliance abril–mayo: corte de la importación de PDF a 2026-04-01 (2026-11-23)
 

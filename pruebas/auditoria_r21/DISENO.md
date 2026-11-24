@@ -357,6 +357,10 @@ son casos particulares 1+1. Se conservan tal cual (la BD los sigue validando igu
 
 ### 9.7 Decisiones para Pio
 
+**DECIDIDAS por Pio (2026-11-24, noche):** R21-D1 aprobada (complementario del mismo día que A **o** de la misma
+recepción que A, como R17); R21-D2 a D8, como se recomiendan. Implementación y despliegue: 2026-11-25. Falta la
+numeración (§9.10).
+
 | Id | Pregunta | Recomendación |
 |---|---|---|
 | R21-D1 | «Mismo día»: con la regla literal, Q039320/2026 (06/05) no entra y **08005707 no cierra** | Complementario válido si es del **mismo día que A o de la misma recepción que A** (la condición de R17). Cierra 08005707 y no amplía a ±1 día |
@@ -401,3 +405,16 @@ son casos particulares 1+1. Se conservan tal cual (la BD los sigue validando igu
 5. `desplegar_40` una sola vez, con confirmación explícita de Pio; postcheck por fila.
 6. Pio enciende `conciliacion_r21` en el editor SQL (R21-D5) y los flags.
 7. 08005707, según R21-D7.
+
+### 9.10 Numeración: cada migración exige la anterior (`DECISIÓN PENDIENTE`)
+
+`CONFIRMADO POR CÓDIGO`: cada migración aborta si falta la anterior (`MIGRACION_34_AUSENTE` en la 35:27,
+`MIGRACION_35_AUSENTE` en la 36:20, `MIGRACION_36_AUSENTE` en la 37:22, `MIGRACION_37_AUSENTE` en la 38:32), y
+REGLAS_CRITICAS («Cashflow (H7)», numeración) dice: «Cada migración exige la anterior».
+
+- La 39 («Actualizar ahora») está decidida pero **no existe**. Con la regla, una 40 (R21) no puede desplegarse
+  mañana sin la 39, ni una 41 (H7b) sin la 40.
+- La comprobación del 24/11 («no hay ningún fichero 39, 40 ni 41») era cierta, pero no bastaba: faltaba esta regla.
+- **Recomendación:** numerar por orden de despliegue: **R21 = 39** (mañana), **H7b = 40**, **«Actualizar ahora» =
+  41** (o la siguiente libre cuando se implemente). Alternativa: mantener 40/41 y que cada una exija la última
+  desplegada en lugar de la anterior en número, lo que cambia la regla de REGLAS_CRITICAS.

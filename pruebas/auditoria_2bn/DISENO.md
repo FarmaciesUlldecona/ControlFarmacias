@@ -21,6 +21,12 @@ lo que necesitan, no puede escribir ni ejecutar RPC que escriban y no tiene acce
   `albaranes_aprobaciones`, `albaranes_aprobaciones_aplicadas`, `proveedores`, `proveedores_alias`,
   `cf_configuracion` y las cuatro vistas (`v_facturas_listado`, `v_dashboard_diario`, `v_vencimientos_calendario`,
   `v_proveedores_estado`, todas con `security_invoker`). Las tablas nuevas no se conceden solas.
+  - **Ampliación de la 38 (Cashflow, H7; desplegada el 2026-11-22; añadida aquí por orden de Pio del
+    2026-11-24):** `SELECT` sobre `cf_cashflow_cuentas`, `cf_cashflow_importaciones`, `cf_cashflow_importes` y
+    `cf_cashflow_saldos`, con RLS sin funciones security definer (cuentas, saldos e importes si su farmacia está en
+    el módulo `CASHFLOW` o no tienen farmacia; importaciones, todas). Ver REGLAS_CRITICAS «Cashflow (H7)».
+  - **Prevista en H7b (`DECISIÓN DE PIO`, 2026-11-24; no implementada):** `SELECT` sobre las tablas de previsión de
+    Cashflow (`pruebas/auditoria_h7b/DISENO.md` §4).
 - **Sin escritura ni RPC:** ningún `INSERT/UPDATE/DELETE/TRUNCATE`, ninguna secuencia, ningún `EXECUTE`
   concedido. Las únicas funciones de `public` ejecutables por `PUBLIC` son dos de trigger y una inmutable de
   cálculo (`cf_resultado_conciliacion`); ninguna `SECURITY DEFINER` ni volátil es ejecutable por el rol.

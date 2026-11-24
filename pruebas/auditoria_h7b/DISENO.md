@@ -1,126 +1,235 @@
-# H7b: apuntes manuales de Cashflow desde la web (diseño)
+# H7b: Cashflow con previsión (vencimientos y apuntes manuales de la web), diseño
 
-Estado (2026-11-24): **DISEÑO, todo `PROPUESTA`**. Sin código, sin migración y sin producción. Encargo de Pio del
-2026-11-24: diseñar los apuntes manuales de Cashflow que pide la web.
+Estado (2026-11-24): **DISEÑO**, sin código, sin migración y sin producción. Rehecho sobre la petición de la web y
+las decisiones de Pio del 2026-11-23 (empezar ya, con recurrentes, solo previsión futura), transmitidas el
+2026-11-24. Sustituye al primer borrador de este fichero (c0a9cee), que no partía de la petición.
 
-Etiquetas: `CONFIRMADO POR CÓDIGO` (fichero:línea), `PROPUESTA`, `SUPUESTO` (falta confirmarlo con Pio o con la web)
-y `DECISIÓN PENDIENTE`.
+Etiquetas: `DECISIÓN DE PIO` (ya decidido), `CONFIRMADO POR CÓDIGO` (fichero:línea), `PROPUESTA` y
+`DECISIÓN PENDIENTE`.
 
-## 0. Qué se pide y qué no sabemos todavía
+## 0. Petición y decisiones de Pio
 
-- **`SUPUESTO`:** la petición de la web no está escrita en el repositorio. Este diseño supone que la web quiere
-  **añadir apuntes que no están en el Excel** (por ejemplo, un pago o un cobro previsto) para verlos en el Cashflow sin
-  esperar a que Pio los pase al Excel. Si la web pide otra cosa (por ejemplo, corregir importes importados), este
-  diseño no vale: corregir lo importado está prohibido (solo inserción, REGLAS_CRITICAS «Cashflow (H7)»).
-- **Lo que no cambia** (`CONFIRMADO POR CÓDIGO`, migración 38 y REGLAS_CRITICAS «Cashflow (H7)»):
-  - el Excel de Pio sigue siendo la fuente de los importes y saldos importados;
-  - las tablas `cf_cashflow_importaciones`, `cf_cashflow_importes` y `cf_cashflow_saldos` siguen siendo solo de
-    inserción, y su única escritura sigue siendo la RPC de importación;
-  - el cuadre E1 (`saldo_inicial + Σ RE − Σ RS = saldo_formulas`) se sigue comprobando solo con lo importado;
-  - la web sigue leyendo esas tablas con `cf_lectura`.
+**Objetivo (`DECISIÓN DE PIO`):** el Cashflow es la suma de tres fuentes, y el Excel pasa a ser provisional.
 
-## 1. Modelo (`PROPUESTA`)
+| Fuente | Qué aporta | Estado |
+|---|---|---|
+| **Norma 43** | Lo real: movimientos de banco | `NO IMPLEMENTADA` (REGLAS_CRITICAS «Capacidades no implementadas») |
+| **Vencimientos** | Lo previsto con factura: `facturas_vencimientos` | Existe (solo PIO, que es la única farmacia con facturas) |
+| **Apuntes manuales de la web** | Lo previsto sin factura | Este hito |
 
-Precedente: Pagos (H6, migración 35), la única escritura de la web fuera de Trabajadores. Se copia su patrón: tabla
-propia, rol propio, anulación en lugar de borrado, autor por transacción e historial por trigger.
+Mientras no haya Norma 43, el Excel importado (migración 38) sigue siendo la fuente de lo real y de los saldos.
 
-### 1.1 Tabla `cf_cashflow_apuntes_manuales`
+**Decisiones de Pio ya tomadas (2026-11-23 y 2026-11-24):**
 
-| Columna | Tipo y regla |
+- **Apunte:** cuenta PIO o RITA; fecha futura respecto al último saldo de banco de la cuenta; categoría `RE`/`RS` de
+  la plantilla; concepto; importe **positivo** (el sentido lo da la categoría); nota. Anular en lugar de borrar,
+  autor por `cf.autor` e historial por trigger.
+- **RITA:** su excepción se amplía **solo en Cashflow**, para admitir sus apuntes. Sus facturas siguen desactivadas.
+- **Recurrente:** mensual, trimestral o anual; día; inicio; fin opcional. Las ocurrencias se calculan al leer y se
+  puede anular una sola ocurrencia.
+- **Conceptos nuevos**, siempre asociados a una categoría existente.
+- **Prioridad** por cuenta, categoría y decena: **vencimientos > apunte > Excel > media**, sin doble cómputo.
+- **Tablas:** `cf_cashflow_apuntes`, `cf_cashflow_recurrentes` y `cf_cashflow_conceptos`. RLS por módulo
+  `CASHFLOW`, rol de escritura propio de la web (`INSERT`, `SELECT` y `UPDATE` solo de anulación), `SELECT` de
+  `cf_lectura` (aprobado) y la excepción en REGLAS_CRITICAS.
+- **Migración 41.** **AUTORIZACIÓN EXPRESA DE PIO:** nombrar el rol del sistema en la 41 y su rollback, si hace
+  falta.
+- **Solo previsión futura:** nada de lo nuevo cambia lo pasado. Lo pasado lo da el banco (hoy, el Excel).
+
+**Lo que no cambia** (`CONFIRMADO POR CÓDIGO`, `sql/migrations/38_cf_cashflow.sql` y REGLAS_CRITICAS «Cashflow
+(H7)»):
+
+- las tablas importadas (`cf_cashflow_importaciones`, `_importes`, `_saldos`) siguen siendo solo de inserción y su
+  única escritura sigue siendo la RPC de importación;
+- el cuadre E1 se sigue comprobando solo con lo importado;
+- ningún rol de la web escribe ni tiene privilegios de escritura sobre ellas.
+
+## 1. Tablas (`PROPUESTA`; migración 41)
+
+Patrón de Pagos (H6, migración 35): tablas propias, anulación en lugar de borrado, autor por transacción e historial
+por trigger. Sin `DELETE` ni `TRUNCATE` para nadie: un trigger los rechaza (`BORRADO_NO_PERMITIDO`). El único
+`UPDATE` admitido es anular (`anulado` de false a true, con `anulado_por`, `anulado_at` y `motivo_anulacion`
+obligatorio): `SOLO_ANULAR`. Corregir es anular y crear otro.
+
+### 1.1 `cf_cashflow_conceptos`
+
+| Columna | Regla |
 |---|---|
-| `id` | `uuid` por defecto |
-| `cuenta` | `text`, referencia a `cf_cashflow_cuentas(codigo)` (`PIO`, `RITA`, `SL`) |
-| `farmacia` | `text`, la de la cuenta (la pone el trigger; `SL` sin farmacia), con el mismo check que `cf_cashflow_importes` |
-| `decena_inicio` | `date`; día 1, 11 o 21 |
-| `categoria` | `text`, `^R[ES] ` como en `cf_cashflow_importes`; además, una categoría existente de esa cuenta en la importación vigente (H7B-D4) |
-| `concepto` | `text`, de 1 a 200 caracteres, obligatorio |
-| `importe` | `numeric(14,2)`, distinto de 0, con el mismo criterio de signo que el Excel (E1: el sentido lo da `RE`/`RS`) |
-| `estado` | `ABIERTO`, `PASADO_AL_EXCEL` o `ANULADO` |
-| `autor`, `creado_at` | del `cf.autor` de la transacción (sin él, `AUTOR_AUSENTE`) y `now()` |
-| `cerrado_por`, `cerrado_at`, `motivo_cierre` | solo al pasar a `PASADO_AL_EXCEL` o `ANULADO`; el motivo es obligatorio |
+| `id` | `uuid` |
+| `cuenta` | `PIO` o `RITA` |
+| `categoria` | Una categoría `RE`/`RS` de la **plantilla** de esa cuenta: existe en la importación vigente (§3) |
+| `nombre` | 1–120 caracteres; único por (cuenta, categoría, nombre normalizado) entre los no anulados |
+| `proveedor_cif` | Opcional: asocia el concepto a un proveedor, para colocar sus vencimientos (§2.2, H7B-D3) |
+| `autor`, `creado_at`, anulación | Como arriba |
 
-- **Sin `DELETE` ni `TRUNCATE`** para nadie; un trigger los rechaza (`BORRADO_NO_PERMITIDO`), como en la 35 y la 38.
-- **`UPDATE` solo para cerrar:** `ABIERTO` → `PASADO_AL_EXCEL` o `ANULADO`, y nada más (`SOLO_CERRAR`). Corregir es
-  anular y crear otro. Un apunte cerrado no se reabre.
-- **Historial** `cf_cashflow_apuntes_historial`: lo escribe un trigger en cada alta y cada cierre, solo inserción e
-  inmutable, como `pagos_historial`.
+- Los conceptos de la plantilla (los que ya trae el Excel en `cf_cashflow_importes.concepto`) valen sin darlos de
+  alta. Esta tabla guarda **solo los nuevos**, cada uno con su categoría existente.
 
-### 1.2 Cómo los ve la web
+### 1.2 `cf_cashflow_apuntes` (apuntes sueltos)
 
-- La web muestra, por cuenta y decena, **dos cifras separadas**:
-  - el saldo del Excel (`saldo_formulas` de la importación vigente), sin tocar;
-  - el **saldo con apuntes** = saldo del Excel + Σ apuntes `ABIERTO` de esa cuenta hasta esa decena (los `RS` restan,
-    con su signo, igual que en E1).
-- Los apuntes se marcan siempre como manuales y con su autor. Nunca se mezclan con los importes importados ni cambian
-  el cuadre E1.
-- **Duplicados:** cuando Pio pasa el apunte al Excel, el apunte sigue `ABIERTO` y contaría dos veces. La web debe
-  cerrarlo como `PASADO_AL_EXCEL`. El sistema **no** lo detecta solo: emparejar un apunte con un importe del Excel por
-  importe y decena no es seguro, y ante la duda se falla cerrado (H7B-D6). Como ayuda, la web puede avisar cuando una
-  importación nueva trae un importe igual en la misma cuenta, decena y categoría, pero el cierre lo hace una persona.
+| Columna | Regla |
+|---|---|
+| `id` | `uuid` |
+| `cuenta`, `farmacia` | `PIO` o `RITA`; la farmacia es la de la cuenta (la pone el trigger) |
+| `fecha` | **Posterior al último saldo de banco de la cuenta** (§3) |
+| `categoria` | De la plantilla de esa cuenta |
+| `concepto` | De la plantilla o de `cf_cashflow_conceptos` (no anulado), en esa categoría |
+| `importe` | `numeric(14,2)`, **> 0**. El sentido lo da la categoría: `RE` suma y `RS` resta |
+| `nota` | Opcional, hasta 500 caracteres |
+| `recurrente_id`, `fecha_ocurrencia` | Solo en las filas que **anulan una ocurrencia** (§1.3); entonces `importe` es nulo |
+| `sustituido_por` | Opcional: factura y vencimiento que lo sustituyen (§2.3) |
+| `autor`, `creado_at`, anulación | Como arriba |
 
-### 1.3 El sistema no usa los apuntes
+### 1.3 `cf_cashflow_recurrentes`
 
-- Ni la importación de Cashflow, ni la noche, ni la conciliación, ni ningún otro proceso los leen para decidir nada.
-- En los postchecks de la noche y de las series 2BJ/2BP entran en `TABLAS_CASHFLOW`, informados aparte y sin afectar
-  al veredicto, como Pagos.
+| Columna | Regla |
+|---|---|
+| `id`, `cuenta`, `farmacia`, `categoria`, `concepto`, `importe`, `nota` | Como en un apunte |
+| `frecuencia` | `MENSUAL`, `TRIMESTRAL` o `ANUAL` |
+| `dia` | 1–31. Si el mes no tiene ese día, la ocurrencia cae el **último día del mes** (H7B-D1) |
+| `inicio` | Fecha de la primera ocurrencia (fija el mes de referencia del trimestre y del año) |
+| `fin` | Opcional, no anterior a `inicio` |
+| `autor`, `creado_at`, anulación | Anular la recurrente anula todas sus ocurrencias futuras |
 
-## 2. Permisos y farmacia (`PROPUESTA`)
+- **Ocurrencias calculadas al leer**, nunca guardadas: una función `stable`, sin `security definer`, o una vista
+  `security_invoker` (regla del 2BN) devuelve (recurrente, fecha) entre dos fechas.
+- **Solo cuentan las ocurrencias futuras:** posteriores al último saldo de banco de la cuenta (§3) y, como mucho,
+  hasta la última decena de la importación vigente.
+- **Anular una ocurrencia:** una fila en `cf_cashflow_apuntes` con `recurrente_id` y `fecha_ocurrencia`, sin importe.
+  El trigger comprueba que esa fecha es una ocurrencia de esa recurrente. Así no hace falta una cuarta tabla de datos
+  (H7B-D2).
 
-- **Rol nuevo `cf_cashflow_web`** (H7B-D2): `SELECT` e `INSERT` sobre `cf_cashflow_apuntes_manuales`, `UPDATE` solo de
-  las columnas de cierre y `SELECT` sobre el historial. Nada más: ni facturas, ni pagos, ni trabajadores, **ni las
-  tablas importadas de Cashflow**. REGLAS_CRITICAS «Cashflow (H7)» dice que ningún rol de la web tiene privilegios
-  sobre ellas, y no hace falta cambiarlo: las validaciones de §3 las hace el trigger, que se ejecuta con los
-  privilegios de su propietario, como en la 35. La web sigue leyendo lo importado con `cf_lectura`. Contraseña SCRAM fijada por Pio fuera del repositorio, como
-  `cf_pagos_web`.
-- **`cf_lectura`** lee las dos tablas nuevas con la regla de módulo de la 38 (sin funciones security definer, regla
-  del 2BN).
-- **Farmacia:** PIO. **RITA, no, salvo decisión de Pio:** su excepción vigente es SOLO para sus datos bancarios del
-  Excel importado (REGLAS_CRITICAS «Cashflow (H7)»), y un apunte manual no sale del Excel. Admitir apuntes de RITA
-  **amplía esa excepción** y exige su decisión expresa en REGLAS_CRITICAS (H7B-D3). RITA sigue sin facturas en
-  cualquier caso. La cuenta `SL`, sin farmacia, solo si Pio lo decide.
-- **Autorización:** como en la 35 y la 38, la migración tendría que nombrar el rol del sistema para quitarle los
-  privilegios por defecto de Supabase sobre lo nuevo. Hace falta una **AUTORIZACIÓN EXPRESA de Pio** solo para esa
-  migración y su rollback (H7B-D8). Sin ella no se implementa.
+### 1.4 Historial
+
+- `cf_cashflow_apuntes_historial`: una fila por alta y por anulación de cualquiera de las tres tablas, con la tabla,
+  el id, la acción, el autor y una copia de la fila. La escribe un trigger, solo inserción e inmutable, como
+  `pagos_historial`.
+- Pio enumeró tres tablas. El historial por trigger necesita una tabla más, y se propone esta (H7B-D2).
+
+## 2. Lectura: prioridad sin doble cómputo (`PROPUESTA`)
+
+### 2.1 La regla por celda
+
+Una **celda** es (cuenta, categoría, decena). Para cada celda **futura** (después del último saldo de banco de la
+cuenta), el Cashflow toma **una sola fuente**, la de mayor prioridad que tenga algo:
+
+1. **Vencimientos** de facturas colocados en esa celda (§2.2);
+2. si no hay, **apuntes**: los sueltos no anulados más las ocurrencias de recurrentes no anuladas;
+3. si no hay, el **importe del Excel** vigente de esa celda;
+4. si no hay, la **media** (H7B-D4).
+
+- Como cada celda usa una sola fuente, no hay doble cómputo: un apunte y el importe del Excel de la misma celda nunca
+  suman juntos.
+- **Las celdas pasadas** (hasta el último saldo de banco) solo usan lo real: hoy el Excel, y con Norma 43 el banco.
+- La web muestra en cada celda **qué fuente se ha usado** y, aparte, las fuentes descartadas, para que se vea qué
+  queda tapado.
+- **Saldo previsto:** saldo de banco de la última decena cuadrada + Σ celdas futuras (`RE` suma, `RS` resta), decena
+  a decena. El `saldo_formulas` del Excel no se toca.
+- **Límite que Pio debe conocer (H7B-D5):** por la regla de una fuente por celda, un apunte de un gasto **distinto**
+  de la misma categoría y decena que un vencimiento queda tapado por el vencimiento. La web lo muestra como
+  descartado. Si se quiere sumarlo, hay que darlo de alta en otra categoría o cambiar la regla.
+
+### 2.2 Dónde cae un vencimiento
+
+- **Cuenta:** la de la farmacia de la factura (hoy solo PIO; RITA no tiene facturas).
+- **Decena:** la de `fecha_vencimiento`.
+- **Importe y sentido:** el del vencimiento; el sentido sale de `datos_extraidos.tipo_documento.valor` (regla de Pio
+  del 2026-11-08: `FACTURA` = salida `RS`, `ABONO` = entrada; un vencimiento no documentado no se suma).
+- **Categoría:** la del concepto con el `proveedor_cif` de la factura en `cf_cashflow_conceptos` (H7B-D3).
+  - Un vencimiento de un proveedor **sin concepto asociado** no se coloca en ninguna categoría. Va a una línea
+    «vencimientos sin categoría», que suma en el saldo previsto y la web muestra para que se asocie. Así no se pierde
+    ni se adivina su categoría.
+- **Solo vencimientos futuros sin pagar:** los que tienen una marca de pago vigente (Pagos H6) no cuentan.
+- Los vencimientos se leen; el Cashflow nunca los modifica.
+
+### 2.3 Cuándo una factura real sustituye a un apunte
+
+Por la regla por celda, un vencimiento en la **misma celda** ya tapa el apunte. Lo difícil es una factura que llega en
+otra decena o con otro importe. Propuesta (H7B-D6), sin automatismos:
+
+- **Candidato:** un vencimiento futuro de la misma cuenta, de la categoría del apunte, en la misma decena o en la
+  siguiente, con importe a ±5 % del apunte.
+- Si un apunte tiene **exactamente un** candidato y ese candidato no lo es de otro apunte, la web lo muestra como
+  «posible sustitución».
+- **La sustitución la confirma una persona:** guarda `sustituido_por` (factura y orden del vencimiento) y el apunte
+  deja de contar, con historial.
+- Con cero o más de un candidato no se sugiere nada (falla cerrado).
+- Para un recurrente se sustituye **una ocurrencia** (anulación de esa ocurrencia con la referencia a la factura), no
+  la recurrente entera.
 
 ## 3. Validaciones en la BD (`PROPUESTA`)
 
-Todas en el trigger de alta, fallando cerrado sin escribir nada:
+En los triggers de alta, que fallan cerrado sin escribir nada:
 
-- la cuenta existe y está permitida: PIO, y RITA o `SL` solo si Pio los admite (H7B-D3);
-- `decena_inicio` es inicio de decena y está dentro del rango permitido (H7B-D5);
-- la categoría existe para esa cuenta en la importación vigente (H7B-D4); sin importación vigente, no se admite
-  ningún apunte (`SIN_IMPORTACION_VIGENTE`);
-- importe distinto de 0 y concepto no vacío;
+- la cuenta es `PIO` o `RITA` y su farmacia está en el módulo `CASHFLOW` (`cf_modulos_farmacias`);
+- **último saldo de banco de la cuenta:** la última decena con `saldo_bancos` no nulo de la importación vigente
+  (E7: un nulo es «aún no cuadrada»). La fecha del apunte, o la primera ocurrencia que cuenta, debe ser posterior al
+  final de esa decena (`FECHA_NO_FUTURA`). Con Norma 43, la referencia pasará a ser el último saldo del banco;
+- sin importación vigente no se admite nada (`SIN_IMPORTACION_VIGENTE`);
+- la categoría existe para esa cuenta en la importación vigente (`CATEGORIA_FUERA_DE_PLANTILLA`);
+- el concepto existe en la plantilla o en `cf_cashflow_conceptos` en esa categoría (`CONCEPTO_DESCONOCIDO`);
+- importe > 0 (`IMPORTE_NO_POSITIVO`), día y frecuencia válidos, fin no anterior a inicio;
 - autor presente (`AUTOR_AUSENTE`).
 
-## 4. Migración, tests y despliegue (`PROPUESTA`)
+Los triggers leen las tablas importadas con los privilegios de su propietario, como en la 35. El rol de la web no las
+necesita para escribir.
 
-- **Numeración:** 39 = «Actualizar ahora», 40 = R21 (DISEÑO §9 de `pruebas/auditoria_r21/DISENO.md`). Esta sería la
-  **41** (H7B-D9). Requiere la 38.
-- **Rollback 41:** falla cerrado si hay algún apunte (`ROLLBACK_41_CON_APUNTES`), como el de la 38.
+## 4. Permisos y farmacia (`PROPUESTA`, sobre decisiones de Pio)
+
+- **Rol de escritura propio de la web:** `cf_cashflow_web`, con `LOGIN`, sin `BYPASSRLS` y sin pertenecer a ningún
+  rol.
+  - `INSERT` y `SELECT` sobre `cf_cashflow_apuntes`, `cf_cashflow_recurrentes` y `cf_cashflow_conceptos`;
+  - `UPDATE` **solo** de las columnas de anulación y de `sustituido_por`;
+  - `SELECT` sobre el historial y `EXECUTE` sobre la función de ocurrencias.
+  - Nada más: ni escritura en las tablas importadas, ni facturas, ni pagos, ni trabajadores.
+  - Contraseña SCRAM fijada por Pio fuera del repositorio; prueba de acceso como `cf_pagos_web`.
+  - La web lee las tablas importadas y los vencimientos con `cf_lectura`, como hoy.
+- **`cf_lectura`:** `SELECT` sobre las tablas nuevas, el historial y la función de ocurrencias (`DECISIÓN DE PIO`),
+  con la RLS del módulo `CASHFLOW` y sin funciones `security definer` (regla del 2BN).
+- **RLS:** las filas de la cuenta de una farmacia del módulo `CASHFLOW` (hoy PIO y RITA).
+- **Excepción de RITA (`DECISIÓN DE PIO`):** pasa de «solo sus datos bancarios del Excel importado» a «sus datos
+  bancarios del Excel importado **y sus apuntes manuales de Cashflow**». Sigue siendo **solo del módulo Cashflow**:
+  `farmacias_habilitadas` no cambia y sus facturas, albaranes, normalización y conciliación siguen desactivados.
+  Recogida ya en REGLAS_CRITICAS («Cashflow (H7)», previsión H7b, no implementada); rige desde el despliegue de la
+  migración de H7b.
+- **Rol del sistema:** la 41 lo nombra solo si hace falta para quitarle los privilegios por defecto de Supabase
+  sobre lo nuevo, como en la 35 y la 38. Autorizado por Pio solo en la 41 y su rollback.
+- **El sistema no usa los apuntes para decidir nada.** Ni la importación, ni la noche, ni la conciliación los leen.
+  En los postchecks de la noche y de las series 2BJ/2BP entran en `TABLAS_CASHFLOW`, informados aparte y sin
+  afectar al veredicto.
+
+## 5. Migración, tests y despliegue (`PROPUESTA`)
+
+- **Migración 41** (`41_cf_cashflow_prevision.sql` y su rollback): tablas, triggers, función de ocurrencias, RLS, rol
+  `cf_cashflow_web` sin contraseña y privilegios de `cf_lectura`. Ver H7B-D7 sobre la numeración.
+- **Rollback 41:** falla cerrado si hay algún apunte, recurrente o concepto (`ROLLBACK_41_CON_DATOS`), como el de la
+  38.
 - **Tests previstos (PostgreSQL 17 local):**
-  - la 41 es idempotente y el rollback vuelve al esquema anterior;
-  - el rol nuevo inserta y cierra, y no puede borrar, reabrir, cambiar el importe ni tocar ninguna otra tabla;
-  - cada validación de §3 rechaza con su motivo;
-  - `cf_lectura` lee según la farmacia del módulo y no ve lo de otra;
-  - una importación nueva de Cashflow no toca los apuntes y los apuntes no cambian el cuadre de la importación;
-  - el postcheck informa las tablas nuevas aparte;
-  - el ensayo de `desplegar_41` con la imitación del `postgres` de Supabase, en la suite histórica;
-  - la prueba de acceso `probar_acceso_cf_cashflow_web.py` (terminal de Pio).
+  - la 41 es idempotente y el rollback deja el esquema de la anterior;
+  - cada validación de §3 rechaza con su motivo; no se puede borrar, reabrir ni cambiar el importe;
+  - ocurrencias: mensual el día 31 en febrero (último día), trimestral y anual desde `inicio`, fin opcional, una
+    ocurrencia anulada, solo las futuras;
+  - prioridad por celda con las cuatro fuentes; un apunte y un importe del Excel en la misma celda no suman juntos;
+  - vencimiento sin concepto asociado → «sin categoría»; vencimiento con marca de pago → no cuenta;
+  - sustitución: un candidato se sugiere; cero o dos, no;
+  - RLS y roles: `cf_cashflow_web` no escribe en ninguna otra tabla; `cf_lectura` lee lo nuevo y no escribe;
+    RITA ve sus apuntes y ninguna factura;
+  - una importación nueva de Cashflow no toca los apuntes y los apuntes no cambian el cuadre E1;
+  - ensayo de `desplegar_41` con la imitación del `postgres` de Supabase, en la suite histórica.
 - **Despliegue (41-D):** commit con código y push de Pio; flags apagados; preflight READ_ONLY; `desplegar_41` una vez
   con confirmación explícita de Pio; postcheck por fila (solo aparecen los objetos nuevos); Pio fija la contraseña;
-  prueba de acceso; flags encendidos. Después, `docs/web/ESQUEMA_CASHFLOW.md` con las tablas nuevas para la web.
+  prueba de acceso; flags encendidos. Después, `docs/web/ESQUEMA_CASHFLOW.md` con las tablas nuevas, la regla por
+  celda y la función de ocurrencias.
 
-## 5. Decisiones para Pio
+## 6. Decisiones pendientes para Pio
 
 | Id | Pregunta | Recomendación |
 |---|---|---|
-| H7B-D1 | ¿Qué pide exactamente la web? Hace falta el texto de la petición | Confirmar el `SUPUESTO` de §0: apuntes que no están en el Excel, nunca corregir lo importado |
-| H7B-D2 | ¿Rol nuevo o ampliar `cf_pagos_web`? | Rol nuevo `cf_cashflow_web`, limitado a estas tablas (cada rol de la web, un solo módulo) |
-| H7B-D3 | ¿Qué cuentas admiten apuntes: PIO, RITA, SL? | Solo PIO. RITA amplía su excepción (hoy solo datos bancarios del Excel importado) y exige decisión expresa en REGLAS_CRITICAS; SL solo si Pio lo pide |
-| H7B-D4 | ¿Categorías libres o solo las existentes? | Solo las de esa cuenta en la importación vigente; una nueva se añade en el Excel |
-| H7B-D5 | ¿Qué decenas? | Desde la decena actual (en `Europe/Madrid`) hasta la última de la importación vigente; nunca decenas pasadas |
-| H7B-D6 | ¿Se cierra solo un apunte cuando aparece en el Excel? | No. Lo cierra una persona como `PASADO_AL_EXCEL`; la web solo avisa de posibles duplicados |
-| H7B-D7 | ¿Los apuntes cuentan en el saldo que muestra la web? | Solo en una cifra aparte («saldo con apuntes»); el saldo del Excel no cambia |
-| H7B-D8 | Autorización para nombrar el rol del sistema solo en la 41 y su rollback | Necesaria para implementar, como en la 35 y la 38 |
-| H7B-D9 | Numeración | 41 (39 = «Actualizar ahora», 40 = R21) |
+| H7B-D1 | Recurrente con día 29–31 en un mes más corto | Último día del mes |
+| H7B-D2 | Historial y anulación de ocurrencias: ¿tablas extra? | Historial en `cf_cashflow_apuntes_historial` (necesario para el trigger); la anulación de una ocurrencia, como fila de `cf_cashflow_apuntes` (sin tabla extra) |
+| H7B-D3 | ¿En qué categoría cae el vencimiento de cada proveedor? | Por un concepto con `proveedor_cif` en `cf_cashflow_conceptos`; sin él, línea «vencimientos sin categoría» |
+| H7B-D4 | ¿Qué es la «media»? | Media de esa categoría en las últimas 6 decenas reales (cuadradas con el banco) de la cuenta; sin 6 decenas reales, no hay media |
+| H7B-D5 | Un apunte de otro gasto en la misma celda que un vencimiento queda tapado | Aceptarlo (es la regla de una fuente por celda) y mostrarlo como descartado |
+| H7B-D6 | Sustitución de un apunte por una factura | Candidato único (misma cuenta y categoría, decena igual o siguiente, ±5 %), confirmado por una persona |
+| H7B-D7 | Numeración: cada migración exige la anterior y la 39 no existe todavía | Ver la nota de numeración en `pruebas/auditoria_r21/DISENO.md` §9.10 |
+| H7B-D8 | ¿Los vencimientos con marca de pago (H6) cuentan? | No: un vencimiento marcado como pagado ya no es previsión |
