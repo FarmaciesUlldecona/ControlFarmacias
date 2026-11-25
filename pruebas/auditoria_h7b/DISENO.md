@@ -1,5 +1,10 @@
 # H7b: Cashflow con previsión (vencimientos y apuntes manuales de la web), diseño
 
+Estado (2026-11-25, tarde): **DISEÑO CORREGIDO a petición de la web y aprobado por Pio** (§2.1 y §6): la media
+sale del diseño y de la BD (es la regla del motor de la web) y la prioridad con vencimientos pasa a «gana el mayor en
+valor absoluto». **La 40 no se aplica sin el OK de Pio a este diseño corregido.** Sin código, sin migración y sin
+producción.
+
 Estado (2026-11-25): **DISEÑO con decisiones de Pio** (H7B-D1 a D8, D5 cambiada: prioridad por cuenta + categoría +
 concepto + decena; migración 40), sin código, sin migración y sin producción; implementación otro día.
 
@@ -33,6 +38,9 @@ Mientras no haya Norma 43, el Excel importado (migración 38) sigue siendo la fu
 - **Conceptos nuevos**, siempre asociados a una categoría existente.
 - **Prioridad** por cuenta, categoría y decena: **vencimientos > apunte > Excel > media**, sin doble cómputo.
   **Precisada por Pio el 2026-11-25 (H7B-D5):** por cuenta + categoría + **concepto** + decena (§2.1).
+  **Corregida el 2026-11-25, tarde (petición de la web, aprobada por Pio; §2.1):** previsión = apunte > Excel > media
+  (la primera que exista); con vencimientos gana el **mayor en valor absoluto** entre los vencimientos y esa
+  previsión (los vencimientos son un mínimo). La media no la define este diseño: es la regla del motor de la web.
 - **Tablas:** `cf_cashflow_apuntes`, `cf_cashflow_recurrentes` y `cf_cashflow_conceptos`. RLS por módulo
   `CASHFLOW`, rol de escritura propio de la web (`INSERT`, `SELECT` y `UPDATE` solo de anulación), `SELECT` de
   `cf_lectura` (aprobado) y la excepción en REGLAS_CRITICAS.
@@ -119,31 +127,40 @@ obligatorio): `SOLO_ANULAR`. Corregir es anular y crear otro.
 
 - El concepto de un vencimiento es el concepto con su `proveedor_cif` (§2.2, H7B-D3). Un apunte o una recurrente
   llevan el suyo. El importe del Excel ya va por concepto (`cf_cashflow_importes.concepto`).
-- Un vencimiento solo sustituye al apunte **del mismo concepto**. Un apunte de otro concepto de la misma categoría y
-  decena **suma**, porque es otra celda.
+- Los vencimientos solo se comparan con la previsión **del mismo concepto**. Un apunte de otro concepto de la misma
+  categoría y decena **suma**, porque es otra celda.
 - El saldo y los totales por categoría suman las celdas de todos los conceptos.
 - Esto sustituye la celda (cuenta, categoría, decena) de la propuesta del 2026-11-24. El texto que sigue vale
   leyendo «celda» con concepto.
 
-Para cada celda **futura** (después del último saldo de banco de la cuenta), el Cashflow toma **una sola fuente**, la
-de mayor prioridad que tenga algo:
+**Regla corregida (DECISIÓN DE PIO, 2026-11-25, tarde, a petición de la web).** Para cada celda **futura** (después
+del último saldo de banco de la cuenta):
 
-1. **Vencimientos** de facturas colocados en esa celda (§2.2);
-2. si no hay, **apuntes**: los sueltos no anulados más las ocurrencias de recurrentes no anuladas;
-3. si no hay, el **importe del Excel** vigente de esa celda;
-4. si no hay, la **media** (H7B-D4): la de ese concepto en sus últimas 6 decenas reales de la cuenta (DECISIÓN DE
-   PIO, 2026-11-25).
+1. **Previsión de la celda sin vencimientos:** la primera fuente que exista, por este orden:
+   1. **apuntes**: los sueltos no anulados más las ocurrencias de recurrentes no anuladas; un apunte cuya
+      **sustitución ha confirmado una persona** (§2.3) está anulado y no cuenta;
+   2. el **importe del Excel** vigente de esa celda;
+   3. la **media** (H7B-D4 corregida): **no la define este diseño ni la BD**. Es la regla del motor de la web
+      (`server/cashflow/cashflow.ts`, en el repositorio de la web, que es la autoridad; citada sin comprobar): por
+      cuenta + concepto, la misma posición de decena (1–10, 11–20, 21–fin) de los últimos 3 meses reales; para
+      RS Modelo, el mismo mes del año anterior.
+2. **Con vencimientos** de facturas colocados en esa celda (§2.2): cuenta el **mayor en valor absoluto** entre la
+   suma de los vencimientos y la previsión del punto 1. Los vencimientos son un mínimo: una previsión mayor no queda
+   tapada por una factura menor.
+3. **Sin vencimientos:** la previsión del punto 1.
 
-- Como cada celda usa una sola fuente, no hay doble cómputo: un apunte y el importe del Excel de la misma celda nunca
-  suman juntos.
+- Cada celda toma un único importe: no hay doble cómputo. Un apunte y el importe del Excel de la misma celda nunca
+  suman juntos, y los vencimientos no se suman a la previsión: se comparan con ella.
+- La BD guarda los apuntes, las recurrentes y los conceptos y calcula las ocurrencias. La elección por celda (y la
+  media) la hace el motor de la web, con la regla de arriba.
 - **Las celdas pasadas** (hasta el último saldo de banco) solo usan lo real: hoy el Excel, y con Norma 43 el banco.
 - La web muestra en cada celda **qué fuente se ha usado** y, aparte, las fuentes descartadas, para que se vea qué
   queda tapado.
 - **Saldo previsto:** saldo de banco de la última decena cuadrada + Σ celdas futuras (`RE` suma, `RS` resta), decena
   a decena. El `saldo_formulas` del Excel no se toca.
 - ~~Límite que Pio debe conocer (H7B-D5): un apunte de un gasto distinto de la misma categoría y decena que un
-  vencimiento queda tapado~~. **Resuelto por Pio (2026-11-25):** con la celda por concepto, ese apunte suma. Solo
-  queda tapado el apunte del mismo concepto, que es justo el que la factura sustituye.
+  vencimiento queda tapado~~. **Resuelto por Pio (2026-11-25):** con la celda por concepto, ese apunte suma. Con la
+  regla corregida, el apunte del mismo concepto se compara con los vencimientos y cuenta el mayor.
 
 ### 2.2 Dónde cae un vencimiento
 
@@ -160,8 +177,9 @@ de mayor prioridad que tenga algo:
 
 ### 2.3 Cuándo una factura real sustituye a un apunte
 
-Por la regla por celda, un vencimiento en la **misma celda** ya tapa el apunte. Lo difícil es una factura que llega en
-otra decena o con otro importe. Propuesta (H7B-D6), sin automatismos:
+Por la regla corregida (§2.1), un vencimiento en la **misma celda** no tapa el apunte: cuenta el mayor de los dos. Para
+que el apunte deje de contar hace falta una sustitución confirmada, que lo anula. Propuesta (H7B-D6), sin
+automatismos:
 
 - **Candidato:** un vencimiento futuro de la misma cuenta, de la categoría del apunte, en la misma decena o en la
   siguiente, con importe a ±5 % del apunte.
@@ -225,14 +243,17 @@ necesita para escribir.
   - cada validación de §3 rechaza con su motivo; no se puede borrar, reabrir ni cambiar el importe;
   - ocurrencias: mensual el día 31 en febrero (último día), trimestral y anual desde `inicio`, fin opcional, una
     ocurrencia anulada, solo las futuras;
-  - prioridad por celda con las cuatro fuentes; un apunte y un importe del Excel en la misma celda no suman juntos;
-    un vencimiento tapa el apunte de su concepto y no el de otro concepto de la misma categoría y decena (H7B-D5);
+  - la BD no elige fuente por celda ni calcula la media (§2.1): las pruebas de la regla por celda son del motor de
+    la web; en la BD, que una sustitución confirmada anula el apunte;
   - vencimiento sin concepto asociado → «sin categoría»; vencimiento con marca de pago → no cuenta;
   - sustitución: un candidato se sugiere; cero o dos, no;
   - RLS y roles: `cf_cashflow_web` no escribe en ninguna otra tabla; `cf_lectura` lee lo nuevo y no escribe;
     RITA ve sus apuntes y ninguna factura;
   - una importación nueva de Cashflow no toca los apuntes y los apuntes no cambian el cuadre E1;
   - ensayo de `desplegar_40` con la imitación del `postgres` de Supabase, en la suite histórica.
+- **Requisito previo (DECISIÓN DE PIO, 2026-11-25):** la 40 no se implementa ni se aplica sin el OK de Pio a este
+  diseño corregido.
+- **Tras desplegarla:** informar a la web del nombre del rol nuevo (`cf_cashflow_web`), sin credenciales.
 - **Despliegue (40-D):** commit con código y push de Pio; flags apagados; preflight READ_ONLY; `desplegar_40` una vez
   con confirmación explícita de Pio; postcheck por fila (solo aparecen los objetos nuevos); Pio fija la contraseña;
   prueba de acceso; flags encendidos. Después, `docs/web/ESQUEMA_CASHFLOW.md` con las tablas nuevas, la regla por
@@ -240,8 +261,21 @@ necesita para escribir.
 
 ## 6. Decisiones de Pio
 
+**CORRECCIÓN (petición de la web, aprobada por Pio, 2026-11-25, tarde):** sustituye lo que digan sobre la media y
+la prioridad los puntos de abajo.
+
+- **H7B-D4 corregida:** la media no se define en la BD ni en este diseño. Es la regla del motor de la web
+  (`server/cashflow/cashflow.ts`, otro repositorio; la web es la autoridad): por cuenta + concepto, misma posición de
+  decena (1–10, 11–20, 21–fin) de los últimos 3 meses reales; RS Modelo, el mismo mes del año anterior. Se retira
+  «las 6 últimas decenas cuadradas con el banco».
+- **H7B-D5 corregida:** por cuenta + categoría + concepto + decena, previsión = apunte > Excel > media (la primera que
+  exista); con vencimientos, el mayor en valor absoluto entre los vencimientos y esa previsión (los vencimientos son
+  un mínimo); sin vencimientos, la previsión. Una sustitución confirmada por Pio anula el apunte.
+- **La 40 no se aplica sin el OK de Pio al diseño corregido.** Tras desplegarla, se informa a la web del nombre del
+  rol nuevo, sin credenciales.
+
 **DECIDIDAS por Pio (2026-11-25):** H7B-D5 cambia (abajo); el resto, D1–D4 y D6–D8, como se recomiendan.
-Implementación otro día, como migración **40** (H7B-D7).
+Implementación otro día, como migración **40** (H7B-D7). *(D4 y D5: ver la corrección de arriba.)*
 
 - **H7B-D5 (DECISIÓN DE PIO):** la prioridad se decide por **cuenta + categoría + concepto + decena**. Un vencimiento
   solo sustituye al apunte **del mismo concepto**; un apunte de otro concepto de la misma categoría y decena suma.
