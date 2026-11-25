@@ -12,6 +12,8 @@
  *  - Solo ejecuta las consultas del contrato (CONSULTAS), con farmacia fija PIO.
  *  - H6-REAL: además, lectura de las tablas de pagos de la migración 35 (vencimientos_marcas_pago,
  *    proveedores_forma_pago, pagos_historial; cf_lectura tiene SELECT en las tres) y su diagnóstico (solo recuentos).
+ *  - H7-REAL: lectura del cashflow de la migración 38 (cf_cashflow_importaciones, _cuentas, _importes, _saldos; SELECT
+ *    para cf_lectura con RLS PIO, RITA —módulo CASHFLOW— y SL), en REPEATABLE READ READ ONLY, y su diagnóstico.
  */
 import { X509Certificate } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -22,6 +24,9 @@ import {
   type Contrato, type EjecutorBloque, type Fila, type NombreConsulta, type ValorDiagnostico,
 } from './contrato.ts';
 import { COLUMNAS_DIAGNOSTICO_PAGOS, SQL_PAGOS } from './pagos/sql.ts';
+import { hoyMadrid } from './pagos/pagos.ts';
+import type { DatosCashflow, VencimientoCashflow } from './cashflow/cashflow.ts';
+import { diagnosticoCashflow, leerCashflowReal } from './cashflow/lectura_real.ts';
 
 export const RUTA_ENV_WEB = join(import.meta.dirname, '..', '.env.web');
 /** Ruta por defecto de la CA; configurable con CF_LECTURA_CA (absoluta o relativa a web/app). */
@@ -106,6 +111,10 @@ export interface AdaptadorReal {
   leerPagos(): Promise<{ marcas: Fila[]; formas: Fila[]; historial: Fila[] }>;
   /** H6-REAL (check:real): recuentos de pagos (marcas vigentes, anuladas, a revisar, huérfanas; formas vigentes; historial). */
   diagnosticoPagos(): Promise<Record<string, number>>;
+  /** H7-REAL: cashflow de la importación vigente (cf_cashflow_*, migración 38), en una sola foto READ ONLY. */
+  leerCashflow(): Promise<DatosCashflow>;
+  /** H7-REAL (check:real): diagnóstico del cashflow, solo números y sí/no. H7-REAL-5: con los vencimientos de PIO. */
+  diagnosticoCashflow(vencimientos?: readonly VencimientoCashflow[]): Promise<Record<string, ValorDiagnostico>>;
   cerrar(): Promise<void>;
 }
 
@@ -234,11 +243,14 @@ export function crearAdaptadorReal(): AdaptadorReal {
     }
   };
 
-  /** Ejecuta una consulta en una transacción READ ONLY propia, siempre con ROLLBACK. */
-  async function soloLectura<T>(trabajo: (cliente: pg.PoolClient) => Promise<T>): Promise<T> {
+  /**
+   * Ejecuta una consulta en una transacción READ ONLY propia, siempre con ROLLBACK. `foto`: REPEATABLE READ (todas las
+   * consultas ven el mismo estado; H7-REAL, cashflow).
+   */
+  async function soloLectura<T>(trabajo: (cliente: pg.PoolClient) => Promise<T>, foto = false): Promise<T> {
     const cliente = await pool.connect();
     try {
-      await cliente.query('begin transaction read only');
+      await cliente.query(foto ? 'begin transaction isolation level repeatable read read only' : 'begin transaction read only');
       const ro = await cliente.query<{ ro: string }>("select current_setting('transaction_read_only') as ro");
       if (ro.rows[0]?.ro !== 'on') throw new Error('TRANSACCION_NO_READ_ONLY');
       return await trabajo(cliente);
@@ -246,6 +258,12 @@ export function crearAdaptadorReal(): AdaptadorReal {
       try { await cliente.query('rollback'); } finally { cliente.release(); }
     }
   }
+
+  /** H7-REAL: las lecturas del cashflow en una sola foto (la vigente y sus filas, coherentes). */
+  const leerCashflow = () => soloLectura(async (cliente) => {
+    await cliente.query("set local statement_timeout = '20s'");
+    return leerCashflowReal(async (sql, params) => (await cliente.query<Fila>(sql, params)).rows);
+  }, true);
 
   // Id de la factura más reciente: se elige una vez y se queda en este cierre (nunca se devuelve ni imprime).
   let facturaReciente: Promise<string | null> | null = null;
@@ -334,6 +352,8 @@ export function crearAdaptadorReal(): AdaptadorReal {
       for (const col of COLUMNAS_DIAGNOSTICO_PAGOS) out[col] = recuento(r.rows[0][col], col);
       return out;
     }),
+    leerCashflow,
+    diagnosticoCashflow: async (vencimientos = []) => validarDiagnostico(diagnosticoCashflow(await leerCashflow(), hoyMadrid(), vencimientos)),
     cerrar: () => pool.end(),
   };
 }

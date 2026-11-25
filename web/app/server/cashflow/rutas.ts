@@ -3,24 +3,22 @@
  *
  * FIXTURES: datos ficticios con la forma del contrato (web/fixtures/cashflow/cashflow.json, generado por
  *   fixtures/scripts/gen_cashflow.mjs) y los vencimientos de PIO de la pantalla Vencimientos (contrato H6, con sus marcas).
- * REAL: las tablas cf_cashflow_* no existen todavía: 503 H7_PENDIENTE «Pendiente de tablas en Supabase». Las lecturas
- *   están escritas contra el contrato (server/cashflow/lectura_real.ts) pero no se conectan hasta que el circuito cree las
- *   tablas y Pío amplíe la lista cerrada de objetos legibles.
+ * REAL (H7-REAL): tablas cf_cashflow_* de la migración 38 con cf_lectura (server/cashflow/lectura_real.ts, una foto READ
+ *   ONLY): importación vigente y sus filas; fecha de referencia = hoy en Europe/Madrid. Sin vigente, la pantalla muestra
+ *   «Todavía no hay datos importados».
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { PAGO_SIN_DATOS } from '../contrato.ts';
-import { esPagado, type FilaVencimientoPago, type PantallaVencimientosDTO } from '../pagos/pagos.ts';
-import {
-  CONFIG_CASHFLOW, ERROR_H7_PENDIENTE, TEXTO_H7_PENDIENTE, type CashflowDTO, type DatosCashflow, type VencimientoCashflow,
-} from './cashflow.ts';
+import { esPagado, hoyMadrid, type FilaVencimientoPago, type PantallaVencimientosDTO } from '../pagos/pagos.ts';
+import { CONFIG_CASHFLOW, type CashflowDTO, type DatosCashflow, type VencimientoCashflow } from './cashflow.ts';
 
 export const RUTA_SEMILLA_CASHFLOW = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'cashflow', 'cashflow.json');
 
 export function leerSemillaCashflow(): DatosCashflow & { hoy: string } {
-  const { hoy, importaciones, cuentas, importes, saldos } = JSON.parse(readFileSync(RUTA_SEMILLA_CASHFLOW, 'utf8')) as DatosCashflow & { hoy: string };
-  return { hoy, importaciones, cuentas, importes, saldos };
+  const { hoy, importaciones, cuentas, importes, saldos, otras_cuentas } = JSON.parse(readFileSync(RUTA_SEMILLA_CASHFLOW, 'utf8')) as DatosCashflow & { hoy: string };
+  return { hoy, importaciones, cuentas, importes, saldos, otras_cuentas };
 }
 
 /** Vencimiento de la pantalla H6 → lo que usa el cashflow. */
@@ -41,20 +39,24 @@ export interface OpcionesCashflow {
   pantallaPagos: () => Promise<PantallaVencimientosDTO>;
   /** FIXTURES: por defecto, la semilla. */
   semilla?: DatosCashflow & { hoy: string };
+  /** REAL: lectura de las tablas cf_cashflow_* (obligatoria en REAL). */
+  leerReal?: () => Promise<DatosCashflow>;
+  /** REAL: fecha de referencia (por defecto, hoy en Europe/Madrid). */
+  hoy?: () => string;
 }
 
 export function registrarCashflow(app: FastifyInstance, opciones: OpcionesCashflow): void {
   const semilla = opciones.modo === 'FIXTURES' ? opciones.semilla ?? leerSemillaCashflow() : null;
-  app.get('/api/cashflow', async (_req, reply): Promise<CashflowDTO | undefined> => {
+  if (opciones.modo === 'REAL' && !opciones.leerReal) throw new Error('CASHFLOW_REAL_SIN_LECTURA');
+  const hoy = opciones.hoy ?? (() => hoyMadrid());
+  app.get('/api/cashflow', async (_req, reply): Promise<CashflowDTO> => {
     reply.header('cache-control', 'no-store');
-    if (semilla === null) {
-      reply.code(503).send({ error: ERROR_H7_PENDIENTE, mensaje: TEXTO_H7_PENDIENTE });
-      return undefined;
-    }
+    const datos: DatosCashflow & { hoy: string } = semilla ?? { ...(await (opciones.leerReal as () => Promise<DatosCashflow>)()), hoy: hoy() };
     const p = await opciones.pantallaPagos();
     return {
-      farmacia: p.farmacia, generado_at: p.generado_at, hoy: semilla.hoy, modo: opciones.modo, config: CONFIG_CASHFLOW,
-      importaciones: semilla.importaciones, cuentas: semilla.cuentas, importes: semilla.importes, saldos: semilla.saldos,
+      farmacia: p.farmacia, generado_at: p.generado_at, hoy: datos.hoy, modo: opciones.modo, config: CONFIG_CASHFLOW,
+      importaciones: datos.importaciones, cuentas: datos.cuentas, importes: datos.importes, saldos: datos.saldos,
+      otras_cuentas: datos.otras_cuentas,
       // Solo PIO (la pantalla H6 es de PIO). RITA: solo datos bancarios.
       vencimientos: p.filas.map(vencimientoCashflow),
       pago: PAGO_SIN_DATOS,

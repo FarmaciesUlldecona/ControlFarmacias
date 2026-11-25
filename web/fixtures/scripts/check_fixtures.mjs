@@ -45,7 +45,7 @@ import { SQL_PAGOS } from '../../app/server/pagos/sql.ts';
 import { leerSemillaPagos } from '../../app/server/pagos/rutas.ts';
 import { agregar as agregarCalendario, resumenAnio, sinFecha as sinFechaCalendario } from '../../app/server/pagos/calendario.ts';
 import { PESTANAS_VENCIMIENTOS, cumpleBusquedaLista } from '../../app/server/pagos/lista.ts';
-import { CATEGORIAS_MEDIA, calcularCashflow, esDecenaInicio, finDecena } from '../../app/server/cashflow/cashflow.ts';
+import { CONCEPTO_MEDIA, calcularCashflow, columnasVista, esDecenaInicio, finDecena, traspasosNoCompensados } from '../../app/server/cashflow/cashflow.ts';
 import { vencimientoCashflow } from '../../app/server/cashflow/rutas.ts';
 import { RUTA_CASHFLOW, generarCashflow, serializarCashflow } from './gen_cashflow.mjs';
 
@@ -1507,50 +1507,112 @@ comprobar('H6-REAL: SQL de pagos: la web no envía fecha ni importe; ON CONFLICT
 // --- Casos H7: Cashflow (datos ficticios con la forma del contrato del circuito) -------------------------------------
 const cashflowSemilla = JSON.parse(readFileSync(RUTA_CASHFLOW, 'utf8'));
 const cashflowDatos = { ...cashflowSemilla, vencimientos: pantallaH6.filas.map(vencimientoCashflow) };
-const ELEGIR = (e) => Object.fromEntries(Object.keys(CATEGORIAS_MEDIA).map((c) => [c, e]));
+const CATEGORIAS_OBLIGATORIAS = ['RE Cobro TPV', 'RE Cobro efectivo', 'RE Cobro SOE', 'RS Modelo 303', 'RS Modelo 111', 'RS Traspasos', 'RE Traspasos'];
 comprobar('H7: cashflow.json al día (idéntico a regenerarlo con gen_cashflow.mjs) y sin cashflow_semanas de H3a', () =>
   si(readFileSync(RUTA_CASHFLOW, 'utf8') === serializarCashflow(generarCashflow()) && !Object.values(FICHEROS_DTO).includes('cashflow_semanas.json'),
     'desactualizado (npm run fixtures:cashflow)'));
-comprobar('H7: forma del contrato (importaciones, cuentas PIO|RITA|SL, importes por decena con categoría RE/RS, saldos con saldo_bancos o null)', () => {
+comprobar('H7-REAL: forma final del contrato (migración 38): importaciones, cuentas PIO|RITA|SL, importes y saldos de la vigente con farmacia de su cuenta, importe ≠ 0, saldo único por cuenta y decena', () => {
   const claves = (o) => Object.keys(o).sort().join(',');
   const malos = [];
-  for (const i of cashflowSemilla.importaciones) if (claves(i) !== 'estado,importacion_id,importado_at,origen,vigente') malos.push(`importación ${claves(i)}`);
-  for (const c of cashflowSemilla.cuentas) if (claves(c) !== 'codigo,farmacia' || !['PIO', 'RITA', 'SL'].includes(c.codigo)) malos.push(`cuenta ${c.codigo}`);
-  for (const f of cashflowSemilla.importes) {
-    if (claves(f) !== 'categoria,concepto,cuenta,decena_fin,decena_inicio,importe' || !esDecenaInicio(f.decena_inicio) || f.decena_fin !== finDecena(f.decena_inicio)
-      || !/^R[ES] /.test(f.categoria)) malos.push(`importe ${JSON.stringify(f)}`);
+  const vigentes = cashflowSemilla.importaciones.filter((i) => i.vigente);
+  for (const i of cashflowSemilla.importaciones) {
+    if (claves(i) !== 'archivo_nombre,detalle_error,estado,filas,importacion_id,importado_at,origen,vigente' || !['NOCHE', 'MANUAL'].includes(i.origen)
+      || !['OK', 'ERROR'].includes(i.estado) || (i.estado === 'OK' && i.detalle_error !== null) || (i.vigente && i.estado !== 'OK')) malos.push(`importación ${claves(i)}`);
   }
-  for (const s of cashflowSemilla.saldos) if (claves(s) !== 'cuenta,decena_inicio,saldo_bancos,saldo_formulas' || !esDecenaInicio(s.decena_inicio)) malos.push(`saldo ${JSON.stringify(s)}`);
+  if (vigentes.length !== 1) malos.push(`vigentes ${vigentes.length}`);
+  const id = vigentes[0]?.importacion_id;
+  for (const c of cashflowSemilla.cuentas) if (claves(c) !== 'codigo,farmacia' || !['PIO', 'RITA', 'SL'].includes(c.codigo) || c.farmacia !== (c.codigo === 'SL' ? null : c.codigo)) malos.push(`cuenta ${c.codigo}`);
+  for (const f of cashflowSemilla.importes) {
+    if (claves(f) !== 'categoria,concepto,cuenta,decena_fin,decena_inicio,farmacia,id,importacion_id,importe' || !esDecenaInicio(f.decena_inicio) || f.decena_fin !== finDecena(f.decena_inicio)
+      || !/^R[ES] /.test(f.categoria) || f.importacion_id !== id || f.farmacia !== f.cuenta || !['PIO', 'RITA'].includes(f.cuenta) || f.importe === 0) malos.push(`importe ${JSON.stringify(f)}`);
+  }
+  const unicos = new Set(cashflowSemilla.saldos.map((s) => `${s.cuenta}|${s.decena_inicio}`));
+  if (unicos.size !== cashflowSemilla.saldos.length) malos.push('saldos repetidos');
+  for (const s of cashflowSemilla.saldos) {
+    if (claves(s) !== 'cuenta,decena_inicio,farmacia,id,importacion_id,saldo_bancos,saldo_formulas,saldo_inicial' || !esDecenaInicio(s.decena_inicio)
+      || s.importacion_id !== id || s.farmacia !== s.cuenta) malos.push(`saldo ${JSON.stringify(s)}`);
+  }
+  if (!isDeepStrictEqual(cashflowSemilla.otras_cuentas, [])) malos.push('otras_cuentas');
   const anios = new Set(cashflowSemilla.importes.map((f) => f.decena_inicio.slice(0, 4)));
   const cuentas = new Set(cashflowSemilla.importes.map((f) => f.cuenta));
   return si(malos.length === 0 && anios.has('2026') && anios.has('2027') && cuentas.has('PIO') && cuentas.has('RITA')
-    && Object.keys(CATEGORIAS_MEDIA).every((c) => cashflowSemilla.importes.some((f) => f.categoria === c)), malos.slice(0, 3).join('; '));
+    && CATEGORIAS_OBLIGATORIAS.every((c) => cashflowSemilla.importes.some((f) => f.categoria === c))
+    && cashflowSemilla.importes.some((f) => f.cuenta === 'RITA' && f.categoria === 'RE Cobro efectivo' && f.concepto === 'COBRO EFECTIU'), malos.slice(0, 3).join('; '));
 });
-for (const e of ['media', 'excel']) {
-  comprobar(`H7 (${e}): naranja RITA cubierta por PIO 11–20/12/2026 con devolución en la SOE (21–31/12); rojo del consolidado 11–20/01/2027; importación de hace 6 días (gris)`, () => {
-    const r = calcularCashflow(cashflowDatos, ELEGIR(e));
-    const n = r.avisos.filter((a) => a.tipo === 'naranja');
-    const rojo = r.avisos.filter((a) => a.tipo === 'rojo');
-    const soe = r.vistas.RITA.lineas.find((l) => l.categoria === 'RE Cobro SOE' && l.celdas['2026-12-21']?.en_saldo);
-    return si(n.length === 1 && n[0].cuenta === 'RITA' && n[0].cubre === 'PIO' && n[0].decena === '2026-12-11' && n[0].devolucion === '2026-12-21' && soe !== undefined
-      && rojo.length === 1 && rojo[0].decena === '2027-01-11' && rojo[0].importe > 0
-      && isDeepStrictEqual(r.avisos.filter((a) => a.tipo === 'gris').map((a) => a.codigo), ['IMPORTACION_ANTIGUA']) && r.importacion.dias === 6,
-    JSON.stringify(r.avisos.map((a) => [a.tipo, a.codigo, a.cuenta, a.decena, a.importe, a.devolucion])));
-  });
-}
-comprobar('H7: ALLIANCE 11–20/11/2026: vencimiento del sistema (F02, 472,22) sustituye al Excel (520,00) con «posible duplicado o diferencia»; RITA sin vencimientos; SL fuera', () => {
+comprobar('H7 (media): naranja RITA cubierta por PIO 11–20/12/2026 con devolución en la SOE (21–31/12); rojo del consolidado 11–20/01/2027; importación de hace 6 días (único gris: ninguno por traspasos)', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const n = r.avisos.filter((a) => a.tipo === 'naranja');
+  const rojo = r.avisos.filter((a) => a.tipo === 'rojo');
+  const soe = r.vistas.RITA.lineas.find((l) => l.categoria === 'RE Cobro SOE' && l.celdas['2026-12-21']?.en_saldo);
+  return si(n.length === 1 && n[0].cuenta === 'RITA' && n[0].cubre === 'PIO' && n[0].decena === '2026-12-11' && n[0].devolucion === '2026-12-21' && soe !== undefined
+    && rojo.length === 1 && rojo[0].decena === '2027-01-11' && rojo[0].importe === 2620
+    && isDeepStrictEqual(r.avisos.filter((a) => a.tipo === 'gris').map((a) => a.codigo), ['IMPORTACION_ANTIGUA']) && r.importacion.dias === 6,
+  JSON.stringify(r.avisos.map((a) => [a.tipo, a.codigo, a.cuenta, a.decena, a.importe, a.devolucion])));
+});
+comprobar('H7-REAL-2/3: previsión: vencimientos > Excel > media de la misma posición de decena (3 meses); con vencimientos, por concepto (ALLIANCE + media del resto); sin doble cómputo', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const L = (v, cat, con) => r.vistas[v].lineas.find((l) => l.categoria === cat && l.concepto === con);
+  const tpv = L('PIO', 'RE Cobro TPV', CONCEPTO_MEDIA);
+  const prov = L('PIO', 'RS Proveedores', CONCEPTO_MEDIA);
+  const soe = L('RITA', 'RE Cobro SOE', CONCEPTO_MEDIA);
+  const ok = tpv.celdas['2026-11-11'].importe === 10000 && isDeepStrictEqual(tpv.celdas['2026-11-11'].media.base.map((b) => b.clave), ['2026-08-11', '2026-09-11', '2026-10-11'])
+    && tpv.celdas['2026-12-21'] === undefined && L('PIO', 'RE Cobro TPV', 'TPV CaixaBank').celdas['2026-12-21'].fuente === 'EXCEL'
+    && prov.celdas['2026-11-11'].importe === -8800 && isDeepStrictEqual(prov.celdas['2026-11-11'].media.excluidos, ['ALLIANCE'])
+    && L('PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-11'].importe === -6000 && prov.celdas['2026-11-21'].importe === -15500
+    && soe.celdas['2026-11-21'].importe === 20000 && soe.celdas['2026-11-11'] === undefined
+    && r.vistas.PIO.decenas['2026-11-11'].saldo === 22300 && !r.categorias_media.includes('RE Traspasos');
+  return si(ok, JSON.stringify({ tpv: tpv.celdas['2026-11-11'].importe, prov: prov.celdas['2026-11-21']?.importe, s: r.vistas.PIO.decenas['2026-11-11'].saldo }));
+});
+comprobar('H7-REAL-2: «RS Modelo …» con el mismo mes del año anterior (PIO 303 ene-2027 = ene-2026: 8.500; 111: 1.500); sin año anterior real, nada', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const m = (v, cat) => r.vistas[v].lineas.find((l) => l.categoria === cat && l.media).celdas;
+  const c = m('PIO', 'RS Modelo 303');
+  return si(c['2027-01-11'].importe === -8500 && c['2027-01-11'].media.regla === 'ANIO_ANTERIOR' && c['2026-11-11'] === undefined && c['2027-12-11'] === undefined
+    && m('PIO', 'RS Modelo 111')['2027-01-11'].importe === -1500 && m('RITA', 'RS Modelo 303')['2027-01-11'].importe === -3100, JSON.stringify(c['2027-01-11']?.media));
+});
+comprobar('H7-REAL-4: traspasos externos (conceptos fuera de TRASPASOS_INTERNOS) con media por concepto y en el consolidado; el Excel manda', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const f = r.vistas.PIO.lineas.find((l) => l.concepto === 'TRASPASO A FONDOS/VALORS');
+  const sl = r.vistas.RITA.lineas.find((l) => l.concepto === 'TRASPASO A LA SL (JUBILACIO ETC)');
+  return si(f?.clase === 'TRASPASO_EXTERNO' && f.celdas['2026-12-01'].importe === -1000 && f.celdas['2027-02-01'].fuente === 'EXCEL' && f.celdas['2027-02-01'].importe === -2500
+    && sl?.clase === 'TRASPASO_EXTERNO' && sl.celdas['2026-11-11'].importe === -500 && r.vistas.CONSOLIDADO.lineas.some((l) => l.concepto === 'TRASPASO A FONDOS/VALORS')
+    && r.vistas.CONSOLIDADO.decenas['2026-12-01'].traspasos_externos === -1000, JSON.stringify({ f: f?.clase, sl: sl?.clase }));
+});
+comprobar('H7-REAL-2/4: traspasos internos sin media; los no compensados sin aviso y solo de las decenas visibles; RITA con su efectivo (COBRO EFECTIU)', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const nc = traspasosNoCompensados(r.vistas.CONSOLIDADO, columnasVista(r.hoy, 'decenas'));
+  const ef = r.vistas.RITA.lineas.find((l) => l.categoria === 'RE Cobro efectivo' && l.concepto === 'COBRO EFECTIU');
+  const efMedia = r.vistas.RITA.lineas.find((l) => l.categoria === 'RE Cobro efectivo' && l.media);
+  return si(isDeepStrictEqual(nc, [{ decena: '2026-10-21', importe: -16000 }]) && r.avisos.every((a) => !/TRASPASO/.test(a.codigo))
+    && ['PIO', 'RITA'].every((v) => r.vistas[v].lineas.every((l) => l.clase !== 'TRASPASO' || !l.media))
+    && ef !== undefined && ef.celdas['2026-11-01'].fuente === 'REAL' && efMedia?.celdas['2026-11-11'].importe === 1200, JSON.stringify(nc));
+});
+comprobar('H7/H7-REAL-5: ALLIANCE 11–20/11/2026: vencimientos (F02, 472,22) como mínimo; gana su media (6.000); el Excel (520,00) no cuenta («posible duplicado o diferencia»); RITA sin vencimientos; SL fuera', () => {
   const r = calcularCashflow(cashflowDatos);
   const c = r.vistas.PIO.lineas.find((l) => l.concepto === 'ALLIANCE').celdas['2026-11-11'];
-  const rita = r.vistas.RITA.lineas.every((l) => Object.values(l.celdas).every((x) => x.fuente !== 'VENCIMIENTOS'));
-  return si(c.fuente === 'VENCIMIENTOS' && c.importe === -472.22 && c.excel === -520 && c.diferencia && c.vencimientos.incluidos[0].factura_id === F(2)
-    && rita && r.fuera.filas_otras_cuentas === 2 && r.vistas.PIO.saldo_partida === 9000 && r.vistas.RITA.saldo_partida === 2000,
-  JSON.stringify({ fuente: c.fuente, importe: c.importe, excel: c.excel, fuera: r.fuera.filas_otras_cuentas }));
+  const rita = r.vistas.RITA.lineas.every((l) => Object.values(l.celdas).every((x) => x.fuente !== 'VENCIMIENTOS' && x.vencimientos === null));
+  return si(c.fuente === 'MEDIA' && c.importe === -6000 && c.vencimientos.neto === 472.22 && c.excel === -520 && c.diferencia && c.vencimientos.incluidos[0].factura_id === F(2)
+    && rita && isDeepStrictEqual(r.fuera.cuentas_fuera, ['SL']) && r.fuera.filas_otras_cuentas === 0 && r.vistas.PIO.saldo_partida === 25000 && r.vistas.RITA.saldo_partida === 2000,
+  JSON.stringify({ fuente: c.fuente, importe: c.importe, excel: c.excel, fuera: r.fuera.cuentas_fuera }));
 });
-comprobar('H7-2: signo de la celda: RS negativo (abono COFARES −250, PIO 1–10/12/2026) reduce las salidas; RE negativo (regularización −120, RITA 21–30/11/2026) reduce las entradas', () => {
+comprobar('H7-REAL: cuadre de control (saldo_inicial + ΣRE − ΣRS = saldo_formulas) en todas las decenas de PIO y RITA; E7 solo en PIO 21–31/10/2026 (−35,20)', () => {
+  const r = calcularCashflow(cashflowDatos);
+  const malos = [];
+  const dif = [];
+  for (const v of ['PIO', 'RITA']) {
+    for (const [d, x] of Object.entries(r.vistas[v].decenas)) {
+      if (cashflowSemilla.saldos.some((s) => s.cuenta === v && s.decena_inicio === d) && x.cuadra !== true) malos.push(`${v} ${d}`);
+      if (x.diferencia_banco !== null) dif.push([v, d, x.diferencia_banco]);
+    }
+  }
+  return si(malos.length === 0 && isDeepStrictEqual(dif, [['PIO', '2026-10-21', -35.2]]) && !r.avisos.some((a) => a.codigo === 'IMPORTACION_NO_CUADRA'),
+    JSON.stringify({ malos: malos.slice(0, 3), dif }));
+});
+comprobar('H7-2: signo de la celda: RS negativo (abono COFARES −250, PIO 11–20/07/2026) reduce las salidas; RE negativo (regularización −120, RITA 21–30/11/2026) reduce las entradas', () => {
   const r = calcularCashflow(cashflowDatos);
   const rs = cashflowSemilla.importes.filter((f) => f.categoria.startsWith('RS ') && f.importe < 0);
   const re = cashflowSemilla.importes.filter((f) => f.categoria.startsWith('RE ') && f.importe < 0);
-  const cof = r.vistas.PIO.lineas.find((l) => l.categoria === 'RS Proveedores' && l.concepto === 'COFARES').celdas['2026-12-01'];
+  const cof = r.vistas.PIO.lineas.find((l) => l.categoria === 'RS Proveedores' && l.concepto === 'COFARES').celdas['2026-07-11'];
   const reg = r.vistas.RITA.lineas.find((l) => l.concepto === 'Regularización mutua').celdas['2026-11-21'];
   return si(rs.length === 1 && re.length === 1 && cof.importe === -4250 && reg.importe === -120, JSON.stringify({ rs, re, cof: cof.importe, reg: reg.importe }));
 });
@@ -1559,7 +1621,7 @@ comprobar('H7: traspasos neutros en el consolidado; «no relacionadas» fuera de
   const sep = r.vistas.CONSOLIDADO.decenas['2026-09-11'];
   const dic = r.vistas.PIO.decenas['2026-12-01'];
   return si(sep.traspasos === 0 && r.vistas.CONSOLIDADO.lineas.every((l) => l.clase !== 'TRASPASO') && dic.no_relacionadas === -550
-    && Math.round((dic.farmacia + dic.no_relacionadas) * 100) === Math.round(dic.neto * 100), JSON.stringify({ sep, dic }));
+    && Math.round((dic.farmacia + dic.no_relacionadas + dic.traspasos_externos) * 100) === Math.round(dic.neto * 100), JSON.stringify({ sep, dic }));
 });
 
 // --- Informe ----------------------------------------------------------------------

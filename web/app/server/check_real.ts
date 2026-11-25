@@ -27,13 +27,19 @@
  * proveedores por bloque. Si los grupos no suman el total, ERROR y una línea RECUENTOS con los mismos números.
  * H8-4: fecha de inicio de los proveedores con conciliación = su albarán reservado más antiguo (anteriores por esa fecha);
  * grupo traspasos_entre_farmacias; proveedores_con_conciliacion_sin_desde y proveedores_traspaso (debería ser 1).
+ * H7-REAL: DIAGNOSTICO cashflow (migración 38): vigente sí/no, días desde la vigente, última ERROR sí/no, filas de
+ * importes y saldos por cuenta, decenas reales con diferencia banco/fórmulas (E7) y decenas que no cuadran.
+ * H7-REAL-2: recuentos de importes por cuenta y categoría (reales / anotados a futuro) y del efectivo de cada cuenta.
  * Solo recuentos, sí/no o nombres de columna; nunca valores.
  * Código de salida: 0 si todas OK; 1 si alguna falla (también sin conexión); 2 si falta .env.web o está incompleto.
  */
 import { CONSULTAS, type NombreConsulta } from './contrato.ts';
 import { ErrorRecuentosIncoherentes, NOMBRES_DIAGNOSTICO, crearAdaptadorReal, type AdaptadorReal } from './adaptador_real.ts';
 import { configuracionRrhh, crearAdaptadorRrhhReal, crearPoolRrhh, leerEnvWeb } from './rrhh/adaptador_real.ts';
-import { configuracionPagos, crearAlmacenPagosReal, crearPoolPagos } from './pagos/adaptador_real.ts';
+import { configuracionPagos, crearAlmacenPagosReal, crearPoolPagos, fuenteDesdeFilas } from './pagos/adaptador_real.ts';
+import { construirPantalla, hoyMadrid } from './pagos/pagos.ts';
+import { vencimientoCashflow } from './cashflow/rutas.ts';
+import type { VencimientoCashflow } from './cashflow/cashflow.ts';
 
 function primeraLinea(e: unknown): string {
   const m = e instanceof Error ? e.message : String(e);
@@ -98,6 +104,30 @@ try {
   console.log(`DIAGNOSTICO pagos ${error(e)}`);
 }
 
+// H7-REAL: cashflow con cf_lectura (una foto READ ONLY): vigente sí/no, días desde la vigente, última ERROR sí/no, filas de
+// importes y saldos por cuenta (PIO, RITA, SL, otras), decenas reales con diferencia banco/fórmulas y decenas que no
+// cuadran. Solo números y sí/no. H7-REAL-2: recuentos por cuenta y categoría (reales y anotados a futuro,
+// cat_<cuenta>_<categoría>_reales|_futuros) y del efectivo (efectivo_<cuenta>_reales|_futuros|_en_otra_categoria).
+// H7-REAL-5: con los vencimientos de PIO (contrato H6 y marcas de pago, solo lectura) para ver cuántas decenas gana la
+// media frente a los vencimientos y el indicador consolidado antes/después. Si no se pueden leer, sin vencimientos
+// (vencimientos_leidos=0) y una línea con el error.
+let vencimientosCashflow: VencimientoCashflow[] = [];
+try {
+  const hoy = hoyMadrid();
+  const pantalla = construirPantalla(await real.contrato.vencimientos(), fuenteDesdeFilas(hoy, await real.leerPagos()), { modo: 'REAL' });
+  vencimientosCashflow = pantalla.filas.map(vencimientoCashflow);
+} catch (e) {
+  fallos += 1;
+  console.log(`DIAGNOSTICO cashflow_vencimientos ${error(e)}`);
+}
+try {
+  const d = await real.diagnosticoCashflow(vencimientosCashflow);
+  console.log(`DIAGNOSTICO cashflow ${Object.entries(d).map(([k, v]) => `${k}=${formato(v)}`).join(' ')}`);
+} catch (e) {
+  fallos += 1;
+  console.log(`DIAGNOSTICO cashflow ${error(e)}`);
+}
+
 await real.cerrar();
 
 // H6-REAL: credencial de pagos (cf_pagos_web), transacción READ ONLY y ROLLBACK. Sin escrituras. Solo sí/no y un recuento.
@@ -135,5 +165,5 @@ if (!cfgTrab.ok) {
   await trab.cerrar?.();
 }
 
-console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + ${4 + NOMBRES_DIAGNOSTICO.length} diagnósticos, ${fallos} con error`);
+console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + ${5 + NOMBRES_DIAGNOSTICO.length} diagnósticos, ${fallos} con error`);
 process.exit(fallos ? 1 : 0);

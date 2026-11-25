@@ -6,10 +6,21 @@
   --cf-consolidado: #1d3b47;
   --cf-previsto-fondo: #f6f8fb;
   --cf-real-zona: #eef1ee;
+  /* H7-REAL-6: tamaños de letra de Cashflow, en un solo sitio. Textos secundarios: nunca por debajo de --cf-tam-min. */
+  --cf-tam-celda: 15px;      /* cifras de la tabla y nombres de concepto */
+  --cf-tam-total: 16px;      /* Total entradas / salidas, Cash flow generado, Total no relacionadas, Total traspasos externos (negrita) */
+  --cf-tam-saldo: 18px;      /* Saldo final (negrita) */
+  --cf-tam-cabecera: 15px;   /* decena o mes */
+  --cf-tam-cabecera-sub: 13px; /* año y Real/Previsto */
+  --cf-tam-grafico: 14px;    /* ejes, etiquetas PIO/RITA/Consolidado, leyenda */
+  --cf-tam-indicador: 16px;  /* variación media mensual (cifras en negrita) */
+  --cf-tam-aviso: 15px;      /* avisos de saldo */
+  --cf-tam-min: 12px;        /* «dif. banco», «incompleto», Media/Excel, marca «m»… */
+  --cf-ancho-concepto: 232px; /* primera columna */
 }
 
 .cashflow { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.cf-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cf-num { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
 .cf-bloque { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .cf-bloque h2, .cf-avisos h2 { margin: 0; font-size: 17px; font-weight: 700; }
 .cf-ayuda { margin: -4px 0 0; font-size: 13px; }
@@ -60,7 +71,7 @@
 
 /* Gráfico */
 .cf-grafico { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.cf-leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--tenue); }
+.cf-leyenda { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: var(--cf-tam-grafico); color: var(--tenue); }
 .cf-leyenda-serie { display: inline-flex; align-items: center; gap: 6px; }
 .cf-leyenda-serie.activa { color: var(--texto); font-weight: 700; }
 .cf-linea-muestra { width: 20px; height: 0; border-top: 2px solid var(--gris); display: inline-block; }
@@ -74,10 +85,10 @@
 .cf-grafico-lienzo { position: relative; min-width: 0; }
 .cf-grafico svg { display: block; width: 100%; height: auto; overflow: visible; }
 .cf-zona-real { fill: var(--cf-real-zona); }
-.cf-zona-texto { font-size: 11px; font-weight: 700; fill: var(--tenue); }
+.cf-zona-texto { font-size: var(--cf-tam-grafico); font-weight: 700; fill: var(--tenue); }
 .cf-reja { stroke: var(--borde-suave); stroke-width: 1; }
 .cf-cero { stroke: var(--texto); stroke-width: 1.5; }
-.cf-eje { font-size: 11.5px; fill: var(--tenue); font-variant-numeric: tabular-nums; }
+.cf-eje { font-size: var(--cf-tam-grafico); fill: var(--tenue); font-variant-numeric: tabular-nums; }
 .cf-eje.actual { fill: var(--texto); font-weight: 700; }
 .cf-serie path { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .cf-serie path.previsto { stroke-dasharray: 6 5; }
@@ -85,7 +96,7 @@
 .cf-serie.s-rita path { stroke: var(--cf-rita); }
 .cf-serie.s-consolidado path { stroke: var(--cf-consolidado); stroke-width: 3; }
 .cf-serie.activa path { stroke-width: 3.5; }
-.cf-etiqueta { font-size: 12px; font-weight: 700; }
+.cf-etiqueta { font-size: var(--cf-tam-grafico); font-weight: 700; }
 .cf-etiqueta.s-pio { fill: var(--cf-pio); }
 .cf-etiqueta.s-rita { fill: var(--cf-rita); }
 .cf-etiqueta.s-consolidado { fill: var(--cf-consolidado); }
@@ -96,7 +107,7 @@
 .cf-zona-foco { fill: transparent; }
 .cf-tooltip {
   position: absolute; top: 4px; transform: translateX(12px); z-index: 2; pointer-events: none;
-  display: flex; flex-direction: column; gap: 3px; min-width: 210px; padding: 10px 12px; font-size: 13px;
+  display: flex; flex-direction: column; gap: 3px; min-width: 230px; padding: 10px 12px; font-size: var(--cf-tam-grafico);
   background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; box-shadow: 0 6px 18px rgba(24, 33, 30, 0.12);
 }
 .cf-tooltip.izquierda { transform: translateX(calc(-100% - 12px)); }
@@ -109,7 +120,8 @@
 .cf-avisos { padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; }
 .cf-avisos h2 .tenue { font-weight: 500; font-size: 14px; }
 .cf-avisos ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.cf-aviso { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 10px; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.45; }
+.cf-aviso { display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 10px; padding: 10px 14px; border-radius: 10px; font-size: var(--cf-tam-aviso); line-height: 1.45; }
+.cf-aviso .cf-num { font-weight: 700; }
 .cf-aviso.naranja { background: var(--naranja-fondo); color: var(--naranja-texto); border: 1px solid #f0c99c; }
 .cf-aviso.rojo { background: var(--rojo-fondo); color: var(--rojo-texto); border: 1px solid #f1b8b3; }
 .cf-aviso-icono { font-size: 12px; }
@@ -117,41 +129,73 @@
 .cf-aviso-texto { color: var(--texto); }
 
 /* Tabla */
-.cf-tabla-marco { overflow-x: auto; min-width: 0; border: 1px solid var(--borde-suave); border-radius: 10px; }
-.cf-tabla { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1060px; table-layout: fixed; font-size: 12.5px; }
-.cf-tabla th, .cf-tabla td { padding: 0; border-bottom: 1px solid var(--borde-suave); }
-.cf-tabla thead th { position: sticky; top: 0; background: var(--superficie); z-index: 1; }
-.cf-tabla tbody th, .cf-esquina {
-  position: sticky; left: 0; z-index: 1; background: var(--superficie); text-align: left; width: 184px;
-  border-right: 1px solid var(--borde); padding: 6px 10px; font-weight: 600;
+/*
+ * H7-REAL-5: la tabla se desplaza dentro de su marco en los dos ejes, con altura ligada a la ventana: la cabecera
+ * (decena o mes, año, Real/Previsto, «hoy») queda fija arriba y la primera columna fija a la izquierda. La esquina va por
+ * encima de las dos. Fondos opacos en todo lo fijo. En escritorio el pie del menú vive en la columna lateral (no tapa);
+ * en ≤900 px el menú es estático, arriba de la página.
+ */
+/* El cartel «Ejemplo» (FIXTURES) no flota: taparía la cabecera fija de la tabla (como en Vencimientos). */
+.cashflow .rrhh-banner { position: static; }
+.cf-tabla-marco {
+  overflow: auto; min-width: 0; border: 1px solid var(--borde-suave); border-radius: 10px;
+  max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px); min-height: 280px; overscroll-behavior: contain;
 }
-.cf-esquina { z-index: 2; font-size: 12px; vertical-align: bottom; }
-.cf-col { text-align: right; padding: 8px 6px 6px; vertical-align: bottom; font-weight: 700; }
+/* H7-REAL-6: con la letra mayor, 12 columnas no caben en 1440 px: la tabla se desplaza a lo ancho con la primera
+   columna fija (nunca se reduce la letra para que quepa). */
+.cf-tabla { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1380px; table-layout: fixed; font-size: var(--cf-tam-celda); }
+.cf-tabla th, .cf-tabla td { padding: 0; border-bottom: 1px solid var(--borde-suave); }
+.cf-tabla thead th { position: sticky; top: 0; background: var(--superficie); z-index: 3; box-shadow: inset 0 -1px 0 var(--borde); }
+.cf-tabla tbody th, .cf-esquina {
+  position: sticky; left: 0; z-index: 2; background: var(--superficie); text-align: left; width: var(--cf-ancho-concepto);
+  border-right: 1px solid var(--borde); padding: 7px 12px; font-weight: 600;
+}
+.cf-tabla thead .cf-esquina { z-index: 4; font-size: var(--cf-tam-cabecera-sub); font-weight: 600; vertical-align: bottom; }
+.cf-tabla thead .cf-col.actual { box-shadow: inset 0 3px 0 var(--primario), inset 0 -1px 0 var(--borde); }
+.cf-col { text-align: right; padding: 9px 8px 7px; vertical-align: bottom; font-weight: 700; font-size: var(--cf-tam-cabecera); }
 .cf-col-texto, .cf-col-anio, .cf-col-tipo { display: block; white-space: nowrap; }
-.cf-col-anio { font-size: 11px; color: var(--tenue); font-weight: 500; }
-.cf-col-tipo { margin-top: 3px; font-size: 10.5px; font-weight: 700; color: var(--tenue); white-space: normal; line-height: 1.2; }
+.cf-col-anio { font-size: var(--cf-tam-cabecera-sub); color: var(--tenue); font-weight: 500; }
+.cf-col-tipo { margin-top: 3px; font-size: var(--cf-tam-cabecera-sub); font-weight: 700; color: var(--tenue); white-space: normal; line-height: 1.2; }
 .cf-col-tipo.previsto, .cf-col-tipo.mixto { color: var(--azul-texto); }
 .cf-col.actual { box-shadow: inset 0 3px 0 var(--primario); }
 .cf-c { text-align: right; vertical-align: top; }
 .cf-c.previsto, .cf-c.mixto { background: var(--cf-previsto-fondo); }
 .cf-c.actual { box-shadow: inset 1px 0 0 #cfd8e6, inset -1px 0 0 #cfd8e6; }
 .cf-cbtn {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 1px; width: 100%; min-height: 34px; padding: 7px 6px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px; width: 100%; min-height: 38px; padding: 8px 8px;
   border: 0; background: transparent; font: inherit; color: inherit; text-align: right; cursor: pointer;
 }
-.cf-linea1 { display: inline-flex; align-items: center; gap: 3px; }
+.cf-linea1 { display: inline-flex; align-items: center; justify-content: flex-end; gap: 3px; }
 .cf-cbtn:hover { background: var(--primario-fondo); }
 .cf-c.f-vencimientos .cf-cbtn { box-shadow: inset 3px 0 0 var(--primario); }
 .cf-c.f-media .cf-cbtn { box-shadow: inset 3px 0 0 var(--cf-rita); }
-.cf-sub { font-size: 10.5px; color: var(--tenue); white-space: nowrap; }
+.cf-c.f-manual .cf-cbtn { box-shadow: inset 3px 0 0 var(--primario); }
+/* H7-REAL-2: marca «media» en cada cifra estimada. */
+.cf-marca-media { display: inline-block; min-width: 13px; padding: 0 3px; margin-right: 4px; border-radius: 4px; font-size: var(--cf-tam-min); line-height: 16px; font-weight: 800; text-align: center; color: #fff; background: var(--cf-rita); vertical-align: 1px; }
+.cf-marca-media.estatico { margin: 0 2px 0 4px; }
+/* H7-REAL-4: indicador de control de la previsión, junto al gráfico. */
+.cf-indicador { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-top: 12px; padding: 12px 14px; border-radius: 8px; background: var(--gris-fondo); font-size: var(--cf-tam-indicador); }
+.cf-indicador-titulo { font-weight: 700; }
+.cf-indicador-dato strong { margin-left: 4px; font-weight: 800; }
+.cf-indicador-nota { font-size: 13px; }
+.cf-traspasos-nc { display: inline-block; margin-left: 10px; }
+.cf-traspasos-nc summary { cursor: pointer; color: var(--gris-texto); font-weight: 600; }
+.cf-traspasos-nc ul { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.cf-traspasos-nc li { display: flex; gap: 8px; }
+.cf-sub { font-size: var(--cf-tam-min); font-weight: 500; color: var(--tenue); white-space: nowrap; }
 .cf-sub.aviso { color: var(--naranja-texto); font-weight: 700; }
+.cf-sub.gris { color: var(--gris-texto); font-weight: 700; }
+/* H7-REAL: el saldo final se abre en su desglose (banco, fórmulas y cuadre). */
+.cf-total td:has(> .cf-saldo-btn) { padding: 0; }
+.cf-saldo-btn { font-weight: 700; }
+.cf-saldo-btn:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; }
 .cf-dif {
-  flex: none; width: 14px; height: 14px; border-radius: 999px; display: inline-flex;
-  align-items: center; justify-content: center; background: var(--naranja); color: #fff; font-size: 10.5px; font-weight: 800;
+  flex: none; width: 16px; height: 16px; border-radius: 999px; display: inline-flex;
+  align-items: center; justify-content: center; background: var(--naranja); color: #fff; font-size: var(--cf-tam-min); font-weight: 800;
 }
 .cf-dif.estatico { margin-left: 8px; }
 .cf-seccion th {
-  position: sticky; left: 0; background: #f7f8f6; padding: 9px 10px 5px; font-size: 12px; font-weight: 800;
+  position: sticky; left: 0; background: #f7f8f6; padding: 10px 12px 6px; font-size: 13px; font-weight: 800;
   color: var(--tenue); text-align: left; border-right: 0;
 }
 .cf-categoria th { font-weight: 700; }
@@ -163,21 +207,23 @@
 }
 .cf-chevron { width: 12px; color: var(--tenue); }
 .cf-eleccion { display: inline-flex; border: 1px solid var(--borde); border-radius: 7px; overflow: hidden; }
-.cf-eleccion button { min-height: 26px; padding: 0 8px; border: 0; background: var(--superficie); font: inherit; font-size: 11.5px; font-weight: 700; color: var(--tenue); cursor: pointer; }
+.cf-eleccion button { min-height: 28px; padding: 0 10px; border: 0; background: var(--superficie); font: inherit; font-size: var(--cf-tam-min); font-weight: 700; color: var(--tenue); cursor: pointer; }
 .cf-eleccion button[aria-pressed='true'] { background: var(--cf-rita); color: #fff; }
 .cf-concepto th { padding-left: 28px; font-weight: 500; color: #3e4a46; }
 .cf-concepto.media th { font-style: italic; color: var(--cf-rita); }
 .cf-concepto-nombre { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cf-total th { font-weight: 800; }
-.cf-total td { padding: 7px 6px; font-weight: 700; }
+.cf-total th { font-weight: 800; font-size: var(--cf-tam-total); }
+.cf-total td { padding: 8px 8px; font-weight: 700; font-size: var(--cf-tam-total); }
+.cf-total .cf-num { font-weight: 700; }
 .cf-total.generado th, .cf-total.generado td { background: var(--verde-fondo); color: var(--verde-texto); }
-.cf-total.saldo th, .cf-total.saldo td { border-top: 2px solid var(--texto); border-bottom: 0; font-size: 13px; }
+.cf-total.saldo th, .cf-total.saldo td { border-top: 2px solid var(--texto); border-bottom: 0; font-size: var(--cf-tam-saldo); }
+.cf-total.saldo .cf-num { font-weight: 800; }
 .cf-saldo { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 1px; }
 .cf-saldo.negativo .cf-num { color: var(--rojo-texto); }
 .cf-saldo.naranja { box-shadow: inset 0 -3px 0 var(--naranja); }
 .cf-saldo.rojo { box-shadow: inset 0 -3px 0 var(--rojo); }
 .cf-neutro th { font-weight: 600; }
-.cf-neutro td { padding: 7px 10px; font-size: 12.5px; text-align: left; }
+.cf-neutro td { padding: 8px 12px; font-size: 14px; text-align: left; }
 
 /* Desglose */
 .cf-velo { position: fixed; inset: 0; background: rgba(24, 33, 30, 0.35); z-index: 50; display: flex; justify-content: flex-end; }
@@ -209,7 +255,7 @@
 .cf-media li { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px dashed var(--borde-suave); }
 .cf-media-total { font-weight: 800; border-bottom: 0 !important; }
 
-/* Fuera de la previsión y REAL pendiente */
+/* Fuera de la previsión y «Todavía no hay datos importados» */
 .cf-fuera { padding: 14px 20px; font-size: 14px; }
 .cf-fuera summary { cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 8px; min-height: 32px; }
 .cf-fuera ul { margin: 10px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
@@ -228,9 +274,9 @@
   .cf-bloque, .cf-avisos { padding: 16px 14px; }
   .cf-aviso { grid-template-columns: auto 1fr; }
   .cf-aviso-texto { grid-column: 1 / -1; }
-  .cf-tabla tbody th, .cf-esquina { width: 132px; }
-  .cf-eje { font-size: 10.5px; }
-  .cf-tabla { min-width: 980px; }
+  .cashflow { --cf-ancho-concepto: 160px; }
+  .cf-tabla-marco { max-height: calc(100vh - 72px); max-height: calc(100dvh - 72px); }
+  .cf-tabla { min-width: 1280px; }
   .cf-segmento button { padding: 0 12px; }
   .cf-tooltip { min-width: 180px; }
 }

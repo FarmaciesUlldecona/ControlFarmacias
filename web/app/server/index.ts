@@ -30,6 +30,7 @@ import { esEscrituraPagos, registrarPagos } from './pagos/rutas.ts';
 import type { AlmacenPagosAsync } from './pagos/almacen.ts';
 import type { LectorPagos } from './pagos/adaptador_real.ts';
 import { registrarCashflow } from './cashflow/rutas.ts';
+import type { DatosCashflow } from './cashflow/cashflow.ts';
 
 const HOST = '127.0.0.1';
 export const PUERTO_FIJO = 4747;
@@ -59,11 +60,13 @@ export function leerPuerto(modo: Modo): number {
   return n;
 }
 
-async function crearContrato(modo: Modo): Promise<{ contrato: Contrato; cerrar: () => Promise<void>; leerPagos?: LectorPagos }> {
+async function crearContrato(modo: Modo): Promise<{
+  contrato: Contrato; cerrar: () => Promise<void>; leerPagos?: LectorPagos; leerCashflow?: () => Promise<DatosCashflow>;
+}> {
   if (modo === 'FIXTURES') return { contrato: crearAdaptadorFixtures(), cerrar: async () => {} };
   const { crearAdaptadorReal } = await import('./adaptador_real.ts');
   const real = crearAdaptadorReal();
-  return { contrato: real.contrato, cerrar: real.cerrar, leerPagos: real.leerPagos };
+  return { contrato: real.contrato, cerrar: real.cerrar, leerPagos: real.leerPagos, leerCashflow: real.leerCashflow };
 }
 
 /**
@@ -151,7 +154,7 @@ export function modulosEscritura(
 }
 
 export async function crearServidor(modo: Modo) {
-  const { contrato, cerrar, leerPagos } = await crearContrato(modo);
+  const { contrato, cerrar, leerPagos, leerCashflow } = await crearContrato(modo);
   const rrhh = await crearRrhh(modo);
   const almacenPagos = await crearAlmacenPagos(modo, leerPagos);
   const acceso = await crearGestorAcceso(modo);
@@ -245,8 +248,8 @@ export async function crearServidor(modo: Modo) {
     modo, contrato, quien: AUTOR_HISTORIAL, almacen: almacenPagos, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)),
   });
   // H7: Cashflow (solo lectura; sustituye al cashflow por semanas de H3a). FIXTURES: datos ficticios con la forma del
-  // contrato + vencimientos de H6. REAL: 503 «Pendiente de tablas en Supabase».
-  registrarCashflow(app, { modo, pantallaPagos: pagos.pantalla });
+  // contrato + vencimientos de H6. H7-REAL: tablas cf_cashflow_* (migración 38) con cf_lectura, importación vigente.
+  registrarCashflow(app, { modo, pantallaPagos: pagos.pantalla, leerReal: leerCashflow });
 
   // Errores: mensaje genérico al cliente; nunca filas ni datos de conexión.
   app.setErrorHandler((err, _req, reply) => {

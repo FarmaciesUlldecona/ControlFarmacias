@@ -4,24 +4,45 @@
 // Uso: npm run fixtures:cashflow (en web/app). check_fixtures comprueba que el fichero está al día.
 //
 // Casos que cubre (fecha de referencia 16/11/2026; última decena con saldo de banco: 01–10/11/2026):
-//   - PIO y RITA, decenas de 2026 (reales desde junio) y 2027 (previstas, hasta diciembre).
-//   - Naranja: RITA queda en negativo en 11–20/12/2026 (campaña de HEFAME y paga extra) y PIO la cubre; RITA recupera
-//     en 21–31/12/2026, la decena de la SOE.
-//   - Rojo: el consolidado queda en negativo en 11–20/01/2027 (IVA y el robot dispensador de PIO).
+//   - PIO y RITA, decenas reales desde octubre de 2025 (el año anterior de los modelos trimestrales) y previstas hasta
+//     diciembre de 2027.
+//   H7-REAL-2 (previsión por cuenta y categoría: vencimientos > apunte manual > Excel > media por posición de decena):
+//   - El Excel futuro está poco anotado (como el de Pío): personal, alquiler del local, el robot, la campaña de HEFAME de
+//     RITA, un TPV de Navidad de PIO (12.500 en 21–31/12/2026) y los traspasos con contrapartida. El resto, media de la
+//     misma posición de decena en los últimos 3 meses reales. Los cobros reales varían por mes (+300, −100, −200: suman 0
+//     en 3 meses seguidos), así que la media de cada posición es la cifra base: TPV PIO 11.000 / 10.000 / 9.000.
+//   - SOE en la 3.ª decena: su media cae en su decena (PIO 40.000, RITA 20.000).
+//   - «RS Modelo 303» y «RS Modelo 111» (trimestrales, 2.ª decena de enero, abril, julio y octubre): el mismo mes del año
+//     anterior (enero de 2027 = enero de 2026: 8.500 y 1.500 en PIO).
+//   - H7-REAL-4: traspasos internos (conceptos de TRASPASOS_INTERNOS: «La Caixa Rita» ↔ «DEPÓSITO CONECTADO», neutros y
+//     sin media; dos sin contrapartida en la 3.ª decena de agosto a octubre de 2026, sin aviso) y externos («TRASPASO A
+//     FONDOS/VALORS» en PIO, «TRASPASO A LA SL (JUBILACIO ETC)» en RITA): cuentan en el saldo y llevan media por concepto.
+//   - RITA con «RE Cobro efectivo / COBRO EFECTIU» en todas las decenas reales (como su hoja del Excel).
+//   - Naranja: RITA queda en negativo en 11–20/12/2026 (campaña de HEFAME y paga extra) y PIO la cubre; RITA recupera en
+//     21–31/12/2026, la decena de la SOE.
+//   - Rojo: el consolidado queda en negativo en 11–20/01/2027 (modelos trimestrales y el robot dispensador de PIO).
 //   - Vencimiento del sistema y Excel distintos: ALLIANCE en 11–20/11/2026 (Excel 520,00 €; sistema 472,22 €, F02).
+//     H7-REAL-3: «RS Proveedores» tiene vencimientos, así que va por concepto: ALLIANCE por vencimientos y el resto por la
+//     media de la 2.ª decena sin ALLIANCE (COFARES 4.500 + HEFAME 3.500 + LOGISTA 800 = 8.800), sin doble cómputo.
+//     H7-REAL-5: los vencimientos son un mínimo: los de ALLIANCE (472,22) son menores que su media de la 2.ª decena
+//     (6.000), así que cuenta la media («Vencimientos conocidos 472,22 € (inferiores a la media)»). El caso contrario
+//     (ganan los vencimientos) va en las pruebas unitarias: los fixtures de H6 no tienen otro vencimiento futuro con
+//     correspondencia. Robot de 27.700 € para que los avisos sigan siendo los mismos.
 //   - Importación vigente de hace 6 días (10/11/2026).
-//   - Traspasos PIO → RITA con contrapartida (neutros en el consolidado) y «no relacionadas con la farmacia».
-//   - Cuenta SL: en cf_cashflow_cuentas y con filas, pero fuera de la pantalla (solo PIO y RITA).
+//   - Cuenta SL: en cf_cashflow_cuentas, sin filas (como el Excel actual) y fuera de la pantalla (solo PIO y RITA).
+//   H7-REAL (forma final de la migración 38): ids, importacion_id (todas de la vigente), farmacia de la cuenta y
+//   saldo_inicial (saldo_inicial + ΣRE − ΣRS = saldo_formulas en todas las decenas: cuadra). E7: en PIO 21–31/10/2026 el
+//   banco va 35,20 € por debajo de las fórmulas.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const RUTA_CASHFLOW = join(import.meta.dirname, '..', 'cashflow', 'cashflow.json');
 export const HOY_CASHFLOW = '2026-11-16';
-const INICIO = '2026-06-01';
+const INICIO = '2025-10-01';
 const FIN = '2027-12-21';
 export const ULTIMA_REAL = '2026-11-01';
 /** Saldo de banco al cierre de la última decena real. */
-export const PARTIDA = { PIO: 9000, RITA: 2000 };
+export const PARTIDA = { PIO: 25000, RITA: 2000 };
 
 const DIAS = ['01', '11', '21'];
 const sumarMes = (ym, n) => { const [a, m] = ym.split('-').map(Number); return new Date(Date.UTC(a, m - 1 + n, 1)).toISOString().slice(0, 7); };
@@ -30,113 +51,158 @@ const fin = (d) => (d.endsWith('-01') ? `${d.slice(0, 8)}10` : d.endsWith('-11')
   : new Date(Date.UTC(Number(d.slice(0, 4)), Number(d.slice(5, 7)), 0)).toISOString().slice(0, 10));
 const ord = (d) => DIAS.indexOf(d.slice(8)) + 1;
 const mm = (d) => d.slice(5, 7);
+const ym = (d) => d.slice(0, 7);
 const r2 = (x) => Math.round(x * 100) / 100;
 
 const DECENAS = [];
 for (let d = INICIO; d <= FIN; d = siguiente(d)) DECENAS.push(d);
 
-/** Variación de los cobros reales: suma 0 cada 6 decenas (la media de las últimas 6 es la cifra base). */
-const CICLO = [300, -200, 100, -300, 200, -100];
+/** Variación mensual de los cobros reales: suma 0 en 3 meses seguidos (la media por posición es la cifra base). */
+const VAR = [300, -100, -200];
+const variacion = (d) => VAR[(Number(d.slice(0, 4)) * 12 + Number(mm(d))) % 3];
 const TRIMESTRE = ['01', '04', '07', '10'];
 const SOE_REAL = {
-  PIO: { '2026-06': 39500, '2026-07': 40200, '2026-08': 38900, '2026-09': 40600, '2026-10': 41000 },
-  RITA: { '2026-06': 19600, '2026-07': 20300, '2026-08': 19800, '2026-09': 20500, '2026-10': 20000 },
+  PIO: { '2025-10': 39800, '2025-11': 40100, '2025-12': 40300, '2026-01': 39600, '2026-02': 40200, '2026-03': 39900, '2026-04': 40400,
+    '2026-05': 39700, '2026-06': 39500, '2026-07': 40200, '2026-08': 38900, '2026-09': 40600, '2026-10': 40500 },
+  RITA: { '2025-10': 19900, '2025-11': 20200, '2025-12': 20400, '2026-01': 19700, '2026-02': 20100, '2026-03': 19800, '2026-04': 20300,
+    '2026-05': 19600, '2026-06': 19600, '2026-07': 20300, '2026-08': 19800, '2026-09': 20500, '2026-10': 19700 },
 };
-/** Retiradas del titular de los meses reales (los meses reales cierran con un saldo parecido). */
-const RETIRADA = {
-  PIO: { '06': 1750, '07': 5950, '08': 13150, '09': 11850, '10': 11200 },
-  RITA: { '06': 6600, '07': 11300, '08': 13800, '09': 17500, '10': 12400 },
+const MODELO_303 = {
+  PIO: { '2025-10': 8200, '2026-01': 8500, '2026-04': 7900, '2026-07': 9100, '2026-10': 8800 },
+  RITA: { '2025-10': 2900, '2026-01': 3100, '2026-04': 2800, '2026-07': 3300, '2026-10': 3000 },
 };
+/** Retiradas del titular de agosto a octubre de 2026 (base de la media de la 3.ª decena); antes, las que cierran el mes. */
+const RETIRADA = { PIO: { '2026-08': 3500, '2026-09': 2000, '2026-10': 3500 }, RITA: { '2026-08': 3500, '2026-09': 4500, '2026-10': 4000 } };
+/** Desde este mes la retirada es la de RETIRADA; antes, la que deja el mes a 0 (los meses reales cierran con el mismo saldo). */
+const DESDE_RETIRADA_FIJA = '2026-08';
+/** Traspasos internos PIO → RITA (con contrapartida: neutros en el consolidado). Conceptos de TRASPASOS_INTERNOS. */
 const TRASPASOS = { '2026-09-11': 3000, '2027-03-01': 2000 };
+/**
+ * Traspasos internos (conceptos de TRASPASOS_INTERNOS) sin contrapartida en la otra cuenta: 3.ª decena de agosto a
+ * octubre de 2026. Neutros y sin media; salen en la línea plegada «traspasos no compensados».
+ */
+const SIN_CONTRAPARTIDA = { PIO: ['DEPOSITO CONECTADO', 6000], RITA: ['TRASPÀS A PIO DEPOSITO CON.', 10000] };
+/**
+ * H7-REAL-4: traspasos EXTERNOS (conceptos fuera de TRASPASOS_INTERNOS): entradas o salidas reales del consolidado, con
+ * media por concepto. PIO «TRASPASO A FONDOS/VALORS» 1.000 € en la 1.ª decena (anotado 2.500 € en 1–10/02/2027: manda
+ * el Excel); RITA «TRASPASO A LA SL (JUBILACIO ETC)» 500 € en la 2.ª decena.
+ */
+const EXTERNOS = { PIO: ['TRASPASO A FONDOS/VALORS', 1, 1000], RITA: ['TRASPASO A LA SL (JUBILACIO ETC)', 2, 500] };
+const conSinContrapartida = (d) => ord(d) === 3 && ym(d) >= '2026-08' && ym(d) <= '2026-10';
 
-// [categoría, concepto, (decena, k, real) => importe | null (sin fila)]
+// [categoría, concepto, real(d) → importe | null, futuro(d) → importe | null (lo anotado en el Excel)]
+const nada = () => null;
 const CONCEPTOS = {
   PIO: [
-    ['RE Cobro TPV', 'TPV CaixaBank', (d, k, real) => (real ? 10000 + CICLO[k % 6] : 9900)],
-    ['RE Cobro efectivo', 'Ingresos de caja', (d, k, real) => (real ? 3000 + CICLO[k % 6] / 4 : 3000)],
-    ['RE Cobro SOE', 'CatSalut receptes', (d, k, real) => (ord(d) !== 3 ? null : real ? SOE_REAL.PIO[d.slice(0, 7)] : 40000)],
-    ['RE No relacionadas con la farmacia', 'Alquiler apartamento', (d) => (ord(d) === 1 ? 650 : null)],
-    ['RS Proveedores', 'ALLIANCE', (d) => (d === '2026-11-11' ? 520 : 6000)],
-    ['RS Proveedores', 'COFARES', () => 4500],
-    ['RS Proveedores', 'HEFAME', () => 3500],
-    ['RS Proveedores', 'FEDERACIÓ', (d) => (ord(d) === 1 ? 1500 : null)],
-    ['RS Proveedores', 'LOGISTA', (d) => (ord(d) === 2 ? 800 : null)],
-    ['RS Personal', 'Nóminas', (d) => (ord(d) === 1 ? 12000 : null)],
-    ['RS Personal', 'Seguridad Social', (d) => (ord(d) === 3 ? 4500 : null)],
-    ['RS Personal', 'Paga extra', (d) => (ord(d) === 3 && (mm(d) === '06' || mm(d) === '12') ? 12000 : null)],
-    ['RS Gastos generales', 'Alquiler local', (d) => (ord(d) === 1 ? 2500 : null)],
-    ['RS Gastos generales', 'Suministros', (d) => (ord(d) === 2 ? 900 : null)],
-    ['RS Impuestos', 'IVA y retenciones', (d) => (ord(d) === 2 && TRIMESTRE.includes(mm(d)) ? 8500 : null)],
-    ['RS Inversiones', 'Robot dispensador', (d) => (d === '2027-01-11' ? 32000 : null)],
-    ['RS No relacionadas con la farmacia', 'Préstamo vivienda', (d) => (ord(d) === 1 ? 1200 : null)],
-    ['RS No relacionadas con la farmacia', 'Retirada titular', (d, k, real) => (real && ord(d) === 3 ? RETIRADA.PIO[mm(d)] : null)],
-    ['RS Traspasos', 'Traspaso a RITA', (d) => TRASPASOS[d] ?? null],
+    ['RE Cobro TPV', 'TPV CaixaBank', (d) => [11000, 10000, 9000][ord(d) - 1] + variacion(d), (d) => (d === '2026-12-21' ? 12500 : null)],
+    ['RE Cobro efectivo', 'Ingresos de caja', (d) => 3000 + variacion(d) / 4, nada],
+    ['RE Cobro SOE', 'CatSalut receptes', (d) => (ord(d) === 3 ? SOE_REAL.PIO[ym(d)] : null), nada],
+    ['RE No relacionadas con la farmacia', 'Alquiler apartamento', (d) => (ord(d) === 1 ? 650 : null), nada],
+    ['RS Proveedores', 'ALLIANCE', () => 6000, (d) => (d === '2026-11-11' ? 520 : null)],
+    ['RS Proveedores', 'COFARES', () => 4500, nada],
+    ['RS Proveedores', 'HEFAME', () => 3500, nada],
+    ['RS Proveedores', 'FEDERACIÓ', (d) => (ord(d) === 3 ? 1500 : null), nada],
+    ['RS Proveedores', 'LOGISTA', (d) => (ord(d) === 2 ? 800 : null), nada],
+    ['RS Personal', 'Nóminas', (d) => (ord(d) === 1 ? 12000 : null), (d) => (ord(d) === 1 ? 12000 : null)],
+    ['RS Personal', 'Seguridad Social', (d) => (ord(d) === 3 ? 4500 : null), (d) => (ord(d) === 3 ? 4500 : null)],
+    ['RS Personal', 'Paga extra', (d) => (ord(d) === 3 && ['06', '12'].includes(mm(d)) ? 12000 : null), (d) => (ord(d) === 3 && ['06', '12'].includes(mm(d)) ? 12000 : null)],
+    ['RS Gastos generales', 'Alquiler local', (d) => (ord(d) === 1 ? 2500 : null), (d) => (ord(d) === 1 ? 2500 : null)],
+    ['RS Gastos generales', 'Suministros', (d) => (ord(d) === 2 ? 900 : null), nada],
+    ['RS Modelo 303', 'IVA trimestral', (d) => (ord(d) === 2 ? MODELO_303.PIO[ym(d)] ?? null : null), nada],
+    ['RS Modelo 111', 'Retenciones IRPF', (d) => (ord(d) === 2 && TRIMESTRE.includes(mm(d)) ? 1500 : null), nada],
+    ['RS Inversiones', 'Robot dispensador', nada, (d) => (d === '2027-01-11' ? 27700 : null)],
+    ['RS No relacionadas con la farmacia', 'Préstamo vivienda', (d) => (ord(d) === 1 ? 1200 : null), nada],
+    ['RS Traspasos', 'La Caixa Rita', (d) => TRASPASOS[d] ?? null, (d) => TRASPASOS[d] ?? null],
+    ['RS Traspasos', SIN_CONTRAPARTIDA.PIO[0], (d) => (conSinContrapartida(d) ? SIN_CONTRAPARTIDA.PIO[1] : null), nada],
+    ['RS Traspasos', EXTERNOS.PIO[0], (d) => (ord(d) === EXTERNOS.PIO[1] ? EXTERNOS.PIO[2] : null), (d) => (d === '2027-02-01' ? 2500 : null)],
   ],
   RITA: [
-    ['RE Cobro TPV', 'TPV Sabadell', (d, k, real) => (real ? 5200 + CICLO[k % 6] / 2 : 5000)],
-    ['RE Cobro efectivo', 'Ingresos de caja', (d, k, real) => (real ? 1200 + CICLO[k % 6] / 10 : 1100)],
-    ['RE Cobro SOE', 'CatSalut receptes', (d, k, real) => (ord(d) !== 3 ? null : real ? SOE_REAL.RITA[d.slice(0, 7)] : 20000)],
-    ['RE Traspasos', 'Traspaso desde PIO', (d) => TRASPASOS[d] ?? null],
-    ['RS Proveedores', 'COFARES', () => 3000],
-    ['RS Proveedores', 'HEFAME', (d) => (d === '2026-12-01' ? 14000 : 2000)],
-    ['RS Personal', 'Nóminas', (d) => (ord(d) === 1 ? 6000 : null)],
-    ['RS Personal', 'Seguridad Social', (d) => (ord(d) === 3 ? 2200 : null)],
-    // Real: la paga de junio, tras la SOE; previsto: en la 2.ª decena de junio y diciembre.
-    ['RS Personal', 'Paga extra', (d, k, real) => (real ? (d === '2026-06-21' ? 7000 : null) : (ord(d) === 2 && (mm(d) === '06' || mm(d) === '12') ? 7000 : null))],
-    ['RS Gastos generales', 'Alquiler local', (d) => (ord(d) === 1 ? 1500 : null)],
-    ['RS Gastos generales', 'Suministros', (d) => (ord(d) === 2 ? 500 : null)],
-    ['RS Impuestos', 'IVA y retenciones', (d) => (ord(d) === 2 && TRIMESTRE.includes(mm(d)) ? 3000 : null)],
-    ['RS No relacionadas con la farmacia', 'Retirada titular', (d, k, real) => (real && ord(d) === 3 ? RETIRADA.RITA[mm(d)] : null)],
+    ['RE Cobro TPV', 'TPV Sabadell', (d) => [5500, 5000, 4500][ord(d) - 1] + variacion(d) / 2, nada],
+    // Como la hoja RITA del Excel: «RE Cobro efectivo / COBRO EFECTIU» en todas las decenas.
+    ['RE Cobro efectivo', 'COBRO EFECTIU', (d) => 1200 + variacion(d) / 10, nada],
+    ['RE Cobro SOE', 'CatSalut receptes', (d) => (ord(d) === 3 ? SOE_REAL.RITA[ym(d)] : null), nada],
+    ['RE Traspasos', 'DEPÓSITO CONECTADO', (d) => TRASPASOS[d] ?? null, (d) => TRASPASOS[d] ?? null],
+    ['RS Proveedores', 'COFARES', () => 3000, nada],
+    ['RS Proveedores', 'HEFAME', () => 2000, (d) => (d === '2026-12-01' ? 14000 : null)],
+    ['RS Personal', 'Nóminas', (d) => (ord(d) === 1 ? 6000 : null), (d) => (ord(d) === 1 ? 6000 : null)],
+    ['RS Personal', 'Seguridad Social', (d) => (ord(d) === 3 ? 2200 : null), (d) => (ord(d) === 3 ? 2200 : null)],
+    // Real: tras la SOE; previsto: en la 2.ª decena de junio y diciembre.
+    ['RS Personal', 'Paga extra', (d) => (ord(d) === 3 && ['06', '12'].includes(mm(d)) ? 7000 : null), (d) => (ord(d) === 2 && ['06', '12'].includes(mm(d)) ? 7000 : null)],
+    ['RS Gastos generales', 'Alquiler local', (d) => (ord(d) === 1 ? 1500 : null), (d) => (ord(d) === 1 ? 1500 : null)],
+    ['RS Gastos generales', 'Suministros', (d) => (ord(d) === 2 ? 500 : null), nada],
+    ['RS Modelo 303', 'IVA trimestral', (d) => (ord(d) === 2 ? MODELO_303.RITA[ym(d)] ?? null : null), nada],
+    ['RS Traspasos', SIN_CONTRAPARTIDA.RITA[0], (d) => (conSinContrapartida(d) ? SIN_CONTRAPARTIDA.RITA[1] : null), nada],
+    ['RS Traspasos', EXTERNOS.RITA[0], (d) => (ord(d) === EXTERNOS.RITA[1] ? EXTERNOS.RITA[2] : null), nada],
   ],
 };
+const CATEGORIA_RETIRADA = 'RS No relacionadas con la farmacia';
+const CONCEPTO_RETIRADA = 'Retirada titular';
 
 /**
  * H7-2: filas con importe negativo (el signo de la celda se respeta): un abono dentro de un proveedor (RS negativo:
- * reduce las salidas) y una regularización de cobros (RE negativo: reduce las entradas). Se suman a las de su concepto.
+ * reduce las salidas; decena real fuera de la base de la media) y una regularización de cobros (RE negativo: reduce las
+ * entradas; anotada a futuro). Se suman a las de su concepto.
  */
 export const FILAS_NEGATIVAS = [
-  { cuenta: 'PIO', decena_inicio: '2026-12-01', categoria: 'RS Proveedores', concepto: 'COFARES', importe: -250 },
+  { cuenta: 'PIO', decena_inicio: '2026-07-11', categoria: 'RS Proveedores', concepto: 'COFARES', importe: -250 },
   { cuenta: 'RITA', decena_inicio: '2026-11-21', categoria: 'RE Otros cobros', concepto: 'Regularización mutua', importe: -120 },
 ];
 
 const signo = (categoria) => (categoria.startsWith('RE ') ? 1 : -1);
+
+/** Importación vigente de la semilla (todas las filas son suyas). */
+export const IMPORTACION_VIGENTE = 'c7000000-0000-4000-8000-000000000002';
+/** E7: diferencia banco − fórmulas en PIO 21–31/10/2026. */
+export const DIFERENCIA_E7 = { cuenta: 'PIO', decena_inicio: '2026-10-21', importe: -35.2 };
 
 export function generarCashflow() {
   const importes = [];
   const saldos = [];
   for (const cuenta of ['PIO', 'RITA']) {
     const mov = new Map();
-    DECENAS.forEach((d, k) => {
+    const delMes = new Map();
+    const fila = (d, categoria, concepto, importe) => {
+      importes.push({
+        id: `m${String(importes.length + 1).padStart(5, '0')}`, importacion_id: IMPORTACION_VIGENTE, cuenta, farmacia: cuenta,
+        decena_inicio: d, decena_fin: fin(d), categoria, concepto, importe,
+      });
+      mov.set(d, r2((mov.get(d) ?? 0) + signo(categoria) * importe));
+      delMes.set(ym(d), r2((delMes.get(ym(d)) ?? 0) + signo(categoria) * importe));
+    };
+    for (const d of DECENAS) {
       const real = d <= ULTIMA_REAL;
-      for (const [categoria, concepto, f] of CONCEPTOS[cuenta]) {
-        const v = f(d, k, real);
+      for (const [categoria, concepto, fReal, fFuturo] of CONCEPTOS[cuenta]) {
+        const v = (real ? fReal : fFuturo)(d);
         if (v === null || v === undefined) continue;
-        importes.push({ cuenta, decena_inicio: d, decena_fin: fin(d), categoria, concepto, importe: r2(v) });
-        mov.set(d, r2((mov.get(d) ?? 0) + signo(categoria) * v));
+        fila(d, categoria, concepto, r2(v));
       }
-      for (const f of FILAS_NEGATIVAS.filter((x) => x.cuenta === cuenta && x.decena_inicio === d)) {
-        importes.push({ cuenta, decena_inicio: d, decena_fin: fin(d), categoria: f.categoria, concepto: f.concepto, importe: f.importe });
-        mov.set(d, r2((mov.get(d) ?? 0) + signo(f.categoria) * f.importe));
+      for (const f of FILAS_NEGATIVAS.filter((x) => x.cuenta === cuenta && x.decena_inicio === d)) fila(d, f.categoria, f.concepto, f.importe);
+      // Retirada del titular (real, 3.ª decena): fija desde agosto de 2026; antes, la que deja el mes a 0.
+      if (real && ord(d) === 3) {
+        const v = ym(d) >= DESDE_RETIRADA_FIJA ? RETIRADA[cuenta][ym(d)] : r2(delMes.get(ym(d)) ?? 0);
+        if (v > 0) fila(d, CATEGORIA_RETIRADA, CONCEPTO_RETIRADA, v);
       }
-    });
+    }
     // Saldo inicial para que el cierre de la última decena real sea PARTIDA.
     const realesNeto = DECENAS.filter((d) => d <= ULTIMA_REAL).reduce((a, d) => a + (mov.get(d) ?? 0), 0);
     let s = r2(PARTIDA[cuenta] - realesNeto);
     for (const d of DECENAS) {
+      const inicial = s;
       s = r2(s + (mov.get(d) ?? 0));
       const real = d <= ULTIMA_REAL;
-      // Fórmulas del Excel = banco, salvo una diferencia de 35,20 € en PIO (21–31/10/2026).
-      const formulas = cuenta === 'PIO' && d === '2026-10-21' ? r2(s + 35.2) : s;
-      saldos.push({ cuenta, decena_inicio: d, saldo_formulas: formulas, saldo_bancos: real ? s : null });
+      // Fórmulas = saldo_inicial + ΣRE − ΣRS (cuadra); banco = fórmulas, salvo la diferencia E7.
+      const e7 = cuenta === DIFERENCIA_E7.cuenta && d === DIFERENCIA_E7.decena_inicio ? DIFERENCIA_E7.importe : 0;
+      saldos.push({
+        id: `s${String(saldos.length + 1).padStart(4, '0')}`, importacion_id: IMPORTACION_VIGENTE, cuenta, farmacia: cuenta, decena_inicio: d,
+        saldo_inicial: inicial, saldo_formulas: s, saldo_bancos: real ? r2(s + e7) : null,
+      });
     }
   }
-  // Cuenta SL: fuera de la pantalla.
-  for (const d of ['2026-10-01', '2026-11-01']) importes.push({ cuenta: 'SL', decena_inicio: d, decena_fin: fin(d), categoria: 'RS Gastos generales', concepto: 'Gestoría', importe: 300 });
   return {
     hoy: HOY_CASHFLOW,
     importaciones: [
-      { importacion_id: 'c7000000-0000-4000-8000-000000000001', vigente: false, importado_at: '2026-11-03T07:40:00.000Z', origen: 'Cashflow 2026.xlsx', estado: 'OK' },
-      { importacion_id: 'c7000000-0000-4000-8000-000000000002', vigente: true, importado_at: '2026-11-10T07:45:00.000Z', origen: 'Cashflow 2026.xlsx', estado: 'OK' },
+      { importacion_id: IMPORTACION_VIGENTE, archivo_nombre: 'Cashflow 2026.xlsx', origen: 'NOCHE', estado: 'OK', detalle_error: null,
+        filas: importes.length + saldos.length, importado_at: '2026-11-10T07:45:00.000Z', vigente: true },
     ],
     cuentas: [
       { codigo: 'PIO', farmacia: 'PIO' },
@@ -145,14 +211,16 @@ export function generarCashflow() {
     ],
     importes,
     saldos,
+    // SL: sin filas en el Excel actual (la lectura REAL solo devolvería recuentos).
+    otras_cuentas: [],
   };
 }
 
 /** Una fila por línea (diff legible). */
 export function serializarCashflow(c) {
-  const lista = (xs) => `[\n${xs.map((x) => `    ${JSON.stringify(x)}`).join(',\n')}\n  ]`;
+  const lista = (xs) => (xs.length === 0 ? '[]' : `[\n${xs.map((x) => `    ${JSON.stringify(x)}`).join(',\n')}\n  ]`);
   return `{\n  "hoy": ${JSON.stringify(c.hoy)},\n  "importaciones": ${lista(c.importaciones)},\n  "cuentas": ${lista(c.cuentas)},\n`
-    + `  "importes": ${lista(c.importes)},\n  "saldos": ${lista(c.saldos)}\n}\n`;
+    + `  "importes": ${lista(c.importes)},\n  "saldos": ${lista(c.saldos)},\n  "otras_cuentas": ${lista(c.otras_cuentas)}\n}\n`;
 }
 
 if (import.meta.main) {

@@ -1,16 +1,18 @@
 /**
  * H7: pantalla Cashflow (solo lectura). Decenas (3 pasadas y 9 próximas) o meses (3 y 9); PIO, RITA o consolidado.
  * El cálculo es el de server/cashflow/cashflow.ts: el front lo repite al cambiar «Media / Excel» (elección guardada solo
- * en este navegador). En REAL, «Pendiente de tablas en Supabase».
+ * en este navegador). H7-REAL: importación vigente de las tablas cf_cashflow_*; sin vigente, «Todavía no hay datos
+ * importados». El saldo final se abre en su desglose: banco frente a fórmulas (E7, informativa) y cuadre de control.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Importe } from '../server/contrato.ts';
 import { DICCIONARIO_ESTADOS } from '../server/pagos/pagos.ts';
 import {
-  CATEGORIAS_MEDIA, TEXTO_FUENTE, TEXTO_H7_PENDIENTE, TEXTO_POSIBLE_DUPLICADO, VISTAS_CUENTA, avisosColumna, calcularCashflow, celdaColumna,
-  columnasVista, finDecena, porCategoria, resumenColumna, saldoColumna, tipoColumna, totalCategoria,
-  type AvisoCashflow, type CashflowDTO, type Celda, type CeldaColumna, type Columna, type Eleccion, type Escala,
+  CUENTAS_CASHFLOW, TEXTO_FUENTE, TEXTO_POSIBLE_DUPLICADO, TEXTO_SIN_DATOS, TOLERANCIA_CUADRE_POR_IMPORTE, VISTAS_CUENTA,
+  avisosColumna, calcularCashflow, celdaColumna, columnasVista, finDecena, porCategoria, resumenColumna, saldoColumna, tipoColumna, totalCategoria,
+  traspasosNoCompensados, variacionMensual, type TramoVariacion,
+  type AvisoCashflow, type CashflowDTO, type Celda, type CeldaColumna, type Columna, type Eleccion, type Escala, type EstadoImportacion,
   type ResultadoCashflow, type ResultadoVista, type TipoColumna, type VencimientoCashflow, type VistaCuenta,
 } from '../server/cashflow/cashflow.ts';
 import { useApiRecargable } from './api.ts';
@@ -40,6 +42,7 @@ const textoColumna = (c: Columna) => (c.escala === 'decenas' ? textoDecena(c.cla
 const textoColumnaLargo = (c: Columna) => (c.escala === 'decenas' ? textoDecenaLargo(c.clave) : textoMes(c.clave));
 const NOMBRE_VISTA: Record<VistaCuenta, string> = { PIO: 'PIO', RITA: 'RITA', CONSOLIDADO: 'Consolidado' };
 const TEXTO_TIPO: Record<TipoColumna, string> = { real: 'Real', previsto: 'Previsto', mixto: 'Real + previsto' };
+const TEXTO_ORIGEN: Record<string, string> = { NOCHE: 'importación nocturna', MANUAL: 'importación manual' };
 
 // ---------------------------------------------------------------------------
 // «Media / Excel»: solo en este navegador (try/catch: sin almacenamiento, por defecto)
@@ -50,7 +53,8 @@ function leerElecciones(): Record<string, Eleccion> {
   try {
     const v = JSON.parse(window.localStorage.getItem(CLAVE_ELECCION) ?? '{}') as unknown;
     if (v === null || typeof v !== 'object' || Array.isArray(v)) return {};
-    return Object.fromEntries(Object.entries(v).filter(([k, x]) => Object.hasOwn(CATEGORIAS_MEDIA, k) && (x === 'media' || x === 'excel')));
+    // H7-REAL-2: cualquier categoría RE/RS puede llevar media (las que no la tienen ignoran la elección).
+    return Object.fromEntries(Object.entries(v).filter(([k, x]) => /^R[ES]\s/.test(k) && (x === 'media' || x === 'excel')));
   } catch {
     return {};
   }
@@ -63,7 +67,7 @@ function guardarElecciones(e: Record<string, Eleccion>): void {
 // Cabecera de datos y avisos
 // ---------------------------------------------------------------------------
 
-function textoAviso(a: AvisoCashflow): ReactNode {
+function textoAviso(a: AvisoCashflow, imp?: EstadoImportacion): ReactNode {
   const periodo = a.decena === null ? '' : a.hasta && a.hasta !== a.decena ? `del ${textoDecenaLargo(a.decena)} al ${textoDecenaLargo(a.hasta)}` : textoDecenaLargo(a.decena);
   if (a.codigo === 'CUENTA_CUBIERTA') {
     return (
@@ -79,6 +83,25 @@ function textoAviso(a: AvisoCashflow): ReactNode {
       <>
         <strong>Consolidado en negativo</strong> ({periodo}). Faltan <strong className="cf-num">{eurosExactos(a.importe)}</strong>
         {a.decenas.length > 1 && peor ? <> en el peor momento ({textoDecenaLargo(peor)})</> : null}.
+      </>
+    );
+  }
+  if (a.codigo === 'IMPORTACION_FALLIDA' && imp?.ultima) {
+    return (
+      <>
+        La última importación del Excel falló ({fechaHora(imp.ultima.importado_at)}): <code className="codigo" data-cf-detalle-error>{imp.ultima.detalle_error ?? 'sin detalle'}</code>.{' '}
+        {imp.vigente ? <>Se siguen mostrando los datos de la vigente, del {fechaHora(imp.vigente.importado_at)}.</> : 'No hay ninguna importación vigente.'}
+      </>
+    );
+  }
+  if (a.codigo === 'IMPORTACION_NO_CUADRA') {
+    const MAX = 4;
+    const lista = a.decenas.slice(0, MAX).map((x) => textoDecenaLargo(x.decena)).join(', ');
+    return (
+      <>
+        Datos de la importación no cuadran en <strong>{a.cuenta}</strong>, {lista}
+        {a.decenas.length > MAX ? ` y ${plural(a.decenas.length - MAX, 'decena más', 'decenas más')}` : ''}: saldo inicial + entradas − salidas no da el
+        saldo de las fórmulas. La web no lo corrige; pulsa el saldo final de la decena para ver las cifras.
       </>
     );
   }
@@ -135,7 +158,9 @@ function Resumen({ r, d }: { r: ResultadoCashflow; d: CashflowDTO }) {
       <div className={`cf-ficha${antigua ? ' gris' : ''}`} data-cf-importacion>
         <span className="cf-ficha-titulo">Última importación</span>
         <span className="cf-ficha-cifra">{imp.vigente ? fechaHora(imp.vigente.importado_at) : 'Ninguna vigente'}</span>
-        <span className="cf-ficha-nota">{imp.vigente ? `${imp.vigente.origen} · hace ${plural(imp.dias ?? 0, 'día', 'días')}` : `Referencia ${fechaCorta(d.hoy)}`}</span>
+        <span className="cf-ficha-nota">{imp.vigente
+          ? `${imp.vigente.archivo_nombre} · ${TEXTO_ORIGEN[imp.vigente.origen] ?? imp.vigente.origen} · hace ${plural(imp.dias ?? 0, 'día', 'días')}`
+          : `Referencia ${fechaCorta(d.hoy)}`}</span>
       </div>
     </div>
   );
@@ -157,9 +182,22 @@ function pasoBonito(rango: number): number {
 
 function Grafico({ r, cols, vista, movil }: { r: ResultadoCashflow; cols: Columna[]; vista: VistaCuenta; movil: boolean }) {
   const [foco, setFoco] = useState<number | null>(null);
-  const W = movil ? 340 : 1000;
-  const H = movil ? 260 : 280;
-  const M = { l: movil ? 46 : 64, r: movil ? 8 : 96, t: 18, b: 30 };
+  // H7-REAL-6: el ancho del dibujo es el ancho real del lienzo (1 unidad = 1 px), para que el texto del gráfico salga al
+  // tamaño de --cf-tam-grafico sin encogerse ni crecer con la escala del SVG.
+  const lienzo = useRef<HTMLDivElement | null>(null);
+  const [medido, setMedido] = useState<number | null>(null);
+  useEffect(() => {
+    const el = lienzo.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const medir = () => { const w = Math.round(el.clientWidth); if (w > 0) setMedido(w); };
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const W = Math.max(medido ?? (movil ? 340 : 1000), movil ? 300 : 600);
+  const H = movil ? 280 : 310;
+  const M = { l: movil ? 64 : 92, r: movil ? 10 : 118, t: 22, b: 44 };
   const series = SERIES.filter((s) => r.vistas[s.vista]);
   const puntos = series.map((s) => cols.map((c) => saldoColumna(r.vistas[s.vista], c).saldo));
   // Marcas de aviso: en el saldo de la peor decena de la columna (en «Mes», el cierre del mes puede ser positivo).
@@ -199,7 +237,7 @@ function Grafico({ r, cols, vista, movil }: { r: ResultadoCashflow; cols: Column
     const j = vals.map((v, i) => (v === null ? -1 : i)).filter((i) => i >= 0).pop();
     return { s, yv: j === undefined ? null : y(vals[j] as number) };
   }).filter((e) => e.yv !== null).sort((a, b) => (a.yv as number) - (b.yv as number));
-  for (let k = 1; k < finales.length; k++) if ((finales[k].yv as number) - (finales[k - 1].yv as number) < 15) finales[k].yv = (finales[k - 1].yv as number) + 15;
+  for (let k = 1; k < finales.length; k++) if ((finales[k].yv as number) - (finales[k - 1].yv as number) < 18) finales[k].yv = (finales[k - 1].yv as number) + 18;
   const f = foco === null ? null : cols[foco];
   return (
     <div className="cf-grafico" data-cf-grafico>
@@ -209,19 +247,22 @@ function Grafico({ r, cols, vista, movil }: { r: ResultadoCashflow; cols: Column
         <span className="cf-leyenda-serie"><span className="cf-marca-muestra naranja">▲</span>Cuenta cubierta</span>
         <span className="cf-leyenda-serie"><span className="cf-marca-muestra rojo">■</span>Consolidado en negativo</span>
       </div>
-      <div className="cf-grafico-lienzo">
+      <div className="cf-grafico-lienzo" ref={lienzo}>
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Saldo previsto por cuenta y consolidado; la tabla de abajo tiene las cifras" onMouseLeave={() => setFoco(null)}>
           {ultimoReal >= 0 && <rect className="cf-zona-real" x={M.l} y={M.t} width={(ultimoReal + 1) * ancho} height={H - M.t - M.b} />}
-          {ultimoReal >= 0 && <text className="cf-zona-texto" x={M.l + 6} y={M.t + 12}>Real</text>}
-          {ultimoReal < cols.length - 1 && <text className="cf-zona-texto" x={M.l + (ultimoReal + 1) * ancho + 6} y={M.t + 12}>Previsto</text>}
+          {ultimoReal >= 0 && <text className="cf-zona-texto" x={M.l + 6} y={M.t + 15}>Real</text>}
+          {ultimoReal < cols.length - 1 && <text className="cf-zona-texto" x={M.l + (ultimoReal + 1) * ancho + 6} y={M.t + 15}>Previsto</text>}
           {ticks.map((t) => (
             <g key={t}>
               <line className={t === 0 ? 'cf-cero' : 'cf-reja'} x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} />
-              <text className="cf-eje" x={M.l - 8} y={y(t) + 4} textAnchor="end">{t === 0 ? '0 €' : cifra(t)}</text>
+              <text className="cf-eje" x={M.l - 8} y={y(t) + 5} textAnchor="end">{t === 0 ? '0 €' : cifra(t)}</text>
             </g>
           ))}
           {cols.map((c, i) => (movil && i % 3 !== 0 ? null : (
-            <text key={c.clave} className={`cf-eje${c.actual ? ' actual' : ''}`} x={x(i)} y={H - 10} textAnchor="middle">{textoColumna(c)}</text>
+            // H7-REAL-6: a 14 px, «21–31 oct» no cabe en su columna: dos líneas (días y mes, o mes y año).
+            <text key={c.clave} className={`cf-eje${c.actual ? ' actual' : ''}`} x={x(i)} y={H - M.b + 18} textAnchor="middle">
+              {textoColumna(c).split(' ').map((p, k) => <tspan key={k} x={x(i)} dy={k === 0 ? 0 : 16}>{p}</tspan>)}
+            </text>
           )))}
           {series.map((s, k) => (
             <g key={s.vista} className={`cf-serie ${s.clase}${s.vista === vista ? ' activa' : ''}`} data-cf-serie={s.vista}>
@@ -232,7 +273,7 @@ function Grafico({ r, cols, vista, movil }: { r: ResultadoCashflow; cols: Column
           {marcas.map(({ i, a, s, decena }, n) => (a.tipo === 'rojo'
             ? <rect key={n} className="cf-marca rojo" x={x(i) - 6} y={y(s) - 6} width={12} height={12} data-cf-marca="rojo" data-columna={cols[i].clave} data-decena={decena} />
             : <path key={n} className="cf-marca naranja" d={`M${x(i)},${y(s) - 8}L${x(i) + 7},${y(s) + 5}L${x(i) - 7},${y(s) + 5}Z`} data-cf-marca="naranja" data-columna={cols[i].clave} data-decena={decena} />))}
-          {finales.map((e) => <text key={e.s.vista} className={`cf-etiqueta ${e.s.clase}`} x={W - M.r + 8} y={(e.yv as number) + 4}>{NOMBRE_VISTA[e.s.vista]}</text>)}
+          {finales.map((e) => <text key={e.s.vista} className={`cf-etiqueta ${e.s.clase}`} x={W - M.r + 8} y={(e.yv as number) + 5}>{NOMBRE_VISTA[e.s.vista]}</text>)}
           {foco !== null && <line className="cf-guia" x1={x(foco)} x2={x(foco)} y1={M.t} y2={H - M.b} />}
           {cols.map((c, i) => (
             <rect key={c.clave} className="cf-zona-foco" x={M.l + i * ancho} y={M.t} width={ancho} height={H - M.t - M.b} onMouseEnter={() => setFoco(i)} />
@@ -252,22 +293,47 @@ function Grafico({ r, cols, vista, movil }: { r: ResultadoCashflow; cols: Column
   );
 }
 
+/**
+ * H7-REAL-4: indicador de control junto al gráfico: variación media mensual del consolidado, real (últimos 12 meses)
+ * frente a prevista (12 siguientes). Si se parecen poco, la previsión merece revisión.
+ */
+function IndicadorVariacion({ r }: { r: ResultadoCashflow }) {
+  const x = variacionMensual(r.vistas.CONSOLIDADO, r.decenas);
+  const conSigno = (t: TramoVariacion | null) => (t === null ? '—' : `${t.por_mes > 0 ? '+' : ''}${eurosExactos(t.por_mes)}/mes`);
+  const meses = (t: TramoVariacion | null) => (t === null ? 'sin datos' : `${String(t.meses).replace('.', ',')} meses, ${textoDecenaLargo(t.desde)} → ${textoDecenaLargo(t.hasta)}`);
+  return (
+    <div className="cf-indicador" data-cf-indicador>
+      <span className="cf-indicador-titulo">Variación media mensual del consolidado</span>
+      <span className="cf-indicador-dato" data-cf-variacion="real" title={meses(x.real)}>
+        Real, últimos 12 meses <strong className="cf-num">{conSigno(x.real)}</strong>
+      </span>
+      <span className="cf-indicador-dato" data-cf-variacion="prevista" title={meses(x.prevista)}>
+        Prevista, próximos 12 meses <strong className="cf-num">{conSigno(x.prevista)}</strong>
+      </span>
+      <span className="tenue cf-indicador-nota">Si la prevista se aleja mucho de la real, revisa la previsión.</span>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Tabla
 // ---------------------------------------------------------------------------
 
-interface Abrir { titulo: string; col: Columna; celda: CeldaColumna }
+interface Abrir { titulo: string; col: Columna; celda: CeldaColumna; externo?: boolean }
 
 function CeldaTabla({ c, col, titulo, onAbrir, clave }: { c: CeldaColumna | null; col: Columna; titulo: string; onAbrir: (a: Abrir) => void; clave: string }) {
   if (c === null) return <td className={`cf-c vacia ${col.actual ? 'actual' : ''}`} />;
   const usaMedia = c.fuentes.includes('MEDIA') && c.celdas.some((x) => x.fuente === 'MEDIA' && x.en_saldo);
-  const fuente = c.tipo === 'real' ? 'real' : c.fuentes.includes('VENCIMIENTOS') ? 'vencimientos' : usaMedia ? 'media' : 'excel';
+  const fuente = c.tipo === 'real' ? 'real' : c.fuentes.includes('VENCIMIENTOS') ? 'vencimientos' : c.fuentes.includes('MANUAL') ? 'manual' : usaMedia ? 'media' : 'excel';
+  // Marca «media» en la cifra: lleva alguna parte estimada (media por posición o año anterior) que suma al saldo.
+  const conMedia = c.tipo !== 'real' && usaMedia;
   return (
     <td className={`cf-c ${c.tipo} f-${fuente}${col.actual ? ' actual' : ''}`} data-cf-celda={clave} data-cf-tipo={c.tipo} data-cf-fuente={fuente}>
       <button type="button" className="cf-cbtn" onClick={() => onAbrir({ titulo, col, celda: c })}
-        title={`${titulo} · ${textoColumnaLargo(col)}: ${eurosExactos(c.importe)} (ver de dónde sale)`}>
+        title={`${titulo} · ${textoColumnaLargo(col)}: ${eurosExactos(c.importe)}${conMedia ? ' (incluye media calculada)' : ''} (ver de dónde sale)`}>
         <span className="cf-linea1">
           {c.diferencia && <span className="cf-dif" title={TEXTO_POSIBLE_DUPLICADO} data-cf-diferencia>!</span>}
+          {conMedia && <span className="cf-marca-media" title="Media calculada" aria-label="media" data-cf-marca-media>m</span>}
           <span className="cf-num">{c.importe === null && c.desconocidos > 0 ? 'pend.' : cifra(c.importe)}</span>
         </span>
         {c.desconocidos > 0 && <span className="cf-sub aviso">+{c.desconocidos} sin importe</span>}
@@ -286,9 +352,9 @@ function FilaTotal({ etiqueta, v, cols, valor, clase = '', datos }: { etiqueta: 
   );
 }
 
-function Tabla({ r, v, cols, elecciones, onElegir, onAbrir }: {
+function Tabla({ r, v, cols, elecciones, onElegir, onAbrir, onAbrirSaldo }: {
   r: ResultadoCashflow; v: ResultadoVista; cols: Columna[]; elecciones: Record<string, Eleccion>;
-  onElegir: (categoria: string, e: Eleccion) => void; onAbrir: (a: Abrir) => void;
+  onElegir: (categoria: string, e: Eleccion) => void; onAbrir: (a: Abrir) => void; onAbrirSaldo: (c: Columna) => void;
 }) {
   const [abiertas, setAbiertas] = useState<Set<string>>(new Set());
   const grupos = porCategoria(v.lineas);
@@ -296,13 +362,18 @@ function Tabla({ r, v, cols, elecciones, onElegir, onAbrir }: {
   const consolidado = v.vista === 'CONSOLIDADO';
 
   const bloque = (gs: typeof grupos) => gs.map((g) => {
-    const abierta = abiertas.has(g.categoria);
-    const media = Object.hasOwn(CATEGORIAS_MEDIA, g.categoria);
+    // H7-REAL-4: una categoría de traspasos puede salir dos veces (internos y externos): clave propia.
+    const externo = g.clase === 'TRASPASO_EXTERNO';
+    const k = externo ? `${g.categoria} (externo)` : g.categoria;
+    const abierta = abiertas.has(k);
+    // «Media / Excel»: en toda categoría con alguna cifra estimada (con «Excel», solo lo anotado). Nunca en los internos.
+    const media = r.categorias_media.includes(g.categoria) && g.clase !== 'TRASPASO';
+    const abrir = (a: Abrir) => onAbrir({ ...a, externo });
     return [
-      <tr key={g.categoria} className="cf-categoria" data-cf-categoria={g.categoria}>
+      <tr key={k} className="cf-categoria" data-cf-categoria={k}>
         <th scope="row">
           <span className="cf-cat-cabeza">
-            <button type="button" className="cf-plegar" aria-expanded={abierta} onClick={() => alternar(g.categoria)} data-cf-plegar={g.categoria}>
+            <button type="button" className="cf-plegar" aria-expanded={abierta} onClick={() => alternar(k)} data-cf-plegar={k}>
               <span className="cf-chevron" aria-hidden="true">{abierta ? '▾' : '▸'}</span>
               {/* Fuera de la farmacia la sección ya da el nombre: Entradas / Salidas. */}
               {g.clase === 'FARMACIA' ? g.categoria.replace(/^R[ES]\s+/, '') : g.sentido === 'ENTRADA' ? 'Entradas' : 'Salidas'}
@@ -318,12 +389,12 @@ function Tabla({ r, v, cols, elecciones, onElegir, onAbrir }: {
             )}
           </span>
         </th>
-        {cols.map((c) => <CeldaTabla key={c.clave} c={totalCategoria(g.lineas, c, v)} col={c} titulo={g.categoria} onAbrir={onAbrir} clave={`${g.categoria}|*|${c.clave}`} />)}
+        {cols.map((c) => <CeldaTabla key={c.clave} c={totalCategoria(g.lineas, c, v)} col={c} titulo={g.categoria} onAbrir={abrir} clave={`${k}|*|${c.clave}`} />)}
       </tr>,
       ...(abierta ? g.lineas.map((l) => (
         <tr key={l.clave} className={`cf-concepto${l.media ? ' media' : ''}`} data-cf-concepto={l.concepto}>
           <th scope="row"><span className="cf-concepto-nombre" title={l.concepto}>{l.concepto}</span></th>
-          {cols.map((c) => <CeldaTabla key={c.clave} c={celdaColumna(l, c, v)} col={c} titulo={`${l.concepto} (${g.categoria})`} onAbrir={onAbrir} clave={`${g.categoria}|${l.concepto}|${c.clave}`} />)}
+          {cols.map((c) => <CeldaTabla key={c.clave} c={celdaColumna(l, c, v)} col={c} titulo={`${l.concepto} (${g.categoria})`} onAbrir={abrir} clave={`${k}|${l.concepto}|${c.clave}`} />)}
         </tr>
       )) : []),
     ];
@@ -335,6 +406,8 @@ function Tabla({ r, v, cols, elecciones, onElegir, onAbrir }: {
   const salidas = grupos.filter((g) => g.clase === 'FARMACIA' && g.sentido === 'SALIDA');
   const noRel = grupos.filter((g) => g.clase === 'NO_RELACIONADA');
   const trasp = grupos.filter((g) => g.clase === 'TRASPASO');
+  const traspExt = grupos.filter((g) => g.clase === 'TRASPASO_EXTERNO');
+  const sinCompensar = consolidado ? traspasosNoCompensados(v, cols) : [];
   const total = (campo: Parameters<typeof resumenColumna>[2]) => (c: Columna) => <span className="cf-num">{cifra(resumenColumna(v, c, campo))}</span>;
 
   return (
@@ -367,23 +440,44 @@ function Tabla({ r, v, cols, elecciones, onElegir, onAbrir }: {
           {noRel.length > 0 && seccion('No relacionadas con la farmacia (cuentan en el saldo)', 'no_relacionadas')}
           {bloque(noRel)}
           {noRel.length > 0 && <FilaTotal etiqueta="Total no relacionadas" v={v} cols={cols} valor={total('no_relacionadas')} datos="no_relacionadas" />}
-          {!consolidado && trasp.length > 0 && seccion('Traspasos entre cuentas propias', 'traspasos')}
+          {/* H7-REAL-4: traspasos externos (SL, fondos, valores…): entran o salen de verdad; también en el consolidado. */}
+          {traspExt.length > 0 && seccion('Traspasos externos: SL, fondos, valores… (cuentan en el saldo)', 'traspasos_externos')}
+          {bloque(traspExt)}
+          {traspExt.length > 0 && <FilaTotal etiqueta="Total traspasos externos" v={v} cols={cols} valor={total('traspasos_externos')} datos="traspasos_externos" />}
+          {!consolidado && trasp.length > 0 && seccion('Traspasos entre cuentas propias (PIO ↔ RITA)', 'traspasos')}
           {!consolidado && bloque(trasp)}
           {consolidado && (
-            <tr className="cf-neutro" data-cf-traspasos-neutros><th scope="row">Traspasos entre cuentas propias</th><td colSpan={cols.length} className="tenue">Neutros en el consolidado: salen de una cuenta y entran en la otra.</td></tr>
+            <tr className="cf-neutro" data-cf-traspasos-neutros>
+              <th scope="row">Traspasos entre cuentas propias</th>
+              <td colSpan={cols.length} className="tenue">
+                Neutros en el consolidado: salen de una cuenta y entran en la otra.
+                {/* H7-REAL-2: los que no se compensan (a la SL, fondos…) no son aviso: una sola línea plegada, de las decenas visibles. */}
+                {sinCompensar.length > 0 && (
+                  <details className="cf-traspasos-nc" data-cf-traspasos-no-compensados={sinCompensar.length}>
+                    <summary>{plural(sinCompensar.length, 'decena con traspasos no compensados', 'decenas con traspasos no compensados')}</summary>
+                    <ul>
+                      {sinCompensar.map((x) => <li key={x.decena}><span>{textoDecenaLargo(x.decena)}</span><span className="cf-num">{eurosExactos(x.importe)}</span></li>)}
+                    </ul>
+                  </details>
+                )}
+              </td>
+            </tr>
           )}
           <FilaTotal etiqueta="Saldo final" v={v} cols={cols} clase="saldo" datos="saldo" valor={(c) => {
             const s = saldoColumna(v, c);
             const negativo = s.saldo !== null && s.saldo < 0;
-            const dif = s.bancos !== null && s.formulas !== null && Math.round(s.bancos * 100) !== Math.round(s.formulas * 100);
             const avisos = avisosColumna(r.avisos, c).filter((a) => (consolidado ? a.tipo === 'rojo' : a.cuenta === v.vista && a.tipo === 'naranja'));
             return (
-              <span className={`cf-saldo${negativo ? ' negativo' : ''}${avisos.length ? ` ${avisos.some((a) => a.tipo === 'rojo') ? 'rojo' : 'naranja'}` : ''}`} data-cf-saldo={c.clave}
-                title={dif ? `Banco ${eurosExactos(s.bancos)} · fórmulas del Excel ${eurosExactos(s.formulas)}` : eurosExactos(s.saldo)}>
-                <span className="cf-num">{cifra(s.saldo)}</span>
-                {s.incompleto && <span className="cf-sub aviso" title="Hay importes pendientes: el saldo no los incluye">incompleto</span>}
-                {dif && <span className="cf-sub" data-cf-dif-formulas>fórmulas {cifra(s.formulas)}</span>}
-              </span>
+              <button type="button" className="cf-cbtn cf-saldo-btn" onClick={() => onAbrirSaldo(c)}
+                title={`Saldo ${textoColumnaLargo(c)}: ${eurosExactos(s.saldo)} (ver banco, fórmulas y cuadre)`}>
+                <span className={`cf-saldo${negativo ? ' negativo' : ''}${avisos.length ? ` ${avisos.some((a) => a.tipo === 'rojo') ? 'rojo' : 'naranja'}` : ''}`} data-cf-saldo={c.clave}>
+                  <span className="cf-num">{cifra(s.saldo)}</span>
+                  {s.incompleto && <span className="cf-sub aviso" title="Hay importes pendientes: el saldo no los incluye">incompleto</span>}
+                  {/* E7: diferencia informativa entre el banco y las fórmulas del Excel (nunca error). */}
+                  {s.diferencia_banco !== null && <span className="cf-sub" data-cf-dif-banco>dif. banco {eurosExactos(s.diferencia_banco)}</span>}
+                  {s.no_cuadra && <span className="cf-sub gris" data-cf-no-cuadra>no cuadra</span>}
+                </span>
+              </button>
             );
           }} />
         </tbody>
@@ -416,7 +510,6 @@ function ListaVenc({ vs, titulo }: { vs: VencimientoCashflow[]; titulo: string }
 }
 
 function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
-  const unidad = c.media?.unidad === 'meses' ? 'meses' : 'decenas';
   return (
     <section className="cf-desglose-celda" data-cf-desglose-fuente={c.fuente}>
       <h3>
@@ -424,8 +517,9 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
         <span className="cf-num cf-desglose-cifra">{eurosExactos(c.importe)}</span>
       </h3>
       {!c.en_saldo && (
-        <p className="cf-nota" data-cf-no-suma>No entra en el saldo: para esta categoría se usa {c.fuente === 'MEDIA' ? 'lo anotado en el Excel' : 'la media'} (cámbialo con «Media / Excel»).</p>
+        <p className="cf-nota" data-cf-no-suma>No entra en el saldo: para esta categoría has elegido «Excel» (solo lo anotado). Cámbialo con «Media / Excel».</p>
       )}
+      {c.fuente === 'MANUAL' && <p>Apunte manual para esta decena: sustituye a lo anotado en el Excel{c.excel_filas > 0 ? ` (${eurosExactos(c.excel)})` : ''}.</p>}
       {c.fuente === 'REAL' && <p>Anotado en el Excel en una decena que ya tiene saldo de banco{c.excel_filas > 1 ? ` (${c.excel_filas} filas)` : ''}.</p>}
       {c.fuente === 'EXCEL' && (
         <p>Anotado en las decenas futuras del Excel{c.excel_filas > 1 ? ` (${c.excel_filas} filas)` : ''}
@@ -433,7 +527,15 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
       )}
       {c.vencimientos && (
         <>
-          <p>Vencimientos de <strong>{c.vencimientos.comercial}</strong> en el sistema para esta decena: sustituyen a lo anotado en el Excel.
+          <h4 data-cf-parte="vencimientos">Vencimientos ({c.vencimientos.comercial})</h4>
+          {/* H7-REAL-5: los vencimientos son un mínimo; si la media del concepto es mayor, cuenta la media. */}
+          {c.fuente === 'MEDIA' && (
+            <p className="cf-nota" data-cf-venc-minimo>
+              Vencimientos conocidos <strong className="cf-num">{eurosExactos(c.vencimientos.neto)}</strong> (inferiores a la media): solo existen para las
+              facturas ya recibidas, así que cuenta la media del concepto, <strong className="cf-num">{eurosExactos(c.importe === null ? null : Math.abs(c.importe))}</strong>.
+            </p>
+          )}
+          <p>Vencimientos de <strong>{c.vencimientos.comercial}</strong> en el sistema para esta decena: sustituyen solo a ese concepto (lo anotado en el Excel para él){c.fuente === 'MEDIA' ? ', salvo que la media sea mayor' : ''}.
             Neto (cargos − abonos): <strong className="cf-num">{eurosExactos(c.vencimientos.neto)}</strong>.</p>
           <p className={c.diferencia ? 'cf-nota naranja' : 'tenue'} data-cf-comparacion={c.diferencia ? 'diferencia' : 'igual'}>
             Excel: {c.excel_filas > 0 ? eurosExactos(c.excel) : 'sin anotar'}.
@@ -448,12 +550,23 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
       )}
       {c.media && (
         <>
-          <p>Media de {plural(c.media.base.length, unidad === 'meses' ? 'mes real' : 'decena real', unidad === 'meses' ? 'meses reales' : 'decenas reales')}
-            {unidad === 'meses' && c.media.decena_habitual ? <>, en la {c.media.decena_habitual}.ª decena del mes (la habitual del cobro)</> : null}:</p>
+          {c.media.excluidos.length > 0 && (
+            <>
+              <h4 data-cf-parte="media-resto">Media del resto</h4>
+              <p data-cf-excluidos>Sin {c.media.excluidos.join(', ')}: esta decena ya los prevé (vencimientos o Excel), así que no entran en la media.</p>
+            </>
+          )}
+          {c.media.regla === 'ANIO_ANTERIOR'
+            ? <p data-cf-regla="anio_anterior">Impuesto trimestral («RS Modelo …»): la misma decena del mismo mes del año anterior, no la media. Sin nada previsto en esta decena (ni vencimientos ni Excel).</p>
+            : <p data-cf-regla="posicion">{c.vencimientos ? 'Media del concepto' : c.media.excluidos.length > 0 ? 'Media' : 'Sin nada previsto en esta decena para la categoría (ni vencimientos ni Excel): media'} de la {c.media.posicion}.ª decena del mes en {c.media.base.length === 1 ? 'el último mes real' : `los últimos ${c.media.base.length} meses reales`}:</p>}
           <ul className="cf-media" data-cf-media>
-            {c.media.base.map((b) => <li key={b.clave}><span>{unidad === 'meses' ? textoMes(b.clave) : textoDecenaLargo(b.clave)}</span><span className="cf-num">{eurosExactos(b.importe)}</span></li>)}
-            <li className="cf-media-total"><span>Media ({c.media.base.length > 0 ? `suma ÷ ${c.media.base.length}` : 'sin datos'})</span><span className="cf-num">{eurosExactos(c.media.media)}</span></li>
+            {c.media.base.map((b) => <li key={b.clave}><span>{textoDecenaLargo(b.clave)}</span><span className="cf-num">{eurosExactos(b.importe)}</span></li>)}
+            <li className="cf-media-total">
+              <span>{c.media.regla === 'ANIO_ANTERIOR' ? 'Año anterior' : `Media (suma ÷ ${c.media.base.length})`}</span>
+              <span className="cf-num">{eurosExactos(c.media.media)}</span>
+            </li>
           </ul>
+          {c.media.sin_importe > 0 && <p className="cf-nota">{plural(c.media.sin_importe, 'fila sin importe', 'filas sin importe')} en esas decenas: no suman en la media.</p>}
         </>
       )}
       {c.desconocidos > 0 && !c.vencimientos && <p className="cf-nota">{plural(c.desconocidos, 'fila sin importe', 'filas sin importe')}: no suman.</p>}
@@ -461,7 +574,7 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
   );
 }
 
-function Desglose({ abrir, d, onCerrar }: { abrir: Abrir; d: CashflowDTO; onCerrar: () => void }) {
+function Dialogo({ titulo, subtitulo, onCerrar, children, datos }: { titulo: string; subtitulo: string; onCerrar: () => void; children: ReactNode; datos?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     ref.current?.focus();
@@ -469,23 +582,86 @@ function Desglose({ abrir, d, onCerrar }: { abrir: Abrir; d: CashflowDTO; onCerr
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [onCerrar]);
-  const celdas = abrir.celda.celdas.flatMap((c) => (c.partes.length ? c.partes : [c]));
   return (
     <div className="cf-velo" onClick={onCerrar}>
       <div className="cf-desglose tarjeta" role="dialog" aria-modal="true" aria-labelledby="t-cf-desglose" tabIndex={-1} ref={ref}
-        onClick={(e) => { e.stopPropagation(); if ((e.target as HTMLElement).closest('a')) onCerrar(); }} data-cf-desglose>
+        onClick={(e) => { e.stopPropagation(); if ((e.target as HTMLElement).closest('a')) onCerrar(); }} data-cf-desglose={datos ?? ''}>
         <header>
           <div>
-            <h2 id="t-cf-desglose">{abrir.titulo}</h2>
-            <span className="tenue">{textoColumnaLargo(abrir.col)} · {TEXTO_TIPO[abrir.celda.tipo]} · total {eurosExactos(abrir.celda.importe)}</span>
+            <h2 id="t-cf-desglose">{titulo}</h2>
+            <span className="tenue">{subtitulo}</span>
           </div>
           <button type="button" className="boton-secundario" onClick={onCerrar}>Cerrar</button>
         </header>
-        <div className="cf-desglose-cuerpo">
-          {celdas.map((c, i) => <DesgloseCelda key={i} c={c} d={d} />)}
-        </div>
+        <div className="cf-desglose-cuerpo">{children}</div>
       </div>
     </div>
+  );
+}
+
+function Desglose({ abrir, d, onCerrar }: { abrir: Abrir; d: CashflowDTO; onCerrar: () => void }) {
+  const celdas = abrir.celda.celdas.flatMap((c) => (c.partes.length ? c.partes : [c]));
+  return (
+    <Dialogo titulo={abrir.titulo} subtitulo={`${textoColumnaLargo(abrir.col)} · ${TEXTO_TIPO[abrir.celda.tipo]} · total ${eurosExactos(abrir.celda.importe)}`} onCerrar={onCerrar}>
+      {abrir.externo && (
+        <p className="cf-nota naranja" data-cf-traspaso-externo>
+          <strong>Traspaso externo</strong> (SL, fondos, valores…): no es entre PIO y RITA, así que es una entrada o salida real y cuenta en el saldo de la cuenta y en el consolidado.
+        </p>
+      )}
+      {celdas.map((c, i) => <DesgloseCelda key={i} c={c} d={d} />)}
+    </Dialogo>
+  );
+}
+
+/** H7-REAL: saldo de una decena de una cuenta: banco frente a fórmulas (E7) y cuadre de control de la importación. */
+function DesgloseSaldoDecena({ v, d }: { v: ResultadoVista; d: string }) {
+  const x = v.decenas[d];
+  if (!x) return null;
+  const q = x.cuadre;
+  const fila = (etiqueta: ReactNode, valor: ReactNode, clase = '') => <li className={clase}><span>{etiqueta}</span><span className="cf-num">{valor}</span></li>;
+  return (
+    <section className="cf-desglose-celda" data-cf-desglose-saldo={`${v.vista}|${d}`}>
+      <h3>
+        {v.vista} · {textoDecenaLargo(d)} · <span className="cf-fuente">{x.real ? 'Real' : 'Previsto'}</span>
+        <span className="cf-num cf-desglose-cifra">{eurosExactos(x.saldo)}</span>
+      </h3>
+      <p className="tenue">{x.real ? 'Saldo real: el del banco.' : 'Saldo previsto: el anterior más entradas menos salidas de la previsión.'}</p>
+      <ul className="cf-media">
+        {fila('Saldo del banco', x.saldo_bancos === null ? 'aún no cuadrada con el banco' : eurosExactos(x.saldo_bancos))}
+        {fila('Saldo según las fórmulas del Excel', eurosExactos(x.saldo_formulas))}
+      </ul>
+      {x.diferencia_banco !== null && (
+        <p className="cf-nota" data-cf-e7>
+          Diferencia banco − fórmulas: <strong className="cf-num">{eurosExactos(x.diferencia_banco)}</strong>. Es informativa: el saldo real es el del banco.
+        </p>
+      )}
+      <h4>Cuadre de la importación</h4>
+      {q === null ? <p className="tenue" data-cf-cuadre="sin-datos">Sin datos para comprobarlo (falta el saldo inicial, el de las fórmulas o algún importe).</p> : (
+        <>
+          <ul className="cf-media" data-cf-cuadre={q.cuadra ? 'cuadra' : 'no-cuadra'}>
+            {fila('Saldo inicial', eurosExactos(q.saldo_inicial))}
+            {fila('+ Entradas (RE)', eurosExactos(q.entradas))}
+            {fila('− Salidas (RS)', eurosExactos(q.salidas))}
+            {fila('= Resultado', eurosExactos(q.esperado), 'cf-media-total')}
+            {fila('Saldo de las fórmulas', eurosExactos(q.saldo_formulas))}
+          </ul>
+          {q.cuadra
+            ? <p className="tenue">Cuadra ({plural(q.filas, 'importe', 'importes')}; tolerancia {String(TOLERANCIA_CUADRE_POR_IMPORTE).replace('.', ',')} € por importe).</p>
+            : <p className="cf-nota" data-cf-no-cuadra-detalle>Datos de la importación no cuadran: diferencia de <strong className="cf-num">{eurosExactos(q.diferencia)}</strong>. La web no lo corrige.</p>}
+        </>
+      )}
+    </section>
+  );
+}
+
+function DesgloseSaldo({ r, vista, col, onCerrar }: { r: ResultadoCashflow; vista: VistaCuenta; col: Columna; onCerrar: () => void }) {
+  const cuentas = vista === 'CONSOLIDADO' ? CUENTAS_CASHFLOW.filter((c) => r.vistas[c]) : [vista];
+  const s = saldoColumna(r.vistas[vista], col);
+  return (
+    <Dialogo titulo={`Saldo final ${NOMBRE_VISTA[vista]}`} subtitulo={`${textoColumnaLargo(col)} · ${TEXTO_TIPO[tipoColumna(r.vistas[vista], col)]} · ${eurosExactos(s.saldo)}`}
+      onCerrar={onCerrar} datos="saldo">
+      {cuentas.flatMap((c) => col.decenas.map((d) => <DesgloseSaldoDecena key={`${c}|${d}`} v={r.vistas[c]} d={d} />))}
+    </Dialogo>
   );
 }
 
@@ -496,11 +672,13 @@ function Desglose({ abrir, d, onCerrar }: { abrir: Abrir; d: CashflowDTO; onCerr
 function Fuera({ r }: { r: ResultadoCashflow }) {
   const f = r.fuera;
   const filas: [string, number, string][] = [
+    ['cuentas-fuera', f.cuentas_fuera.length, `${f.cuentas_fuera.length === 1 ? 'cuenta' : 'cuentas'} fuera de la pantalla: ${f.cuentas_fuera.join(', ')}`
+      + (f.filas_otras_cuentas > 0 ? ` (${plural(f.filas_otras_cuentas, 'fila', 'filas')} en la importación vigente, no se suman)` : ' (sin filas en la importación vigente)')],
     ['sin-concepto', f.venc_sin_concepto.length, 'vencimientos de PIO sin concepto en el Excel (su proveedor no tiene correspondencia por nombre comercial)'],
     ['no-suman', f.venc_no_suman.length, 'vencimientos con concepto que no suman (ya pagados, sentido no documentado o importe negativo): cuenta el Excel'],
     ['decenas-reales', f.venc_en_decenas_reales.length, 'vencimientos sin pagar con fecha en decenas ya reales (lo real es el Excel)'],
     ['sin-fecha', f.venc_sin_fecha, 'vencimientos sin fecha'],
-    ['otras-cuentas', f.filas_otras_cuentas, 'filas de otras cuentas (no PIO ni RITA)'],
+    ['otra-importacion', f.filas_otra_importacion, 'filas de una importación que no es la vigente (no se usan)'],
     ['no-reconocidas', f.filas_no_reconocidas, `filas con categoría sin RE/RS${f.categorias_no_reconocidas.length ? `: ${f.categorias_no_reconocidas.join(', ')}` : ''}`],
     ['decena-no-valida', f.filas_decena_no_valida, 'filas con una decena no válida'],
   ];
@@ -532,7 +710,9 @@ export function PaginaCashflow() {
   const vista: VistaCuenta = p === 'PIO' || p === 'RITA' ? p : 'CONSOLIDADO';
   const [elecciones, setElecciones] = useState<Record<string, Eleccion>>(leerElecciones);
   const [abrir, setAbrir] = useState<Abrir | null>(null);
+  const [abrirSaldo, setAbrirSaldo] = useState<Columna | null>(null);
   const cerrar = useCallback(() => setAbrir(null), []);
+  const cerrarSaldo = useCallback(() => setAbrirSaldo(null), []);
   const d = carga.estado === 'ok' ? carga.datos : null;
   const r = useMemo(() => (d ? calcularCashflow(d, elecciones) : null), [d, elecciones]);
   const cols = useMemo(() => (d ? columnasVista(d.hoy, escala, d.config) : []), [d, escala]);
@@ -546,9 +726,13 @@ export function PaginaCashflow() {
     setElecciones(n);
     guardarElecciones(n);
   };
-  const pendiente = carga.estado === 'error' && carga.mensaje === TEXTO_H7_PENDIENTE;
   const v = r?.vistas[vista] ?? null;
-  const grises = r?.avisos.filter((a) => a.tipo === 'gris') ?? [];
+  // Sin importación vigente: ninguna cifra («Todavía no hay datos importados»); sí el aviso de una ERROR.
+  const sinDatos = r !== null && r.importacion.vigente === null;
+  const grises = r?.avisos.filter((a) => a.tipo === 'gris' && !(sinDatos && a.codigo === 'SIN_IMPORTACION_VIGENTE')) ?? [];
+  const avisosGrises = grises.map((a, i) => (
+    <p key={i} className="cf-aviso-gris" role="status" data-cf-aviso="gris" data-codigo={a.codigo}>{textoAviso(a, r?.importacion)}</p>
+  ));
 
   return (
     <>
@@ -557,26 +741,29 @@ export function PaginaCashflow() {
       </Cabecera>
 
       {carga.estado === 'cargando' && <p className="tenue">Leyendo el cashflow…</p>}
-      {pendiente && (
-        <section className="tarjeta cf-pendiente" data-cf-pendiente data-contrato-ok="cashflow">
-          <span className="insignia n">Solo lectura</span>
-          <h2>{TEXTO_H7_PENDIENTE}</h2>
-          <p>Esta pantalla leerá el Excel de cashflow que importa el circuito (importaciones, cuentas, importes por decena y saldos de banco) cuando existan sus tablas. Hasta entonces no muestra ninguna cifra.</p>
-        </section>
+      {d && sinDatos && (
+        <div className="cashflow" data-contrato-ok="cashflow">
+          {avisosGrises}
+          <section className="tarjeta cf-pendiente" data-cf-sin-datos>
+            <span className="insignia n">Solo lectura</span>
+            <h2>{TEXTO_SIN_DATOS}</h2>
+            <p>Esta pantalla muestra el Excel de cashflow que importa el circuito (por la noche o a mano). Cuando haya una importación correcta, aparecerán aquí los saldos reales y la previsión.</p>
+          </section>
+        </div>
       )}
-      {carga.estado === 'error' && !pendiente && (
+      {carga.estado === 'error' && (
         <section className="tarjeta bloque error" role="alert">
           <h2>No se ha podido leer el cashflow</h2>
           <p>La API local respondió <code className="codigo">{carga.mensaje}</code>. Pulsa Actualizar para volver a intentarlo.</p>
         </section>
       )}
 
-      {d && r && v && (
+      {d && r && v && !sinDatos && (
         <div className="cashflow" data-contrato-ok="cashflow" aria-busy={recargando}>
           {d.modo === 'FIXTURES' && (
             <p className="rrhh-banner" data-banner-cashflow="fixtures"><span className="rrhh-banner-marca">Ejemplo</span>Datos ficticios con la forma del Excel importado: PIO y RITA, 2026 y 2027.</p>
           )}
-          {grises.map((a, i) => <p key={i} className="cf-aviso-gris" role="status" data-cf-aviso="gris" data-codigo={a.codigo}>{textoAviso(a)}</p>)}
+          {avisosGrises}
 
           <Resumen r={r} d={d} />
 
@@ -597,7 +784,7 @@ export function PaginaCashflow() {
             </div>
             <span className="cf-leyenda-fuentes tenue">
               <span className="cf-fuente-m f-vencimientos" /> vencimientos del sistema
-              <span className="cf-fuente-m f-media" /> media
+              <span className="cf-fuente-m f-media" /> <span className="cf-marca-media estatico">m</span> media
               <span className="cf-fuente-m f-excel" /> Excel
               <span className="cf-dif estatico">!</span> {TEXTO_POSIBLE_DUPLICADO}
             </span>
@@ -606,6 +793,7 @@ export function PaginaCashflow() {
           <section className="tarjeta cf-bloque" aria-labelledby="t-cf-grafico">
             <h2 id="t-cf-grafico">Saldo {escala === 'mes' ? 'a fin de mes' : 'al cierre de cada decena'}</h2>
             <Grafico r={r} cols={cols} vista={vista} movil={movil} />
+            <IndicadorVariacion r={r} />
           </section>
 
           <ListaAvisos avisos={r.avisos} />
@@ -613,11 +801,12 @@ export function PaginaCashflow() {
           <section className="tarjeta cf-bloque" aria-labelledby="t-cf-tabla">
             <h2 id="t-cf-tabla">{NOMBRE_VISTA[vista]}: real frente a previsto</h2>
             <p className="tenue cf-ayuda">Pulsa una cifra para ver de dónde sale. Cada categoría se despliega por concepto.</p>
-            <Tabla r={r} v={v} cols={cols} elecciones={r.elecciones} onElegir={elegir} onAbrir={setAbrir} />
+            <Tabla r={r} v={v} cols={cols} elecciones={r.elecciones} onElegir={elegir} onAbrir={setAbrir} onAbrirSaldo={setAbrirSaldo} />
           </section>
 
           <Fuera r={r} />
           {abrir && <Desglose abrir={abrir} d={d} onCerrar={cerrar} />}
+          {abrirSaldo && <DesgloseSaldo r={r} vista={vista} col={abrirSaldo} onCerrar={cerrarSaldo} />}
         </div>
       )}
     </>

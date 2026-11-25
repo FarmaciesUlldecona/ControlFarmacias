@@ -6,28 +6,47 @@
  * cuenta bancaria (PIO, RITA) más consolidado. RITA activa en Cashflow solo con datos bancarios: a RITA nunca se le suman
  * vencimientos del sistema; solo lo que trae la importación del Excel y sus saldos de banco.
  *
- * Contrato de datos (lo crea el circuito; tablas pendientes en Supabase):
- *   cf_cashflow_importaciones (vigente, importado_at, origen, estado)
- *   cf_cashflow_cuentas       (codigo PIO|RITA|SL, farmacia)
- *   cf_cashflow_importes      (cuenta, decena_inicio, decena_fin, categoria "RE …"/"RS …", concepto, importe)
- *   cf_cashflow_saldos        (cuenta, decena_inicio, saldo_formulas, saldo_bancos | null)
+ * Contrato de datos (migración 38, en producción; H7-REAL):
+ *   cf_cashflow_importaciones (id, archivo_nombre, origen NOCHE|MANUAL, estado OK|ERROR, detalle_error, filas, importado_at,
+ *                              vigente: como máximo una, siempre OK; una ERROR es solo cabecera, nunca vigente)
+ *   cf_cashflow_cuentas       (codigo PIO|RITA|SL, farmacia: null en SL)
+ *   cf_cashflow_importes      (id, importacion_id, cuenta, farmacia, decena_inicio, decena_fin, categoria "RE …"/"RS …",
+ *                              concepto | null, importe ≠ 0 con el signo de la celda; sin fila = 0)
+ *   cf_cashflow_saldos        (id, importacion_id, cuenta, farmacia, decena_inicio —el fin se deduce—, saldo_inicial,
+ *                              saldo_formulas, saldo_bancos | null = decena aún no cuadrada con el banco)
+ *   Solo se usan los importes y saldos de la importación vigente (nunca se mezclan importaciones).
  *
  * Reglas:
  *   Real = decenas hasta la última con saldo_bancos de cada cuenta; saldo de partida = ese saldo_bancos.
- *   Previsión por (cuenta, concepto, decena), con su fuente:
+ *   Previsión (H7-REAL-2), por cuenta y categoría, en cada decena futura, por orden de prioridad (ORDEN_PRIORIDAD):
  *     a) PIO: vencimientos del sistema (contrato H6) de los conceptos del Excel que corresponden por nombre comercial
  *        (CORRESPONDENCIAS_PROVEEDOR, único punto). Sustituyen lo anotado en el Excel para ese concepto y decena; si los dos
  *        existen y difieren, «posible duplicado o diferencia».
+ *     a') Apunte manual: hueco preparado, sin datos todavía (llegará con tablas del circuito). Sustituye al Excel de su
+ *        concepto y decena; nunca a los vencimientos.
  *     b) Lo anotado en las decenas futuras del Excel (RITA, y PIO para lo no cubierto por a).
- *     c) TPV y efectivo: media de las últimas N decenas reales; SOE: media de los últimos N meses reales, en la decena en
- *        que cobra habitualmente. N en CONFIG_CASHFLOW. «Media / Excel» por categoría (las dos cifras siempre a la vista).
- *   Saldo previsto = anterior + entradas − salidas. Traspasos entre cuentas propias: neutros en el consolidado.
+ *     c) Si la categoría no tiene nada en esa decena (ni a, ni a', ni b): media de la misma posición de decena (1.ª, 2.ª o
+ *        3.ª del mes) en los últimos N meses reales (N = CONFIG_CASHFLOW.meses_media, único punto). Todas las categorías
+ *        RE y RS, también TPV, efectivo, SOE (cae en su decena) y «no relacionadas»; los traspasos, nunca (neutros).
+ *     d) «RS Modelo …» (impuestos trimestrales): la misma decena del mismo mes del año anterior, no la media.
+ *     Sin doble cómputo: con a, a' o b en esa categoría y decena no se añade media. H7-REAL-3: en las categorías con
+ *     vencimientos del sistema, por concepto: lo previsto sustituye solo a su concepto y el resto lleva la «media del
+ *     resto» (la de la categoría sin esos conceptos). «Media / Excel» por categoría: con
+ *     «Excel», solo lo anotado (la media queda a la vista sin sumar).
+ *   Saldo previsto = anterior + entradas − salidas. Traspasos entre cuentas propias: neutros en el consolidado. Los que no
+ *   se compensan (traspasos a la SL, fondos…) no son aviso: solo una línea plegada con las decenas visibles.
  *   «No relacionadas con la farmacia»: cuentan en el saldo, no en el «cash flow generado farmacia».
  *   Importe ausente = null, nunca 0: no suma y se cuenta (el saldo queda «incompleto»).
  *
  * Signo (H7-2, decisión de Marc): el importe del Excel se usa con el signo de la celda, nunca en valor absoluto. RE suma
  * el valor tal cual; RS lo resta tal cual: un RS negativo (abono dentro de un proveedor, comisión devuelta) reduce las
  * salidas, y un RE negativo reduce las entradas. Categoría sin prefijo RE/RS: fuera, contada.
+ *
+ * H7-REAL:
+ *   E7: en una decena real con saldo_bancos ≠ saldo_formulas se muestra la diferencia (informativa, nunca error).
+ *   Cuadre de control: saldo_inicial + ΣRE − ΣRS = saldo_formulas por cuenta y decena (tolerancia 0,005 € por importe).
+ *   Si no cuadra, aviso gris; la web no recalcula nada.
+ *   Cuentas fuera de la pantalla (SL): contadas en «Fuera de la previsión».
  *
  * Solo sintaxis TypeScript borrable; sin dependencias del servidor (el front lo importa).
  */
@@ -39,10 +58,14 @@ import { esPagado, type EstadoPagoVencimiento } from '../pagos/pagos.ts';
 // ---------------------------------------------------------------------------
 
 export interface ConfigCashflow {
-  /** N de la media de TPV y efectivo (decenas reales). */
-  decenas_media: number;
-  /** N de la media de la SOE (meses reales completos). */
-  meses_media_soe: number;
+  /** N de la media por posición de decena: últimos N meses reales (la misma decena del mes en cada uno). */
+  meses_media: number;
+  /**
+   * H7-REAL-5: los vencimientos del sistema de un concepto son un MÍNIMO (solo existen para facturas ya recibidas): en
+   * cada decena futura cuenta el mayor en valor absoluto entre su suma y la media del concepto en esa posición de decena.
+   * false = la regla anterior (los vencimientos sustituyen al concepto); solo para comparar en check:real.
+   */
+  vencimientos_como_minimo: boolean;
   /** Aviso gris si la importación vigente tiene más de estos días. */
   dias_importacion_antigua: number;
   /** Saldo mínimo de los avisos. */
@@ -55,8 +78,8 @@ export interface ConfigCashflow {
   estados_importacion_ok: readonly string[];
 }
 export const CONFIG_CASHFLOW: ConfigCashflow = {
-  decenas_media: 6,
-  meses_media_soe: 3,
+  meses_media: 3,
+  vencimientos_como_minimo: true,
   dias_importacion_antigua: 5,
   saldo_minimo: 0,
   decenas_pasadas: 3,
@@ -73,17 +96,17 @@ export const VISTAS_CUENTA: readonly VistaCuenta[] = ['PIO', 'RITA', 'CONSOLIDAD
 /** Única cuenta a la que se suman vencimientos del sistema (RITA: solo datos bancarios). */
 export const CUENTA_VENCIMIENTOS: CuentaCashflow = 'PIO';
 
-export const TEXTO_H7_PENDIENTE = 'Pendiente de tablas en Supabase';
-export const ERROR_H7_PENDIENTE = 'H7_PENDIENTE';
+export const TEXTO_SIN_DATOS = 'Todavía no hay datos importados';
+/** Concepto de una fila del Excel sin concepto (concepto null). */
+export const CONCEPTO_VACIO = 'Sin concepto';
+/** Tolerancia del cuadre de control, por importe sumado (en euros). */
+export const TOLERANCIA_CUADRE_POR_IMPORTE = 0.005;
 export const TEXTO_POSIBLE_DUPLICADO = 'posible duplicado o diferencia';
 
-/** Categorías con previsión por media (las tres del Excel). */
-export type UnidadMedia = 'decenas' | 'meses';
-export const CATEGORIAS_MEDIA: Readonly<Record<string, UnidadMedia>> = {
-  'RE Cobro TPV': 'decenas',
-  'RE Cobro efectivo': 'decenas',
-  'RE Cobro SOE': 'meses',
-};
+/** Orden de prioridad de la previsión de una decena futura (MANUAL: hueco preparado, sin datos todavía). */
+export const ORDEN_PRIORIDAD = ['VENCIMIENTOS', 'MANUAL', 'EXCEL', 'MEDIA'] as const;
+/** Cómo se estima una categoría sin nada en la decena: media por posición o, en los modelos trimestrales, año anterior. */
+export type ReglaEstimacion = 'POSICION' | 'ANIO_ANTERIOR';
 export type Eleccion = 'media' | 'excel';
 export type Elecciones = Readonly<Record<string, Eleccion>>;
 export const ELECCION_POR_DEFECTO: Eleccion = 'media';
@@ -111,8 +134,39 @@ export function comercialDeConcepto(concepto: string): string | null {
   return CORRESPONDENCIAS_PROVEEDOR.find((c) => c.conceptos.some((x) => normal(x) === n))?.comercial ?? null;
 }
 
+/** Mismo concepto: igual sin mayúsculas ni acentos, o con el mismo nombre comercial (FEDERACIÓ = FEDEFARMA). */
+export function mismoConcepto(a: string, b: string): boolean {
+  return normal(a) === normal(b) || (comercialDeConcepto(a) !== null && comercialDeConcepto(a) === comercialDeConcepto(b));
+}
+
 export type SentidoMovimiento = 'ENTRADA' | 'SALIDA';
-export type ClaseMovimiento = 'FARMACIA' | 'NO_RELACIONADA' | 'TRASPASO';
+/**
+ * TRASPASO = interno (PIO ↔ RITA): neutro en el consolidado y sin media. TRASPASO_EXTERNO (H7-REAL-4) = categoría de
+ * traspasos con un concepto que no está en TRASPASOS_INTERNOS (a la SL, fondos, valores…): entrada o salida real, con
+ * previsión (Excel y, si no, media por concepto) y en el saldo de su cuenta y del consolidado.
+ */
+export type ClaseMovimiento = 'FARMACIA' | 'NO_RELACIONADA' | 'TRASPASO' | 'TRASPASO_EXTERNO';
+/**
+ * H7-REAL-4 (decisión de Pío): conceptos de traspaso INTERNO entre PIO y RITA, por cuenta. Único punto. Se comparan sin
+ * mayúsculas, acentos ni espacios. Cualquier otro concepto de una categoría de traspasos es externo.
+ */
+export const TRASPASOS_INTERNOS: Readonly<Record<string, readonly string[]>> = {
+  PIO: ['TRANSFERENCIA DE RITA A PIO', 'La Caixa Rita', 'DEPOSITO CONECTADO'],
+  RITA: ['TRASPÀS A PIO DEPOSITO CON.', 'DEPÓSITO CONECTADO'],
+};
+const compacto = (s: string) => normal(s).replace(/\s+/g, '');
+/** ¿Concepto de traspaso interno (PIO ↔ RITA) de esa cuenta? */
+export function esTraspasoInterno(cuenta: string, concepto: string | null): boolean {
+  if (concepto === null) return false;
+  const c = compacto(concepto);
+  return (TRASPASOS_INTERNOS[cuenta] ?? []).some((x) => compacto(x) === c);
+}
+/** Clase de una fila: la de su categoría; en las de traspasos, interno o externo según el concepto. */
+export function claseMovimiento(cuenta: string, categoria: string, concepto: string | null): { sentido: SentidoMovimiento; clase: ClaseMovimiento } | null {
+  const c = clasificarCategoria(categoria);
+  if (c === null || c.clase !== 'TRASPASO') return c;
+  return { sentido: c.sentido, clase: esTraspasoInterno(cuenta, concepto) ? 'TRASPASO' : 'TRASPASO_EXTERNO' };
+}
 /** "RE …" = entrada, "RS …" = salida; traspasos y «no relacionadas» por su nombre. null = no reconocida. */
 export function clasificarCategoria(categoria: string): { sentido: SentidoMovimiento; clase: ClaseMovimiento } | null {
   const m = /^(RE|RS)\s+(\S.*)$/.exec(categoria.trim());
@@ -120,6 +174,19 @@ export function clasificarCategoria(categoria: string): { sentido: SentidoMovimi
   const resto = normal(m[2]);
   const clase: ClaseMovimiento = /TRASPAS/.test(resto) ? 'TRASPASO' : /NO RELACIONAD/.test(resto) ? 'NO_RELACIONADA' : 'FARMACIA';
   return { sentido: m[1] === 'RE' ? 'ENTRADA' : 'SALIDA', clase };
+}
+/** «RS Modelo …» (impuestos trimestrales): se estiman con el mismo mes del año anterior. */
+export function esModeloTrimestral(categoria: string): boolean {
+  return /^RS MODELO\b/.test(normal(categoria));
+}
+/**
+ * Regla de estimación de una categoría (null = sin estimación por categoría: traspasos; los externos se estiman aparte,
+ * por concepto, y los internos nunca).
+ */
+export function reglaEstimacion(categoria: string): ReglaEstimacion | null {
+  const c = clasificarCategoria(categoria);
+  if (c === null || c.clase === 'TRASPASO') return null;
+  return esModeloTrimestral(categoria) ? 'ANIO_ANTERIOR' : 'POSICION';
 }
 
 // ---------------------------------------------------------------------------
@@ -197,29 +264,63 @@ export function fechaMadrid(instante: string): string | null {
 // ---------------------------------------------------------------------------
 
 export interface ImportacionCashflow {
+  /** cf_cashflow_importaciones.id (uuid). */
   importacion_id: string;
-  vigente: boolean;
-  importado_at: string;
+  archivo_nombre: string;
+  /** NOCHE | MANUAL. */
   origen: string;
+  /** OK | ERROR. */
   estado: string;
+  /** Solo en ERROR: códigos y celdas (nunca conceptos). */
+  detalle_error: string | null;
+  filas: number | null;
+  importado_at: string;
+  vigente: boolean;
 }
 export interface CuentaCashflowFila {
   codigo: string;
   farmacia: string | null;
 }
 export interface ImporteCashflow {
+  id: string;
+  importacion_id: string;
   cuenta: string;
+  farmacia: string | null;
   decena_inicio: string;
   decena_fin: string;
   categoria: string;
-  concepto: string;
+  /** null = fila del Excel sin concepto (se muestra como CONCEPTO_VACIO). */
+  concepto: string | null;
   importe: Importe;
 }
 export interface SaldoCashflow {
+  id: string;
+  importacion_id: string;
   cuenta: string;
+  farmacia: string | null;
+  /** El fin se deduce (días 10, 20 o fin de mes). */
   decena_inicio: string;
+  saldo_inicial: Importe;
   saldo_formulas: Importe;
   saldo_bancos: Importe;
+}
+/** Filas de la importación vigente en cuentas fuera de la pantalla (SL): solo recuentos, nunca importes. */
+export interface OtraCuentaCashflow {
+  cuenta: string;
+  importes: number;
+  saldos: number;
+}
+/**
+ * H7-REAL-2: apunte manual (prioridad entre los vencimientos y el Excel). Hueco preparado: todavía no hay tabla ni datos
+ * (llegará con tablas del circuito); el servidor no envía ninguno.
+ */
+export interface ApunteManualCashflow {
+  cuenta: string;
+  decena_inicio: string;
+  categoria: string;
+  concepto: string | null;
+  /** Con el signo de la celda, como el Excel (RE suma, RS resta). */
+  importe: Importe;
 }
 /** Vencimiento del sistema (contrato H6, solo PIO) con lo que necesita el cashflow. */
 export interface VencimientoCashflow {
@@ -237,16 +338,19 @@ export interface VencimientoCashflow {
   cargo_negativo: boolean;
 }
 export interface DatosCashflow {
+  /** La vigente (si hay) y la última por importado_at. */
   importaciones: ImportacionCashflow[];
   cuentas: CuentaCashflowFila[];
+  /** Solo de la importación vigente y de las cuentas de la pantalla. */
   importes: ImporteCashflow[];
   saldos: SaldoCashflow[];
+  otras_cuentas: OtraCuentaCashflow[];
 }
 /** Respuesta de GET /api/cashflow: los datos de partida; el cálculo lo hace calcularCashflow (también en el front). */
 export interface CashflowDTO extends DatosCashflow {
   farmacia: string;
   generado_at: string;
-  /** Fecha de referencia (FIXTURES: la de la semilla; REAL: la del servidor). */
+  /** Fecha de referencia (FIXTURES: la de la semilla; REAL: la del servidor, Europe/Madrid). */
   hoy: string;
   modo: 'FIXTURES' | 'REAL';
   config: ConfigCashflow;
@@ -258,10 +362,11 @@ export interface CashflowDTO extends DatosCashflow {
 // Resultado
 // ---------------------------------------------------------------------------
 
-export type FuenteCelda = 'REAL' | 'VENCIMIENTOS' | 'EXCEL' | 'MEDIA' | 'MIXTA';
+export type FuenteCelda = 'REAL' | 'VENCIMIENTOS' | 'MANUAL' | 'EXCEL' | 'MEDIA' | 'MIXTA';
 export const TEXTO_FUENTE: Readonly<Record<FuenteCelda, string>> = {
   REAL: 'Real (Excel, decena con saldo de banco)',
   VENCIMIENTOS: 'Vencimientos del sistema',
+  MANUAL: 'Apunte manual',
   EXCEL: 'Anotado en el Excel',
   MEDIA: 'Media calculada',
   MIXTA: 'Varias fuentes',
@@ -280,12 +385,20 @@ export interface DesgloseVencimientos {
   ya_en_banco: VencimientoCashflow[];
 }
 export interface DesgloseMedia {
-  unidad: UnidadMedia;
-  /** Decenas (o meses) que entran en la media, con su total. */
+  regla: ReglaEstimacion;
+  /** Posición (1.ª, 2.ª o 3.ª decena del mes) de la decena prevista. */
+  posicion: 1 | 2 | 3;
+  /** Decenas reales usadas, con el total de la categoría en cada una (0 = sin filas). */
   base: { clave: string; importe: number }[];
+  /** POSICION: Σ base ÷ nº de decenas; ANIO_ANTERIOR: el total de la decena del año anterior. */
   media: Importe;
-  /** SOE: decena del mes en que cobra habitualmente. */
-  decena_habitual: 1 | 2 | 3 | null;
+  /** Filas sin importe en la base (no suman). */
+  sin_importe: number;
+  /**
+   * H7-REAL-3: conceptos que no entran en la media porque esa decena ya los prevé (vencimientos, apunte o Excel), en las
+   * categorías con vencimientos: la cifra es la «media del resto». Vacío = media de toda la categoría.
+   */
+  excluidos: string[];
 }
 export interface Celda {
   cuenta: CuentaCashflow;
@@ -327,14 +440,37 @@ export interface ResumenDecena {
   /** Cash flow generado farmacia (sin «no relacionadas» ni traspasos). */
   farmacia: Importe;
   no_relacionadas: Importe;
+  /** Traspasos internos (PIO ↔ RITA): en el consolidado deberían sumar 0. */
   traspasos: Importe;
+  /** H7-REAL-4: traspasos externos (SL, fondos, valores…): cuentan en el saldo, también en el consolidado. */
+  traspasos_externos: Importe;
   neto: Importe;
   saldo: Importe;
   saldo_bancos: Importe;
   saldo_formulas: Importe;
+  /** E7: decena real con saldo_bancos ≠ saldo_formulas: banco − fórmulas (informativa). null = no hay diferencia. */
+  diferencia_banco: Importe;
+  /** Cuadre de control de la importación (por cuenta; en el consolidado, null). */
+  cuadre: CuadreDecena | null;
+  /** false = alguna cuenta no cuadra en esta decena; null = no se ha podido comprobar. */
+  cuadra: boolean | null;
   desconocidos: number;
   /** Hay importes desconocidos en esta decena o antes (desde la partida). */
   incompleto: boolean;
+}
+/** saldo_inicial + ΣRE − ΣRS frente a saldo_formulas (valores de la importación, sin recalcular nada). */
+export interface CuadreDecena {
+  saldo_inicial: number;
+  /** Σ de los RE tal cual (con su signo). */
+  entradas: number;
+  /** Σ de los RS tal cual (con su signo). */
+  salidas: number;
+  esperado: number;
+  saldo_formulas: number;
+  /** saldo_formulas − esperado. */
+  diferencia: number;
+  filas: number;
+  cuadra: boolean;
 }
 export interface ResultadoVista {
   vista: VistaCuenta;
@@ -345,7 +481,7 @@ export interface ResultadoVista {
 }
 export type CodigoAviso =
   | 'CUENTA_CUBIERTA' | 'CONSOLIDADO_NEGATIVO' | 'IMPORTACION_ANTIGUA' | 'IMPORTACION_FALLIDA' | 'SIN_IMPORTACION_VIGENTE'
-  | 'SIN_SALDO_BANCO' | 'TRASPASO_SIN_CONTRAPARTIDA';
+  | 'SIN_SALDO_BANCO' | 'IMPORTACION_NO_CUADRA';
 export interface AvisoCashflow {
   tipo: 'naranja' | 'rojo' | 'gris';
   codigo: CodigoAviso;
@@ -365,7 +501,11 @@ export interface AvisoCashflow {
   incompleto: boolean;
 }
 export interface FueraDeCashflow {
+  /** Cuentas declaradas fuera de la pantalla (SL). */
+  cuentas_fuera: string[];
   filas_otras_cuentas: number;
+  /** Filas de una importación que no es la vigente (en REAL la lectura ya las filtra: debería ser 0). */
+  filas_otra_importacion: number;
   categorias_no_reconocidas: string[];
   filas_no_reconocidas: number;
   filas_decena_no_valida: number;
@@ -389,7 +529,7 @@ export interface ResultadoCashflow {
   importacion: EstadoImportacion;
   fuera: FueraDeCashflow;
   elecciones: Record<string, Eleccion>;
-  /** Categorías con media en alguna cuenta. */
+  /** Categorías con alguna cifra estimada (media o año anterior) en alguna cuenta: llevan «Media / Excel». */
   categorias_media: string[];
 }
 
@@ -417,8 +557,9 @@ export const mismoImporte = (a: number, b: number) => cent(a) === cent(b);
 // ---------------------------------------------------------------------------
 
 export function estadoImportacion(imps: readonly ImportacionCashflow[], hoy: string, config: ConfigCashflow = CONFIG_CASHFLOW): { estado: EstadoImportacion; avisos: AvisoCashflow[] } {
+  // Vigente: como máximo una y siempre OK (una ERROR nunca es vigente): si no, ninguna (falla cerrado).
   const vigentes = imps.filter((i) => i.vigente);
-  const vigente = vigentes.length === 1 ? vigentes[0] : null;
+  const vigente = vigentes.length === 1 && config.estados_importacion_ok.includes(vigentes[0].estado) ? vigentes[0] : null;
   const ultima = [...imps].sort((a, b) => Date.parse(b.importado_at) - Date.parse(a.importado_at))[0] ?? null;
   const fv = vigente ? fechaMadrid(vigente.importado_at) : null;
   const dias = fv === null ? null : diasEntre(fv, hoy);
@@ -426,12 +567,16 @@ export function estadoImportacion(imps: readonly ImportacionCashflow[], hoy: str
   const base = { decena: null, hasta: null, cuenta: null, cubre: null, importe: null, devolucion: null, decenas: [], incompleto: false };
   if (vigente === null) {
     avisos.push({ ...base, tipo: 'gris', codigo: 'SIN_IMPORTACION_VIGENTE',
-      texto: vigentes.length === 0 ? 'No hay ninguna importación vigente del Excel.' : 'Hay más de una importación marcada como vigente: no se sabe cuál usar.' });
+      texto: vigentes.length === 0 ? 'No hay ninguna importación vigente del Excel.'
+        : vigentes.length > 1 ? 'Hay más de una importación marcada como vigente: no se sabe cuál usar.'
+          : 'La importación marcada como vigente no es correcta: no se usa.' });
   } else if (dias !== null && dias > config.dias_importacion_antigua) {
     avisos.push({ ...base, tipo: 'gris', codigo: 'IMPORTACION_ANTIGUA', texto: `La importación vigente del Excel tiene ${dias} días.` });
   }
   if (ultima !== null && !config.estados_importacion_ok.includes(ultima.estado)) {
-    avisos.push({ ...base, tipo: 'gris', codigo: 'IMPORTACION_FALLIDA', texto: `La última importación del Excel falló (${fechaMadrid(ultima.importado_at) ?? 'sin fecha'}): se muestran los datos de la vigente.` });
+    const detalle = ultima.detalle_error === null ? 'sin detalle' : ultima.detalle_error;
+    avisos.push({ ...base, tipo: 'gris', codigo: 'IMPORTACION_FALLIDA',
+      texto: `La última importación del Excel falló (${fechaMadrid(ultima.importado_at) ?? 'sin fecha'}; ${detalle}): ${vigente ? 'se muestran los datos de la vigente' : 'no hay ninguna vigente'}.` });
   }
   return { estado: { vigente, ultima, dias }, avisos };
 }
@@ -443,46 +588,35 @@ export function estadoImportacion(imps: readonly ImportacionCashflow[], hoy: str
 const claveLinea = (categoria: string, concepto: string) => `${categoria}\u0000${concepto}`;
 const NEUTRO = { vencimientos: null, media: null, diferencia: false, desconocidos: 0, partes: [] } as const;
 
-interface Valida extends ImporteCashflow { cuenta: CuentaCashflow; sentido: SentidoMovimiento; clase: ClaseMovimiento }
+interface Valida extends Omit<ImporteCashflow, 'concepto'> { cuenta: CuentaCashflow; concepto: string; sentido: SentidoMovimiento; clase: ClaseMovimiento }
 
-/** Media de una categoría para una cuenta. */
-function calcularMedia(filas: readonly Valida[], unidad: UnidadMedia, ultimaReal: string | null, config: ConfigCashflow): DesgloseMedia {
-  const vacia: DesgloseMedia = { unidad, base: [], media: null, decena_habitual: null };
-  if (ultimaReal === null) return vacia;
-  const porDecena = new Map<string, number>();
-  for (const f of filas) {
-    if (f.decena_inicio > ultimaReal || f.importe === null) continue;
-    porDecena.set(f.decena_inicio, (porDecena.get(f.decena_inicio) ?? 0) + cent(signo(f) * f.importe));
+/**
+ * Estimación de una categoría en una decena futura (c y d de la previsión), con los totales reales de la categoría por
+ * decena (céntimos, con signo). `primera`: primera decena con datos de la cuenta (antes no hay real: no cuenta como 0).
+ *   POSICION:      últimas N decenas reales de la misma posición (1.ª, 2.ª o 3.ª del mes); sin filas = 0.
+ *   ANIO_ANTERIOR: la misma decena del mismo mes del año anterior (tiene que ser real).
+ * null = sin base (ninguna decena real que usar).
+ */
+export function estimarCategoria(
+  regla: ReglaEstimacion, decena: string, porDecena: ReadonlyMap<string, { c: number; sin_importe: number }>,
+  primera: string, ultimaReal: string, config: ConfigCashflow = CONFIG_CASHFLOW): DesgloseMedia | null {
+  const posicion = ordinalDecena(decena);
+  const de = (d: string) => porDecena.get(d) ?? { c: 0, sin_importe: 0 };
+  let base: string[];
+  if (regla === 'ANIO_ANTERIOR') {
+    const d = `${sumarMeses(decena.slice(0, 7), -12)}-${decena.slice(8)}`;
+    base = d >= primera && d <= ultimaReal ? [d] : [];
+  } else {
+    base = [];
+    let d = ultimaReal;
+    while (ordinalDecena(d) !== posicion) d = anteriorDecena(d);
+    for (; base.length < config.meses_media && d >= primera; d = `${sumarMeses(d.slice(0, 7), -1)}-${d.slice(8)}`) base.unshift(d);
   }
-  const primera = [...porDecena.keys()].sort()[0];
-  if (primera === undefined) return vacia;
-  if (unidad === 'decenas') {
-    // Últimas N decenas reales (desde la primera con datos): una decena sin filas cuenta como 0.
-    const base: { clave: string; importe: number }[] = [];
-    for (let d = ultimaReal; base.length < config.decenas_media && d >= primera; d = anteriorDecena(d)) base.unshift({ clave: d, importe: eur(porDecena.get(d) ?? 0) });
-    return { unidad, base, media: eur(Math.round(base.reduce((a, x) => a + cent(x.importe), 0) / base.length)), decena_habitual: null };
-  }
-  // Meses: los completos (sus tres decenas reales) con datos de la categoría; los últimos N.
-  const meses = new Map<string, { total: number; mayor: { ordinal: 1 | 2 | 3; c: number } }>();
-  for (const [d, c] of porDecena) {
-    const ym = d.slice(0, 7);
-    if (`${ym}-21` > ultimaReal) continue;
-    const m = meses.get(ym) ?? { total: 0, mayor: { ordinal: ordinalDecena(d), c } };
-    m.total += c;
-    if (Math.abs(c) > Math.abs(m.mayor.c)) m.mayor = { ordinal: ordinalDecena(d), c };
-    meses.set(ym, m);
-  }
-  const ultimos = [...meses.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-config.meses_media_soe);
-  if (ultimos.length === 0) return vacia;
-  // Decena habitual: la más frecuente entre esos meses (empate: la más tardía).
-  const veces = [0, 0, 0, 0];
-  for (const [, m] of ultimos) veces[m.mayor.ordinal] += 1;
-  const habitual = ([3, 2, 1] as const).reduce((mejor, o) => (veces[o] > veces[mejor] ? o : mejor), 3 as 1 | 2 | 3);
+  if (base.length === 0) return null;
+  const total = base.reduce((a, d) => a + de(d).c, 0);
   return {
-    unidad,
-    base: ultimos.map(([ym, m]) => ({ clave: ym, importe: eur(m.total) })),
-    media: eur(Math.round(ultimos.reduce((a, [, m]) => a + m.total, 0) / ultimos.length)),
-    decena_habitual: habitual,
+    regla, posicion, base: base.map((d) => ({ clave: d, importe: eur(de(d).c) })),
+    media: eur(Math.round(total / base.length)), sin_importe: base.reduce((a, d) => a + de(d).sin_importe, 0), excluidos: [],
   };
 }
 const signo = (f: { sentido: SentidoMovimiento }) => (f.sentido === 'ENTRADA' ? 1 : -1);
@@ -499,7 +633,8 @@ function desgloseVencimientos(comercial: string, vs: readonly VencimientoCashflo
   return { comercial, incluidos, neto, sin_importe: cargos.desconocidos + abonos.desconocidos, no_documentado: noDoc, cargo_negativo: neg, ya_en_banco: ya };
 }
 
-function resumen(lineas: readonly Linea[], d: string, real: boolean): Omit<ResumenDecena, 'saldo' | 'saldo_bancos' | 'saldo_formulas' | 'incompleto'> {
+function resumen(lineas: readonly Linea[], d: string, real: boolean):
+  Omit<ResumenDecena, 'saldo' | 'saldo_bancos' | 'saldo_formulas' | 'incompleto' | 'diferencia_banco' | 'cuadre' | 'cuadra'> {
   const celdas = lineas.map((l) => ({ l, c: l.celdas[d] })).filter((x) => x.c !== undefined && x.c.en_saldo);
   const de = (f: (l: Linea) => boolean) => sumaOnull(celdas.filter((x) => f(x.l)).map((x) => x.c.importe).filter((v) => v !== null));
   return {
@@ -510,18 +645,21 @@ function resumen(lineas: readonly Linea[], d: string, real: boolean): Omit<Resum
     farmacia: de((l) => l.clase === 'FARMACIA'),
     no_relacionadas: de((l) => l.clase === 'NO_RELACIONADA'),
     traspasos: de((l) => l.clase === 'TRASPASO'),
+    traspasos_externos: de((l) => l.clase === 'TRASPASO_EXTERNO'),
     neto: de(() => true),
     desconocidos: celdas.reduce((a, x) => a + x.c.desconocidos, 0),
   };
 }
 
 function ordenarLineas(ls: Linea[]): Linea[] {
-  const rango = (l: Linea) => (l.clase === 'FARMACIA' ? 0 : l.clase === 'NO_RELACIONADA' ? 1 : 2) * 2 + (l.sentido === 'ENTRADA' ? 0 : 1);
+  const rango = (l: Linea) => (l.clase === 'FARMACIA' ? 0 : l.clase === 'NO_RELACIONADA' ? 1 : l.clase === 'TRASPASO_EXTERNO' ? 2 : 3) * 2 + (l.sentido === 'ENTRADA' ? 0 : 1);
   return ls.sort((a, b) => rango(a) - rango(b) || a.categoria.localeCompare(b.categoria, 'es') || Number(a.media) - Number(b.media) || a.concepto.localeCompare(b.concepto, 'es'));
 }
 
 /** Calcula las vistas, los avisos y lo que queda fuera. `decenas`: horizonte (por defecto, el de los datos y las vistas). */
-export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' | 'cuentas' | 'importes' | 'saldos' | 'vencimientos'> & { config?: ConfigCashflow },
+export function calcularCashflow(
+  dto: Pick<CashflowDTO, 'hoy' | 'importaciones' | 'cuentas' | 'importes' | 'saldos' | 'vencimientos'> & Partial<Pick<CashflowDTO, 'otras_cuentas'>>
+    & { config?: ConfigCashflow; apuntes_manuales?: readonly ApunteManualCashflow[] },
   elecciones: Elecciones = {}): ResultadoCashflow {
   const config = dto.config ?? CONFIG_CASHFLOW;
   const hoy = dto.hoy;
@@ -529,22 +667,35 @@ export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' 
   const declaradas = new Set(dto.cuentas.map((c) => c.codigo));
   const cuentas = CUENTAS_CASHFLOW.filter((c) => declaradas.has(c));
   const esCuenta = (c: string): c is CuentaCashflow => (cuentas as readonly string[]).includes(c);
+  const otras = dto.otras_cuentas ?? [];
   const fuera: FueraDeCashflow = {
-    filas_otras_cuentas: 0, categorias_no_reconocidas: [], filas_no_reconocidas: 0, filas_decena_no_valida: 0,
+    cuentas_fuera: [...new Set([...dto.cuentas.map((c) => c.codigo).filter((c) => !esCuenta(c)), ...otras.map((o) => o.cuenta)])].sort(),
+    filas_otras_cuentas: otras.reduce((a, o) => a + o.importes + o.saldos, 0), filas_otra_importacion: 0,
+    categorias_no_reconocidas: [], filas_no_reconocidas: 0, filas_decena_no_valida: 0,
     venc_sin_concepto: [], venc_no_suman: [], venc_sin_fecha: 0, venc_en_decenas_reales: [],
+  };
+  const imp = estadoImportacion(dto.importaciones, hoy, config);
+  // Solo la importación vigente (sin vigente, ninguna fila): nunca se mezclan importaciones.
+  const vigenteId = imp.estado.vigente?.importacion_id ?? null;
+  const deVigente = <T extends { importacion_id: string }>(xs: readonly T[]) => {
+    const si = xs.filter((x) => vigenteId !== null && x.importacion_id === vigenteId);
+    fuera.filas_otra_importacion += xs.length - si.length;
+    return si;
   };
   const validas: Valida[] = [];
   const noReconocidas = new Set<string>();
-  for (const f of dto.importes) {
+  for (const f0 of deVigente(dto.importes)) {
+    const f = { ...f0, concepto: f0.concepto ?? CONCEPTO_VACIO };
     if (!esCuenta(f.cuenta)) { fuera.filas_otras_cuentas += 1; continue; }
     if (!esDecenaInicio(f.decena_inicio) || f.decena_fin !== finDecena(f.decena_inicio)) { fuera.filas_decena_no_valida += 1; continue; }
-    const c = clasificarCategoria(f.categoria);
+    const c = claseMovimiento(f.cuenta, f.categoria, f0.concepto);
     if (c === null) { fuera.filas_no_reconocidas += 1; noReconocidas.add(f.categoria); continue; }
     validas.push({ ...f, cuenta: f.cuenta, ...c });
   }
   fuera.categorias_no_reconocidas = [...noReconocidas].sort();
-  const saldos = dto.saldos.filter((s) => esCuenta(s.cuenta) && esDecenaInicio(s.decena_inicio));
-  fuera.filas_otras_cuentas += dto.saldos.filter((s) => !esCuenta(s.cuenta)).length;
+  const saldosVigente = deVigente(dto.saldos);
+  const saldos = saldosVigente.filter((s) => esCuenta(s.cuenta) && esDecenaInicio(s.decena_inicio));
+  fuera.filas_otras_cuentas += saldosVigente.filter((s) => !esCuenta(s.cuenta)).length;
 
   // Horizonte: de la primera decena con datos (o de la ventana) a la última (o a la ventana).
   const actual = decenaDe(hoy);
@@ -558,7 +709,6 @@ export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' 
 
   const avisos: AvisoCashflow[] = [];
   const base = { decena: null, hasta: null, cuenta: null, cubre: null, importe: null, devolucion: null, decenas: [], incompleto: false };
-  const imp = estadoImportacion(dto.importaciones, hoy, config);
   avisos.push(...imp.avisos);
 
   const eleccionDe = (cat: string): Eleccion => elecciones[cat] ?? ELECCION_POR_DEFECTO;
@@ -571,8 +721,11 @@ export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' 
     const conBanco = [...ss.values()].filter((s) => s.saldo_bancos !== null).map((s) => s.decena_inicio).sort();
     const ultimaReal = conBanco.length ? conBanco[conBanco.length - 1] : null;
     const finReal = ultimaReal === null ? null : finDecena(ultimaReal);
+    /** Primera decena con datos de la cuenta (antes no hay real: no entra en las medias). */
+    const primeraCuenta: string | null = [...filas.map((f) => f.decena_inicio), ...ss.keys()].sort()[0] ?? null;
     const esReal = (d: string) => ultimaReal !== null && d <= ultimaReal;
-    if (ultimaReal === null) avisos.push({ ...base, tipo: 'gris', codigo: 'SIN_SALDO_BANCO', cuenta, texto: `${cuenta}: ninguna decena tiene saldo de banco; no se puede calcular el saldo previsto.` });
+    // Sin importación vigente no hay saldos que echar de menos («Todavía no hay datos importados»).
+    if (ultimaReal === null && vigenteId !== null) avisos.push({ ...base, tipo: 'gris', codigo: 'SIN_SALDO_BANCO', cuenta, texto: `${cuenta}: ninguna decena tiene saldo de banco; no se puede calcular el saldo previsto.` });
 
     // Líneas del Excel.
     const lineas = new Map<string, Linea>();
@@ -627,33 +780,146 @@ export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' 
         const importe = dv.neto === null ? null : eur(cent(signo(l) * dv.neto));
         const excel = previa?.excel ?? null;
         const diferencia = previa !== undefined && previa.excel_filas > 0 && (importe === null || excel === null || !mismoImporte(importe, excel));
+        // H7-REAL-5: los vencimientos son un mínimo (solo de facturas ya recibidas): si la media del concepto en esa
+        // posición de decena (últimos N meses reales) es mayor en valor absoluto, cuenta la media (marca «m»; el desglose
+        // enseña los vencimientos conocidos). Con «Excel» en la categoría, o con el neto desconocido, los vencimientos.
+        let media: DesgloseMedia | null = null;
+        if (config.vencimientos_como_minimo && importe !== null && eleccionDe(l.categoria) === 'media' && ultimaReal !== null && primeraCuenta !== null) {
+          const pd = new Map<string, { c: number; sin_importe: number }>();
+          for (const f of filas) {
+            if (f.categoria !== l.categoria || !esReal(f.decena_inicio) || !mismoConcepto(f.concepto, l.concepto)) continue;
+            const x = pd.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
+            if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
+            pd.set(f.decena_inicio, x);
+          }
+          const m = estimarCategoria('POSICION', d, pd, primeraCuenta, ultimaReal, config);
+          if (m !== null && m.media !== null && Math.abs(cent(m.media)) > Math.abs(cent(importe))) media = m;
+        }
         l.celdas[d] = {
-          ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'VENCIMIENTOS', importe, en_saldo: true,
-          excel, excel_filas: previa?.excel_filas ?? 0, vencimientos: dv, diferencia, desconocidos: dv.sin_importe,
+          ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: media ? 'MEDIA' : 'VENCIMIENTOS', importe: media ? media.media : importe, en_saldo: true,
+          excel, excel_filas: previa?.excel_filas ?? 0, vencimientos: dv, media, diferencia, desconocidos: media ? 0 : dv.sin_importe,
         };
       }
     }
 
-    // c) Medias (TPV, efectivo, SOE).
-    for (const [cat, unidad] of Object.entries(CATEGORIAS_MEDIA)) {
-      const fc = filas.filter((f) => f.categoria === cat);
-      if (fc.length === 0) continue;
-      categoriasMedia.add(cat);
-      const m = calcularMedia(fc, unidad, ultimaReal, config);
-      const usar = eleccionDe(cat) === 'media' && m.media !== null;
-      const lm = linea(cat, CONCEPTO_MEDIA, fc[0].sentido, fc[0].clase, true);
-      for (const d of decenas) {
-        if (esReal(d) || ultimaReal === null) continue;
-        if (unidad === 'meses' && ordinalDecena(d) !== m.decena_habitual) continue;
-        lm.celdas[d] = { ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe: m.media, en_saldo: usar, excel: null, excel_filas: 0, media: m };
-      }
-      if (usar) {
+    // a') Apuntes manuales (hueco preparado, sin datos todavía): sustituyen al Excel de su concepto y decena; los
+    // vencimientos mandan sobre ellos. Solo decenas futuras (lo real es el Excel).
+    for (const a of dto.apuntes_manuales ?? []) {
+      if (a.cuenta !== cuenta || !esDecenaInicio(a.decena_inicio) || esReal(a.decena_inicio) || ultimaReal === null) continue;
+      const c = claseMovimiento(cuenta, a.categoria, a.concepto);
+      if (c === null) { fuera.filas_no_reconocidas += 1; noReconocidas.add(a.categoria); continue; }
+      const l = linea(a.categoria, a.concepto ?? CONCEPTO_VACIO, c.sentido, c.clase);
+      const previa = l.celdas[a.decena_inicio];
+      if (previa?.vencimientos) continue; // los vencimientos mandan (también si ganó la media)
+      const s = sumar([...(previa?.fuente === 'MANUAL' ? [previa.importe] : []), a.importe === null ? null : eur(cent(signo(c) * a.importe))]);
+      l.celdas[a.decena_inicio] = {
+        ...NEUTRO, partes: [], cuenta, decena: a.decena_inicio, real: false, fuente: 'MANUAL', importe: s.suma, en_saldo: true,
+        excel: previa?.excel ?? null, excel_filas: previa?.excel_filas ?? 0, desconocidos: (previa?.fuente === 'MANUAL' ? previa.desconocidos : 0) + s.desconocidos,
+      };
+    }
+
+    // c) y d) Estimación de cada categoría (menos traspasos) en las decenas futuras sin nada (ni vencimientos, ni apunte
+    // manual, ni Excel): media de la misma posición de decena en los últimos N meses reales; «RS Modelo …», año anterior.
+    if (ultimaReal !== null) {
+      const primera = primeraCuenta ?? ultimaReal;
+      const categorias = new Map<string, Valida>();
+      for (const f of filas) if (!categorias.has(f.categoria)) categorias.set(f.categoria, f);
+      for (const [cat, f0] of categorias) {
+        const regla = reglaEstimacion(cat);
+        if (regla === null) continue;
+        const porDecena = new Map<string, { c: number; sin_importe: number }>();
+        for (const f of filas) {
+          if (f.categoria !== cat || !esReal(f.decena_inicio)) continue;
+          const x = porDecena.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
+          if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
+          porDecena.set(f.decena_inicio, x);
+        }
+        // Conceptos con cifra prevista (a, a' o b) en cada decena.
+        const previstos = new Map<string, Set<string>>();
+        let conVencimientos = false;
         for (const l of lineas.values()) {
           if (l.categoria !== cat || l.media) continue;
-          for (const c of Object.values(l.celdas)) if (!c.real) c.en_saldo = false;
+          for (const [d, c] of Object.entries(l.celdas)) {
+            if (c.real) continue;
+            if (c.vencimientos !== null) conVencimientos = true; // también si ganó la media (H7-REAL-5)
+            previstos.set(d, (previstos.get(d) ?? new Set<string>()).add(l.concepto));
+          }
         }
+        // H7-REAL-3 (decisión de Marc): en una categoría con vencimientos del sistema, la prioridad va POR CONCEPTO: lo
+        // previsto (vencimientos, apunte o Excel) sustituye solo a su concepto y el resto lleva la media de la categoría
+        // calculada sin esos conceptos (sin doble cómputo). Sin vencimientos: por categoría (cualquier cifra = sin media).
+        const sinConceptos = (excluir: readonly string[]) => {
+          if (excluir.length === 0) return porDecena;
+          const m = new Map<string, { c: number; sin_importe: number }>();
+          for (const f of filas) {
+            if (f.categoria !== cat || !esReal(f.decena_inicio) || excluir.some((x) => mismoConcepto(x, f.concepto))) continue;
+            const x = m.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
+            if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
+            m.set(f.decena_inicio, x);
+          }
+          return m;
+        };
+        const usar = eleccionDe(cat) === 'media';
+        let lm: Linea | null = null;
+        for (const d of decenas) {
+          if (esReal(d)) continue;
+          const excluir = [...(previstos.get(d) ?? [])].sort();
+          if (excluir.length > 0 && !conVencimientos) continue;
+          const m0 = estimarCategoria(regla, d, sinConceptos(excluir), primera, ultimaReal, config);
+          const m = m0 === null ? null : { ...m0, excluidos: excluir };
+          if (m === null || m.media === null || cent(m.media) === 0) continue;
+          lm ??= linea(cat, CONCEPTO_MEDIA, f0.sentido, f0.clase, true);
+          lm.celdas[d] = { ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe: m.media, en_saldo: usar, excel: null, excel_filas: 0, media: m };
+        }
+        if (lm !== null) categoriasMedia.add(cat);
+      }
+
+      // H7-REAL-4: traspasos externos (SL, fondos, valores…), POR CONCEPTO: lo anotado (Excel o apunte) y, si no hay,
+      // la media de ese concepto en la misma posición de decena, en su misma línea. Los internos, nunca (neutros).
+      const externos = new Map<string, Valida>();
+      for (const f of filas) if (f.clase === 'TRASPASO_EXTERNO' && !externos.has(claveLinea(f.categoria, f.concepto))) externos.set(claveLinea(f.categoria, f.concepto), f);
+      for (const [k, f0] of externos) {
+        const l = lineas.get(k);
+        if (!l) continue;
+        const porDecena = new Map<string, { c: number; sin_importe: number }>();
+        for (const f of filas) {
+          if (f.categoria !== f0.categoria || f.concepto !== f0.concepto || !esReal(f.decena_inicio)) continue;
+          const x = porDecena.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
+          if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
+          porDecena.set(f.decena_inicio, x);
+        }
+        const usar = eleccionDe(f0.categoria) === 'media';
+        let alguna = false;
+        for (const d of decenas) {
+          if (esReal(d) || l.celdas[d] !== undefined) continue; // sin doble cómputo: lo anotado manda
+          const m = estimarCategoria('POSICION', d, porDecena, primera, ultimaReal, config);
+          if (m === null || m.media === null || cent(m.media) === 0) continue;
+          l.celdas[d] = { ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe: m.media, en_saldo: usar, excel: null, excel_filas: 0, media: m };
+          alguna = true;
+        }
+        if (alguna) categoriasMedia.add(f0.categoria);
       }
     }
+
+    // Cuadre de control (H7-REAL): saldo_inicial + ΣRE − ΣRS = saldo_formulas, con los valores de la importación tal
+    // cual (también traspasos y «no relacionadas»; sin medias ni vencimientos). Solo se comprueba, nunca se corrige.
+    const filasPorDecena = new Map<string, Valida[]>();
+    for (const f of filas) filasPorDecena.set(f.decena_inicio, [...(filasPorDecena.get(f.decena_inicio) ?? []), f]);
+    const cuadreDe = (d: string): CuadreDecena | null => {
+      const s = ss.get(d);
+      if (!s || s.saldo_inicial === null || s.saldo_formulas === null) return null;
+      const fs = filasPorDecena.get(d) ?? [];
+      if (fs.some((f) => f.importe === null)) return null; // con un importe desconocido no se puede comprobar
+      const suma = (sentido: SentidoMovimiento) => fs.filter((f) => f.sentido === sentido).reduce((a, f) => a + cent(f.importe as number), 0);
+      const e = suma('ENTRADA');
+      const sa = suma('SALIDA');
+      const esperado = cent(s.saldo_inicial) + e - sa;
+      const dif = cent(s.saldo_formulas) - esperado;
+      return {
+        saldo_inicial: s.saldo_inicial, entradas: eur(e), salidas: eur(sa), esperado: eur(esperado), saldo_formulas: s.saldo_formulas,
+        diferencia: eur(dif), filas: fs.length, cuadra: Math.abs(dif) <= TOLERANCIA_CUADRE_POR_IMPORTE * 100 * fs.length + 1e-9,
+      };
+    };
 
     // Saldos.
     const ls = ordenarLineas([...lineas.values()]);
@@ -676,7 +942,21 @@ export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' 
         incompleto = incompleto || r.desconocidos > 0;
         saldoD = saldo;
       }
-      res[d] = { ...r, saldo: saldoD, saldo_bancos: s?.saldo_bancos ?? null, saldo_formulas: s?.saldo_formulas ?? null, incompleto: !real && incompleto };
+      const bancos = s?.saldo_bancos ?? null;
+      const formulas = s?.saldo_formulas ?? null;
+      // E7: solo en decenas reales; informativa (el saldo real sigue siendo el del banco).
+      const diferencia = real && bancos !== null && formulas !== null && !mismoImporte(bancos, formulas) ? eur(cent(bancos) - cent(formulas)) : null;
+      const cuadre = cuadreDe(d);
+      res[d] = {
+        ...r, saldo: saldoD, saldo_bancos: bancos, saldo_formulas: formulas, diferencia_banco: diferencia, cuadre, cuadra: cuadre?.cuadra ?? null,
+        incompleto: !real && incompleto,
+      };
+    }
+    const noCuadran = decenas.filter((d) => res[d].cuadra === false);
+    if (noCuadran.length > 0) {
+      avisos.push({ ...base, tipo: 'gris', codigo: 'IMPORTACION_NO_CUADRA', cuenta, decena: noCuadran[0], hasta: noCuadran[noCuadran.length - 1],
+        decenas: noCuadran.map((d) => ({ decena: d, importe: (res[d].cuadre as CuadreDecena).diferencia })),
+        texto: `Datos de la importación no cuadran en ${cuenta}, ${noCuadran.join(', ')}.` });
     }
     vistas[cuenta] = { vista: cuenta, ultima_real: ultimaReal, saldo_partida: ultimaReal === null ? null : ss.get(ultimaReal)?.saldo_bancos ?? null, lineas: ls, decenas: res };
   }
@@ -721,13 +1001,11 @@ export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' 
       ...r, traspasos: sumaOnull(partesV.map((v) => v.decenas[d].traspasos).filter((x) => x !== null)),
       saldo: partesV.length === 0 || saldosD.some((x) => x === null) ? null : eur(saldosD.reduce((a: number, x) => a + cent(x as number), 0)),
       saldo_bancos: sum((x) => x.saldo_bancos), saldo_formulas: sum((x) => x.saldo_formulas),
+      diferencia_banco: sumaOnull(partesV.map((v) => v.decenas[d].diferencia_banco).filter((x) => x !== null)),
+      cuadre: null,
+      cuadra: partesV.some((v) => v.decenas[d].cuadra === false) ? false : partesV.length > 0 && partesV.every((v) => v.decenas[d].cuadra === true) ? true : null,
       incompleto: partesV.some((v) => v.decenas[d].incompleto),
     };
-    const t = resC[d].traspasos;
-    if (t !== null && t !== 0 && partesV.length > 1) {
-      avisos.push({ ...base, tipo: 'gris', codigo: 'TRASPASO_SIN_CONTRAPARTIDA', decena: d, hasta: d, importe: t,
-        texto: 'Los traspasos entre cuentas de esta decena no se compensan: revisa el Excel.' });
-    }
   }
   const ultimasC = partesV.map((v) => v.ultima_real);
   vistas.CONSOLIDADO = {
@@ -739,6 +1017,7 @@ export function calcularCashflow(dto: Pick<CashflowDTO, 'hoy' | 'importaciones' 
   };
 
   avisos.push(...avisosSaldo(vistas, cuentas, decenas, config));
+  fuera.categorias_no_reconocidas = [...noReconocidas].sort();
   return {
     hoy, decenas, vistas, avisos, importacion: imp.estado, fuera,
     elecciones: Object.fromEntries([...categoriasMedia].map((c) => [c, eleccionDe(c)])),
@@ -865,24 +1144,78 @@ export function totalCategoria(ls: readonly Linea[], col: Columna, v: ResultadoV
     sin_usar: sumaOnull(cs.map((c) => c.sin_usar).filter((x) => x !== null)), celdas: cs.flatMap((c) => c.celdas),
   };
 }
-export type CampoResumen = 'entradas' | 'salidas' | 'farmacia' | 'no_relacionadas' | 'traspasos' | 'neto';
+export type CampoResumen = 'entradas' | 'salidas' | 'farmacia' | 'no_relacionadas' | 'traspasos' | 'traspasos_externos' | 'neto';
 export function resumenColumna(v: ResultadoVista, col: Columna, campo: CampoResumen): Importe {
   return sumaOnull(col.decenas.map((d) => v.decenas[d]?.[campo] ?? null).filter((x) => x !== null));
 }
 /** Saldo al cierre de la columna (el de su última decena). */
-export function saldoColumna(v: ResultadoVista, col: Columna): { saldo: Importe; incompleto: boolean; bancos: Importe; formulas: Importe } {
+export function saldoColumna(v: ResultadoVista, col: Columna): {
+  saldo: Importe; incompleto: boolean; bancos: Importe; formulas: Importe; diferencia_banco: Importe; no_cuadra: boolean;
+} {
   const r = v.decenas[col.decenas[col.decenas.length - 1]];
-  return { saldo: r?.saldo ?? null, incompleto: r?.incompleto ?? false, bancos: r?.saldo_bancos ?? null, formulas: r?.saldo_formulas ?? null };
+  return {
+    saldo: r?.saldo ?? null, incompleto: r?.incompleto ?? false, bancos: r?.saldo_bancos ?? null, formulas: r?.saldo_formulas ?? null,
+    // E7 al cierre de la columna; el cuadre, en cualquiera de sus decenas.
+    diferencia_banco: r?.diferencia_banco ?? null, no_cuadra: col.decenas.some((d) => v.decenas[d]?.cuadra === false),
+  };
 }
 /** Avisos de saldo que tocan una columna. */
 export function avisosColumna(avisos: readonly AvisoCashflow[], col: Columna): AvisoCashflow[] {
   return avisos.filter((a) => a.tipo !== 'gris' && a.decenas.some((x) => col.decenas.includes(x.decena)));
 }
+/**
+ * H7-REAL-2: decenas de las columnas visibles cuyos traspasos no se compensan en el consolidado (traspasos a la SL,
+ * fondos…). No es un aviso: solo una línea plegada en la tabla del consolidado.
+ */
+export function traspasosNoCompensados(v: ResultadoVista, cols: readonly Columna[]): { decena: string; importe: number }[] {
+  return cols.flatMap((c) => c.decenas).flatMap((d) => {
+    const t = v.decenas[d]?.traspasos ?? null;
+    return t !== null && cent(t) !== 0 ? [{ decena: d, importe: t }] : [];
+  });
+}
+/** Variación media mensual del saldo entre dos decenas (cierre de cada una). */
+export interface TramoVariacion {
+  desde: string;
+  hasta: string;
+  meses: number;
+  saldo_desde: number;
+  saldo_hasta: number;
+  /** (saldo_hasta − saldo_desde) ÷ meses. */
+  por_mes: number;
+}
+/** Meses del indicador de control (12: los últimos reales y los primeros previstos). */
+export const MESES_INDICADOR = 12;
+/**
+ * H7-REAL-4: indicador de control de la previsión: variación media mensual REAL del saldo en los últimos 12 meses (o
+ * desde la primera decena real con saldo, si hay menos) frente a la PREVISTA en los 12 siguientes (o hasta el final del
+ * horizonte). Si la prevista se aleja mucho de la real, la previsión merece revisión. null = sin saldos para calcularla.
+ */
+export function variacionMensual(v: ResultadoVista, decenas: readonly string[]): { real: TramoVariacion | null; prevista: TramoVariacion | null } {
+  const L = v.ultima_real;
+  const s = (d: string) => v.decenas[d]?.saldo ?? null;
+  if (L === null || s(L) === null) return { real: null, prevista: null };
+  const tramo = (desde: string, hasta: string): TramoVariacion | null => {
+    const n = rangoDecenas(desde, hasta).length - 1;
+    const a = s(desde);
+    const b = s(hasta);
+    if (n <= 0 || a === null || b === null) return null;
+    const meses = n / 3;
+    return { desde, hasta, meses: Math.round(meses * 100) / 100, saldo_desde: a, saldo_hasta: b, por_mes: eur(Math.round((cent(b) - cent(a)) / meses)) };
+  };
+  const inicioReal = decenas.find((d) => d >= moverDecena(L, -3 * MESES_INDICADOR) && d <= L && v.decenas[d]?.real && s(d) !== null);
+  const objetivo = moverDecena(L, 3 * MESES_INDICADOR);
+  const finPrevisto = [...decenas].reverse().find((d) => d > L && d <= objetivo && s(d) !== null);
+  return {
+    real: inicioReal === undefined ? null : tramo(inicioReal, L),
+    prevista: finPrevisto === undefined ? null : tramo(L, finPrevisto),
+  };
+}
 /** Agrupa las líneas por categoría (en el orden de las líneas). */
 export function porCategoria(ls: readonly Linea[]): { categoria: string; sentido: SentidoMovimiento; clase: ClaseMovimiento; lineas: Linea[] }[] {
   const out: { categoria: string; sentido: SentidoMovimiento; clase: ClaseMovimiento; lineas: Linea[] }[] = [];
   for (const l of ls) {
-    const g = out.find((x) => x.categoria === l.categoria);
+    // Por categoría y clase: una categoría de traspasos puede tener conceptos internos y externos (H7-REAL-4).
+    const g = out.find((x) => x.categoria === l.categoria && x.clase === l.clase);
     if (g) g.lineas.push(l); else out.push({ categoria: l.categoria, sentido: l.sentido, clase: l.clase, lineas: [l] });
   }
   return out;
