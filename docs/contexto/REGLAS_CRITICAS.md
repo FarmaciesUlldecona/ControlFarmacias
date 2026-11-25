@@ -1,6 +1,6 @@
 # Reglas críticas
 
-Actualizado: 2026-11-24 (decisiones de Pio para la previsión de Cashflow, H7b, no implementadas: excepción de RITA ampliada a sus apuntes de Cashflow, `cf_lectura` sobre las tablas nuevas y autorización para nombrar el rol del sistema en la 41 y su rollback; R21-D1 aprobada; decisiones de Pio: `alliance-local` 1.3.2 con autoridad en la noche, ABONOS CLUBS = `ABONO` solo con importe negativo y R22 acotada al mismo documento y concepto; 2026-11-22, Cashflow en producción: primera importación MANUAL REAL OK con confirmación explícita de Pio, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y esquema para la web; Cashflow, decisiones de Pio tras la primera simulación: E2 ampliada a la celda de importe exactamente "=" y cuadre sin margen por saldo, con corrección del Excel en origen; presentaciones de la web, decisiones de Pio: HPLUS CONSUMO = HEFAME solo como nombre comercial y decisión 6A, albaranes de PIO de `4.- FFARMACIA RITA` como traspasos sin factura, aparte y sin alerta; 38-B, decisiones de Pio: categoría nueva = ausente de toda importación OK anterior de esa cuenta, y C7 «Cashflow no en ejecución» en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, con la RPC de la 38 como única escritura, C5 sin escribir nada hasta la manual y la tarea de las 23:45 sin crear; H7-D: migración 38 de Cashflow desplegada en producción, confirmación explícita de Pio, y prueba de acceso de cf_lectura ACCESO_OK; H7: migración 38 de Cashflow implementada en local, con RPC de solo inserción, cuadre sin margen por saldo y `TABLAS_CASHFLOW` en los postchecks, decisiones de Pio; 2026-11-21, 37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
+Actualizado: 2026-11-25 (R21: migración 39 implementada en local, sin desplegar, con la marca `conciliacion_r21` a false por defecto y R21-D1 revisada por Pio: complementario de la misma recepción que A o sin recepción y del mismo día; numeración por orden de despliegue, decisión de Pio: R21 = 39, H7b = 40, «Actualizar ahora» = 41; H7b: prioridad por cuenta + categoría + concepto + decena, decisión de Pio, no implementada; 2026-11-24, decisiones de Pio para la previsión de Cashflow, H7b, no implementadas: excepción de RITA ampliada a sus apuntes de Cashflow, `cf_lectura` sobre las tablas nuevas y autorización para nombrar el rol del sistema en la 41 y su rollback; R21-D1 aprobada; decisiones de Pio: `alliance-local` 1.3.2 con autoridad en la noche, ABONOS CLUBS = `ABONO` solo con importe negativo y R22 acotada al mismo documento y concepto; 2026-11-22, Cashflow en producción: primera importación MANUAL REAL OK con confirmación explícita de Pio, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y esquema para la web; Cashflow, decisiones de Pio tras la primera simulación: E2 ampliada a la celda de importe exactamente "=" y cuadre sin margen por saldo, con corrección del Excel en origen; presentaciones de la web, decisiones de Pio: HPLUS CONSUMO = HEFAME solo como nombre comercial y decisión 6A, albaranes de PIO de `4.- FFARMACIA RITA` como traspasos sin factura, aparte y sin alerta; 38-B, decisiones de Pio: categoría nueva = ausente de toda importación OK anterior de esa cuenta, y C7 «Cashflow no en ejecución» en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, con la RPC de la 38 como única escritura, C5 sin escribir nada hasta la manual y la tarea de las 23:45 sin crear; H7-D: migración 38 de Cashflow desplegada en producción, confirmación explícita de Pio, y prueba de acceso de cf_lectura ACCESO_OK; H7: migración 38 de Cashflow implementada en local, con RPC de solo inserción, cuadre sin margen por saldo y `TABLAS_CASHFLOW` en los postchecks, decisiones de Pio; 2026-11-21, 37-D: migración 37 desplegada en producción, confirmación explícita de Pio; migración 37: defectos de extracción directos a `REVISION`, implementada en local, decisiones de Pio D1–D7, con la autorización expresa para nombrar el rol del sistema solo en la 37 y su rollback; 2026-11-20, Hito SUITE: suite paralela con pytest-xdist 3.8.0 y 8 workers, suite histórica, regla de reparación y barrera de despliegue, decisiones de Pio D1–D8, con excepciones expresas para los ficheros que nombran el registro de suites; 2026-11-19, 36-D: migración 36 desplegada en producción, confirmación explícita de Pio; HEFAME: liquidaciones comerciales como `ABONO` y números `91…` por numeración interna, decisiones de Pio H3/H4; R20: migración 36 implementada en local, con la marca `conciliacion_r20` y la ventana de ±15 días en la BD, decisiones de Pio; numeración R20 = 36, defectos = 37, Cashflow = 38, y autorización C3 reconfirmada solo para la 38, decisión de Pio; puerta git con el main leído del remoto con `ls-remote` en la noche, 2BJ, 2BP y
 despliegues, que exigen el commit ya subido; el revisor lee con Read los ficheros de src/, sql/, tests/ y pruebas/ que
 cita el diff, decisión de Pio; 2026-11-18, HEFAME: cargo cooperativo de 80,00 y `APROAFA` como `CARGO`, decisiones de Pio H1/H2, con H6/H7; AUTO-ON: automatización Alliance en modo `REAL`, confirmación explícita de Pio, y vuelta
 atrás con los flags; 2026-11-17, H6-D: migración 35 desplegada en producción y prueba de acceso de `cf_pagos_web`
@@ -406,10 +406,41 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
     la 36, o con la marca a `false` (apaga R20 sin rollback), la línea sigue sin casar y la noche deja la factura para
     revisar, sin reclamarla ni gastar intentos. Por eso el código puede subirse antes de desplegar la 36.
   - **Primera conciliación tras el despliegue (36-D):** 08013495 la hace la noche (decisión de Pio).
+- Regla de Pio R21 (DECISIONES DE PIO, 2026-11-24, y R21-D1 revisada el 2026-11-25; `CONFIRMADO POR TEST`, también
+  en PostgreSQL 17 local; migración 39 **implementada en local, NO DESPLEGADA**; diseño en
+  `pruebas/auditoria_r21/DISENO.md` §9; origen: 08005707 / 08L82633):
+  - **R21 línea = su albarán exacto + de 1 a 3 complementarios:** una línea documental (cargo) que queda sin casar
+    tras el 1:1 puede casar con la suma de su albarán del número **exacto** (A; nunca la letra final, D2), no interno,
+    con PUC, a ±15 días de la línea (D6), y de 1 a 3 complementarios que cumplen todos:
+    - interno de Farmatic (`[A-Z]\d{6}/\d{4}`) o la variante de ese número con una letra final (solo Alliance);
+    - **de la misma recepción (no nula) que A, o sin recepción y del mismo día que A (R21-D1 revisada):** un albarán
+      de otra recepción es otra entrega aunque sea del mismo día;
+    - mismo proveedor que A (R9) y misma farmacia; **PUC > 0** (D3);
+    - ninguno reservado (R15) ni casado por otra línea, ninguno ausente en Farmatic (2BD), y su número no es una línea
+      de otra factura.
+    - PUC de A + Σ PUC dentro de 0,05; solo cargos; nunca HEFAME ni abonos.
+  - **Falla cerrado**, con R17, R20 y R21 contadas juntas y cada conjunto de albaranes una sola vez (si es R17 o R20,
+    conserva esa regla, así que lo que casa hoy por R17 o R20 no cambia):
+    - más de una combinación → `AMBIGUO_R21` (o `AMBIGUO_R17`/`AMBIGUO_R20` si no hay ninguna R21);
+    - un albarán en las combinaciones de dos líneas → `CONFLICTO_*`;
+    - más de 12 candidatos complementarios para un A → `AMBIGUO_R21` con motivo `DEMASIADOS_CANDIDATOS` (D4).
+  - Se persiste como n + 1 detalles `UNO_A_VARIOS` (`regla: R21`, `papel_r21`, `motivo_r21`, la suma y la
+    tolerancia); todos los albaranes quedan reservados y R11 cuenta la línea como un albarán casado. La BD lo revalida
+    en `cf_linea_r17_valida`, redefinida por la 39 con la misma firma y sin regenerar la RPC (rechazo:
+    `LINEA_R17_NO_VALIDA`); la unicidad de la combinación y el número de otra factura los comprueba solo el código,
+    como en R17.
+  - **Marca y conmutador:** `cf_configuracion.conciliacion_r21`, **default `false`** (D5). Pio la enciende tras el
+    postcheck del despliegue. El código usa R21 solo si la 39 está en la BD y la marca vale `true` (sesión de solo
+    lectura, como R20). Sin la 39, o con la marca a `false`, la línea sigue sin casar y la noche deja la factura para
+    revisar sin reclamarla ni gastar intentos. Por eso el código puede subirse antes de desplegar la 39.
+  - **Rollback** al esquema 38: falla cerrado si alguna conciliación vigente tiene una línea R21
+    (`ROLLBACK_39_CON_LINEAS_R21_VIGENTES`).
+  - **Banco READ_ONLY del 2026-11-25 (D8):** con la D1 revisada solo cambia 08005707. Con la D1 del 24/11, 08005706 y
+    08012619 pasaban de R17 a `AMBIGUO_R21`, y por eso se revisó.
 - Regla de Pio R22 (DECISIÓN DE PIO, 2026-11-24; `CONFIRMADO POR TEST`, también en PostgreSQL 17 local, sin
   migración; diseño en `pruebas/auditoria_r21/DISENO.md` §3; origen: 08005257 / 08B45588):
-  - **R22 cargo sin albarán anulado por su abono:** una línea documental `CARGO` que queda sin casar tras el 1:1, R17
-    y R20, con número, y **sin ningún albarán de ese número** entre los candidatos leídos queda explicada, con neto 0,
+  - **R22 cargo sin albarán anulado por su abono:** una línea documental `CARGO` que queda sin casar tras el 1:1, R17,
+    R20 y R21, con número, y **sin ningún albarán de ese número** entre los candidatos leídos queda explicada, con neto 0,
     por un movimiento `ABONO` del **mismo documento** (la misma factura) que cumple a la vez:
     - **mismo concepto/laboratorio (D6):** el literal de la línea (`facturas_albaranes_extraidos.descripcion`) igual al
       del movimiento (`descripcion_literal`), sin distinguir mayúsculas ni espacios; los dos no vacíos;
@@ -667,6 +698,8 @@ entran en `SUITE_HISTORICA` en el commit del 38-B, no en el de su «D».
 - **Rollback** al esquema 37: falla cerrado si hay alguna importación (`ROLLBACK_38_CASHFLOW_CON_DATOS`).
 - **Numeración (DECISIÓN DE PIO, 2026-11-19):** R20 = migración 36, defectos de extracción directos a REVISION = 37,
   Cashflow = 38 (antes 36 y 37). Cada migración exige la anterior.
+- **Numeración (DECISIÓN DE PIO, 2026-11-25):** por orden de despliegue: R21 = 39, previsión de Cashflow (H7b) = 40,
+  «Actualizar ahora» = 41. La 39 exige la 38.
 - **AUTORIZACIÓN EXPRESA DE PIO (C3, 2026-11-17; reconfirmada el 2026-11-19 tras renumerar):** nombrar el rol del
   sistema **SOLO** en `sql/migrations/38_*.sql` y su rollback. Tests, scripts y documentación no lo nombran; cualquier
   otro fichero, autorización nueva.
@@ -677,14 +710,17 @@ entran en `SUITE_HISTORICA` en el commit del 38-B, no en el de su «D».
   - El Cashflow será Norma 43 (real) + vencimientos (previsto) + apuntes manuales de la web (lo que no tiene
     factura); el Excel pasa a ser provisional. Mientras no haya Norma 43, todo lo anterior de esta sección sigue
     vigente. Solo previsión futura: nada de lo nuevo cambia lo pasado ni las tablas importadas.
-  - Prioridad por cuenta, categoría y decena: vencimientos > apunte > Excel > media, sin doble cómputo.
+  - Prioridad por cuenta, categoría, **concepto** y decena (H7B-D5, DECISIÓN DE PIO del 2026-11-25): vencimientos >
+    apunte > Excel > media, sin doble cómputo. Un vencimiento solo sustituye al apunte del mismo concepto. La media
+    también es por cuenta, categoría, concepto y decena: la del concepto en sus últimas 6 decenas reales (H7B-D4,
+    DECISIÓN DE PIO del 2026-11-25).
   - **Excepción de RITA ampliada, solo en Cashflow:** además de sus datos bancarios del Excel importado, sus apuntes
     manuales de Cashflow. `farmacias_habilitadas` no cambia y sus facturas siguen desactivadas. Rige desde que se
     despliegue la migración de H7b.
   - Rol de escritura propio de la web para Cashflow (`INSERT`, `SELECT` y `UPDATE` solo de anulación sobre las
     tablas de previsión), y `SELECT` de `cf_lectura` sobre ellas.
   - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-24):** nombrar el rol del sistema **solo** en la migración de H7b (41
-    según el encargo; ver la numeración en `pruebas/auditoria_r21/DISENO.md` §9.10) y su rollback, si hace falta.
+    según el encargo; **40** por la numeración decidida por Pio el 2026-11-25) y su rollback, si hace falta.
     Tests, scripts y documentación no lo nombran.
 
 ## Automatización Alliance

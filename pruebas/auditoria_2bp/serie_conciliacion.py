@@ -389,14 +389,15 @@ def _ejecutar_una(cliente, directorio: Path):
     from src.facturas.runtime_supabase.compositor_manual import construir_worker_manual_productivo
     from src.facturas.runtime_supabase.repositorios import RepositorioRuntimeSupabase
 
-    from src.facturas.runtime_supabase.lectura_readonly import r20_habilitada
+    from src.facturas.runtime_supabase.lectura_readonly import r20_habilitada, r21_habilitada
 
     configuracion = RepositorioRuntimeSupabase(cliente).obtener_configuracion()
     worker_id = f"{WORKER_BASE}-{uuid.uuid4().hex[:8]}"
-    # R20 (migracion 36): la misma deteccion READ_ONLY que la simulacion del plan (``ar._simular``).
+    # R20 (migracion 36) y R21 (39): la misma deteccion READ_ONLY que la simulacion del plan (``ar._simular``).
     return construir_worker_manual_productivo(
         cliente, configuracion, worker_id, directorio,
-        r20_habilitada=lambda: _ejecutar_lectura(lambda lector: {"r20": r20_habilitada(lector)})[1]["r20"]) \
+        r20_habilitada=lambda: _ejecutar_lectura(lambda lector: {"r20": r20_habilitada(lector)})[1]["r20"],
+        r21_habilitada=lambda: _ejecutar_lectura(lambda lector: {"r21": r21_habilitada(lector)})[1]["r21"]) \
         .ejecutar_una_manual_conciliacion()
 
 

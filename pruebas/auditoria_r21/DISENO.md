@@ -4,8 +4,10 @@ Estado (2026-11-24):
 
 - **R22 y ABONOS CLUBS: IMPLEMENTADOS EN LOCAL** (`CONFIRMADO POR TEST`, también en PostgreSQL 17 local).
 - **R21: DISEÑADA, NO IMPLEMENTADA**, porque con los datos de hoy no cierra ninguna factura (§2).
-- **R21 como migración 40 (diseño de la noche del 2026-11-24, §9):** sustituye a §2.2. Exacto + hasta 3
-  complementarios (internos «Q0» o variante con letra). Sin código ni migración todavía.
+- **R21 como migración 39 (diseño de la noche del 2026-11-24, §9; IMPLEMENTADA EN LOCAL el 2026-11-25, §9.11):**
+  sustituye a §2.2. Exacto + hasta 3 complementarios (internos «Q0» o variante con letra). Numeración por orden de
+  despliegue (DECISIÓN DE PIO, 2026-11-25): R21 = 39, H7b = 40, «Actualizar ahora» = 41. R21-D1 revisada por Pio el
+  2026-11-25 tras el banco R21-D8 (§9.11). `CONFIRMADO POR TEST`, también en PostgreSQL 17 local; sin desplegar.
 - **Confirmación de Pio (2026-11-24, tarde):** las tres reglas pasan a REGLAS_CRITICAS (`alliance-local` 1.3.2 con
   autoridad en la noche; ABONOS CLUBS = `ABONO` solo con importe negativo; R22 acotada). D1–D5, D7 y D8 como se
   recomendaron; **D6: R22 exige el mismo concepto/laboratorio** (§3).
@@ -241,12 +243,12 @@ Desplegar migraciones; ejecutar las aprobaciones I1; re-normalizar 08006123; toc
   y no existe ninguna aprobación manual de líneas. Pio decide R21 como migración 40 (§9). 08005707 quedó fuera del
   2BP del 24/11 (tandas 01–02 en `carga_abril_mayo\2bp_2411`, 10/10 CONCILIADA).
 
-## 9. R21 como migración 40 (DISEÑO, 2026-11-24 noche; sin código ni migración)
+## 9. R21 como migración 39 (DISEÑO, 2026-11-24 noche; IMPLEMENTADA EN LOCAL el 2026-11-25)
 
 Encargo de Pio (2026-11-24): exacto + hasta 3 complementarios (internos «Q0» o variante con letra) del mismo
-proveedor (R9) y del mismo día, suma en R11, falla cerrado si hay más de una combinación, trazabilidad. Migración
-**40**: la 39 sigue reservada para «Actualizar ahora» y no hay ningún fichero 39, 40 ni 41 en `sql/migrations`, así
-que no hace falta renumerar. Todo lo de esta sección es `PROPUESTA` salvo lo marcado como `CONFIRMADO POR CÓDIGO`.
+proveedor (R9) y del mismo día, suma en R11, falla cerrado si hay más de una combinación, trazabilidad. Se diseñó
+como migración 40; **Pio la renumera a 39** (2026-11-25, §9.10). Esta sección conserva el diseño de la noche del 24;
+lo que cambió al implementarla (R21-D1 revisada, número 39 y lo que exige) está en §9.10 y §9.11, que prevalecen.
 
 ### 9.1 Caso real y conflicto con «mismo día» (`CONFIRMADO POR LECTURA READ_ONLY`)
 
@@ -358,8 +360,12 @@ son casos particulares 1+1. Se conservan tal cual (la BD los sigue validando igu
 ### 9.7 Decisiones para Pio
 
 **DECIDIDAS por Pio (2026-11-24, noche):** R21-D1 aprobada (complementario del mismo día que A **o** de la misma
-recepción que A, como R17); R21-D2 a D8, como se recomiendan. Implementación y despliegue: 2026-11-25. Falta la
-numeración (§9.10).
+recepción que A, como R17); R21-D2 a D8, como se recomiendan. Implementación y despliegue: 2026-11-25.
+
+**R21-D1 REVISADA por Pio (2026-11-25), tras el banco R21-D8 (§9.11):** un complementario vale si es de la **misma
+recepción (no nula) que A**, o si **no tiene recepción y es del mismo día que A**. Un albarán de otra recepción es otra
+entrega aunque sea del mismo día. Descartada la alternativa (evaluar R21 solo si R17 y R20 no dan nada). La fila D1
+de la tabla queda como histórico; manda este párrafo.
 
 | Id | Pregunta | Recomendación |
 |---|---|---|
@@ -369,7 +375,7 @@ numeración (§9.10).
 | R21-D4 | Tope de candidatos complementarios por línea | 12; con más, `AMBIGUO_R21` con `DEMASIADOS_CANDIDATOS` |
 | R21-D5 | Marca `conciliacion_r21` | `false` por defecto; Pio la enciende tras el despliegue y el postcheck (R20 se desplegó con `true`) |
 | R21-D6 | Ventana de A | ±15 días de la línea, comprobada también en la BD, como R20 |
-| R21-D7 | 08005707 tras el despliegue | Esta noche gasta un intento (DIFERENCIA) y queda en espera. Tras la 40: reintento solicitado por Pio (`cf_solicitar_reintento_conciliacion`) y 2BP de una factura, o esperar a la noche |
+| R21-D7 | 08005707 tras el despliegue | ~~Esta noche gasta un intento~~ **Corregido (2026-11-25):** la noche del 24→25/11 la simuló, la dejó para revisar y **no gastó intento** (0 intentos fallidos, sin conciliación). Tras la 39 y la marca: entra en el 2BP de las 15 pendientes como n.º 1 del selector, sin reintento |
 | R21-D8 | Banco antes de implementar | Medición READ_ONLY de todas las líneas `SIN_COINCIDENCIA` vigentes: cuántas cierra R21 y cuántas quedan `AMBIGUO`. Si cierra algo inesperado, PARAR |
 
 ### 9.8 Tests previstos
@@ -394,19 +400,23 @@ numeración (§9.10).
 - **Ensayo de despliegue:** `desplegar_40` en PostgreSQL 17 (preflight, aplicación única y postcheck por fila: solo
   cambian la función y la columna nueva), añadido a la suite histórica.
 
-### 9.9 Plan de despliegue (40-D)
+### 9.9 Plan de despliegue (39-D; texto de la noche del 24, numerado como 39)
 
-1. Commit con código, migración 40, rollback, `desplegar_40` y tests; suite completa + histórica y revisor PASS. El
-   código no usa R21 sin la 40 ni con la marca apagada, así que puede subirse antes del despliegue.
-2. Push de Pio antes de las 20:00.
+1. Commit con código, migración 39, rollback, `desplegar_39` y tests; suite completa + histórica y revisor PASS. El
+   código no usa R21 sin la 39 ni con la marca apagada, así que puede subirse antes del despliegue.
+2. Push de Pio, fuera de 20:00–23:15.
 3. Pio apaga los flags.
-4. Preflight READ_ONLY: puerta git (ls-remote), tareas a 60 min o más, sin claims ni locks, la 36 desplegada y la 40
+4. Preflight READ_ONLY: puerta git (ls-remote), tareas a 60 min o más, sin claims ni locks, la 38 desplegada y la 39
    ausente.
-5. `desplegar_40` una sola vez, con confirmación explícita de Pio; postcheck por fila.
-6. Pio enciende `conciliacion_r21` en el editor SQL (R21-D5) y los flags.
-7. 08005707, según R21-D7.
+5. `desplegar_39` una sola vez, con confirmación explícita de Pio; postcheck por fila.
+6. Pio enciende `conciliacion_r21` en el editor SQL (R21-D5).
+7. 2BP de las 15 pendientes (08005707 la primera, R21-D7); después Pio enciende los flags.
 
-### 9.10 Numeración: cada migración exige la anterior (`DECISIÓN PENDIENTE`)
+### 9.10 Numeración: cada migración exige la anterior (`DECIDIDA por Pio, 2026-11-25`)
+
+**DECISIÓN DE PIO (2026-11-25):** numeración por orden de despliegue: **R21 = 39**, **H7b = 40**, **«Actualizar
+ahora» = 41**. La 39 exige la 38 (`MIGRACION_38_AUSENTE`) y, además, la 36 (`MIGRACION_36_AUSENTE`, marca de R20).
+Texto de la noche del 24, como histórico:
 
 `CONFIRMADO POR CÓDIGO`: cada migración aborta si falta la anterior (`MIGRACION_34_AUSENTE` en la 35:27,
 `MIGRACION_35_AUSENTE` en la 36:20, `MIGRACION_36_AUSENTE` en la 37:22, `MIGRACION_37_AUSENTE` en la 38:32), y
@@ -418,3 +428,37 @@ REGLAS_CRITICAS («Cashflow (H7)», numeración) dice: «Cada migración exige l
 - **Recomendación:** numerar por orden de despliegue: **R21 = 39** (mañana), **H7b = 40**, **«Actualizar ahora» =
   41** (o la siguiente libre cuando se implemente). Alternativa: mantener 40/41 y que cada una exija la última
   desplegada en lugar de la anterior en número, lo que cambia la regla de REGLAS_CRITICAS.
+
+### 9.11 Implementación y banco (2026-11-25; `CONFIRMADO POR TEST` y `CONFIRMADO POR LECTURA READ_ONLY`)
+
+**Banco R21-D8 con la D1 de la noche del 24** (`verificar_banco_r21.py`, salida en
+`C:\ControlFarmacias\carga_abril_mayo\r21\banco_r21_2511.json`, 93 facturas de PIO, R20 como en la BD):
+
+- 08005707 / 08L82633 pasa a `MATCH_R21` con 3 detalles, como se esperaba.
+- **Inesperado (PARADA por R21-D8):** las líneas R17 de **08005706** (08B56937) y **08012619** (08D52644, ya
+  CONCILIADA) pasaban a `AMBIGUO_R21`. Junto al interno de la recepción de A hay una variante con letra del mismo día
+  pero de **otra** recepción con exactamente el mismo PUC: Q039349/2026 y 08B56937A (12,80; recepciones 49546 y
+  49547); Q040931/2026 y 08D52644A (27,20; 54099 y 54100). Diagnóstico en `r21\diagnostico_ambiguo_2511.json`.
+- Con la D1 revisada (probada antes sin tocar `src`, `r21\banco_r21_variante_c_2511.json`) y con el código final
+  (`r21\banco_r21_final_2511.json`): **solo cambia 08005707**, nada queda `AMBIGUO_R21`, `CONFLICTO_R21` ni con
+  `DEMASIADOS_CANDIDATOS`. Un error igual con y sin R21: 08006123, `TRAZABILIDAD_SERVICIO_INSUFICIENTE` (la
+  re-normalización pendiente, D5).
+
+**Implementación:**
+
+- `sql/migrations/39_cf_r21_complementarios.sql`: exige la 38 y la 36; añade `conciliacion_r21` (default `false`);
+  redefine `cf_linea_r17_valida` con la misma firma. Las ramas R17 y R20 de la 36 se conservan con el mismo criterio
+  dentro de un bloque `r17_r20` (si no valen, se prueba R21 en lugar de devolver `false`); la rama R21 solo con la
+  marca a `true` y de 2 a 4 detalles. Rollback: falla cerrado con una línea R21 vigente
+  (`ROLLBACK_39_CON_LINEAS_R21_VIGENTES`); si no, restaura el texto exacto de la 36.
+- `conciliacion.py`: `_complementario_r21`, `_combinaciones_r21` (tope 12, R21-D4) y `_aplicar_r17` con R17, R20 y
+  R21 contadas juntas; cada conjunto de albaranes una vez, con la regla R17 o R20 si lo es. `_detalles_r21`: n + 1
+  detalles con `papel_r21`, `motivo_r21` (`MISMA_RECEPCION` o `MISMO_DIA_SIN_RECEPCION`), `importe_combinacion`,
+  `tolerancia_linea`, `complementarios` y `combinaciones_evaluadas`. Sin motivo, la provenance de una línea sin casar
+  es la de siempre.
+- `lectura_readonly.r21_habilitada`, inyectada en el repositorio, los dos compositores, la noche, el simulador del 2AT
+  (`lineas_r21` en el resumen) y la serie 2BP.
+- Tests: `tests/facturas/runtime_supabase/test_r21.py` (unitarios, con la regresión del banco) y
+  `test_integracion_pg17_r21.py` (plantillas 38/39/39_rollback, la BD acepta y rechaza, R17 y R20 con la marca
+  apagada y encendida, rollback que aborta, worker 08007969 convertido en R21, noche sin la 39 o sin la marca, ensayo
+  de `desplegar_39`). Los ensayos del despliegue y el rollback entran en la suite histórica en el commit del 39-D.

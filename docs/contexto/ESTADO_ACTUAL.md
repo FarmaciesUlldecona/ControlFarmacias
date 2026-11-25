@@ -1,6 +1,6 @@
 # Estado actual
 
-Actualizado: 2026-11-24 (noche: 2BF 9–11 aplicadas, 2BP 10/10 CONCILIADA sin 08005707, R21 diseñada como migración 40; R22 acotada al mismo concepto y ABONOS CLUBS con adaptador Alliance 1.3.2, confirmadas por Pio en REGLAS_CRITICAS, solo local; R21 diseñada sin implementar; 3 aprobaciones de identidad preparadas para Pio; 2026-11-23, carga Alliance abril–mayo: corte de la importación de PDF a 2026-04-01 sin ABRIL 26\1A DESENA, solo local, y hook de identidad Farmatic sin los nombres de la importación de facturas; Cashflow: puerta de tareas por nombre, tarea verificada a mano y segunda importación 6b093e12 vigente; 2026-11-22, Cashflow: primera importación MANUAL REAL OK, vigente, postcheck solo Cashflow, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y verificada, esquema para la web; 38-B, primera simulación con el Excel real, SIMULADO_ERROR sin escribir nada, E2 ampliada a "=" y corrección del Excel en origen por Pio; 38-B, decisiones de Pio sobre DISENO §10: categoría nueva por todas las importaciones OK anteriores y C7 en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, .bat de la tarea de las 23:45 sin crear la tarea, ensayos de la 37 y la 38 en la histórica y docstring de la 2BP; H7-D: migración 38 de Cashflow desplegada en producción, APLICADA, postcheck por fila OK, prueba de acceso de cf_lectura ACCESO_OK y flags encendidos de nuevo; H7: migración 38 de Cashflow implementada en local, con desplegar_38 ensayado y prueba de acceso de cf_lectura; 2026-11-21, 37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
+Actualizado: 2026-11-25 (noche REAL 24→25/11 NOCHE_OK sin conciliaciones: 08005707 para revisar sin gastar intento y las otras 14 detrás; R21 implementada en local como migración 39, sin desplegar, con R21-D1 revisada por Pio tras el banco; numeración 39/40/41 decidida por Pio; H7b: D5 por concepto, decisión de Pio; 2026-11-24, noche: 2BF 9–11 aplicadas, 2BP 10/10 CONCILIADA sin 08005707, R21 diseñada como migración 40; R22 acotada al mismo concepto y ABONOS CLUBS con adaptador Alliance 1.3.2, confirmadas por Pio en REGLAS_CRITICAS, solo local; R21 diseñada sin implementar; 3 aprobaciones de identidad preparadas para Pio; 2026-11-23, carga Alliance abril–mayo: corte de la importación de PDF a 2026-04-01 sin ABRIL 26\1A DESENA, solo local, y hook de identidad Farmatic sin los nombres de la importación de facturas; Cashflow: puerta de tareas por nombre, tarea verificada a mano y segunda importación 6b093e12 vigente; 2026-11-22, Cashflow: primera importación MANUAL REAL OK, vigente, postcheck solo Cashflow, prueba de acceso con datos ACCESO_OK, tarea de las 23:45 creada por Pio y verificada, esquema para la web; 38-B, primera simulación con el Excel real, SIMULADO_ERROR sin escribir nada, E2 ampliada a "=" y corrección del Excel en origen por Pio; 38-B, decisiones de Pio sobre DISENO §10: categoría nueva por todas las importaciones OK anteriores y C7 en la puerta de la noche y de los preflights; 38-B: script de importación de Cashflow implementado en local, sin ejecutar contra producción, .bat de la tarea de las 23:45 sin crear la tarea, ensayos de la 37 y la 38 en la histórica y docstring de la 2BP; H7-D: migración 38 de Cashflow desplegada en producción, APLICADA, postcheck por fila OK, prueba de acceso de cf_lectura ACCESO_OK y flags encendidos de nuevo; H7: migración 38 de Cashflow implementada en local, con desplegar_38 ensayado y prueba de acceso de cf_lectura; 2026-11-21, 37-D: migración 37 desplegada en producción, APLICADA, postcheck por fila OK y flags encendidos de nuevo; migración 37: defectos de extracción directos a REVISION, implementada en local, decisiones de Pio D1–D7; noche REAL 20→21/11, primera con el código de SUITE, NOCHE_OK, 3.ª noche REAL buena seguida; 2026-11-20, Hito SUITE: suite paralela, histórica y regla de reparación, solo tests y barrera; noche REAL 19→20/11, primera con R20, NOCHE_OK, 08013495 y 08013498 CONCILIADAS; 2026-11-19, 36-D: migración 36 desplegada en producción, APLICADA, postcheck OK y flags encendidos de nuevo; R20: migración 36 implementada en local; diseño de R20, migración 36; renumeración 36/37/38, decisión de Pio; puerta git con el main leído del remoto en la noche, 2BJ, 2BP y despliegues; primera
 noche REAL 18→19/11 revisada, `FIN_LIMITE`, postcheck OK, 08013495 para revisar y decisión de Pio R20; 2026-11-18, AUTO-ON: `.bat` en REAL, flags a cargo de Pio, primera noche REAL el 18/11 con 5 + 5;
 AUTO-S: noche de sombra 17→18/11, NOCHE_OK y coherente con los planes 2BJ y 2BP; 2026-11-17, D3: los 3 defectos en ERROR a REVISION, TANDA_OK, cedb06d0 intacto; H7: diseño de Cashflow
 con las decisiones C1–C8; H6-D: migración 35 desplegada en producción, APLICADA, postcheck por fila OK, prueba de
@@ -342,6 +342,36 @@ con confirmación expresa de Pio y lanzada una sola vez.
   (transporte/logística) y va en la factura con vencimiento a principio de mes (día 6). Correcto en 08007499.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
+
+### Noche 24→25/11 y R21 implementada como migración 39 (solo local, 2026-11-25)
+
+- **Noche REAL 24→25/11 (revisión READ_ONLY, `C:\ControlFarmacias\carga_abril_mayo\noche_2511`):**
+  - `NOCHE_OK`, 22:15–22:15, commit 1ff56bb, 0 conciliadas. El n.º 1 del selector, 08005707, simuló DIFERENCIA
+    688,15 y quedó para revisar **sin gastar intento** (0 intentos fallidos, sin conciliación). Las otras 14 del plan
+    2BP no se intentaron; quedan 15 en cola. 77 CONCILIADA y 18 PENDIENTE_CONCILIAR.
+  - Sincronización de las 21:30: 6 albaranes nuevos del 24/11. Un cambio de identidad en REVISION: 299765
+    Q041365/2026 → 08D96831A (revisión 4315); Pio lo deja para otro día.
+  - 5 documentos nuevos (NOVEMBRE 3A DESENA), `PROVEEDOR_NO_SOPORTADO`. Cashflow: importación NOCHE OK a las 23:45
+    («CASHFLOWW .xlsm», 5152 filas), vigente.
+  - Sin locks, claims, NORMALIZANDO ni ERROR. Flags `t|t|f|{PIO}`.
+- **R21 (migración 39, `CONFIRMADO POR TEST`, también en PostgreSQL 17 local; sin desplegar ni push):** exacto + de 1
+  a 3 complementarios; marca `conciliacion_r21` a `false` por defecto. Regla en REGLAS_CRITICAS y diseño en
+  `pruebas/auditoria_r21/DISENO.md` §9.10–§9.11.
+  - **Banco R21-D8 (READ_ONLY, `carga_abril_mayo\r21`):** con la D1 del 24/11, 08005706 y 08012619 (CONCILIADA)
+    pasaban de R17 a `AMBIGUO_R21` (interno de la recepción de A y variante del mismo día de otra recepción con el
+    mismo PUC). Se paró y Pio revisó R21-D1: complementario de la misma recepción que A, o sin recepción y del mismo
+    día. Con el código final solo cambia 08005707 (R21, 3 detalles).
+  - **Numeración (DECISIÓN DE PIO, 2026-11-25):** R21 = 39, H7b = 40, «Actualizar ahora» = 41. La 39 exige la 38.
+- **H7b:** D5 decidida por Pio, prioridad por cuenta + categoría + concepto + decena (un vencimiento solo sustituye al
+  apunte del mismo concepto); la media (D4) también por cuenta + categoría + concepto + decena (confirmado por Pio);
+  D1–D3 y D6–D8 como se recomendaron; migración 40; implementación otro día.
+- **Mejora pendiente (Pio, 2026-11-25):** el primer `revisor-reglas` del commit R21 leyó el registro de suites con
+  la suite aún en curso y dio FAIL en T2 (de proceso, no de código); la repetición dio PASS, pero la barrera
+  `commit_revisor_fail` siguió bloqueando por el FAIL anterior sobre la misma huella. Mejoras: (1) el revisor no debe
+  leer el registro con suites en curso; (2) la barrera debe admitir un PASS posterior cuando el FAIL fue de proceso.
+  Sin implementar (tocan `.claude/`; solo con orden y OK de Pio).
+- `PENDIENTE`: despliegue 39-D y 2BP de las 15 pendientes (hoy, fuera de 20:00–23:15); re-normalización de 08006123
+  (D5 de R22); revisión 4315 (otro día).
 
 ### R22, ABONOS CLUBS (Alliance 1.3.2) y R21 diseñada (solo local, 2026-11-24)
 

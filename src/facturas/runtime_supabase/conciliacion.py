@@ -5,6 +5,7 @@ import unicodedata
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
+from itertools import combinations
 from typing import Any, Iterable, Mapping
 
 from ..clasificacion_documental import TipoFacturaDocumental
@@ -122,6 +123,11 @@ class ResultadoBusquedaAlbaran:
     # R20 (migracion 36, estado MATCH_R20): variante con letra final del mismo numero, misma recepcion.
     complementario: CandidatoAlbaranSupabase | None = None
     importe_complementario: Decimal | None = None
+    # R21 (migracion 39, estado MATCH_R21): los 1 a 3 complementarios de la linea (el primero, tambien en
+    # ``complementario``). Vacio en R17 y R20.
+    complementarios: tuple[CandidatoAlbaranSupabase, ...] = ()
+    # R21-D4: motivo de una linea que queda sin casar (``DEMASIADOS_CANDIDATOS``); va a la provenance.
+    motivo: str | None = None
 
 
 def canonicalizar_proveedor(valor: str | None) -> str | None:
@@ -446,14 +452,16 @@ def buscar_albaranes_factura(
     ventana_dias: int = VENTANA_FECHA_DIAS,
     ventana_sin_numero_dias: int = VENTANA_SIN_NUMERO_DIAS,
     r20_habilitada: bool = False,
+    r21_habilitada: bool = False,
 ) -> tuple[ResultadoBusquedaAlbaran, ...]:
     """R15 (2BA) para todas las lineas de una factura; resultados en el orden documental.
 
     Un albaran solo justifica una linea: lo elegido por una linea queda ocupado para las
     demas. Primero se buscan las lineas con algun candidato con coincidencia de numero,
     para que una linea por importe no se lleve el albaran que otra tiene por numero.
-    Despues, R17 (2BE) para las lineas que quedan ``SIN_COINCIDENCIA``: ``_parejas_r17``; y R20 (migracion 36,
-    solo con ``r20_habilitada``, que el repositorio activa si detecta la 36 en la BD): ``_parejas_r20``.
+    Despues, R17 (2BE) para las lineas que quedan ``SIN_COINCIDENCIA``: ``_parejas_r17``; R20 (migracion 36,
+    solo con ``r20_habilitada``, que el repositorio activa si detecta la 36 en la BD): ``_parejas_r20``; y R21
+    (migracion 39, solo con ``r21_habilitada``): ``_combinaciones_r21``.
     """
     docs = tuple(documentales)
     rows = tuple(candidatos)
@@ -487,7 +495,7 @@ def buscar_albaranes_factura(
                      tolerancia=dinero(tolerancia), ventana_dias=ventana_dias,
                      numeros_otras_facturas=frozenset(
                          n for n in (normalizar_numero_albaran(x) for x in numeros) if n),
-                     r20_habilitada=r20_habilitada)
+                     r20_habilitada=r20_habilitada, r21_habilitada=r21_habilitada)
     return tuple(r for r in resultados if r is not None)
 
 
@@ -567,6 +575,78 @@ def _parejas_r20(
     return parejas
 
 
+# R21 (migracion 39): como mucho 3 complementarios por linea y, para enumerar, como mucho 12 candidatos por A (R21-D4).
+R21_MAX_COMPLEMENTARIOS = 3
+R21_TOPE_CANDIDATOS = 12
+
+
+def _complementario_r21(
+    documental: AlbaranDocumentalTrabajo,
+    a: CandidatoAlbaranSupabase,
+    b: CandidatoAlbaranSupabase,
+    *,
+    alliance: bool,
+    numeros_otras_facturas: frozenset[str],
+) -> bool:
+    """R21: B puede completar la linea de A (DECISIONES DE PIO 2026-11-24; R21-D1 revisada el 2026-11-25; D3).
+
+    Interno de Farmatic o la variante con letra final del numero de la linea (solo Alliance); PUC > 0; misma farmacia y
+    mismo proveedor que A (R9); la misma recepcion no nula que A, o SIN recepcion y la misma fecha que A (un albaran de
+    otra recepcion es otra entrega, aunque sea del mismo dia); su numero no es el de una linea de otra factura (R15).
+    Libre ya viene dado (``libres``)."""
+    if (_clave_albaran(b) == _clave_albaran(a) or b.farmacia != a.farmacia or b.importe_puc is None
+            or dinero(b.importe_puc) <= 0
+            or _id_proveedor_comparable(b.id_proveedor) != _id_proveedor_comparable(a.id_proveedor)
+            or normalizar_numero_albaran(b.numero_albaran) in numeros_otras_facturas):
+        return False
+    interno = bool(_NUMERO_INTERNO_FARMATIC.match(b.numero_albaran.strip().upper()))
+    variante = alliance and clasificar_numero_albaran(documental.numero, b.numero_albaran,
+                                                      alliance=True) == "LETRA_FINAL"
+    if not (interno or variante):
+        return False
+    return (a.id_recepcion is not None and b.id_recepcion == a.id_recepcion) or (
+        b.id_recepcion is None and b.fecha == a.fecha)
+
+
+def _combinaciones_r21(
+    documental: AlbaranDocumentalTrabajo,
+    libres: list[CandidatoAlbaranSupabase],
+    *,
+    alliance: bool,
+    tolerancia: Decimal,
+    ventana_dias: int,
+    numeros_otras_facturas: frozenset[str],
+) -> tuple[list[tuple[CandidatoAlbaranSupabase, tuple[CandidatoAlbaranSupabase, ...]]], bool]:
+    """R21 (DECISIONES DE PIO 2026-11-24; migracion 39): combinaciones A + 1..3 complementarios que suman la linea.
+
+    A = el albaran del numero EXACTO de la linea (R21-D2), no interno, con PUC y proveedor, a +-ventana_dias de la linea
+    (R21-D6). Complementarios: ``_complementario_r21``. |PUC(A) + suma de PUC - importe| dentro de la tolerancia por
+    linea. Solo cargos. Devuelve tambien si algun A tenia mas de ``R21_TOPE_CANDIDATOS`` candidatos (R21-D4: esa A no
+    se enumera y la linea queda sin casar)."""
+    if documental.fecha is None or documental.importe is None or documental.sentido != "CARGO":
+        return [], False
+    esperado = dinero(documental.importe)
+    combinaciones: list[tuple[CandidatoAlbaranSupabase, tuple[CandidatoAlbaranSupabase, ...]]] = []
+    demasiados = False
+    for a in libres:
+        if (a.importe_puc is None or _id_proveedor_comparable(a.id_proveedor) is None
+                or clasificar_numero_albaran(documental.numero, a.numero_albaran, alliance=alliance) != "EXACTA"
+                or _NUMERO_INTERNO_FARMATIC.match(a.numero_albaran.strip().upper())
+                or abs((a.fecha - documental.fecha).days) > ventana_dias):
+            continue
+        candidatos = [b for b in libres if _complementario_r21(documental, a, b, alliance=alliance,
+                                                               numeros_otras_facturas=numeros_otras_facturas)]
+        if len(candidatos) > R21_TOPE_CANDIDATOS:
+            demasiados = True
+            continue
+        for k in range(1, R21_MAX_COMPLEMENTARIOS + 1):
+            for bs in combinations(candidatos, k):
+                suma = dinero(a.importe_puc) + sum((dinero(b.importe_puc) for b in bs), Decimal("0"))
+                if abs(suma - esperado) <= tolerancia:
+                    combinaciones.append((a, bs))
+    return combinaciones, demasiados
+
+
 def _aplicar_r17(
     docs: tuple[AlbaranDocumentalTrabajo, ...],
     resultados: list[ResultadoBusquedaAlbaran | None],
@@ -578,54 +658,79 @@ def _aplicar_r17(
     ventana_dias: int,
     numeros_otras_facturas: frozenset[str],
     r20_habilitada: bool = False,
+    r21_habilitada: bool = False,
 ) -> None:
-    """R17 (y R20 si ``r20_habilitada``) despues del casado 1:1. Falla cerrado: mas de una pareja para una
-    linea (de cualquiera de las dos reglas, contadas juntas), o un albaran en las parejas de dos lineas, deja
-    esas lineas sin casar (sin depender del orden)."""
+    """R17, R20 (si ``r20_habilitada``) y R21 (si ``r21_habilitada``) despues del casado 1:1.
+
+    Falla cerrado: mas de una combinacion para una linea (de las tres reglas, contadas juntas; cada conjunto de
+    albaranes una sola vez y con la regla R17 o R20 si lo es), o un albaran en las combinaciones de dos lineas, deja
+    esas lineas sin casar (sin depender del orden). R21 con mas de 12 candidatos para un A: ``AMBIGUO_R21`` con motivo
+    ``DEMASIADOS_CANDIDATOS`` (R21-D4)."""
     libres = [row for row in by_provider if _clave_albaran(row) not in ocupados]
     comunes = {"alliance": alliance, "tolerancia": tolerancia, "ventana_dias": ventana_dias,
                "numeros_otras_facturas": numeros_otras_facturas}
-    parejas = {
-        i: [(a, b, "R17") for a, b in _parejas_r17(docs[i], libres, **comunes)]
-        + ([(a, b, "R20") for a, b in _parejas_r20(docs[i], libres, **comunes)] if r20_habilitada else [])
-        for i, resultado in enumerate(resultados)
-        if resultado is not None and resultado.estado == "SIN_COINCIDENCIA"
-    }
-    uso: dict[tuple[str, int], int] = {}
-    for opciones in parejas.values():
-        for clave in {_clave_albaran(row) for a, b, _ in opciones for row in (a, b)}:
-            uso[clave] = uso.get(clave, 0) + 1
-    for i, opciones in parejas.items():
-        if not opciones:
+    opciones_por_linea: dict[int, list[tuple[CandidatoAlbaranSupabase, tuple[CandidatoAlbaranSupabase, ...], str]]] = {}
+    demasiados: set[int] = set()
+    for i, resultado in enumerate(resultados):
+        if resultado is None or resultado.estado != "SIN_COINCIDENCIA":
             continue
+        por_conjunto: dict[frozenset[tuple[str, int]], tuple] = {}
+        parejas = [(a, (b,), "R17") for a, b in _parejas_r17(docs[i], libres, **comunes)]
+        if r20_habilitada:
+            parejas += [(a, (b,), "R20") for a, b in _parejas_r20(docs[i], libres, **comunes)]
+        if r21_habilitada:
+            combinaciones, exceso = _combinaciones_r21(docs[i], libres, **comunes)
+            parejas += [(a, bs, "R21") for a, bs in combinaciones]
+            if exceso:
+                demasiados.add(i)
+        for a, bs, regla in parejas:
+            # Un mismo conjunto de albaranes cuenta una vez; si es R17 o R20, conserva esa regla (va primero).
+            por_conjunto.setdefault(frozenset(_clave_albaran(row) for row in (a, *bs)), (a, bs, regla))
+        opciones_por_linea[i] = list(por_conjunto.values())
+    uso: dict[tuple[str, int], int] = {}
+    for opciones in opciones_por_linea.values():
+        for clave in {_clave_albaran(row) for a, bs, _ in opciones for row in (a, *bs)}:
+            uso[clave] = uso.get(clave, 0) + 1
+    for i, opciones in opciones_por_linea.items():
         previo = resultados[i]
         assert previo is not None
+        if i in demasiados:
+            resultados[i] = replace(previo, estado="AMBIGUO_R21", candidatos_finales=len(opciones),
+                                    motivo="DEMASIADOS_CANDIDATOS")
+            continue
+        if not opciones:
+            continue
         if len(opciones) > 1:
-            regla = "R20" if any(r == "R20" for _, _, r in opciones) else "R17"
+            reglas = {r for _, _, r in opciones}
+            regla = "R21" if "R21" in reglas else "R20" if "R20" in reglas else "R17"
             resultados[i] = replace(previo, estado=f"AMBIGUO_{regla}", candidatos_finales=len(opciones))
             continue
-        a, b, regla = opciones[0]
-        if uso[_clave_albaran(a)] > 1 or uso[_clave_albaran(b)] > 1:
+        a, bs, regla = opciones[0]
+        if any(uso[_clave_albaran(row)] > 1 for row in (a, *bs)):
             resultados[i] = replace(previo, estado=f"CONFLICTO_{regla}")
             continue
         resultados[i] = ResultadoBusquedaAlbaran(
             f"MATCH_{regla}", a, dinero(a.importe_puc), comparar_numeros_albaran(docs[i].numero, a.numero_albaran),
             previo.candidatos_proveedor, previo.candidatos_fecha, previo.candidatos_importe, 1,
             clasificar_numero_albaran(docs[i].numero, a.numero_albaran, alliance=alliance),
-            complementario=b, importe_complementario=dinero(b.importe_puc))
+            complementario=bs[0], importe_complementario=dinero(bs[0].importe_puc),
+            complementarios=bs if regla == "R21" else ())
 
 
 def detalles_desde_busqueda(
     documental: AlbaranDocumentalTrabajo,
     resultado: ResultadoBusquedaAlbaran,
 ) -> tuple[DetalleConciliacion, ...]:
-    """Detalles de una linea: uno (1:1 o sin coincidencia) o dos ``UNO_A_VARIOS`` (R17, 2BE; R20, migracion 36).
+    """Detalles de una linea: uno (1:1 o sin coincidencia), dos ``UNO_A_VARIOS`` (R17, 2BE; R20, migracion 36) o de
+    dos a cuatro (R21, migracion 39).
 
-    En R17 y R20 cada albaran aplica su PUC; ambos llevan el mismo origen documental y la misma recepcion.
-    ``cf_persistir_conciliacion`` revalida la pareja con ``cf_linea_r17_valida`` (24; R20 desde la 36).
+    En R17, R20 y R21 cada albaran aplica su PUC; todos llevan el mismo origen documental.
+    ``cf_persistir_conciliacion`` revalida la linea con ``cf_linea_r17_valida`` (24; R20 desde la 36; R21 desde la 39).
     """
     if resultado.complementario is None:
         return (detalle_desde_busqueda(documental, resultado),)
+    if resultado.estado == "MATCH_R21":
+        return _detalles_r21(documental, resultado)
     a, b = resultado.candidato, resultado.complementario
     if (resultado.estado not in ("MATCH_R17", "MATCH_R20") or a is None or resultado.importe_compatible is None
             or resultado.importe_complementario is None):
@@ -662,6 +767,55 @@ def detalles_desde_busqueda(
             detalle(b, resultado.importe_complementario, segundo, segundo))
 
 
+def _detalles_r21(
+    documental: AlbaranDocumentalTrabajo,
+    resultado: ResultadoBusquedaAlbaran,
+) -> tuple[DetalleConciliacion, ...]:
+    """R21 (migracion 39): A y sus 1 a 3 complementarios, cada uno con su PUC y su papel, su motivo y la combinacion."""
+    a, bs = resultado.candidato, resultado.complementarios
+    if (a is None or resultado.importe_compatible is None or not 1 <= len(bs) <= R21_MAX_COMPLEMENTARIOS
+            or resultado.complementario is not bs[0] or any(b.importe_puc is None for b in bs)):
+        raise ValueError("RESULTADO_R21_INCOMPLETO")
+    suma = resultado.importe_compatible + sum((dinero(b.importe_puc) for b in bs), Decimal("0"))
+    comun = {
+        "fuente": "ALBARANES_SUPABASE",
+        "estado_matching": resultado.estado,
+        "regla": "R21",
+        "id_recepcion": a.id_recepcion,
+        "numero_documental": documental.numero,
+        "fecha_documental": documental.fecha.isoformat() if documental.fecha else None,
+        "importe_documental": str(documental.importe),
+        "importe_combinacion": str(suma),
+        "tolerancia_linea": str(TOLERANCIA_LINEA),
+        "complementarios": len(bs),
+        "combinaciones_evaluadas": 1,
+        "sentido_documental": documental.sentido,
+    }
+
+    def detalle(row: CandidatoAlbaranSupabase, importe: Decimal, papel: str, clase: str | None,
+                motivo: str | None) -> DetalleConciliacion:
+        return DetalleConciliacion(
+            tipo_relacion=TipoRelacionConciliacion.UNO_A_VARIOS,
+            importe_aplicado=importe,
+            albaran_farmacia=row.farmacia,
+            albaran_id_contador=row.id_contador,
+            factura_albaran_extraido_id=documental.id,
+            coincidencia_numero_literal=papel == "NUMERO" and resultado.coincidencia_numero == "EXACTA",
+            importe_documental=importe_documental_con_signo(documental),
+            provenance={**comun, "papel_r21": papel, "clase_numero": clase, "motivo_r21": motivo,
+                        "numero_operacional": row.numero_albaran, "id_proveedor": row.id_proveedor,
+                        "id_recepcion_operacional": row.id_recepcion, "fecha_operacional": row.fecha.isoformat()},
+        )
+
+    detalles = [detalle(a, resultado.importe_compatible, "NUMERO", resultado.clase_numero, None)]
+    for b in bs:
+        papel = "INTERNO" if _NUMERO_INTERNO_FARMATIC.match(b.numero_albaran.strip().upper()) else "LETRA_FINAL"
+        motivo = ("MISMA_RECEPCION" if a.id_recepcion is not None and b.id_recepcion == a.id_recepcion
+                  else "MISMO_DIA_SIN_RECEPCION")
+        detalles.append(detalle(b, dinero(b.importe_puc), papel, papel, motivo))
+    return tuple(detalles)
+
+
 def detalle_desde_busqueda(
     documental: AlbaranDocumentalTrabajo,
     resultado: ResultadoBusquedaAlbaran,
@@ -680,6 +834,8 @@ def detalle_desde_busqueda(
                 "estado_matching": resultado.estado,
                 "candidatos_finales": resultado.candidatos_finales,
                 "sentido_documental": documental.sentido,
+                # R21-D4: solo si hay motivo (``DEMASIADOS_CANDIDATOS``); sin el, la provenance es la de antes.
+                **({"motivo": resultado.motivo} if resultado.motivo else {}),
             },
         )
     candidate = resultado.candidato
@@ -972,7 +1128,7 @@ def aplicar_r22(
 ) -> tuple[DetalleConciliacion, ...]:
     """R22 (DECISION DE PIO, 2026-11-24; caso E, 08005257): cargo sin albaran anulado por su abono en el mismo documento.
 
-    Una linea documental ``CARGO`` que sigue ``SIN_COINCIDENCIA`` tras el 1:1, R17 y R20, con numero, y **sin ningun
+    Una linea documental ``CARGO`` que sigue ``SIN_COINCIDENCIA`` tras el 1:1, R17, R20 y R21, con numero, y **sin ningun
     albaran** de ese numero en los candidatos leidos (cualquier proveedor; ``EXACTA``, ``LETRA_FINAL`` o
     ``FINAL_DOCUMENTAL``, con la lectura Alliance, la mas amplia) queda explicada por un movimiento ``ABONO`` del MISMO
     documento (la misma factura) del MISMO concepto/laboratorio (D6: el literal de la linea, ``descripcion``, igual al

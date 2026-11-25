@@ -1,5 +1,8 @@
 # H7b: Cashflow con previsión (vencimientos y apuntes manuales de la web), diseño
 
+Estado (2026-11-25): **DISEÑO con decisiones de Pio** (H7B-D1 a D8, D5 cambiada: prioridad por cuenta + categoría +
+concepto + decena; migración 40), sin código, sin migración y sin producción; implementación otro día.
+
 Estado (2026-11-24): **DISEÑO**, sin código, sin migración y sin producción. Rehecho sobre la petición de la web y
 las decisiones de Pio del 2026-11-23 (empezar ya, con recurrentes, solo previsión futura), transmitidas el
 2026-11-24. Sustituye al primer borrador de este fichero (c0a9cee), que no partía de la petición.
@@ -29,11 +32,13 @@ Mientras no haya Norma 43, el Excel importado (migración 38) sigue siendo la fu
   puede anular una sola ocurrencia.
 - **Conceptos nuevos**, siempre asociados a una categoría existente.
 - **Prioridad** por cuenta, categoría y decena: **vencimientos > apunte > Excel > media**, sin doble cómputo.
+  **Precisada por Pio el 2026-11-25 (H7B-D5):** por cuenta + categoría + **concepto** + decena (§2.1).
 - **Tablas:** `cf_cashflow_apuntes`, `cf_cashflow_recurrentes` y `cf_cashflow_conceptos`. RLS por módulo
   `CASHFLOW`, rol de escritura propio de la web (`INSERT`, `SELECT` y `UPDATE` solo de anulación), `SELECT` de
   `cf_lectura` (aprobado) y la excepción en REGLAS_CRITICAS.
-- **Migración 41.** **AUTORIZACIÓN EXPRESA DE PIO:** nombrar el rol del sistema en la 41 y su rollback, si hace
-  falta.
+- **Migración 41** según el encargo; **40 por la numeración decidida por Pio el 2026-11-25** (R21 = 39, H7b = 40,
+  «Actualizar ahora» = 41). **AUTORIZACIÓN EXPRESA DE PIO:** nombrar el rol del sistema en la migración de H7b (la
+  40) y su rollback, si hace falta.
 - **Solo previsión futura:** nada de lo nuevo cambia lo pasado. Lo pasado lo da el banco (hoy, el Excel).
 
 **Lo que no cambia** (`CONFIRMADO POR CÓDIGO`, `sql/migrations/38_cf_cashflow.sql` y REGLAS_CRITICAS «Cashflow
@@ -44,7 +49,7 @@ Mientras no haya Norma 43, el Excel importado (migración 38) sigue siendo la fu
 - el cuadre E1 se sigue comprobando solo con lo importado;
 - ningún rol de la web escribe ni tiene privilegios de escritura sobre ellas.
 
-## 1. Tablas (`PROPUESTA`; migración 41)
+## 1. Tablas (`PROPUESTA`; migración 40)
 
 Patrón de Pagos (H6, migración 35): tablas propias, anulación en lugar de borrado, autor por transacción e historial
 por trigger. Sin `DELETE` ni `TRUNCATE` para nadie: un trigger los rechaza (`BORRADO_NO_PERMITIDO`). El único
@@ -110,13 +115,24 @@ obligatorio): `SOLO_ANULAR`. Corregir es anular y crear otro.
 
 ### 2.1 La regla por celda
 
-Una **celda** es (cuenta, categoría, decena). Para cada celda **futura** (después del último saldo de banco de la
-cuenta), el Cashflow toma **una sola fuente**, la de mayor prioridad que tenga algo:
+**H7B-D5 (DECISIÓN DE PIO, 2026-11-25):** una **celda** es (cuenta, categoría, **concepto**, decena).
+
+- El concepto de un vencimiento es el concepto con su `proveedor_cif` (§2.2, H7B-D3). Un apunte o una recurrente
+  llevan el suyo. El importe del Excel ya va por concepto (`cf_cashflow_importes.concepto`).
+- Un vencimiento solo sustituye al apunte **del mismo concepto**. Un apunte de otro concepto de la misma categoría y
+  decena **suma**, porque es otra celda.
+- El saldo y los totales por categoría suman las celdas de todos los conceptos.
+- Esto sustituye la celda (cuenta, categoría, decena) de la propuesta del 2026-11-24. El texto que sigue vale
+  leyendo «celda» con concepto.
+
+Para cada celda **futura** (después del último saldo de banco de la cuenta), el Cashflow toma **una sola fuente**, la
+de mayor prioridad que tenga algo:
 
 1. **Vencimientos** de facturas colocados en esa celda (§2.2);
 2. si no hay, **apuntes**: los sueltos no anulados más las ocurrencias de recurrentes no anuladas;
 3. si no hay, el **importe del Excel** vigente de esa celda;
-4. si no hay, la **media** (H7B-D4).
+4. si no hay, la **media** (H7B-D4): la de ese concepto en sus últimas 6 decenas reales de la cuenta (DECISIÓN DE
+   PIO, 2026-11-25).
 
 - Como cada celda usa una sola fuente, no hay doble cómputo: un apunte y el importe del Excel de la misma celda nunca
   suman juntos.
@@ -125,9 +141,9 @@ cuenta), el Cashflow toma **una sola fuente**, la de mayor prioridad que tenga a
   queda tapado.
 - **Saldo previsto:** saldo de banco de la última decena cuadrada + Σ celdas futuras (`RE` suma, `RS` resta), decena
   a decena. El `saldo_formulas` del Excel no se toca.
-- **Límite que Pio debe conocer (H7B-D5):** por la regla de una fuente por celda, un apunte de un gasto **distinto**
-  de la misma categoría y decena que un vencimiento queda tapado por el vencimiento. La web lo muestra como
-  descartado. Si se quiere sumarlo, hay que darlo de alta en otra categoría o cambiar la regla.
+- ~~Límite que Pio debe conocer (H7B-D5): un apunte de un gasto distinto de la misma categoría y decena que un
+  vencimiento queda tapado~~. **Resuelto por Pio (2026-11-25):** con la celda por concepto, ese apunte suma. Solo
+  queda tapado el apunte del mismo concepto, que es justo el que la factura sustituye.
 
 ### 2.2 Dónde cae un vencimiento
 
@@ -192,36 +208,53 @@ necesita para escribir.
   `farmacias_habilitadas` no cambia y sus facturas, albaranes, normalización y conciliación siguen desactivados.
   Recogida ya en REGLAS_CRITICAS («Cashflow (H7)», previsión H7b, no implementada); rige desde el despliegue de la
   migración de H7b.
-- **Rol del sistema:** la 41 lo nombra solo si hace falta para quitarle los privilegios por defecto de Supabase
-  sobre lo nuevo, como en la 35 y la 38. Autorizado por Pio solo en la 41 y su rollback.
+- **Rol del sistema:** la 40 lo nombra solo si hace falta para quitarle los privilegios por defecto de Supabase
+  sobre lo nuevo, como en la 35 y la 38. Autorizado por Pio solo en la migración de H7b (la 40) y su rollback.
 - **El sistema no usa los apuntes para decidir nada.** Ni la importación, ni la noche, ni la conciliación los leen.
   En los postchecks de la noche y de las series 2BJ/2BP entran en `TABLAS_CASHFLOW`, informados aparte y sin
   afectar al veredicto.
 
 ## 5. Migración, tests y despliegue (`PROPUESTA`)
 
-- **Migración 41** (`41_cf_cashflow_prevision.sql` y su rollback): tablas, triggers, función de ocurrencias, RLS, rol
-  `cf_cashflow_web` sin contraseña y privilegios de `cf_lectura`. Ver H7B-D7 sobre la numeración.
-- **Rollback 41:** falla cerrado si hay algún apunte, recurrente o concepto (`ROLLBACK_41_CON_DATOS`), como el de la
+- **Migración 40** (`40_cf_cashflow_prevision.sql` y su rollback; exige la 39): tablas, triggers, función de
+  ocurrencias, RLS, rol `cf_cashflow_web` sin contraseña y privilegios de `cf_lectura`. Numeración: H7B-D7.
+- **Rollback 40:** falla cerrado si hay algún apunte, recurrente o concepto (`ROLLBACK_40_CON_DATOS`), como el de la
   38.
 - **Tests previstos (PostgreSQL 17 local):**
-  - la 41 es idempotente y el rollback deja el esquema de la anterior;
+  - la 40 es idempotente y el rollback deja el esquema de la 39;
   - cada validación de §3 rechaza con su motivo; no se puede borrar, reabrir ni cambiar el importe;
   - ocurrencias: mensual el día 31 en febrero (último día), trimestral y anual desde `inicio`, fin opcional, una
     ocurrencia anulada, solo las futuras;
   - prioridad por celda con las cuatro fuentes; un apunte y un importe del Excel en la misma celda no suman juntos;
+    un vencimiento tapa el apunte de su concepto y no el de otro concepto de la misma categoría y decena (H7B-D5);
   - vencimiento sin concepto asociado → «sin categoría»; vencimiento con marca de pago → no cuenta;
   - sustitución: un candidato se sugiere; cero o dos, no;
   - RLS y roles: `cf_cashflow_web` no escribe en ninguna otra tabla; `cf_lectura` lee lo nuevo y no escribe;
     RITA ve sus apuntes y ninguna factura;
   - una importación nueva de Cashflow no toca los apuntes y los apuntes no cambian el cuadre E1;
-  - ensayo de `desplegar_41` con la imitación del `postgres` de Supabase, en la suite histórica.
-- **Despliegue (41-D):** commit con código y push de Pio; flags apagados; preflight READ_ONLY; `desplegar_41` una vez
+  - ensayo de `desplegar_40` con la imitación del `postgres` de Supabase, en la suite histórica.
+- **Despliegue (40-D):** commit con código y push de Pio; flags apagados; preflight READ_ONLY; `desplegar_40` una vez
   con confirmación explícita de Pio; postcheck por fila (solo aparecen los objetos nuevos); Pio fija la contraseña;
   prueba de acceso; flags encendidos. Después, `docs/web/ESQUEMA_CASHFLOW.md` con las tablas nuevas, la regla por
   celda y la función de ocurrencias.
 
-## 6. Decisiones pendientes para Pio
+## 6. Decisiones de Pio
+
+**DECIDIDAS por Pio (2026-11-25):** H7B-D5 cambia (abajo); el resto, D1–D4 y D6–D8, como se recomiendan.
+Implementación otro día, como migración **40** (H7B-D7).
+
+- **H7B-D5 (DECISIÓN DE PIO):** la prioridad se decide por **cuenta + categoría + concepto + decena**. Un vencimiento
+  solo sustituye al apunte **del mismo concepto**; un apunte de otro concepto de la misma categoría y decena suma.
+  Regla en §2.1.
+- **H7B-D4 precisada por D5 (DECISIÓN DE PIO, 2026-11-25, confirmada):** la media también es por **cuenta + categoría
+  + concepto + decena**: la del concepto en sus últimas 6 decenas reales (cuadradas con el banco) de la cuenta; sin 6
+  decenas reales, no hay media. Sustituye la «media de esa categoría» de la tabla. Texto de la propuesta, como
+  histórico:
+- Consecuencia de D5 sobre D4 (propuesta del 2026-11-25): si la celda es por concepto, la media
+  también debe serlo (la del concepto en sus últimas 6 decenas reales); una media de la categoría sumaría dos veces lo
+  que ya cubre cada concepto. Propuesta: media por concepto.
+
+Tabla de la propuesta del 2026-11-24 (histórico; D5 y D7 sustituidas por lo anterior):
 
 | Id | Pregunta | Recomendación |
 |---|---|---|
@@ -231,5 +264,5 @@ necesita para escribir.
 | H7B-D4 | ¿Qué es la «media»? | Media de esa categoría en las últimas 6 decenas reales (cuadradas con el banco) de la cuenta; sin 6 decenas reales, no hay media |
 | H7B-D5 | Un apunte de otro gasto en la misma celda que un vencimiento queda tapado | Aceptarlo (es la regla de una fuente por celda) y mostrarlo como descartado |
 | H7B-D6 | Sustitución de un apunte por una factura | Candidato único (misma cuenta y categoría, decena igual o siguiente, ±5 %), confirmado por una persona |
-| H7B-D7 | Numeración: cada migración exige la anterior y la 39 no existe todavía | Ver la nota de numeración en `pruebas/auditoria_r21/DISENO.md` §9.10 |
+| H7B-D7 | Numeración: cada migración exige la anterior y la 39 no existe todavía | **DECIDIDA (2026-11-25): H7b = 40**, tras R21 = 39 (`pruebas/auditoria_r21/DISENO.md` §9.10) |
 | H7B-D8 | ¿Los vencimientos con marca de pago (H6) cuentan? | No: un vencimiento marcado como pagado ya no es previsión |

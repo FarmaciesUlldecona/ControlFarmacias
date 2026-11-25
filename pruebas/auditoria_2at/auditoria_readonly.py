@@ -597,11 +597,12 @@ def _simular(lector: _Lector, factura_id: str) -> dict:
     from src.facturas.runtime_supabase.repositorios import (
         RepositorioRuntimeSupabase, clave_idempotente_conciliacion, payload_conciliacion)
 
-    from src.facturas.runtime_supabase.lectura_readonly import r20_habilitada
+    from src.facturas.runtime_supabase.lectura_readonly import r20_habilitada, r21_habilitada
 
     cliente = _ClienteLectura(lector)
-    # R20 (migracion 36): la misma deteccion que la noche (information_schema y, solo si existe, la columna).
-    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=lambda: r20_habilitada(lector))
+    # R20 (migracion 36) y R21 (39): la misma deteccion que la noche (information_schema y, solo si existe, la columna).
+    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=lambda: r20_habilitada(lector),
+                                             r21_habilitada=lambda: r21_habilitada(lector))
     # Fila tal como la devolveria la RPC de claim (setof facturas), sin reclamar.
     fila = json.loads(lector.valor("select to_jsonb(f)::text from public.facturas f where f.id = %s",
                                    (factura_id,)))
@@ -671,7 +672,7 @@ def _simular(lector: _Lector, factura_id: str) -> dict:
     movimientos = {r["id"]: r for r in cliente.table("facturas_movimientos")
                    .select("id,categoria,descripcion_literal,sentido,importe,base")
                    .eq("factura_id", factura.factura_id).order("orden").execute().data}
-    lineas, casados, sin_coincidencia, lineas_r17, lineas_r20 = [], 0, 0, set(), set()
+    lineas, casados, sin_coincidencia, lineas_r17, lineas_r20, lineas_r21 = [], 0, 0, set(), set(), set()
     suma_albaranes = suma_movimientos = Decimal("0")
     for orden, d in enumerate(resultado.detalles, start=1):
         linea = {"orden": orden, "tipo_relacion": d.tipo_relacion.value, "importe_aplicado": str(d.importe_aplicado),
@@ -690,12 +691,14 @@ def _simular(lector: _Lector, factura_id: str) -> dict:
                 (d.albaran_farmacia, d.albaran_id_contador))
         casados += d.tipo_relacion.value == "UNO_A_UNO"
         sin_coincidencia += d.tipo_relacion.value == "SIN_COINCIDENCIA"
-        if d.tipo_relacion.value == "UNO_A_VARIOS":  # 2BE (R17) y R20 (36): dos detalles por linea documental
-            (lineas_r20 if d.provenance.get("regla") == "R20" else lineas_r17).add(d.factura_albaran_extraido_id)
+        if d.tipo_relacion.value == "UNO_A_VARIOS":  # 2BE (R17) y R20 (36): dos detalles; R21 (39): de dos a cuatro
+            {"R20": lineas_r20, "R21": lineas_r21}.get(d.provenance.get("regla"), lineas_r17).add(
+                d.factura_albaran_extraido_id)
         lineas.append(linea)
     out["resumen_detalles"] = {
         "detalles": len(lineas), "albaranes_documentales": len(extraidos), "albaranes_casados_1a1": casados,
         "albaranes_sin_coincidencia": sin_coincidencia, "lineas_r17": len(lineas_r17), "lineas_r20": len(lineas_r20),
+        "lineas_r21": len(lineas_r21),
         "movimientos": len(movimientos),
         "importe_albaranes_aplicado": str(suma_albaranes), "importe_movimientos_aplicado": str(suma_movimientos)}
     out["detalles"] = lineas

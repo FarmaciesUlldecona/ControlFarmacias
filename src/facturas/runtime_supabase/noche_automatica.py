@@ -788,6 +788,14 @@ def _r20_en_bd(conexion) -> bool:
         return r20_habilitada(lector)
 
 
+def _r21_en_bd(conexion) -> bool:
+    """R21 (DECISIONES DE PIO, 2026-11-24): la 39 presente y su marca ``conciliacion_r21`` a true."""
+    from .lectura_readonly import r21_habilitada, sesion_lectura
+
+    with sesion_lectura(conexion) as lector:
+        return r21_habilitada(lector)
+
+
 def _37_en_bd(conexion) -> bool:
     """Migracion 37 (DECISIONES DE PIO D5-D7): la firma de 8 parametros y la columna ``lector`` presentes."""
     from .lectura_readonly import defectos_37_en_bd, sesion_lectura
@@ -814,10 +822,11 @@ def main(argv: list[str]) -> int:
             cliente=cliente,
             tareas=_tareas_productivas,
             puerta_git=puerta_git,
-            # R20 (migracion 36) y migracion 37: el worker detecta cada una con una sesion de solo lectura (catalogo).
+            # R20 (migracion 36), migracion 37 y R21 (39): el worker detecta cada una con una sesion de solo lectura
+            # (catalogo).
             construir_worker=lambda cfg: construir_worker_automatico_productivo(
                 cliente, cfg, WORKER_BASE, trabajo, r20_habilitada=lambda: _r20_en_bd(conexion),
-                defectos_37=lambda: _37_en_bd(conexion)),
+                defectos_37=lambda: _37_en_bd(conexion), r21_habilitada=lambda: _r21_en_bd(conexion)),
             directorio_informes=directorio,
         )
         return ejecutar_noche(argv[0], entorno)
