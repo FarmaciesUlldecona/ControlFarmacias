@@ -120,6 +120,12 @@ SUITE_HISTORICA = {
         "test_ensayo_completo_despliegue_38_y_segundo_intento_revierte",
         "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_38_es_de_solo_lectura",
         "test_postcondiciones_en_la_plantilla_38"),
+    # 39-D (2026-11-25): R21 desplegada en produccion.
+    "test_integracion_pg17_r21.py": (
+        "test_rollback_39_devuelve_exactamente_el_esquema_38", "test_el_rollback_aborta_con_una_linea_r21_vigente",
+        "test_ensayo_completo_despliegue_39_y_segundo_intento_revierte",
+        "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_39_es_de_solo_lectura",
+        "test_postcondiciones_en_la_plantilla_39"),
 }
 
 # Modulo pg17_local -> familia (grupo xdist_group). Los modulos sin entrada forman su propia familia. Medicion del
