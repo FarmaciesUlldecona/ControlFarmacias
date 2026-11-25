@@ -138,12 +138,12 @@ del último saldo de banco de la cuenta):
 
 1. **Previsión de la celda sin vencimientos:** la primera fuente que exista, por este orden:
    1. **apuntes**: los sueltos no anulados más las ocurrencias de recurrentes no anuladas; un apunte cuya
-      **sustitución ha confirmado una persona** (§2.3) está anulado y no cuenta;
+      **sustitución ha sido confirmada por Pio** (§2.3) está anulado y no cuenta;
    2. el **importe del Excel** vigente de esa celda;
-   3. la **media** (H7B-D4 corregida): **no la define este diseño ni la BD**. Es la regla del motor de la web
-      (`server/cashflow/cashflow.ts`, en el repositorio de la web, que es la autoridad; citada sin comprobar): por
-      cuenta + concepto, la misma posición de decena (1–10, 11–20, 21–fin) de los últimos 3 meses reales; para
-      RS Modelo, el mismo mes del año anterior.
+   3. la **media** (H7B-D4 corregida): **no la define la BD**; la calcula el motor de la web
+      (`server/cashflow/cashflow.ts`, en el repositorio de la web, que es la autoridad; citado sin comprobar). Regla
+      (**DECISIÓN DE PIO, 2026-11-25**): por cuenta + concepto, la misma posición de decena (1–10, 11–20, 21–fin) de
+      los **últimos 12 meses reales**; para RS Modelo, el mismo mes del año anterior.
 2. **Con vencimientos** de facturas colocados en esa celda (§2.2): cuenta el **mayor en valor absoluto** entre la
    suma de los vencimientos y la previsión del punto 1. Los vencimientos son un mínimo: una previsión mayor no queda
    tapada por una factura menor.
@@ -185,7 +185,7 @@ automatismos:
   siguiente, con importe a ±5 % del apunte.
 - Si un apunte tiene **exactamente un** candidato y ese candidato no lo es de otro apunte, la web lo muestra como
   «posible sustitución».
-- **La sustitución la confirma una persona:** guarda `sustituido_por` (factura y orden del vencimiento) y el apunte
+- **La sustitución la confirma Pio:** guarda `sustituido_por` (factura y orden del vencimiento) y el apunte
   deja de contar, con historial.
 - Con cero o más de un candidato no se sugiere nada (falla cerrado).
 - Para un recurrente se sustituye **una ocurrencia** (anulación de esa ocurrencia con la referencia a la factura), no
@@ -264,13 +264,14 @@ necesita para escribir.
 **CORRECCIÓN (petición de la web, aprobada por Pio, 2026-11-25, tarde):** sustituye lo que digan sobre la media y
 la prioridad los puntos de abajo.
 
-- **H7B-D4 corregida:** la media no se define en la BD ni en este diseño. Es la regla del motor de la web
-  (`server/cashflow/cashflow.ts`, otro repositorio; la web es la autoridad): por cuenta + concepto, misma posición de
-  decena (1–10, 11–20, 21–fin) de los últimos 3 meses reales; RS Modelo, el mismo mes del año anterior. Se retira
-  «las 6 últimas decenas cuadradas con el banco».
+- **H7B-D4 corregida:** la media no se define en la BD; la calcula el motor de la web (`server/cashflow/cashflow.ts`,
+  otro repositorio; la web es la autoridad): por cuenta + concepto, misma posición de decena (1–10, 11–20, 21–fin) de
+  los **últimos 12 meses reales** (DECISIÓN DE PIO, 2026-11-25; sustituye a los 3 meses de la corrección anterior);
+  RS Modelo, el mismo mes del año anterior. Se retira «las 6 últimas decenas cuadradas con el banco».
 - **H7B-D5 corregida:** por cuenta + categoría + concepto + decena, previsión = apunte > Excel > media (la primera que
   exista); con vencimientos, el mayor en valor absoluto entre los vencimientos y esa previsión (los vencimientos son
-  un mínimo); sin vencimientos, la previsión. Una sustitución confirmada por Pio anula el apunte.
+  un mínimo); sin vencimientos, la previsión. Una sustitución confirmada por Pio anula el apunte. **La web ha
+  confirmado esta regla de prioridad (motor H7-REAL-8).**
 - **La 40 no se aplica sin el OK de Pio al diseño corregido.** Tras desplegarla, se informa a la web del nombre del
   rol nuevo, sin credenciales.
 
@@ -297,6 +298,6 @@ Tabla de la propuesta del 2026-11-24 (histórico; D5 y D7 sustituidas por lo ant
 | H7B-D3 | ¿En qué categoría cae el vencimiento de cada proveedor? | Por un concepto con `proveedor_cif` en `cf_cashflow_conceptos`; sin él, línea «vencimientos sin categoría» |
 | H7B-D4 | ¿Qué es la «media»? | Media de esa categoría en las últimas 6 decenas reales (cuadradas con el banco) de la cuenta; sin 6 decenas reales, no hay media |
 | H7B-D5 | Un apunte de otro gasto en la misma celda que un vencimiento queda tapado | Aceptarlo (es la regla de una fuente por celda) y mostrarlo como descartado |
-| H7B-D6 | Sustitución de un apunte por una factura | Candidato único (misma cuenta y categoría, decena igual o siguiente, ±5 %), confirmado por una persona |
+| H7B-D6 | Sustitución de un apunte por una factura | Candidato único (misma cuenta y categoría, decena igual o siguiente, ±5 %), confirmado por Pio |
 | H7B-D7 | Numeración: cada migración exige la anterior y la 39 no existe todavía | **DECIDIDA (2026-11-25): H7b = 40**, tras R21 = 39 (`pruebas/auditoria_r21/DISENO.md` §9.10) |
 | H7B-D8 | ¿Los vencimientos con marca de pago (H6) cuentan? | No: un vencimiento marcado como pagado ya no es previsión |
