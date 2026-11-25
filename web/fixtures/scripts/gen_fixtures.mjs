@@ -336,6 +336,12 @@ const AJUSTES_LINEAS_H5 = [
   [FX('01'), 1, { estado_matching: 'EXACTO', clase_numero: null }],
   [FX('01'), 2, { estado_matching: 'ECONOMICO_UNICO', clase_numero: null, numero_albaran_farmatic: '08X10002B',
     coincidencia_numero: 'DIFERENTE', coincidencia_numero_literal: false }],
+  // H8-5: reglas nuevas del circuito con etiqueta propia (provenance.regla). Solo cambia el código de regla: importes,
+  // estados y relación siguen igual. F05 línea 3: R21 (complementarios de la misma recepción); F04 línea 1: R22 (cargo
+  // anulado por su abono, neto 0).
+  // H7-REAL-8: con su estado del motor MATCH_R21 (estado conocido).
+  [FX('05'), 3, { regla: 'R21', estado_matching: 'MATCH_R21' }],
+  [FX('04'), 1, { regla: 'R22' }],
 ];
 /**
  * H5-3: líneas sin casar de F07 (abono) con estados de motor: uno no previsto con forma de código, uno que no es

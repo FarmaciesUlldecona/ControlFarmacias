@@ -1111,8 +1111,8 @@ const OBJ_INCIDENCIAS = ['facturas_incidencias', 'facturas', 'documentos_factura
  */
 export const PATRON_CODIGO_DIAGNOSTICO = /^[A-Z0-9_]{1,40}$/;
 export const ETIQUETAS_CLASE_NUMERO = ['EXACTA', 'LETRA_FINAL', 'FINAL_DOCUMENTAL', 'INTERNO', 'PROVEEDOR', 'SIN_PATRON', 'NO_DISPONIBLE', 'DIFERENTE'] as const;
-// H8: MATCH_R20 (albarán partido en Farmatic, migración 36) es etiqueta fija.
-export const ETIQUETAS_ESTADO_MATCHING = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', 'MATCH_R20', 'SIN_COINCIDENCIA', 'AMBIGUO', 'AMBIGUO_R17',
+// H8: MATCH_R20 (albarán partido en Farmatic, migración 36) es etiqueta fija. H7-REAL-8: MATCH_R21 también (R21, H8-5).
+export const ETIQUETAS_ESTADO_MATCHING = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', 'MATCH_R20', 'MATCH_R21', 'SIN_COINCIDENCIA', 'AMBIGUO', 'AMBIGUO_R17',
   'CONFLICTO_R17', 'ALBARAN_YA_CONCILIADO', 'NUMERO_PROVEEDOR_DISTINTO', 'NUMERO_AUSENTE', 'NO_DEMOSTRABLE',
   'NUMERO_EXACTO_ECONOMIA_INCOMPATIBLE',
   // H5-5: versión anterior del motor (scripts 2T/2V, commit e18acf0; ver ESTADOS_MATCHING en detalle.ts).

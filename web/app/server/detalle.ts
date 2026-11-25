@@ -86,6 +86,19 @@ const FUENTE_ECONOMICO_UNICO = 'e18acf0:pruebas/auditoria_2t/flujo_controlado.py
   + 'e18acf0:pruebas/auditoria_2t/resultado.md:36-40';
 /** H8: fuente de R20 (provenance estado_matching MATCH_R20, regla R20, papel_r20, clase_numero). */
 export const FUENTE_R20 = 'migración 36';
+/** H8-5: fuente de R21 y R22 (código de regla en provenance.regla, escrito por el circuito). */
+export const FUENTE_REGLAS_CIRCUITO = 'R21:provenance.regla; R22:provenance.regla';
+/**
+ * H8-5: código de regla (provenance.regla) → clave del «cómo casó». Las reglas con etiqueta propia mandan sobre el
+ * estado del motor. R17 y R20 tienen su propio tratamiento; cualquier otro código se muestra tal cual (codigoReglaDesconocido).
+ */
+export const CLAVE_POR_REGLA = { R21: 'R21:COMPLEMENTARIOS', R22: 'R22:ANULADO' } as const;
+const REGLAS_CONOCIDAS = ['R17', 'R20', ...Object.keys(CLAVE_POR_REGLA)];
+/** H8-5: código de regla que la web no conoce: se muestra tal cual (nunca falla). null si no hay regla o es conocida. */
+export function codigoReglaDesconocido(l: Partial<Pick<LineaConciliacion, 'regla'>>): string | null {
+  const r = typeof l.regla === 'string' ? l.regla.trim() : '';
+  return r === '' || REGLAS_CONOCIDAS.includes(r) ? null : r;
+}
 /** H5-5: estados de una versión anterior del motor (no los escribe el código actual). */
 export const ESTADOS_VERSION_ANTERIOR = ['EXACTO', 'ECONOMICO_UNICO'] as const;
 
@@ -106,6 +119,9 @@ export const DICCIONARIO_CASADO = {
   'HEFAME:EXACTO_ECONOMICO': { texto: 'Mismo número e importe (Hefame)', color: 'verde', fuente: 'C:327-349,370' },
   // H8: R20, una línea del PDF partida en dos albaranes de Farmatic (el número exacto y su variante con letra).
   'R20:PARTIDO': { texto: 'Albarán partido en Farmatic', color: 'verde', fuente: FUENTE_R20 },
+  // H8-5: reglas nuevas del circuito, por su código de regla (provenance.regla), con etiqueta propia como R20.
+  'R21:COMPLEMENTARIOS': { texto: 'Albarán con complementarios de la misma recepción', color: 'verde', fuente: FUENTE_REGLAS_CIRCUITO },
+  'R22:ANULADO': { texto: 'Cargo anulado por su abono (neto 0)', color: 'gris', fuente: FUENTE_REGLAS_CIRCUITO },
   // H5-5: estados escritos por una versión anterior del motor (scripts de los hitos 2T/2V; ya no están en el código).
   'ANTERIOR:EXACTO': { texto: 'Un único albarán; el motor anterior lo dio por número coincidente (versión anterior del motor)', color: 'verde', fuente: FUENTE_EXACTO },
   'ANTERIOR:ECONOMICO_UNICO': { texto: 'Un único albarán por importe; el número no es idéntico (versión anterior del motor)', color: 'verde', fuente: FUENTE_ECONOMICO_UNICO },
@@ -160,6 +176,8 @@ export const ESTADOS_MATCHING = {
   EXACTO_ECONOMICO: { texto: 'Hefame: mismo número e importe compatible', fuente: 'C:327-349,370' },
   MATCH_R17: { texto: 'Pareja de la misma recepción que suma el importe (R17)', fuente: 'C:497-525,564-568,588' },
   MATCH_R20: { texto: 'Una línea del PDF repartida en dos albaranes de Farmatic: el número exacto y su variante (R20)', fuente: FUENTE_R20 },
+  // H7-REAL-8: estado del motor de R21 (etiqueta del «cómo casó»: R21:COMPLEMENTARIOS, H8-5).
+  MATCH_R21: { texto: 'Albarán con complementarios de la misma recepción (R21)', fuente: FUENTE_REGLAS_CIRCUITO },
   SIN_COINCIDENCIA: { texto: DICCIONARIO_CASADO['SIN:SIN_COINCIDENCIA'].texto, fuente: 'C:374-375' },
   AMBIGUO: { texto: DICCIONARIO_CASADO['SIN:AMBIGUO'].texto, fuente: 'C:361-363,375' },
   AMBIGUO_R17: { texto: DICCIONARIO_CASADO['SIN:AMBIGUO_R17'].texto, fuente: 'C:557-558' },
@@ -174,7 +192,7 @@ export const ESTADOS_MATCHING = {
   ECONOMICO_UNICO: { texto: 'Versión anterior del motor: un único albarán de Farmatic por importe, sin número idéntico', fuente: FUENTE_ECONOMICO_UNICO, version_anterior: true },
 } as const;
 /** Estados con los que la línea queda casada (el resto, sin casar). EXACTO/ECONOMICO_UNICO: MATCH_UNICO antiguo. */
-const ESTADOS_CASADOS = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', 'MATCH_R20', ...ESTADOS_VERSION_ANTERIOR];
+const ESTADOS_CASADOS = ['MATCH_UNICO', 'EXACTO_ECONOMICO', 'MATCH_R17', 'MATCH_R20', 'MATCH_R21', ...ESTADOS_VERSION_ANTERIOR];
 
 /** H8: detalle de una línea R20 (estado_matching MATCH_R20 o regla R20; la regla distingue R20 de R17). */
 export function esR20(l: Pick<LineaConciliacion, 'estado_matching' | 'regla'>): boolean {
@@ -206,6 +224,9 @@ export function estadoSinDescripcion(l: Pick<LineaConciliacion, 'estado_matching
 }
 
 export function claveCasado(l: Pick<LineaConciliacion, 'tipo_relacion' | 'estado_matching' | 'clase_numero' | 'coincidencia_numero' | 'sentido_documental'> & Partial<Pick<LineaConciliacion, 'regla'>>): ClaveCasado {
+  // H8-5: R21 y R22 tienen etiqueta propia (también si el estado del motor es nuevo para la web).
+  const porRegla = typeof l.regla === 'string' && Object.hasOwn(CLAVE_POR_REGLA, l.regla) ? CLAVE_POR_REGLA[l.regla as keyof typeof CLAVE_POR_REGLA] : null;
+  if (porRegla !== null) return porRegla;
   if (l.tipo_relacion === 'MOVIMIENTO_NO_FARMATIC') {
     if (l.sentido_documental === null) return 'MOVIMIENTO:SIN_SENTIDO';
     return l.sentido_documental === 'ABONO' ? 'MOVIMIENTO:ABONO' : 'MOVIMIENTO';

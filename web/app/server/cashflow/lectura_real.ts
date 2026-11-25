@@ -13,7 +13,8 @@
  */
 import type { Fila, ValorDiagnostico } from '../contrato.ts';
 import {
-  CONFIG_CASHFLOW, CUENTAS_CASHFLOW, calcularCashflow, esDecenaInicio, fechaMadrid, variacionMensual, type VencimientoCashflow,
+  CONFIG_CASHFLOW, CUENTAS_CASHFLOW, MESES_INDICADOR, calcularCashflow, comercialDeConcepto, esDecenaInicio, fechaMadrid, moverDecena, variacionMensual,
+  type Celda, type ResultadoCashflow, type VencimientoCashflow,
   type CuentaCashflowFila, type DatosCashflow, type ImportacionCashflow, type ImporteCashflow, type OtraCuentaCashflow, type SaldoCashflow,
 } from './cashflow.ts';
 
@@ -249,13 +250,31 @@ export function diagnosticoCashflow(d: DatosCashflow, hoy: string, vencimientos:
       for (const x of Object.values(l.celdas)) {
         if (x.real || x.vencimientos === null) continue;
         const k = `${claveCategoria(x.vencimientos.comercial)}_${c.toLowerCase()}`;
-        for (const q of ['gana_media', 'ganan_vencimientos']) if (!gana.has(`venc_${q}_${k}`)) gana.set(`venc_${q}_${k}`, 0);
-        const q = `venc_${x.fuente === 'MEDIA' ? 'gana_media' : 'ganan_vencimientos'}_${k}`;
+        // H7-REAL-8: la previsión base que gana puede ser la media, el Excel o el apunte manual.
+        for (const q of ['gana_media', 'gana_excel', 'gana_manual', 'ganan_vencimientos']) if (!gana.has(`venc_${q}_${k}`)) gana.set(`venc_${q}_${k}`, 0);
+        const q = `venc_${x.fuente === 'VENCIMIENTOS' ? 'ganan_vencimientos' : `gana_${x.fuente.toLowerCase()}`}_${k}`;
         gana.set(q, (gana.get(q) as number) + 1);
       }
     }
   }
   for (const [k, n] of [...gana].sort(([a], [b]) => a.localeCompare(b))) out[k] = n;
+  // H7-REAL-9: Excel frente a media del concepto (gana el mayor en valor absoluto), por cuenta y mayorista (su nombre
+  // comercial de CORRESPONDENCIAS_PROVEEDOR, nunca el texto del Excel): decenas futuras en que ganó cada uno.
+  const frente = new Map<string, number>();
+  for (const c of CUENTAS_CASHFLOW) {
+    for (const l of r.vistas[c]?.lineas ?? []) {
+      const comercial = comercialDeConcepto(l.concepto);
+      if (comercial === null || !MAYORISTAS.includes(comercial)) continue;
+      const k = `${claveCategoria(comercial)}_${c.toLowerCase()}`;
+      for (const q of ['excel_gana_media', 'media_gana_excel']) if (!frente.has(`${q}_${k}`)) frente.set(`${q}_${k}`, 0);
+      for (const x of Object.values(l.celdas)) {
+        if (x.real || x.frente === null) continue;
+        const q = `${Math.abs(x.frente.media) > Math.abs(x.frente.excel) ? 'media_gana_excel' : 'excel_gana_media'}_${k}`;
+        frente.set(q, (frente.get(q) as number) + 1);
+      }
+    }
+  }
+  for (const [k, n] of [...frente].sort(([a], [b]) => a.localeCompare(b))) out[k] = n;
   const antes = calcularCashflow({ ...d, hoy, vencimientos: [...vencimientos], config: { ...CONFIG_CASHFLOW, vencimientos_como_minimo: false } });
   for (const [cuando, x] of [['antes', antes], ['despues', r]] as const) {
     const v = variacionMensual(x.vistas.CONSOLIDADO, x.decenas);
@@ -266,5 +285,120 @@ export function diagnosticoCashflow(d: DatosCashflow, hoy: string, vencimientos:
       out[`indicador_${cuando}_${tramo}_negativa`] = t.por_mes < 0;
     }
   }
+  Object.assign(out, diagnosticoPrevision(r, vencimientos));
+  // H7-REAL-8: media de 3 meses (la anterior) frente a la de 12 (decisión de Pío, 25/11/2026): indicador consolidado y
+  // variación prevista por cuenta, mismo formato (entero sin signo + _negativa).
+  const r3 = calcularCashflow({ ...d, hoy, vencimientos: [...vencimientos], config: { ...CONFIG_CASHFLOW, meses_media: 3 } });
+  const r12 = CONFIG_CASHFLOW.meses_media === 12 ? r : calcularCashflow({ ...d, hoy, vencimientos: [...vencimientos], config: { ...CONFIG_CASHFLOW, meses_media: 12 } });
+  for (const [m, x] of [['media3', r3], ['media12', r12]] as const) {
+    const v = variacionMensual(x.vistas.CONSOLIDADO, x.decenas);
+    eurMes(out, `indicador_${m}_real`, v.real === null ? null : Math.round(v.real.por_mes * 100));
+    eurMes(out, `indicador_${m}_prevista`, v.prevista === null ? null : Math.round(v.prevista.por_mes * 100));
+    for (const c of CUENTAS_CASHFLOW) {
+      const vc = x.vistas[c];
+      const t = vc ? variacionMensual(vc, x.decenas).prevista : null;
+      eurMes(out, `prev_${c.toLowerCase()}_variacion_prevista_${m}`, t === null ? null : Math.round(t.por_mes * 100));
+    }
+  }
+  return out;
+}
+
+/** Fuente de una cifra prevista, para la «fuente dominante» del diagnóstico (minúsculas: etiqueta permitida). */
+function fuenteDiagnostico(c: Celda): string {
+  if (c.fuente === 'MEDIA') return c.media?.regla === 'ANIO_ANTERIOR' ? 'anio_anterior' : 'media';
+  return c.fuente.toLowerCase();
+}
+/** Importe mensual en euros enteros sin signo + sí/no «negativa» (la barrera de check:real solo admite enteros ≥ 0). */
+function eurMes(out: Record<string, ValorDiagnostico>, k: string, centimosMes: number | null): void {
+  out[`${k}_disponible`] = centimosMes !== null;
+  if (centimosMes === null) return;
+  out[`${k}_eur_mes`] = Math.round(Math.abs(centimosMes) / 100);
+  out[`${k}_negativa`] = centimosMes < 0;
+}
+/** H7-REAL-9: mayoristas (nombre comercial de CORRESPONDENCIAS_PROVEEDOR) del diagnóstico «Excel frente a media». */
+export const MAYORISTAS: readonly string[] = ['ALLIANCE', 'HEFAME', 'COFARES', 'FEDEFARMA', 'LOGISTA PHARMA'];
+/** Hasta 10 categorías por cuenta en «mayor diferencia». */
+export const TOP_DIFERENCIA_PREVISION = 10;
+/** H7-REAL-7: proveedores del grupo KENVUE (decisión de Pío, 25/11/2026) en los vencimientos: por el nombre. */
+const PARECE_KENVUE = /JNTL|KENVUE|J(OH|HO)NSON/;
+
+/**
+ * H7-REAL-7: diagnóstico de la previsión (solo informa; no cambia ninguna regla). Ventanas del indicador: los 12 meses
+ * reales hasta la última decena real de la cuenta y los 12 previstos tras ella (o lo que haya). Por cuenta (PIO, RITA) y
+ * categoría (sin los traspasos internos, neutros), lo que entra en el saldo:
+ *   prev_<cuenta>_<categoría>_real|_prevista: media mensual (`_eur_mes` entero sin signo, `_negativa`, `_disponible`);
+ *   prev_<cuenta>_<categoría>_fuente: fuente dominante de la previsión (vencimientos, manual, excel, media, anio_anterior;
+ *     ninguna si no hay previsión), por importe absoluto;
+ *   prev_<cuenta>_top_diferencia: las 10 categorías con mayor |prevista − real| mensual, de mayor a menor;
+ *   prev_<cuenta>_variacion_real|_prevista: variación media mensual del saldo de la cuenta (como el indicador);
+ *   prev_<cuenta>_solo_prevision / _solo_real: categorías con previsión y ningún real en 12 meses, y al revés.
+ * Equivalencias de concepto: `equivalencias_filas_<cuenta>` (filas del Excel sumadas bajo otro nombre) y, de los
+ * vencimientos del sistema que parecen KENVUE por el nombre, cuántos tienen nombre comercial KENVUE y cuántos no.
+ * Nunca un concepto ni un proveedor por su nombre: categorías como etiqueta (claveCategoria).
+ */
+export function diagnosticoPrevision(r: ResultadoCashflow, vencimientos: readonly VencimientoCashflow[]): Record<string, ValorDiagnostico> {
+  const out: Record<string, ValorDiagnostico> = {};
+  for (const cuenta of CUENTAS_CASHFLOW) {
+    const k = cuenta.toLowerCase();
+    const v = r.vistas[cuenta];
+    const L = v?.ultima_real ?? null;
+    out[`prev_${k}_disponible`] = v !== undefined && L !== null;
+    if (!v || L === null) continue;
+    const desde = moverDecena(L, -3 * MESES_INDICADOR);
+    const hasta = moverDecena(L, 3 * MESES_INDICADOR);
+    const reales = r.decenas.filter((x) => x > desde && x <= L && v.decenas[x]?.real);
+    const previstas = r.decenas.filter((x) => x > L && x <= hasta);
+    const cats = new Map<string, { real: number; prev: number; nReal: number; fuentes: Map<string, number> }>();
+    for (const l of v.lineas) {
+      if (l.clase === 'TRASPASO') continue;
+      const ck = claveCategoria(l.clase === 'TRASPASO_EXTERNO' ? `${l.categoria} externo` : l.categoria);
+      const x = cats.get(ck) ?? { real: 0, prev: 0, nReal: 0, fuentes: new Map<string, number>() };
+      cats.set(ck, x);
+      for (const dd of reales) {
+        const c = l.celdas[dd];
+        if (!c || !c.en_saldo || c.importe === null) continue;
+        x.real += Math.round(c.importe * 100);
+        x.nReal += 1;
+      }
+      for (const dd of previstas) {
+        const c = l.celdas[dd];
+        if (!c || !c.en_saldo || c.importe === null) continue;
+        const ct = Math.round(c.importe * 100);
+        x.prev += ct;
+        const f = fuenteDiagnostico(c);
+        x.fuentes.set(f, (x.fuentes.get(f) ?? 0) + Math.abs(ct));
+      }
+    }
+    const mesesReal = reales.length / 3;
+    const mesesPrev = previstas.length / 3;
+    const diferencias: { ck: string; dif: number }[] = [];
+    const soloPrev: string[] = [];
+    const soloReal: string[] = [];
+    for (const [ck, x] of [...cats].sort(([a], [b]) => a.localeCompare(b))) {
+      const realMes = mesesReal > 0 ? x.real / mesesReal : null;
+      const prevMes = mesesPrev > 0 ? x.prev / mesesPrev : null;
+      eurMes(out, `prev_${k}_${ck}_real`, realMes);
+      eurMes(out, `prev_${k}_${ck}_prevista`, prevMes);
+      const dom = [...x.fuentes].filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+      out[`prev_${k}_${ck}_fuente`] = [dom ? dom[0] : 'ninguna'];
+      diferencias.push({ ck, dif: Math.abs((prevMes ?? 0) - (realMes ?? 0)) });
+      const hayPrev = [...x.fuentes.values()].some((n) => n > 0);
+      if (hayPrev && x.nReal === 0) soloPrev.push(ck);
+      if (!hayPrev && x.nReal > 0) soloReal.push(ck);
+    }
+    out[`prev_${k}_top_diferencia`] = diferencias.sort((a, b) => b.dif - a.dif || a.ck.localeCompare(b.ck)).slice(0, TOP_DIFERENCIA_PREVISION).map((x) => x.ck);
+    out[`prev_${k}_solo_prevision`] = soloPrev;
+    out[`prev_${k}_solo_real`] = soloReal;
+    const vm = variacionMensual(v, r.decenas);
+    eurMes(out, `prev_${k}_variacion_real`, vm.real === null ? null : Math.round(vm.real.por_mes * 100));
+    eurMes(out, `prev_${k}_variacion_prevista`, vm.prevista === null ? null : Math.round(vm.prevista.por_mes * 100));
+  }
+  for (const cuenta of CUENTAS_CASHFLOW) out[`equivalencias_filas_${cuenta.toLowerCase()}`] = r.equivalencias.filas[cuenta] ?? 0;
+  // H7-REAL-8: pares no fusionados por un prefijo que coincide con varios nombres o con ninguno (falla cerrado).
+  out.equivalencias_ambiguas = r.equivalencias.ambiguas;
+  out.equivalencias_sin_coincidencia = r.equivalencias.sin_coincidencia;
+  const kenvue = vencimientos.filter((x) => PARECE_KENVUE.test(normalDiag(x.proveedor_nombre)) || x.proveedor_comercial === 'KENVUE');
+  out.kenvue_venc_con_comercial = kenvue.filter((x) => x.proveedor_comercial === 'KENVUE').length;
+  out.kenvue_venc_sin_comercial = kenvue.filter((x) => x.proveedor_comercial !== 'KENVUE').length;
   return out;
 }

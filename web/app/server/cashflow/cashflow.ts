@@ -58,7 +58,10 @@ import { esPagado, type EstadoPagoVencimiento } from '../pagos/pagos.ts';
 // ---------------------------------------------------------------------------
 
 export interface ConfigCashflow {
-  /** N de la media por posición de decena: últimos N meses reales (la misma decena del mes en cada uno). */
+  /**
+   * N de la media por posición de decena: últimos N meses reales (la misma decena del mes en cada uno). H7-REAL-8
+   * (decisión de Pío, 25/11/2026): 12. Toda media: de categoría, «media del resto», por concepto y frente a vencimientos.
+   */
   meses_media: number;
   /**
    * H7-REAL-5: los vencimientos del sistema de un concepto son un MÍNIMO (solo existen para facturas ya recibidas): en
@@ -78,7 +81,7 @@ export interface ConfigCashflow {
   estados_importacion_ok: readonly string[];
 }
 export const CONFIG_CASHFLOW: ConfigCashflow = {
-  meses_media: 3,
+  meses_media: 12,
   vencimientos_como_minimo: true,
   dias_importacion_antigua: 5,
   saldo_minimo: 0,
@@ -103,15 +106,16 @@ export const CONCEPTO_VACIO = 'Sin concepto';
 export const TOLERANCIA_CUADRE_POR_IMPORTE = 0.005;
 export const TEXTO_POSIBLE_DUPLICADO = 'posible duplicado o diferencia';
 
-/** Orden de prioridad de la previsión de una decena futura (MANUAL: hueco preparado, sin datos todavía). */
+/**
+ * Orden de la previsión de una decena futura (MANUAL: hueco preparado, sin datos todavía). H7-REAL-8: la previsión base
+ * es la primera de MANUAL, EXCEL y MEDIA; los VENCIMIENTOS no van primero: se comparan con ella y gana el mayor en valor
+ * absoluto (vencimientos como mínimo).
+ */
 export const ORDEN_PRIORIDAD = ['VENCIMIENTOS', 'MANUAL', 'EXCEL', 'MEDIA'] as const;
 /** Cómo se estima una categoría sin nada en la decena: media por posición o, en los modelos trimestrales, año anterior. */
 export type ReglaEstimacion = 'POSICION' | 'ANIO_ANTERIOR';
-export type Eleccion = 'media' | 'excel';
-export type Elecciones = Readonly<Record<string, Eleccion>>;
-export const ELECCION_POR_DEFECTO: Eleccion = 'media';
-/** Concepto de la línea que lleva la media (no viene del Excel). */
-export const CONCEPTO_MEDIA = 'Media calculada';
+// H7-REAL-9: ya no hay selector «Media / Excel» por categoría (la regla Excel frente a media aplica siempre) ni línea de
+// «Media calculada» de categoría (cada concepto lleva su media en su línea).
 
 /** Categoría donde se crea la línea de un proveedor del sistema que el Excel no tiene. */
 export const CATEGORIA_PROVEEDORES = 'RS Proveedores';
@@ -125,9 +129,79 @@ export const CORRESPONDENCIAS_PROVEEDOR: readonly { conceptos: readonly string[]
   { conceptos: ['COFARES'], comercial: 'COFARES' },
   { conceptos: ['FEDERACIÓ', 'FEDERACIO', 'FEDEFARMA'], comercial: 'FEDEFARMA' },
   { conceptos: ['LOGISTA'], comercial: 'LOGISTA PHARMA' },
+  // H7-REAL-7 (decisión de Pío, 25/11/2026): JNTL CONSUMER y JHONSON & JHONSON quedan como KENVUE (CONCEPTOS_EQUIVALENTES);
+  // los vencimientos del sistema con nombre comercial KENVUE van a esa línea (proveedor_comercial.ts).
+  { conceptos: ['KENVUE'], comercial: 'KENVUE' },
 ];
 
 const normal = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toUpperCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * H7-REAL-7 y H7-REAL-8 (decisiones de Pío, 25/11/2026): conceptos del Excel que son el mismo proveedor con otro nombre.
+ * Único punto. Al leer los importes (real, Excel y, por tanto, media) se suman bajo `queda`, por cuenta y decena. Se
+ * comparan sin mayúsculas, acentos ni espacios dobles. Un nombre truncado («…» al final) es un PREFIJO, tanto en el
+ * alias como en el nombre que queda; el que queda es entonces el texto completo del Excel. Si un prefijo coincide con
+ * ningún nombre o con más de uno distinto, ese par no se fusiona (falla cerrado) y se cuenta (resolverEquivalencias).
+ */
+export const CONCEPTOS_EQUIVALENTES: readonly { alias: string; queda: string }[] = [
+  // H7-REAL-7
+  { alias: 'JNTL CONSUMER (ORALDI…', queda: 'KENVUE' },
+  { alias: 'JHONSON & JHONSON', queda: 'KENVUE' },
+  // H7-REAL-8
+  { alias: 'PROTECTFARMA', queda: 'PROTECFARMA' },
+  { alias: 'SM NATURAL (SOLARAY)', queda: 'SOLARAY' },
+  { alias: 'LAB. VILARDELL (NO USAR)', queda: 'LAB. VILARDELL' },
+  { alias: 'BIODERMA (NAOS)', queda: 'BIODERMA' },
+  { alias: 'DERMOFARM (CUMLAUDE)', queda: 'CUMLAUDE' },
+  { alias: 'DERMOPHARMACIE I PERF…', queda: 'DERMOFARMACIA PERFUM…' },
+  { alias: 'AREAFAR (ENNA CYCLE)', queda: 'AREAFAR' },
+  { alias: 'EXPOFARM CREU, CASH', queda: 'EXPOFARM' },
+  { alias: 'PEROXIDOS', queda: 'PEROXFARMA' },
+];
+/** Equivalencias resueltas contra los conceptos del Excel: texto del Excel → nombre que queda, y pares no fusionados. */
+export interface EquivalenciasResueltas {
+  mapa: ReadonlyMap<string, string>;
+  /** Pares con algún prefijo que coincide con más de un nombre distinto (no se fusionan). */
+  ambiguas: number;
+  /** Pares con algún prefijo que no coincide con ningún nombre (no se fusionan). */
+  sin_coincidencia: number;
+}
+const TRUNCADO = /(…|\.\.\.)$/;
+/**
+ * Resuelve CONCEPTOS_EQUIVALENTES contra los conceptos presentes. Nombre exacto: el que coincide (sin mayúsculas ni
+ * acentos); si el que queda está en el Excel con otra grafía, se usa la del Excel (misma línea). Prefijo: exactamente un
+ * nombre distinto o el par no se fusiona.
+ */
+export function resolverEquivalencias(conceptos: Iterable<string>, tabla: typeof CONCEPTOS_EQUIVALENTES = CONCEPTOS_EQUIVALENTES): EquivalenciasResueltas {
+  const porNormal = new Map<string, string[]>();
+  for (const c of new Set(conceptos)) porNormal.set(normal(c), [...(porNormal.get(normal(c)) ?? []), c]);
+  const candidatos = (patron: string) => {
+    const prefijo = TRUNCADO.test(patron);
+    const p = normal(patron.replace(TRUNCADO, ''));
+    return { prefijo, nombres: [...porNormal.keys()].filter((n) => (prefijo ? n.startsWith(p) : n === p)) };
+  };
+  const mapa = new Map<string, string>();
+  let ambiguas = 0;
+  let sinCoincidencia = 0;
+  for (const e of tabla) {
+    const a = candidatos(e.alias);
+    const q = candidatos(e.queda);
+    const fallos = [a, q].filter((x) => x.prefijo);
+    if (fallos.some((x) => x.nombres.length > 1)) { ambiguas += 1; continue; }
+    if (fallos.some((x) => x.nombres.length === 0)) { sinCoincidencia += 1; continue; }
+    // Nombre que queda: el texto del Excel (truncado o con otra grafía); si no está, el de la tabla.
+    const queda = q.nombres.length === 1 ? (porNormal.get(q.nombres[0]) as string[])[0] : e.queda;
+    for (const n of a.nombres) {
+      if (n === normal(queda)) continue;
+      for (const original of porNormal.get(n) ?? []) mapa.set(original, queda);
+    }
+  }
+  return { mapa, ambiguas, sin_coincidencia: sinCoincidencia };
+}
+/** Nombre que queda para un concepto del Excel (el mismo si no tiene equivalencia), dentro de `universo` (sus conceptos). */
+export function conceptoEquivalente(concepto: string, universo: Iterable<string> = [concepto]): string {
+  return resolverEquivalencias([concepto, ...universo]).mapa.get(concepto) ?? concepto;
+}
 /** Nombre comercial del sistema para un concepto del Excel (null = sin correspondencia). */
 export function comercialDeConcepto(concepto: string): string | null {
   const n = normal(concepto);
@@ -416,6 +490,13 @@ export interface Celda {
   media: DesgloseMedia | null;
   /** Vencimientos y Excel distintos (o no comparables): «posible duplicado o diferencia». */
   diferencia: boolean;
+  /**
+   * H7-REAL-8: con vencimientos, la otra cifra de la comparación (la que perdió): los vencimientos si ganó la previsión
+   * base (apunte, Excel o media) y la previsión base si ganaron los vencimientos. null = sin comparación.
+   */
+  comparada: { fuente: 'VENCIMIENTOS' | 'MANUAL' | 'EXCEL' | 'MEDIA'; importe: number } | null;
+  /** H7-REAL-9: Excel y media del concepto en la misma decena (gana el mayor en valor absoluto). null = no hubo los dos. */
+  frente: { excel: number; media: number } | null;
   /** Importes desconocidos (null) de la celda. */
   desconocidos: number;
   /** Consolidado: celdas de cada cuenta. */
@@ -429,6 +510,8 @@ export interface Linea {
   clase: ClaseMovimiento;
   /** Línea de la media (no viene del Excel). */
   media: boolean;
+  /** H7-REAL-7: conceptos del Excel sumados en esta línea por CONCEPTOS_EQUIVALENTES (vacío = ninguno). */
+  incluye: string[];
   celdas: Record<string, Celda>;
 }
 export interface ResumenDecena {
@@ -528,9 +611,10 @@ export interface ResultadoCashflow {
   avisos: AvisoCashflow[];
   importacion: EstadoImportacion;
   fuera: FueraDeCashflow;
-  elecciones: Record<string, Eleccion>;
-  /** Categorías con alguna cifra estimada (media o año anterior) en alguna cuenta: llevan «Media / Excel». */
+  /** Categorías con alguna cifra estimada (media o año anterior) en alguna cuenta. */
   categorias_media: string[];
+  /** H7-REAL-8: equivalencias de concepto: filas sumadas bajo otro nombre (por cuenta) y pares no fusionados (suma de las cuentas). */
+  equivalencias: { filas: Record<string, number>; ambiguas: number; sin_coincidencia: number };
 }
 
 // ---------------------------------------------------------------------------
@@ -586,9 +670,13 @@ export function estadoImportacion(imps: readonly ImportacionCashflow[], hoy: str
 // ---------------------------------------------------------------------------
 
 const claveLinea = (categoria: string, concepto: string) => `${categoria}\u0000${concepto}`;
-const NEUTRO = { vencimientos: null, media: null, diferencia: false, desconocidos: 0, partes: [] } as const;
+const NEUTRO = { vencimientos: null, media: null, diferencia: false, desconocidos: 0, partes: [], comparada: null, frente: null } as const;
 
-interface Valida extends Omit<ImporteCashflow, 'concepto'> { cuenta: CuentaCashflow; concepto: string; sentido: SentidoMovimiento; clase: ClaseMovimiento }
+interface Valida extends Omit<ImporteCashflow, 'concepto'> {
+  cuenta: CuentaCashflow; concepto: string; sentido: SentidoMovimiento; clase: ClaseMovimiento;
+  /** H7-REAL-7: concepto tal como viene del Excel, si una equivalencia lo ha cambiado (null = el mismo). */
+  alias: string | null;
+}
 
 /**
  * Estimación de una categoría en una decena futura (c y d de la previsión), con los totales reales de la categoría por
@@ -659,8 +747,7 @@ function ordenarLineas(ls: Linea[]): Linea[] {
 /** Calcula las vistas, los avisos y lo que queda fuera. `decenas`: horizonte (por defecto, el de los datos y las vistas). */
 export function calcularCashflow(
   dto: Pick<CashflowDTO, 'hoy' | 'importaciones' | 'cuentas' | 'importes' | 'saldos' | 'vencimientos'> & Partial<Pick<CashflowDTO, 'otras_cuentas'>>
-    & { config?: ConfigCashflow; apuntes_manuales?: readonly ApunteManualCashflow[] },
-  elecciones: Elecciones = {}): ResultadoCashflow {
+    & { config?: ConfigCashflow; apuntes_manuales?: readonly ApunteManualCashflow[] }): ResultadoCashflow {
   const config = dto.config ?? CONFIG_CASHFLOW;
   const hoy = dto.hoy;
   // Cuentas: solo PIO y RITA, y solo si figuran en cf_cashflow_cuentas (falla cerrado).
@@ -684,13 +771,23 @@ export function calcularCashflow(
   };
   const validas: Valida[] = [];
   const noReconocidas = new Set<string>();
-  for (const f0 of deVigente(dto.importes)) {
+  const importesVigente = deVigente(dto.importes);
+  // H7-REAL-7/8: equivalencias resueltas contra los conceptos de cada cuenta (su hoja del Excel) en la importación
+  // vigente; un prefijo ambiguo o sin coincidencia deja ese par sin fusionar en esa cuenta (falla cerrado).
+  const equivalenciasDe = new Map<string, EquivalenciasResueltas>();
+  for (const c of CUENTAS_CASHFLOW) {
+    equivalenciasDe.set(c, resolverEquivalencias(importesVigente.filter((f) => f.cuenta === c).flatMap((f) => (f.concepto === null ? [] : [f.concepto]))));
+  }
+  const mapaDe = (cuenta: string) => equivalenciasDe.get(cuenta)?.mapa ?? new Map<string, string>();
+  for (const f0 of importesVigente) {
     const f = { ...f0, concepto: f0.concepto ?? CONCEPTO_VACIO };
     if (!esCuenta(f.cuenta)) { fuera.filas_otras_cuentas += 1; continue; }
     if (!esDecenaInicio(f.decena_inicio) || f.decena_fin !== finDecena(f.decena_inicio)) { fuera.filas_decena_no_valida += 1; continue; }
     const c = claseMovimiento(f.cuenta, f.categoria, f0.concepto);
     if (c === null) { fuera.filas_no_reconocidas += 1; noReconocidas.add(f.categoria); continue; }
-    validas.push({ ...f, cuenta: f.cuenta, ...c });
+    // H7-REAL-7: equivalencias de concepto al leer (la clase ya se ha decidido con el concepto del Excel).
+    const queda = mapaDe(f.cuenta).get(f.concepto) ?? f.concepto;
+    validas.push({ ...f, cuenta: f.cuenta, ...c, concepto: queda, alias: queda === f.concepto ? null : f.concepto });
   }
   fuera.categorias_no_reconocidas = [...noReconocidas].sort();
   const saldosVigente = deVigente(dto.saldos);
@@ -711,7 +808,6 @@ export function calcularCashflow(
   const base = { decena: null, hasta: null, cuenta: null, cubre: null, importe: null, devolucion: null, decenas: [], incompleto: false };
   avisos.push(...imp.avisos);
 
-  const eleccionDe = (cat: string): Eleccion => elecciones[cat] ?? ELECCION_POR_DEFECTO;
   const vistas = {} as Record<VistaCuenta, ResultadoVista>;
   const categoriasMedia = new Set<string>();
 
@@ -732,13 +828,19 @@ export function calcularCashflow(
     const linea = (categoria: string, concepto: string, sentido: SentidoMovimiento, clase: ClaseMovimiento, media = false): Linea => {
       const k = claveLinea(categoria, concepto);
       let l = lineas.get(k);
-      if (!l) { l = { clave: k, categoria, concepto, sentido, clase, media, celdas: {} }; lineas.set(k, l); }
+      if (!l) { l = { clave: k, categoria, concepto, sentido, clase, media, incluye: [], celdas: {} }; lineas.set(k, l); }
       return l;
     };
     const grupos = new Map<string, Valida[]>();
     for (const f of filas) {
       const k = `${claveLinea(f.categoria, f.concepto)}\u0000${f.decena_inicio}`;
       grupos.set(k, [...(grupos.get(k) ?? []), f]);
+    }
+    // H7-REAL-7: conceptos del Excel fusionados en cada línea (para el desglose: «incluye: …»).
+    for (const f of filas) {
+      if (f.alias === null) continue;
+      const l = linea(f.categoria, f.concepto, f.sentido, f.clase);
+      if (!l.incluye.includes(f.alias)) l.incluye = [...l.incluye, f.alias].sort((a, b) => a.localeCompare(b, 'es'));
     }
     for (const g of grupos.values()) {
       const f = g[0];
@@ -751,7 +853,64 @@ export function calcularCashflow(
       };
     }
 
-    // a) Vencimientos del sistema (solo PIO; RITA solo con datos bancarios).
+    // a) Apuntes manuales (hueco preparado, sin datos todavía): sustituyen al Excel de su concepto y decena. Solo decenas
+    // futuras (lo real es el Excel). H7-REAL-8: van antes que los vencimientos, que se comparan con ellos (b).
+    for (const a of dto.apuntes_manuales ?? []) {
+      if (a.cuenta !== cuenta || !esDecenaInicio(a.decena_inicio) || esReal(a.decena_inicio) || ultimaReal === null) continue;
+      const c = claseMovimiento(cuenta, a.categoria, a.concepto);
+      if (c === null) { fuera.filas_no_reconocidas += 1; noReconocidas.add(a.categoria); continue; }
+      const l = linea(a.categoria, a.concepto === null ? CONCEPTO_VACIO : mapaDe(cuenta).get(a.concepto) ?? a.concepto, c.sentido, c.clase);
+      const previa = l.celdas[a.decena_inicio];
+      const s = sumar([...(previa?.fuente === 'MANUAL' ? [previa.importe] : []), a.importe === null ? null : eur(cent(signo(c) * a.importe))]);
+      l.celdas[a.decena_inicio] = {
+        ...NEUTRO, partes: [], cuenta, decena: a.decena_inicio, real: false, fuente: 'MANUAL', importe: s.suma, en_saldo: true,
+        excel: previa?.excel ?? null, excel_filas: previa?.excel_filas ?? 0, desconocidos: (previa?.fuente === 'MANUAL' ? previa.desconocidos : 0) + s.desconocidos,
+      };
+    }
+
+    // b) H7-REAL-9 (decisión de Pío, 25/11/2026): previsión base POR CONCEPTO en cada decena futura. El apunte manual manda;
+    // si no, gana el mayor en valor absoluto entre el Excel y la media del concepto (últimos N meses reales, misma
+    // posición de decena; «RS Modelo …»: el mismo mes del año anterior); sin Excel, la media; sin historia, el Excel.
+    // Cada concepto lleva su propia media en su línea (no hay media de categoría: todo lo real tiene concepto), así que
+    // un concepto anotado no deja sin media a los demás de su categoría, y nada se cuenta dos veces. Traspasos internos:
+    // nunca (neutros). El Excel con importe desconocido no se compara (cuenta como desconocido).
+    if (ultimaReal !== null) {
+      const primera = primeraCuenta ?? ultimaReal;
+      const conceptos = new Map<string, Valida>();
+      for (const f of filas) if (!conceptos.has(claveLinea(f.categoria, f.concepto))) conceptos.set(claveLinea(f.categoria, f.concepto), f);
+      for (const [k, f0] of conceptos) {
+        if (f0.clase === 'TRASPASO') continue;
+        const regla: ReglaEstimacion | null = f0.clase === 'TRASPASO_EXTERNO' ? 'POSICION' : reglaEstimacion(f0.categoria);
+        const l = lineas.get(k);
+        if (regla === null || !l) continue;
+        const porDecena = new Map<string, { c: number; sin_importe: number }>();
+        for (const f of filas) {
+          if (f.categoria !== f0.categoria || f.concepto !== f0.concepto || !esReal(f.decena_inicio)) continue;
+          const x = porDecena.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
+          if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
+          porDecena.set(f.decena_inicio, x);
+        }
+        for (const d of decenas) {
+          if (esReal(d)) continue;
+          const previa = l.celdas[d];
+          if (previa?.fuente === 'MANUAL') continue;
+          const m0 = estimarCategoria(regla, d, porDecena, primera, ultimaReal, config);
+          const media = m0 !== null && m0.media !== null && cent(m0.media) !== 0 ? m0 : null;
+          if (media === null) continue;
+          if (previa === undefined) {
+            l.celdas[d] = { ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe: media.media, en_saldo: true, excel: null, excel_filas: 0, media };
+          } else if (previa.importe !== null) {
+            const frente = { excel: previa.importe, media: media.media as number };
+            l.celdas[d] = Math.abs(cent(frente.media)) > Math.abs(cent(frente.excel))
+              ? { ...previa, fuente: 'MEDIA', importe: frente.media, media, frente }
+              : { ...previa, media, frente };
+          }
+          categoriasMedia.add(l.categoria);
+        }
+      }
+    }
+
+    // c) Vencimientos del sistema (solo PIO; RITA solo con datos bancarios).
     if (cuenta === CUENTA_VENCIMIENTOS) {
       const porClave = new Map<string, VencimientoCashflow[]>();
       for (const v of dto.vencimientos) {
@@ -780,124 +939,20 @@ export function calcularCashflow(
         const importe = dv.neto === null ? null : eur(cent(signo(l) * dv.neto));
         const excel = previa?.excel ?? null;
         const diferencia = previa !== undefined && previa.excel_filas > 0 && (importe === null || excel === null || !mismoImporte(importe, excel));
-        // H7-REAL-5: los vencimientos son un mínimo (solo de facturas ya recibidas): si la media del concepto en esa
-        // posición de decena (últimos N meses reales) es mayor en valor absoluto, cuenta la media (marca «m»; el desglose
-        // enseña los vencimientos conocidos). Con «Excel» en la categoría, o con el neto desconocido, los vencimientos.
-        let media: DesgloseMedia | null = null;
-        if (config.vencimientos_como_minimo && importe !== null && eleccionDe(l.categoria) === 'media' && ultimaReal !== null && primeraCuenta !== null) {
-          const pd = new Map<string, { c: number; sin_importe: number }>();
-          for (const f of filas) {
-            if (f.categoria !== l.categoria || !esReal(f.decena_inicio) || !mismoConcepto(f.concepto, l.concepto)) continue;
-            const x = pd.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
-            if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
-            pd.set(f.decena_inicio, x);
-          }
-          const m = estimarCategoria('POSICION', d, pd, primeraCuenta, ultimaReal, config);
-          if (m !== null && m.media !== null && Math.abs(cent(m.media)) > Math.abs(cent(importe))) media = m;
-        }
-        l.celdas[d] = {
-          ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: media ? 'MEDIA' : 'VENCIMIENTOS', importe: media ? media.media : importe, en_saldo: true,
-          excel, excel_filas: previa?.excel_filas ?? 0, vencimientos: dv, media, diferencia, desconocidos: media ? 0 : dv.sin_importe,
-        };
-      }
-    }
-
-    // a') Apuntes manuales (hueco preparado, sin datos todavía): sustituyen al Excel de su concepto y decena; los
-    // vencimientos mandan sobre ellos. Solo decenas futuras (lo real es el Excel).
-    for (const a of dto.apuntes_manuales ?? []) {
-      if (a.cuenta !== cuenta || !esDecenaInicio(a.decena_inicio) || esReal(a.decena_inicio) || ultimaReal === null) continue;
-      const c = claseMovimiento(cuenta, a.categoria, a.concepto);
-      if (c === null) { fuera.filas_no_reconocidas += 1; noReconocidas.add(a.categoria); continue; }
-      const l = linea(a.categoria, a.concepto ?? CONCEPTO_VACIO, c.sentido, c.clase);
-      const previa = l.celdas[a.decena_inicio];
-      if (previa?.vencimientos) continue; // los vencimientos mandan (también si ganó la media)
-      const s = sumar([...(previa?.fuente === 'MANUAL' ? [previa.importe] : []), a.importe === null ? null : eur(cent(signo(c) * a.importe))]);
-      l.celdas[a.decena_inicio] = {
-        ...NEUTRO, partes: [], cuenta, decena: a.decena_inicio, real: false, fuente: 'MANUAL', importe: s.suma, en_saldo: true,
-        excel: previa?.excel ?? null, excel_filas: previa?.excel_filas ?? 0, desconocidos: (previa?.fuente === 'MANUAL' ? previa.desconocidos : 0) + s.desconocidos,
-      };
-    }
-
-    // c) y d) Estimación de cada categoría (menos traspasos) en las decenas futuras sin nada (ni vencimientos, ni apunte
-    // manual, ni Excel): media de la misma posición de decena en los últimos N meses reales; «RS Modelo …», año anterior.
-    if (ultimaReal !== null) {
-      const primera = primeraCuenta ?? ultimaReal;
-      const categorias = new Map<string, Valida>();
-      for (const f of filas) if (!categorias.has(f.categoria)) categorias.set(f.categoria, f);
-      for (const [cat, f0] of categorias) {
-        const regla = reglaEstimacion(cat);
-        if (regla === null) continue;
-        const porDecena = new Map<string, { c: number; sin_importe: number }>();
-        for (const f of filas) {
-          if (f.categoria !== cat || !esReal(f.decena_inicio)) continue;
-          const x = porDecena.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
-          if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
-          porDecena.set(f.decena_inicio, x);
-        }
-        // Conceptos con cifra prevista (a, a' o b) en cada decena.
-        const previstos = new Map<string, Set<string>>();
-        let conVencimientos = false;
-        for (const l of lineas.values()) {
-          if (l.categoria !== cat || l.media) continue;
-          for (const [d, c] of Object.entries(l.celdas)) {
-            if (c.real) continue;
-            if (c.vencimientos !== null) conVencimientos = true; // también si ganó la media (H7-REAL-5)
-            previstos.set(d, (previstos.get(d) ?? new Set<string>()).add(l.concepto));
-          }
-        }
-        // H7-REAL-3 (decisión de Marc): en una categoría con vencimientos del sistema, la prioridad va POR CONCEPTO: lo
-        // previsto (vencimientos, apunte o Excel) sustituye solo a su concepto y el resto lleva la media de la categoría
-        // calculada sin esos conceptos (sin doble cómputo). Sin vencimientos: por categoría (cualquier cifra = sin media).
-        const sinConceptos = (excluir: readonly string[]) => {
-          if (excluir.length === 0) return porDecena;
-          const m = new Map<string, { c: number; sin_importe: number }>();
-          for (const f of filas) {
-            if (f.categoria !== cat || !esReal(f.decena_inicio) || excluir.some((x) => mismoConcepto(x, f.concepto))) continue;
-            const x = m.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
-            if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
-            m.set(f.decena_inicio, x);
-          }
-          return m;
-        };
-        const usar = eleccionDe(cat) === 'media';
-        let lm: Linea | null = null;
-        for (const d of decenas) {
-          if (esReal(d)) continue;
-          const excluir = [...(previstos.get(d) ?? [])].sort();
-          if (excluir.length > 0 && !conVencimientos) continue;
-          const m0 = estimarCategoria(regla, d, sinConceptos(excluir), primera, ultimaReal, config);
-          const m = m0 === null ? null : { ...m0, excluidos: excluir };
-          if (m === null || m.media === null || cent(m.media) === 0) continue;
-          lm ??= linea(cat, CONCEPTO_MEDIA, f0.sentido, f0.clase, true);
-          lm.celdas[d] = { ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe: m.media, en_saldo: usar, excel: null, excel_filas: 0, media: m };
-        }
-        if (lm !== null) categoriasMedia.add(cat);
-      }
-
-      // H7-REAL-4: traspasos externos (SL, fondos, valores…), POR CONCEPTO: lo anotado (Excel o apunte) y, si no hay,
-      // la media de ese concepto en la misma posición de decena, en su misma línea. Los internos, nunca (neutros).
-      const externos = new Map<string, Valida>();
-      for (const f of filas) if (f.clase === 'TRASPASO_EXTERNO' && !externos.has(claveLinea(f.categoria, f.concepto))) externos.set(claveLinea(f.categoria, f.concepto), f);
-      for (const [k, f0] of externos) {
-        const l = lineas.get(k);
-        if (!l) continue;
-        const porDecena = new Map<string, { c: number; sin_importe: number }>();
-        for (const f of filas) {
-          if (f.categoria !== f0.categoria || f.concepto !== f0.concepto || !esReal(f.decena_inicio)) continue;
-          const x = porDecena.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
-          if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
-          porDecena.set(f.decena_inicio, x);
-        }
-        const usar = eleccionDe(f0.categoria) === 'media';
-        let alguna = false;
-        for (const d of decenas) {
-          if (esReal(d) || l.celdas[d] !== undefined) continue; // sin doble cómputo: lo anotado manda
-          const m = estimarCategoria('POSICION', d, porDecena, primera, ultimaReal, config);
-          if (m === null || m.media === null || cent(m.media) === 0) continue;
-          l.celdas[d] = { ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe: m.media, en_saldo: usar, excel: null, excel_filas: 0, media: m };
-          alguna = true;
-        }
-        if (alguna) categoriasMedia.add(f0.categoria);
+        // H7-REAL-8/9: previsión base del concepto en esa decena (b: apunte manual, o el mayor entre Excel y media). Los
+        // vencimientos (solo de facturas ya recibidas) se comparan con ella: gana el mayor en valor absoluto (a igualdad,
+        // los vencimientos). Con el neto o la base desconocidos no se puede comparar: los vencimientos.
+        const base = previa !== undefined && previa.importe !== null && (previa.fuente === 'MANUAL' || previa.fuente === 'EXCEL' || previa.fuente === 'MEDIA')
+          ? { fuente: previa.fuente, importe: previa.importe } : null;
+        const ganaBase = config.vencimientos_como_minimo && importe !== null && base !== null && Math.abs(cent(base.importe)) > Math.abs(cent(importe));
+        l.celdas[d] = ganaBase && previa !== undefined
+          ? { ...previa, vencimientos: dv, diferencia, desconocidos: 0, comparada: { fuente: 'VENCIMIENTOS', importe: importe as number } }
+          : {
+            ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'VENCIMIENTOS', importe, en_saldo: true,
+            excel, excel_filas: previa?.excel_filas ?? 0, vencimientos: dv, media: previa?.media ?? null, frente: previa?.frente ?? null,
+            diferencia, desconocidos: dv.sin_importe,
+            comparada: base === null || !config.vencimientos_como_minimo ? null : { fuente: base.fuente, importe: base.importe },
+          };
       }
     }
 
@@ -969,6 +1024,7 @@ export function calcularCashflow(
       if (l.clase === 'TRASPASO') continue;
       let lc = lineasC.get(l.clave);
       if (!lc) { lc = { ...l, celdas: {} }; lineasC.set(l.clave, lc); }
+      lc.incluye = [...new Set([...lc.incluye, ...l.incluye])].sort((a, b) => a.localeCompare(b, 'es'));
       for (const [d, c] of Object.entries(l.celdas)) {
         const prev = lc.celdas[d];
         const partes = [...(prev?.partes ?? []), c];
@@ -983,6 +1039,7 @@ export function calcularCashflow(
           excel: sumaOnull(partes.map((p) => p.excel).filter((x) => x !== null)), excel_filas: partes.reduce((a, p) => a + p.excel_filas, 0),
           diferencia: partes.some((p) => p.diferencia), desconocidos: cuentan.reduce((a, p) => a + p.desconocidos, 0), partes,
           media: partes.find((p) => p.media)?.media ?? null, vencimientos: partes.find((p) => p.vencimientos)?.vencimientos ?? null,
+          comparada: partes.find((p) => p.comparada)?.comparada ?? null, frente: partes.length === 1 ? partes[0].frente : null,
         };
       }
     }
@@ -1020,8 +1077,12 @@ export function calcularCashflow(
   fuera.categorias_no_reconocidas = [...noReconocidas].sort();
   return {
     hoy, decenas, vistas, avisos, importacion: imp.estado, fuera,
-    elecciones: Object.fromEntries([...categoriasMedia].map((c) => [c, eleccionDe(c)])),
     categorias_media: [...categoriasMedia].sort(),
+    equivalencias: {
+      filas: Object.fromEntries(cuentas.map((c) => [c, validas.filter((f) => f.cuenta === c && f.alias !== null).length])),
+      ambiguas: cuentas.reduce((a, c) => a + (equivalenciasDe.get(c)?.ambiguas ?? 0), 0),
+      sin_coincidencia: cuentas.reduce((a, c) => a + (equivalenciasDe.get(c)?.sin_coincidencia ?? 0), 0),
+    },
   };
 }
 
@@ -1044,7 +1105,11 @@ function avisosSaldo(vistas: Record<VistaCuenta, ResultadoVista>, cuentas: reado
     return eps;
   };
   const C = vistas.CONSOLIDADO;
-  const previstas = decenas.filter((d) => !C.decenas[d].real && C.decenas[d].saldo !== null);
+  // H7-REAL-7: solo dentro del horizonte mostrado, el mismo que el indicador: los 12 meses previstos tras la última
+  // decena real (antes salían avisos hasta el final de los datos del Excel).
+  const finHorizonte = C.ultima_real === null ? null : moverDecena(C.ultima_real, 3 * MESES_INDICADOR);
+  const enHorizonte = (d: string) => finHorizonte !== null && d <= finHorizonte;
+  const previstas = decenas.filter((d) => !C.decenas[d].real && C.decenas[d].saldo !== null && enHorizonte(d));
   const rojas = previstas.filter((d) => (C.decenas[d].saldo as number) < min);
   for (const ep of episodios(rojas.map((d) => ({ decena: d, importe: eur(cent(min) - cent(C.decenas[d].saldo as number)), incompleto: C.decenas[d].incompleto })))) {
     const mayor = Math.max(...ep.map((x) => x.importe));
@@ -1063,7 +1128,7 @@ function avisosSaldo(vistas: Record<VistaCuenta, ResultadoVista>, cuentas: reado
       .map((d) => ({ decena: d, importe: eur(cent(min) - cent(A.decenas[d].saldo as number)), incompleto: A.decenas[d].incompleto }));
     for (const ep of episodios(marcas)) {
       const fin = ep[ep.length - 1].decena;
-      const devolucion = decenas.find((d) => d > fin && A.decenas[d].saldo !== null && (A.decenas[d].saldo as number) >= min) ?? null;
+      const devolucion = decenas.find((d) => d > fin && enHorizonte(d) && A.decenas[d].saldo !== null && (A.decenas[d].saldo as number) >= min) ?? null;
       const mayor = Math.max(...ep.map((x) => x.importe));
       out.push({
         tipo: 'naranja', codigo: 'CUENTA_CUBIERTA', decena: ep[0].decena, hasta: fin, cuenta: a, cubre: b, importe: mayor, devolucion,

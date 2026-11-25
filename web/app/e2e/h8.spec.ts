@@ -81,6 +81,31 @@ test.describe('PC 1440', () => {
     await expect(page).toHaveURL(new RegExp(`/facturas/${F(6)}$`));
   });
 
+  test('H8-5: R21 (F05) y R22 (F04) con su etiqueta legible en el detalle; las dos facturas están en Conciliación', async ({ page }) => {
+    await page.goto('/conciliacion');
+    await expect(page.locator('[data-revisar-noche]')).toBeVisible();
+    for (const [n, clave, texto] of [[5, 'R21:COMPLEMENTARIOS', 'Albarán con complementarios de la misma recepción'], [4, 'R22:ANULADO', 'Cargo anulado por su abono (neto 0)']] as const) {
+      await abrirDetalle(page, n);
+      const alb = page.locator('[data-seccion="albaranes"]');
+      await expect(alb.locator(`[data-casado="${clave}"]`)).toHaveCount(1);
+      await expect(alb.locator(`[data-casado="${clave}"]`)).toHaveText(texto);
+      await expect(alb.locator('[data-regla-desconocida]')).toHaveCount(0);
+      await alb.locator(`[data-casado="${clave}"]`).scrollIntoViewIfNeeded();
+      await page.screenshot({ path: join(CAPTURAS, `pc1440_${clave.slice(0, 3).toLowerCase()}_detalle.png`) });
+    }
+    // Código de regla desconocido: el código tal cual, sin fallar (respuesta de FIXTURES modificada en el navegador).
+    await page.route('**/api/facturas/*', async (r) => {
+      const res = await r.fetch();
+      const j = (await res.json()) as { lineas?: Record<string, unknown>[] };
+      if (Array.isArray(j.lineas)) j.lineas = j.lineas.map((l) => (l.regla === 'R21' ? { ...l, regla: 'R99' } : l));
+      await r.fulfill({ response: res, json: j });
+    });
+    await abrirDetalle(page, 5);
+    const alb = page.locator('[data-seccion="albaranes"]');
+    await expect(alb.locator('[data-regla-desconocida="R99"]')).toHaveText('R99');
+    await expect(alb.locator('[data-casado="R21:COMPLEMENTARIOS"]')).toHaveCount(0);
+  });
+
   test('Inicio: solo recuento y enlace (naranja); no suma en «Necesita tu atención»', async ({ page }) => {
     await page.goto('/');
     const r = page.locator('[data-revisar-noche-inicio]');

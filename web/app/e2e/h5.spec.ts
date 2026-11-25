@@ -318,7 +318,9 @@ test.describe('Detalle PC 1440', () => {
     await expect(mov.locator('[data-encabezado="mov-base"]')).toContainText('sin IVA');
 
     await abrirDetalle(page, 5);
-    await expect(page.locator('[data-casado="HEFAME:EXACTO_ECONOMICO"]')).toHaveCount(3);
+    // H8-5: la línea 3 de F05 lleva ahora la regla R21 (etiqueta propia).
+    await expect(page.locator('[data-casado="HEFAME:EXACTO_ECONOMICO"]')).toHaveCount(2);
+    await expect(page.locator('[data-casado="R21:COMPLEMENTARIOS"]')).toHaveCount(1);
     // H5-7 Hefame: importe del PDF = base neta (rotulado); estado y diferencia del motor tal cual, con advertencia visible.
     const HEFAME = 'El motor compara la base neta del PDF (sin IVA) con el importe de Farmatic (con IVA): la diferencia incluye el IVA y el recargo';
     await expect(page.locator('[data-encabezado="pdf"]')).toHaveText(/base neta sin IVA \(Hefame\)/);

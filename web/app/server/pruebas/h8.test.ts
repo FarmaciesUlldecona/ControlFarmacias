@@ -5,7 +5,7 @@ import {
   CONSULTAS, CONSULTAS_CHECK, CONSULTAS_POR_BLOQUE, ETIQUETAS_ESTADO_MATCHING, OBJETOS_PERMITIDOS, construirRevisarNoche,
   formatoDiferenciaNoche, resumenCasado, type DocumentoPdf, type FacturaResumen, type LineaConciliacion,
 } from '../contrato.ts';
-import { claveCasado, esR20, importeFarmaticLinea, lineasConDiferencia, numerosR20, tipoCasado, textoEstadoMatching } from '../detalle.ts';
+import { claveCasado, codigoReglaDesconocido, esR20, importeFarmaticLinea, lineasConDiferencia, numerosR20, tipoCasado, textoEstadoMatching } from '../detalle.ts';
 import { COLUMNAS_NOCHE, NOMBRES_DIAGNOSTICO, resumenNoche } from '../adaptador_real.ts';
 
 const FA = 'f0000000-0000-4000-8000-0000000000a1';
@@ -25,6 +25,36 @@ function linea(extra: Partial<LineaConciliacion>): LineaConciliacion {
 const exacto = linea({ detalle_id: 'a', orden: 1 });
 const variante = linea({ detalle_id: 'b', orden: 2, papel_r20: 'LETRA_FINAL', clase_numero: 'LETRA_FINAL', coincidencia_numero_literal: false,
   numero_albaran_farmatic: '08D79747', albaran_id_contador: 2, importe_puc: 40, importe_farmatic: 40, importe_aplicado: 40 });
+
+describe('H8-5: etiquetas de R21 y R22; código de regla desconocido', () => {
+  test('R21 «Albarán con complementarios de la misma recepción» (verde) y R22 «Cargo anulado por su abono (neto 0)» (gris)', () => {
+    const r21 = linea({ regla: 'R21', estado_matching: 'MATCH_UNICO', papel_r20: null });
+    const r22 = linea({ regla: 'R22', tipo_relacion: 'MOVIMIENTO_NO_FARMATIC', estado_matching: null, papel_r20: null });
+    assert.deepEqual([tipoCasado(r21).texto, tipoCasado(r21).color], ['Albarán con complementarios de la misma recepción', 'verde']);
+    assert.deepEqual([tipoCasado(r22).texto, tipoCasado(r22).color], ['Cargo anulado por su abono (neto 0)', 'gris']);
+    // Mandan sobre un estado del motor que la web no conoce (no «sin descripción»).
+    assert.equal(claveCasado(linea({ regla: 'R21', estado_matching: 'MATCH_R21' })), 'R21:COMPLEMENTARIOS');
+    assert.equal(claveCasado(linea({ regla: 'R22', estado_matching: 'MATCH_R22', tipo_relacion: 'UNO_A_UNO' })), 'R22:ANULADO');
+    assert.deepEqual([codigoReglaDesconocido({ regla: 'R21' }), codigoReglaDesconocido({ regla: 'R22' })], [null, null]);
+  });
+  test('H7-REAL-8: MATCH_R21 es estado conocido (casado, texto llano y etiqueta fija del diagnóstico); otros estados nuevos, no_previsto', () => {
+    assert.ok((ETIQUETAS_ESTADO_MATCHING as readonly string[]).includes('MATCH_R21'));
+    assert.match(textoEstadoMatching('MATCH_R21') ?? '', /R21/);
+    assert.equal(claveCasado(linea({ regla: null, estado_matching: 'MATCH_R21', papel_r20: null })), 'NUMERO:EXACTA'); // casado, no «sin descripción»
+    assert.equal(claveCasado(linea({ regla: 'R21', estado_matching: 'MATCH_R21', papel_r20: null })), 'R21:COMPLEMENTARIOS');
+    assert.equal(resumenCasado([{ eje: 'estado_matching', etiqueta: 'match_r21', n: '3' }])['estado_matching.match_r21'], 3);
+    assert.throws(() => resumenCasado([{ eje: 'estado_matching', etiqueta: 'no_previsto:MATCH_R21', n: '1' }]));
+    assert.equal(resumenCasado([{ eje: 'estado_matching', etiqueta: 'no_previsto:MATCH_R22', n: '1' }])['estado_matching.no_previsto.MATCH_R22'], 1);
+    assert.equal(claveCasado(linea({ regla: null, estado_matching: 'MATCH_R23', papel_r20: null })), 'ESTADO:SIN_DESCRIPCION');
+  });
+  test('código de regla desconocido: se muestra tal cual y no cambia el «cómo casó» (nunca falla)', () => {
+    const r23 = linea({ regla: 'R23', estado_matching: 'MATCH_UNICO', papel_r20: null });
+    assert.equal(codigoReglaDesconocido(r23), 'R23');
+    assert.equal(claveCasado(r23), 'NUMERO:EXACTA');
+    assert.doesNotThrow(() => tipoCasado(linea({ regla: '  ', estado_matching: 'MATCH_UNICO' })));
+    assert.deepEqual([codigoReglaDesconocido({ regla: null }), codigoReglaDesconocido({}), codigoReglaDesconocido({ regla: 'R17' }), codigoReglaDesconocido({ regla: 'R20' })], [null, null, null, null]);
+  });
+});
 
 describe('H8: R20 en el detalle', () => {
   test('«Cómo casó»: «Albarán partido en Farmatic»; secundario, los dos números (el exacto primero); fuente migración 36', () => {

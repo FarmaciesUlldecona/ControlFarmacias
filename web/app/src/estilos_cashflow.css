@@ -200,15 +200,11 @@
 }
 .cf-categoria th { font-weight: 700; }
 .cf-cat-cabeza { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
-.cf-cat-cabeza .cf-eleccion { margin-left: 16px; }
 .cf-plegar {
   display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0; border: 0; background: none;
   font: inherit; font-weight: 700; color: var(--texto); cursor: pointer; text-align: left;
 }
 .cf-chevron { width: 12px; color: var(--tenue); }
-.cf-eleccion { display: inline-flex; border: 1px solid var(--borde); border-radius: 7px; overflow: hidden; }
-.cf-eleccion button { min-height: 28px; padding: 0 10px; border: 0; background: var(--superficie); font: inherit; font-size: var(--cf-tam-min); font-weight: 700; color: var(--tenue); cursor: pointer; }
-.cf-eleccion button[aria-pressed='true'] { background: var(--cf-rita); color: #fff; }
 .cf-concepto th { padding-left: 28px; font-weight: 500; color: #3e4a46; }
 .cf-concepto.media th { font-style: italic; color: var(--cf-rita); }
 .cf-concepto-nombre { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

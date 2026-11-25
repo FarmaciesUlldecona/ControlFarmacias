@@ -28,6 +28,13 @@
 //     (6.000), así que cuenta la media («Vencimientos conocidos 472,22 € (inferiores a la media)»). El caso contrario
 //     (ganan los vencimientos) va en las pruebas unitarias: los fixtures de H6 no tienen otro vencimiento futuro con
 //     correspondencia. Robot de 27.700 € para que los avisos sigan siendo los mismos.
+//     H7-REAL-8: previsión base = Excel antes que la media; los vencimientos (472,22) se comparan con el Excel (520):
+//     gana el Excel. Media de 12 meses; robot de 32.000 € para mantener el rojo de 11–20/01/2027 (2.584,99 €).
+//     H7-REAL-9: previsión por concepto, el mayor entre Excel y media (ALLIANCE: su media de 6.000 > Excel 520); los
+//     demás conceptos de una categoría anotada llevan su media. Robot de 23.400 € y campaña HEFAME de RITA de 9.800 €
+//     para mantener la naranja de RITA (11–20/12/2026, 5.008,33 €) y un solo rojo (11–20/01/2027, 2.598,36 €).
+//   H7-REAL-7: dos alias de KENVUE en la misma decena real (una línea con la suma) y una obra en 12/2027, fuera del
+//   horizonte de 12 meses previstos: el consolidado queda en negativo allí, pero sin aviso.
 //   - Importación vigente de hace 6 días (10/11/2026).
 //   - Cuenta SL: en cf_cashflow_cuentas, sin filas (como el Excel actual) y fuera de la pantalla (solo PIO y RITA).
 //   H7-REAL (forma final de la migración 38): ids, importacion_id (todas de la vigente), farmacia de la cuenta y
@@ -62,7 +69,7 @@ const VAR = [300, -100, -200];
 const variacion = (d) => VAR[(Number(d.slice(0, 4)) * 12 + Number(mm(d))) % 3];
 const TRIMESTRE = ['01', '04', '07', '10'];
 const SOE_REAL = {
-  PIO: { '2025-10': 39800, '2025-11': 40100, '2025-12': 40300, '2026-01': 39600, '2026-02': 40200, '2026-03': 39900, '2026-04': 40400,
+  PIO: { '2025-10': 39800, '2025-11': 40200, '2025-12': 40300, '2026-01': 39600, '2026-02': 40200, '2026-03': 39900, '2026-04': 40400,
     '2026-05': 39700, '2026-06': 39500, '2026-07': 40200, '2026-08': 38900, '2026-09': 40600, '2026-10': 40500 },
   RITA: { '2025-10': 19900, '2025-11': 20200, '2025-12': 20400, '2026-01': 19700, '2026-02': 20100, '2026-03': 19800, '2026-04': 20300,
     '2026-05': 19600, '2026-06': 19600, '2026-07': 20300, '2026-08': 19800, '2026-09': 20500, '2026-10': 19700 },
@@ -73,8 +80,14 @@ const MODELO_303 = {
 };
 /** Retiradas del titular de agosto a octubre de 2026 (base de la media de la 3.ª decena); antes, las que cierran el mes. */
 const RETIRADA = { PIO: { '2026-08': 3500, '2026-09': 2000, '2026-10': 3500 }, RITA: { '2026-08': 3500, '2026-09': 4500, '2026-10': 4000 } };
-/** Desde este mes la retirada es la de RETIRADA; antes, la que deja el mes a 0 (los meses reales cierran con el mismo saldo). */
+/** Desde este mes la retirada es la de RETIRADA; antes, la del mismo mes del ciclo (mes % 3: sep 0, oct 1, ago 2). */
 const DESDE_RETIRADA_FIJA = '2026-08';
+/** Conceptos de traspaso interno (TRASPASOS_INTERNOS) que cierran a 0 los meses reales hasta julio de 2026. */
+const TRASPASO_AJUSTE = { PIO: 'La Caixa Rita', RITA: 'TRASPÀS A PIO DEPOSITO CON.' };
+const RETIRADA_CICLO = {
+  PIO: [RETIRADA.PIO['2026-09'], RETIRADA.PIO['2026-10'], RETIRADA.PIO['2026-08']],
+  RITA: [RETIRADA.RITA['2026-09'], RETIRADA.RITA['2026-10'], RETIRADA.RITA['2026-08']],
+};
 /** Traspasos internos PIO → RITA (con contrapartida: neutros en el consolidado). Conceptos de TRASPASOS_INTERNOS. */
 const TRASPASOS = { '2026-09-11': 3000, '2027-03-01': 2000 };
 /**
@@ -110,7 +123,7 @@ const CONCEPTOS = {
     ['RS Gastos generales', 'Suministros', (d) => (ord(d) === 2 ? 900 : null), nada],
     ['RS Modelo 303', 'IVA trimestral', (d) => (ord(d) === 2 ? MODELO_303.PIO[ym(d)] ?? null : null), nada],
     ['RS Modelo 111', 'Retenciones IRPF', (d) => (ord(d) === 2 && TRIMESTRE.includes(mm(d)) ? 1500 : null), nada],
-    ['RS Inversiones', 'Robot dispensador', nada, (d) => (d === '2027-01-11' ? 27700 : null)],
+    ['RS Inversiones', 'Robot dispensador', nada, (d) => (d === '2027-01-11' ? 23400 : null)],
     ['RS No relacionadas con la farmacia', 'Préstamo vivienda', (d) => (ord(d) === 1 ? 1200 : null), nada],
     ['RS Traspasos', 'La Caixa Rita', (d) => TRASPASOS[d] ?? null, (d) => TRASPASOS[d] ?? null],
     ['RS Traspasos', SIN_CONTRAPARTIDA.PIO[0], (d) => (conSinContrapartida(d) ? SIN_CONTRAPARTIDA.PIO[1] : null), nada],
@@ -123,7 +136,7 @@ const CONCEPTOS = {
     ['RE Cobro SOE', 'CatSalut receptes', (d) => (ord(d) === 3 ? SOE_REAL.RITA[ym(d)] : null), nada],
     ['RE Traspasos', 'DEPÓSITO CONECTADO', (d) => TRASPASOS[d] ?? null, (d) => TRASPASOS[d] ?? null],
     ['RS Proveedores', 'COFARES', () => 3000, nada],
-    ['RS Proveedores', 'HEFAME', () => 2000, (d) => (d === '2026-12-01' ? 14000 : null)],
+    ['RS Proveedores', 'HEFAME', () => 2000, (d) => (d === '2026-12-01' ? 9800 : null)],
     ['RS Personal', 'Nóminas', (d) => (ord(d) === 1 ? 6000 : null), (d) => (ord(d) === 1 ? 6000 : null)],
     ['RS Personal', 'Seguridad Social', (d) => (ord(d) === 3 ? 2200 : null), (d) => (ord(d) === 3 ? 2200 : null)],
     // Real: tras la SOE; previsto: en la 2.ª decena de junio y diciembre.
@@ -147,6 +160,36 @@ export const FILAS_NEGATIVAS = [
   { cuenta: 'PIO', decena_inicio: '2026-07-11', categoria: 'RS Proveedores', concepto: 'COFARES', importe: -250 },
   { cuenta: 'RITA', decena_inicio: '2026-11-21', categoria: 'RE Otros cobros', concepto: 'Regularización mutua', importe: -120 },
 ];
+/**
+ * H7-REAL-7: equivalencias de concepto (CONCEPTOS_EQUIVALENTES, decisión de Pío 25/11/2026). Dos alias de KENVUE en la
+ * misma decena real de PIO (11–20/03/2026, fuera de la base de la media y en un mes que la retirada deja a 0: no cambia
+ * ningún saldo ni ninguna previsión a la vista): una sola línea «KENVUE» con la suma (300 + 200 = 500).
+ */
+export const FILAS_EQUIVALENTES = [
+  { cuenta: 'PIO', decena_inicio: '2026-03-11', categoria: 'RS Proveedores', concepto: 'JNTL CONSUMER (ORALDINE) S.L.', importe: 300 },
+  { cuenta: 'PIO', decena_inicio: '2026-03-11', categoria: 'RS Proveedores', concepto: 'JHONSON & JHONSON', importe: 200 },
+];
+/**
+ * H7-REAL-8 (en meses reales que la retirada deja a 0: los saldos reales a la vista no cambian):
+ *  - PAGO_HACE_8_MESES: «RS Gastos generales / Reparación cámara frigorífica» 6.000 € en PIO 21–31/03/2026: entra en la
+ *    media de 12 meses de la 3.ª decena (500 €), no en la de 3;
+ *  - FILAS_PREFIJO: par por prefijo en PIO («DERMOPHARMACIE I PERF…» → «DERMOFARMACIA PERFUM…», el nombre completo del
+ *    Excel): una línea «DERMOFARMACIA PERFUMERIA SL» con 120 + 80; en RITA el prefijo del nombre que queda coincide con
+ *    dos nombres distintos: ambiguo, no se fusiona (tres líneas).
+ */
+export const PAGO_HACE_8_MESES = { cuenta: 'PIO', decena_inicio: '2026-03-21', categoria: 'RS Gastos generales', concepto: 'Reparación cámara frigorífica', importe: 6000 };
+export const FILAS_PREFIJO = [
+  { cuenta: 'PIO', decena_inicio: '2026-03-11', categoria: 'RS Proveedores', concepto: 'DERMOPHARMACIE I PERFUMERIA', importe: 120 },
+  { cuenta: 'PIO', decena_inicio: '2026-03-11', categoria: 'RS Proveedores', concepto: 'DERMOFARMACIA PERFUMERIA SL', importe: 80 },
+  { cuenta: 'RITA', decena_inicio: '2026-03-11', categoria: 'RS Proveedores', concepto: 'DERMOPHARMACIE I PERFUMERIA', importe: 60 },
+  { cuenta: 'RITA', decena_inicio: '2026-03-11', categoria: 'RS Proveedores', concepto: 'DERMOFARMACIA PERFUMERIA SL', importe: 40 },
+  { cuenta: 'RITA', decena_inicio: '2026-03-11', categoria: 'RS Proveedores', concepto: 'DERMOFARMACIA PERFUMES BCN', importe: 30 },
+];
+/**
+ * H7-REAL-7: aviso fuera del horizonte. Obra anotada en el Excel de PIO en 11–20/12/2027, más allá de los 12 meses
+ * previstos (hasta 01–10/11/2027): el consolidado queda en negativo, pero no sale ningún aviso (como el indicador).
+ */
+export const FUERA_HORIZONTE = { cuenta: 'PIO', decena_inicio: '2027-12-11', categoria: 'RS Inversiones', concepto: 'Reforma local', importe: 400000 };
 
 const signo = (categoria) => (categoria.startsWith('RE ') ? 1 : -1);
 
@@ -176,11 +219,18 @@ export function generarCashflow() {
         if (v === null || v === undefined) continue;
         fila(d, categoria, concepto, r2(v));
       }
-      for (const f of FILAS_NEGATIVAS.filter((x) => x.cuenta === cuenta && x.decena_inicio === d)) fila(d, f.categoria, f.concepto, f.importe);
-      // Retirada del titular (real, 3.ª decena): fija desde agosto de 2026; antes, la que deja el mes a 0.
+      for (const f of [...FILAS_NEGATIVAS, ...FILAS_EQUIVALENTES, FUERA_HORIZONTE, PAGO_HACE_8_MESES, ...FILAS_PREFIJO].filter((x) => x.cuenta === cuenta && x.decena_inicio === d)) fila(d, f.categoria, f.concepto, f.importe);
+      // Retirada del titular (real, 3.ª decena). H7-REAL-8 (media de 12 meses): en todos los meses reales, el ciclo de
+      // agosto–octubre de 2026 (suma lo mismo en 3 y en 12 meses, como los cobros); antes de H7-REAL-8, la que dejaba
+      // el mes a 0 hasta julio de 2026.
       if (real && ord(d) === 3) {
-        const v = ym(d) >= DESDE_RETIRADA_FIJA ? RETIRADA[cuenta][ym(d)] : r2(delMes.get(ym(d)) ?? 0);
+        const fija = ym(d) >= DESDE_RETIRADA_FIJA;
+        const v = fija ? RETIRADA[cuenta][ym(d)] : RETIRADA_CICLO[cuenta][Number(mm(d)) % 3];
         if (v > 0) fila(d, CATEGORIA_RETIRADA, CONCEPTO_RETIRADA, v);
+        // Hasta julio de 2026 el resto del mes sale por un traspaso interno (neutro, sin media): el mes cierra con el
+        // mismo saldo, como antes, sin que entre en la media de las «no relacionadas».
+        const resto = r2(delMes.get(ym(d)) ?? 0);
+        if (!fija && resto > 0) fila(d, 'RS Traspasos', TRASPASO_AJUSTE[cuenta], resto);
       }
     }
     // Saldo inicial para que el cierre de la última decena real sea PARTIDA.

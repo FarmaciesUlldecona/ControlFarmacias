@@ -698,6 +698,13 @@ H6-3 (decisiones de Marc): abonos y cargos negativos.
 | Tipo no previsto | F03, TIPO_FUTURO_PRUEBA | «Elemento de la noche sin descripción (ver evidencia técnica)» |
 | Otra farmacia | Factura inexistente en PIO | No sale |
 
+### H8-5: etiquetas de R21 y R22
+
+- Solo cambia `regla` (provenance.regla) en dos líneas existentes; importes, estados y relación siguen igual.
+- F05 (Hefame, en revisión en Conciliación) línea 3: `R21` → «Albarán con complementarios de la misma recepción» (verde). H7-REAL-8: con estado del motor `MATCH_R21` (estado conocido: casado, etiqueta fija `estado_matching.match_r21` del diagnóstico).
+- F04 (Cofares, conciliada) línea 1: `R22` → «Cargo anulado por su abono (neto 0)» (gris).
+- Código de regla desconocido (p. ej. `R99`, solo en Playwright, respuesta modificada en el navegador): el «cómo casó» no cambia y el código sale tal cual, sin fallar.
+
 ### H8: pantalla Conciliación (doble comprobación)
 
 - **Marcas (datos existentes):**
@@ -749,14 +756,15 @@ Datos ficticios con la forma del contrato del circuito (`cf_cashflow_importacion
 
 | Caso | Datos | Efecto |
 |---|---|---|
-| Vencimiento y Excel distintos | ALLIANCE 11–20/11/2026: Excel 520,00 €; sistema F02 472,22 € | Cuenta 472,22 € (vencimientos) con «!» «posible duplicado o diferencia»; el desglose enlaza a la factura. H7-REAL-3: «RS Proveedores» tiene vencimientos, así que va por concepto: ALLIANCE + «media del resto» sin ALLIANCE (8.800 €). H7-REAL-5: los vencimientos son un mínimo: 472,22 € < media de ALLIANCE en la 2.ª decena (6.000 €) → cuenta la media («m»; popup «Vencimientos conocidos 472,22 € (inferiores a la media)»); la celda suma 14.800 € (sin doble cómputo). El caso «ganan los vencimientos» está en las pruebas unitarias (los fixtures de H6 no tienen otro vencimiento futuro con correspondencia) |
+| Vencimiento y Excel distintos | ALLIANCE 11–20/11/2026: Excel 520,00 €; sistema F02 472,22 € | «!» «posible duplicado o diferencia» (47,78 € entre los dos); el desglose enlaza a la factura. H7-REAL-9: previsión base = el mayor entre el Excel (520) y la media del concepto (6.000): la media («Excel 520,00 € (inferior a la media) → media 6.000,00 €»); los vencimientos (472,22) son menores → cuenta la media («Vencimientos conocidos 472,22 € (inferiores a la media)»). La celda de la categoría suma 14.837,51 € (cada concepto con su cifra). «Ganan los vencimientos»: Playwright sube ese vencimiento a 7.000 en la respuesta (navegador) y en las pruebas unitarias |
+| Excel frente a media (H7-REAL-9, decisión de Pío 25/11/2026) | Por cuenta, categoría, concepto y decena futura: apunte > el mayor entre Excel y media del concepto > media; sin selector «Media / Excel» | Excel inferior → la media (ALLIANCE 11–20/11). Excel superior → el Excel: TPV de Navidad de PIO (12.500 frente a 9.000), campaña HEFAME de RITA 1–10/12 (9.800 frente a 2.000). En la misma decena, COFARES de RITA (sin Excel) lleva su media (3.000): antes la categoría quedaba sin media. Paga extra (anual): media de 1/12 en cada 3.ª decena y su Excel en junio y diciembre. Sin línea «Media calculada» de categoría |
 | Media por posición (H7-REAL-2) | PIO TPV: 11.000 / 10.000 / 9.000 € en la 1.ª / 2.ª / 3.ª decena; proveedores 14.000 / 14.800 / 15.500 € | Marca «m» y desglose con las 3 decenas usadas (p. ej. 11–20 de agosto, septiembre y octubre) |
 | SOE en su decena | PIO 40.000 €, RITA 20.000 € en la 3.ª decena | Media solo en la 3.ª decena (en las otras la media es 0: sin cifra) |
 | Excel antes que media | PIO TPV 21–31/12/2026: Excel 12.500 € | Cuenta el Excel; sin media en esa decena |
 | Modelos trimestrales (H7-REAL-2) | «RS Modelo 303» y «RS Modelo 111»: 2.ª decena de ene/abr/jul/oct | Enero de 2027 = enero de 2026 (PIO 8.500 + 1.500 €; RITA 3.100 €); fuera de esos meses, nada |
 | RITA con efectivo | «RE Cobro efectivo / COBRO EFECTIU» en todas las decenas reales | Línea en la vista RITA (real) y media de 1.200 € por decena |
-| Naranja | RITA 11–20/12/2026 (HEFAME campaña 14.000 € el 1–10/12 y paga extra 7.000 €) | RITA en negativo (−5.020 €), PIO la cubre; devolución prevista 21–31/12/2026 (decena de la SOE) |
-| Rojo | 11–20/01/2027: modelos 303 y 111 del año anterior y robot dispensador de PIO (27.700 €) | Consolidado en negativo: faltan 2.620 € (PIO −3.400; RITA 780) |
+| Naranja | RITA 11–20/12/2026 (HEFAME campaña el 1–10/12, H7-REAL-9: 9.800 €, y paga extra 7.000 €) | RITA en negativo (−5.008,33 €), PIO la cubre; devolución prevista 21–31/12/2026 (decena de la SOE) |
+| Rojo | 11–20/01/2027: modelos 303 y 111 del año anterior y robot dispensador de PIO (H7-REAL-9: 23.400 €) | Consolidado en negativo: faltan 2.598,36 € (PIO −2.212,53; RITA −385,83) |
 | RS negativo (H7-2) | PIO 11–20/07/2026 (real): COFARES −4.500 € y abono −250 € en la misma decena | La celda resta 4.250 € (el abono reduce las salidas) |
 | RE negativo (H7-2) | RITA 21–30/11/2026: «RE Otros cobros» / Regularización mutua −120 € | Reduce las entradas en 120 € |
 | Importación antigua | Vigente del 10/11/2026 (6 días) | Aviso gris «La importación vigente del Excel tiene 6 días» |
@@ -768,4 +776,8 @@ Datos ficticios con la forma del contrato del circuito (`cf_cashflow_importacion
 | E7: banco ≠ fórmulas (H7-REAL) | PIO 21–31/10/2026: banco 35,20 € por debajo de las fórmulas | Saldo final con «dif. banco −35,20 €»; su desglose lo explica (informativa, nunca error) |
 | Cuadre de control (H7-REAL) | Todas las decenas: saldo_inicial + ΣRE − ΣRS = saldo_formulas | Cuadran todas (sin aviso). El descuadre se prueba en la base simulada y en Playwright «REAL simulado» |
 | Otra cuenta | SL: en `cf_cashflow_cuentas`, sin filas (como el Excel actual) | Fuera de la pantalla; «Fuera de la previsión»: 1 cuenta (SL) |
-| Media / Excel | PIO TPV 11–20/11: media 10.000 €; nada anotado | Con «Excel» la media queda a la vista sin sumar: el saldo de 11–20/11 pasa de 22.300 € (Media) a 12.300 € (Excel en TPV); con Excel en todas (vencimientos como total, sin media), 24.527,78 € |
+| Saldo PIO 11–20/11 (H7-REAL-9) | 25.000 + TPV 10.000 + efectivo 3.000 − ALLIANCE 6.000 − COFARES 4.479,17 − HEFAME 3.500 − LOGISTA 800 − KENVUE 41,67 − DERMOFARMACIA 16,67 − suministros 900 | 22.262,49 €. El selector «Media / Excel» se ha retirado (la regla Excel frente a media aplica siempre); una elección antigua guardada en el navegador ya no se lee |
+| Media de 12 meses (H7-REAL-8, decisión de Pío 25/11/2026) | Toda media: misma posición de decena en los últimos 12 meses reales (2.ª decena: 11–20/11/2025 a 11–20/10/2026). PIO «RS Gastos generales / Reparación cámara frigorífica» 6.000 € en 21–31/03/2026 | Entra en la media de la 3.ª decena (−500 € en cada 21–fin de mes previsto), no en la de 3 meses. Popup «Media de 12 meses (misma decena)». Retiradas del titular: el ciclo de ago–oct en todos los meses reales (suma lo mismo en 3 y en 12); hasta julio de 2026 el resto del mes sale por un traspaso interno (neutro, sin media) para que el mes cierre a 0 |
+| Fusiones por prefijo (H7-REAL-8) | PIO 11–20/03/2026: «DERMOPHARMACIE I PERFUMERIA» 120 € y «DERMOFARMACIA PERFUMERIA SL» 80 €; RITA: los mismos dos y «DERMOFARMACIA PERFUMES BCN» | PIO: una línea «DERMOFARMACIA PERFUMERIA SL» (texto completo del Excel) con −200 €. RITA: el prefijo «DERMOFARMACIA PERFUM…» coincide con dos nombres: ambiguo, sin fusionar (tres líneas); «JNTL…» no está en RITA: sin coincidencia. check:real: `equivalencias_ambiguas` 1, `equivalencias_sin_coincidencia` 1. Saldos idénticos con y sin fusiones |
+| Equivalencias de concepto (H7-REAL-7, decisión de Pío 25/11/2026) | PIO 11–20/03/2026 (real, fuera de la base de la media; la retirada deja el mes a 0): «JNTL CONSUMER (ORALDINE) S.L.» 300 € y «JHONSON & JHONSON» 200 € en «RS Proveedores» | Una sola línea «KENVUE» con −500 € e «incluye: …» en el desglose; saldos por decena idénticos sin la equivalencia. Playwright pone los dos alias en 11–20/10/2026 modificando la respuesta en el navegador (con un cobro que compensa el cuadre) para ver el popup |
+| Aviso fuera del horizonte (H7-REAL-7) | PIO «RS Inversiones / Reforma local» 400.000 € anotada en 11–20/12/2027 | El consolidado queda en negativo, pero fuera de los 12 meses previstos (hasta 01–10/11/2027): sin aviso. Siguen solo el naranja de RITA y el rojo de 11–20/01/2027 |

@@ -8,7 +8,8 @@
  *  2. Por el literal, solo con las equivalencias de identidad del motor (canonicalizarProveedor, conciliacion.py:34-51,
  *     124-141) y el literal fijo que escribe el adaptador COFARES (cofares.py:211, sin CIF).
  * Si CIF y literal dan nombres distintos: null (falla cerrado; se muestra el literal).
- * H8-5: única excepción a «sale de src/»: HPLUS CONSUMO → HEFAME, con fuente «decisión de Pío, 22/11/2026».
+ * H8-5: excepción a «sale de src/»: HPLUS CONSUMO → HEFAME, con fuente «decisión de Pío, 22/11/2026».
+ * H7-REAL-7: JNTL CONSUMER… / JHONSON & JHONSON → KENVUE, con fuente «decisión de Pío, 25/11/2026».
  */
 
 /**
@@ -75,14 +76,29 @@ export const COMERCIAL_POR_LITERAL: Readonly<Record<string, EquivalenciaComercia
   // H8-5: literal de HPLUS CONSUMO (sin sufijo societario; también en Farmatic) → HEFAME, decisión de Pío (22/11/2026).
   // No es un alias de identidad del motor (no entra en ALIAS_HEFAME ni en canonicalizarProveedor).
   HPLUSCONSUMO: { nombre: 'HEFAME', fuente: 'decisión de Pío, 22/11/2026' },
+  // H7-REAL-7: JNTL CONSUMER (ORALDI…) y JHONSON & JHONSON → KENVUE, decisión de Pío (25/11/2026), la misma que
+  // CONCEPTOS_EQUIVALENTES del cashflow. Solo los literales que da la decisión (sin CIF: la web no lo tiene); el literal
+  // completo de JNTL en las facturas no consta en la web: check:real cuenta los vencimientos de estos proveedores que
+  // quedan sin nombre comercial (DIAGNOSTICO cashflow, kenvue_*).
+  KENVUE: { nombre: 'KENVUE', fuente: 'decisión de Pío, 25/11/2026' },
+  JHONSONJHONSON: { nombre: 'KENVUE', fuente: 'decisión de Pío, 25/11/2026' },
+  JOHNSONJOHNSON: { nombre: 'KENVUE', fuente: 'decisión de Pío, 25/11/2026' },
 };
+/**
+ * H7-REAL-7: literales de proveedor del grupo KENVUE (decisión de Pío, 25/11/2026) que no son una equivalencia exacta:
+ * «JNTL CONSUMER …» (el nombre sigue tras CONSUMER). Por prefijo del literal canonicalizado.
+ */
+export const PREFIJOS_COMERCIAL: readonly { prefijo: string; equivalencia: EquivalenciaComercial }[] = [
+  { prefijo: 'JNTLCONSUMER', equivalencia: { nombre: 'KENVUE', fuente: 'decisión de Pío, 25/11/2026' } },
+];
 
 /** Nombre comercial de una factura (o null: se muestra el literal del PDF). */
 export function nombreComercial(cif: string | null, literal: string | null): string | null {
   const c = cifComparable(cif);
   const porCif = c === null ? null : COMERCIAL_POR_CIF[c]?.nombre ?? null;
   const canon = canonicalizarProveedor(literal);
-  const porLiteral = canon === null ? null : COMERCIAL_POR_LITERAL[canon]?.nombre ?? null;
+  const porLiteral = canon === null ? null
+    : COMERCIAL_POR_LITERAL[canon]?.nombre ?? PREFIJOS_COMERCIAL.find((p) => canon.startsWith(p.prefijo))?.equivalencia.nombre ?? null;
   if (porCif !== null && porLiteral !== null && porCif !== porLiteral) return null;
   return porCif ?? porLiteral;
 }

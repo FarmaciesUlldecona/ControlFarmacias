@@ -12,7 +12,7 @@ import {
   CUENTAS_CASHFLOW, TEXTO_FUENTE, TEXTO_POSIBLE_DUPLICADO, TEXTO_SIN_DATOS, TOLERANCIA_CUADRE_POR_IMPORTE, VISTAS_CUENTA,
   avisosColumna, calcularCashflow, celdaColumna, columnasVista, finDecena, porCategoria, resumenColumna, saldoColumna, tipoColumna, totalCategoria,
   traspasosNoCompensados, variacionMensual, type TramoVariacion,
-  type AvisoCashflow, type CashflowDTO, type Celda, type CeldaColumna, type Columna, type Eleccion, type Escala, type EstadoImportacion,
+  type AvisoCashflow, type CashflowDTO, type Celda, type CeldaColumna, type Columna, type Escala, type EstadoImportacion,
   type ResultadoCashflow, type ResultadoVista, type TipoColumna, type VencimientoCashflow, type VistaCuenta,
 } from '../server/cashflow/cashflow.ts';
 import { useApiRecargable } from './api.ts';
@@ -42,26 +42,16 @@ const textoColumna = (c: Columna) => (c.escala === 'decenas' ? textoDecena(c.cla
 const textoColumnaLargo = (c: Columna) => (c.escala === 'decenas' ? textoDecenaLargo(c.clave) : textoMes(c.clave));
 const NOMBRE_VISTA: Record<VistaCuenta, string> = { PIO: 'PIO', RITA: 'RITA', CONSOLIDADO: 'Consolidado' };
 const TEXTO_TIPO: Record<TipoColumna, string> = { real: 'Real', previsto: 'Previsto', mixto: 'Real + previsto' };
+/** H7-REAL-8: textos de la comparación vencimientos ↔ previsión base (apunte, Excel o media). */
+const TEXTO_FRENTE: Partial<Record<string, string>> = { EXCEL: 'a Excel', MEDIA: 'a la media', MANUAL: 'al apunte manual' };
+const TEXTO_CUENTA: Partial<Record<string, string>> = { EXCEL: 'lo anotado en el Excel', MEDIA: 'la media del concepto', MANUAL: 'el apunte manual' };
+const TEXTO_OTRA: Record<'MANUAL' | 'EXCEL' | 'MEDIA', string> = { EXCEL: 'Excel', MEDIA: 'media del concepto', MANUAL: 'apunte manual' };
+/** Vencimientos de la celda con el signo de la línea (la cifra si ganaron; si no, «la otra» de la comparación). */
+const vencConSigno = (c: Celda): Importe => (c.fuente === 'VENCIMIENTOS' ? c.importe : c.comparada?.fuente === 'VENCIMIENTOS' ? c.comparada.importe : null);
 const TEXTO_ORIGEN: Record<string, string> = { NOCHE: 'importación nocturna', MANUAL: 'importación manual' };
 
-// ---------------------------------------------------------------------------
-// «Media / Excel»: solo en este navegador (try/catch: sin almacenamiento, por defecto)
-// ---------------------------------------------------------------------------
-
-const CLAVE_ELECCION = 'cf.cashflow.eleccion.v1';
-function leerElecciones(): Record<string, Eleccion> {
-  try {
-    const v = JSON.parse(window.localStorage.getItem(CLAVE_ELECCION) ?? '{}') as unknown;
-    if (v === null || typeof v !== 'object' || Array.isArray(v)) return {};
-    // H7-REAL-2: cualquier categoría RE/RS puede llevar media (las que no la tienen ignoran la elección).
-    return Object.fromEntries(Object.entries(v).filter(([k, x]) => /^R[ES]\s/.test(k) && (x === 'media' || x === 'excel')));
-  } catch {
-    return {};
-  }
-}
-function guardarElecciones(e: Record<string, Eleccion>): void {
-  try { window.localStorage.setItem(CLAVE_ELECCION, JSON.stringify(e)); } catch { /* sin almacenamiento: la elección dura la visita */ }
-}
+// H7-REAL-9: el selector «Media / Excel» por categoría se ha retirado (la regla «gana el mayor entre Excel y media»
+// aplica siempre); la elección que guardaba este navegador (cf.cashflow.eleccion.v1) ya no se lee.
 
 // ---------------------------------------------------------------------------
 // Cabecera de datos y avisos
@@ -319,11 +309,15 @@ function IndicadorVariacion({ r }: { r: ResultadoCashflow }) {
 // Tabla
 // ---------------------------------------------------------------------------
 
-interface Abrir { titulo: string; col: Columna; celda: CeldaColumna; externo?: boolean }
+interface Abrir { titulo: string; col: Columna; celda: CeldaColumna; externo?: boolean; incluye?: string[] }
 
 function CeldaTabla({ c, col, titulo, onAbrir, clave }: { c: CeldaColumna | null; col: Columna; titulo: string; onAbrir: (a: Abrir) => void; clave: string }) {
   if (c === null) return <td className={`cf-c vacia ${col.actual ? 'actual' : ''}`} />;
   const usaMedia = c.fuentes.includes('MEDIA') && c.celdas.some((x) => x.fuente === 'MEDIA' && x.en_saldo);
+  // H7-REAL-9: en la cifra de un concepto y decena, la otra de «Excel frente a media» (la que no cuenta), a la vista.
+  const f = c.celdas.length === 1 ? c.celdas[0].frente : null;
+  const otra = f === null || Math.round(f.media * 100) === Math.round(f.excel * 100) ? null
+    : Math.abs(f.media) > Math.abs(f.excel) ? { texto: 'Excel', importe: f.excel } : { texto: 'Media', importe: f.media };
   const fuente = c.tipo === 'real' ? 'real' : c.fuentes.includes('VENCIMIENTOS') ? 'vencimientos' : c.fuentes.includes('MANUAL') ? 'manual' : usaMedia ? 'media' : 'excel';
   // Marca «media» en la cifra: lleva alguna parte estimada (media por posición o año anterior) que suma al saldo.
   const conMedia = c.tipo !== 'real' && usaMedia;
@@ -337,7 +331,7 @@ function CeldaTabla({ c, col, titulo, onAbrir, clave }: { c: CeldaColumna | null
           <span className="cf-num">{c.importe === null && c.desconocidos > 0 ? 'pend.' : cifra(c.importe)}</span>
         </span>
         {c.desconocidos > 0 && <span className="cf-sub aviso">+{c.desconocidos} sin importe</span>}
-        {c.sin_usar !== null && <span className="cf-sub" data-cf-alt>{usaMedia ? 'Excel' : 'Media'} {cifra(c.sin_usar)}</span>}
+        {otra !== null && <span className="cf-sub" data-cf-alt>{otra.texto} {cifra(otra.importe)}</span>}
       </button>
     </td>
   );
@@ -352,9 +346,8 @@ function FilaTotal({ etiqueta, v, cols, valor, clase = '', datos }: { etiqueta: 
   );
 }
 
-function Tabla({ r, v, cols, elecciones, onElegir, onAbrir, onAbrirSaldo }: {
-  r: ResultadoCashflow; v: ResultadoVista; cols: Columna[]; elecciones: Record<string, Eleccion>;
-  onElegir: (categoria: string, e: Eleccion) => void; onAbrir: (a: Abrir) => void; onAbrirSaldo: (c: Columna) => void;
+function Tabla({ r, v, cols, onAbrir, onAbrirSaldo }: {
+  r: ResultadoCashflow; v: ResultadoVista; cols: Columna[]; onAbrir: (a: Abrir) => void; onAbrirSaldo: (c: Columna) => void;
 }) {
   const [abiertas, setAbiertas] = useState<Set<string>>(new Set());
   const grupos = porCategoria(v.lineas);
@@ -366,8 +359,6 @@ function Tabla({ r, v, cols, elecciones, onElegir, onAbrir, onAbrirSaldo }: {
     const externo = g.clase === 'TRASPASO_EXTERNO';
     const k = externo ? `${g.categoria} (externo)` : g.categoria;
     const abierta = abiertas.has(k);
-    // «Media / Excel»: en toda categoría con alguna cifra estimada (con «Excel», solo lo anotado). Nunca en los internos.
-    const media = r.categorias_media.includes(g.categoria) && g.clase !== 'TRASPASO';
     const abrir = (a: Abrir) => onAbrir({ ...a, externo });
     return [
       <tr key={k} className="cf-categoria" data-cf-categoria={k}>
@@ -378,23 +369,14 @@ function Tabla({ r, v, cols, elecciones, onElegir, onAbrir, onAbrirSaldo }: {
               {/* Fuera de la farmacia la sección ya da el nombre: Entradas / Salidas. */}
               {g.clase === 'FARMACIA' ? g.categoria.replace(/^R[ES]\s+/, '') : g.sentido === 'ENTRADA' ? 'Entradas' : 'Salidas'}
             </button>
-            {media && (
-              <span className="cf-eleccion" role="group" aria-label={`Previsión de ${g.categoria}`} data-cf-eleccion={g.categoria}>
-                {(['media', 'excel'] as const).map((e) => (
-                  <button key={e} type="button" aria-pressed={(elecciones[g.categoria] ?? 'media') === e} data-opcion={e} onClick={() => onElegir(g.categoria, e)}>
-                    {e === 'media' ? 'Media' : 'Excel'}
-                  </button>
-                ))}
-              </span>
-            )}
           </span>
         </th>
         {cols.map((c) => <CeldaTabla key={c.clave} c={totalCategoria(g.lineas, c, v)} col={c} titulo={g.categoria} onAbrir={abrir} clave={`${k}|*|${c.clave}`} />)}
       </tr>,
       ...(abierta ? g.lineas.map((l) => (
         <tr key={l.clave} className={`cf-concepto${l.media ? ' media' : ''}`} data-cf-concepto={l.concepto}>
-          <th scope="row"><span className="cf-concepto-nombre" title={l.concepto}>{l.concepto}</span></th>
-          {cols.map((c) => <CeldaTabla key={c.clave} c={celdaColumna(l, c, v)} col={c} titulo={`${l.concepto} (${g.categoria})`} onAbrir={abrir} clave={`${k}|${l.concepto}|${c.clave}`} />)}
+          <th scope="row"><span className="cf-concepto-nombre" title={l.incluye.length ? `${l.concepto} (incluye: ${l.incluye.join(', ')})` : l.concepto}>{l.concepto}</span></th>
+          {cols.map((c) => <CeldaTabla key={c.clave} c={celdaColumna(l, c, v)} col={c} titulo={`${l.concepto} (${g.categoria})`} onAbrir={(a) => abrir({ ...a, incluye: l.incluye })} clave={`${k}|${l.concepto}|${c.clave}`} />)}
         </tr>
       )) : []),
     ];
@@ -516,8 +498,13 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
         {c.cuenta} · {textoDecenaLargo(c.decena)} · <span className={`cf-fuente f-${c.fuente.toLowerCase()}`}>{TEXTO_FUENTE[c.fuente]}</span>
         <span className="cf-num cf-desglose-cifra">{eurosExactos(c.importe)}</span>
       </h3>
-      {!c.en_saldo && (
-        <p className="cf-nota" data-cf-no-suma>No entra en el saldo: para esta categoría has elegido «Excel» (solo lo anotado). Cámbialo con «Media / Excel».</p>
+      {/* H7-REAL-9: Excel frente a la media del concepto: gana el mayor en valor absoluto. */}
+      {c.frente && (
+        <p className={`cf-nota${c.fuente === 'MEDIA' ? '' : ' tenue'}`} data-cf-frente={Math.abs(c.frente.media) > Math.abs(c.frente.excel) ? 'media' : 'excel'}>
+          {Math.abs(c.frente.media) > Math.abs(c.frente.excel)
+            ? <>Excel <strong className="cf-num">{eurosExactos(Math.abs(c.frente.excel))}</strong> (inferior a la media) → media <strong className="cf-num">{eurosExactos(Math.abs(c.frente.media))}</strong>.</>
+            : <>Excel <strong className="cf-num">{eurosExactos(Math.abs(c.frente.excel))}</strong> (superior a la media {eurosExactos(Math.abs(c.frente.media))}).</>}
+        </p>
       )}
       {c.fuente === 'MANUAL' && <p>Apunte manual para esta decena: sustituye a lo anotado en el Excel{c.excel_filas > 0 ? ` (${eurosExactos(c.excel)})` : ''}.</p>}
       {c.fuente === 'REAL' && <p>Anotado en el Excel en una decena que ya tiene saldo de banco{c.excel_filas > 1 ? ` (${c.excel_filas} filas)` : ''}.</p>}
@@ -528,18 +515,24 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
       {c.vencimientos && (
         <>
           <h4 data-cf-parte="vencimientos">Vencimientos ({c.vencimientos.comercial})</h4>
-          {/* H7-REAL-5: los vencimientos son un mínimo; si la media del concepto es mayor, cuenta la media. */}
-          {c.fuente === 'MEDIA' && (
-            <p className="cf-nota" data-cf-venc-minimo>
-              Vencimientos conocidos <strong className="cf-num">{eurosExactos(c.vencimientos.neto)}</strong> (inferiores a la media): solo existen para las
-              facturas ya recibidas, así que cuenta la media del concepto, <strong className="cf-num">{eurosExactos(c.importe === null ? null : Math.abs(c.importe))}</strong>.
+          {/* H7-REAL-8: los vencimientos son un mínimo: se comparan con la previsión base (apunte, Excel o media) y gana el
+              mayor en valor absoluto. Se dice qué ganó y el importe del otro. */}
+          {c.fuente !== 'VENCIMIENTOS' && c.comparada?.fuente === 'VENCIMIENTOS' && (
+            <p className="cf-nota" data-cf-venc-minimo={c.fuente.toLowerCase()}>
+              Vencimientos conocidos <strong className="cf-num">{eurosExactos(Math.abs(c.comparada.importe))}</strong> (inferiores {TEXTO_FRENTE[c.fuente] ?? 'a la previsión'}):
+              solo existen para las facturas ya recibidas, así que cuenta {TEXTO_CUENTA[c.fuente] ?? 'la previsión'}, <strong className="cf-num">{eurosExactos(c.importe === null ? null : Math.abs(c.importe))}</strong>.
             </p>
           )}
-          <p>Vencimientos de <strong>{c.vencimientos.comercial}</strong> en el sistema para esta decena: sustituyen solo a ese concepto (lo anotado en el Excel para él){c.fuente === 'MEDIA' ? ', salvo que la media sea mayor' : ''}.
+          {c.fuente === 'VENCIMIENTOS' && c.comparada && c.comparada.fuente !== 'VENCIMIENTOS' && (
+            <p className="cf-nota" data-cf-venc-ganan={c.comparada.fuente.toLowerCase()}>
+              Ganan los vencimientos: {TEXTO_OTRA[c.comparada.fuente]} <strong className="cf-num">{eurosExactos(Math.abs(c.comparada.importe))}</strong> (inferior a los vencimientos).
+            </p>
+          )}
+          <p>Vencimientos de <strong>{c.vencimientos.comercial}</strong> en el sistema para esta decena: se comparan con la previsión del concepto (apunte, Excel o media, la primera que haya) y cuenta la mayor.
             Neto (cargos − abonos): <strong className="cf-num">{eurosExactos(c.vencimientos.neto)}</strong>.</p>
           <p className={c.diferencia ? 'cf-nota naranja' : 'tenue'} data-cf-comparacion={c.diferencia ? 'diferencia' : 'igual'}>
             Excel: {c.excel_filas > 0 ? eurosExactos(c.excel) : 'sin anotar'}.
-            {c.diferencia ? <> <strong>Posible duplicado o diferencia</strong>{c.importe !== null && c.excel !== null ? `: ${eurosExactos(Math.round((c.importe - c.excel) * 100) / 100)} entre los dos` : ''}.</> : c.excel_filas > 0 ? ' Coinciden.' : ''}
+            {c.diferencia ? <> <strong>Posible duplicado o diferencia</strong>{vencConSigno(c) !== null && c.excel !== null ? `: ${eurosExactos(Math.round(((vencConSigno(c) as number) - c.excel) * 100) / 100)} entre los dos` : ''}.</> : c.excel_filas > 0 ? ' Coinciden.' : ''}
           </p>
           <ListaVenc vs={c.vencimientos.incluidos} titulo="Suman" />
           {c.vencimientos.sin_importe > 0 && <p className="cf-nota">{plural(c.vencimientos.sin_importe, 'vencimiento sin importe', 'vencimientos sin importe')}: no suman (importe pendiente).</p>}
@@ -558,7 +551,15 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
           )}
           {c.media.regla === 'ANIO_ANTERIOR'
             ? <p data-cf-regla="anio_anterior">Impuesto trimestral («RS Modelo …»): la misma decena del mismo mes del año anterior, no la media. Sin nada previsto en esta decena (ni vencimientos ni Excel).</p>
-            : <p data-cf-regla="posicion">{c.vencimientos ? 'Media del concepto' : c.media.excluidos.length > 0 ? 'Media' : 'Sin nada previsto en esta decena para la categoría (ni vencimientos ni Excel): media'} de la {c.media.posicion}.ª decena del mes en {c.media.base.length === 1 ? 'el último mes real' : `los últimos ${c.media.base.length} meses reales`}:</p>}
+            : (
+              <>
+                {/* H7-REAL-8: ventana de la media (decisión de Pío, 25/11/2026). */}
+                <p className="cf-media-ventana" data-cf-media-ventana={c.media.base.length}>
+                  <strong>Media de {c.media.base.length} {c.media.base.length === 1 ? 'mes' : 'meses'} (misma decena)</strong>
+                </p>
+                <p data-cf-regla="posicion">Media del concepto en la {c.media.posicion}.ª decena del mes en {c.media.base.length === 1 ? 'el último mes real' : `los últimos ${c.media.base.length} meses reales`}:</p>
+              </>
+            )}
           <ul className="cf-media" data-cf-media>
             {c.media.base.map((b) => <li key={b.clave}><span>{textoDecenaLargo(b.clave)}</span><span className="cf-num">{eurosExactos(b.importe)}</span></li>)}
             <li className="cf-media-total">
@@ -606,6 +607,12 @@ function Desglose({ abrir, d, onCerrar }: { abrir: Abrir; d: CashflowDTO; onCerr
       {abrir.externo && (
         <p className="cf-nota naranja" data-cf-traspaso-externo>
           <strong>Traspaso externo</strong> (SL, fondos, valores…): no es entre PIO y RITA, así que es una entrada o salida real y cuenta en el saldo de la cuenta y en el consolidado.
+        </p>
+      )}
+      {/* H7-REAL-7: cifra que suma conceptos del Excel equivalentes (decisión de Pío, 25/11/2026). */}
+      {abrir.incluye && abrir.incluye.length > 0 && (
+        <p className="cf-nota" data-cf-incluye={abrir.incluye.join('|')}>
+          Incluye: {abrir.incluye.join(', ')} (mismo proveedor en el Excel con otro nombre).
         </p>
       )}
       {celdas.map((c, i) => <DesgloseCelda key={i} c={c} d={d} />)}
@@ -708,23 +715,17 @@ export function PaginaCashflow() {
   const escala: Escala = params.get('escala') === 'mes' ? 'mes' : 'decenas';
   const p = params.get('cuenta');
   const vista: VistaCuenta = p === 'PIO' || p === 'RITA' ? p : 'CONSOLIDADO';
-  const [elecciones, setElecciones] = useState<Record<string, Eleccion>>(leerElecciones);
   const [abrir, setAbrir] = useState<Abrir | null>(null);
   const [abrirSaldo, setAbrirSaldo] = useState<Columna | null>(null);
   const cerrar = useCallback(() => setAbrir(null), []);
   const cerrarSaldo = useCallback(() => setAbrirSaldo(null), []);
   const d = carga.estado === 'ok' ? carga.datos : null;
-  const r = useMemo(() => (d ? calcularCashflow(d, elecciones) : null), [d, elecciones]);
+  const r = useMemo(() => (d ? calcularCashflow(d) : null), [d]);
   const cols = useMemo(() => (d ? columnasVista(d.hoy, escala, d.config) : []), [d, escala]);
   const cambiar = (k: string, valor: string | null) => {
     const n = new URLSearchParams(params);
     if (valor === null) n.delete(k); else n.set(k, valor);
     setParams(n, { replace: true });
-  };
-  const elegir = (categoria: string, e: Eleccion) => {
-    const n = { ...elecciones, [categoria]: e };
-    setElecciones(n);
-    guardarElecciones(n);
   };
   const v = r?.vistas[vista] ?? null;
   // Sin importación vigente: ninguna cifra («Todavía no hay datos importados»); sí el aviso de una ERROR.
@@ -801,7 +802,7 @@ export function PaginaCashflow() {
           <section className="tarjeta cf-bloque" aria-labelledby="t-cf-tabla">
             <h2 id="t-cf-tabla">{NOMBRE_VISTA[vista]}: real frente a previsto</h2>
             <p className="tenue cf-ayuda">Pulsa una cifra para ver de dónde sale. Cada categoría se despliega por concepto.</p>
-            <Tabla r={r} v={v} cols={cols} elecciones={r.elecciones} onElegir={elegir} onAbrir={setAbrir} onAbrirSaldo={setAbrirSaldo} />
+            <Tabla v={v} cols={cols} onAbrir={setAbrir} onAbrirSaldo={setAbrirSaldo} r={r} />
           </section>
 
           <Fuera r={r} />

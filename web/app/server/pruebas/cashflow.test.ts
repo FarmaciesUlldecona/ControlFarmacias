@@ -8,11 +8,12 @@ import { crearAdaptadorFixtures } from '../adaptador_fixtures.ts';
 import { construirPantalla, crearAlmacenPagos } from '../pagos/pagos.ts';
 import { leerSemillaPagos } from '../pagos/rutas.ts';
 import {
-  CONCEPTO_MEDIA, CONCEPTO_VACIO, CONFIG_CASHFLOW, CORRESPONDENCIAS_PROVEEDOR, ORDEN_PRIORIDAD, TRASPASOS_INTERNOS, calcularCashflow, celdaColumna,
+  CONCEPTO_VACIO, CONCEPTOS_EQUIVALENTES, CONFIG_CASHFLOW, CORRESPONDENCIAS_PROVEEDOR, ORDEN_PRIORIDAD, TRASPASOS_INTERNOS, calcularCashflow, celdaColumna,
+  conceptoEquivalente, resolverEquivalencias,
   claseMovimiento, clasificarCategoria, esTraspasoInterno, variacionMensual,
   columnasVista, comercialDeConcepto, decenaDe, estadoImportacion, finDecena, moverDecena, ordinalDecena, reglaEstimacion, saldoColumna, siguienteDecena,
   totalCategoria, traspasosNoCompensados, type CashflowDTO, type ImportacionCashflow, type ImporteCashflow, type Linea, type ResultadoCashflow,
-  type SaldoCashflow, type VencimientoCashflow,
+  type SaldoCashflow, type VencimientoCashflow, type Celda,
 } from '../cashflow/cashflow.ts';
 import { leerSemillaCashflow, registrarCashflow, vencimientoCashflow } from '../cashflow/rutas.ts';
 import { SQL_CASHFLOW, claveCategoria, diagnosticoCashflow, leerCashflowReal } from '../cashflow/lectura_real.ts';
@@ -70,7 +71,8 @@ describe('H7: decenas y configuración', () => {
     assert.equal(comercialDeConcepto(' logista '), 'LOGISTA PHARMA');
     assert.equal(comercialDeConcepto('Nóminas'), null);
     assert.ok(CORRESPONDENCIAS_PROVEEDOR.some((c) => c.comercial === 'ALLIANCE'));
-    assert.deepEqual([CONFIG_CASHFLOW.meses_media, CONFIG_CASHFLOW.dias_importacion_antigua, CONFIG_CASHFLOW.saldo_minimo], [3, 5, 0]);
+    // H7-REAL-8 (decisión de Pío, 25/11/2026): media de 12 meses.
+    assert.deepEqual([CONFIG_CASHFLOW.meses_media, CONFIG_CASHFLOW.dias_importacion_antigua, CONFIG_CASHFLOW.saldo_minimo], [12, 5, 0]);
     assert.deepEqual([...ORDEN_PRIORIDAD], ['VENCIMIENTOS', 'MANUAL', 'EXCEL', 'MEDIA']);
     assert.equal(reglaEstimacion('RS Modelo 303'), 'ANIO_ANTERIOR');
     assert.equal(reglaEstimacion('RS  modelo 111 retenciones'), 'ANIO_ANTERIOR');
@@ -117,25 +119,24 @@ describe('H7: fixtures (16/11/2026; última decena real 01–10/11)', () => {
     }
   });
 
-  test('previsión por fuente: ALLIANCE 11–20/11: vencimientos (472,22) como mínimo; gana su media (6.000); el Excel (520) no cuenta: posible duplicado o diferencia', async () => {
+  test('previsión por fuente: ALLIANCE 11–20/11: media (6.000) > Excel (520) → base = media; mayor que los vencimientos (472,22); posible duplicado o diferencia', async () => {
     const r = calcularCashflow(await datosFixtures());
     const c = linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-11'];
-    // H7-REAL-5: vencimientos conocidos 472,22 inferiores a la media del concepto en la 2.ª decena: cuenta la media.
-    assert.deepEqual([c.fuente, c.importe, c.vencimientos?.neto, c.media?.base.map((b) => b.clave)], ['MEDIA', -6000, 472.22, ['2026-08-11', '2026-09-11', '2026-10-11']]);
+    // H7-REAL-9: previsión base = el mayor entre Excel (520) y la media del concepto (6.000): la media; los vencimientos
+    // conocidos (472,22) son menores: cuenta la media.
+    assert.deepEqual([c.fuente, c.importe, c.vencimientos?.neto, c.frente, c.comparada], ['MEDIA', -6000, 472.22, { excel: -520, media: -6000 }, { fuente: 'VENCIMIENTOS', importe: -472.22 }]);
     assert.equal(c.excel, -520);
     assert.equal(c.diferencia, true);
     assert.deepEqual(c.vencimientos?.incluidos.map((v) => v.vencimiento_id), ['90000000-0000-4000-8000-000000000002']);
     // Sin la regla (como antes): los vencimientos.
     const antes = calcularCashflow({ ...(await datosFixtures()), config: { ...CONFIG_CASHFLOW, vencimientos_como_minimo: false } });
     assert.deepEqual([linea(antes, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-11'].fuente, linea(antes, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-11'].importe], ['VENCIMIENTOS', -472.22]);
-    // H7-REAL-3: «RS Proveedores» tiene vencimientos → por concepto. 11–20/11: ALLIANCE por vencimientos y el resto por la
-    // media de la 2.ª decena sin ALLIANCE (4.500 + 3.500 + 800); en 21–30/11 (nada previsto), la media de toda la categoría.
-    const resto = linea(r, 'PIO', 'RS Proveedores', CONCEPTO_MEDIA).celdas['2026-11-11'];
-    assert.deepEqual([resto.importe, resto.media?.excluidos, resto.en_saldo], [-8800, ['ALLIANCE'], true]);
-    assert.deepEqual(resto.media?.base.map((b) => b.importe), [-8800, -8800, -8800]);
-    assert.equal(linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-21'], undefined);
-    const prov = linea(r, 'PIO', 'RS Proveedores', CONCEPTO_MEDIA).celdas['2026-11-21'];
-    assert.deepEqual([prov.fuente, prov.importe, prov.media?.base.map((b) => b.clave)], ['MEDIA', -15500, ['2026-08-21', '2026-09-21', '2026-10-21']]);
+    // H7-REAL-9: cada concepto con su media en su línea: COFARES 4.500 − abono de julio (250 ÷ 12) = 4.479,17.
+    assert.deepEqual([linea(r, 'PIO', 'RS Proveedores', 'COFARES').celdas['2026-11-11'].fuente, linea(r, 'PIO', 'RS Proveedores', 'COFARES').celdas['2026-11-11'].importe], ['MEDIA', -4479.17]);
+    const all21 = linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-21'];
+    assert.deepEqual([all21.fuente, all21.importe, all21.media?.base[0].clave, all21.media?.base[11].clave], ['MEDIA', -6000, '2025-11-21', '2026-10-21']);
+    // Sin línea de «Media calculada» de categoría.
+    assert.ok(r.vistas.PIO.lineas.every((l) => !l.media && l.concepto !== 'Media calculada'));
     // Real: del Excel, aunque haya vencimientos (04/11).
     assert.equal(linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-01'].fuente, 'REAL');
     // RITA: nunca vencimientos del sistema.
@@ -162,61 +163,72 @@ describe('H7: fixtures (16/11/2026; última decena real 01–10/11)', () => {
     assert.equal(saldoColumna(r.vistas.PIO, columnasVista(r.hoy, 'decenas')[1]).diferencia_banco, -35.2);
   });
 
-  test('sin doble cómputo (H7-REAL-3/5): 11–20/11 suma ALLIANCE (el mayor entre vencimientos y su media) + la media del resto de proveedores, nunca el Excel', async () => {
+  test('sin doble cómputo (H7-REAL-9): 11–20/11, una cifra por concepto (su media o su Excel, el mayor); el saldo es la suma', async () => {
     const dto = await datosFixtures();
-    // 25.000 + TPV 10.000 + efectivo 3.000 − ALLIANCE 6.000 (media > vencimientos) − resto de proveedores 8.800 − suministros 900 = 22.300
+    // 25.000 + TPV 10.000 + efectivo 3.000 − ALLIANCE 6.000 − COFARES 4.479,17 − HEFAME 3.500 − LOGISTA 800 − KENVUE 41,67
+    // − DERMOFARMACIA 16,67 − suministros 900 = 22.262,49
     const r = calcularCashflow(dto);
-    assert.equal(saldo(r, 'PIO', '2026-11-11'), 22300);
+    assert.equal(saldo(r, 'PIO', '2026-11-11'), 22262.49);
     const usadas = r.vistas.PIO.lineas.flatMap((l) => (l.celdas['2026-11-11']?.en_saldo ? [`${l.categoria}|${l.concepto}`] : []));
-    assert.deepEqual(usadas.sort(), ['RE Cobro TPV|Media calculada', 'RE Cobro efectivo|Media calculada', 'RS Gastos generales|Media calculada',
-      'RS Proveedores|ALLIANCE', 'RS Proveedores|Media calculada'].sort());
-    assert.equal(r.vistas.PIO.decenas['2026-11-11'].salidas, -15700);
-    // La media del resto sigue sin ALLIANCE (el concepto con vencimientos).
-    assert.deepEqual(linea(r, 'PIO', 'RS Proveedores', CONCEPTO_MEDIA).celdas['2026-11-11'].media?.excluidos, ['ALLIANCE']);
-    // «Excel» en todas: solo lo anotado (y los vencimientos): 25.000 − 472,22.
-    const e = calcularCashflow(dto, Object.fromEntries(r.categorias_media.map((c) => [c, 'excel' as const])));
-    assert.equal(saldo(e, 'PIO', '2026-11-11'), 24527.78);
+    assert.deepEqual(usadas.sort(), ['RE Cobro TPV|TPV CaixaBank', 'RE Cobro efectivo|Ingresos de caja', 'RS Gastos generales|Suministros',
+      'RS Proveedores|ALLIANCE', 'RS Proveedores|COFARES', 'RS Proveedores|DERMOFARMACIA PERFUMERIA SL', 'RS Proveedores|HEFAME', 'RS Proveedores|KENVUE',
+      'RS Proveedores|LOGISTA'].sort());
+    assert.equal(r.vistas.PIO.decenas['2026-11-11'].salidas, -15737.51);
+    // Una cifra por concepto y decena: el saldo previsto es el anterior más la suma de las cifras de todas las líneas.
+    for (const v of ['PIO', 'RITA'] as const) {
+      let s = r.vistas[v].saldo_partida as number;
+      for (const d of r.decenas.filter((x) => x > (r.vistas[v].ultima_real as string))) {
+        s = Math.round(s * 100 + r.vistas[v].lineas.reduce((a, l) => a + Math.round((l.celdas[d]?.importe ?? 0) * 100), 0)) / 100;
+        assert.equal(saldo(r, v, d), s, `${v} ${d}`);
+      }
+    }
   });
 
-  test('media por posición de decena (últimos 3 meses reales): TPV, efectivo y SOE en su decena; Excel antes que la media; «Media / Excel»', async () => {
+  test('H7-REAL-9: Excel frente a la media del concepto: inferior → la media; superior → el Excel; otro concepto sin Excel en esa decena: su media', async () => {
+    const r = calcularCashflow(await datosFixtures());
+    const nav = linea(r, 'PIO', 'RE Cobro TPV', 'TPV CaixaBank').celdas['2026-12-21'];
+    assert.deepEqual([nav.fuente, nav.importe, nav.frente], ['EXCEL', 12500, { excel: 12500, media: 9000 }]);
+    const hef = linea(r, 'RITA', 'RS Proveedores', 'HEFAME').celdas['2026-12-01'];
+    assert.deepEqual([hef.fuente, hef.importe, hef.frente], ['EXCEL', -9800, { excel: -9800, media: -2000 }]);
+    // RITA COFARES en 1–10/12 (HEFAME anotado en esa decena): su propia media (antes quedaba vacío).
+    assert.deepEqual([linea(r, 'RITA', 'RS Proveedores', 'COFARES').celdas['2026-12-01'].fuente, linea(r, 'RITA', 'RS Proveedores', 'COFARES').celdas['2026-12-01'].importe], ['MEDIA', -3000]);
+    // Excel inferior a la media: la media (ALLIANCE 11–20/11).
+    assert.deepEqual(linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-11'].frente, { excel: -520, media: -6000 });
+    // Paga extra (anual): en diciembre, Excel (12.000) frente a media (2.000) → el Excel; el resto de meses, su media.
+    const paga = linea(r, 'PIO', 'RS Personal', 'Paga extra').celdas;
+    assert.deepEqual([paga['2026-12-21'].fuente, paga['2026-12-21'].importe, paga['2027-01-21'].fuente, paga['2027-01-21'].importe], ['EXCEL', -12000, 'MEDIA', -2000]);
+  });
+
+  test('media por posición de decena (últimos 12 meses reales): TPV, efectivo y SOE en su decena, en la línea de su concepto', async () => {
     const dto = await datosFixtures();
     const r = calcularCashflow(dto);
-    const tpv = linea(r, 'PIO', 'RE Cobro TPV', CONCEPTO_MEDIA);
-    // 2.ª decena: 11–20 de agosto, septiembre y octubre (los cobros varían +300/−100/−200 y suman 0).
+    const tpv = linea(r, 'PIO', 'RE Cobro TPV', 'TPV CaixaBank');
+    // 2.ª decena: 11–20 de noviembre de 2025 a octubre de 2026 (los cobros varían +300/−100/−200 y suman 0 cada 3 meses).
     assert.deepEqual([tpv.celdas['2026-11-11'].fuente, tpv.celdas['2026-11-11'].importe, tpv.celdas['2026-11-11'].en_saldo], ['MEDIA', 10000, true]);
-    assert.deepEqual(tpv.celdas['2026-11-11'].media?.base.map((b) => b.clave), ['2026-08-11', '2026-09-11', '2026-10-11']);
+    const base = tpv.celdas['2026-11-11'].media?.base.map((b) => b.clave) ?? [];
+    assert.deepEqual([base.length, base[0], base[11]], [12, '2025-11-11', '2026-10-11']);
     assert.deepEqual([tpv.celdas['2026-11-11'].media?.posicion, tpv.celdas['2026-11-11'].media?.regla], [2, 'POSICION']);
-    // 1.ª y 3.ª decena con su propia base (1.ª: septiembre, octubre y noviembre).
+    // 1.ª y 3.ª decena con su propia base (1.ª: de diciembre de 2025 a noviembre de 2026).
     assert.equal(tpv.celdas['2026-12-01'].importe, 11000);
-    assert.deepEqual(tpv.celdas['2026-12-01'].media?.base.map((b) => b.clave), ['2026-09-01', '2026-10-01', '2026-11-01']);
+    const base1 = tpv.celdas['2026-12-01'].media?.base.map((b) => b.clave) ?? [];
+    assert.deepEqual([base1.length, base1[0], base1[11]], [12, '2025-12-01', '2026-11-01']);
     assert.equal(tpv.celdas['2026-11-21'].importe, 9000);
-    // Anotado en el Excel (TPV de Navidad): manda el Excel y no se añade media.
-    assert.equal(tpv.celdas['2026-12-21'], undefined);
-    assert.deepEqual([linea(r, 'PIO', 'RE Cobro TPV', 'TPV CaixaBank').celdas['2026-12-21'].fuente, linea(r, 'PIO', 'RE Cobro TPV', 'TPV CaixaBank').celdas['2026-12-21'].importe], ['EXCEL', 12500]);
     // SOE: solo en la 3.ª decena (la media de las otras posiciones es 0: no hay cifra).
-    const soe = linea(r, 'RITA', 'RE Cobro SOE', CONCEPTO_MEDIA);
+    const soe = linea(r, 'RITA', 'RE Cobro SOE', 'CatSalut receptes');
     assert.equal(soe.celdas['2026-11-21'].importe, 20000);
-    assert.deepEqual(soe.celdas['2026-11-21'].media?.base.map((x) => x.clave), ['2026-08-21', '2026-09-21', '2026-10-21']);
+    assert.equal(soe.celdas['2026-11-21'].media?.base.length, 12);
     assert.equal(soe.celdas['2026-11-11'], undefined);
     assert.equal(soe.celdas['2026-12-01'], undefined);
-    // Con «Excel»: solo lo anotado; la media queda a la vista sin sumar.
-    const e = calcularCashflow(dto, { 'RE Cobro TPV': 'excel' });
-    assert.equal(linea(e, 'PIO', 'RE Cobro TPV', CONCEPTO_MEDIA).celdas['2026-11-11'].en_saldo, false);
-    assert.equal((saldo(r, 'PIO', '2026-11-11') as number) - (saldo(e, 'PIO', '2026-11-11') as number), 10000);
-    // Columna: la cifra que no suma también se ve.
+    // Columna: total de la categoría (sin cifras «a la vista sin sumar»: ya no hay selector «Media / Excel»).
     const col = columnasVista('2026-11-16', 'decenas')[3];
     const t = totalCategoria(r.vistas.PIO.lineas.filter((l) => l.categoria === 'RE Cobro TPV'), col, r.vistas.PIO);
     assert.deepEqual([t?.importe, t?.sin_usar], [10000, null]);
-    const te = totalCategoria(e.vistas.PIO.lineas.filter((l) => l.categoria === 'RE Cobro TPV'), col, e.vistas.PIO);
-    assert.deepEqual([te?.importe, te?.sin_usar], [null, 10000]);
     // Consolidado: la media de efectivo de las dos cuentas (PIO 3.000 + RITA 1.200).
     const ef = totalCategoria(r.vistas.CONSOLIDADO.lineas.filter((l) => l.categoria === 'RE Cobro efectivo'), col, r.vistas.CONSOLIDADO);
     assert.equal(ef?.importe, 4200);
-    // Todas las categorías RE y RS con historia llevan media (también «no relacionadas»); de los traspasos, solo los externos.
-    assert.ok(['RS Proveedores', 'RS Gastos generales', 'RS No relacionadas con la farmacia', 'RE No relacionadas con la farmacia', 'RS Traspasos'].every((c) => r.categorias_media.includes(c)));
+    // Todas las categorías RE y RS con historia llevan media (también «no relacionadas» y personal); de los traspasos, solo los externos.
+    assert.ok(['RS Proveedores', 'RS Gastos generales', 'RS No relacionadas con la farmacia', 'RE No relacionadas con la farmacia', 'RS Traspasos', 'RS Personal'].every((c) => r.categorias_media.includes(c)));
     assert.ok(!r.categorias_media.includes('RE Traspasos'));
-    // RS Personal: anotada en el Excel en todas sus decenas (la 2.ª no tiene historia): sin media.
-    assert.ok(!r.categorias_media.includes('RS Personal'));
   });
 
   test('RITA: «RE Cobro efectivo / COBRO EFECTIU» real en todas las decenas y previsto por media', async () => {
@@ -224,14 +236,13 @@ describe('H7: fixtures (16/11/2026; última decena real 01–10/11)', () => {
     const ef = linea(r, 'RITA', 'RE Cobro efectivo', 'COBRO EFECTIU');
     const reales = r.decenas.filter((d) => d <= '2026-11-01');
     assert.ok(reales.every((d) => ef.celdas[d]?.fuente === 'REAL' && (ef.celdas[d].importe as number) > 0));
-    const m = linea(r, 'RITA', 'RE Cobro efectivo', CONCEPTO_MEDIA);
-    assert.ok(r.decenas.filter((d) => d > '2026-11-01').every((d) => m.celdas[d]?.importe === 1200));
+    assert.ok(r.decenas.filter((d) => d > '2026-11-01').every((d) => ef.celdas[d]?.fuente === 'MEDIA' && ef.celdas[d]?.importe === 1200));
     assert.equal(r.vistas.RITA.decenas['2026-11-01'].entradas! > 0, true);
   });
 
   test('«RS Modelo …» (trimestrales): el mismo mes del año anterior, no la media', async () => {
     const r = calcularCashflow(await datosFixtures());
-    const m303 = linea(r, 'PIO', 'RS Modelo 303', CONCEPTO_MEDIA);
+    const m303 = linea(r, 'PIO', 'RS Modelo 303', 'IVA trimestral');
     assert.deepEqual([m303.celdas['2027-01-11'].importe, m303.celdas['2027-01-11'].media?.regla, m303.celdas['2027-01-11'].media?.base.map((b) => b.clave)],
       [-8500, 'ANIO_ANTERIOR', ['2026-01-11']]);
     assert.equal(m303.celdas['2027-04-11'].importe, -7900);
@@ -241,8 +252,8 @@ describe('H7: fixtures (16/11/2026; última decena real 01–10/11)', () => {
     assert.equal(m303.celdas['2026-12-11'], undefined);
     // Más de 12 meses por delante (el año anterior aún no es real): nada.
     assert.equal(m303.celdas['2027-12-11'], undefined);
-    assert.equal(linea(r, 'PIO', 'RS Modelo 111', CONCEPTO_MEDIA).celdas['2027-01-11'].importe, -1500);
-    assert.equal(linea(r, 'RITA', 'RS Modelo 303', CONCEPTO_MEDIA).celdas['2027-01-11'].importe, -3100);
+    assert.equal(linea(r, 'PIO', 'RS Modelo 111', 'Retenciones IRPF').celdas['2027-01-11'].importe, -1500);
+    assert.equal(linea(r, 'RITA', 'RS Modelo 303', 'IVA trimestral').celdas['2027-01-11'].importe, -3100);
   });
 
   test('traspasos internos: neutros en el consolidado y sin media; los no compensados no son aviso (línea plegada de las decenas visibles)', async () => {
@@ -300,8 +311,10 @@ describe('H7: fixtures (16/11/2026; última decena real 01–10/11)', () => {
       assert.equal(rojos.length, 1, JSON.stringify(rojos));
       assert.deepEqual([rojos[0].decena, rojos[0].hasta], ['2027-01-11', '2027-01-11']);
       assert.equal(rojos[0].importe, -(saldo(r, 'CONSOLIDADO', '2027-01-11') as number));
-      assert.deepEqual([saldo(r, 'PIO', '2027-01-11'), saldo(r, 'RITA', '2027-01-11'), rojos[0].importe], [-3400, 780, 2620]);
-      assert.equal(saldo(r, 'RITA', '2026-12-11'), -5020);
+      // H7-REAL-9 (media por concepto; Excel frente a media): robot de 23.400 € y campaña HEFAME de RITA de 9.800 € para
+      // mantener la naranja de RITA en 11–20/12 y un solo rojo en 11–20/01/2027.
+      assert.deepEqual([saldo(r, 'PIO', '2027-01-11'), saldo(r, 'RITA', '2027-01-11'), rojos[0].importe], [-2212.53, -385.83, 2598.36]);
+      assert.equal(saldo(r, 'RITA', '2026-12-11'), -5008.33);
       // Gris: importación de hace 6 días (y ninguno por traspasos).
       assert.deepEqual(r.avisos.filter((a) => a.tipo === 'gris').map((a) => a.codigo), ['IMPORTACION_ANTIGUA']);
       assert.equal(r.importacion.dias, 6);
@@ -316,7 +329,7 @@ describe('H7: fixtures (16/11/2026; última decena real 01–10/11)', () => {
     const c = celdaColumna(linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE'), nov, r.vistas.PIO);
     assert.equal(c?.tipo, 'mixto');
     assert.equal(c?.diferencia, true);
-    assert.equal(c?.importe, -12000); // 6.000 real (1–10/11) + 6.000 media de ALLIANCE (11–20/11, mayor que sus vencimientos)
+    assert.equal(c?.importe, -18000); // 6.000 real (1–10/11) + 6.000 media (11–20/11, mayor que su Excel y sus vencimientos) + 6.000 media (21–30/11)
   });
 });
 
@@ -337,7 +350,9 @@ describe('H7: casos sintéticos', () => {
     // Abono del mismo proveedor: resta de lo que se paga. Pagado antes del último saldo de banco: ya está en el saldo.
     const ab = calcularCashflow({ ...base, importes, saldos, vencimientos: [venc({}), venc({ vencimiento_id: 'v2', importe: -30, sentido: 'ABONO' }),
       venc({ vencimiento_id: 'v3', importe: 50, estado_pago: 'PAGADO_MANUAL', fecha_pago: '2026-11-15' })] });
-    assert.equal(linea(ab, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-21'].importe, -70);
+    // Neto 70; H7-REAL-8: el Excel (100) es mayor y gana; los vencimientos quedan como «la otra».
+    const abc = linea(ab, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-11-21'];
+    assert.deepEqual([abc.fuente, abc.importe, abc.vencimientos?.neto, abc.comparada], ['EXCEL', -100, 70, { fuente: 'VENCIMIENTOS', importe: -70 }]);
     // Proveedor sin línea en el Excel: se crea en RS Proveedores con su concepto.
     const nuevo = calcularCashflow({ ...base, importes: [], saldos, vencimientos: [venc({ proveedor_comercial: 'FEDEFARMA' })] });
     assert.equal(linea(nuevo, 'PIO', 'RS Proveedores', 'FEDERACIÓ').celdas['2026-11-21'].importe, -100);
@@ -396,14 +411,30 @@ describe('H7: casos sintéticos', () => {
 describe('H7-REAL-2: previsión por cuenta y categoría (vencimientos > apunte manual > Excel > media)', () => {
   // Real hasta 11–20/11/2026 (hoy 16/11 → la decena actual también es real aquí): meses reales completos.
   const hoy = '2026-11-25';
-  const base = { hoy, importaciones: IMP_OK, cuentas: CUENTAS };
+  // H7-REAL-8: estos casos prueban el mecanismo con una ventana de 3 meses (N en un único punto, CONFIG_CASHFLOW.meses_media);
+  // la de 12 (la vigente, decisión de Pío) va en «H7-REAL-8: media de 12 meses».
+  const base = { hoy, importaciones: IMP_OK, cuentas: CUENTAS, config: { ...CONFIG_CASHFLOW, meses_media: 3 } };
   const reales = (cuenta: string, categoria: string, concepto: string, porPosicion: [number, number, number], desde = '2026-06-01', hasta = '2026-11-11') => {
     const out: ImporteCashflow[] = [];
     for (let d = desde; d <= hasta; d = siguienteDecena(d)) out.push(fila(cuenta, d, categoria, concepto, porPosicion[ordinalDecena(d) - 1]));
     return out.filter((f) => f.importe !== 0);
   };
   const saldos = [banco('PIO', '2026-06-01', 0, { saldo_bancos: null }), banco('PIO', '2026-11-11', 10000), banco('RITA', '2026-11-11', 0)];
-  const media = (r: ResultadoCashflow, cuenta: 'PIO' | 'RITA', categoria: string) => r.vistas[cuenta].lineas.find((l) => l.categoria === categoria && l.media)?.celdas ?? {};
+  // H7-REAL-9: ya no hay línea de media de categoría: suma, por decena futura, las cifras de media de los conceptos de la
+  // categoría (cada uno en su línea), con la media del primero que la lleve.
+  const media = (r: ResultadoCashflow, cuenta: 'PIO' | 'RITA', categoria: string) => {
+    const out: Record<string, { importe: number; media: Celda['media']; conceptos: string[] }> = {};
+    for (const l of r.vistas[cuenta].lineas.filter((x) => x.categoria === categoria)) {
+      for (const [d, c] of Object.entries(l.celdas)) {
+        if (c.real || c.fuente !== 'MEDIA' || c.importe === null) continue;
+        const x = out[d] ?? { importe: 0, media: c.media, conceptos: [] };
+        x.importe = Math.round((x.importe + c.importe) * 100) / 100;
+        x.conceptos.push(l.concepto);
+        out[d] = x;
+      }
+    }
+    return out;
+  };
 
   test('posición de decena: últimos 3 meses reales de la misma decena del mes (1.ª, 2.ª o 3.ª)', () => {
     // 1.ª: 100; 2.ª: 200; 3.ª: 300, salvo septiembre (600): 3.ª = (600 + 300 + 300) / 3 = 400.
@@ -421,44 +452,52 @@ describe('H7-REAL-2: previsión por cuenta y categoría (vencimientos > apunte m
     assert.deepEqual(media(r2, 'PIO', 'RS Gastos generales')['2026-11-21'].media?.base.map((b) => b.importe), [-600, 0]);
   });
 
-  test('sin doble cómputo, categoría SIN vencimientos: con Excel en la categoría y decena no se añade media (aunque sea de otro concepto)', () => {
+  test('H7-REAL-9: por concepto: Excel inferior a la media → la media; superior → el Excel; los demás conceptos de la categoría, su media (sin huecos ni doble cómputo)', () => {
     const importes = [
       ...reales('PIO', 'RS Gastos generales', 'Luz', [1000, 1000, 1000]), ...reales('PIO', 'RS Gastos generales', 'Agua', [500, 500, 500]),
-      fila('PIO', '2026-12-11', 'RS Gastos generales', 'Agua', 450), // anotado en el Excel
+      fila('PIO', '2026-12-11', 'RS Gastos generales', 'Agua', 450), // anotado en el Excel, inferior a su media
+      fila('PIO', '2027-01-11', 'RS Gastos generales', 'Agua', 700), // anotado en el Excel, superior a su media
     ];
     const r = calcularCashflow({ ...base, vencimientos: [], importes, saldos });
-    const m = media(r, 'PIO', 'RS Gastos generales');
-    assert.equal(m['2026-12-11'], undefined);
-    assert.equal(m['2026-12-21'].importe, -1500);
-    assert.deepEqual([r.vistas.PIO.decenas['2026-12-11'].salidas, r.vistas.PIO.decenas['2026-12-21'].salidas], [-450, -1500]);
+    const agua = linea(r, 'PIO', 'RS Gastos generales', 'Agua').celdas;
+    assert.deepEqual([agua['2026-12-11'].fuente, agua['2026-12-11'].importe, agua['2026-12-11'].frente, agua['2026-12-11'].excel], ['MEDIA', -500, { excel: -450, media: -500 }, -450]);
+    assert.deepEqual([agua['2027-01-11'].fuente, agua['2027-01-11'].importe, agua['2027-01-11'].frente], ['EXCEL', -700, { excel: -700, media: -500 }]);
+    // Luz (sin Excel en esas decenas): su media, aunque Agua esté anotada (antes la categoría quedaba sin media).
+    const luz = linea(r, 'PIO', 'RS Gastos generales', 'Luz').celdas;
+    assert.deepEqual([luz['2026-12-11'].fuente, luz['2026-12-11'].importe, luz['2027-01-11'].importe], ['MEDIA', -1000, -1000]);
+    // Una sola cifra por concepto y decena: el saldo es la suma.
+    assert.deepEqual([r.vistas.PIO.decenas['2026-12-11'].salidas, r.vistas.PIO.decenas['2027-01-11'].salidas, r.vistas.PIO.decenas['2026-12-21'].salidas], [-1500, -1700, -1500]);
+    assert.equal(saldo(r, 'PIO', '2026-12-11'), Math.round(((saldo(r, 'PIO', '2026-12-01') as number) - 1500) * 100) / 100);
+    // Sin línea de «Media calculada» de categoría.
+    assert.ok(r.vistas.PIO.lineas.every((l) => !l.media));
+    // Excel con importe desconocido: no se compara (cuenta como desconocido, nunca 0).
+    const nulo = calcularCashflow({ ...base, vencimientos: [], saldos, importes: [...importes, fila('PIO', '2027-02-11', 'RS Gastos generales', 'Agua', null)] });
+    const an = linea(nulo, 'PIO', 'RS Gastos generales', 'Agua').celdas['2027-02-11'];
+    assert.deepEqual([an.fuente, an.importe, an.frente, an.desconocidos], ['EXCEL', null, null, 1]);
   });
 
-  test('H7-REAL-3: categoría CON vencimientos: por concepto; el resto lleva la media de la categoría sin los conceptos ya previstos', () => {
+  test('H7-REAL-3/9: categoría CON vencimientos: cada concepto con su previsión (vencimientos, Excel o media); sin doble cómputo', () => {
     const importes = [
       ...reales('PIO', 'RS Proveedores', 'ALLIANCE', [1000, 1000, 1000]), ...reales('PIO', 'RS Proveedores', 'COFARES', [500, 500, 500]),
       ...reales('PIO', 'RS Proveedores', 'Varios', [200, 200, 200]),
-      fila('PIO', '2026-12-11', 'RS Proveedores', 'COFARES', 450), // anotado en el Excel
+      fila('PIO', '2026-12-11', 'RS Proveedores', 'COFARES', 450), // anotado en el Excel (inferior a su media)
     ];
     // Vencimiento de ALLIANCE (1.200) mayor que su media (1.000): ganan los vencimientos (H7-REAL-5).
     const vencimientos = [venc({ fecha_vencimiento: '2026-12-05', importe: 1200 })];
     const r = calcularCashflow({ ...base, vencimientos, importes, saldos });
     const m = media(r, 'PIO', 'RS Proveedores');
-    // 1–10/12: vencimiento de ALLIANCE (1.200) + media del resto sin ALLIANCE (500 + 200).
-    assert.deepEqual([m['2026-12-01'].importe, m['2026-12-01'].media?.excluidos], [-700, ['ALLIANCE']]);
-    // 11–20/12: Excel de COFARES (450) + media del resto sin COFARES (1.000 + 200).
-    assert.deepEqual([m['2026-12-11'].importe, m['2026-12-11'].media?.excluidos], [-1200, ['COFARES']]);
-    // 21–31/12: nada previsto: media de toda la categoría.
-    assert.deepEqual([m['2026-12-21'].importe, m['2026-12-21'].media?.excluidos], [-1700, []]);
+    // 1–10/12: vencimiento de ALLIANCE (1.200) + medias de COFARES (500) y Varios (200).
+    assert.deepEqual([m['2026-12-01'].importe, m['2026-12-01'].conceptos.sort()], [-700, ['COFARES', 'Varios']]);
+    // 11–20/12: COFARES por su media (500 > Excel 450) + ALLIANCE (1.000) + Varios (200).
+    assert.deepEqual([m['2026-12-11'].importe, m['2026-12-11'].conceptos.sort()], [-1700, ['ALLIANCE', 'COFARES', 'Varios']]);
+    assert.deepEqual([m['2026-12-21'].importe], [-1700]);
     const d = r.vistas.PIO.decenas;
-    assert.deepEqual([d['2026-12-01'].salidas, d['2026-12-11'].salidas, d['2026-12-21'].salidas], [-1900, -1650, -1700]);
-    // Correspondencia por nombre comercial: un vencimiento de FEDEFARMA excluye «FEDERACIO» de la media.
+    assert.deepEqual([d['2026-12-01'].salidas, d['2026-12-11'].salidas, d['2026-12-21'].salidas], [-1900, -1700, -1700]);
+    // Correspondencia por nombre comercial: un vencimiento de FEDEFARMA va a «FEDERACIO» (400 > su media 300).
     const fed = calcularCashflow({ ...base, saldos, vencimientos: [venc({ proveedor_comercial: 'FEDEFARMA', fecha_vencimiento: '2026-12-05', importe: 400 })],
       importes: [...reales('PIO', 'RS Proveedores', 'FEDERACIO', [300, 300, 300]), ...reales('PIO', 'RS Proveedores', 'HEFAME', [100, 100, 100])] });
     assert.deepEqual([media(fed, 'PIO', 'RS Proveedores')['2026-12-01'].importe, fed.vistas.PIO.decenas['2026-12-01'].salidas], [-100, -500]);
-    // Con «Excel»: solo lo anotado y los vencimientos; la media, a la vista sin sumar.
-    const e = calcularCashflow({ ...base, vencimientos, importes, saldos }, { 'RS Proveedores': 'excel' });
-    assert.equal(media(e, 'PIO', 'RS Proveedores')['2026-12-21'].en_saldo, false);
-    assert.deepEqual([e.vistas.PIO.decenas['2026-12-01'].salidas, e.vistas.PIO.decenas['2026-12-21'].salidas], [-1200, null]);
+    assert.deepEqual(linea(fed, 'PIO', 'RS Proveedores', 'FEDERACIO').celdas['2026-12-01'].comparada, { fuente: 'MEDIA', importe: -300 });
   });
 
   test('H7-REAL-5: vencimientos como mínimo, por concepto y decena: menores que la media → media; mayores → vencimientos; sin vencimientos → media', () => {
@@ -473,17 +512,28 @@ describe('H7-REAL-2: previsión por cuenta y categoría (vencimientos > apunte m
     const a = linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas;
     assert.deepEqual([a['2026-12-01'].fuente, a['2026-12-01'].importe, a['2026-12-01'].vencimientos?.neto], ['MEDIA', -1000, 400]);
     assert.deepEqual(a['2026-12-01'].media?.base.map((b) => b.clave), ['2026-09-01', '2026-10-01', '2026-11-01']);
-    assert.deepEqual([a['2026-12-11'].fuente, a['2026-12-11'].importe, a['2026-12-11'].media], ['VENCIMIENTOS', -3500, null]);
+    assert.deepEqual([a['2026-12-11'].fuente, a['2026-12-11'].importe, a['2026-12-11'].media?.media], ['VENCIMIENTOS', -3500, -3000]);
     assert.deepEqual([a['2026-12-21'].fuente, a['2026-12-21'].importe], ['VENCIMIENTOS', 50]);
-    // Sin vencimientos (enero): media del concepto dentro de la media de la categoría (ALLIANCE + COFARES).
-    assert.equal(a['2027-01-01'], undefined);
+    // Sin vencimientos (enero): la media del concepto, en su línea.
+    assert.deepEqual([a['2027-01-01'].fuente, a['2027-01-01'].importe], ['MEDIA', -1000]);
     assert.equal(media(r, 'PIO', 'RS Proveedores')['2027-01-01'].importe, -1500);
-    // La media del resto excluye ALLIANCE también cuando ganó su media (sin doble cómputo).
-    assert.deepEqual([media(r, 'PIO', 'RS Proveedores')['2026-12-01'].importe, media(r, 'PIO', 'RS Proveedores')['2026-12-01'].media?.excluidos], [-500, ['ALLIANCE']]);
+    // 1–10/12: ALLIANCE por su media (mayor que sus vencimientos) + COFARES por la suya (sin doble cómputo).
+    assert.deepEqual([media(r, 'PIO', 'RS Proveedores')['2026-12-01'].importe, media(r, 'PIO', 'RS Proveedores')['2026-12-01'].conceptos.sort()], [-1500, ['ALLIANCE', 'COFARES']]);
     assert.deepEqual([r.vistas.PIO.decenas['2026-12-01'].salidas, r.vistas.PIO.decenas['2026-12-11'].salidas], [-1500, -4000]);
-    // Con «Excel» en la categoría: los vencimientos, como antes (la media no entra).
-    const e = calcularCashflow({ ...base, vencimientos, importes, saldos }, { 'RS Proveedores': 'excel' });
-    assert.deepEqual([linea(e, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-12-01'].fuente, e.vistas.PIO.decenas['2026-12-01'].salidas], ['VENCIMIENTOS', -400]);
+    // Previsión base = el mayor entre Excel y media; después, frente a los vencimientos (3.500):
+    //   Excel 4.000 > media 3.000 → base 4.000 > 3.500 → el Excel;
+    //   Excel 3.000 = media 3.000 → base Excel 3.000 < 3.500 → los vencimientos (con el Excel al lado);
+    //   Excel 2.000 < media 3.000 → base media 3.000 < 3.500 → los vencimientos (con la media al lado).
+    const conExcel = (x: number) => linea(calcularCashflow({ ...base, vencimientos, importes: [...importes, fila('PIO', '2026-12-11', 'RS Proveedores', 'ALLIANCE', x)], saldos }), 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-12-11'];
+    const gx = conExcel(4000);
+    assert.deepEqual([gx.fuente, gx.importe, gx.comparada, gx.frente], ['EXCEL', -4000, { fuente: 'VENCIMIENTOS', importe: -3500 }, { excel: -4000, media: -3000 }]);
+    const gv = conExcel(3000);
+    assert.deepEqual([gv.fuente, gv.importe, gv.comparada, gv.diferencia], ['VENCIMIENTOS', -3500, { fuente: 'EXCEL', importe: -3000 }, true]);
+    const em = conExcel(2000);
+    assert.deepEqual([em.fuente, em.importe, em.comparada, em.frente], ['VENCIMIENTOS', -3500, { fuente: 'MEDIA', importe: -3000 }, { excel: -2000, media: -3000 }]);
+    // Ganan los vencimientos frente a la media: la media queda como «la otra».
+    assert.deepEqual(a['2026-12-11'].comparada, { fuente: 'MEDIA', importe: -3000 });
+    assert.deepEqual(a['2026-12-01'].comparada, { fuente: 'VENCIMIENTOS', importe: -400 });
     // Vencimiento sin importe conocido: no se compara (los vencimientos, saldo incompleto).
     const n = calcularCashflow({ ...base, vencimientos: [venc({ fecha_vencimiento: '2026-12-05', importe: null })], importes, saldos });
     assert.equal(linea(n, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-12-01'].fuente, 'VENCIMIENTOS');
@@ -518,28 +568,25 @@ describe('H7-REAL-2: previsión por cuenta y categoría (vencimientos > apunte m
     const importes = [
       ...reales('RITA', 'RS Traspasos', 'TRASPASO A LA SL (JUBILACIO ETC)', [0, 6000, 0]), ...reales('RITA', 'RS Traspasos', 'Otro fondo', [0, 1000, 0]),
       ...reales('RITA', 'RS Traspasos', 'DEPÓSITO CONECTADO', [0, 9000, 0]), // interno: sin media
-      fila('RITA', '2026-12-11', 'RS Traspasos', 'TRASPASO A LA SL (JUBILACIO ETC)', 2000), // anotado: manda
+      fila('RITA', '2026-12-11', 'RS Traspasos', 'TRASPASO A LA SL (JUBILACIO ETC)', 8000), // anotado, mayor que su media (6.000): manda
     ];
     const conSaldos = { ...base, vencimientos: [], importes, saldos: [...saldos.filter((s) => s.cuenta !== 'RITA'), banco('RITA', '2026-11-11', 50000)] };
     const r = calcularCashflow(conSaldos);
     const sl = linea(r, 'RITA', 'RS Traspasos', 'TRASPASO A LA SL (JUBILACIO ETC)');
     assert.equal(sl.clase, 'TRASPASO_EXTERNO');
     assert.deepEqual([sl.celdas['2026-11-21'], sl.celdas['2027-01-11'].fuente, sl.celdas['2027-01-11'].importe], [undefined, 'MEDIA', -6000]);
-    assert.deepEqual([sl.celdas['2026-12-11'].fuente, sl.celdas['2026-12-11'].importe], ['EXCEL', -2000]);
+    assert.deepEqual([sl.celdas['2026-12-11'].fuente, sl.celdas['2026-12-11'].importe, sl.celdas['2026-12-11'].frente], ['EXCEL', -8000, { excel: -8000, media: -6000 }]);
     // Por concepto: «Otro fondo» lleva su media aunque la SL esté anotada en 11–20/12.
     assert.equal(linea(r, 'RITA', 'RS Traspasos', 'Otro fondo').celdas['2026-12-11'].importe, -1000);
     assert.ok(Object.values(linea(r, 'RITA', 'RS Traspasos', 'DEPÓSITO CONECTADO').celdas).every((c) => c.fuente === 'REAL'));
     const d = r.vistas.RITA.decenas;
-    assert.deepEqual([d['2026-12-11'].traspasos_externos, d['2026-12-11'].traspasos, d['2026-12-11'].saldo], [-3000, null, 47000]);
+    assert.deepEqual([d['2026-12-11'].traspasos_externos, d['2026-12-11'].traspasos, d['2026-12-11'].saldo], [-9000, null, 41000]);
     // Consolidado: el externo cuenta (línea y saldo); el interno no compensado, solo en la línea plegada.
     assert.ok(r.vistas.CONSOLIDADO.lineas.some((l) => l.concepto === 'TRASPASO A LA SL (JUBILACIO ETC)'));
     assert.ok(!r.vistas.CONSOLIDADO.lineas.some((l) => l.concepto === 'DEPÓSITO CONECTADO'));
-    assert.equal(r.vistas.CONSOLIDADO.decenas['2026-12-11'].traspasos_externos, -3000);
+    assert.equal(r.vistas.CONSOLIDADO.decenas['2026-12-11'].traspasos_externos, -9000);
     assert.equal(r.vistas.CONSOLIDADO.decenas['2026-12-11'].traspasos, null);
     assert.equal(r.vistas.CONSOLIDADO.decenas['2026-11-11'].traspasos, -9000);
-    // «Media / Excel» de la categoría: con «Excel», solo lo anotado.
-    const e = calcularCashflow(conSaldos, { 'RS Traspasos': 'excel' });
-    assert.equal(e.vistas.RITA.decenas['2027-01-11'].traspasos_externos, null);
   });
 
   test('H7-REAL-4: indicador de control: variación media mensual real (12 meses) frente a prevista', () => {
@@ -552,7 +599,7 @@ describe('H7-REAL-2: previsión por cuenta y categoría (vencimientos > apunte m
     assert.deepEqual([x.prevista?.desde, x.prevista?.hasta, x.prevista?.meses, x.prevista?.por_mes], ['2026-11-11', '2027-07-21', 8.33, -96]);
   });
 
-  test('apunte manual (hueco preparado): entre vencimientos y Excel; sin apuntes, nada cambia', () => {
+  test('apunte manual (hueco preparado): antes que el Excel y comparado con los vencimientos; sin apuntes, nada cambia', () => {
     const importes = [...reales('PIO', 'RS Personal', 'Nóminas', [1000, 0, 0]), fila('PIO', '2026-12-01', 'RS Personal', 'Nóminas', 1100)];
     const sin = calcularCashflow({ ...base, vencimientos: [], importes, saldos });
     assert.equal(sin.vistas.PIO.lineas.find((l) => l.concepto === 'Nóminas')!.celdas['2026-12-01'].fuente, 'EXCEL');
@@ -564,11 +611,32 @@ describe('H7-REAL-2: previsión por cuenta y categoría (vencimientos > apunte m
     const r = calcularCashflow({ ...base, vencimientos: [venc({ fecha_vencimiento: '2026-12-05', importe: 800 })], importes, saldos, apuntes_manuales: apuntes });
     const nom = linea(r, 'PIO', 'RS Personal', 'Nóminas').celdas['2026-12-01'];
     assert.deepEqual([nom.fuente, nom.importe, nom.excel], ['MANUAL', -1250, -1100]);
-    // Con un apunte en la categoría y decena, no hay media (enero: Finiquito, sin media de Nóminas).
-    assert.equal(media(r, 'PIO', 'RS Personal')['2027-01-01'], undefined);
+    // H7-REAL-9: el apunte de otro concepto (enero: Finiquito) no deja a Nóminas sin su media.
+    assert.deepEqual([media(r, 'PIO', 'RS Personal')['2027-01-01'].importe, media(r, 'PIO', 'RS Personal')['2027-01-01'].conceptos], [-1000, ['Nóminas']]);
+    assert.equal(linea(r, 'PIO', 'RS Personal', 'Finiquito').celdas['2027-01-01'].importe, -400);
     assert.equal(media(r, 'PIO', 'RS Personal')['2027-02-01'].importe, -1000);
-    // Los vencimientos mandan sobre el apunte.
-    assert.deepEqual([linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-12-01'].fuente, linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-12-01'].importe], ['VENCIMIENTOS', -800]);
+    // H7-REAL-8: el apunte es la previsión base y se compara con los vencimientos: 999 > 800 → el apunte.
+    const al = linea(r, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-12-01'];
+    assert.deepEqual([al.fuente, al.importe, al.comparada], ['MANUAL', -999, { fuente: 'VENCIMIENTOS', importe: -800 }]);
+    // Apunte menor que los vencimientos: los vencimientos.
+    const menor = calcularCashflow({ ...base, vencimientos: [venc({ fecha_vencimiento: '2026-12-05', importe: 800 })], importes, saldos,
+      apuntes_manuales: [{ cuenta: 'PIO', decena_inicio: '2026-12-01', categoria: 'RS Proveedores', concepto: 'ALLIANCE', importe: 300 }] });
+    assert.deepEqual([linea(menor, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-12-01'].fuente, linea(menor, 'PIO', 'RS Proveedores', 'ALLIANCE').celdas['2026-12-01'].comparada],
+      ['VENCIMIENTOS', { fuente: 'MANUAL', importe: -300 }]);
+  });
+
+  test('H7-REAL-8: media de 12 meses (decisión de Pío): un pago grande de hace 8 meses entra en la de 12, no en la de 3', () => {
+    // Un año de reales (desde 11/2025): «Reparación» 6.000 en 21–31/03/2026 y nada más en la categoría.
+    const saldos12 = [banco('PIO', '2025-11-01', 0, { saldo_bancos: null }), banco('PIO', '2026-11-11', 10000), banco('RITA', '2026-11-11', 0)];
+    const importes = [...reales('PIO', 'RS Gastos generales', 'Luz', [100, 100, 100], '2025-11-01'), fila('PIO', '2026-03-21', 'RS Gastos generales', 'Reparación', 6000)];
+    const r12 = calcularCashflow({ ...base, config: CONFIG_CASHFLOW, vencimientos: [], importes, saldos: saldos12 });
+    const m12 = media(r12, 'PIO', 'RS Gastos generales')['2026-11-21'];
+    assert.deepEqual([m12.importe, m12.media?.base.length, m12.media?.base[0].clave], [-600, 12, '2025-11-21']); // 100 + 6.000 ÷ 12
+    const r3 = calcularCashflow({ ...base, vencimientos: [], importes, saldos: saldos12 });
+    assert.equal(media(r3, 'PIO', 'RS Gastos generales')['2026-11-21'].importe, -100);
+    // Menos de 12 meses de historia: los que haya (desde la primera decena de la cuenta).
+    const corto = calcularCashflow({ ...base, config: CONFIG_CASHFLOW, vencimientos: [], importes: reales('PIO', 'RS Gastos generales', 'Luz', [100, 100, 100]), saldos });
+    assert.equal(media(corto, 'PIO', 'RS Gastos generales')['2026-11-21'].media?.base.length, 5); // junio a octubre
   });
 
   test('H7-REAL-2 (RITA sin efectivo): la categoría y el concepto del Excel llegan a la vista RITA, con cualquier mayúscula', () => {
@@ -764,6 +832,104 @@ function consultarSimulada(b: BaseSimulada, log: { sql: string; params: unknown[
   };
 }
 
+describe('H7-REAL-7: equivalencias de concepto y horizonte de los avisos', () => {
+  test('CONCEPTOS_EQUIVALENTES: JNTL CONSUMER (ORALDI…) y JHONSON & JHONSON → KENVUE (sin mayúsculas ni acentos); el resto, igual', () => {
+    assert.equal(conceptoEquivalente('JNTL CONSUMER (ORALDINE) S.L.'), 'KENVUE');
+    assert.equal(conceptoEquivalente('jntl consumer (oraldi'), 'KENVUE');
+    assert.equal(conceptoEquivalente(' Jhonson  &  Jhonson '), 'KENVUE');
+    assert.equal(conceptoEquivalente('JNTL CONSUMER'), 'JNTL CONSUMER'); // sin «(ORALDI», no
+    assert.equal(conceptoEquivalente('ALLIANCE'), 'ALLIANCE');
+    assert.equal(CONCEPTOS_EQUIVALENTES.filter((e) => e.queda === 'KENVUE').length, 2);
+    assert.equal(comercialDeConcepto('KENVUE'), 'KENVUE');
+  });
+
+  test('H7-REAL-8: las 9 fusiones de Pío; truncados («…») por prefijo en el alias y en el que queda (texto del Excel); ambiguo o sin coincidencia: sin fusionar', () => {
+    assert.equal(CONCEPTOS_EQUIVALENTES.length, 11);
+    const exactos: [string, string][] = [['PROTECTFARMA', 'PROTECFARMA'], ['SM NATURAL (SOLARAY)', 'SOLARAY'], ['LAB. VILARDELL (NO USAR)', 'LAB. VILARDELL'],
+      ['BIODERMA (NAOS)', 'BIODERMA'], ['DERMOFARM (CUMLAUDE)', 'CUMLAUDE'], ['AREAFAR (ENNA CYCLE)', 'AREAFAR'], ['EXPOFARM CREU, CASH', 'EXPOFARM'], ['PEROXIDOS', 'PEROXFARMA']];
+    for (const [a, q] of exactos) assert.equal(conceptoEquivalente(a), q, a);
+    // El que queda con otra grafía en el Excel: la del Excel (misma línea).
+    assert.equal(resolverEquivalencias(['Peroxidos', 'Peroxfarma']).mapa.get('Peroxidos'), 'Peroxfarma');
+    // Truncados: alias y nombre que queda por prefijo; queda el texto completo del Excel.
+    const ok = resolverEquivalencias(['DERMOPHARMACIE I PERFUMERIA', 'Dermofarmacia Perfumeria SL']);
+    assert.deepEqual([...ok.mapa], [['DERMOPHARMACIE I PERFUMERIA', 'Dermofarmacia Perfumeria SL']]);
+    assert.deepEqual([ok.ambiguas, ok.sin_coincidencia], [0, 1]); // JNTL… no está
+    // Prefijo del que queda con dos nombres distintos: ambiguo, no se fusiona.
+    const amb = resolverEquivalencias(['DERMOPHARMACIE I PERFUMERIA', 'DERMOFARMACIA PERFUMERIA SL', 'DERMOFARMACIA PERFUMES BCN']);
+    assert.deepEqual([amb.mapa.size, amb.ambiguas], [0, 1]);
+    // Prefijo del que queda sin coincidencia (el alias sí está): no se fusiona.
+    const sin = resolverEquivalencias(['DERMOPHARMACIE I PERFUMERIA']);
+    assert.deepEqual([sin.mapa.size, sin.sin_coincidencia], [0, 2]);
+    // Mismo nombre con distinta grafía: no es ambiguo (es el mismo nombre).
+    assert.equal(resolverEquivalencias(['JNTL CONSUMER (ORALDINE)', 'jntl consumer (oraldine)']).mapa.size, 2);
+  });
+
+  test('H7-REAL-8: fusiones en el cálculo por cuenta (cada hoja); saldo final por decena idéntico con y sin fusiones', () => {
+    const importes = [
+      ...['2026-08-11', '2026-09-11', '2026-10-11'].flatMap((d) => [fila('PIO', d, 'RS Proveedores', 'PROTECTFARMA', 100), fila('PIO', d, 'RS Proveedores', 'PROTECFARMA', 20)]),
+      fila('PIO', '2026-11-11', 'RS Proveedores', 'PEROXIDOS', 50), fila('PIO', '2026-11-01', 'RE Cobro TPV', 'TPV', 1000),
+      // RITA: prefijo ambiguo en su hoja (en PIO no lo sería): sin fusionar.
+      fila('RITA', '2026-10-11', 'RS Proveedores', 'DERMOPHARMACIE I PERFUMERIA', 10), fila('RITA', '2026-10-11', 'RS Proveedores', 'DERMOFARMACIA PERFUMERIA SL', 10),
+      fila('RITA', '2026-10-11', 'RS Proveedores', 'DERMOFARMACIA PERFUMES', 10),
+    ];
+    const b = { hoy: '2026-11-16', importaciones: IMP_OK, cuentas: CUENTAS, saldos: [banco('PIO', '2026-11-01', 5000), banco('RITA', '2026-11-01', 1000)], vencimientos: [] };
+    const r = calcularCashflow({ ...b, importes });
+    assert.deepEqual(linea(r, 'PIO', 'RS Proveedores', 'PROTECFARMA').celdas['2026-10-11'].importe, -120);
+    assert.deepEqual(linea(r, 'PIO', 'RS Proveedores', 'PEROXFARMA').celdas['2026-11-11'].importe, -50);
+    assert.equal(r.vistas.RITA.lineas.filter((l) => /^DERMO/.test(l.concepto)).length, 3);
+    assert.deepEqual([r.equivalencias.filas, r.equivalencias.ambiguas], [{ PIO: 4, RITA: 0 }, 1]);
+    const sin = calcularCashflow({ ...b, importes: importes.map((f) => ({ ...f, concepto: `ZZ ${f.concepto}` })) });
+    for (const v of ['PIO', 'RITA', 'CONSOLIDADO'] as const) for (const d of r.decenas) assert.equal(saldo(r, v, d), saldo(sin, v, d), `${v} ${d}`);
+  });
+
+  test('real, Excel y media sumados bajo KENVUE por cuenta y decena; «incluye»; saldo final por decena idéntico sin la equivalencia', () => {
+    const importes = [
+      // Real (base de la media de la 2.ª decena: oct, sep y ago) y Excel a futuro, repartidos entre los dos alias.
+      ...['2026-08-11', '2026-09-11', '2026-10-11'].flatMap((d) => [fila('PIO', d, 'RS Proveedores', 'JNTL CONSUMER (ORALDINE)', 100), fila('PIO', d, 'RS Proveedores', 'JHONSON & JHONSON', 50)]),
+      fila('PIO', '2026-11-11', 'RS Proveedores', 'JNTL CONSUMER (ORALDINE)', 70), fila('PIO', '2026-11-11', 'RS Proveedores', 'JHONSON & JHONSON', 30),
+      fila('PIO', '2026-11-01', 'RE Cobro TPV', 'TPV', 1000), fila('RITA', '2026-11-01', 'RS Proveedores', 'JHONSON & JHONSON', 40),
+    ];
+    const saldos = [banco('PIO', '2026-11-01', 5000), banco('RITA', '2026-11-01', 1000)];
+    const base = { hoy: '2026-11-16', importaciones: IMP_OK, cuentas: CUENTAS, saldos, vencimientos: [] };
+    const r = calcularCashflow({ ...base, importes });
+    const k = linea(r, 'PIO', 'RS Proveedores', 'KENVUE');
+    assert.deepEqual(k.incluye, ['JHONSON & JHONSON', 'JNTL CONSUMER (ORALDINE)']);
+    assert.equal(r.vistas.PIO.lineas.filter((l) => l.categoria === 'RS Proveedores' && !l.media).length, 1);
+    // H7-REAL-9: Excel sumado (100) frente a la media sumada (150): la media.
+    assert.deepEqual([k.celdas['2026-10-11'].importe, k.celdas['2026-10-11'].excel_filas, k.celdas['2026-11-11'].importe, k.celdas['2026-11-11'].fuente, k.celdas['2026-11-11'].frente],
+      [-150, 2, -150, 'MEDIA', { excel: -100, media: -150 }]);
+    // La media del concepto usa los reales sumados (−150 en cada 2.ª decena).
+    assert.equal(k.celdas['2026-12-11'].importe, -150);
+    // Consolidado: una línea con los alias de las dos cuentas.
+    assert.deepEqual(linea(r, 'CONSOLIDADO', 'RS Proveedores', 'KENVUE').incluye, ['JHONSON & JHONSON', 'JNTL CONSUMER (ORALDINE)']);
+    // Sin la equivalencia (otros nombres, mismos importes): los saldos de todas las decenas, idénticos.
+    const sin = calcularCashflow({ ...base, importes: importes.map((f) => ({ ...f, concepto: `ZZ ${f.concepto}` })) });
+    for (const v of ['PIO', 'RITA', 'CONSOLIDADO'] as const) for (const d of r.decenas) assert.equal(saldo(r, v, d), saldo(sin, v, d), `${v} ${d}`);
+    assert.equal(sin.vistas.PIO.lineas.filter((l) => l.categoria === 'RS Proveedores' && !l.media).length, 2);
+  });
+
+  test('vencimientos del sistema con nombre comercial KENVUE van a la línea KENVUE', () => {
+    const importes = [fila('PIO', '2026-10-11', 'RS Proveedores', 'JHONSON & JHONSON', 50), fila('PIO', '2026-11-01', 'RE Cobro TPV', 'TPV', 1000)];
+    const r = calcularCashflow({ hoy: '2026-11-16', importaciones: IMP_OK, cuentas: CUENTAS, importes, saldos: [banco('PIO', '2026-11-01', 5000)],
+      vencimientos: [venc({ proveedor_comercial: 'KENVUE', proveedor_nombre: 'KENVUE', fecha_vencimiento: '2026-11-25', importe: 900 })] });
+    const c = linea(r, 'PIO', 'RS Proveedores', 'KENVUE').celdas['2026-11-21'];
+    assert.deepEqual([c.fuente, c.importe, c.vencimientos?.comercial], ['VENCIMIENTOS', -900, 'KENVUE']);
+    assert.equal(r.fuera.venc_sin_concepto.length, 0);
+  });
+
+  test('avisos de saldo solo en los 12 meses previstos tras la última decena real (como el indicador)', () => {
+    // Solo lo anotado (sin reales: ninguna media).
+    const importes = [fila('PIO', '2027-12-11', 'RS Inversiones', 'Obra', 9000), fila('PIO', '2027-10-21', 'RS Inversiones', 'Obra', 2000)];
+    const r = calcularCashflow({ hoy: '2026-11-16', importaciones: IMP_OK, cuentas: CUENTAS, importes, saldos: [banco('PIO', '2026-11-01', 5000), banco('RITA', '2026-11-01', 0)], vencimientos: [] });
+    assert.ok((saldo(r, 'CONSOLIDADO', '2027-12-11') as number) < 0);
+    // Horizonte: hasta 01–10/11/2027 (36 decenas tras 01–10/11/2026). La obra de 12/2027 no da aviso.
+    assert.deepEqual(r.avisos.filter((a) => a.tipo !== 'gris').map((a) => a.decena), []);
+    const dentro = calcularCashflow({ hoy: '2026-11-16', importaciones: IMP_OK, cuentas: CUENTAS, saldos: [banco('PIO', '2026-11-01', 5000), banco('RITA', '2026-11-01', 0)], vencimientos: [],
+      importes: [...importes, fila('PIO', '2027-11-01', 'RS Inversiones', 'Obra', 4000)] });
+    assert.deepEqual(dentro.avisos.filter((a) => a.tipo === 'rojo').map((a) => [a.decena, a.hasta]), [['2027-11-01', '2027-11-01']]);
+  });
+});
+
 describe('H7-REAL: lectura de las tablas cf_cashflow_* (base simulada)', () => {
   test('solo SELECT de los cuatro objetos; importes y saldos filtrados por la importación vigente', () => {
     for (const sql of Object.values(SQL_CASHFLOW)) {
@@ -855,7 +1021,9 @@ describe('H7-REAL: lectura de las tablas cf_cashflow_* (base simulada)', () => {
   test('check:real: diagnóstico cashflow solo con números y sí/no', async () => {
     const d = await leerCashflowReal(consultarSimulada(baseSimulada()));
     const diag = validarDiagnostico(diagnosticoCashflow(d, '2026-11-16'));
-    assert.deepEqual(diag, {
+    // H7-REAL-7: el diagnóstico de la previsión (prev_*, equivalencias_*, kenvue_*) se prueba aparte.
+    const nuevas = /^(prev_|equivalencias_|kenvue_|indicador_media|excel_gana_media_|media_gana_excel_)/;
+    assert.deepEqual(Object.fromEntries(Object.entries(diag).filter(([k]) => !nuevas.test(k))), {
       vigente: true, dias_desde_vigente: 6, ultima_error: true,
       importes_pio: 4, saldos_pio: 2, importes_rita: 1, saldos_rita: 2, importes_sl: 1, saldos_sl: 0, importes_otras: 0, saldos_otras: 0,
       decenas_diferencia_banco_formulas: 1, decenas_no_cuadran: 1,
@@ -871,8 +1039,10 @@ describe('H7-REAL: lectura de las tablas cf_cashflow_* (base simulada)', () => {
     });
     const vacia = diagnosticoCashflow(await leerCashflowReal(consultarSimulada(baseSimulada({ importaciones: [] }))), '2026-11-16');
     assert.deepEqual([vacia.vigente, 'dias_desde_vigente' in vacia, vacia.ultima_error, vacia.importes_pio], [false, false, false, 0]);
-    // Ningún valor es un importe, un concepto ni un texto.
-    assert.ok(Object.values(diag).every((v) => typeof v === 'boolean' || Number.isSafeInteger(v)));
+    // Ningún valor es un importe, un concepto ni un texto (H7-REAL-7: las listas, solo etiquetas de categoría o de fuente).
+    assert.ok(Object.values(diag).every((v) => typeof v === 'boolean' || Number.isSafeInteger(v)
+      || (Array.isArray(v) && v.every((x) => typeof x === 'string' && /^[a-z_][a-z0-9_]*$/.test(x)))));
+    assert.deepEqual([diag.prev_pio_disponible, diag.equivalencias_filas_pio, diag.kenvue_venc_con_comercial, diag.kenvue_venc_sin_comercial], [true, 0, 0, 0]);
   });
 
   test('H7-REAL-5 check:real: decenas en que gana la media frente a los vencimientos, por concepto (nombre comercial), e indicador antes/después', async () => {
@@ -880,13 +1050,51 @@ describe('H7-REAL: lectura de las tablas cf_cashflow_* (base simulada)', () => {
     const d = { importaciones: dto.importaciones, cuentas: dto.cuentas, importes: dto.importes, saldos: dto.saldos, otras_cuentas: dto.otras_cuentas };
     const diag = validarDiagnostico(diagnosticoCashflow(d, dto.hoy, dto.vencimientos));
     assert.equal(diag.vencimientos_leidos, dto.vencimientos.length);
-    assert.deepEqual([diag.venc_gana_media_alliance_pio, diag.venc_ganan_vencimientos_alliance_pio], [1, 0]);
+    // H7-REAL-9: ALLIANCE 11–20/11: base = su media (6.000 > Excel 520), mayor que sus vencimientos (472,22).
+    assert.deepEqual([diag.venc_gana_media_alliance_pio, diag.venc_gana_excel_alliance_pio, diag.venc_gana_manual_alliance_pio, diag.venc_ganan_vencimientos_alliance_pio], [1, 0, 0, 0]);
+    // Excel frente a media por mayorista y cuenta: ALLIANCE PIO (11–20/11: media), HEFAME RITA (1–10/12: Excel).
+    assert.deepEqual([diag.media_gana_excel_alliance_pio, diag.excel_gana_media_alliance_pio, diag.excel_gana_media_hefame_rita, diag.media_gana_excel_hefame_rita], [1, 0, 1, 0]);
+    assert.ok(!('excel_gana_media_kenvue_pio' in diag)); // KENVUE no es mayorista
     // Antes (vencimientos como total) la previsión sube más que después (vencimientos como mínimo).
     const antes = (diag.indicador_antes_prevista_negativa ? -1 : 1) * (diag.indicador_antes_prevista_eur_mes as number);
     const despues = (diag.indicador_despues_prevista_negativa ? -1 : 1) * (diag.indicador_despues_prevista_eur_mes as number);
     assert.ok(antes > despues, `${antes} > ${despues}`);
     assert.equal(diag.indicador_antes_real_eur_mes, diag.indicador_despues_real_eur_mes);
-    assert.ok(Object.values(diag).every((v) => typeof v === 'boolean' || (Number.isSafeInteger(v) && (v as number) >= 0)));
+    assert.ok(Object.values(diag).every((v) => typeof v === 'boolean' || (Number.isSafeInteger(v) && (v as number) >= 0) || Array.isArray(v)));
+  });
+
+  test('H7-REAL-7 check:real: diagnóstico de la previsión por cuenta y categoría (media mensual real y prevista, fuente dominante, top diferencias, solo previsión / solo real)', async () => {
+    const dto = await datosFixtures();
+    const d = { importaciones: dto.importaciones, cuentas: dto.cuentas, importes: dto.importes, saldos: dto.saldos, otras_cuentas: dto.otras_cuentas };
+    const diag = validarDiagnostico(diagnosticoCashflow(d, dto.hoy, dto.vencimientos));
+    // TPV de PIO: real 30.000 €/mes (11.000 + 10.000 + 9.000; las variaciones suman 0 por trimestre); previsto por media.
+    assert.deepEqual([diag.prev_pio_re_cobro_tpv_real_eur_mes, diag.prev_pio_re_cobro_tpv_real_negativa, diag.prev_pio_re_cobro_tpv_fuente], [30000, false, ['media']]);
+    assert.equal(diag.prev_pio_re_cobro_tpv_prevista_negativa, false);
+    // Personal de PIO: el Excel manda (Nóminas y Seguridad Social anotadas); salidas → negativa.
+    assert.deepEqual([diag.prev_pio_rs_personal_fuente, diag.prev_pio_rs_personal_real_negativa], [['excel'], true]);
+    // Modelos: año anterior; robot y obra: solo previsión (ningún real en 12 meses).
+    assert.deepEqual(diag.prev_pio_rs_modelo_303_fuente, ['anio_anterior']);
+    assert.ok((diag.prev_pio_solo_prevision as string[]).includes('rs_inversiones'));
+    assert.deepEqual(diag.prev_pio_solo_real, []);
+    // Top 10 por cuenta, sin repetidos y con etiquetas de categoría (nunca conceptos).
+    const top = diag.prev_pio_top_diferencia as string[];
+    assert.ok(top.length > 0 && top.length <= 10 && new Set(top).size === top.length && top.every((x) => `prev_pio_${x}_fuente` in diag));
+    // Variación mensual por cuenta (como el indicador) y equivalencias: las 2 filas de KENVUE de PIO.
+    assert.deepEqual([diag.prev_pio_variacion_real_disponible, diag.prev_rita_variacion_prevista_disponible], [true, true]);
+    // H7-REAL-8: + DERMOPHARMACIE (prefijo); RITA, ambiguo (sin fusionar) y JNTL… sin coincidencia en su hoja.
+    assert.deepEqual([diag.equivalencias_filas_pio, diag.equivalencias_filas_rita, diag.equivalencias_ambiguas, diag.equivalencias_sin_coincidencia], [3, 0, 1, 1]);
+    // Media de 3 y de 12 meses: indicador consolidado y variación prevista por cuenta.
+    for (const m of ['media3', 'media12']) {
+      assert.equal(diag[`indicador_${m}_prevista_disponible`], true);
+      assert.equal(typeof diag[`indicador_${m}_prevista_eur_mes`], 'number');
+      for (const c of ['pio', 'rita']) assert.equal(typeof diag[`prev_${c}_variacion_prevista_${m}_negativa`], 'boolean');
+    }
+    assert.notEqual(diag.prev_pio_variacion_prevista_media3_eur_mes, diag.prev_pio_variacion_prevista_media12_eur_mes);
+    assert.ok(!JSON.stringify(diag).includes('KENVUE') && !JSON.stringify(diag).includes('JNTL'));
+    // KENVUE en los vencimientos: con y sin nombre comercial, por el nombre del proveedor.
+    const v = dto.vencimientos[0];
+    const k = diagnosticoCashflow(d, dto.hoy, [{ ...v, proveedor_comercial: 'KENVUE', proveedor_nombre: 'KENVUE' }, { ...v, proveedor_comercial: null, proveedor_nombre: 'Johnson & Johnson SA' }]);
+    assert.deepEqual([k.kenvue_venc_con_comercial, k.kenvue_venc_sin_comercial], [1, 1]);
   });
 
   test('H7-REAL-2 check:real: efectivo de RITA (reales, futuros y en otra categoría) y claves de categoría sin conceptos ni importes', () => {

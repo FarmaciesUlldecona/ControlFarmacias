@@ -8,7 +8,7 @@ import {
 } from '../server/contrato.ts';
 import {
   ESTADO_LINEA, TEXTO_HEFAME_BASES, agruparLineas, avisosFactura, baseAlbaran, claveEstadoLinea, etiquetaConciliacion, lineasConDiferencia, origenAplicado, etiquetaNormalizacion, etiquetaResultadoMotor, etiquetaRevision,
-  textoEstadoMatching, textoEvento, tipoCasado, esR20, importeFarmaticLinea, type BaseAlbaran, type GrupoLinea,
+  textoEstadoMatching, textoEvento, tipoCasado, esR20, importeFarmaticLinea, codigoReglaDesconocido, type BaseAlbaran, type GrupoLinea,
 } from '../server/detalle.ts';
 import { useApi } from './api.ts';
 import { euros, fechaCorta, fechaHora, plural, tipoPorcentaje } from './formato.ts';
@@ -166,6 +166,8 @@ function Casado({ l, pareja }: { l: LineaConciliacion; pareja?: readonly LineaCo
         <span className="nota-celda" data-estado-matching={l.estado_matching}>{textoEstadoMatching(l.estado_matching)}</span>
       )}
       {c.notas.map((n) => <span key={n} className="nota-celda" data-nota-casado>{n}</span>)}
+      {/* H8-5: regla del circuito que la web no conoce: el código tal cual. */}
+      {codigoReglaDesconocido(l) !== null && <span className="nota-celda" data-regla-desconocida={codigoReglaDesconocido(l)} title="Regla del circuito sin etiqueta en la web">{codigoReglaDesconocido(l)}</span>}
     </span>
   );
 }
