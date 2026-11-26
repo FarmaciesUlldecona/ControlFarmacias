@@ -7,6 +7,7 @@ import { PaginaEnConstruccion, PaginaNoEncontrada } from './paginas.tsx';
 import { PaginaTrabajadora, PaginaTrabajadores } from './trabajadores.tsx';
 import { PaginaCalendario } from './calendario.tsx';
 import { PaginaGuardias } from './guardias.tsx';
+import { PaginaImprimirGuardias } from './imprimir_guardias.tsx';
 import { PaginaVencimientos } from './vencimientos.tsx';
 import { PaginaCashflow } from './cashflow.tsx';
 import { PaginaConciliacion } from './conciliacion.tsx';
@@ -29,6 +30,8 @@ export type Pantalla = (typeof PANTALLAS)[number];
 export default function App() {
   return (
     <Routes>
+      {/* TA4: vista de impresión del año de guardias (A4), sin menú. */}
+      <Route path="/trabajadores/guardias/imprimir" element={<PaginaImprimirGuardias />} />
       <Route element={<Layout />}>
         {PANTALLAS.map((p) => (
           <Route

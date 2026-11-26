@@ -47,10 +47,11 @@ test.describe('Guardias y festivos PC 1440', () => {
     expect(new Set([pio, rita, ajena]).size).toBe(3);
     // Festivos: marcados con la farmacia de guardia (el 31 ago, sin asignar).
     await expect(page.locator('[data-dia="2026-01-01"]')).toHaveAttribute('data-festivo', 'PIO');
-    await expect(page.locator('[data-dia="2026-01-01"]')).toHaveAttribute('title', /Festivo: Año Nuevo \(guardia PIO: Aina Bosch Ferrer\)/);
+    // TA4: popup «1/1 Año Nuevo · Guardia festiva: PIO · Aina Bosch Ferrer» al principio del título del día.
+    await expect(page.locator('[data-dia="2026-01-01"]')).toHaveAttribute('title', /^1\/1 Año Nuevo · Guardia festiva: PIO · Aina Bosch Ferrer · /);
     await expect(page.locator('[data-dia="2026-12-25"]')).toHaveAttribute('data-festivo', 'RITA');
     await expect(page.locator('[data-dia="2026-08-31"]')).toHaveAttribute('data-festivo', '');
-    await expect(page.locator('[data-dia="2026-08-31"]')).toHaveAttribute('title', /guardia sin asignar/);
+    await expect(page.locator('[data-dia="2026-08-31"]')).toHaveAttribute('title', /^31\/8 Fiesta mayor \(ejemplo\) · Guardia festiva: sin asignar · /);
     await expect(page.locator('[data-dia="2026-11-02"]')).not.toHaveAttribute('data-festivo', /.*/);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_anio_guardias.png'), fullPage: true });
   });
@@ -81,7 +82,7 @@ test.describe('Guardias y festivos PC 1440', () => {
     // La paleta ya no habla de TA3; TA3-4: guardias y festivos se pintan con sus herramientas.
     await expect(page.locator('[data-tipos-ta3]')).toContainText('guardias, apoyos y festivos se pintan con sus herramientas');
     await expect(page.locator('[data-tipos-ta3]')).not.toContainText('TA3');
-    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(4);
+    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(5); // TA4: + Guardia festiva
   });
 
   test('pestaña: lista anual por semana y festivos; sin etiqueta TA3', async ({ page }) => {
@@ -150,7 +151,7 @@ test.describe('TA3-REAL: modo REAL simulado (intercepción del estado): pestaña
     await page.goto('/trabajadores/calendario?fecha=2026-11-09');
     await expect(page.locator('[data-calendario]')).toBeVisible();
     await expect(page.locator('[data-cabecera-guardias]')).toBeVisible();
-    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(4);
+    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(5); // TA4: + Guardia festiva
     await expect(page.locator(`[data-marca-g="${ID(21)}|2026-11-09"]`)).toBeVisible(); // titular de PIO de guardia
   });
 });

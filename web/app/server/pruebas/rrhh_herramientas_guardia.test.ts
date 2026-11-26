@@ -8,10 +8,11 @@ import Fastify from 'fastify';
 import { crearAdaptadorRrhhFixtures, type AdaptadorRrhhFixtures } from '../rrhh/adaptador_fixtures.ts';
 import type { Trabajadora } from '../rrhh/contrato.ts';
 import {
-  candidatasSemana, contextoGuardias, esAviso, marcasGuardia, peticionGuardia, planApoyo, planFestivo, planGomaApoyo, planGomaFestivo,
-  planGomaGuardiaFestivo, planGomaSemana, planGuardia, planOtra, planSemanaElegida, restaurarFestivo,
+  candidatasFestiva, candidatasSemana, contextoGuardias, esAviso, marcasGuardia, peticionGuardia, planApoyo, planFestivo, planGomaApoyo, planGomaFestivo,
+  planGomaGuardiaFestivo, planGomaSemana, planGuardia, planGuardiaFestiva, planOtra, planSemanaElegida, restaurarFestivo,
   type ContextoGuardias, type OpGuardia, type PlanGuardia, type ResultadoPlan,
 } from '../rrhh/herramientas_guardia.ts';
+import { NOMBRE_FESTIVO_POR_DEFECTO, textoGuardiaFestiva } from '../rrhh/guardias.ts';
 import { esEscrituraRrhh, registrarRrhh } from '../rrhh/rutas.ts';
 
 const ID = (n: number) => `e0000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -199,6 +200,69 @@ describe('Marcas del calendario (capa superpuesta) y peticiones', () => {
     for (const [m, u] of [['DELETE', '/api/rrhh/guardias/2027-01-04'], ['PUT', '/api/rrhh/guardias/2027-01-05x/anular'], ['PUT', '/api/rrhh/festivos/2027-01-01/guardia/borrar']]) {
       assert.equal(esEscrituraRrhh(m, u), false, `${m} ${u}`);
     }
+  });
+});
+
+describe('TA4: Guardia festiva de un día (farmacia, persona y nombre del festivo)', () => {
+  const a = nuevo();
+  const ctx = ctxDe(a);
+  test('día sin festivo: crea el festivo (nombre escrito o «Festivo») y después la guardia; deshacer = dar de baja el festivo', () => {
+    const p = plan(planGuardiaFestiva(ctx, '2027-01-06', 'RITA', MARTA, ' Reis '));
+    assert.deepEqual(p.previas, [{ k: 'festivo', fecha: '2027-01-06', nombre: 'Reis', ambito: 'LOCAL' }]);
+    assert.deepEqual(p.op, { k: 'guardia_festivo', fecha: '2027-01-06', farmacia: 'RITA', persona: MARTA });
+    assert.deepEqual(p.inversa, [{ k: 'anular_festivo', fecha: '2027-01-06' }]);
+    assert.equal(p.texto, 'Guardia festiva RITA (Marta Vila Soler): Reis (6 ene 2027)');
+    const sin = plan(planGuardiaFestiva(ctx, '2027-01-06', 'OTRA', AINA, ''));
+    assert.deepEqual([sin.previas?.[0], sin.op], [{ k: 'festivo', fecha: '2027-01-06', nombre: NOMBRE_FESTIVO_POR_DEFECTO, ambito: 'LOCAL' },
+      { k: 'guardia_festivo', fecha: '2027-01-06', farmacia: 'OTRA', persona: null }]); // OTRA nunca lleva persona
+  });
+  test('día festivo (8 dic, PIO Clara): mismo nombre → solo la guardia (deshacer = la anterior); otro nombre → anular + crear el festivo', () => {
+    const p = plan(planGuardiaFestiva(ctx, '2026-12-08', 'PIO', ELENA, 'La Inmaculada'));
+    assert.equal(p.previas, undefined);
+    assert.deepEqual(p.inversa, [{ k: 'guardia_festivo', fecha: '2026-12-08', farmacia: 'PIO', persona: CLARA }]);
+    const r = plan(planGuardiaFestiva(ctx, '2026-12-08', 'PIO', ELENA, 'Immaculada'));
+    assert.deepEqual(r.previas, [{ k: 'anular_festivo', fecha: '2026-12-08' }, { k: 'festivo', fecha: '2026-12-08', nombre: 'Immaculada', ambito: ctx.festivo('2026-12-08')?.ambito }]);
+    assert.deepEqual(r.inversa.slice(0, 2), [{ k: 'anular_festivo', fecha: '2026-12-08' }, { k: 'festivo', fecha: '2026-12-08', nombre: 'La Inmaculada', ambito: ctx.festivo('2026-12-08')?.ambito }]);
+    assert.match(aviso(planGuardiaFestiva(ctx, '2026-12-08', 'PIO', CLARA, '')), /ya tiene esa guardia festiva/);
+  });
+  test('avisos: PIO/RITA sin persona, persona de otra farmacia o no de alta, nombre demasiado largo', () => {
+    assert.match(aviso(planGuardiaFestiva(ctx, '2027-01-06', 'PIO', null, '')), /Elige la persona de guardia de PIO/);
+    assert.match(aviso(planGuardiaFestiva(ctx, '2027-01-06', 'PIO', MARTA, '')), /no es de PIO/);
+    assert.match(aviso(planGuardiaFestiva(ctx, '2027-01-06', 'RITA', LAURA, 'x'.repeat(61))), /Máximo 60 caracteres/);
+    assert.deepEqual(candidatasFestiva(fichasDe(a), 'OTRA', '2027-01-06'), []);
+    assert.ok(candidatasFestiva(fichasDe(a), 'RITA', '2027-01-06').every((t) => t.farmacia === 'RITA'));
+  });
+  test('popup: «6/1 Reis · Guardia festiva: RITA · Raquel»; OTRA y sin asignar', () => {
+    const p = { id: 'x', nombre: 'Raquel', farmacia: 'RITA' as const, iniciales: 'R' };
+    assert.equal(textoGuardiaFestiva({ fecha: '2027-01-06', nombre: 'Reis', guardia: { farmacia: 'RITA', persona: p } }), '6/1 Reis · Guardia festiva: RITA · Raquel');
+    assert.equal(textoGuardiaFestiva({ fecha: '2027-01-06', nombre: 'Reis', guardia: { farmacia: 'OTRA', persona: null } }), '6/1 Reis · Guardia festiva: Otra farmacia');
+    assert.equal(textoGuardiaFestiva({ fecha: '2027-12-25', nombre: 'Nadal', guardia: null }), '25/12 Nadal · Guardia festiva: sin asignar');
+  });
+  test('ida y vuelta por la API: crear (con festivo nuevo), editar, anular y deshacer todo deja todo como estaba', async () => {
+    const b = nuevo();
+    const app = Fastify();
+    registrarRrhh(app, { modo: 'FIXTURES', quien: 'Marc', adaptador: b, sesionValida: () => true });
+    await app.ready();
+    const W = { host: '127.0.0.1:4747', origin: 'http://127.0.0.1:4747', 'content-type': 'application/json' };
+    const aplicar = async (op: OpGuardia) => {
+      const q = peticionGuardia(op);
+      const r = await app.inject({ method: q.metodo, url: q.ruta, headers: W, payload: JSON.stringify(q.cuerpo) });
+      assert.ok(r.statusCode === 200 || r.statusCode === 201, `${q.ruta}: ${r.body}`);
+    };
+    const vista = () => JSON.stringify(b.guardiasTa3.vista('2026-11-01', '2027-03-31'));
+    const inicio = vista();
+    const pila: PlanGuardia[] = [];
+    const hacer = async (r: ResultadoPlan) => { const p = plan(r); for (const op of [...(p.previas ?? []), p.op]) await aplicar(op); pila.push(p); };
+    await hacer(planGuardiaFestiva(ctxDe(b), '2027-01-06', 'RITA', MARTA, 'Reis'));
+    assert.deepEqual([ctxDe(b).festivo('2027-01-06')?.nombre, ctxDe(b).festivo('2027-01-06')?.guardia?.persona?.id], ['Reis', MARTA]);
+    await hacer(planGuardiaFestiva(ctxDe(b), '2027-01-06', 'OTRA', null, 'Reis')); // editar: pasa a OTRA
+    assert.deepEqual(ctxDe(b).festivo('2027-01-06')?.guardia, { farmacia: 'OTRA', persona: null });
+    await hacer(planGomaGuardiaFestivo(ctxDe(b), '2027-01-06')); // anular (no borra)
+    assert.equal(ctxDe(b).festivo('2027-01-06')?.guardia, null);
+    assert.ok(b.guardiasTa3.datos().guardiasFestivo.filter((g) => g.fecha === '2027-01-06').every((g) => g.anulada));
+    while (pila.length) { const p = pila.pop() as PlanGuardia; for (const op of p.inversa) await aplicar(op); }
+    assert.equal(vista(), inicio);
+    await app.close();
   });
 });
 

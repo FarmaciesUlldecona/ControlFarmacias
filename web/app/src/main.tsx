@@ -14,6 +14,7 @@ import './estilos_rrhh.css';
 import './estilos_calendario.css';
 import './estilos_ficha.css';
 import './estilos_guardias.css';
+import './estilos_imprimir_guardias.css';
 import './estilos_vencimientos.css';
 import './estilos_cashflow.css';
 import './estilos_conciliacion.css';

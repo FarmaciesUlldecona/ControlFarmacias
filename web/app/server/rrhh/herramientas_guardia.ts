@@ -21,7 +21,7 @@
 import type { Trabajadora } from './contrato.ts';
 import { deAltaEl, diaSemana, lunesDe, sumarDias, textoPeriodoCambio } from './eventos.ts';
 import {
-  AMBITO_POR_DEFECTO, TEXTO_AMBITO, TEXTO_FARMACIA_GUARDIA, domingoDe, leerNombreFestivo, personaValida, sabadoDe,
+  AMBITO_POR_DEFECTO, NOMBRE_FESTIVO_POR_DEFECTO, TEXTO_AMBITO, TEXTO_FARMACIA_GUARDIA, domingoDe, leerNombreFestivo, personaValida, sabadoDe,
   type AmbitoFestivoTa3, type FarmaciaGuardia, type FestivoVista, type GuardiasDTO, type SemanaGuardiaVista,
 } from './guardias.ts';
 
@@ -38,6 +38,11 @@ export type OpGuardia =
   | { k: 'anular_guardia_festivo'; fecha: string };
 
 export interface PlanGuardia {
+  /**
+   * TA4: operaciones que van antes de `op`, en orden (crear el festivo del día, o anularlo y volver a crearlo con otro
+   * nombre). Si `op` falla después de ellas, se ejecuta `inversa` para no dejar nada a medias.
+   */
+  previas?: OpGuardia[];
   op: OpGuardia;
   /** Pasos, en orden, para volver a como estaba (pila de deshacer). */
   inversa: OpGuardia[];
@@ -208,6 +213,59 @@ export function planFestivo(ctx: ContextoGuardias, fecha: string, nombre: string
     texto: `Festivo: ${n.nombre} (${textoDia(fecha)}, ${TEXTO_AMBITO[ambito].toLowerCase()})`,
     confirmar: null,
   };
+}
+
+/**
+ * TA4: Guardia festiva de un día (panel: farmacia, persona si PIO/RITA, nombre del festivo opcional). Tablas de la
+ * migración 34: la guardia va en guardias_festivo (fecha, farmacia, persona) y exige un festivo común ese día
+ * (festivos.descripcion = nombre, obligatorio en la BD):
+ *  - día sin festivo: se crea (nombre escrito o NOMBRE_FESTIVO_POR_DEFECTO; ámbito por defecto) y después la guardia;
+ *    deshacer = dar de baja ese festivo (la BD anula su guardia);
+ *  - día festivo: se propone su nombre; si se cambia, el festivo se anula y se vuelve a crear con el nombre nuevo (no
+ *    hay edición de festivos: anular + crear) y después la guardia; deshacer lo deja como estaba;
+ *  - con el mismo nombre: solo la guardia (editar = anular + crear en REAL), deshacer = la guardia anterior.
+ * OTRA nunca lleva persona; PIO/RITA, una persona de esa farmacia de alta ese día.
+ */
+export function planGuardiaFestiva(ctx: ContextoGuardias, fecha: string, farmacia: FarmaciaGuardia, persona: string | null, nombre: string): ResultadoPlan {
+  let quien: string = nombreFarmacia('OTRA');
+  let pid: string | null = null;
+  if (farmacia !== 'OTRA') {
+    if (!persona) return { aviso: `Elige la persona de guardia de ${farmacia}. ${NADA}` };
+    const t = ctx.ficha(persona);
+    if (!personaValida(t, farmacia, [fecha])) return { aviso: `${t?.nombre ?? 'Esa persona'} no es de ${farmacia} o no está de alta el ${textoDia(fecha)}. ${NADA}` };
+    pid = persona;
+    quien = `${farmacia} (${(t as Trabajadora).nombre})`;
+  }
+  const escrito = nombre.trim() === '' ? null : leerNombreFestivo(nombre);
+  if (escrito && !escrito.ok) return { aviso: `${escrito.error}. ${NADA}` };
+  const pedido = escrito && escrito.ok ? escrito.nombre : null;
+  const op: OpGuardia = { k: 'guardia_festivo', fecha, farmacia, persona: pid };
+  const fe = ctx.festivo(fecha);
+  if (!fe) {
+    const n = pedido ?? NOMBRE_FESTIVO_POR_DEFECTO;
+    return {
+      previas: [{ k: 'festivo', fecha, nombre: n, ambito: AMBITO_POR_DEFECTO }], op,
+      inversa: [{ k: 'anular_festivo', fecha }],
+      texto: `Guardia festiva ${quien}: ${n} (${textoDia(fecha)})`, confirmar: null,
+    };
+  }
+  if (pedido !== null && pedido !== fe.nombre) {
+    return {
+      previas: [{ k: 'anular_festivo', fecha }, { k: 'festivo', fecha, nombre: pedido, ambito: fe.ambito }], op,
+      inversa: [{ k: 'anular_festivo', fecha }, ...restaurarFestivo(fe)],
+      texto: `Guardia festiva ${quien}: ${pedido} (antes «${fe.nombre}», ${textoDia(fecha)})`, confirmar: null,
+    };
+  }
+  if (fe.guardia?.farmacia === farmacia && (fe.guardia.persona?.id ?? null) === pid) return { aviso: `${fe.nombre} ya tiene esa guardia festiva.` };
+  return {
+    op, inversa: restaurarGuardiaFestivo(fecha, fe),
+    texto: `Guardia festiva ${quien}: ${fe.nombre} (${textoDia(fecha)})`, confirmar: null,
+  };
+}
+
+/** TA4: personas de una farmacia que pueden hacer la guardia festiva de un día (de alta ese día). */
+export function candidatasFestiva(fichas: readonly Trabajadora[], farmacia: FarmaciaGuardia, fecha: string): Trabajadora[] {
+  return farmacia === 'OTRA' ? [] : fichas.filter((t) => t.farmacia === farmacia && deAltaEl(t, fecha));
 }
 
 // --- Goma (sobre la marca) -----------------------------------------------------------------------------------------

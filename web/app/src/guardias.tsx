@@ -4,12 +4,12 @@
 // TA3-4 (decisión de Marc): guardias, apoyos, OTRA y festivos se pintan en el calendario (herramientas de guardia); la
 // pestaña pasa a lista de consulta del año, solo lectura, con «Editar en el calendario» que abre la semana.
 // Horas fuera de cómputo: se registran, no suman en el año (HORARIO_GUARDIA, único punto).
-import { type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { ANIOS_CONVENIO } from '../server/rrhh/contrato.ts';
 import { CODIGO_TIPO_EVENTO, TEXTO_TIPO_EVENTO, diaSemana, lunesDe, textoPeriodoCambio } from '../server/rrhh/eventos.ts';
 import {
-  COLOR_FARMACIA_GUARDIA, HORARIO_GUARDIA, HORAS_SERVICIO, TEXTO_AMBITO, TEXTO_FARMACIA_GUARDIA, textoTramos,
+  COLOR_FARMACIA_GUARDIA, COLOR_FESTIVA_GUARDIA, HORARIO_GUARDIA, HORAS_SERVICIO, TEXTO_AMBITO, TEXTO_FARMACIA_GUARDIA, textoTramos,
   type FarmaciaGuardia, type FestivoVista, type GuardiasRespuestaDTO, type PersonaGuardia, type SemanaGuardiaVista,
 } from '../server/rrhh/guardias.ts';
 import { useApiRecargable } from './api.ts';
@@ -27,9 +27,92 @@ export const rutaCalendarioSemana = (fecha: string) => `/trabajadores/calendario
 // Piezas comunes (también en el calendario)
 // ---------------------------------------------------------------------------
 
-/** Color de la farmacia de guardia (OTRA, gris claro con texto oscuro). */
-export const estiloGuardia = (f: FarmaciaGuardia) =>
-  ({ '--g': COLOR_FARMACIA_GUARDIA[f], '--gt': f === 'OTRA' ? 'var(--gris-texto)' : '#ffffff' }) as CSSProperties;
+// ---------------------------------------------------------------------------
+// TA4: colores de guardia editables (semanal y festiva, por farmacia)
+// ---------------------------------------------------------------------------
+
+/**
+ * Mismo almacenamiento que «Cambiar colores» del calendario: localStorage de este navegador, clave
+ * cf.rrhh.calendario.colores.v1 (un solo objeto: tipos de evento y, desde TA4, GUARDIA_<F> y FESTIVA_<F>).
+ */
+export const CLAVE_COLORES = 'cf.rrhh.calendario.colores.v1';
+const HEX = /^#[0-9a-f]{6}$/i;
+export type TipoColorGuardia = 'semanal' | 'festiva';
+export type ColoresGuardia = Record<TipoColorGuardia, Record<FarmaciaGuardia, string>>;
+export const COLORES_GUARDIA_POR_DEFECTO: ColoresGuardia = { semanal: { ...COLOR_FARMACIA_GUARDIA }, festiva: { ...COLOR_FESTIVA_GUARDIA } };
+const FARMACIAS: readonly FarmaciaGuardia[] = ['PIO', 'RITA', 'OTRA'];
+const claveGuardiaColor = (t: TipoColorGuardia, f: FarmaciaGuardia) => `${t === 'semanal' ? 'GUARDIA' : 'FESTIVA'}_${f}`;
+
+/** Objeto guardado (cualquier cosa rara: vacío). */
+export function leerAlmacenColores(): Record<string, unknown> {
+  try {
+    const g = JSON.parse(localStorage.getItem(CLAVE_COLORES) ?? '{}') as unknown;
+    return g && typeof g === 'object' && !Array.isArray(g) ? g as Record<string, unknown> : {};
+  } catch { return {}; }
+}
+/** Mezcla `cambios` en el objeto guardado (null borra la clave: vuelve al color por defecto). */
+export function guardarAlmacenColores(cambios: Record<string, string | null>): void {
+  try {
+    const g = leerAlmacenColores();
+    for (const [k, v] of Object.entries(cambios)) { if (v === null) delete g[k]; else g[k] = v; }
+    localStorage.setItem(CLAVE_COLORES, JSON.stringify(g));
+  } catch { /* sin almacenamiento: dura la visita */ }
+}
+export function leerColoresGuardia(): ColoresGuardia {
+  const g = leerAlmacenColores();
+  const c: ColoresGuardia = { semanal: { ...COLOR_FARMACIA_GUARDIA }, festiva: { ...COLOR_FESTIVA_GUARDIA } };
+  for (const t of ['semanal', 'festiva'] as const) {
+    for (const f of FARMACIAS) { const v = g[claveGuardiaColor(t, f)]; if (typeof v === 'string' && HEX.test(v)) c[t][f] = v; }
+  }
+  return c;
+}
+/** Colores de guardia y su cambio (null: restaurar los de por defecto). */
+export function useColoresGuardia(): [ColoresGuardia, (t: TipoColorGuardia | null, f?: FarmaciaGuardia, color?: string) => void] {
+  const [c, setC] = useState<ColoresGuardia>(leerColoresGuardia);
+  const cambiar = (t: TipoColorGuardia | null, f?: FarmaciaGuardia, color?: string) => {
+    if (t === null || !f || !color || !HEX.test(color)) {
+      guardarAlmacenColores(Object.fromEntries((['semanal', 'festiva'] as const).flatMap((x) => FARMACIAS.map((y) => [claveGuardiaColor(x, y), null]))));
+      setC({ semanal: { ...COLOR_FARMACIA_GUARDIA }, festiva: { ...COLOR_FESTIVA_GUARDIA } });
+      return;
+    }
+    guardarAlmacenColores({ [claveGuardiaColor(t, f)]: color });
+    setC((p) => ({ ...p, [t]: { ...p[t], [f]: color } }));
+  };
+  return [c, cambiar];
+}
+
+const lineal = (v: number) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+const luminancia = (hex: string) => {
+  const [r, g, b] = [1, 3, 5].map((i) => lineal(parseInt(hex.slice(i, i + 2), 16) / 255));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+export const TEXTO_OSCURO = '#18211e';
+/** Texto blanco u oscuro sobre el color: el de más contraste (también el texto de la barra y de la marca de guardia). */
+export function textoSobre(hex: string): string {
+  const l = luminancia(hex);
+  return 1.05 / (l + 0.05) >= (l + 0.05) / (luminancia(TEXTO_OSCURO) + 0.05) ? '#ffffff' : TEXTO_OSCURO;
+}
+const varGuardia = (t: TipoColorGuardia, f: FarmaciaGuardia) => `--gu${t === 'semanal' ? '' : 'f'}-${f.toLowerCase()}`;
+/**
+ * Variables CSS de los colores de guardia (fondo y texto con contraste) para el contenedor (calendario, impresión).
+ * Fuera de un contenedor con ellas (pestaña de consulta), las marcas usan los colores por defecto.
+ */
+export function varsColoresGuardia(c: ColoresGuardia): CSSProperties {
+  const v: Record<string, string> = {};
+  for (const t of ['semanal', 'festiva'] as const) {
+    for (const f of FARMACIAS) { v[varGuardia(t, f)] = c[t][f]; v[`${varGuardia(t, f)}-t`] = textoSobre(c[t][f]); }
+  }
+  return v as CSSProperties;
+}
+const estiloDe = (t: TipoColorGuardia, f: FarmaciaGuardia) => {
+  const defecto = COLORES_GUARDIA_POR_DEFECTO[t][f];
+  return { '--g': `var(${varGuardia(t, f)}, ${defecto})`, '--gt': `var(${varGuardia(t, f)}-t, ${textoSobre(defecto)})` } as CSSProperties;
+};
+
+/** Color de la farmacia de guardia semanal (TA4: editable; el texto, blanco u oscuro según el color). */
+export const estiloGuardia = (f: FarmaciaGuardia) => estiloDe('semanal', f);
+/** TA4: color de la guardia festiva de un día (marca diaria, distinta de la barra semanal). */
+export const estiloGuardiaFestiva = (f: FarmaciaGuardia) => estiloDe('festiva', f);
 
 export function ChipGuardia({ f }: { f: FarmaciaGuardia }) {
   return <span className="gu-chip" style={estiloGuardia(f)} data-guardia-farmacia={f}>{f}</span>;

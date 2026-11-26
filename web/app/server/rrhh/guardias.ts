@@ -44,6 +44,23 @@ export const TEXTO_FARMACIA_GUARDIA: Readonly<Record<FarmaciaGuardia, string>> =
  * naranja, rojo). OTRA, gris. El color nunca va solo: siempre con la farmacia o las iniciales.
  */
 export const COLOR_FARMACIA_GUARDIA: Readonly<Record<FarmaciaGuardia, string>> = { PIO: '#6d2e6b', RITA: '#6b7518', OTRA: '#c9cec9' };
+/**
+ * TA4: colores por defecto de la guardia festiva de un día (marca diaria, distinta de la barra semanal): tonos más
+ * claros de los de su farmacia; OTRA, gris medio. Editables en «Cambiar colores» (solo en ese navegador).
+ */
+export const COLOR_FESTIVA_GUARDIA: Readonly<Record<FarmaciaGuardia, string>> = { PIO: '#a86aa6', RITA: '#a3ad4a', OTRA: '#8e978f' };
+/**
+ * TA4: nombre del festivo que se crea con la herramienta «Guardia festiva» si no se escribe ninguno: la BD exige
+ * festivos.descripcion (1–100) y la guardia de festivo exige un festivo común ese día (migración 34).
+ */
+export const NOMBRE_FESTIVO_POR_DEFECTO = 'Festivo';
+/** TA4: «6/1 Reis · Guardia festiva: RITA · Raquel Ferrer» (OTRA: «Otra farmacia»; sin guardia: «sin asignar»). */
+export function textoGuardiaFestiva(f: { fecha: string; nombre: string; guardia: { farmacia: FarmaciaGuardia; persona: { nombre: string } | null } | null }): string {
+  const dm = `${Number(f.fecha.slice(8))}/${Number(f.fecha.slice(5, 7))}`;
+  const g = f.guardia === null ? 'sin asignar'
+    : f.guardia.farmacia === 'OTRA' ? 'Otra farmacia' : `${f.guardia.farmacia}${f.guardia.persona ? ` · ${f.guardia.persona.nombre}` : ''}`;
+  return `${dm} ${f.nombre} · Guardia festiva: ${g}`;
+}
 
 export interface Tramo { desde: string; hasta: string }
 /**

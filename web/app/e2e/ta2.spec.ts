@@ -319,8 +319,9 @@ test.describe('Calendario PC 1440', () => {
     await page.getByRole('button', { name: 'Cancelar' }).click();
     await expect(page.locator('[data-confirmar-anio]')).toHaveCount(0);
     await expect(oferta).toBeVisible();
-    // Confirmar: 5 personas × 261 laborables de 2027.
+    // Confirmar: 5 personas × 261 laborables de 2027. TA4-2: aquí solo la jornada (las guardias por rotación, en ta4.spec).
     await page.locator('[data-ofrecer-anio]').click();
+    await page.locator('[data-relleno-incluir="guardias"]').uncheck();
     await page.locator('[data-confirmar-anio-si]').click();
     await expect(aviso(page)).toHaveText('Rellenado 2027: 261 días laborables × 5 personas.'); // TA2-4: no «1305 días»
     await expect(oferta).toHaveCount(0);

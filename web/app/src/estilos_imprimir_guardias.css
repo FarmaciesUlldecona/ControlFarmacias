@@ -1,0 +1,90 @@
+/* TA4: vista de impresión de las guardias del año. Una sola hoja A4 vertical (210 × 297 mm, márgenes de 8 mm: caja de
+   194 × 281 mm). Medidas en mm y pt para que la pantalla y el papel coincidan. Colores de guardia: variables --gu-* y
+   --guf-* (varsColoresGuardia) vía --g / --gt; con filtro, la otra farmacia en gris neutro. Legible en blanco y negro:
+   la farmacia va también como texto.
+   TA4-2: rejilla de 12 meses de 4 × 55 mm + 3 × 1,5 mm = 224,5 mm (≈ 80 % del alto útil de 281 mm; mínimo pedido 70 %);
+   días 9 pt, barra 7,5 pt, cabecera de mes 10 pt. Seis semanas caben en 55 mm (6 × 7,4 mm + cabecera). */
+@page { size: A4 portrait; margin: 8mm; }
+
+.imp { background: #e9ece9; min-height: 100vh; padding: 16px; color: #18211e; }
+.imp-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; max-width: 194mm; margin: 0 auto 12px; }
+.imp-hoja {
+  box-sizing: border-box; width: 194mm; height: 279mm; margin: 0 auto; padding: 0; background: #ffffff; overflow: hidden;
+  display: flex; flex-direction: column; gap: 1.6mm; font-family: Figtree, system-ui, sans-serif; font-size: 7pt; line-height: 1.15;
+  box-shadow: 0 0 0 8mm #ffffff, 0 4px 18px rgba(24, 33, 30, 0.18);
+}
+.imp-cabecera { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.4mm solid #18211e; padding-bottom: 1mm; }
+.imp-cabecera h1 { margin: 0; font-size: 14pt; font-weight: 800; }
+.imp-fecha { font-size: 7.5pt; color: #4b5651; }
+
+.imp-meses { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 55mm); gap: 1.5mm 2.5mm; }
+.imp-mes { box-sizing: border-box; border: 0.25mm solid #b9c1bd; border-radius: 1.2mm; padding: 0.8mm 1mm; overflow: hidden; }
+.imp-mes h2 { margin: 0 0 0.3mm; font-size: 10pt; line-height: 4.4mm; font-weight: 800; }
+.imp-dsem, .imp-dias { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+.imp-dsem { font-size: 6.5pt; line-height: 2.8mm; font-weight: 700; color: #4b5651; }
+.imp-semana { margin-top: 0.2mm; }
+.imp-dia { font-size: 9pt; height: 3.9mm; line-height: 3.9mm; border-radius: 0.6mm; }
+.imp-dia.finde { color: #4b5651; }
+.imp-dia.festivo { font-weight: 800; outline: 0.3mm solid #18211e; outline-offset: -0.3mm; background: var(--g, #ffffff); color: var(--gt, #18211e); }
+.imp-barra-semana {
+  margin-top: 0.1mm; height: 3.2mm; line-height: 3.2mm; padding: 0 1mm; border-radius: 0.6mm; font-size: 7.5pt; font-weight: 800;
+  white-space: nowrap; overflow: hidden; text-overflow: clip; background: var(--g); color: var(--gt);
+}
+.imp-barra-semana.neutra { background: #eef0ee; color: #4b5651; font-weight: 600; }
+.imp-barra-semana.otra { border: 0.2mm dashed #4b5651; }
+
+.imp-festivos h2 { margin: 0 0 0.5mm; font-size: 8.5pt; font-weight: 800; }
+.imp-festivos ol { margin: 0; padding: 0; list-style: none; columns: 3; column-gap: 4mm; font-size: 6.8pt; }
+.imp-festivos li { break-inside: avoid; padding: 0.1mm 0; }
+/* TA4-3: línea de festivo resaltada (subrayador) con el color de la guardia festiva de su farmacia. */
+.imp-resalte {
+  background: var(--g); color: var(--gt); padding: 0 0.6mm; border-radius: 0.6mm;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+/* TA4-3: el navegador imprime los fondos (lista de festivos, marcas y barras del calendario), también fuera de @media print. */
+.imp-resalte, .imp-dia.festivo, .imp-barra-semana, .imp-muestra, .gu-festiva, .gu-marca, .cal-dia-festivo.con-guardia {
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.imp-leyenda { margin-top: auto; border-top: 0.25mm solid #b9c1bd; padding-top: 1mm; display: flex; flex-direction: column; gap: 0.6mm; font-size: 6.5pt; }
+.imp-leyenda-colores { display: flex; flex-wrap: wrap; gap: 0.8mm 5mm; }
+.imp-leyenda-fila { display: inline-flex; align-items: center; gap: 1.2mm; }
+.imp-muestra { display: inline-block; padding: 0 1.4mm; border-radius: 0.6mm; font-weight: 800; border: 0.2mm solid #4b5651; }
+.imp-leyenda-personas { margin: 0; display: flex; flex-wrap: wrap; gap: 0.3mm 4mm; }
+
+@media print {
+  html, body { background: #ffffff !important; }
+  .no-imprimir { display: none !important; }
+  .imp { background: #ffffff; padding: 0; min-height: 0; }
+  .imp-hoja { box-shadow: none; margin: 0; }
+  .imp * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* TA4: calendario: marca diaria de la guardia festiva (cabecera del día) y panel de colores de guardia. */
+.gu-festiva {
+  display: inline-block; margin-top: 2px; padding: 0 5px; border-radius: 4px; font-size: var(--cf-tam-min, 12px); font-weight: 800; line-height: 16px;
+  background: var(--g); color: var(--gt); white-space: nowrap;
+}
+.gu-festiva.sin { background: transparent; color: var(--tenue, #5b6661); border: 1px dashed currentColor; }
+.gu-festiva-goma { padding: 0; border: 0; background: none; cursor: pointer; outline: 2px dashed #c8372d; outline-offset: 1px; border-radius: 4px; }
+.cal-dia-festivo.con-guardia { background: var(--g); color: var(--gt); }
+.cal-colores-guardia { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; padding: 8px 10px; border: 1px solid var(--borde, #d5dad6); border-radius: 8px; }
+.cal-colores-guardia legend { font-weight: 700; padding: 0 4px; }
+.cal-colores-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.cal-colores-titulo { min-width: 170px; font-weight: 600; }
+.gu-marca.muestra { min-width: 36px; text-align: center; }
+
+/* TA4-2: vista previa del relleno de guardias por rotación (confirmación de «Rellenar año completo»). Lo propuesto va
+   en tono claro (planificado: aún no existe); lo que no se puede crear, tachado en gris. */
+.rl-incluir { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.rl-previa { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 10px; }
+.rl-resumen { margin: 0; font-weight: 700; }
+.rl-avisos { margin: 0; padding: 6px 10px 6px 26px; border: 1px solid #e3a35a; border-radius: 6px; background: #fff6ea; color: #7a4a10; }
+.rl-columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px 18px; }
+.rl-columnas h4 { margin: 4px 0; }
+.rl-lista { margin: 0; padding: 0; list-style: none; max-height: 260px; overflow: auto; border: 1px solid var(--borde, #d5dad6); border-radius: 6px; }
+.rl-lista li { display: flex; align-items: center; gap: 8px; padding: 3px 8px; border-bottom: 1px solid #eef0ee; }
+.rl-lista li.planificado { background: #f7f9fc; }
+.rl-lista li.planificado .rl-marca { opacity: 0.7; }
+.rl-lista li.sin-crear { color: #5b6661; text-decoration: line-through; }
+.rl-fecha { min-width: 42px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.rl-marca { display: inline-block; min-width: 40px; padding: 0 5px; border-radius: 4px; text-align: center; font-weight: 800; background: var(--g); color: var(--gt); }

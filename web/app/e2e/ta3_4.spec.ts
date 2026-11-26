@@ -35,7 +35,8 @@ test.describe('Herramientas de guardia PC 1440', () => {
   test('Guardia (toda la semana, «G»), Apoyo sábado («A»), confirmación al sustituir otra farmacia, OTRA; deshacer todo', async ({ page }) => {
     await abrir(page, '?fecha=2027-01-04');
     await expect(page.locator('[data-cabecera-guardias] [data-texto-guardia]')).toHaveText('Guardia: sin asignar');
-    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveText(['GGuardia', 'AApoyo sábado', 'OTRAGuardia otra farmacia', 'FFestivo']);
+    // TA4: + Guardia festiva.
+    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveText(['GGuardia', 'AApoyo sábado', 'OTRAGuardia otra farmacia', 'FFestivo', 'GFGuardia festiva']);
     const jornadaAntes = await celda(page, AINA, '2027-01-05').getAttribute('data-tipo');
 
     // Guardia: clic en Aina el miércoles → guardia PIO toda la semana (lunes a domingo).
@@ -192,7 +193,7 @@ test.describe('Herramientas de guardia PC 1440', () => {
   test('vista año: paleta sin tipos de evento; clic en la banda con Guardia abre el selector (farmacia, guardia y apoyo)', async ({ page }) => {
     await abrir(page, '?vista=anio&fecha=2027-01-01');
     await expect(page.locator('[data-herramienta="VACACIONES"]')).toHaveCount(0);
-    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(4);
+    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(5); // TA4: + Guardia festiva
     const banda = page.locator('[data-banda-semana="2027-02-15"]').first();
     await expect(banda).toHaveAttribute('data-banda-farmacia', '');
     await herramienta(page, 'guardia');
@@ -234,7 +235,7 @@ test.describe('REAL simulado (intercepción del estado): las herramientas tambi�
     await page.route('**/api/rrhh/estado', (r) => r.fulfill({ json: {
       modo: 'REAL', conectado: true, datos_ejemplo: false, mensaje: 'Datos reales: cada cambio se guarda en la base de datos con autor Marc', guardias_disponibles: true } }));
     await page.goto('/trabajadores/calendario?fecha=2027-03-01');
-    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(4);
+    await expect(page.locator('[data-paleta-guardias] [data-herramienta]')).toHaveCount(5); // TA4: + Guardia festiva
     await herramienta(page, 'guardia');
     await celda(page, LAURA, '2027-03-03').click();
     await expect(page.locator(`[data-marca-g="${LAURA}|2027-03-01"]`)).toBeVisible();
