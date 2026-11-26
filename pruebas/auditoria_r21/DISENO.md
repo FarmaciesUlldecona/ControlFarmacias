@@ -6,7 +6,8 @@ Estado (2026-11-24):
 - **R21: DISEÑADA, NO IMPLEMENTADA**, porque con los datos de hoy no cierra ninguna factura (§2).
 - **R21 como migración 39 (diseño de la noche del 2026-11-24, §9; IMPLEMENTADA EN LOCAL el 2026-11-25, §9.11):**
   sustituye a §2.2. Exacto + hasta 3 complementarios (internos «Q0» o variante con letra). Numeración por orden de
-  despliegue (DECISIÓN DE PIO, 2026-11-25): R21 = 39, H7b = 40, «Actualizar ahora» = 41. R21-D1 revisada por Pio el
+  despliegue (DECISIÓN DE PIO, 2026-11-25): R21 = 39, H7b = 40, «Actualizar ahora» = 41 (42 desde el 2026-11-26, con
+  TA4-2 = 41). R21-D1 revisada por Pio el
   2026-11-25 tras el banco R21-D8 (§9.11). `CONFIRMADO POR TEST`, también en PostgreSQL 17 local; sin desplegar.
 - **Confirmación de Pio (2026-11-24, tarde):** las tres reglas pasan a REGLAS_CRITICAS (`alliance-local` 1.3.2 con
   autoridad en la noche; ABONOS CLUBS = `ABONO` solo con importe negativo; R22 acotada). D1–D5, D7 y D8 como se
@@ -416,6 +417,7 @@ de la tabla queda como histórico; manda este párrafo.
 
 **DECISIÓN DE PIO (2026-11-25):** numeración por orden de despliegue: **R21 = 39**, **H7b = 40**, **«Actualizar
 ahora» = 41**. La 39 exige la 38 (`MIGRACION_38_AUSENTE`) y, además, la 36 (`MIGRACION_36_AUSENTE`, marca de R20).
+**DECISIÓN DE PIO (2026-11-26):** TA4-2 de Trabajadores = 41 y «Actualizar ahora» pasa a **42**.
 Texto de la noche del 24, como histórico:
 
 `CONFIRMADO POR CÓDIGO`: cada migración aborta si falta la anterior (`MIGRACION_34_AUSENTE` en la 35:27,

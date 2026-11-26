@@ -55,7 +55,7 @@ Mientras no haya Norma 43, el Excel importado (migración 38) sigue siendo la fu
   `CASHFLOW`, rol de escritura propio de la web (`INSERT`, `SELECT` y `UPDATE` solo de anulación), `SELECT` de
   `cf_lectura` (aprobado) y la excepción en REGLAS_CRITICAS.
 - **Migración 41** según el encargo; **40 por la numeración decidida por Pio el 2026-11-25** (R21 = 39, H7b = 40,
-  «Actualizar ahora» = 41). **AUTORIZACIÓN EXPRESA DE PIO:** nombrar el rol del sistema en la migración de H7b (la
+  «Actualizar ahora» = 41; desde el 2026-11-26, TA4-2 de Trabajadores = 41 y «Actualizar ahora» = 42). **AUTORIZACIÓN EXPRESA DE PIO:** nombrar el rol del sistema en la migración de H7b (la
   40) y su rollback, si hace falta.
 - **Solo previsión futura:** nada de lo nuevo cambia lo pasado. Lo pasado lo da el banco (hoy, el Excel).
 

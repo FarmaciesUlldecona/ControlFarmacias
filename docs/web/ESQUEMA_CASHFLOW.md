@@ -165,7 +165,9 @@ cambia lo importado ni lo pasado, y el sistema no lo usa para decidir nada.
   - `UPDATE` solo de `anulado` y `motivo_anulacion` y, en apuntes, también de `sustituido_factura_id` y
     `sustituido_vencimiento_orden`;
   - `SELECT` de `cf_cashflow_apuntes_historial`;
-  - `EXECUTE` de `cf_cashflow_ocurrencias` y `cf_cashflow_fechas_recurrente`.
+  - `EXECUTE` de `cf_cashflow_ocurrencias` y `cf_cashflow_fechas_recurrente`;
+  - `EXECUTE` de `cf_cashflow_farmacia_habilitada(farmacia)`, la función de su RLS (security definer: comprueba si
+    la farmacia está en el módulo `CASHFLOW`). La usan las políticas; la web no necesita llamarla.
 - **No lee** lo importado (cuentas, importaciones, importes, saldos), facturas ni vencimientos: eso se lee con
   `cf_lectura`. No borra (`DELETE` y `TRUNCATE` se rechazan).
 - **Autor obligatorio:** cada transacción que escriba hace antes `set local cf.autor = '<usuario>'` (1–60
@@ -216,11 +218,22 @@ El importe es siempre positivo: el sentido lo da el prefijo de la categoría (`R
 | `CATEGORIA_FUERA_DE_PLANTILLA` | La categoría no está en la plantilla de la cuenta en la vigente |
 | `CONCEPTO_DESCONOCIDO` | El concepto (de un apunte o una recurrente) no está, para esa cuenta y categoría, ni en la plantilla de la vigente ni en `cf_cashflow_conceptos` sin anular |
 | `IMPORTE_NO_POSITIVO` | Importe ausente o ≤ 0 (suelto o recurrente) |
+| `FECHA_AUSENTE` | Apunte suelto sin `fecha` |
 | `SIN_SALDO_DE_BANCO` | La cuenta no tiene ninguna decena con saldo de bancos en la vigente |
 | `FECHA_NO_FUTURA` | La fecha (o ninguna ocurrencia de la recurrente) es posterior al fin de la última decena con saldo de bancos |
 | `FRECUENCIA_NO_VALIDA`, `DIA_NO_VALIDO`, `INICIO_AUSENTE`, `FIN_ANTERIOR_A_INICIO`, `INICIO_NO_ES_OCURRENCIA` | Recurrente mal formada |
 | `OCURRENCIA_NO_VALIDA`, `RECURRENTE_NO_ENCONTRADA`, `RECURRENTE_ANULADA`, `IMPORTE_EN_ANULACION_DE_OCURRENCIA`, `OCURRENCIA_SIN_RECURRENTE` | Anulación de ocurrencia mal formada |
 | `SUSTITUCION_SOLO_AL_ANULAR`, `SUSTITUCION_INCOMPLETA`, `FACTURA_NO_ENCONTRADA`, `FARMACIA_DISTINTA_DE_LA_FACTURA`, `VENCIMIENTO_NO_ENCONTRADO` | Sustitución no válida |
+
+Al anular (`UPDATE`):
+
+| Código | Cuándo |
+|---|---|
+| `SOLO_ANULAR` | Cambia algo distinto de la anulación (y, en un apunte suelto, la sustitución), o la fila ya estaba anulada |
+| `MOTIVO_ANULACION_AUSENTE` | Se anula sin `motivo_anulacion` (vacío o solo espacios) |
+| `AUTOR_AUSENTE` | Sin `set local cf.autor` |
+| `SUSTITUCION_INCOMPLETA`, `FACTURA_NO_ENCONTRADA`, `FARMACIA_DISTINTA_DE_LA_FACTURA`, `VENCIMIENTO_NO_ENCONTRADO` | Sustitución no válida |
+| `BORRADO_NO_PERMITIDO` | `DELETE` o `TRUNCATE` (además, la web no tiene esos privilegios) |
 
 ### Anular (nunca borrar)
 
