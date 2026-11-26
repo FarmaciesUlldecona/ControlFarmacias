@@ -39,7 +39,7 @@ Donde las secciones siguientes dicen `PROPUESTA` para C1–C8, queda decidido.
 | Id | Decisión de Pio |
 |---|---|
 | **E1** | **Cuadre = saldo inicial + ΣRE − ΣRS.** Las salidas `RS` están en positivo en las celdas: un `RS` positivo es una salida. El importe se guarda con el signo de la celda y la web interpreta el sentido por el prefijo de la categoría (§2.4, §3.5, §3.7) |
-| **E2** | El texto que sale de una fórmula y las celdas con solo espacios cuentan como **vacías**. Cualquier otro texto en una celda de importe es `ERROR` (§2.3) |
+| **E2** | El texto que sale de una fórmula y las celdas con solo espacios cuentan como **vacías**. Cualquier otro texto en una celda de importe es `ERROR` (§2.3). **Ampliada (2026-11-22, §10):** una celda de importe cuyo contenido es exactamente `=` también cuenta como vacía, con aviso y recuento en el informe |
 | **E3** | **Pio no modifica el Excel.** Un importe con más de 2 decimales se **redondea al céntimo (half-up)** y se avisa en el informe (hoja, celda, valor original y redondeado), sin `ERROR`. El cuadre se comprueba con los valores guardados en el Excel **sin redondear** (§2.3, §2.4, §4) |
 | **E4** | «Hoja ignorada con datos» = hoja ignorada con **algún importe distinto de 0** (§2.4) |
 | **E5** | `SL` sin saldo en la primera decena: **aceptado** (§2.4) |
@@ -406,15 +406,20 @@ crearla (la tarea no se crea). `CONFIRMADO POR TEST` en local; nada se ha ejecut
 | `PARADA` (puertas, hash de una importación anterior, resultado incierto de la RPC, postcheck) | nada, salvo que el postcheck falle tras escribir | 3 |
 | `CATEGORIAS_NUEVAS_SIN_ACEPTAR` (C5) | nada | 4 |
 
-- **Concreciones del script** (`PROPUESTA` para Pio: no están en las decisiones C1–C8 ni E1–E7):
-  1. Sin fichero, con más de uno o con una copia inestable no hay hash: el `ERROR` va solo al informe, no a la BD.
-  2. **C5:** una categoría nueva no se registra como `ERROR`, porque su hash quedaría bloqueado (único) y Pio no
-     podría aceptar ese mismo fichero. Se informa y no se escribe nada hasta la manual con la opción. Cuenta como
-     nueva cada par (cuenta, categoría) sin importes en la importación vigente; en la primera importación, todas.
-  3. **C6 ampliado:** si el hash es el de una importación anterior que no es la última (el Excel ha vuelto a una
-     versión ya importada), la RPC lo rechazaría (`HASH_YA_IMPORTADO`): `PARADA` sin escribir.
-  4. **Resultado incierto** (error sin código de la RPC, por ejemplo un corte de red): `PARADA`, sin registrar un
-     `ERROR` aparte; el postcheck dice si llegó a escribirse.
+- **Concreciones del script.** DECISIONES DE PIO (2026-11-22) sobre las cinco primeras:
+  1. **APROBADA.** Sin fichero, con más de uno o con una copia inestable no hay hash: el `ERROR` va solo al informe,
+     no a la BD.
+  2. **APROBADA CON CAMBIO. C5:** una categoría nueva no se registra como `ERROR`, porque su hash quedaría bloqueado
+     (único) y Pio no podría aceptar ese mismo fichero. Se informa y no se escribe nada hasta la manual con la opción.
+     **Categoría nueva = un par (cuenta, categoría) que no aparece en ninguna importación `OK` anterior de esa
+     cuenta** (no solo en la vigente). En la primera importación, todas; un `ERROR` no tiene importes y no hace
+     conocida ninguna.
+  3. **APROBADA. C6 ampliado:** si el hash es el de una importación anterior que no es la última (el Excel ha vuelto
+     a una versión ya importada), la RPC lo rechazaría (`HASH_YA_IMPORTADO`): `PARADA` sin escribir.
+  4. **APROBADA. Resultado incierto** (error sin código de la RPC, por ejemplo un corte de red): `PARADA`, sin
+     registrar un `ERROR` aparte; el postcheck dice si llegó a escribirse.
+
+  `PROPUESTA` (sin decisión expresa de Pio):
   5. **Filas sin categoría:** solo pueden tener fórmulas (totales, cuadre). Un número tecleado en una de ellas es
      `IMPORTE_SIN_CATEGORIA`.
   6. **Saldos:** el texto de fórmula o solo espacios cuenta como vacío (E2); otro texto es `TEXTO_EN_SALDO`. La E5 se
@@ -424,10 +429,28 @@ crearla (la tarea no se crea). `CONFIRMADO POR TEST` en local; nada se ha ejecut
   8. **Cuadre de la RPC repetido en el script:** con los valores al céntimo, 0,005 por importe redondeado y ninguno
      por saldo (`CUADRE_REDONDEADO_NO_VALIDO`); así `SIMULAR` predice lo que la RPC rechazaría. Un importe que
      redondea a 0 es `IMPORTE_CERO_TRAS_REDONDEO`.
+- **Primera simulación con el Excel real (2026-11-22, `MANUAL SIMULAR`, sin escribir nada):** `SIMULADO_ERROR`
+  `TEXTO_EN_IMPORTE:PÍO:BJ62`. Evidencias en `C:\ControlFarmacias\evidencias_38b_simular\` (`SHA256SUMS.txt`).
+  - **Corrección de §1:** las 13 celdas de texto de un carácter en importes que la verificación del 18/11 tomó por
+    «de fórmula» no son fórmulas. La verificación miraba si el texto empezaba por `=`, y 12 de ellas contienen
+    exactamente `=` (2 en PÍO y 10 en RITA). La otra es `PÍO:P226`, con un carácter distinto. Las 3 de solo espacios
+    de RITA siguen siendo vacías por E2.
+  - **DECISIÓN DE PIO (2026-11-22), E2 ampliada:** una celda de importe cuyo contenido es exactamente `=` cuenta como
+    vacía, con aviso y recuento en el informe (`avisos_celdas_igual_vacias`). Cualquier otro texto sigue siendo
+    `ERROR`, también en los saldos.
+  - **Cuadre al céntimo (punto 8):** en `PÍO`, decena 2025-07-11, la diferencia al céntimo es 0,01 con un solo
+    importe redondeado. **DECISIÓN DE PIO (2026-11-22), opción (b):** sin margen por saldo; Pio corrige el Excel en
+    origen. Celdas que causan los decimales: `PÍO:D4` (saldo inicial de la primera decena, tecleado con más de 2
+    decimales, que arrastran los 359 saldos de fórmula de PÍO), `PÍO:BH222` y `RITA:BH21` (importes de fórmula con 3
+    decimales, en la decena 2025-07-11). En RITA, los saldos de fórmula con decimales empiezan en esa decena.
 - **Postcheck por fila:** antes y después de la RPC, todas las tablas de `public` del snapshot 2AX de la noche
   (cualquier fila cambiada es `FILAS_AJENAS`) y las de Cashflow (solo la cabecera nueva, sus importes y saldos y el
   vigente de la anterior).
 - **Informe:** `C:\ControlFarmacias\cashflow\informes\<fecha>\<hora>_<origen>_<modo>\`, copias en
   `C:\ControlFarmacias\cashflow\copias\`. Sin conceptos ni categorías.
-- **C7 `PENDIENTE`:** la comprobación «Cashflow no en ejecución» en la puerta de la noche y de los preflights se
-  añade con la creación de la tarea, que hoy no existe.
+- **C7 (orden de Pio del 2026-11-22: se añade ya, antes de crear la tarea):** «Cashflow no en ejecución» en la
+  puerta de la noche (`noche_automatica.puertas_tareas`; `_tareas_productivas` lee la tarea solo si existe) y de los
+  preflights: `auditoria_2bd_d/preflight_readonly` (lo heredan los preflights 2BE-D en adelante y las series 2BJ y
+  2BP) y `auditoria_2at/auditoria_readonly` (ya la leía por el comodín `*ControlFarmacias*`). La tarea no es
+  obligatoria ni previa: si no existe o terminó con error, la puerta pasa. En los preflights rige además el margen de
+  60 minutos antes de su próxima ejecución, como para las demás.

@@ -21,6 +21,21 @@ lo que necesitan, no puede escribir ni ejecutar RPC que escriban y no tiene acce
   `albaranes_aprobaciones`, `albaranes_aprobaciones_aplicadas`, `proveedores`, `proveedores_alias`,
   `cf_configuracion` y las cuatro vistas (`v_facturas_listado`, `v_dashboard_diario`, `v_vencimientos_calendario`,
   `v_proveedores_estado`, todas con `security_invoker`). Las tablas nuevas no se conceden solas.
+  - **Ampliación de la 38 (Cashflow, H7; desplegada el 2026-11-22; añadida aquí por orden de Pio del
+    2026-11-24):** `SELECT` sobre `cf_cashflow_cuentas`, `cf_cashflow_importaciones`, `cf_cashflow_importes` y
+    `cf_cashflow_saldos`, con RLS sin funciones security definer (cuentas, saldos e importes si su farmacia está en
+    el módulo `CASHFLOW` o no tienen farmacia; importaciones, todas). Ver REGLAS_CRITICAS «Cashflow (H7)».
+  - **Uso en H8-6 (web, 2026-11-26):** la reserva de un albarán se lee en `conciliacion_albaranes_reservados`
+    (`albaran_farmacia`, `albaran_id_contador`), que ya está en la lista. No hace falta ampliarla. Comprobado en
+    producción READ_ONLY:
+    - `SELECT` concedido;
+    - política `conciliacion_albaranes_reservados_lectura_select` para `cf_lectura`, que muestra las filas cuya
+      factura es de una farmacia habilitada.
+  - **Ampliación de la 40 (H7b, `DECISIÓN DE PIO`, 2026-11-24; implementada en local el 2026-11-26, no desplegada):**
+    - `SELECT` sobre `cf_cashflow_conceptos`, `cf_cashflow_recurrentes`, `cf_cashflow_apuntes` y
+      `cf_cashflow_apuntes_historial`, con la RLS del módulo `CASHFLOW`;
+    - `EXECUTE` de `cf_cashflow_ocurrencias` y `cf_cashflow_fechas_recurrente`, que son stable e immutable y no son
+      security definer (`pruebas/auditoria_h7b/DISENO.md` §4 y §7).
 - **Sin escritura ni RPC:** ningún `INSERT/UPDATE/DELETE/TRUNCATE`, ninguna secuencia, ningún `EXECUTE`
   concedido. Las únicas funciones de `public` ejecutables por `PUBLIC` son dos de trigger y una inmutable de
   cálculo (`cf_resultado_conciliacion`); ninguna `SECURITY DEFINER` ni volátil es ejecutable por el rol.

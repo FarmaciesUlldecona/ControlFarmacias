@@ -55,6 +55,8 @@ LIMITES_PLENOS = (20, 20)
 NOCHES_BUENAS_PARA_PLENOS = 3
 MINUTOS_MAXIMOS = 60
 TAREAS_PREVIAS = ("ControlFarmacias - Importar facturas", "Sincronización ControlFarmacias")
+# C7 (H7): la de Cashflow (23:45) no es previa ni obligatoria; solo no puede estar en ejecucion.
+TAREA_CASHFLOW = "ControlFarmacias - Importar Cashflow"
 RESULTADO_EN_EJECUCION = 267009
 # Valores certificados (R11, 2AZ; tolerancia documental 0,05).
 TOLERANCIAS_CERTIFICADAS = {
@@ -80,8 +82,11 @@ TABLAS_TRABAJADORES = frozenset({
 TABLAS_PAGOS = frozenset({"vencimientos_marcas_pago", "proveedores_forma_pago", "pagos_historial"})
 # Cashflow (H7, migracion 38; decision de Pio, pruebas/auditoria_h7/DISENO.md §6): importaciones del Excel de cashflow,
 # ajenas a facturas. Como Pagos: se informan aparte y no hacen fallar el veredicto. Solo se leen las que existen.
+# H7b (migracion 40; pruebas/auditoria_h7b/DISENO.md §4): conceptos, recurrentes, apuntes y su historial, escritos por
+# la web; hasta desplegar la 40 no existen y no se leen.
 TABLAS_CASHFLOW = frozenset({"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
-                             "cf_cashflow_saldos"})
+                             "cf_cashflow_saldos", "cf_cashflow_conceptos", "cf_cashflow_recurrentes",
+                             "cf_cashflow_apuntes", "cf_cashflow_apuntes_historial"})
 # Fuera del snapshot 2AX: la propia tabla de resumen, Trabajadores, Pagos y Cashflow (se leen aparte,
 # ``snapshot_aparte``).
 TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES | TABLAS_PAGOS | TABLAS_CASHFLOW
@@ -437,6 +442,12 @@ def puertas_tareas(info: dict, fecha: dt.date) -> list[str]:
             momento = momento.replace(tzinfo=dt.timezone.utc)
         if momento.astimezone().date() != fecha:
             fallos.append(f"TAREA_NO_EJECUTADA_ESTA_NOCHE:{nombre}:{ultima}")
+    # C7 (H7, DISENO §5.2; orden de Pio del 2026-11-22): la tarea de Cashflow no es obligatoria (puede no existir);
+    # solo se exige que no este en ejecucion.
+    cashflow = por_nombre.get(unicodedata.normalize("NFC", TAREA_CASHFLOW))
+    if cashflow is not None and (cashflow.get("estado") == "Running"
+                                 or cashflow.get("resultado") == RESULTADO_EN_EJECUCION):
+        fallos.append(f"TAREA_EN_EJECUCION:{TAREA_CASHFLOW}")
     return fallos
 
 
@@ -750,6 +761,12 @@ def _tareas_productivas() -> dict:
         " [pscustomobject]@{ nombre = $n;"
         "  ultima = $(if ($i.LastRunTime) { $i.LastRunTime.ToUniversalTime().ToString('o') } else { $null });"
         "  resultado = $i.LastTaskResult } });"
+        # C7: la tarea de Cashflow solo si existe (no es obligatoria), con su estado actual.
+        f"$c = Get-ScheduledTask -TaskName '{TAREA_CASHFLOW}' -ErrorAction SilentlyContinue;"
+        " if ($c) { $ci = $c | Get-ScheduledTaskInfo -ErrorAction Stop;"
+        f"  $t += [pscustomobject]@{{ nombre = '{TAREA_CASHFLOW}'; estado = [string]$c.State;"
+        "  ultima = $(if ($ci.LastRunTime) { $ci.LastRunTime.ToUniversalTime().ToString('o') } else { $null });"
+        "  resultado = $ci.LastTaskResult } };"
         "ConvertTo-Json -InputObject $t -Depth 3")
     codificado = base64.b64encode(ps.encode("utf-16-le")).decode("ascii")
     r = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-EncodedCommand", codificado],
@@ -772,6 +789,14 @@ def _r20_en_bd(conexion) -> bool:
 
     with sesion_lectura(conexion) as lector:
         return r20_habilitada(lector)
+
+
+def _r21_en_bd(conexion) -> bool:
+    """R21 (DECISIONES DE PIO, 2026-11-24): la 39 presente y su marca ``conciliacion_r21`` a true."""
+    from .lectura_readonly import r21_habilitada, sesion_lectura
+
+    with sesion_lectura(conexion) as lector:
+        return r21_habilitada(lector)
 
 
 def _37_en_bd(conexion) -> bool:
@@ -800,10 +825,11 @@ def main(argv: list[str]) -> int:
             cliente=cliente,
             tareas=_tareas_productivas,
             puerta_git=puerta_git,
-            # R20 (migracion 36) y migracion 37: el worker detecta cada una con una sesion de solo lectura (catalogo).
+            # R20 (migracion 36), migracion 37 y R21 (39): el worker detecta cada una con una sesion de solo lectura
+            # (catalogo).
             construir_worker=lambda cfg: construir_worker_automatico_productivo(
                 cliente, cfg, WORKER_BASE, trabajo, r20_habilitada=lambda: _r20_en_bd(conexion),
-                defectos_37=lambda: _37_en_bd(conexion)),
+                defectos_37=lambda: _37_en_bd(conexion), r21_habilitada=lambda: _r21_en_bd(conexion)),
             directorio_informes=directorio,
         )
         return ejecutar_noche(argv[0], entorno)

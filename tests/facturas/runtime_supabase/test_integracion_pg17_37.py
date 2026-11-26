@@ -9,7 +9,7 @@ Se comprueba:
   limpio (25) igual; la firma de 7 parametros tambien aplica la regla (lector null); lector no valido -> nada escrito;
   reprocesado tras el defecto -> PENDIENTE con 0 intentos; rollback con un documento ya en REVISION -> se queda;
 - sin la 37 (plantilla 36) el codigo detecta su ausencia y sigue la regla de la 17;
-- worker manual real con un PDF ilegible: EXTRACCION_LOCAL_ERROR, REVISION y lector alliance-local 1.3.1;
+- worker manual real con un PDF ilegible: EXTRACCION_LOCAL_ERROR, REVISION y lector alliance-local 1.3.2;
 - desplegar_37.py ensayado con el rol que imita al postgres de Supabase (norma 2BN-D), segundo intento revertido y
   rollback con la imitacion.
 Sin produccion ni Farmatic.
@@ -46,7 +46,7 @@ RUTA_37 = "sql/migrations/37_cf_defectos_directos_a_revision.sql"
 SCRIPT_37 = ROOT / "pruebas/auditoria_37/desplegar_37.py"
 FIRMA_8 = "public.cf_registrar_fallo_normalizacion(uuid,text,text,text,text,text,text,jsonb)"
 FIRMA_7 = "public.cf_registrar_fallo_normalizacion(uuid,text,text,text,text,text,text)"
-LECTOR = {"adaptador": "alliance-local", "version_adaptador": "1.3.1", "layout": None}
+LECTOR = {"adaptador": "alliance-local", "version_adaptador": "1.3.2", "layout": None}
 HUELLA_37 = {
     **CONSULTAS_HUELLA,
     "documentos": "select to_jsonb(d) from public.documentos_facturas d",

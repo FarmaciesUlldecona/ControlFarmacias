@@ -228,6 +228,7 @@ def construir_worker_manual_productivo(
     directorio_trabajo: Path,
     r20_habilitada: Callable[[], bool] | None = None,
     defectos_37: Callable[[], bool] | None = None,
+    r21_habilitada: Callable[[], bool] | None = None,
 ) -> WorkerAutomatico:
     """Compone el worker manual productivo. Solo debe invocarse ``ejecutar_una_manual``."""
     if configuracion.luna_habilitada:
@@ -236,9 +237,10 @@ def construir_worker_manual_productivo(
         raise ValueError("SOLO_PIO_AUTORIZADA_EN_COMPOSITOR_MANUAL")
     if not worker_id.strip():
         raise ValueError("WORKER_ID_OBLIGATORIO")
-    # R20 (migracion 36) y migracion 37: deteccion con una sesion de solo lectura; sin ella, R20 desactivada y fallo
-    # con la firma de 7 parametros.
-    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=r20_habilitada, defectos_37=defectos_37)
+    # R20 (migracion 36), migracion 37 y R21 (39): deteccion con una sesion de solo lectura; sin ella, R20 y R21
+    # desactivadas y fallo con la firma de 7 parametros.
+    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=r20_habilitada, defectos_37=defectos_37,
+                                             r21_habilitada=r21_habilitada)
     orquestador = OrquestadorExtraccionProductiva(
         extractor_especifico=ExtractorDocumentalAutorizado(),
         extractor_generico_local=None,

@@ -184,6 +184,20 @@ def test_redondeo_llega_a_la_rpc_con_su_margen(cf):
                      "where cuenta = 'PIO' and decena_inicio = '2026-01-11'") == "1450.01"
 
 
+def test_celdas_igual_vacias_con_aviso_en_el_informe_y_se_importa(cf):
+    """E2 ampliada (decision de Pio, 2026-11-22): '=' exacto en un importe cuenta como vacio, con aviso y recuento."""
+    def cambiar(hojas, _):
+        hojas[HOJA_PIO]["F6"] = ef.Texto("=")
+        hojas["RITA"]["E5"] = ef.Texto("=")
+    _excel(cf, cambiar)
+    codigo, informe = cf.importar("MANUAL", "REAL", True)
+    assert (codigo, informe["resultado"]) == (ic.CODIGO_OK, "OK"), informe
+    assert informe["lectura"]["avisos_celdas_igual_vacias"] == {"n": 2, "posiciones": [f"{HOJA_PIO}:F6", "RITA:E5"]}
+    assert cf.pg.sql(CONTEOS) == "1|7|11"
+    resumen = next((cf.tmp / "cf" / "informes").rglob("resumen.txt")).read_text(encoding="utf-8")
+    assert "celdas '=' vacias: 2" in resumen
+
+
 # --------------------------------------------------------------------------- C6 y versiones
 
 
@@ -242,6 +256,37 @@ def test_una_categoria_nueva_para_la_noche_y_la_acepta_la_manual(cf):
     codigo, informe = cf.importar("MANUAL", "REAL", True)
     assert (codigo, informe["resultado"]) == (ic.CODIGO_OK, "OK")
     assert cf.pg.sql(CONTEOS) == "2|15|22"
+
+
+def test_una_categoria_de_una_importacion_ok_anterior_no_es_nueva_aunque_no_este_en_la_vigente(cf):
+    """C5 (decision de Pio, 2026-11-22): nueva = no aparece en NINGUNA importacion OK anterior de esa cuenta."""
+    _primera(cf)  # PIO usa la categoria de devoluciones (D7 = -50)
+
+    def sin_devolucion(hojas, cacheados):
+        hojas[HOJA_PIO]["D7"] = None
+        cacheados[(HOJA_PIO, "D9")] = 1200
+    _excel(cf, sin_devolucion)
+    codigo, informe = cf.importar("NOCHE", "REAL")
+    assert (codigo, informe["resultado"], informe["categorias_nuevas"]) == (ic.CODIGO_OK, "OK", 0), informe
+    assert cf.pg.sql("select count(*) from public.cf_cashflow_importes i join public.cf_cashflow_importaciones m "
+                     "on m.id = i.importacion_id where m.vigente and i.categoria like 'RS Devol%'") == "0"
+
+    def vuelve(hojas, cacheados):
+        hojas[HOJA_PIO]["D7"] = -60
+        cacheados[(HOJA_PIO, "D9")] = 1260
+    _excel(cf, vuelve)
+    codigo, informe = cf.importar("NOCHE", "REAL")
+    assert (codigo, informe["resultado"], informe["categorias_nuevas"]) == (ic.CODIGO_OK, "OK", 0), informe
+    assert cf.pg.sql(CONTEOS) == "3|20|33"  # 7 + 6 + 7 importes, 11 saldos cada una
+
+
+def test_un_error_anterior_no_hace_conocida_ninguna_categoria(cf):
+    _excel(cf, lambda h, _: h["RITA"].__setitem__("H9", 351))
+    assert cf.importar("MANUAL", "REAL", True)[1]["resultado"] == "ERROR"
+    _excel(cf)
+    codigo, informe = cf.importar("NOCHE", "REAL")
+    assert (codigo, informe["resultado"], informe["categorias_nuevas"]) == (
+        ic.CODIGO_CATEGORIAS, "CATEGORIAS_NUEVAS_SIN_ACEPTAR", 4)
 
 
 # --------------------------------------------------------------------------- ERROR
@@ -330,6 +375,8 @@ def test_puertas_paran_sin_escribir(cf, preparar, origen, modo, fallo):
     codigo, informe = cf.importar(origen, modo)
     assert (codigo, informe["resultado"]) == (ic.CODIGO_PARADA, "PARADA")
     assert fallo in informe["puertas"]
+    # Orden de Pio del 2026-11-23: el texto del error de las tareas (saneado) queda en el informe.
+    assert informe.get("tareas_error") == ("sin acceso" if fallo == "TAREAS_NO_DETERMINABLES" else None)
     assert cf.cliente.rpcs == [] and cf.pg.sql(CONTEOS) == "0|0|0"
 
 

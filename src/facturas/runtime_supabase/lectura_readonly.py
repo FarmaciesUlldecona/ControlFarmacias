@@ -209,6 +209,19 @@ def r20_habilitada(lector: Any) -> bool:
     return lector.valor(SQL_VALOR_R20) is True
 
 
+SQL_COLUMNA_R21 = ("select exists (select 1 from information_schema.columns where table_schema = 'public' "
+                   "and table_name = 'cf_configuracion' and column_name = 'conciliacion_r21')")
+SQL_VALOR_R21 = "select conciliacion_r21 is true from public.cf_configuracion where id"
+
+
+def r21_habilitada(lector: Any) -> bool:
+    """R21 (DECISIONES DE PIO, 2026-11-24): activa solo si la 39 esta en la BD y su marca es ``true`` (R21-D5: la 39
+    la crea a false). Igual que ``r20_habilitada``: primero ``information_schema`` y la columna solo si existe."""
+    if lector.valor(SQL_COLUMNA_R21) is not True:
+        return False
+    return lector.valor(SQL_VALOR_R21) is True
+
+
 FIRMA_FALLO_37 = "public.cf_registrar_fallo_normalizacion(uuid,text,text,text,text,text,text,jsonb)"
 SQL_MIGRACION_37 = (
     f"select to_regprocedure('{FIRMA_FALLO_37}') is not null and exists (select 1 from information_schema.columns "
@@ -234,7 +247,8 @@ def simular_conciliacion(lector: LectorReadOnly, factura_id: str, disparador: st
     from .repositorios import RepositorioRuntimeSupabase, clave_idempotente_conciliacion, payload_conciliacion
 
     cliente = ClienteLectura(lector)
-    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=lambda: r20_habilitada(lector))
+    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=lambda: r20_habilitada(lector),
+                                             r21_habilitada=lambda: r21_habilitada(lector))
     fila = json.loads(lector.valor("select to_jsonb(f)::text from public.facturas f where f.id = %s",
                                    (factura_id,)))
     factura = FacturaTrabajo(

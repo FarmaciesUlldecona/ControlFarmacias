@@ -94,5 +94,14 @@ def test_rita_nunca_entra_en_manifiesto_pio():
 
 
 def test_fuera_de_periodo_o_no_pdf_queda_excluido():
-    assert clasificar_ruta_indice("MAIG 26\\1A DESENA\\A PIO.pdf") == "EXCLUIDO"
+    # Corte 2026-04-01 (carga Alliance abril-mayo, decision de Pio del 2026-11-23): marzo fuera, mayo dentro.
+    assert clasificar_ruta_indice("MARÇ 26\\3A DESENA\\A PIO.pdf") == "EXCLUIDO"
+    assert clasificar_ruta_indice("MAIG 26\\1A DESENA\\A PIO.pdf") == "PIO"
     assert clasificar_ruta_indice("JUNY 26\\1A DESENA\\A PIO.txt") == "EXCLUIDO"
+
+
+def test_abril_26_1a_desena_queda_excluida_y_el_resto_de_abril_entra():
+    assert clasificar_ruta_indice("ABRIL 26\\1A DESENA\\A PIO.pdf") == "EXCLUIDO"
+    assert clasificar_ruta_indice("ABRIL 26\\2A DESENA\\A PIO.pdf") == "PIO"
+    assert clasificar_ruta_indice("ABRIL 26\\3A DESENA\\A RITA.pdf") == "RITA"
+    assert clasificar_ruta_indice("ABRIL 27\\1A DESENA\\A PIO.pdf") == "PIO"

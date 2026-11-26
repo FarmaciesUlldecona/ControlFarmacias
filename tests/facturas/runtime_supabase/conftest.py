@@ -120,6 +120,25 @@ SUITE_HISTORICA = {
         "test_ensayo_completo_despliegue_38_y_segundo_intento_revierte",
         "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_38_es_de_solo_lectura",
         "test_postcondiciones_en_la_plantilla_38"),
+    # 39-D (2026-11-25): R21 desplegada en produccion.
+    "test_integracion_pg17_r21.py": (
+        "test_rollback_39_devuelve_exactamente_el_esquema_38", "test_el_rollback_aborta_con_una_linea_r21_vigente",
+        "test_ensayo_completo_despliegue_39_y_segundo_intento_revierte",
+        "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_39_es_de_solo_lectura",
+        "test_postcondiciones_en_la_plantilla_39"),
+    # 40-D (2026-11-26): prevision de Cashflow (H7b) desplegada en produccion.
+    "test_integracion_pg17_40_prevision.py": (
+        "test_rollback_40_devuelve_exactamente_el_esquema_39", "test_rollback_falla_cerrado_con_datos",
+        "test_ensayo_completo_despliegue_40_y_segundo_intento_revierte",
+        "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_40_es_de_solo_lectura",
+        "test_postcondiciones_en_la_plantilla_40"),
+    # 41-D (2026-11-26): guardias por asignar y estado (TA4-2) desplegadas en produccion.
+    "test_integracion_pg17_41_trabajadores.py": (
+        "test_rollback_41_devuelve_exactamente_el_esquema_40",
+        "test_rollback_falla_cerrado_sin_cambiar_nada_aunque_la_guardia_este_anulada",
+        "test_ensayo_completo_despliegue_41_y_segundo_intento_revierte",
+        "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_41_es_de_solo_lectura",
+        "test_postcondiciones_en_la_plantilla_41"),
 }
 
 # Modulo pg17_local -> familia (grupo xdist_group). Los modulos sin entrada forman su propia familia. Medicion del

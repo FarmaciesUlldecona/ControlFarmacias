@@ -250,14 +250,28 @@ def documentar_sentido_desde_relacion(
     }
 
 
-def documentar_sentido_decision_funcional_pio(literal: str) -> dict[str, Any] | None:
-    """Aplica únicamente las decisiones literales autorizadas para Alliance."""
+# DECISION DE PIO (2026-11-24, version 1.3.2; caso 08006123): "ABONOS CLUBS" es ABONO solo si el importe de la fila es
+# negativo. Con importe positivo, nulo o ilegible, el sentido sigue null (falla cerrado).
+DECISIONES_SENTIDO_SOLO_IMPORTE_NEGATIVO = {"ABONOS CLUBS": "ABONO"}
+
+
+def documentar_sentido_decision_funcional_pio(literal: str, importe: float | None = None) -> dict[str, Any] | None:
+    """Aplica únicamente las decisiones literales autorizadas para Alliance.
+
+    ``importe``: total de la fila (con signo). Solo lo usan las decisiones condicionadas al signo
+    (``DECISIONES_SENTIDO_SOLO_IMPORTE_NEGATIVO``); el sentido sigue saliendo del literal, no del signo.
+    """
     decisiones = {
         "SERVICIO BASICO": "CARGO",
         "CONDIC. COMERCIAL": "CARGO",
     }
     literal_normalizado = normalizar_texto(literal)
     sentido = decisiones.get(literal_normalizado)
+    condicion = None
+    if sentido is None and literal_normalizado in DECISIONES_SENTIDO_SOLO_IMPORTE_NEGATIVO:
+        if importe is None or not importe < 0:
+            return None
+        sentido, condicion = DECISIONES_SENTIDO_SOLO_IMPORTE_NEGATIVO[literal_normalizado], "IMPORTE_FILA_NEGATIVO"
     if sentido is None:
         return None
     return {
@@ -278,6 +292,7 @@ def documentar_sentido_decision_funcional_pio(literal: str) -> dict[str, Any] | 
             "inferencia_por_categoria": False,
             "inferencia_por_signo": False,
             "inferencia_por_gold": False,
+            **({"condicion": condicion} if condicion else {}),
         },
     }
 
@@ -292,7 +307,7 @@ class AdaptadorAlliance(AdaptadorBase):
     """
 
     id = "alliance-local"
-    version = "1.3.1"
+    version = "1.3.2"  # 1.3.2 (Pio, 2026-11-24): "ABONOS CLUBS" -> ABONO solo con importe negativo
     capacidades = {
         "segmentacion": "SOPORTADO_MULTIFACTURA_DETERMINISTA",
         "cabecera": "SOPORTADO_MONEDA_NULL_NO_DOCUMENTADA",
@@ -344,6 +359,7 @@ class AdaptadorAlliance(AdaptadorBase):
         movimientos = self._movimientos(documento, paginas[0], fiscal_aux["filas_concepto"])
         candidatos = self._candidatos_fila(documento, paginas)
         relaciones = self._relaciones_documentales(candidatos, movimientos)
+        self._aplicar_decisiones_condicionadas(movimientos)
         relaciones_por_candidato = {
             r["candidato"]["orden"]: r for r in relaciones if r.get("inequivoca") is True
         }
@@ -577,6 +593,8 @@ class AdaptadorAlliance(AdaptadorBase):
                 seccion["literal_encabezado"]["valor"] if seccion else None,
                 pertenencia_demostrada=seccion is not None,
             )
+            # Las decisiones condicionadas al signo (ABONOS CLUBS, 1.3.2) se aplican despues de las relaciones
+            # documentales (``_aplicar_decisiones_condicionadas``): la evidencia documental tiene prioridad.
             decision_pio = documentar_sentido_decision_funcional_pio(literal) if sentido is None else None
             if decision_pio:
                 sentido = decision_pio["valor"]
@@ -742,6 +760,28 @@ class AdaptadorAlliance(AdaptadorBase):
                 },
             })
         return salida
+
+    @staticmethod
+    def _aplicar_decisiones_condicionadas(movimientos):
+        """1.3.2 (Pio, 2026-11-24): ABONOS CLUBS -> ABONO solo con importe negativo, y solo si ni la seccion ni una
+        relacion documental han dado el sentido. Sin importe negativo, el sentido sigue null (falla cerrado)."""
+        for movimiento in movimientos:
+            if movimiento["sentido"] is not None:
+                continue
+            decision = documentar_sentido_decision_funcional_pio(
+                (movimiento.get("descripcion_literal") or {}).get("valor") or "",
+                (movimiento.get("importe") or {}).get("valor"))
+            if decision is None or "condicion" not in decision["provenance"]:
+                continue
+            movimiento["sentido"] = decision["valor"]
+            movimiento["sentido_fuente"] = "DECISION_FUNCIONAL_PIO"
+            movimiento["sentido_documentacion"] = decision
+            movimiento["provenance"]["regla_sentido"] = decision["provenance"]["regla"]
+            movimiento["incidencias"] = [
+                incidencia
+                for incidencia in movimiento["incidencias"]
+                if incidencia.get("codigo") != "SENTIDO_NO_DOCUMENTADO"
+            ]
 
     def _aplicar_sentido_documental(self, candidato, movimiento, relacion):
         if movimiento["sentido"] is not None:

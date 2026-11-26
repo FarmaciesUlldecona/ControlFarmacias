@@ -174,7 +174,8 @@ def test_pagos_fuera_del_2ax_y_comparados_aparte():
 def test_cashflow_fuera_del_2ax_y_comparado_aparte():
     """H7 (DISENO §6, decision de Pio 2026-11-22): Cashflow se informa aparte, como Pagos, sin veredicto."""
     assert na.TABLAS_CASHFLOW == {"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
-                                  "cf_cashflow_saldos"}
+                                  "cf_cashflow_saldos", "cf_cashflow_conceptos", "cf_cashflow_recurrentes",
+                                  "cf_cashflow_apuntes", "cf_cashflow_apuntes_historial"}
     assert na.TABLAS_CASHFLOW <= na.TABLAS_FUERA_DEL_SNAPSHOT
     assert not na.TABLAS_CASHFLOW & (na.TABLAS_TRABAJADORES | na.TABLAS_PAGOS)
     pre = {"tablas": {"cf_cashflow_importaciones": {}}}
@@ -283,14 +284,16 @@ def test_numeros_de_un_cambio_r18():
 
 def test_autoridad_automatica_solo_alliance_certificada():
     assert dict(AUTORIDAD_COMPOSITOR_AUTOMATICO) and all(
-        v == ("alliance-local", "1.3.1") for v in AUTORIDAD_COMPOSITOR_AUTOMATICO.values())
-    assert autoridad_automatica_habilitada("alliance-local", "1.3.1") is True
+        v == ("alliance-local", "1.3.2") for v in AUTORIDAD_COMPOSITOR_AUTOMATICO.values())
+    assert autoridad_automatica_habilitada("alliance-local", "1.3.2") is True
+    # Pio, 2026-11-24: la 1.3.1 (sin "ABONOS CLUBS" -> ABONO) deja de estar certificada para la ruta automatica.
+    assert autoridad_automatica_habilitada("alliance-local", "1.3.1") is False
     # Pio, 2026-11-14: la 1.3.0 (sin "ENCARGO") deja de estar certificada para la ruta automatica.
     assert autoridad_automatica_habilitada("alliance-local", "1.3.0") is False
     assert autoridad_automatica_habilitada("alliance-local", "1.2.0") is False
     assert autoridad_automatica_habilitada("alliance-local", None) is False
     for layout in ("hefame-local", "cofares-local", "fedefarma-local", None, "inventado"):
-        assert autoridad_automatica_habilitada(layout, "1.3.1") is False
+        assert autoridad_automatica_habilitada(layout, "1.3.2") is False
     # El compositor manual no cambia.
     assert autoridad_manual_habilitada("alliance-local") is True
 

@@ -33,7 +33,12 @@ def resolver_ruta_facturas(valor_configurado: str | None = None) -> Path:
 
 RUTA_FACTURAS = resolver_ruta_facturas()
 
-FECHA_INICIO_IMPORTACION = date(2026, 6, 1)
+FECHA_INICIO_IMPORTACION = date(2026, 4, 1)
+
+# Carga Alliance abril-mayo (decision (b) de Pio, 2026-11-22; ampliada el 2026-11-23): el corte baja de 2026-06-01 a
+# 2026-04-01, pero la subcarpeta ABRIL 26\1A DESENA queda fuera (su factura es de 21-31/03, sin albaranes Farmatic).
+# Cada exclusion es (mes de la carpeta mensual, nombre normalizado de la subcarpeta de decena).
+SUBCARPETAS_EXCLUIDAS = frozenset({(date(2026, 4, 1), "1A DESENA")})
 
 FARMACIA_ESPERADA = "PIO"
 BUCKET_FACTURAS = "facturas-pdf"
@@ -243,10 +248,39 @@ def obtener_fecha_carpeta_mes(
         return None
 
 
+def subcarpeta_excluida(
+    partes: tuple[str, ...] | list[str],
+) -> bool:
+    """
+    Indica si una ruta relativa a FACTURES PIO (partes: carpeta
+    mensual, decena, ...) cae en una subcarpeta excluida
+    (SUBCARPETAS_EXCLUIDAS). Solo cuentan las rutas con al menos
+    mes y subcarpeta.
+    """
+
+    if len(partes) < 3:
+        return False
+
+    fecha_mes = obtener_fecha_carpeta_mes(
+        partes[0]
+    )
+
+    if fecha_mes is None:
+        return False
+
+    decena = re.sub(
+        r"[^A-Z0-9]+",
+        " ",
+        normalizar_texto(partes[1]),
+    ).strip()
+
+    return (fecha_mes, decena) in SUBCARPETAS_EXCLUIDAS
+
+
 def obtener_carpetas_mensuales_validas() -> list[Path]:
     """
-    Devuelve todas las carpetas mensuales desde junio de 2026
-    en adelante, sin límite de fecha final.
+    Devuelve todas las carpetas mensuales desde abril de 2026
+    (FECHA_INICIO_IMPORTACION) en adelante, sin límite de fecha final.
     """
 
     carpetas_validas: list[
@@ -300,7 +334,8 @@ def obtener_carpetas_mensuales_validas() -> list[Path]:
 
 def obtener_facturas_pdf() -> list[Path]:
     """
-    Localiza todos los PDF desde junio de 2026.
+    Localiza todos los PDF desde abril de 2026, salvo los de las
+    subcarpetas excluidas (SUBCARPETAS_EXCLUIDAS).
 
     Recorre las carpetas de las decenas y cualquier
     otra subcarpeta existente dentro del mes.
@@ -320,6 +355,11 @@ def obtener_facturas_pdf() -> list[Path]:
                 == ".pdf"
                 and not es_factura_rita(
                     archivo
+                )
+                and not subcarpeta_excluida(
+                    archivo.relative_to(
+                        carpeta_mes.parent
+                    ).parts
                 )
             ):
                 facturas.append(

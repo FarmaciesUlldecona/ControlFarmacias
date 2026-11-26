@@ -3,6 +3,11 @@
 Estado: **DISEÑO CON LAS DECISIONES DE PIO** (2026-11-19, §0; A1 cambiada por Pio el mismo día). Sin código, sin
 migración y sin tocar producción. Petición de la web con las decisiones de Pio del encargo (2026-11-19). La bandeja de entrada (H9) queda para más adelante.
 
+**Numeración (DECISIONES DE PIO del 2026-11-25 y del 2026-11-26):** «Actualizar ahora» era la migración 39; pasó a 41
+(R21 = 39, H7b = 40) y ahora a **42** (la 41 es TA4-2 de Trabajadores). En este documento, «la 42» es la antigua «39».
+La autorización A4 para nombrar el rol del sistema se dio para esta migración con el número 39: **se reconfirma con
+Pio al implementarla con el número 42** (como en la renumeración de C3, 2026-11-19).
+
 - **Etiquetas:** `CONFIRMADO POR CÓDIGO` (fichero:línea), `CONFIRMADO POR LECTURA` (listado del espejo, solo nombres y
   conteos, sin abrir PDF) y `PROPUESTA`. Lo que tiene que decidir Pio está en §4.
 - **Fuera de alcance:** Farmatic (no se toca), el lector, la conciliación y la bandeja H9.
@@ -11,8 +16,8 @@ migración y sin tocar producción. Petición de la web con las decisiones de Pi
 
 | Id | Decisión |
 |---|---|
-| **A1** (cambiada) | El botón ejecuta el **circuito COMPLETO** (importar, sincronizar, normalizar y conciliar) en **modalidad «bajo demanda»**, dentro de la **migración 39**: varias ejecuciones al día **sin bloquear la noche**, con **las mismas puertas y límites** (§3.3) |
-| **V1** | **Velocidad**, también en la 39: **encadenar los pasos** (cada uno arranca al terminar el anterior), en el botón **y en la noche**, e **insertar en bloque** los albaranes de la sincronización. Tiempos medidos y estimados en §1.4 y §3.6 |
+| **A1** (cambiada) | El botón ejecuta el **circuito COMPLETO** (importar, sincronizar, normalizar y conciliar) en **modalidad «bajo demanda»**, dentro de la **migración 42**: varias ejecuciones al día **sin bloquear la noche**, con **las mismas puertas y límites** (§3.3) |
+| **V1** | **Velocidad**, también en la 42: **encadenar los pasos** (cada uno arranca al terminar el anterior), en el botón **y en la noche**, e **insertar en bloque** los albaranes de la sincronización. Tiempos medidos y estimados en §1.4 y §3.6 |
 | **E1** | «Evidencia en llamadas aparte»: **sigue `PENDIENTE`** (decisión de Pio, sin cambios) |
 | **B1** | Las ejecuciones bajo demanda tienen **fila propia en `cf_noches_automaticas`** (columnas `modalidad`, `id` y `peticion_id`; índice único parcial para la noche) |
 | **B2** | **Mismos límites por ejecución**, **sin máximo diario**. La escalada 5 + 5 → 20 + 20 cuenta **SOLO las noches** |
@@ -26,9 +31,9 @@ migración y sin tocar producción. Petición de la web con las decisiones de Pi
 | **S4** | Nombre repetido: **rechazo** (`NOMBRE_EXISTENTE`) |
 | **A2** | **Sí:** `Usuari` puede **EJECUTAR** la tarea de sincronización, sin modificarla. **Ya lo tiene desde el hito 2AG** (comprobado hoy, §5): no hace falta ningún cambio |
 | **A3** | Caducidad de una petición: **10 minutos**. Tiempo máximo por paso: **30 minutos** |
-| **A4** | La cola va en la **migración 39**. **AUTORIZACIÓN EXPRESA DE PIO (2026-11-19):** nombrar el rol del sistema **SOLO** en `sql/migrations/39_*.sql` y su rollback (para el EXECUTE de las funciones de reclamar y cerrar). Tests, scripts y documentación no lo nombran; cualquier otro fichero, autorización nueva. Se registra en REGLAS_CRITICAS al implementar la 39 |
+| **A4** | La cola va en la **migración 42** (antes 39). **AUTORIZACIÓN EXPRESA DE PIO (2026-11-19):** nombrar el rol del sistema **SOLO** en la migración de «Actualizar ahora» y su rollback (para el EXECUTE de las funciones de reclamar y cerrar); se dio como `sql/migrations/39_*.sql` y **se reconfirma con Pio para `42_*.sql` al implementarla**. Tests, scripts y documentación no lo nombran; cualquier otro fichero, autorización nueva. Se registra en REGLAS_CRITICAS al implementar la 42 |
 | **S6** | Rol de la web para la cola: **nuevo, `cf_actualizar_web`** (solo `INSERT` y `SELECT` sobre la cola) |
-| **Orden** | **37 → 38 → 39.** Cada migración exige la anterior |
+| **Orden** | **37 → 38 → 39 (R21) → 40 (H7b) → 41 (TA4-2) → 42.** Cada migración exige la anterior |
 
 ## 1. Lo que hay hoy
 
@@ -140,7 +145,7 @@ Programador de tareas no devuelve eventos). Evidencias en `C:\ControlFarmacias\e
 
 ### 3.1 Cola
 
-Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de la 37 y la 38:
+Tabla `cf_peticiones_actualizacion`, en la **migración 42** (A4), después de la 41:
 
 | Columna | Contenido |
 |---|---|
@@ -181,14 +186,14 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
   tareas, `Usuari`), no deja un proceso vivo y, si falla, la siguiente vuelta lo ve. El retraso máximo es de 2
   minutos.
 
-### 3.3 Modalidad «bajo demanda» (migración 39)
+### 3.3 Modalidad «bajo demanda» (migración 42)
 
 `PROPUESTA` que concreta A1.
 
 - **El mismo orquestador** (`noche_automatica.py`) con una modalidad nueva, `BAJO_DEMANDA`, junto a `SOMBRA` y `REAL`.
   Mismo código de normalización y conciliación, mismas puertas, mismos límites, mismas paradas y mismo postcheck por
   fila. Lo que cambia:
-  - **Fila propia** en `cf_noches_automaticas` (B1, decidido): la 39 añade `modalidad` (`NOCHE` o `BAJO_DEMANDA`), un
+  - **Fila propia** en `cf_noches_automaticas` (B1, decidido): la 42 añade `modalidad` (`NOCHE` o `BAJO_DEMANDA`), un
     `id` y `peticion_id`. La guarda de una noche por fecha pasa a un **índice único parcial** `(fecha) where modalidad =
     'NOCHE'`: la noche sigue siendo una sola por fecha y las ejecuciones bajo demanda no la ocupan.
   - **Puerta de pasos** en lugar de la de tareas: en vez de «las tareas han corrido esta noche», «la importación y la
@@ -237,7 +242,7 @@ Tabla `cf_peticiones_actualizacion`, en la **migración 39** (A4), después de l
 
 `PROPUESTA` (estimación; se medirá con las marcas de §3.4):
 
-| Paso | Hoy | Con la 39 |
+| Paso | Hoy | Con la 42 |
 |---|---|---|
 | Esperas entre pasos | 30 + 45 minutos | **0** (encadenado) |
 | Importación | 7–12 s + ~1,5 s por PDF | ~0,5 s por PDF con la propuesta de §3.8 (sin la espera fija de 1 s) |
@@ -294,11 +299,11 @@ Tomadas el 2026-11-19 (§0), incluidas B1–B4, V2 e I1. **Queda para Pio:**
 
 - **E1.** «Evidencia en llamadas aparte»: sigue `PENDIENTE`.
 
-Para el hito de implementación (la 39 va después de la 37 y la 38):
+Para el hito de implementación (la 42 va después de la 41):
 
-- migración 39: cola, trigger, funciones de reclamar y cerrar, rol `cf_actualizar_web`, columnas de B1 y su rollback,
-  con `desplegar_39` ensayado con la imitación del `postgres` de Supabase; la autorización A4 se registra entonces en
-  REGLAS_CRITICAS;
+- migración 42: cola, trigger, funciones de reclamar y cerrar, rol `cf_actualizar_web`, columnas de B1 y su rollback,
+  con `desplegar_42` ensayado con la imitación del `postgres` de Supabase; la autorización A4, reconfirmada por Pio para
+  la 42, se registra entonces en REGLAS_CRITICAS;
 - código: modalidad `BAJO_DEMANDA`, circuito encadenado, lotes de albaranes, tarea del botón;
 - el servidor de subida de la web y la excepción de §2.3 en REGLAS_CRITICAS;
 - la prueba de lanzar la sincronización desde el circuito, sin ejecutarla en producción salvo con la confirmación de

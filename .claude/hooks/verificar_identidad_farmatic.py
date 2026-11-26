@@ -47,9 +47,11 @@ PATRONES = (
     "importar_albaranes_historicos",
     "probar_albaranes",
     "explorar_base_datos",
-    "importar_facturas_drive",
+    # importar_facturas_drive y ejecutar_importacion_facturas salen de la lista (decision de Pio, 2026-11-23): no
+    # abren conexion con Farmatic ni usan sus credenciales (solo Drive, SQLite local y Supabase). Lanzarlos sigue
+    # pidiendo confirmacion (reglas ask de settings.json); el test de deriva exige cubrir cualquier modulo de src/ que
+    # llegue a usar Farmatic.
     "ejecutar_sincronizacion",
-    "ejecutar_importacion_facturas",
     "odbc",
     "sqlcmd",
     "sqlclient",

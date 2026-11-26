@@ -98,7 +98,7 @@ class _Cliente:
 
 
 DOC = DocumentoTrabajo(documento_id="d1", archivo_ruta="PIO/x.pdf", archivo_nombre="x.pdf", farmacia="PIO")
-LECTOR = {"adaptador": "alliance-local", "version_adaptador": "1.3.1", "layout": None}
+LECTOR = {"adaptador": "alliance-local", "version_adaptador": "1.3.2", "layout": None}
 CLAVES_17 = {"p_documento_id", "p_worker_id", "p_disparador", "p_idempotency_key", "p_error_codigo",
              "p_error_detalle", "p_clase_fallo"}
 
@@ -182,7 +182,7 @@ def _worker(orquestador, lector_autorizado=None):
     return worker, repositorio
 
 
-AUTORIZADO = {"adaptador": "alliance-local", "version_adaptador": "1.3.1"}
+AUTORIZADO = {"adaptador": "alliance-local", "version_adaptador": "1.3.2"}
 
 
 def test_el_worker_guarda_el_lector_autorizado_con_el_layout_reconocido():
@@ -212,7 +212,7 @@ def test_el_worker_sin_lector_autorizado_llama_como_antes():
 
 
 def test_lectores_autorizados_de_los_compositores():
-    assert lector_autorizado_automatico() == {"adaptador": "alliance-local", "version_adaptador": "1.3.1"}
+    assert lector_autorizado_automatico() == {"adaptador": "alliance-local", "version_adaptador": "1.3.2"}
     assert tuple(lector_autorizado_automatico().values()) in AUTORIDAD_COMPOSITOR_AUTOMATICO.values()
     assert lector_autorizado_manual() == {"adaptador": AdaptadorAlliance.id, "version_adaptador": AdaptadorAlliance.version}
 

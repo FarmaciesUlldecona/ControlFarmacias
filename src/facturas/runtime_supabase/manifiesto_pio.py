@@ -11,6 +11,7 @@ from src.facturas.importar_facturas_drive import (
     FECHA_INICIO_IMPORTACION,
     es_factura_rita,
     obtener_fecha_carpeta_mes,
+    subcarpeta_excluida,
 )
 
 SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -32,7 +33,7 @@ def clasificar_ruta_indice(ruta_relativa: str) -> str:
     if not ruta.parts or ruta.suffix.casefold() != ".pdf":
         return "EXCLUIDO"
     fecha = obtener_fecha_carpeta_mes(ruta.parts[0])
-    if fecha is None or fecha < FECHA_INICIO_IMPORTACION:
+    if fecha is None or fecha < FECHA_INICIO_IMPORTACION or subcarpeta_excluida(ruta.parts):
         return "EXCLUIDO"
     return "RITA" if es_factura_rita(ruta) else "PIO"
 

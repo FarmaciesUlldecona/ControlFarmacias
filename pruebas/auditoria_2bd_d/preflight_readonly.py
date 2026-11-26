@@ -49,6 +49,8 @@ COLUMNA_NUEVA = "id_recepcion"
 SCRIPT_DESPLIEGUE = ROOT / "pruebas/auditoria_2bd/desplegar_22.py"
 # 267009 = SCHED_S_TASK_RUNNING
 RESULTADO_EN_EJECUCION = 267009
+# C7 (H7): la tarea de Cashflow (23:45) no es obligatoria; si existe, no puede estar en ejecucion.
+TAREA_CASHFLOW = "ControlFarmacias - Importar Cashflow"
 
 MARCAS = (
     "select jsonb_build_object("
@@ -95,6 +97,13 @@ def _tareas() -> dict:
         "  proxima = $(if ($i.NextRunTime) { $i.NextRunTime.ToUniversalTime().ToString('o') } else { $null });"
         "  ultima = $(if ($i.LastRunTime) { $i.LastRunTime.ToUniversalTime().ToString('o') } else { $null });"
         "  resultado = $i.LastTaskResult } });"
+        # C7 (H7, orden de Pio del 2026-11-22): la tarea de Cashflow solo si existe (no es obligatoria).
+        f"$c = Get-ScheduledTask -TaskName '{TAREA_CASHFLOW}' -ErrorAction SilentlyContinue;"
+        " if ($c) { $ci = $c | Get-ScheduledTaskInfo -ErrorAction Stop;"
+        f"  $t += [pscustomobject]@{{ nombre = '{TAREA_CASHFLOW}'; estado = [string]$c.State;"
+        "  proxima = $(if ($ci.NextRunTime) { $ci.NextRunTime.ToUniversalTime().ToString('o') } else { $null });"
+        "  ultima = $(if ($ci.LastRunTime) { $ci.LastRunTime.ToUniversalTime().ToString('o') } else { $null });"
+        "  resultado = $ci.LastTaskResult } };"
         "ConvertTo-Json -InputObject $t -Depth 3"
     )
     codificado = base64.b64encode(ps.encode("utf-16-le")).decode("ascii")
@@ -115,7 +124,7 @@ def _puertas_tareas(info: dict, ahora: _dt.datetime) -> list[str]:
         if unicodedata.normalize("NFC", esperada) not in nombres:
             fallos.append(f"TAREA_NO_ENCONTRADA: {esperada}")
     for t in info["tareas"]:
-        if t.get("resultado") == RESULTADO_EN_EJECUCION:
+        if t.get("resultado") == RESULTADO_EN_EJECUCION or t.get("estado") == "Running":
             fallos.append(f"TAREA_EN_EJECUCION: {t['nombre']}")
         if t.get("proxima"):
             proxima = _dt.datetime.fromisoformat(t["proxima"].replace("Z", "+00:00"))

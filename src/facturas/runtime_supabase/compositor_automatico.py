@@ -1,8 +1,9 @@
 """Compositor productivo de la ruta AUTOMATICA (Hito AUTO-A, decision D1 de Pio, 2026-11-12).
 
-Autoridad de extraccion SOLO para Alliance y SOLO en su version certificada (``alliance-local`` 1.3.1, con el puente
+Autoridad de extraccion SOLO para Alliance y SOLO en su version certificada (``alliance-local`` 1.3.2, con el puente
 multifactura certificado; DECISION DE PIO, 2026-11-14: R10 ampliada con "ENCARGO", banco Alliance 1.3.0 frente a
-1.3.1 sin otras diferencias). Reutiliza las piezas del compositor manual del 2AP (Storage privado, PDF verificado,
+1.3.1 sin otras diferencias; DECISION DE PIO, 2026-11-24: "ABONOS CLUBS" -> ABONO solo con importe negativo, 1.3.2,
+banco Alliance 1.3.1 frente a 1.3.2 en ``pruebas/auditoria_r21/DISENO.md``). Reutiliza las piezas del compositor manual del 2AP (Storage privado, PDF verificado,
 motor local, puente multifactura, ensamblado) y anade la comprobacion de version. Cualquier otro proveedor, layout o
 version falla cerrado: el documento queda ``PROVEEDOR_NO_SOPORTADO`` (R2) o con su defecto (R3).
 
@@ -35,9 +36,9 @@ from .worker_conciliacion import construir_worker_conciliacion
 from .worker_normalizacion import WorkerNormalizacion
 
 
-# D1 (Pio, 2026-11-12): solo Alliance, solo su version certificada (1.3.1 desde el 2026-11-14).
+# D1 (Pio, 2026-11-12): solo Alliance, solo su version certificada (1.3.1 desde el 2026-11-14; 1.3.2 desde el 2026-11-24).
 AUTORIDAD_COMPOSITOR_AUTOMATICO: Mapping[ProveedorLocal, tuple[str, str]] = MappingProxyType({
-    ProveedorLocal.ALLIANCE: ("alliance-local", "1.3.1"),
+    ProveedorLocal.ALLIANCE: ("alliance-local", "1.3.2"),
 })
 
 
@@ -103,6 +104,7 @@ def construir_worker_automatico_productivo(
     directorio_trabajo: Path,
     r20_habilitada: Callable[[], bool] | None = None,
     defectos_37: Callable[[], bool] | None = None,
+    r21_habilitada: Callable[[], bool] | None = None,
 ) -> WorkerAutomatico:
     """Compone el worker de la ruta AUTOMATICA. Solo lo invoca el orquestador nocturno."""
     if configuracion.luna_habilitada:
@@ -111,9 +113,10 @@ def construir_worker_automatico_productivo(
         raise ValueError("SOLO_PIO_AUTORIZADA_EN_COMPOSITOR_AUTOMATICO")
     if not worker_id.strip():
         raise ValueError("WORKER_ID_OBLIGATORIO")
-    # R20 (migracion 36) y migracion 37: deteccion con una sesion de solo lectura; sin ella, R20 desactivada y fallo
-    # con la firma de 7 parametros.
-    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=r20_habilitada, defectos_37=defectos_37)
+    # R20 (migracion 36), migracion 37 y R21 (39): deteccion con una sesion de solo lectura; sin ella, R20 y R21
+    # desactivadas y fallo con la firma de 7 parametros.
+    repositorio = RepositorioRuntimeSupabase(cliente, r20_habilitada=r20_habilitada, defectos_37=defectos_37,
+                                             r21_habilitada=r21_habilitada)
     orquestador = OrquestadorExtraccionProductiva(
         extractor_especifico=ExtractorDocumentalAutorizadoAutomatico(),
         extractor_generico_local=None,
