@@ -185,10 +185,11 @@ test.describe('PC 1440', () => {
     await expect(tr.locator('[data-sf-traspaso="RITA"]')).toContainText('1.840,00 €');
     await expect(tr.locator('[data-antiguedad]')).toHaveCount(0);
     // H8-3: total (más de 50) y su reparto por grupo, que suma el total; sin poder comprobar (naranja) y anteriores de leído.
-    await expect(page.locator('[data-sf-total]')).toHaveAttribute('data-sf-total', '608');
-    await expect(page.locator('[data-sf-total]')).toHaveText('En total, 608 albaranes sin reservar (54.933,45 €): 2 en alerta, 2 en plazo, '
+    // H8-6: + 5 devoluciones de abono en bloque y 4 en plazo (devoluciones que no entran: 0,00, positiva, discrepancia, COFARES).
+    await expect(page.locator('[data-sf-total]')).toHaveAttribute('data-sf-total', '617');
+    await expect(page.locator('[data-sf-total]')).toHaveText('En total, 617 albaranes sin reservar (54.758,80 €): 2 en alerta, 6 en plazo, '
       + '546 anteriores al primer albarán conciliado, 1 sin poder comprobar, 9 leídos sin conciliación automática, 34 pendientes de automatizar, '
-      + '12 traspasos entre farmacias, 2 excluidos.');
+      + '12 traspasos entre farmacias, 5 devoluciones de abono en bloque, 2 excluidos.');
     const sd = al.locator('[data-sf-sin-desde="7"]');
     await expect(sd.locator('[data-sf-nombre]')).toHaveText('LOGISTAPHARMA');
     await expect(sd.locator('[data-sf-n]')).toHaveText('1 albarán');
@@ -220,11 +221,12 @@ test.describe('PC 1440', () => {
   test('H8-5: Sin factura: cada proveedor es un desplegable plegado con nombre, nº, importe, antigüedad y estado; al abrir, su detalle', async ({ page }) => {
     await abrir(page, '?pestana=sin-factura');
     const ds = page.locator('details[data-sf-desplegable]');
-    await expect(ds).toHaveCount(9); // alerta 1, sin poder comprobar 1, leído 1, pendiente 5, traspasos 1
+    await expect(ds).toHaveCount(13); // alerta 1, sin poder comprobar 1, leído 1, pendiente 5, traspasos 1, devoluciones en bloque 4
     expect(await ds.evaluateAll((xs) => xs.filter((x) => (x as HTMLDetailsElement).open).length)).toBe(0);
     // Estado por grupo: naranja solo alerta y sin poder comprobar; el resto gris.
     const estados = await page.locator('[data-sf-estado]').evaluateAll((xs) => xs.map((x) => `${x.getAttribute('data-sf-estado')}:${x.classList.contains('o') ? 'o' : 'n'}`));
-    expect(estados).toEqual(['alerta:o', 'sin-desde:o', 'leido:n', 'pendiente:n', 'pendiente:n', 'pendiente:n', 'pendiente:n', 'pendiente:n', 'traspaso:n']);
+    expect(estados).toEqual(['alerta:o', 'sin-desde:o', 'leido:n', 'pendiente:n', 'pendiente:n', 'pendiente:n', 'pendiente:n', 'pendiente:n', 'traspaso:n',
+      'bloque:n', 'bloque:n', 'bloque:n', 'bloque:n']);
     // Cabecera de ISDIN: 18 albaranes, 2.430,55 €, el más antiguo de 37 días, «pendiente de automatizar».
     const isdin = page.locator('[data-sf-gris="37"]');
     await expect(isdin.locator('summary')).toBeVisible();
@@ -251,6 +253,49 @@ test.describe('PC 1440', () => {
     await isdin.locator('summary').click();
     await expect(isdin.locator('tr[data-sf-albaran]').first()).toBeHidden();
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_sin_factura_desplegables.png'), fullPage: true });
+  });
+
+  test('H8-6: Devoluciones (abono en bloque): gris, desplegable por tipo con subtotal y nota; fuera de alertas, pendientes y cobertura', async ({ page }) => {
+    await abrir(page, '?pestana=sin-factura');
+    const bl = page.locator('[data-sf-devoluciones-bloque]');
+    await expect(bl).toHaveAttribute('data-sf-devoluciones-bloque', '5');
+    await expect(bl.locator('h2')).toHaveText('Devoluciones (abono en bloque)');
+    await expect(bl.locator('h2 .punto')).toHaveClass(/\bpn\b/);
+    await expect(bl.locator('.bloque-cabecera .insignia')).toHaveText('5 albaranes · -174,66 €');
+    await expect(bl.locator('[data-sf-bloque-subtitulo]')).toHaveText('Alliance abona las devoluciones en bloque (ABONOS AGRUPADOS). Pendiente de regla de casado.');
+    // Orden: después de los traspasos.
+    const orden = await page.locator('[data-sf-traspasos], [data-sf-devoluciones-bloque]').evaluateAll((xs) => xs.map((x) => (x.hasAttribute('data-sf-traspasos') ? 't' : 'b')));
+    expect(orden).toEqual(['t', 'b']);
+    const tipos = [
+      ['SAFA', 'SAFA', '2 albaranes', '-123,36 €', 'Cubiertas en total por ABONOS AGRUPADOS (+123,36 € a favor).'],
+      ['SAFA_RECIENTE', 'SAFA recientes', '1 albarán', '-12,40 €', 'Posteriores a la última factura Alliance; pendientes de factura.'],
+      ['ECO360', 'ECO360', '1 albarán', '-30,00 €', 'Pendiente del extracto de abonos de Alliance.'],
+      ['SAFA_CADUCITATS', 'SAFA CADUCITATS', '1 albarán', '-8,90 €', 'Compensadas con producto.'],
+    ];
+    await expect(bl.locator('[data-sf-bloque-tipo]')).toHaveCount(4);
+    for (const [t, nombre, n, imp, nota] of tipos) {
+      const li = bl.locator(`[data-sf-bloque-tipo="${t}"]`);
+      await expect(li.locator('[data-sf-nombre]')).toContainText(nombre);
+      await expect(li.locator('[data-sf-nombre] .nota-celda')).toHaveText(nota);
+      await expect(li.locator('[data-sf-n]')).toHaveText(n);
+      await expect(li.locator('[data-sf-importe]')).toHaveText(imp);
+      await expect(li.locator('[data-sf-estado]')).toHaveText('abono en bloque');
+    }
+    // Plegado por defecto; al abrir, su detalle (gris: sin insignia de alerta).
+    const safa = bl.locator('[data-sf-bloque-tipo="SAFA"]');
+    await expect(safa.locator('tr[data-sf-albaran]').first()).toBeHidden();
+    await safa.locator('summary').click();
+    await expect(safa.locator('tr[data-sf-albaran]')).toHaveText([/DV-SAFA-01/, /DV-SAFA-02/]);
+    await expect(bl.locator('[data-antiguedad]')).toHaveCount(0);
+    // Las que no entran no están en el grupo; ninguna devolución en alerta, pendiente de automatizar ni cobertura.
+    for (const n of ['DV-ECO-02', 'DV-SAFA-04', 'DV-SAFA-05', 'DV-SAFA-06', 'DV-COF-01']) await expect(bl.locator(`[data-sf-albaran="${n}"]`)).toHaveCount(0);
+    await expect(page.locator('[data-pestana="sin-factura"] .pestana-n')).toHaveText('2');
+    await expect(page.locator('[data-sf-alertas] [data-sf-total-alertas]')).toHaveText('2 albaranes · 84,30 € (1 sin importe)');
+    await expect(page.locator('[data-sf-sin-lector]')).not.toContainText(/CADUCITATS|ECO360/);
+    await bl.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_sin_factura_devoluciones_bloque.png'), fullPage: true });
+    await abrir(page, '?pestana=albaranes');
+    await expect(page.locator('main')).not.toContainText(/abono en bloque|DV-SAFA|DV-ECO|DV-CAD/);
   });
 
   test('Banco: aviso «Pendiente: conciliación bancaria (Norma 43)» con lo que hará; sin datos', async ({ page }) => {

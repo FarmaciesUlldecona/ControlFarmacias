@@ -4,7 +4,7 @@
 // Solo presenta: diferencias y tolerancias son las del motor; importe ausente = null, nunca 0.
 import { useMemo, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import type { AlbaranSinFactura, Alerta, Color, ConciliacionBandejaDTO, FacturaBandeja, Importe, OpcionFiltroProveedor, SinFactura } from '../server/contrato.ts';
+import type { AlbaranSinFactura, Alerta, Color, ConciliacionBandejaDTO, FacturaBandeja, Importe, OpcionFiltroProveedor, SinFactura, TipoAbonoEnBloque } from '../server/contrato.ts';
 import {
   MARCAS_ALBARANES, OPCIONES_MARCA_ALBARANES, bandejaAlbaranes, cabeceraAlbaranes, coberturaProveedores, cumpleFiltrosDoble,
   enlaceVencimiento, facturasRevisarNoche, marcaAlbaranes, marcaBanco, resumenDoble, type FiltrosDoble, type TramoResumen,
@@ -383,7 +383,7 @@ function repartoSinFactura(sf: SinFactura): string[] {
     [g.AUTO_ANTERIOR.albaranes, 'anteriores al primer albarán conciliado'], [g.AUTO_SIN_DESDE.albaranes, 'sin poder comprobar'],
     [g.LEIDO.albaranes + g.LEIDO_ANTERIOR.albaranes, 'leídos sin conciliación automática'],
     [g.SIN_LECTOR.albaranes + g.SIN_PROVEEDOR.albaranes, 'pendientes de automatizar'], [g.TRASPASO.albaranes, 'traspasos entre farmacias'],
-    [g.AUSENTE.albaranes, 'excluidos'],
+    [g.DEVOLUCION_BLOQUE.albaranes, 'devoluciones de abono en bloque'], [g.AUSENTE.albaranes, 'excluidos'],
   ];
   return partes.filter(([n]) => n > 0).map(([n, t]) => `${n} ${t}`);
 }
@@ -574,9 +574,34 @@ function PestanaSinFactura({ sf }: { sf: SinFactura }) {
           </ul>
         )}
       </section>
+      {/* H8-6 (decisión de Pío, 26/11/2026): devoluciones Alliance que se abonan en bloque: gris, nunca alerta ni dinero
+          pendiente, fuera de la cobertura. Un desplegable por tipo con su subtotal y su nota. */}
+      <section className="tarjeta bloque" aria-labelledby="t-sf-bloque" data-sf-devoluciones-bloque={sf.grupos.DEVOLUCION_BLOQUE.albaranes}>
+        <div className="bloque-cabecera">
+          <h2 id="t-sf-bloque"><span className="punto pn" aria-hidden="true" /> Devoluciones (abono en bloque)</h2>
+          <span className="insignia n">{plural(sf.grupos.DEVOLUCION_BLOQUE.albaranes, 'albarán', 'albaranes')} · <Euros v={sf.grupos.DEVOLUCION_BLOQUE.importe} /></span>
+        </div>
+        <p className="tenue cc-nota" data-sf-bloque-subtitulo>Alliance abona las devoluciones en bloque (ABONOS AGRUPADOS). Pendiente de regla de casado.</p>
+        {sf.devoluciones_bloque.every((b) => b.albaranes === 0) ? <p className="tenue vacio">Ninguna devolución de abono en bloque.</p> : (
+          <ul className="cc-sf-lista">
+            {sf.devoluciones_bloque.filter((b) => b.albaranes > 0).map((b) => (
+              <li key={b.tipo} data-sf-bloque-tipo={b.tipo}>
+                <ProveedorSinFactura clave={b.tipo} nombre={ETIQUETA_TIPO_BLOQUE[b.tipo]} secundario={null} nota={b.nota}
+                  albaranes={b.albaranes} importe={b.importe} sinImporte={b.sin_importe} detalle={b.detalle} limite={lim}
+                  estado={{ clave: 'bloque', color: 'gris', texto: 'abono en bloque' }} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </>
   );
 }
+
+/** H8-6: nombre de cada tipo de devolución en bloque en la pantalla. */
+const ETIQUETA_TIPO_BLOQUE: Record<TipoAbonoEnBloque, string> = {
+  SAFA: 'SAFA', SAFA_RECIENTE: 'SAFA recientes', ECO360: 'ECO360', SAFA_CADUCITATS: 'SAFA CADUCITATS',
+};
 
 // ---------------------------------------------------------------------------
 // Pestaña 4: Banco

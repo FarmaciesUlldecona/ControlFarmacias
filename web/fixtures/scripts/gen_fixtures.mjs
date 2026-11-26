@@ -8,7 +8,7 @@
 // Uso: node web/fixtures/scripts/gen_fixtures.mjs   (o `npm run fixtures:gen` en web/app)
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { cifFactura, construir, idProveedorR9 } from '../../app/server/contrato.ts';
+import { TIPOS_ABONO_EN_BLOQUE, cifFactura, clasificarAbonoEnBloque, construir, idProveedorR9 } from '../../app/server/contrato.ts';
 
 const RAIZ = join(import.meta.dirname, '..');
 const DTO = join(RAIZ, 'dto');
@@ -600,6 +600,63 @@ function detallesSf(clase, idp, proveedor, { n, ultima, importe, sinImporte = 0,
       fecha: restarDias(ultima, (n - 1 - i) * paso), importe: imp, sin_importe: sin ? 1 : 0 });
   });
 }
+/**
+ * H8-6: devoluciones Alliance como «abono en bloque» (todo ficticio). Albaranes de Farmatic de PIO con la forma que ve la
+ * regla; se clasifican con clasificarAbonoEnBloque (la réplica en TS del SQL) y la fixture exige `esperado`:
+ *  - SAFA ×2 (−123,36 €), SAFA reciente (posterior a la última factura Alliance ficticia, 20/10/2026), ECO360 y SAFA
+ *    CADUCITATS → grupo «Devoluciones (abono en bloque)»;
+ *  - no entran: importe 0,00 (ECO360), reservada (no está en «Sin factura»: la reserva una conciliación vigente), positiva
+ *    de SAFA, id 2 con literal «SAFA» (no casa: no clasificada, cuenta en discrepancia) y una devolución de COFARES. Las no
+ *    reservadas siguen en su grupo (`grupo`: en plazo de ALLIANCE o de COFARES).
+ */
+export const ULTIMA_FACTURA_ALLIANCE_H8_6 = '2026-10-20';
+export const DEVOLUCIONES_H8_6 = [
+  { caso: 'safa', id_contador: 970001, numero_albaran: 'DV-SAFA-01', id_proveedor: '0002', proveedor: '1.- SAFA', fecha: '2026-06-12', importe_puc: -45.2, esperado: 'SAFA' },
+  { caso: 'safa', id_contador: 970002, numero_albaran: 'DV-SAFA-02', id_proveedor: '2', proveedor: '1.- SAFA', fecha: '2026-10-10', importe_puc: -78.16, esperado: 'SAFA' },
+  { caso: 'safa_reciente', id_contador: 970003, numero_albaran: 'DV-SAFA-03', id_proveedor: '2', proveedor: '1.- SAFA', fecha: '2026-10-28', importe_puc: -12.4, esperado: 'SAFA_RECIENTE' },
+  { caso: 'eco360', id_contador: 970004, numero_albaran: 'DV-ECO-01', id_proveedor: '154', proveedor: '6- PLATAF. ECO360 AH', fecha: '2026-08-03', importe_puc: -30, esperado: 'ECO360' },
+  { caso: 'safa_caducitats', id_contador: 970005, numero_albaran: 'DV-CAD-01', id_proveedor: '143', proveedor: 'SAFA CADUCITATS I DEVOLUCIONS', fecha: '2026-07-01', importe_puc: -8.9, esperado: 'SAFA_CADUCITATS' },
+  { caso: 'importe_cero', id_contador: 970006, numero_albaran: 'DV-ECO-02', id_proveedor: '154', proveedor: '6- PLATAF. ECO360 AH', fecha: '2026-10-21', importe_puc: 0, esperado: null, grupo: ['AUTO_RECIENTE', '2'] },
+  { caso: 'reservada', id_contador: 970007, numero_albaran: 'DV-SAFA-04', id_proveedor: '2', proveedor: '1.- SAFA', fecha: '2026-10-15', importe_puc: -20, reservado: true, esperado: null, grupo: null },
+  { caso: 'positiva', id_contador: 970008, numero_albaran: 'DV-SAFA-05', id_proveedor: '2', proveedor: '1.- SAFA', fecha: '2026-10-22', importe_puc: 25, esperado: null, grupo: ['AUTO_RECIENTE', '2'] },
+  { caso: 'discrepancia', id_contador: 970009, numero_albaran: 'DV-SAFA-06', id_proveedor: '2', proveedor: 'SAFA', fecha: '2026-10-23', importe_puc: -9.99, esperado: null, discrepancia: true, grupo: ['AUTO_RECIENTE', '2'] },
+  { caso: 'otro_proveedor', id_contador: 970010, numero_albaran: 'DV-COF-01', id_proveedor: '1', proveedor: 'COFARES', fecha: '2026-10-24', importe_puc: -15, esperado: null, grupo: ['AUTO_RECIENTE', '1'] },
+].map((d) => ({ farmacia: 'PIO', reservado: false, discrepancia: false, ...d }));
+const IDP_BLOQUE = { SAFA: '2', SAFA_RECIENTE: '2', ECO360: '2', SAFA_CADUCITATS: '143' };
+const centimos = (xs) => xs.reduce((a, x) => a + Math.round(x * 100), 0) / 100;
+function clasificadasH8_6() {
+  return DEVOLUCIONES_H8_6.map((d) => {
+    const c = clasificarAbonoEnBloque(d, ULTIMA_FACTURA_ALLIANCE_H8_6);
+    if (c.tipo !== d.esperado || c.discrepancia !== d.discrepancia) throw new Error(`H8-6 fixture: ${d.numero_albaran} clasificado ${c.tipo}/${c.discrepancia}`);
+    return { ...d, tipo: c.tipo };
+  });
+}
+/** Filas de la consulta: una por (grupo, proveedor, tipo) con su detalle; las no clasificadas, en su grupo (sin detalle). */
+function filasDevolucionesH8_6() {
+  const xs = clasificadasH8_6();
+  const out = [];
+  for (const t of TIPOS_ABONO_EN_BLOQUE) {
+    const ys = xs.filter((d) => d.tipo === t);
+    if (ys.length === 0) continue;
+    out.push(sf('DEVOLUCION_BLOQUE', IDP_BLOQUE[t], { proveedor: ys[0].proveedor, fecha: ys.map((d) => d.fecha).sort().at(-1),
+      importe: centimos(ys.map((d) => d.importe_puc)), albaranes: ys.length, tipo_bloque: t }));
+    for (const d of [...ys].sort((a, b) => a.fecha.localeCompare(b.fecha))) {
+      out.push(sf('DETALLE_DEVOLUCION_BLOQUE', IDP_BLOQUE[t], { id_contador: d.id_contador, numero_albaran: d.numero_albaran,
+        proveedor: d.proveedor, fecha: d.fecha, importe: d.importe_puc, tipo_bloque: t }));
+    }
+  }
+  for (const d of xs.filter((x) => x.tipo === null && x.grupo)) {
+    const [clase, idp] = d.grupo;
+    out.push(sf(clase, idp, { proveedor: d.proveedor, fecha: d.fecha, importe: d.importe_puc, desde: idp === '2' ? '2026-10-06' : '2026-09-01' }));
+  }
+  return out;
+}
+/** TOTAL de antes más los albaranes H8-6 que están en «Sin factura» (todos menos la reservada). */
+function totalConDevoluciones(t) {
+  const ys = DEVOLUCIONES_H8_6.filter((d) => !d.reservado);
+  return { ...t, albaranes: t.albaranes + ys.length, importe: centimos([t.importe, ...ys.map((d) => d.importe_puc)]) };
+}
+
 export const SIN_FACTURA_H8 = [
   sf('AUTO_ALERTA', '1', { proveedor: 'COFARES', fecha: '2026-09-28', importe: 84.3, albaranes: 2, sin_importe: 1, desde: '2026-09-01' }),
   sf('AUTO_RECIENTE', '1', { proveedor: 'COFARES', fecha: '2026-10-25', importe: 120, desde: '2026-09-01' }),
@@ -629,7 +686,8 @@ export const SIN_FACTURA_H8 = [
   ...detallesSf('DETALLE_SIN_LECTOR', '42', '12.- HPLUS CONSUMO', { n: 3, ultima: '2026-10-26', importe: 87.6, base: 960400, prefijo: 'HP-' }),
   ...detallesSf('DETALLE_SIN_PROVEEDOR', null, 'VARIOS', { n: 2, ultima: '2026-10-11', importe: 45.2, base: 960500, prefijo: 'SP-' }),
   ...detallesSf('DETALLE_TRASPASO', '40', '4.- FFARMACIA RITA', { n: 12, ultima: '2026-10-27', importe: 1840, base: 960600, prefijo: 'TR-' }),
-  sf('TOTAL', null, { importe: 54933.45, albaranes: 608, sin_importe: 5 }),
+  ...filasDevolucionesH8_6(),
+  sf('TOTAL', null, totalConDevoluciones({ importe: 54933.45, albaranes: 608, sin_importe: 5 })),
 ];
 
 const comunes = {

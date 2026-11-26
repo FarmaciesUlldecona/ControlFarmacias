@@ -741,6 +741,10 @@ H6-3 (decisiones de Marc): abonos y cargos negativos.
     - «2.- COFARES» (id 41) pendiente de automatizar: 6 albaranes, 742,10 €; en la cobertura va en la misma fila que sus facturas leídas, no como «sin lector» aparte;
     - «12.- HPLUS CONSUMO» (id 42): 3 albaranes, 87,60 €; se muestra como HEFAME (decisión de Pío, 22/11/2026), con «HPLUS CONSUMO» debajo, y en la cobertura va en la fila HEFAME;
     - total: 608 albaranes, 54.933,45 €, 5 sin importe.
+  - H8-6, «Devoluciones (abono en bloque)» (gris, `PROVEEDORES_ABONO_EN_BLOQUE`; decisión de Pío / criterio del circuito, 26/11/2026). `DEVOLUCIONES_H8_6` en gen_fixtures se clasifica con `clasificarAbonoEnBloque`; la última factura Alliance ficticia es del 20/10/2026:
+    - entran: SAFA ×2 (DV-SAFA-01/02, -123,36 €), SAFA reciente (DV-SAFA-03, 28/10, -12,40 €), ECO360 (DV-ECO-01, -30,00 €) y SAFA CADUCITATS (DV-CAD-01, -8,90 €): 5 albaranes, -174,66 €;
+    - no entran: importe 0,00 (DV-ECO-02), positiva de SAFA (DV-SAFA-05), id 2 con literal «SAFA» (DV-SAFA-06, discrepancia) y una devolución de COFARES (DV-COF-01): siguen en plazo de ALLIANCE (3) y de COFARES (1). La reservada (DV-SAFA-04) no está en «Sin factura»;
+    - total: 617 albaranes, 54.758,80 €, 5 sin importe; los once grupos suman el total.
 - **Inicio:** las alertas (1 duplicado, 1 no en Farmatic, 2 correcciones) salen de «Necesita tu atención»: 15 tipos y 27 casos pasan a 12 tipos y 23 casos. Quedan como recuento con enlace a Conciliación → Albaranes.
 
 ## H7: pantalla Cashflow (fixtures/cashflow/cashflow.json; H7-REAL: migración 38 en producción)

@@ -20,7 +20,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import pg from 'pg';
 import {
-  CATEGORIAS_TIPO_DOCUMENTAL, COLUMNA_DIAGNOSTICO_GRUPO, CONSULTAS, CONSULTAS_CHECK, FARMACIA, GRUPOS_SIN_FACTURA, UUID_RE, contratoDesdeConsultas, resumenCasado, resumenDuplicados, resumenPar08C66676,
+  CATEGORIAS_TIPO_DOCUMENTAL, COLUMNA_DIAGNOSTICO_ABONO_EN_BLOQUE, COLUMNA_DIAGNOSTICO_GRUPO, TIPOS_ABONO_EN_BLOQUE, CONSULTAS, CONSULTAS_CHECK, FARMACIA, GRUPOS_SIN_FACTURA, UUID_RE, contratoDesdeConsultas, resumenCasado, resumenDuplicados, resumenPar08C66676,
   type Contrato, type EjecutorBloque, type Fila, type NombreConsulta, type ValorDiagnostico,
 } from './contrato.ts';
 import { COLUMNAS_DIAGNOSTICO_PAGOS, SQL_PAGOS } from './pagos/sql.ts';
@@ -141,8 +141,12 @@ export const NOMBRES_DIAGNOSTICO = ['vencimientos', 'documentos', 'tipo_document
 const COLUMNAS_GRUPOS_SIN_FACTURA = GRUPOS_SIN_FACTURA.map((g) => COLUMNA_DIAGNOSTICO_GRUPO[g]);
 // H8-4: + traspasos entre farmacias (grupo) y proveedores con conciliación sin fecha de inicio y de traspaso (el de
 // traspaso debería ser 1: confirma que la configuración identifica un único proveedor de Farmatic).
+// H8-6: + los tipos de las devoluciones Alliance en bloque (suman devoluciones_abono_bloque) y las discrepancias id/literal
+// (no clasificadas: siguen en su grupo).
+const COLUMNAS_TIPOS_ABONO_EN_BLOQUE = TIPOS_ABONO_EN_BLOQUE.map((t) => COLUMNA_DIAGNOSTICO_ABONO_EN_BLOQUE[t]);
 export const COLUMNAS_SIN_FACTURA = ['total', ...COLUMNAS_GRUPOS_SIN_FACTURA, 'proveedores_con_conciliacion',
-  'proveedores_leido_sin_conciliacion', 'proveedores_sin_lector', 'proveedores_con_conciliacion_sin_desde', 'proveedores_traspaso'];
+  'proveedores_leido_sin_conciliacion', 'proveedores_sin_lector', 'proveedores_con_conciliacion_sin_desde', 'proveedores_traspaso',
+  ...COLUMNAS_TIPOS_ABONO_EN_BLOQUE, 'devoluciones_bloque_discrepancia'];
 
 /**
  * H8-3: error de recuentos incoherentes que lleva los recuentos (solo números) para que check:real los imprima igualmente
@@ -162,6 +166,11 @@ export function resumenSinFactura(fila: Record<string, unknown>): Record<string,
   for (const col of COLUMNAS_SIN_FACTURA) d[col] = recuento(fila[col], col);
   const suma = COLUMNAS_GRUPOS_SIN_FACTURA.reduce((a, c) => a + d[c], 0);
   if (suma !== d.total) throw new ErrorRecuentosIncoherentes('sin_factura', { ...d, suma_grupos: suma, diferencia: Math.abs(d.total - suma) });
+  const sumaBloque = COLUMNAS_TIPOS_ABONO_EN_BLOQUE.reduce((a, c) => a + d[c], 0);
+  const grupoBloque = d[COLUMNA_DIAGNOSTICO_GRUPO.DEVOLUCION_BLOQUE];
+  if (sumaBloque !== grupoBloque) {
+    throw new ErrorRecuentosIncoherentes('sin_factura', { ...d, suma_tipos_bloque: sumaBloque, diferencia: Math.abs(grupoBloque - sumaBloque) });
+  }
   return d;
 }
 /** H8: «para revisar» de la última noche (migración 36), solo recuentos. */

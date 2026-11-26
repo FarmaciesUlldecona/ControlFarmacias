@@ -5,7 +5,8 @@ import {
   BANCO_SIN_DATOS, CLASE_DETALLE_SIN_FACTURA, COLUMNA_DIAGNOSTICO_GRUPO, CONSULTAS, CONSULTAS_CHECK, CONSULTAS_POR_BLOQUE, DIAS_ALERTA_SIN_FACTURA, GRUPOS_SIN_FACTURA,
   LIMITE_DETALLE_ALERTA, TRASPASOS_ENTRE_FARMACIAS, claveLiteralFarmatic, construirSinFactura, diasEntre, idProveedorLector,
   literalFarmaticSinPrefijo, nombreProveedorFarmatic,
-  type FacturaBandeja, type FacturaResumen, type Fila, type GrupoSinFactura,
+  COLUMNA_DIAGNOSTICO_ABONO_EN_BLOQUE, DESDE_ABONO_EN_BLOQUE, PROVEEDORES_ABONO_EN_BLOQUE, TIPOS_ABONO_EN_BLOQUE, clasificarAbonoEnBloque,
+  type AlbaranAbonoEnBloque, type FacturaBandeja, type FacturaResumen, type Fila, type GrupoSinFactura,
 } from '../contrato.ts';
 import {
   bandejaAlbaranes, coberturaProveedores, compararRiesgo, cumpleFiltrosDoble, enlaceVencimiento, marcaAlbaranes, marcaBanco, motivoBandeja, resumenDoble,
@@ -24,7 +25,7 @@ const LECT_SIM = new Map([['1', '2026-08-01'], ['4', '2026-09-20']]);
  * facturas leídas con su id, como SAFA en REAL, pero con reservas: ya no es «sin fecha de inicio»).
  */
 const AUTO_SIM = new Map<string, string | null>([['1', '2026-08-01'], ['5', null], ['6', '2026-09-01']]);
-const ORDEN_CASE: GrupoSinFactura[] = ['AUSENTE', 'TRASPASO', 'SIN_PROVEEDOR', 'AUTO_SIN_DESDE', 'AUTO_ANTERIOR', 'AUTO_ALERTA', 'AUTO_RECIENTE',
+const ORDEN_CASE: GrupoSinFactura[] = ['AUSENTE', 'DEVOLUCION_BLOQUE', 'TRASPASO', 'SIN_PROVEEDOR', 'AUTO_SIN_DESDE', 'AUTO_ANTERIOR', 'AUTO_ALERTA', 'AUTO_RECIENTE',
   'LEIDO_ANTERIOR', 'LEIDO', 'SIN_LECTOR'];
 interface AlbSim { id: number; idp: string | null; fecha: string | null; importe: number | null; ausente: boolean; literal?: string }
 function grupoSim(a: AlbSim): GrupoSinFactura {
@@ -275,7 +276,9 @@ describe('H8: Sin factura (con / sin lector y antigüedad)', () => {
     const sql = CONSULTAS.albaranes_sin_factura.sql;
     // El case de grupos de g (hasta su else); el case de las clases de detalle (H8-5) va después, en el select.
     const hastaElse = sql.slice(0, sql.indexOf("else 'SIN_LECTOR'"));
-    const enCase = [...hastaElse.matchAll(/then '([A-Z_]+)'/g)].map((m) => m[1]).filter((c) => !c.startsWith('DETALLE_'));
+    // H8-6: los tipos de devolución en bloque se asignan en a0 (otro case), no son grupos.
+    const enCase = [...hastaElse.matchAll(/then '([A-Z_]+)'/g)].map((m) => m[1])
+      .filter((c) => !c.startsWith('DETALLE_') && !(TIPOS_ABONO_EN_BLOQUE as readonly string[]).includes(c));
     assert.deepEqual(enCase, ORDEN_CASE.slice(0, -1));
     assert.match(sql, /else 'SIN_LECTOR'\s+end::text as grupo/);
     assert.deepEqual([...ORDEN_CASE].sort(), [...GRUPOS_SIN_FACTURA].sort());
@@ -283,8 +286,10 @@ describe('H8: Sin factura (con / sin lector y antigüedad)', () => {
     assert.match(sql, /'TOTAL'[\s\S]*from a0/);
     assert.match(sql, new RegExp(`orden_detalle <= ${LIMITE_DETALLE_ALERTA}\\b`));
     // H8-5: detalle por (grupo, proveedor) en todos los grupos con desplegable, los más antiguos primero y los sin fecha al final.
-    assert.match(sql, /partition by g\.grupo, g\.idp order by g\.fecha nulls last, g\.id_contador/);
-    assert.match(sql, /g\.grupo in \('AUTO_ALERTA', 'AUTO_SIN_DESDE', 'LEIDO', 'SIN_LECTOR', 'SIN_PROVEEDOR', 'TRASPASO'\)/);
+    // H8-6: + el tipo de devolución en bloque (null en los demás grupos).
+    assert.match(sql, /partition by g\.grupo, g\.idp, g\.tipo_bloque order by g\.fecha nulls last, g\.id_contador/);
+    assert.match(sql, /group by g\.grupo, g\.idp, g\.tipo_bloque\n/);
+    assert.match(sql, /g\.grupo in \('AUTO_ALERTA', 'AUTO_SIN_DESDE', 'LEIDO', 'SIN_LECTOR', 'SIN_PROVEEDOR', 'TRASPASO', 'DEVOLUCION_BLOQUE'\)/);
     for (const [g, c] of Object.entries(CLASE_DETALLE_SIN_FACTURA)) assert.match(sql, new RegExp(`when '${g}' then '${c}'`));
     // Ningún límite de filas fuera del detalle de alertas.
     assert.doesNotMatch(sql, /\blimit\b/i);
@@ -377,7 +382,9 @@ describe('H8: Sin factura (con / sin lector y antigüedad)', () => {
     const ok = { total: '32', con_conciliacion_alerta: '2', con_conciliacion_recientes: '1', con_conciliacion_anteriores: '2',
       con_conciliacion_sin_desde: '4', leido_sin_conciliacion: '3', leido_sin_conciliacion_anteriores: '7', sin_lector: '9',
       sin_proveedor: '1', traspasos_entre_farmacias: '0', excluidos_ausentes: '3', proveedores_con_conciliacion: '2',
-      proveedores_leido_sin_conciliacion: '1', proveedores_sin_lector: '3', proveedores_con_conciliacion_sin_desde: '1', proveedores_traspaso: '0' };
+      proveedores_leido_sin_conciliacion: '1', proveedores_sin_lector: '3', proveedores_con_conciliacion_sin_desde: '1', proveedores_traspaso: '0',
+      devoluciones_abono_bloque: '0', devoluciones_bloque_safa: '0', devoluciones_bloque_safa_recientes: '0', devoluciones_bloque_eco360: '0',
+      devoluciones_bloque_safa_caducitats: '0', devoluciones_bloque_discrepancia: '0' };
     assert.deepEqual(Object.keys(resumenSinFactura(ok)), COLUMNAS_SIN_FACTURA);
     assert.deepEqual(COLUMNAS_SIN_FACTURA.slice(1, 1 + GRUPOS_SIN_FACTURA.length), GRUPOS_SIN_FACTURA.map((g) => COLUMNA_DIAGNOSTICO_GRUPO[g]));
     let err: unknown = null;
@@ -398,6 +405,103 @@ describe('H8: Sin factura (con / sin lector y antigüedad)', () => {
     assert.match(diag, /as proveedores_traspaso/);
     assert.match(diag, /as proveedores_con_conciliacion_sin_desde/);
     assert.ok(COLUMNAS_SIN_FACTURA.includes('traspasos_entre_farmacias') && COLUMNAS_SIN_FACTURA.includes('proveedores_traspaso'));
+  });
+});
+
+describe('H8-6: devoluciones Alliance como «abono en bloque»', () => {
+  const alb = (extra: Partial<AlbaranAbonoEnBloque>): AlbaranAbonoEnBloque => ({ farmacia: 'PIO', fecha: '2026-09-01', id_proveedor: '2',
+    proveedor: '1.- SAFA', importe_puc: -10, reservado: false, ...extra });
+  const ULT = '2026-10-20';
+  const tipo = (extra: Partial<AlbaranAbonoEnBloque>) => clasificarAbonoEnBloque(alb(extra), ULT);
+  test('criterio: farmacia, fecha, id + literal exacto, importe < 0, sin reserva; SAFA reciente tras la última factura Alliance', () => {
+    assert.deepEqual(tipo({}), { tipo: 'SAFA', discrepancia: false });
+    assert.deepEqual(tipo({ id_proveedor: ' 0002 ' }), { tipo: 'SAFA', discrepancia: false });
+    assert.deepEqual(tipo({ fecha: '2026-10-21' }), { tipo: 'SAFA_RECIENTE', discrepancia: false });
+    assert.deepEqual(tipo({ fecha: '2026-10-20' }), { tipo: 'SAFA', discrepancia: false }); // igual a la última: no es posterior
+    assert.deepEqual(clasificarAbonoEnBloque(alb({ fecha: '2026-11-01' }), null), { tipo: 'SAFA', discrepancia: false });
+    assert.deepEqual(tipo({ id_proveedor: '154', proveedor: '6- PLATAF. ECO360 AH', fecha: '2026-11-01' }), { tipo: 'ECO360', discrepancia: false });
+    assert.deepEqual(tipo({ id_proveedor: '143', proveedor: 'SAFA CADUCITATS I DEVOLUCIONS' }), { tipo: 'SAFA_CADUCITATS', discrepancia: false });
+    assert.deepEqual(tipo({ fecha: '2026-05-20' }).tipo, 'SAFA');
+    // No entran.
+    for (const x of [{ fecha: '2026-05-19' }, { fecha: null }, { importe_puc: 0 }, { importe_puc: null }, { importe_puc: 25 },
+      { reservado: true }, { farmacia: 'RITA' }, { id_proveedor: '1', proveedor: 'COFARES' }] as Partial<AlbaranAbonoEnBloque>[]) {
+      assert.deepEqual(tipo(x), { tipo: null, discrepancia: false }, JSON.stringify(x));
+    }
+    // id y literal que no casan: no se clasifica y cuenta como discrepancia (falla cerrado).
+    for (const x of [{ proveedor: 'SAFA' }, { proveedor: '1.- SAFA ' }, { id_proveedor: '154' }, { id_proveedor: '7', proveedor: 'SAFA CADUCITATS I DEVOLUCIONS' },
+      { id_proveedor: null }] as Partial<AlbaranAbonoEnBloque>[]) {
+      assert.deepEqual(tipo(x), { tipo: null, discrepancia: true }, JSON.stringify(x));
+    }
+    // La discrepancia solo cuenta si cumple el resto (importe 0,00 o reservada: ni grupo ni discrepancia).
+    assert.deepEqual(tipo({ proveedor: 'SAFA', importe_puc: 0 }), { tipo: null, discrepancia: false });
+    assert.deepEqual(tipo({ proveedor: 'SAFA', reservado: true }), { tipo: null, discrepancia: false });
+    assert.deepEqual(PROVEEDORES_ABONO_EN_BLOQUE.map((p) => [p.id, p.literal, p.tipo]),
+      [['2', '1.- SAFA', 'SAFA'], ['154', '6- PLATAF. ECO360 AH', 'ECO360'], ['143', 'SAFA CADUCITATS I DEVOLUCIONS', 'SAFA_CADUCITATS']]);
+    assert.equal(DESDE_ABONO_EN_BLOQUE, '2026-05-20');
+  });
+  test('SQL: la misma regla en a0, un grupo propio antes de traspasos; id comparable calculado, nunca leído como columna', () => {
+    const sql = CONSULTAS.albaranes_sin_factura.sql;
+    assert.match(sql, /a\.farmacia = 'PIO' and a\.fecha::date >= date '2026-05-20'/);
+    assert.match(sql, /and a\.importe_puc < 0/);
+    assert.match(sql, /not exists \(select 1 from public\.conciliacion_albaranes_reservados rb\s+where rb\.albaran_farmacia = a\.farmacia and rb\.albaran_id_contador = a\.id_contador\)/);
+    for (const p of PROVEEDORES_ABONO_EN_BLOQUE) {
+      assert.ok(sql.includes(`coalesce(ltrim(btrim(a.id_proveedor), '0'), '') = '${p.id}' and coalesce(a.proveedor, '') = '${p.literal}'`), p.tipo);
+    }
+    assert.match(sql, /when a\.fecha::date > \(select ualli\.fecha from ualli\) then 'SAFA_RECIENTE' else 'SAFA' end/);
+    assert.match(sql, /max\(f\.fecha_factura\)::date as fecha\s+from public\.facturas f\s+where f\.farmacia = 'PIO' and f\.proveedor_literal ilike '%ALLIANCE%'/);
+    assert.match(sql, /when a0\.ausente then 'AUSENTE'\s+when a0\.tipo_bloque is not null then 'DEVOLUCION_BLOQUE'\s+when /);
+    // Nota del circuito: id_proveedor_comparable y numero_base no existen en public.albaranes: solo como alias calculados.
+    for (const [nombre, c] of Object.entries(CONSULTAS)) {
+      for (const col of ['id_proveedor_comparable', 'numero_base']) {
+        if (c.sql.includes(col)) assert.ok(c.sql.includes(`as ${col}`), `${nombre}: ${col} leído como columna`);
+      }
+    }
+    assert.doesNotMatch(sql, /\$\{/); // sin plantillas sin resolver
+  });
+  test('construcción: subtotales por tipo con nota y detalle; nunca alerta, ni pendiente de automatizar, ni cobertura; falla cerrado', () => {
+    const filas: Fila[] = [
+      fila('DEVOLUCION_BLOQUE', '2', { proveedor: '1.- SAFA', albaranes: '2', importe: '-123.36', fecha: '2026-10-10', tipo_bloque: 'SAFA' }),
+      fila('DETALLE_DEVOLUCION_BLOQUE', '2', { id_contador: '1', numero_albaran: 'S1', fecha: '2026-06-12', importe: '-45.2', tipo_bloque: 'SAFA' }),
+      fila('DETALLE_DEVOLUCION_BLOQUE', '2', { id_contador: '2', numero_albaran: 'S2', fecha: '2026-10-10', importe: '-78.16', tipo_bloque: 'SAFA' }),
+      fila('DEVOLUCION_BLOQUE', '2', { proveedor: '6- PLATAF. ECO360 AH', importe: '-30', fecha: '2026-08-03', tipo_bloque: 'ECO360' }),
+      fila('DETALLE_DEVOLUCION_BLOQUE', '2', { id_contador: '3', numero_albaran: 'E1', fecha: '2026-08-03', importe: '-30', tipo_bloque: 'ECO360' }),
+      fila('TOTAL', null, { albaranes: '3', importe: '-153.36' }),
+    ];
+    const sf = construirSinFactura(filas, [], HOY_SIM);
+    assert.deepEqual(sf.devoluciones_bloque.map((b) => [b.tipo, b.albaranes, b.importe, b.detalle.map((a) => a.numero_albaran).join(), b.nota]), [
+      ['SAFA', 2, -123.36, 'S1,S2', 'Cubiertas en total por ABONOS AGRUPADOS (+123,36 € a favor).'],
+      ['SAFA_RECIENTE', 0, null, '', 'Posteriores a la última factura Alliance; pendientes de factura.'],
+      ['ECO360', 1, -30, 'E1', 'Pendiente del extracto de abonos de Alliance.'],
+      ['SAFA_CADUCITATS', 0, null, '', 'Compensadas con producto.'],
+    ]);
+    assert.deepEqual(sf.grupos.DEVOLUCION_BLOQUE, { albaranes: 3, importe: -153.36, sin_importe: 0 });
+    assert.equal(sf.totales.alertas, 0);
+    assert.equal(sf.con_lector.length + sf.sin_lector.length + sf.leido_sin_conciliacion.length, 0);
+    assert.deepEqual(coberturaProveedores([], sf), []);
+    // Falla cerrado: grupo sin tipo, tipo desconocido, tipo en otro grupo, detalle que no cuadra.
+    const sin = (f: Fila) => ({ ...f, tipo_bloque: null });
+    assert.throws(() => construirSinFactura(filas.map((f, i) => (i === 0 ? sin(f) : f)), [], HOY_SIM), /SIN_FACTURA_FILA_NO_RECONOCIDA/);
+    assert.throws(() => construirSinFactura(filas.map((f, i) => (i === 0 ? { ...f, tipo_bloque: 'OTRO' } : f)), [], HOY_SIM), /SIN_FACTURA_FILA_NO_RECONOCIDA/);
+    assert.throws(() => construirSinFactura([fila('SIN_LECTOR', '37', { tipo_bloque: 'SAFA' }), fila('TOTAL', null)], [], HOY_SIM), /SIN_FACTURA_FILA_NO_RECONOCIDA/);
+    assert.throws(() => construirSinFactura(filas.filter((_, i) => i !== 2), [], HOY_SIM), /SIN_FACTURA_DETALLE_NO_CUADRA/);
+  });
+  test('check:real: recuentos por tipo que suman el grupo (esperado del circuito 125 + 2 + 34 + 2 = 163) y discrepancias aparte', () => {
+    const diag = CONSULTAS_CHECK.diagnostico_sin_factura.sql;
+    assert.match(diag, /g\.grupo = 'DEVOLUCION_BLOQUE'\) as devoluciones_abono_bloque/);
+    for (const t of TIPOS_ABONO_EN_BLOQUE) assert.match(diag, new RegExp(`g\\.tipo_bloque = '${t}'\\) as ${COLUMNA_DIAGNOSTICO_ABONO_EN_BLOQUE[t]}\\b`));
+    assert.match(diag, /count\(\*\) filter \(where g\.discrepancia_bloque\) as devoluciones_bloque_discrepancia/);
+    const base: Record<string, string> = Object.fromEntries(COLUMNAS_SIN_FACTURA.map((c) => [c, '0']));
+    const ok = { ...base, total: '200', sin_lector: '37', devoluciones_abono_bloque: '163', devoluciones_bloque_safa: '125',
+      devoluciones_bloque_safa_recientes: '2', devoluciones_bloque_eco360: '34', devoluciones_bloque_safa_caducitats: '2', devoluciones_bloque_discrepancia: '1' };
+    const r = resumenSinFactura(ok);
+    assert.equal(r.devoluciones_abono_bloque, 163);
+    assert.equal(r.devoluciones_bloque_discrepancia, 1);
+    assert.ok(['devoluciones_abono_bloque', 'devoluciones_bloque_safa', 'devoluciones_bloque_safa_recientes', 'devoluciones_bloque_eco360',
+      'devoluciones_bloque_safa_caducitats', 'devoluciones_bloque_discrepancia'].every((c) => COLUMNAS_SIN_FACTURA.includes(c)));
+    let err: unknown = null;
+    try { resumenSinFactura({ ...ok, devoluciones_bloque_eco360: '33' }); } catch (e) { err = e; }
+    assert.ok(err instanceof ErrorRecuentosIncoherentes);
+    assert.equal((err as ErrorRecuentosIncoherentes).recuentos.suma_tipos_bloque, 162);
   });
 });
 

@@ -314,10 +314,12 @@ export const LIMITE_DETALLE_ALERTA = 100;
  *    conciliación automática pero sin fecha de inicio de lectura: la alerta no se puede evaluar; revisión, no alerta);
  *  - LEIDO / LEIDO_ANTERIOR: facturas leídas sin conciliación automática (desde lo que cubren / anteriores o sin fecha);
  *  - SIN_LECTOR (proveedor identificado sin facturas leídas) y SIN_PROVEEDOR (sin proveedor comparable);
- *  - AUSENTE: último evento de presencia en Farmatic AUSENTE (excluidos, solo recuento).
+ *  - AUSENTE: último evento de presencia en Farmatic AUSENTE (excluidos, solo recuento);
+ *  - DEVOLUCION_BLOQUE (H8-6): devoluciones Alliance que se abonan en bloque (PROVEEDORES_ABONO_EN_BLOQUE): gris,
+ *    nunca alerta, fuera de la cobertura.
  */
 export const GRUPOS_SIN_FACTURA = ['AUTO_ALERTA', 'AUTO_RECIENTE', 'AUTO_ANTERIOR', 'AUTO_SIN_DESDE', 'LEIDO', 'LEIDO_ANTERIOR',
-  'SIN_LECTOR', 'SIN_PROVEEDOR', 'TRASPASO', 'AUSENTE'] as const;
+  'SIN_LECTOR', 'SIN_PROVEEDOR', 'TRASPASO', 'DEVOLUCION_BLOQUE', 'AUSENTE'] as const;
 export type GrupoSinFactura = (typeof GRUPOS_SIN_FACTURA)[number];
 /**
  * H8-5: grupos con detalle por albarán (desplegable de cada proveedor) y su clase de fila en la consulta. Los demás
@@ -325,7 +327,7 @@ export type GrupoSinFactura = (typeof GRUPOS_SIN_FACTURA)[number];
  */
 export const CLASE_DETALLE_SIN_FACTURA = {
   AUTO_ALERTA: 'DETALLE_ALERTA', AUTO_SIN_DESDE: 'DETALLE_SIN_DESDE', LEIDO: 'DETALLE_LEIDO', SIN_LECTOR: 'DETALLE_SIN_LECTOR',
-  SIN_PROVEEDOR: 'DETALLE_SIN_PROVEEDOR', TRASPASO: 'DETALLE_TRASPASO',
+  SIN_PROVEEDOR: 'DETALLE_SIN_PROVEEDOR', TRASPASO: 'DETALLE_TRASPASO', DEVOLUCION_BLOQUE: 'DETALLE_DEVOLUCION_BLOQUE',
 } as const satisfies Partial<Record<GrupoSinFactura, string>>;
 type GrupoConDetalle = keyof typeof CLASE_DETALLE_SIN_FACTURA;
 const GRUPO_DE_CLASE_DETALLE = new Map(Object.entries(CLASE_DETALLE_SIN_FACTURA).map(([g, c]) => [c as string, g as GrupoConDetalle]));
@@ -333,8 +335,104 @@ const GRUPO_DE_CLASE_DETALLE = new Map(Object.entries(CLASE_DETALLE_SIN_FACTURA)
 export const COLUMNA_DIAGNOSTICO_GRUPO: Record<GrupoSinFactura, string> = {
   AUTO_ALERTA: 'con_conciliacion_alerta', AUTO_RECIENTE: 'con_conciliacion_recientes', AUTO_ANTERIOR: 'con_conciliacion_anteriores',
   AUTO_SIN_DESDE: 'con_conciliacion_sin_desde', LEIDO: 'leido_sin_conciliacion', LEIDO_ANTERIOR: 'leido_sin_conciliacion_anteriores',
-  SIN_LECTOR: 'sin_lector', SIN_PROVEEDOR: 'sin_proveedor', TRASPASO: 'traspasos_entre_farmacias', AUSENTE: 'excluidos_ausentes',
+  SIN_LECTOR: 'sin_lector', SIN_PROVEEDOR: 'sin_proveedor', TRASPASO: 'traspasos_entre_farmacias',
+  DEVOLUCION_BLOQUE: 'devoluciones_abono_bloque', AUSENTE: 'excluidos_ausentes',
 };
+
+/**
+ * H8-6: devoluciones Alliance como «abono en bloque». Decisión de Pío / criterio del circuito, 26/11/2026: Alliance no
+ * abona devolución a devolución, sino en bloque («ABONOS AGRUPADOS» en los movimientos de la factura), y la conciliación
+ * aún no enlaza esos movimientos con los albaranes de Farmatic. No son dinero pendiente ni alerta: grupo gris aparte.
+ * ÚNICO punto de configuración. Un albarán entra si cumple TODO:
+ *  a) farmacia FARMACIA_ABONO_EN_BLOQUE (PIO); b) fecha >= DESDE_ABONO_EN_BLOQUE;
+ *  c) id de proveedor ltrim(btrim(id_proveedor), '0') y literal exacto de albaranes.proveedor de la MISMA fila de esta
+ *     tabla (si el id o el literal es de la tabla pero no casan: no se clasifica y cuenta como discrepancia; falla cerrado);
+ *  d) importe_puc < 0 (los 0,00 y los null no cuentan); e) sin ninguna reserva en conciliacion_albaranes_reservados;
+ *  f) el número del albarán no interviene; g) SAFA «reciente»: fecha posterior a la última factura Alliance de PIO
+ *     (max(fecha_factura) con proveedor_literal ILIKE '%ALLIANCE%').
+ */
+export const FARMACIA_ABONO_EN_BLOQUE = 'PIO';
+export const DESDE_ABONO_EN_BLOQUE = '2026-05-20';
+export const PROVEEDORES_ABONO_EN_BLOQUE = [
+  { id: '2', literal: '1.- SAFA', tipo: 'SAFA' },
+  { id: '154', literal: '6- PLATAF. ECO360 AH', tipo: 'ECO360' },
+  { id: '143', literal: 'SAFA CADUCITATS I DEVOLUCIONS', tipo: 'SAFA_CADUCITATS' },
+] as const;
+/** H8-6: tipos (subtotales) del grupo, en el orden de la pantalla y de check:real. SAFA_RECIENTE sale de SAFA (regla g). */
+export const TIPOS_ABONO_EN_BLOQUE = ['SAFA', 'SAFA_RECIENTE', 'ECO360', 'SAFA_CADUCITATS'] as const;
+export type TipoAbonoEnBloque = (typeof TIPOS_ABONO_EN_BLOQUE)[number];
+/** H8-6: columna de check:real de cada tipo (DIAGNOSTICO sin_factura). */
+export const COLUMNA_DIAGNOSTICO_ABONO_EN_BLOQUE: Record<TipoAbonoEnBloque, string> = {
+  SAFA: 'devoluciones_bloque_safa', SAFA_RECIENTE: 'devoluciones_bloque_safa_recientes', ECO360: 'devoluciones_bloque_eco360',
+  SAFA_CADUCITATS: 'devoluciones_bloque_safa_caducitats',
+};
+/** H8-6: notas de cada tipo (decisiones de Pío, 26/11/2026). */
+export const NOTA_ABONO_EN_BLOQUE: Record<TipoAbonoEnBloque, string> = {
+  SAFA: 'Cubiertas en total por ABONOS AGRUPADOS (+123,36 € a favor).',
+  SAFA_RECIENTE: 'Posteriores a la última factura Alliance; pendientes de factura.',
+  ECO360: 'Pendiente del extracto de abonos de Alliance.',
+  SAFA_CADUCITATS: 'Compensadas con producto.',
+};
+for (const p of PROVEEDORES_ABONO_EN_BLOQUE) {
+  if (!/^[1-9][0-9]*$/.test(p.id) || !/^[A-Z0-9 .-]+$/.test(p.literal)) throw new Error('ABONO_EN_BLOQUE_CONFIGURACION_NO_VALIDA');
+}
+if (!/^\d{4}-\d{2}-\d{2}$/.test(DESDE_ABONO_EN_BLOQUE) || !/^[A-Z]+$/.test(FARMACIA_ABONO_EN_BLOQUE)) throw new Error('ABONO_EN_BLOQUE_CONFIGURACION_NO_VALIDA');
+
+/** H8-6: albarán de Farmatic tal como lo ve la regla (mismos campos que el SQL). */
+export interface AlbaranAbonoEnBloque {
+  farmacia: string; fecha: string | null; id_proveedor: string | null; proveedor: string | null; importe_puc: number | null;
+  /** Alguna fila en conciliacion_albaranes_reservados para (farmacia, id_contador). */
+  reservado: boolean;
+}
+/**
+ * H8-6: réplica en TS de la regla del SQL (SQL_TIPO_ABONO_EN_BLOQUE / SQL_DISCREPANCIA_ABONO_EN_BLOQUE): tipo del grupo o
+ * null y si es una discrepancia id/literal (no clasificada). `ultimaAlliance`: fecha de la última factura Alliance de PIO
+ * (null: ninguna SAFA es «reciente»).
+ */
+export function clasificarAbonoEnBloque(a: AlbaranAbonoEnBloque, ultimaAlliance: string | null): { tipo: TipoAbonoEnBloque | null; discrepancia: boolean } {
+  const fecha = a.fecha?.slice(0, 10) ?? null;
+  const base = a.farmacia === FARMACIA_ABONO_EN_BLOQUE && fecha !== null && fecha >= DESDE_ABONO_EN_BLOQUE
+    && a.importe_puc !== null && a.importe_puc < 0 && !a.reservado;
+  if (!base) return { tipo: null, discrepancia: false };
+  // Igual que coalesce(ltrim(btrim(id_proveedor), '0'), '') y coalesce(proveedor, '') del SQL.
+  const id = (a.id_proveedor ?? '').replace(/^ +| +$/g, '').replace(/^0+/, '');
+  const literal = a.proveedor ?? '';
+  const fila = PROVEEDORES_ABONO_EN_BLOQUE.find((p) => p.id === id && p.literal === literal);
+  if (fila === undefined) {
+    const tocaTabla = PROVEEDORES_ABONO_EN_BLOQUE.some((p) => p.id === id || p.literal === literal);
+    return { tipo: null, discrepancia: tocaTabla };
+  }
+  if (fila.tipo === 'SAFA' && ultimaAlliance !== null && fecha > ultimaAlliance.slice(0, 10)) return { tipo: 'SAFA_RECIENTE', discrepancia: false };
+  return { tipo: fila.tipo, discrepancia: false };
+}
+const sqlTexto = (v: string) => `'${v.replace(/'/g, "''")}'`;
+/** H8-6: condiciones a), b), d) y e) en SQL (alias del albarán de public.albaranes). */
+function SQL_BASE_ABONO_EN_BLOQUE(a: string): string {
+  return `(${a}.farmacia = ${sqlTexto(FARMACIA_ABONO_EN_BLOQUE)} and ${a}.fecha::date >= date ${sqlTexto(DESDE_ABONO_EN_BLOQUE)}
+                and ${a}.importe_puc < 0
+                and not exists (select 1 from public.conciliacion_albaranes_reservados rb
+                                 where rb.albaran_farmacia = ${a}.farmacia and rb.albaran_id_contador = ${a}.id_contador))`;
+}
+/** H8-6: tipo del grupo en SQL (null si no entra). `ultima`: subconsulta con la última factura Alliance. */
+const SQL_ID_ABONO_EN_BLOQUE = (a: string) => `coalesce(ltrim(btrim(${a}.id_proveedor), '0'), '')`;
+const SQL_LITERAL_ABONO_EN_BLOQUE = (a: string) => `coalesce(${a}.proveedor, '')`;
+function SQL_TIPO_ABONO_EN_BLOQUE(a: string, ultima: string): string {
+  const id = SQL_ID_ABONO_EN_BLOQUE(a);
+  const lit = SQL_LITERAL_ABONO_EN_BLOQUE(a);
+  return `case when ${SQL_BASE_ABONO_EN_BLOQUE(a)} then case
+${PROVEEDORES_ABONO_EN_BLOQUE.map((p) => `                  when ${id} = ${sqlTexto(p.id)} and ${lit} = ${sqlTexto(p.literal)} then ${p.tipo === 'SAFA'
+    ? `(case when ${a}.fecha::date > (${ultima}) then 'SAFA_RECIENTE' else 'SAFA' end)` : sqlTexto(p.tipo)}`).join('\n')}
+                end end`;
+}
+/** H8-6: discrepancia en SQL: cumple a), b), d), e), el id o el literal es de la tabla, pero no forman una fila. */
+function SQL_DISCREPANCIA_ABONO_EN_BLOQUE(a: string): string {
+  const id = SQL_ID_ABONO_EN_BLOQUE(a);
+  const lit = SQL_LITERAL_ABONO_EN_BLOQUE(a);
+  return `(${SQL_BASE_ABONO_EN_BLOQUE(a)}
+                and (${id} in (${PROVEEDORES_ABONO_EN_BLOQUE.map((p) => sqlTexto(p.id)).join(', ')})
+                     or ${lit} in (${PROVEEDORES_ABONO_EN_BLOQUE.map((p) => sqlTexto(p.literal)).join(', ')}))
+                and not (${PROVEEDORES_ABONO_EN_BLOQUE.map((p) => `(${id} = ${sqlTexto(p.id)} and ${lit} = ${sqlTexto(p.literal)})`).join(' or ')}))`;
+}
 
 /**
  * H8-4: clave de un literal de proveedor de Farmatic: mayúsculas, solo A-Z/0-9 y sin el prefijo numérico de Farmatic
@@ -450,8 +548,17 @@ export interface ProveedorTraspaso extends ResumenAlbaranes, ConDetalleSinFactur
   proveedor: string;
   fecha_ultima: string | null;
 }
+/** H8-6: un tipo del grupo «Devoluciones (abono en bloque)»: subtotal, nota fija y detalle (los más antiguos). */
+export interface TipoDevolucionBloque extends ResumenAlbaranes {
+  tipo: TipoAbonoEnBloque;
+  nota: string;
+  fecha_ultima: string | null;
+  detalle: AlbaranSinFactura[];
+}
 export interface SinFactura {
   dias_alerta: number;
+  /** H8-6: devoluciones Alliance en bloque, por tipo (siempre los cuatro, en el orden de TIPOS_ABONO_EN_BLOQUE). */
+  devoluciones_bloque: TipoDevolucionBloque[];
   /** H8-4: traspasos entre farmacias, fuera de «pendiente de automatizar» y de la cobertura. */
   traspasos: ProveedorTraspaso[];
   /** H8-3: máximo de albaranes con detalle por proveedor (H8-5: en cada bloque: alerta, sin poder comprobar, leído,
@@ -890,7 +997,11 @@ function SQL_ID_PROVEEDOR_LECTOR(col: string): string {
  *    «sin fecha de inicio» solo si ninguno de sus albaranes reservados tiene fecha;
  *  - TRASPASO (H8-4): el proveedor de Farmatic es otra farmacia del grupo (TRASPASOS_ENTRE_FARMACIAS);
  *  - aus (H8-2): albaranes cuyo último evento de presencia en Farmatic es AUSENTE;
- *  - a0: albaranes de PIO no reservados (con la marca `ausente`);
+ *  - ualli (H8-6): fecha de la última factura Alliance de PIO (SAFA «recientes»);
+ *  - a0: albaranes de PIO no reservados (con la marca `ausente`). H8-6: `tipo_bloque` (devolución Alliance en bloque,
+ *    PROVEEDORES_ABONO_EN_BLOQUE; null si no entra) y `discrepancia_bloque` (id o literal de la tabla que no casan: no se
+ *    clasifica; solo se cuenta en check:real). id_proveedor_comparable = ltrim(btrim(id_proveedor), '0') se calcula aquí:
+ *    no es una columna de public.albaranes;
  *  - g (H8-3): cada albarán de a0 con su grupo (GRUPOS_SIN_FACTURA) en un único `case` con `else`: exhaustivo y
  *    excluyente. lect y auto tienen una fila por idp, así que los left join no duplican albaranes.
  * H8-3, causa del fallo en REAL: el diagnóstico contaba en con_lector todo albarán de un proveedor de `auto`, pero los
@@ -927,10 +1038,17 @@ aus as (
              order by c.id_contador, c.id desc) u
      where u.valor_nuevo = 'AUSENTE'
 ),
+ualli as (
+    select max(f.fecha_factura)::date as fecha
+      from public.facturas f
+     where f.farmacia = ${sqlTexto(FARMACIA_ABONO_EN_BLOQUE)} and f.proveedor_literal ilike '%ALLIANCE%'
+),
 a0 as (
     select a.id_contador, a.numero_albaran, a.proveedor, a.fecha::date as fecha, a.importe_puc,
            ${SQL_ID_PROVEEDOR_LECTOR('a.id_proveedor')} as idp,
-           exists (select 1 from aus where aus.id_contador = a.id_contador) as ausente
+           exists (select 1 from aus where aus.id_contador = a.id_contador) as ausente,
+           (${SQL_TIPO_ABONO_EN_BLOQUE('a', 'select ualli.fecha from ualli')})::text as tipo_bloque,
+           ${SQL_DISCREPANCIA_ABONO_EN_BLOQUE('a')} as discrepancia_bloque
       from public.albaranes a
       cross join hab
      where a.farmacia = $1
@@ -939,8 +1057,11 @@ a0 as (
 g as (
     select a0.id_contador, a0.numero_albaran, a0.proveedor, a0.fecha, a0.importe_puc, a0.idp,
            (case when u.idp is not null then u.desde else l.desde end) as desde,
+           (case when not a0.ausente then a0.tipo_bloque end) as tipo_bloque,
+           coalesce(a0.discrepancia_bloque, false) as discrepancia_bloque,
            case
              when a0.ausente then 'AUSENTE'
+             when a0.tipo_bloque is not null then 'DEVOLUCION_BLOQUE'
              when ${CLAVES_TRASPASO.length ? `${SQL_CLAVE_LITERAL_FARMATIC('a0.proveedor')} in (${CLAVES_TRASPASO.map((c) => `'${c}'`).join(', ')})` : 'false'} then 'TRASPASO'
              when a0.idp is null then 'SIN_PROVEEDOR'
              when u.idp is not null and u.desde is null then 'AUTO_SIN_DESDE'
@@ -1375,21 +1496,22 @@ limit 1`,
 ${CTE_SIN_FACTURA}
 select g.grupo as clase, g.idp, null::bigint as id_contador, null::text as numero_albaran, min(g.proveedor)::text as proveedor,
        max(g.fecha)::text as fecha, sum(g.importe_puc)::numeric as importe, count(*)::bigint as albaranes,
-       count(*) filter (where g.importe_puc is null)::bigint as sin_importe, min(g.desde)::text as desde
+       count(*) filter (where g.importe_puc is null)::bigint as sin_importe, min(g.desde)::text as desde,
+       g.tipo_bloque::text as tipo_bloque
   from g
- group by g.grupo, g.idp
+ group by g.grupo, g.idp, g.tipo_bloque
 union all
 select (case d.grupo ${Object.entries(CLASE_DETALLE_SIN_FACTURA).map(([g, c]) => `when '${g}' then '${c}'`).join(' ')} end)::text,
        d.idp, d.id_contador::bigint, d.numero_albaran::text, d.proveedor::text, d.fecha::text,
-       d.importe_puc::numeric, 1::bigint, (d.importe_puc is null)::int::bigint, d.desde::text
-  from (select g.*, row_number() over (partition by g.grupo, g.idp order by g.fecha nulls last, g.id_contador) as orden_detalle
+       d.importe_puc::numeric, 1::bigint, (d.importe_puc is null)::int::bigint, d.desde::text, d.tipo_bloque::text
+  from (select g.*, row_number() over (partition by g.grupo, g.idp, g.tipo_bloque order by g.fecha nulls last, g.id_contador) as orden_detalle
           from g where g.grupo in (${Object.keys(CLASE_DETALLE_SIN_FACTURA).map((g) => `'${g}'`).join(', ')})) d
  where d.orden_detalle <= ${Number(LIMITE_DETALLE_ALERTA)}
 union all
 select 'TOTAL', null, null, null, null, null, sum(a0.importe_puc)::numeric, count(*)::bigint,
-       count(*) filter (where a0.importe_puc is null)::bigint, null
+       count(*) filter (where a0.importe_puc is null)::bigint, null, null
   from a0
-order by 1, 2, 6`,
+order by 1, 2, 11, 6`,
   },
 
   alertas_albaran_no_en_farmatic: {
@@ -1736,7 +1858,9 @@ ${GRUPOS_SIN_FACTURA.map((gr) => `       count(*) filter (where g.grupo = '${gr}
        count(distinct g.idp) filter (where g.grupo in ('LEIDO', 'LEIDO_ANTERIOR')) as proveedores_leido_sin_conciliacion,
        count(distinct g.idp) filter (where g.grupo = 'SIN_LECTOR') as proveedores_sin_lector,
        count(distinct g.idp) filter (where g.grupo = 'AUTO_SIN_DESDE') as proveedores_con_conciliacion_sin_desde,
-       count(distinct coalesce(g.idp, '')) filter (where g.grupo = 'TRASPASO') as proveedores_traspaso
+       count(distinct coalesce(g.idp, '')) filter (where g.grupo = 'TRASPASO') as proveedores_traspaso,
+${TIPOS_ABONO_EN_BLOQUE.map((t) => `       count(*) filter (where g.grupo = 'DEVOLUCION_BLOQUE' and g.tipo_bloque = '${t}') as ${COLUMNA_DIAGNOSTICO_ABONO_EN_BLOQUE[t]},`).join('\n')}
+       count(*) filter (where g.discrepancia_bloque) as devoluciones_bloque_discrepancia
 from g`,
   },
   diagnostico_par_08c66676: {
@@ -2749,10 +2873,11 @@ export function construirSinFactura(rows: Fila[], facts: FacturaResumen[], hoy: 
     return p;
   };
   // H8-5: detalle por (grupo, proveedor) y el recuento con el que debe cuadrar.
-  const claveDetalle = (g: GrupoConDetalle, idp: string | null) => `${g}|${idp ?? ''}`;
+  // H8-6: + el tipo de devolución en bloque (null en los demás grupos).
+  const claveDetalle = (g: GrupoConDetalle, idp: string | null, tipo: string | null = null) => `${g}|${idp ?? ''}|${tipo ?? ''}`;
   const destinoDetalle = new Map<string, { n: number; xs: AlbaranSinFactura[] }>();
-  const esperarDetalle = (g: GrupoConDetalle, idp: string | null, n: number, xs: AlbaranSinFactura[]) => {
-    const k = claveDetalle(g, idp);
+  const esperarDetalle = (g: GrupoConDetalle, idp: string | null, n: number, xs: AlbaranSinFactura[], tipo: string | null = null) => {
+    const k = claveDetalle(g, idp, tipo);
     const e = destinoDetalle.get(k);
     if (e === undefined) destinoDetalle.set(k, { n, xs });
     else if (e.xs !== xs) throw new Error(`SIN_FACTURA_DETALLE_NO_CUADRA: ${g}`);
@@ -2761,6 +2886,9 @@ export function construirSinFactura(rows: Fila[], facts: FacturaResumen[], hoy: 
   const detalle = new Map<string, AlbaranSinFactura[]>();
   const sin: ProveedorSinLector[] = [];
   const traspasos: ProveedorTraspaso[] = [];
+  const bloques = new Map<TipoAbonoEnBloque, TipoDevolucionBloque>(TIPOS_ABONO_EN_BLOQUE.map((t) => [t,
+    { tipo: t, nota: NOTA_ABONO_EN_BLOQUE[t], albaranes: 0, importe: null, sin_importe: 0, fecha_ultima: null, detalle: [] }]));
+  const esTipoBloque = (t: string | null): t is TipoAbonoEnBloque => (TIPOS_ABONO_EN_BLOQUE as readonly string[]).includes(t ?? '');
   const grupos = Object.fromEntries(GRUPOS_SIN_FACTURA.map((g) => [g, resumenVacio()])) as Record<GrupoSinFactura, ResumenAlbaranes>;
   const esGrupo = (c: string | null): c is GrupoSinFactura => (GRUPOS_SIN_FACTURA as readonly string[]).includes(c ?? '');
   let total: ResumenAlbaranes | null = null;
@@ -2775,6 +2903,10 @@ export function construirSinFactura(rows: Fila[], facts: FacturaResumen[], hoy: 
     // H8-4: nombre comercial por el literal de Farmatic, o el literal sin el prefijo numérico.
     const literal = nombreProveedorFarmatic(literalFarmatic);
     const fecha = texto(r.fecha)?.slice(0, 10) ?? null;
+    // H8-6: el tipo solo existe (y es obligatorio) en las devoluciones en bloque; en cualquier otra fila, falla cerrado.
+    const tipoBloque = texto(r.tipo_bloque);
+    const deBloque = clase === 'DEVOLUCION_BLOQUE' || clase === CLASE_DETALLE_SIN_FACTURA.DEVOLUCION_BLOQUE;
+    if (deBloque ? !esTipoBloque(tipoBloque) : tipoBloque !== null) throw new Error(`SIN_FACTURA_FILA_NO_RECONOCIDA: ${clase ?? 'null'} tipo ${tipoBloque ?? 'null'}`);
     if (clase === 'TOTAL') {
       if (total !== null) throw new Error('SIN_FACTURA_TOTAL_DUPLICADO');
       total = { albaranes: n, importe: imp, sin_importe: sinImp };
@@ -2785,7 +2917,7 @@ export function construirSinFactura(rows: Fila[], facts: FacturaResumen[], hoy: 
       // H8-5: el detalle sin proveedor solo existe en SIN_PROVEEDOR y en TRASPASO (que puede ir sin id).
       if (idp === null && grupoDetalle !== 'SIN_PROVEEDOR' && grupoDetalle !== 'TRASPASO') throw new Error(`SIN_FACTURA_FILA_NO_RECONOCIDA: ${clase} sin proveedor`);
       if (idp !== null && grupoDetalle === 'SIN_PROVEEDOR') throw new Error(`SIN_FACTURA_FILA_NO_RECONOCIDA: ${clase} con proveedor`);
-      const k = claveDetalle(grupoDetalle, idp);
+      const k = claveDetalle(grupoDetalle, idp, tipoBloque);
       detalle.set(k, [...(detalle.get(k) ?? []), { id_contador: entero(r.id_contador), numero_albaran: texto(r.numero_albaran),
         fecha, importe: imp, dias: fecha === null ? null : diasEntre(fecha, hoy) }]);
       continue;
@@ -2841,6 +2973,14 @@ export function construirSinFactura(rows: Fila[], facts: FacturaResumen[], hoy: 
         esperarDetalle('TRASPASO', idp, n, t.detalle);
         break;
       }
+      case 'DEVOLUCION_BLOQUE': {
+        // H8-6: gris, nunca alerta, fuera de la cobertura y de «pendiente de automatizar».
+        const b = bloques.get(tipoBloque as TipoAbonoEnBloque)!;
+        sumarResumen(b, n, imp, sinImp);
+        if (fecha !== null && (b.fecha_ultima === null || fecha > b.fecha_ultima)) b.fecha_ultima = fecha;
+        esperarDetalle('DEVOLUCION_BLOQUE', idp, n, b.detalle, tipoBloque);
+        break;
+      }
       case 'AUSENTE': break;
     }
   }
@@ -2872,6 +3012,7 @@ export function construirSinFactura(rows: Fila[], facts: FacturaResumen[], hoy: 
     total,
     grupos,
     traspasos: traspasos.sort((a, b) => porImporte(a.importe, b.importe) || a.proveedor.localeCompare(b.proveedor)),
+    devoluciones_bloque: [...bloques.values()],
     con_lector: conLector,
     leido_sin_conciliacion: leidos,
     sin_lector: sin,

@@ -27,6 +27,9 @@
  * proveedores por bloque. Si los grupos no suman el total, ERROR y una línea RECUENTOS con los mismos números.
  * H8-4: fecha de inicio de los proveedores con conciliación = su albarán reservado más antiguo (anteriores por esa fecha);
  * grupo traspasos_entre_farmacias; proveedores_con_conciliacion_sin_desde y proveedores_traspaso (debería ser 1).
+ * H8-6: grupo devoluciones_abono_bloque (devoluciones Alliance en bloque, PROVEEDORES_ABONO_EN_BLOQUE) con sus tipos
+ * devoluciones_bloque_safa, _safa_recientes, _eco360 y _safa_caducitats (deben sumar el grupo) y
+ * devoluciones_bloque_discrepancia (id y literal que no casan: no clasificadas, siguen en su grupo).
  * H7-REAL: DIAGNOSTICO cashflow (migración 38): vigente sí/no, días desde la vigente, última ERROR sí/no, filas de
  * importes y saldos por cuenta, decenas reales con diferencia banco/fórmulas (E7) y decenas que no cuadran.
  * H7-REAL-2: recuentos de importes por cuenta y categoría (reales / anotados a futuro) y del efectivo de cada cuenta.

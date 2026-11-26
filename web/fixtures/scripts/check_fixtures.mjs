@@ -38,6 +38,8 @@ import { COLOR_FARMACIA_GUARDIA, FARMACIAS_GUARDIA, HORAS_SERVICIO, reglasSemana
 import { leerSemillaFichaAnual } from '../../app/server/rrhh/adaptador_fixtures.ts';
 import { AVISO_VACACIONES_DESDE, REDONDEO_PROPORCIONAL, TIPOS_HORAS_COMPUTAN, calcularFichaAnual, resumenPlantilla } from '../../app/server/rrhh/ficha_anual.ts';
 import { COMERCIAL_POR_CIF, COMERCIAL_POR_LITERAL, nombreComercial, razonSocialSecundaria } from '../../app/server/proveedor_comercial.ts';
+import { DEVOLUCIONES_H8_6, ULTIMA_FACTURA_ALLIANCE_H8_6 } from './gen_fixtures.mjs';
+import { NOTA_ABONO_EN_BLOQUE, PROVEEDORES_ABONO_EN_BLOQUE, clasificarAbonoEnBloque } from '../../app/server/contrato.ts';
 import { ALERTA_DUPLICADO, F05_SIN_TIPO_DOCUMENTAL, INCIDENCIAS_H4B, INCIDENCIAS_H4D, TIPO_DOCUMENTAL_H4C, VENCIMIENTOS_H6_3, generar } from './gen_fixtures.mjs';
 import {
   DICCIONARIO_ESTADOS, ESTADOS_IMPLEMENTADOS, MENSAJE_FALTA_CREDENCIAL_PAGOS, construirPantalla, crearAlmacenPagos, totalesPorPeriodo,
@@ -907,15 +909,37 @@ comprobar('H8: Sin factura: con lector > 30 días → alerta (antigüedad e impo
     && conciliacionBandeja.facturas.find((x) => x.factura_id === F(6)).conciliacion === null
     && isDeepStrictEqual(sf.excluidos_ausentes, { albaranes: 2, importe: 130.5, sin_importe: 0 })
     && isDeepStrictEqual(cof.alertas.map((a) => [a.numero_albaran, a.dias, a.importe]), [['77501', 51, 84.3], ['77502', 35, null]])
-    && cof.recientes.albaranes === 1 && cof.recientes.importe === 120
-    && all.alertas.length === 0 && all.recientes.albaranes === 1 && all.anteriores.albaranes === 412 && all.anteriores.sin_importe === 3
+    // H8-6: + una devolución de COFARES en plazo (−15) y, en ALLIANCE, la de 0,00, la positiva y la discrepancia (no entran).
+    && cof.recientes.albaranes === 2 && cof.recientes.importe === 105
+    && all.alertas.length === 0 && all.recientes.albaranes === 4 && all.anteriores.albaranes === 412 && all.anteriores.sin_importe === 3
     // H8-5: más COFARES (41) y HPLUS CONSUMO (42) pendientes de automatizar.
     && isDeepStrictEqual(sf.sin_lector.map((s) => [s.clave, s.identificado]), [['37', true], ['41', true], ['88', true], ['42', true], [null, false]])
     && sf.sin_lector[4].proveedor === 'Proveedor sin identificar' && sf.totales.sin_lector.albaranes === 34
     && sf.con_lector.every((p) => !/^Proveedor \d/.test(p.proveedor));
   return si(ok, JSON.stringify({ totales: sf.totales, con: sf.con_lector.map((p) => [p.clave, p.proveedor, p.alertas.length]) }));
 });
-comprobar('H8-3/H8-4/H8-5: Sin factura: grupos exhaustivos y excluyentes que suman el total (608 > 50); sin poder comprobar y anteriores de leído visibles', () => {
+comprobar('H8-6: Devoluciones (abono en bloque): una de cada tipo y una reciente; 0,00, reservada, positiva, discrepancia y otro proveedor no entran', () => {
+  const sf = conciliacionBandeja.sin_factura;
+  const tipos = sf.devoluciones_bloque.map((b) => [b.tipo, b.albaranes, b.importe, b.detalle.map((a) => a.numero_albaran).join()]);
+  const clas = DEVOLUCIONES_H8_6.map((d) => [d.caso, clasificarAbonoEnBloque(d, ULTIMA_FACTURA_ALLIANCE_H8_6)]);
+  const enBloque = new Set(sf.devoluciones_bloque.flatMap((b) => b.detalle.map((a) => a.numero_albaran)));
+  const fuera = DEVOLUCIONES_H8_6.filter((d) => d.esperado === null).map((d) => d.numero_albaran);
+  const cob = coberturaProveedores(conciliacionBandeja.facturas, sf);
+  const ok = isDeepStrictEqual(tipos, [['SAFA', 2, -123.36, 'DV-SAFA-01,DV-SAFA-02'], ['SAFA_RECIENTE', 1, -12.4, 'DV-SAFA-03'],
+    ['ECO360', 1, -30, 'DV-ECO-01'], ['SAFA_CADUCITATS', 1, -8.9, 'DV-CAD-01']])
+    && isDeepStrictEqual(sf.grupos.DEVOLUCION_BLOQUE, { albaranes: 5, importe: -174.66, sin_importe: 0 })
+    && sf.devoluciones_bloque.every((b) => b.nota === NOTA_ABONO_EN_BLOQUE[b.tipo])
+    && clas.filter(([, c]) => c.discrepancia).map(([k]) => k).join() === 'discrepancia'
+    && clas.filter(([, c]) => c.tipo === null).map(([k]) => k).join() === 'importe_cero,reservada,positiva,discrepancia,otro_proveedor'
+    && fuera.every((n) => !enBloque.has(n))
+    // Nunca alerta, ni en «pendiente de automatizar», ni en la cobertura.
+    && sf.totales.alertas === 2 && sf.con_lector.every((p) => p.alertas.every((a) => !/^DV-/.test(a.numero_albaran ?? '')))
+    && !sf.sin_lector.some((s) => s.clave === '143') && !cob.some((f) => f.clave.includes('143'))
+    && isDeepStrictEqual(PROVEEDORES_ABONO_EN_BLOQUE.map((p) => [p.id, p.literal, p.tipo]),
+      [['2', '1.- SAFA', 'SAFA'], ['154', '6- PLATAF. ECO360 AH', 'ECO360'], ['143', 'SAFA CADUCITATS I DEVOLUCIONS', 'SAFA_CADUCITATS']]);
+  return si(ok, JSON.stringify({ tipos, grupo: sf.grupos.DEVOLUCION_BLOQUE, clas }));
+});
+comprobar('H8-3/H8-4/H8-5/H8-6: Sin factura: grupos exhaustivos y excluyentes que suman el total (617 > 50); sin poder comprobar y anteriores de leído visibles', () => {
   const sf = conciliacionBandeja.sin_factura;
   const suma = GRUPOS_SIN_FACTURA.reduce((a, g) => a + sf.grupos[g].albaranes, 0);
   const sumaImp = Math.round(GRUPOS_SIN_FACTURA.reduce((a, g) => a + (sf.grupos[g].importe ?? 0), 0) * 100) / 100;
@@ -923,7 +947,7 @@ comprobar('H8-3/H8-4/H8-5: Sin factura: grupos exhaustivos y excluyentes que sum
   const log = sf.con_lector.find((p) => p.clave === '7');
   const fed = sf.leido_sin_conciliacion.find((p) => p.clave === '4');
   const ok = isDeepStrictEqual(Object.keys(sf.grupos), [...GRUPOS_SIN_FACTURA])
-    && sf.total.albaranes === 608 && suma === 608 && sumaImp === 54933.45 && sf.total.importe === 54933.45 && sumaSin === sf.total.sin_importe
+    && sf.total.albaranes === 617 && suma === 617 && sumaImp === 54758.8 && sf.total.importe === 54758.8 && sumaSin === sf.total.sin_importe
     && sf.limite_detalle === 100 && sf.con_lector.every((p) => p.alertas.length === Math.min(p.alertas_total, 100))
     && log?.sin_desde.albaranes === 1 && log.alertas_total === 0
     && fed?.anteriores.albaranes === 6 && fed.albaranes === 3;

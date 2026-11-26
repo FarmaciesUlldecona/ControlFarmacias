@@ -2070,8 +2070,8 @@
     "dias_alerta": 30,
     "limite_detalle": 100,
     "total": {
-      "albaranes": 608,
-      "importe": 54933.45,
+      "albaranes": 617,
+      "importe": 54758.8,
       "sin_importe": 5
     },
     "grupos": {
@@ -2081,8 +2081,8 @@
         "sin_importe": 1
       },
       "AUTO_RECIENTE": {
-        "albaranes": 2,
-        "importe": 184.1,
+        "albaranes": 6,
+        "importe": 184.11,
         "sin_importe": 0
       },
       "AUTO_ANTERIOR": {
@@ -2118,6 +2118,11 @@
       "TRASPASO": {
         "albaranes": 12,
         "importe": 1840,
+        "sin_importe": 0
+      },
+      "DEVOLUCION_BLOQUE": {
+        "albaranes": 5,
+        "importe": -174.66,
         "sin_importe": 0
       },
       "AUSENTE": {
@@ -2224,6 +2229,83 @@
         "literal_farmatic": null
       }
     ],
+    "devoluciones_bloque": [
+      {
+        "tipo": "SAFA",
+        "nota": "Cubiertas en total por ABONOS AGRUPADOS (+123,36 € a favor).",
+        "albaranes": 2,
+        "importe": -123.36,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-10-10",
+        "detalle": [
+          {
+            "id_contador": 970001,
+            "numero_albaran": "DV-SAFA-01",
+            "fecha": "2026-06-12",
+            "importe": -45.2,
+            "dias": 143
+          },
+          {
+            "id_contador": 970002,
+            "numero_albaran": "DV-SAFA-02",
+            "fecha": "2026-10-10",
+            "importe": -78.16,
+            "dias": 23
+          }
+        ]
+      },
+      {
+        "tipo": "SAFA_RECIENTE",
+        "nota": "Posteriores a la última factura Alliance; pendientes de factura.",
+        "albaranes": 1,
+        "importe": -12.4,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-10-28",
+        "detalle": [
+          {
+            "id_contador": 970003,
+            "numero_albaran": "DV-SAFA-03",
+            "fecha": "2026-10-28",
+            "importe": -12.4,
+            "dias": 5
+          }
+        ]
+      },
+      {
+        "tipo": "ECO360",
+        "nota": "Pendiente del extracto de abonos de Alliance.",
+        "albaranes": 1,
+        "importe": -30,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-08-03",
+        "detalle": [
+          {
+            "id_contador": 970004,
+            "numero_albaran": "DV-ECO-01",
+            "fecha": "2026-08-03",
+            "importe": -30,
+            "dias": 91
+          }
+        ]
+      },
+      {
+        "tipo": "SAFA_CADUCITATS",
+        "nota": "Compensadas con producto.",
+        "albaranes": 1,
+        "importe": -8.9,
+        "sin_importe": 0,
+        "fecha_ultima": "2026-07-01",
+        "detalle": [
+          {
+            "id_contador": 970005,
+            "numero_albaran": "DV-CAD-01",
+            "fecha": "2026-07-01",
+            "importe": -8.9,
+            "dias": 124
+          }
+        ]
+      }
+    ],
     "con_lector": [
       {
         "clave": "1",
@@ -2249,8 +2331,8 @@
         "importe_alertas": 84.3,
         "alertas_sin_importe": 1,
         "recientes": {
-          "albaranes": 1,
-          "importe": 120,
+          "albaranes": 2,
+          "importe": 105,
           "sin_importe": 0
         },
         "anteriores": {
@@ -2275,8 +2357,8 @@
         "importe_alertas": null,
         "alertas_sin_importe": 0,
         "recientes": {
-          "albaranes": 1,
-          "importe": 64.1,
+          "albaranes": 4,
+          "importe": 79.11,
           "sin_importe": 0
         },
         "anteriores": {
