@@ -132,6 +132,13 @@ SUITE_HISTORICA = {
         "test_ensayo_completo_despliegue_40_y_segundo_intento_revierte",
         "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_40_es_de_solo_lectura",
         "test_postcondiciones_en_la_plantilla_40"),
+    # 41-D (2026-11-26): guardias por asignar y estado (TA4-2) desplegadas en produccion.
+    "test_integracion_pg17_41_trabajadores.py": (
+        "test_rollback_41_devuelve_exactamente_el_esquema_40",
+        "test_rollback_falla_cerrado_sin_cambiar_nada_aunque_la_guardia_este_anulada",
+        "test_ensayo_completo_despliegue_41_y_segundo_intento_revierte",
+        "test_el_despliegue_rechaza_un_sql_distinto_del_commit", "test_sql_de_precondiciones_41_es_de_solo_lectura",
+        "test_postcondiciones_en_la_plantilla_41"),
 }
 
 # Modulo pg17_local -> familia (grupo xdist_group). Los modulos sin entrada forman su propia familia. Medicion del

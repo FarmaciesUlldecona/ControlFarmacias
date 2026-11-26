@@ -1,9 +1,10 @@
 # TA4-2: guardias por asignar y estado de la guardia (migración 41), diseño
 
-Estado (2026-11-26): **DECISIÓN DE PIO** sobre la petición de la web TA4-2. Migración 41 **implementada en local**
-(`CONFIRMADO POR TEST`, `tests/facturas/runtime_supabase/test_integracion_pg17_41_trabajadores.py`), con su rollback
-y `desplegar_41.py`; **no desplegada**: no se aplica sin el OK de Pio. Los detalles que la decisión no fijaba están
-en §3, como `PROPUESTA`.
+Estado (2026-11-26): **DECISIÓN DE PIO** sobre la petición de la web TA4-2. Migración 41 implementada
+(`tests/facturas/runtime_supabase/test_integracion_pg17_41_trabajadores.py`), con su rollback y `desplegar_41.py`, y
+**desplegada en producción en el 41-D** (2026-11-26, confirmación explícita de Pio; `CONFIRMADO EN PRODUCCIÓN`:
+`desplegar_41` APLICADA y postcheck por fila sin diferencias; `desplegar_41` no se vuelve a ejecutar). Las
+concreciones del §3 están aprobadas por Pio (2026-11-26).
 
 Numeración (DECISIÓN DE PIO, 2026-11-26): TA4-2 = 41; «Actualizar ahora» pasa a 42.
 
@@ -63,7 +64,7 @@ fila de PIO o RITA, **anulada o no**, está por asignar (`ROLLBACK_41_GUARDIAS_P
     `OTRA` presentes, las políticas, los triggers y la RLS;
   - **propietario:** `postgres`.
 
-## 3. Concreciones de la implementación (`PROPUESTA`, para que Pio las confirme)
+## 3. Concreciones de la implementación (`DECISIÓN DE PIO`, 2026-11-26: aprobadas tal como se proponían)
 
 1. **Default `CONFIRMADO` también para las filas nuevas.** La web actual da de alta sin `estado` y sus guardias son
    confirmadas: con el default sigue funcionando igual hasta que envíe `estado`. Alternativa: quitar el default tras
