@@ -51,8 +51,11 @@ import { PESTANAS_VENCIMIENTOS, cumpleBusquedaLista } from '../../app/server/pag
 import {
   CONFIG_CASHFLOW, calcularCashflow, columnasVista, esDecenaInicio, finDecena, resolverEquivalencias, traspasosNoCompensados,
 } from '../../app/server/cashflow/cashflow.ts';
-import { vencimientoCashflow } from '../../app/server/cashflow/rutas.ts';
+import { RUTA_SEMILLA_APUNTES, vencimientoCashflow } from '../../app/server/cashflow/rutas.ts';
 import { FILAS_EQUIVALENTES, FUERA_HORIZONTE, PAGO_HACE_8_MESES, RUTA_CASHFLOW, generarCashflow, serializarCashflow } from './gen_cashflow.mjs';
+import {
+  apuntesMotor, calcularOcurrencias, candidatosSustitucion, inicioEsOcurrencia, limiteFuturo, plantillaCuenta, ventanaOcurrencias,
+} from '../../app/server/cashflow/apuntes.ts';
 
 const RAIZ = join(import.meta.dirname, '..');
 const DTO = join(RAIZ, 'dto');
@@ -1743,6 +1746,62 @@ comprobar('H7-REAL-7: avisos de saldo solo dentro del horizonte (12 meses previs
   const negativoFuera = r.decenas.filter((d) => d > fin && C.decenas[d].saldo !== null && C.decenas[d].saldo < 0);
   return si(negativoFuera.includes(FUERA_HORIZONTE.decena_inicio) && r.avisos.every((a) => a.decenas.every((x) => x.decena <= fin))
     && r.avisos.filter((a) => a.tipo !== 'gris').length === 2, JSON.stringify({ negativoFuera, avisos: r.avisos.map((a) => [a.tipo, a.decena, a.hasta]) }));
+});
+
+// --- Casos H7-AP1: apuntes manuales (migración 40), semilla web/fixtures/cashflow/apuntes.json ---------------------
+const apuntesSemilla = JSON.parse(readFileSync(RUTA_SEMILLA_APUNTES, 'utf8'));
+const ventanaAp = ventanaOcurrencias(apuntesSemilla.hoy);
+const previsionesSemilla = {
+  conceptos: apuntesSemilla.conceptos, recurrentes: apuntesSemilla.recurrentes, apuntes: apuntesSemilla.apuntes, ventana: ventanaAp,
+  ocurrencias: calcularOcurrencias(apuntesSemilla, ventanaAp.desde, ventanaAp.hasta),
+};
+comprobar('H7-AP1: apuntes.json con la forma de la migración 40 (columnas, ids, cuenta = farmacia, autor, tipos de apunte, inicio = ocurrencia, plantilla de la vigente, solo fechas futuras)', () => {
+  const malos = [];
+  const COMUNES = ['id', 'cuenta', 'farmacia', 'categoria', 'autor', 'creado_at', 'anulado', 'anulado_por', 'anulado_at', 'motivo_anulacion'];
+  const forma = { conceptos: [...COMUNES, 'nombre', 'proveedor_cif'], recurrentes: [...COMUNES, 'concepto', 'importe', 'nota', 'frecuencia', 'dia', 'inicio', 'fin'],
+    apuntes: [...COMUNES, 'fecha', 'concepto', 'importe', 'nota', 'recurrente_id', 'fecha_ocurrencia', 'sustituido_factura_id', 'sustituido_vencimiento_orden'] };
+  const ids = new Set();
+  for (const [t, cols] of Object.entries(forma)) {
+    for (const x of apuntesSemilla[t]) {
+      if (Object.keys(x).sort().join() !== [...cols].sort().join()) malos.push(`${t} ${x.id}: columnas`);
+      if (!/^[0-9a-f-]{36}$/.test(x.id) || ids.has(x.id)) malos.push(`${t} ${x.id}: id`);
+      ids.add(x.id);
+      if (!['PIO', 'RITA'].includes(x.cuenta) || x.farmacia !== x.cuenta || x.autor !== 'Marc') malos.push(`${t} ${x.id}: cuenta/farmacia/autor`);
+      if (x.anulado !== (x.motivo_anulacion !== null) || x.anulado !== (x.anulado_at !== null)) malos.push(`${t} ${x.id}: anulación sin motivo`);
+      if (!plantillaCuenta(cashflowSemilla, apuntesSemilla, x.cuenta).some((c) => c.categoria === x.categoria)) malos.push(`${t} ${x.id}: categoría fuera de la plantilla`);
+    }
+  }
+  for (const r of apuntesSemilla.recurrentes) if (!inicioEsOcurrencia(r.dia, r.inicio) || !(r.importe > 0)) malos.push(`recurrente ${r.id}: inicio o importe`);
+  for (const a of apuntesSemilla.apuntes) {
+    const suelto = a.recurrente_id === null && a.fecha_ocurrencia === null && a.importe > 0;
+    const anulacion = a.recurrente_id !== null && a.importe === null && a.fecha === a.fecha_ocurrencia;
+    if (!suelto && !anulacion) malos.push(`apunte ${a.id}: ni suelto ni anulación de ocurrencia`);
+    const pl = plantillaCuenta(cashflowSemilla, apuntesSemilla, a.cuenta);
+    if (!pl.find((c) => c.categoria === a.categoria)?.conceptos.some((c) => c.nombre === a.concepto)) malos.push(`apunte ${a.id}: concepto desconocido`);
+    if (a.fecha <= limiteFuturo(cashflowSemilla, a.cuenta)) malos.push(`apunte ${a.id}: fecha no futura`);
+  }
+  return si(malos.length === 0 && apuntesSemilla.hoy === cashflowSemilla.hoy, malos.slice(0, 4).join('; '));
+});
+comprobar('H7-AP1: casos de la semilla: suelto en un concepto nuevo, apunte que gana al Excel y a la media, recurrente de RITA el 31 (28/02), ocurrencia anulada, apunte anulado; lo visible antes del 21/01/2027 y los avisos no cambian', () => {
+  const r = calcularCashflow({ ...cashflowDatos, apuntes_manuales: apuntesMotor(previsionesSemilla) });
+  const sin = calcularCashflow(cashflowDatos);
+  const L = (v, con) => r.vistas[v].lineas.find((l) => l.concepto === con);
+  const fondos = L('PIO', 'TRASPASO A FONDOS/VALORS').celdas['2027-02-01'];
+  const ascensor = L('PIO', 'Mantenimiento ascensor')?.celdas['2027-02-01'];
+  const sum = L('RITA', 'Suministros');
+  const distintos = ['PIO', 'RITA', 'CONSOLIDADO'].flatMap((v) => r.decenas.filter((d) => d < '2027-01-21' && r.vistas[v].decenas[d].saldo !== sin.vistas[v].decenas[d].saldo).map((d) => `${v} ${d}`));
+  const ok = fondos.fuente === 'MANUAL' && fondos.importe === -2000 && fondos.excel === -2500 && fondos.media?.media === -1000
+    && ascensor?.fuente === 'MANUAL' && ascensor.importe === -350 && apuntesSemilla.conceptos.some((c) => c.nombre === 'Mantenimiento ascensor')
+    && sum?.celdas['2027-02-21']?.apuntes[0]?.fecha === '2027-02-28' && sum.celdas['2027-03-21'] === undefined
+    && apuntesSemilla.apuntes.some((a) => a.anulado && a.recurrente_id === null)
+    && distintos.length === 0 && isDeepStrictEqual(r.avisos.map((a) => [a.tipo, a.decena, a.importe]), sin.avisos.map((a) => [a.tipo, a.decena, a.importe]));
+  return si(ok, JSON.stringify({ fondos: [fondos.fuente, fondos.importe, fondos.excel, fondos.media?.media], ascensor: ascensor?.importe, distintos: distintos.slice(0, 3) }));
+});
+comprobar('H7-AP1: «vencimiento mayor que el apunte» y «sugerencia de sustitución» no van en la semilla (el único vencimiento futuro con concepto, ALLIANCE 472,22 en 11–20/11, sostiene los casos de H7): sin candidatos; la prueba e2e los crea', () => {
+  const c = candidatosSustitucion({ datos: cashflowSemilla, previsiones: previsionesSemilla }, cashflowDatos.vencimientos);
+  const conApunte = candidatosSustitucion({ datos: cashflowSemilla, previsiones: { ...previsionesSemilla, apuntes: [...previsionesSemilla.apuntes,
+    { ...previsionesSemilla.apuntes[0], id: 'e7a00000-0000-4000-8000-000000000999', categoria: 'RS Proveedores', concepto: 'ALLIANCE', importe: 460, fecha: '2026-11-15' }] } }, cashflowDatos.vencimientos);
+  return si(c.length === 0 && conApunte.length === 1 && conApunte[0].vencimiento.factura_id === F(2) && conApunte[0].vencimiento.vencimiento_orden === 1, JSON.stringify({ c: c.length, conApunte: conApunte.length }));
 });
 
 // --- Informe ----------------------------------------------------------------------

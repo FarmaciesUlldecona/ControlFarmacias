@@ -14,6 +14,8 @@
  *    proveedores_forma_pago, pagos_historial; cf_lectura tiene SELECT en las tres) y su diagnóstico (solo recuentos).
  *  - H7-REAL: lectura del cashflow de la migración 38 (cf_cashflow_importaciones, _cuentas, _importes, _saldos; SELECT
  *    para cf_lectura con RLS PIO, RITA —módulo CASHFLOW— y SL), en REPEATABLE READ READ ONLY, y su diagnóstico.
+ *  - H7-AP1: en la misma foto, los apuntes manuales de la migración 40 (cf_cashflow_conceptos, _recurrentes, _apuntes y
+ *    cf_cashflow_ocurrencias; SELECT y EXECUTE para cf_lectura con la misma RLS) y su diagnóstico (solo recuentos).
  */
 import { X509Certificate } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -25,8 +27,10 @@ import {
 } from './contrato.ts';
 import { COLUMNAS_DIAGNOSTICO_PAGOS, SQL_PAGOS } from './pagos/sql.ts';
 import { hoyMadrid } from './pagos/pagos.ts';
-import type { DatosCashflow, VencimientoCashflow } from './cashflow/cashflow.ts';
-import { diagnosticoCashflow, leerCashflowReal } from './cashflow/lectura_real.ts';
+import { sumarMeses, type DatosCashflow, type VencimientoCashflow } from './cashflow/cashflow.ts';
+import { diagnosticoCashflow, leerCashflowReal, leerPrevisionesReal } from './cashflow/lectura_real.ts';
+import { MESES_DIAGNOSTICO_OCURRENCIAS, fechaOcurrencia, type PrevisionesCashflow } from './cashflow/apuntes.ts';
+import { COLUMNAS_DIAGNOSTICO_APUNTES, SQL_LECTURA_APUNTES } from './cashflow/sql_apuntes.ts';
 
 export const RUTA_ENV_WEB = join(import.meta.dirname, '..', '.env.web');
 /** Ruta por defecto de la CA; configurable con CF_LECTURA_CA (absoluta o relativa a web/app). */
@@ -111,8 +115,13 @@ export interface AdaptadorReal {
   leerPagos(): Promise<{ marcas: Fila[]; formas: Fila[]; historial: Fila[] }>;
   /** H6-REAL (check:real): recuentos de pagos (marcas vigentes, anuladas, a revisar, huérfanas; formas vigentes; historial). */
   diagnosticoPagos(): Promise<Record<string, number>>;
-  /** H7-REAL: cashflow de la importación vigente (cf_cashflow_*, migración 38), en una sola foto READ ONLY. */
-  leerCashflow(): Promise<DatosCashflow>;
+  /**
+   * H7-REAL: cashflow de la importación vigente (cf_cashflow_*, migración 38), en una sola foto READ ONLY. H7-AP1: con los
+   * apuntes manuales de la migración 40 (conceptos, recurrentes, apuntes y ocurrencias) en la misma foto.
+   */
+  leerCashflow(): Promise<DatosCashflow & { previsiones: PrevisionesCashflow }>;
+  /** H7-AP1 (check:real): recuentos de los apuntes manuales (vigentes, anulados, recurrentes, ocurrencias a 12 meses, conceptos). */
+  diagnosticoApuntesCashflow(): Promise<Record<string, number>>;
   /** H7-REAL (check:real): diagnóstico del cashflow, solo números y sí/no. H7-REAL-5: con los vencimientos de PIO. */
   diagnosticoCashflow(vencimientos?: readonly VencimientoCashflow[]): Promise<Record<string, ValorDiagnostico>>;
   cerrar(): Promise<void>;
@@ -271,7 +280,9 @@ export function crearAdaptadorReal(): AdaptadorReal {
   /** H7-REAL: las lecturas del cashflow en una sola foto (la vigente y sus filas, coherentes). */
   const leerCashflow = () => soloLectura(async (cliente) => {
     await cliente.query("set local statement_timeout = '20s'");
-    return leerCashflowReal(async (sql, params) => (await cliente.query<Fila>(sql, params)).rows);
+    const consultar = async (sql: string, params: unknown[]) => (await cliente.query<Fila>(sql, params)).rows;
+    const datos = await leerCashflowReal(consultar);
+    return { ...datos, previsiones: await leerPrevisionesReal(consultar, hoyMadrid()) };
   }, true);
 
   // Id de la factura más reciente: se elige una vez y se queda en este cierre (nunca se devuelve ni imprime).
@@ -363,6 +374,17 @@ export function crearAdaptadorReal(): AdaptadorReal {
     }),
     leerCashflow,
     diagnosticoCashflow: async (vencimientos = []) => validarDiagnostico(diagnosticoCashflow(await leerCashflow(), hoyMadrid(), vencimientos)),
+    // H7-AP1: apuntes manuales con cf_lectura (READ ONLY, ROLLBACK). Ocurrencias de hoy a hoy + 12 meses. Solo recuentos.
+    diagnosticoApuntesCashflow: () => soloLectura(async (cliente) => {
+      const hoy = hoyMadrid();
+      // El mismo día 12 meses después (o el último del mes, si no lo tiene).
+      const hasta = fechaOcurrencia(sumarMeses(hoy.slice(0, 7), MESES_DIAGNOSTICO_OCURRENCIAS), Number(hoy.slice(8)));
+      const r = await cliente.query<Fila>(SQL_LECTURA_APUNTES.diagnostico, [hoy, hasta]);
+      if (r.rows.length !== 1) throw new Error(`DIAGNOSTICO_FILAS_INESPERADAS: ${r.rows.length}`);
+      const out: Record<string, number> = {};
+      for (const col of COLUMNAS_DIAGNOSTICO_APUNTES) out[col] = recuento(r.rows[0][col], col);
+      return out;
+    }),
     cerrar: () => pool.end(),
   };
 }

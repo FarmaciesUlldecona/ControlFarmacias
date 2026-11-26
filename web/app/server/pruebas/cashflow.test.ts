@@ -18,6 +18,7 @@ import {
 import { leerSemillaCashflow, registrarCashflow, vencimientoCashflow } from '../cashflow/rutas.ts';
 import { SQL_CASHFLOW, claveCategoria, diagnosticoCashflow, leerCashflowReal } from '../cashflow/lectura_real.ts';
 import { validarDiagnostico } from '../adaptador_real.ts';
+import { previsionesVacias } from '../cashflow/apuntes.ts';
 
 async function datosFixtures(): Promise<CashflowDTO> {
   const semilla = leerSemillaCashflow();
@@ -26,6 +27,8 @@ async function datosFixtures(): Promise<CashflowDTO> {
   return {
     ...semilla, farmacia: 'PIO', generado_at: p.generado_at, modo: 'FIXTURES', config: CONFIG_CASHFLOW,
     vencimientos: p.filas.map(vencimientoCashflow), pago: p.pago,
+    // H7-AP1: sin apuntes manuales (sus casos, en cashflow_apuntes.test.ts).
+    previsiones: previsionesVacias(semilla.hoy), escritura_cashflow: { habilitada: true, codigo: null, mensaje: null, autor: 'Marc' },
   };
 }
 const linea = (r: ResultadoCashflow, vista: 'PIO' | 'RITA' | 'CONSOLIDADO', categoria: string, concepto: string): Linea => {
@@ -1132,7 +1135,7 @@ describe('H7: ruta /api/cashflow', () => {
     let lecturas = 0;
     registrarCashflow(real, {
       modo: 'REAL', hoy: () => '2026-11-16',
-      leerReal: async () => { lecturas += 1; return leerCashflowReal(consultarSimulada(baseSimulada())); },
+      leerReal: async () => { lecturas += 1; return { ...await leerCashflowReal(consultarSimulada(baseSimulada())), previsiones: previsionesVacias('2026-11-16') }; },
       pantallaPagos: async () => construirPantalla(vencs, almacen.fuente(), { hoy: almacen.hoy, modo: 'REAL' }),
     });
     const r = await real.inject({ method: 'GET', url: '/api/cashflow' });
@@ -1143,7 +1146,8 @@ describe('H7: ruta /api/cashflow', () => {
     assert.ok(!JSON.stringify(j).includes('Gestoría')); // SL: solo recuentos
     // Sin importación: 200 con la lista vacía (la pantalla dice «Todavía no hay datos importados»).
     const vacia = Fastify();
-    registrarCashflow(vacia, { modo: 'REAL', hoy: () => '2026-11-16', leerReal: () => leerCashflowReal(consultarSimulada(baseSimulada({ importaciones: [] }))),
+    registrarCashflow(vacia, { modo: 'REAL', hoy: () => '2026-11-16',
+      leerReal: async () => ({ ...await leerCashflowReal(consultarSimulada(baseSimulada({ importaciones: [] }))), previsiones: previsionesVacias('2026-11-16') }),
       pantallaPagos: async () => construirPantalla(vencs, almacen.fuente(), { hoy: almacen.hoy, modo: 'REAL' }) });
     const v = (await vacia.inject({ method: 'GET', url: '/api/cashflow' })).json() as CashflowDTO;
     assert.deepEqual([v.importaciones, v.importes], [[], []]);

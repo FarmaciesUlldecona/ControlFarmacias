@@ -1,0 +1,15 @@
+{
+  "hoy": "2026-11-16",
+  "conceptos": [
+    {"id": "c7a00000-0000-4000-8000-000000000001", "cuenta": "PIO", "farmacia": "PIO", "categoria": "RS Gastos generales", "autor": "Marc", "creado_at": "2026-11-12T10:15:00.000Z", "anulado": false, "anulado_por": null, "anulado_at": null, "motivo_anulacion": null, "nombre": "Mantenimiento ascensor", "proveedor_cif": null}
+  ],
+  "recurrentes": [
+    {"id": "b7a00000-0000-4000-8000-000000000201", "cuenta": "RITA", "farmacia": "RITA", "categoria": "RS Gastos generales", "autor": "Marc", "creado_at": "2026-11-12T10:30:00.000Z", "anulado": false, "anulado_por": null, "anulado_at": null, "motivo_anulacion": null, "concepto": "Suministros", "importe": 180, "nota": "Cuota del contrato de mantenimiento del TPV", "frecuencia": "MENSUAL", "dia": 31, "inicio": "2027-01-31", "fin": "2027-12-31"}
+  ],
+  "apuntes": [
+    {"id": "e7a00000-0000-4000-8000-000000000101", "cuenta": "PIO", "farmacia": "PIO", "categoria": "RS Gastos generales", "autor": "Marc", "creado_at": "2026-11-12T10:16:00.000Z", "anulado": false, "anulado_por": null, "anulado_at": null, "motivo_anulacion": null, "fecha": "2027-02-05", "concepto": "Mantenimiento ascensor", "importe": 350, "nota": "Revisión anual del ascensor", "recurrente_id": null, "fecha_ocurrencia": null, "sustituido_factura_id": null, "sustituido_vencimiento_orden": null},
+    {"id": "e7a00000-0000-4000-8000-000000000102", "cuenta": "PIO", "farmacia": "PIO", "categoria": "RS Traspasos", "autor": "Marc", "creado_at": "2026-11-12T10:20:00.000Z", "anulado": false, "anulado_por": null, "anulado_at": null, "motivo_anulacion": null, "fecha": "2027-02-03", "concepto": "TRASPASO A FONDOS/VALORS", "importe": 2000, "nota": "Aportación acordada con el banco", "recurrente_id": null, "fecha_ocurrencia": null, "sustituido_factura_id": null, "sustituido_vencimiento_orden": null},
+    {"id": "e7a00000-0000-4000-8000-000000000103", "cuenta": "PIO", "farmacia": "PIO", "categoria": "RS Gastos generales", "autor": "Marc", "creado_at": "2026-11-12T10:25:00.000Z", "anulado": true, "anulado_por": "Marc", "anulado_at": "2026-11-13T08:00:00.000Z", "motivo_anulacion": "Duplicado del de Suministros", "fecha": "2027-02-15", "concepto": "Suministros", "importe": 120, "nota": null, "recurrente_id": null, "fecha_ocurrencia": null, "sustituido_factura_id": null, "sustituido_vencimiento_orden": null},
+    {"id": "e7a00000-0000-4000-8000-000000000104", "cuenta": "RITA", "farmacia": "RITA", "categoria": "RS Gastos generales", "autor": "Marc", "creado_at": "2026-11-12T10:31:00.000Z", "anulado": false, "anulado_por": null, "anulado_at": null, "motivo_anulacion": null, "fecha": "2027-03-31", "concepto": "Suministros", "importe": null, "nota": "Marzo sin cuota: promoción del proveedor", "recurrente_id": "b7a00000-0000-4000-8000-000000000201", "fecha_ocurrencia": "2027-03-31", "sustituido_factura_id": null, "sustituido_vencimiento_orden": null}
+  ]
+}

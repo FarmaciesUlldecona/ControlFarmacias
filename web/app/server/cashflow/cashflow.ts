@@ -2,7 +2,8 @@
  * H7: pantalla Cashflow. Módulo puro: lo usan el servidor (FIXTURES), el front (que recalcula al cambiar «Media / Excel»),
  * check_fixtures y las pruebas.
  *
- * Decisiones de Marc: el Excel es la referencia; la web solo lee (sin escrituras ni excepción nueva). Decenas y mes. Por
+ * Decisiones de Marc: el Excel es la referencia; la web solo lee lo importado (H7-AP1: escribe solo los apuntes de
+ * previsión de la migración 40, en sus propias tablas: apuntes.ts). Decenas y mes. Por
  * cuenta bancaria (PIO, RITA) más consolidado. RITA activa en Cashflow solo con datos bancarios: a RITA nunca se le suman
  * vencimientos del sistema; solo lo que trae la importación del Excel y sus saldos de banco.
  *
@@ -22,8 +23,8 @@
  *     a) PIO: vencimientos del sistema (contrato H6) de los conceptos del Excel que corresponden por nombre comercial
  *        (CORRESPONDENCIAS_PROVEEDOR, único punto). Sustituyen lo anotado en el Excel para ese concepto y decena; si los dos
  *        existen y difieren, «posible duplicado o diferencia».
- *     a') Apunte manual: hueco preparado, sin datos todavía (llegará con tablas del circuito). Sustituye al Excel de su
- *        concepto y decena; nunca a los vencimientos.
+ *     a') Apunte manual (H7-AP1, migración 40: sueltos y ocurrencias de recurrentes). Manda sobre el Excel y la media de
+ *        su concepto y decena; con vencimientos, gana el mayor en valor absoluto.
  *     b) Lo anotado en las decenas futuras del Excel (RITA, y PIO para lo no cubierto por a).
  *     c) Si la categoría no tiene nada en esa decena (ni a, ni a', ni b): media de la misma posición de decena (1.ª, 2.ª o
  *        3.ª del mes) en los últimos N meses reales (N = CONFIG_CASHFLOW.meses_media, único punto). Todas las categorías
@@ -52,6 +53,7 @@
  */
 import type { EstadoPago, Importe, SentidoVencimiento } from '../contrato.ts';
 import { esPagado, type EstadoPagoVencimiento } from '../pagos/pagos.ts';
+import type { EscrituraCashflow, PrevisionesCashflow } from './apuntes.ts';
 
 // ---------------------------------------------------------------------------
 // Configuración (único punto)
@@ -385,21 +387,42 @@ export interface OtraCuentaCashflow {
   saldos: number;
 }
 /**
- * H7-REAL-2: apunte manual (prioridad entre los vencimientos y el Excel). Hueco preparado: todavía no hay tabla ni datos
- * (llegará con tablas del circuito); el servidor no envía ninguno.
+ * H7-AP1: de dónde sale un apunte manual (migración 40): un apunte suelto o una ocurrencia de un recurrente. Lo que sale
+ * en el popup de la celda («Apunte manual: nota · Marc · fecha»).
+ */
+export interface OrigenApunte {
+  tipo: 'SUELTO' | 'OCURRENCIA';
+  /** SUELTO: id del apunte; OCURRENCIA: id del recurrente. */
+  id: string;
+  /** Fecha del apunte o de la ocurrencia. */
+  fecha: string;
+  nota: string | null;
+  autor: string;
+  creado_at: string;
+  /** Importe del apunte (siempre positivo: el sentido lo da la categoría). */
+  importe: number;
+}
+/**
+ * H7-REAL-2: apunte manual. H7-AP1: los da la migración 40 (apuntes sueltos y ocurrencias de recurrentes, apuntes.ts). El
+ * apunte manda sobre el Excel y la media de su concepto y decena; con vencimientos, gana el mayor en valor absoluto.
  */
 export interface ApunteManualCashflow {
   cuenta: string;
   decena_inicio: string;
   categoria: string;
   concepto: string | null;
-  /** Con el signo de la celda, como el Excel (RE suma, RS resta). */
+  /** Positivo, como en la BD: el sentido lo da la categoría (RE suma, RS resta). */
   importe: Importe;
+  origen?: OrigenApunte;
 }
 /** Vencimiento del sistema (contrato H6, solo PIO) con lo que necesita el cashflow. */
 export interface VencimientoCashflow {
   vencimiento_id: string;
   factura_id: string;
+  /** H7-AP1: orden del vencimiento en su factura (la sustitución de un apunte lo guarda). null = sin orden. */
+  vencimiento_orden?: number | null;
+  /** H7-AP1: CIF comparable del proveedor (un concepto nuevo con CIF coincide con sus vencimientos). */
+  proveedor_cif?: string | null;
   numero_factura: string | null;
   proveedor_comercial: string | null;
   proveedor_nombre: string;
@@ -430,6 +453,10 @@ export interface CashflowDTO extends DatosCashflow {
   config: ConfigCashflow;
   vencimientos: VencimientoCashflow[];
   pago: EstadoPago;
+  /** H7-AP1: apuntes manuales, recurrentes, conceptos nuevos y ocurrencias (migración 40; REAL: leídos con cf_lectura). */
+  previsiones: PrevisionesCashflow;
+  /** H7-AP1: si se pueden crear y anular apuntes (REAL: credencial de cf_cashflow_web) y, si no, por qué. */
+  escritura_cashflow: EscrituraCashflow;
 }
 
 // ---------------------------------------------------------------------------
@@ -499,6 +526,8 @@ export interface Celda {
   frente: { excel: number; media: number } | null;
   /** Importes desconocidos (null) de la celda. */
   desconocidos: number;
+  /** H7-AP1: apuntes manuales de la celda (también si los vencimientos les ganan). */
+  apuntes: readonly OrigenApunte[];
   /** Consolidado: celdas de cada cuenta. */
   partes: Celda[];
 }
@@ -670,7 +699,7 @@ export function estadoImportacion(imps: readonly ImportacionCashflow[], hoy: str
 // ---------------------------------------------------------------------------
 
 const claveLinea = (categoria: string, concepto: string) => `${categoria}\u0000${concepto}`;
-const NEUTRO = { vencimientos: null, media: null, diferencia: false, desconocidos: 0, partes: [], comparada: null, frente: null } as const;
+const NEUTRO = { vencimientos: null, media: null, diferencia: false, desconocidos: 0, partes: [], comparada: null, frente: null, apuntes: [] } as const;
 
 interface Valida extends Omit<ImporteCashflow, 'concepto'> {
   cuenta: CuentaCashflow; concepto: string; sentido: SentidoMovimiento; clase: ClaseMovimiento;
@@ -799,6 +828,8 @@ export function calcularCashflow(
   const mesActual = hoy.slice(0, 7);
   const extremos = [
     ...validas.map((f) => f.decena_inicio), ...saldos.map((s) => s.decena_inicio),
+    // H7-AP1: un apunte manual más allá de los datos del Excel también entra en el horizonte.
+    ...(dto.apuntes_manuales ?? []).map((a) => a.decena_inicio).filter(esDecenaInicio),
     moverDecena(actual, -config.decenas_pasadas), moverDecena(actual, config.decenas_proximas - 1),
     `${sumarMeses(mesActual, -config.meses_pasados)}-01`, `${sumarMeses(mesActual, config.meses_proximos - 1)}-21`,
   ].sort();
@@ -853,8 +884,8 @@ export function calcularCashflow(
       };
     }
 
-    // a) Apuntes manuales (hueco preparado, sin datos todavía): sustituyen al Excel de su concepto y decena. Solo decenas
-    // futuras (lo real es el Excel). H7-REAL-8: van antes que los vencimientos, que se comparan con ellos (b).
+    // a) Apuntes manuales (H7-AP1: migración 40): mandan sobre el Excel y la media de su concepto y decena. Solo decenas
+    // futuras (lo real es el Excel). H7-REAL-8: van antes que los vencimientos, que se comparan con ellos (c).
     for (const a of dto.apuntes_manuales ?? []) {
       if (a.cuenta !== cuenta || !esDecenaInicio(a.decena_inicio) || esReal(a.decena_inicio) || ultimaReal === null) continue;
       const c = claseMovimiento(cuenta, a.categoria, a.concepto);
@@ -865,6 +896,7 @@ export function calcularCashflow(
       l.celdas[a.decena_inicio] = {
         ...NEUTRO, partes: [], cuenta, decena: a.decena_inicio, real: false, fuente: 'MANUAL', importe: s.suma, en_saldo: true,
         excel: previa?.excel ?? null, excel_filas: previa?.excel_filas ?? 0, desconocidos: (previa?.fuente === 'MANUAL' ? previa.desconocidos : 0) + s.desconocidos,
+        apuntes: [...(previa?.fuente === 'MANUAL' ? previa.apuntes : []), ...(a.origen ? [a.origen] : [])],
       };
     }
 
@@ -893,9 +925,10 @@ export function calcularCashflow(
         for (const d of decenas) {
           if (esReal(d)) continue;
           const previa = l.celdas[d];
-          if (previa?.fuente === 'MANUAL') continue;
           const m0 = estimarCategoria(regla, d, porDecena, primera, ultimaReal, config);
           const media = m0 !== null && m0.media !== null && cent(m0.media) !== 0 ? m0 : null;
+          // H7-AP1: el apunte manual manda; la media del concepto queda a la vista en su desglose (no suma).
+          if (previa?.fuente === 'MANUAL') { if (media !== null) l.celdas[d] = { ...previa, media }; continue; }
           if (media === null) continue;
           if (previa === undefined) {
             l.celdas[d] = { ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe: media.media, en_saldo: true, excel: null, excel_filas: 0, media };
@@ -950,7 +983,7 @@ export function calcularCashflow(
           : {
             ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'VENCIMIENTOS', importe, en_saldo: true,
             excel, excel_filas: previa?.excel_filas ?? 0, vencimientos: dv, media: previa?.media ?? null, frente: previa?.frente ?? null,
-            diferencia, desconocidos: dv.sin_importe,
+            diferencia, desconocidos: dv.sin_importe, apuntes: previa?.apuntes ?? [],
             comparada: base === null || !config.vencimientos_como_minimo ? null : { fuente: base.fuente, importe: base.importe },
           };
       }
@@ -1040,6 +1073,7 @@ export function calcularCashflow(
           diferencia: partes.some((p) => p.diferencia), desconocidos: cuentan.reduce((a, p) => a + p.desconocidos, 0), partes,
           media: partes.find((p) => p.media)?.media ?? null, vencimientos: partes.find((p) => p.vencimientos)?.vencimientos ?? null,
           comparada: partes.find((p) => p.comparada)?.comparada ?? null, frente: partes.length === 1 ? partes[0].frente : null,
+          apuntes: partes.flatMap((p) => p.apuntes),
         };
       }
     }

@@ -33,6 +33,9 @@
  * H7-REAL: DIAGNOSTICO cashflow (migración 38): vigente sí/no, días desde la vigente, última ERROR sí/no, filas de
  * importes y saldos por cuenta, decenas reales con diferencia banco/fórmulas (E7) y decenas que no cuadran.
  * H7-REAL-2: recuentos de importes por cuenta y categoría (reales / anotados a futuro) y del efectivo de cada cuenta.
+ * H7-AP1 (migración 40): DIAGNOSTICO cashflow_apuntes con cf_lectura (apuntes vigentes, anulados y sustituidos,
+ * ocurrencias anuladas, recurrentes vigentes y anulados, ocurrencias en los próximos 12 meses, conceptos nuevos y anulados)
+ * y DIAGNOSTICO credencial_cashflow con cf_cashflow_web (conecta sí/no, en READ ONLY y sin escribir).
  * Solo recuentos, sí/no o nombres de columna; nunca valores.
  * Código de salida: 0 si todas OK; 1 si alguna falla (también sin conexión); 2 si falta .env.web o está incompleto.
  */
@@ -43,6 +46,7 @@ import { configuracionPagos, crearAlmacenPagosReal, crearPoolPagos, fuenteDesdeF
 import { construirPantalla, hoyMadrid } from './pagos/pagos.ts';
 import { vencimientoCashflow } from './cashflow/rutas.ts';
 import type { VencimientoCashflow } from './cashflow/cashflow.ts';
+import { configuracionCashflow, crearAlmacenCashflowReal, crearPoolCashflow } from './cashflow/adaptador_real.ts';
 
 function primeraLinea(e: unknown): string {
   const m = e instanceof Error ? e.message : String(e);
@@ -131,7 +135,35 @@ try {
   console.log(`DIAGNOSTICO cashflow ${error(e)}`);
 }
 
+// H7-AP1: apuntes manuales de Cashflow (migración 40) con cf_lectura (READ ONLY): apuntes vigentes, anulados y
+// sustituidos, ocurrencias anuladas una a una, recurrentes vigentes y anulados, ocurrencias en los próximos 12 meses
+// (cf_cashflow_ocurrencias) y conceptos nuevos. Solo recuentos.
+try {
+  const d = await real.diagnosticoApuntesCashflow();
+  console.log(`DIAGNOSTICO cashflow_apuntes ${Object.entries(d).map(([k, v]) => `${k}=${v}`).join(' ')}`);
+} catch (e) {
+  fallos += 1;
+  console.log(`DIAGNOSTICO cashflow_apuntes ${error(e)}`);
+}
+
 await real.cerrar();
+
+// H7-AP1: credencial de Cashflow (cf_cashflow_web), transacción READ ONLY y ROLLBACK. Sin escrituras. Solo sí/no y un recuento.
+const cfgCashflow = configuracionCashflow(leerEnvWeb());
+if (!cfgCashflow.ok) {
+  fallos += 1;
+  console.log(`DIAGNOSTICO credencial_cashflow SIN_CONFIGURACION ${cfgCashflow.codigo}: ${cfgCashflow.mensaje}`);
+} else {
+  const cf = crearAlmacenCashflowReal({ pool: crearPoolCashflow(cfgCashflow.config) });
+  try {
+    const d = await cf.probarCredencial();
+    console.log(`DIAGNOSTICO credencial_cashflow conecta=sí filas_visibles=${d.filas}`);
+  } catch (e) {
+    fallos += 1;
+    console.log(`DIAGNOSTICO credencial_cashflow ${error(e)}`);
+  }
+  await cf.cerrar?.();
+}
 
 // H6-REAL: credencial de pagos (cf_pagos_web), transacción READ ONLY y ROLLBACK. Sin escrituras. Solo sí/no y un recuento.
 const cfgPagos = configuracionPagos(leerEnvWeb());
@@ -168,5 +200,5 @@ if (!cfgTrab.ok) {
   await trab.cerrar?.();
 }
 
-console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + ${5 + NOMBRES_DIAGNOSTICO.length} diagnósticos, ${fallos} con error`);
+console.log(`TOTAL ${Object.keys(CONSULTAS).length} consultas + ${7 + NOMBRES_DIAGNOSTICO.length} diagnósticos, ${fallos} con error`);
 process.exit(fallos ? 1 : 0);

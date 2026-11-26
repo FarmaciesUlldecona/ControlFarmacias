@@ -7,16 +7,23 @@
  *   3. Importes y saldos SOLO de la importación vigente y de las cuentas de la pantalla (PIO, RITA). Sin vigente, no se
  *      leen («Todavía no hay datos importados»).
  *   4. Otras cuentas (SL): solo recuentos de filas de la vigente, nunca importes.
+ *   5. H7-AP1 (leerPrevisionesReal, migración 40): conceptos nuevos, recurrentes y apuntes de PIO y RITA, y las
+ *      ocurrencias de la ventana con cf_cashflow_ocurrencias, en la misma transacción.
  *
  * Falla cerrado: cualquier valor con forma inesperada, más de una vigente, una vigente que no es OK, una fila de otra
  * importación, una farmacia que no es la de su cuenta o un saldo repetido lanzan error (nunca se inventa un 0).
  */
 import type { Fila, ValorDiagnostico } from '../contrato.ts';
 import {
-  CONFIG_CASHFLOW, CUENTAS_CASHFLOW, MESES_INDICADOR, calcularCashflow, comercialDeConcepto, esDecenaInicio, fechaMadrid, moverDecena, variacionMensual,
-  type Celda, type ResultadoCashflow, type VencimientoCashflow,
+  CONFIG_CASHFLOW, CUENTAS_CASHFLOW, MESES_INDICADOR, calcularCashflow, comercialDeConcepto, esDecenaInicio, esFecha, fechaMadrid, moverDecena, variacionMensual,
+  type Celda, type CuentaCashflow, type ResultadoCashflow, type VencimientoCashflow,
   type CuentaCashflowFila, type DatosCashflow, type ImportacionCashflow, type ImporteCashflow, type OtraCuentaCashflow, type SaldoCashflow,
 } from './cashflow.ts';
+import {
+  FRECUENCIAS, esCuentaCashflow, ventanaOcurrencias,
+  type ApunteCashflow, type ConceptoCashflow, type Frecuencia, type OcurrenciaCashflow, type PrevisionesCashflow, type RecurrenteCashflow,
+} from './apuntes.ts';
+import { SQL_LECTURA_APUNTES } from './sql_apuntes.ts';
 
 export const OBJETOS_CASHFLOW = ['cf_cashflow_importaciones', 'cf_cashflow_cuentas', 'cf_cashflow_importes', 'cf_cashflow_saldos'] as const;
 
@@ -169,6 +176,95 @@ export async function leerCashflowReal(consultar: (sql: string, params: unknown[
     return { cuenta, importes: entero(r.importes, 'importes'), saldos: entero(r.saldos, 'saldos') };
   });
   return { importaciones, cuentas, importes, saldos, otras_cuentas };
+}
+
+// ---------------------------------------------------------------------------
+// H7-AP1: apuntes manuales (migración 40) con cf_lectura, en la misma transacción READ ONLY del cashflow
+// ---------------------------------------------------------------------------
+
+function cuentaApunte(r: Fila): { cuenta: CuentaCashflow; farmacia: string } {
+  const cuenta = texto(r.cuenta, 'cuenta');
+  if (!esCuentaCashflow(cuenta)) throw new Error('CASHFLOW_CUENTA_NO_PEDIDA');
+  // La farmacia la pone el trigger (igual a la cuenta): si no, falla cerrado.
+  if (r.farmacia !== cuenta) throw new Error('CASHFLOW_FARMACIA_NO_CUADRA');
+  return { cuenta, farmacia: cuenta };
+}
+function momento(v: unknown, campo: string): string {
+  const t = v instanceof Date ? v.getTime() : typeof v === 'string' ? Date.parse(v.trim().replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00')) : NaN;
+  if (Number.isNaN(t)) throw new Error(`CASHFLOW_FECHA_NO_VALIDA: ${campo}`);
+  return new Date(t).toISOString();
+}
+function fechaDia(v: unknown, campo: string): string {
+  const s = decena(v, campo);
+  if (!esFecha(s)) throw new Error(`CASHFLOW_FECHA_NO_VALIDA: ${campo}`);
+  return s;
+}
+function positivo(v: unknown, campo: string): number {
+  const n = importeReal(v, campo);
+  if (n === null || n <= 0) throw new Error(`CASHFLOW_IMPORTE_NO_VALIDO: ${campo}`);
+  return n;
+}
+function comunesApunte(r: Fila) {
+  if (typeof r.anulado !== 'boolean') throw new Error('CASHFLOW_VALOR_NO_VALIDO: anulado');
+  return {
+    id: uuid(r.id, 'id'), ...cuentaApunte(r), categoria: texto(r.categoria, 'categoria'), autor: texto(r.autor, 'autor'),
+    creado_at: momento(r.creado_at, 'creado_at'), anulado: r.anulado,
+    anulado_por: textoONull(r.anulado_por, 'anulado_por'), anulado_at: r.anulado_at === null || r.anulado_at === undefined ? null : momento(r.anulado_at, 'anulado_at'),
+    motivo_anulacion: textoONull(r.motivo_anulacion, 'motivo_anulacion'),
+  };
+}
+export function filaAConcepto(r: Fila): ConceptoCashflow {
+  return { ...comunesApunte(r), nombre: texto(r.nombre, 'nombre'), proveedor_cif: textoONull(r.proveedor_cif, 'proveedor_cif') };
+}
+export function filaARecurrente(r: Fila): RecurrenteCashflow {
+  const frecuencia = texto(r.frecuencia, 'frecuencia');
+  if (!(FRECUENCIAS as readonly string[]).includes(frecuencia)) throw new Error('CASHFLOW_VALOR_NO_VALIDO: frecuencia');
+  const dia = entero(r.dia, 'dia');
+  if (dia < 1 || dia > 31) throw new Error('CASHFLOW_VALOR_NO_VALIDO: dia');
+  return {
+    ...comunesApunte(r), concepto: texto(r.concepto, 'concepto'), importe: positivo(r.importe, 'importe'), nota: textoONull(r.nota, 'nota'),
+    frecuencia: frecuencia as Frecuencia, dia, inicio: fechaDia(r.inicio, 'inicio'), fin: r.fin === null || r.fin === undefined ? null : fechaDia(r.fin, 'fin'),
+  };
+}
+export function filaAApunte(r: Fila): ApunteCashflow {
+  const recurrente = r.recurrente_id === null || r.recurrente_id === undefined ? null : uuid(r.recurrente_id, 'recurrente_id');
+  const importe = importeReal(r.importe, 'importe');
+  // Dos tipos: suelto (importe > 0, sin recurrente) o anulación de una ocurrencia (recurrente y fecha, sin importe).
+  if (recurrente === null ? importe === null || importe <= 0 : importe !== null || r.fecha_ocurrencia === null || r.fecha_ocurrencia === undefined) {
+    throw new Error('CASHFLOW_VALOR_NO_VALIDO: tipo de apunte');
+  }
+  const orden = r.sustituido_vencimiento_orden === null || r.sustituido_vencimiento_orden === undefined ? null : entero(r.sustituido_vencimiento_orden, 'sustituido_vencimiento_orden');
+  return {
+    ...comunesApunte(r), fecha: fechaDia(r.fecha, 'fecha'), concepto: texto(r.concepto, 'concepto'), importe, nota: textoONull(r.nota, 'nota'),
+    recurrente_id: recurrente, fecha_ocurrencia: recurrente === null ? null : fechaDia(r.fecha_ocurrencia, 'fecha_ocurrencia'),
+    sustituido_factura_id: r.sustituido_factura_id === null || r.sustituido_factura_id === undefined ? null : uuid(r.sustituido_factura_id, 'sustituido_factura_id'),
+    sustituido_vencimiento_orden: orden,
+  };
+}
+export function filaAOcurrencia(r: Fila): OcurrenciaCashflow {
+  return {
+    recurrente_id: uuid(r.recurrente_id, 'recurrente_id'), ...cuentaApunte(r), categoria: texto(r.categoria, 'categoria'),
+    concepto: texto(r.concepto, 'concepto'), importe: positivo(r.importe, 'importe'), fecha: fechaDia(r.fecha, 'fecha'),
+  };
+}
+
+/**
+ * H7-AP1: conceptos nuevos, recurrentes y apuntes de PIO y RITA, y las ocurrencias de la ventana (cf_cashflow_ocurrencias,
+ * como dice el esquema: meses cortos → último día del mes; sin las anuladas una a una). Con `consultar` de la misma
+ * transacción READ ONLY del cashflow. Falla cerrado ante una forma inesperada o una ocurrencia de un recurrente que no
+ * se ha leído.
+ */
+export async function leerPrevisionesReal(consultar: (sql: string, params: unknown[]) => Promise<Fila[]>, hoy: string): Promise<PrevisionesCashflow> {
+  const cuentas = [...CUENTAS_CASHFLOW] as string[];
+  const ventana = ventanaOcurrencias(hoy);
+  const conceptos = (await consultar(SQL_LECTURA_APUNTES.conceptos, [cuentas])).map(filaAConcepto);
+  const recurrentes = (await consultar(SQL_LECTURA_APUNTES.recurrentes, [cuentas])).map(filaARecurrente);
+  const apuntes = (await consultar(SQL_LECTURA_APUNTES.apuntes, [cuentas])).map(filaAApunte);
+  const ocurrencias = (await consultar(SQL_LECTURA_APUNTES.ocurrencias, [ventana.desde, ventana.hasta])).map(filaAOcurrencia);
+  const ids = new Set(recurrentes.filter((r) => !r.anulado).map((r) => r.id));
+  if (ocurrencias.some((o) => !ids.has(o.recurrente_id) || o.fecha < ventana.desde || o.fecha > ventana.hasta)) throw new Error('CASHFLOW_OCURRENCIA_INESPERADA');
+  for (const xs of [conceptos, recurrentes, apuntes]) if (new Set(xs.map((x) => x.id)).size !== xs.length) throw new Error('CASHFLOW_ID_REPETIDO');
+  return { conceptos, recurrentes, apuntes, ocurrencias, ventana };
 }
 
 /** Cuentas con recuento propio en el diagnóstico; cualquier otra suma en «otras». */

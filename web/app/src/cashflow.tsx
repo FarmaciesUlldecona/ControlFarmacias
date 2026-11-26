@@ -1,5 +1,7 @@
 /**
- * H7: pantalla Cashflow (solo lectura). Decenas (3 pasadas y 9 próximas) o meses (3 y 9); PIO, RITA o consolidado.
+ * H7: pantalla Cashflow. Decenas (3 pasadas y 9 próximas) o meses (3 y 9); PIO, RITA o consolidado. H7-AP1: apuntes
+ * manuales de la migración 40 (cashflow_apuntes.tsx): desde la celda futura de un concepto, «Añadir apunte» y la sección
+ * «Apuntes manuales»; marca «a» en la celda.
  * El cálculo es el de server/cashflow/cashflow.ts: el front lo repite al cambiar «Media / Excel» (elección guardada solo
  * en este navegador). H7-REAL: importación vigente de las tablas cf_cashflow_*; sin vigente, «Todavía no hay datos
  * importados». El saldo final se abre en su desglose: banco frente a fórmulas (E7, informativa) y cuadre de control.
@@ -15,9 +17,11 @@ import {
   type AvisoCashflow, type CashflowDTO, type Celda, type CeldaColumna, type Columna, type Escala, type EstadoImportacion,
   type ResultadoCashflow, type ResultadoVista, type TipoColumna, type VencimientoCashflow, type VistaCuenta,
 } from '../server/cashflow/cashflow.ts';
+import { apuntesMotor, candidatosSustitucion, conceptoEnPlantilla, limiteFuturo, plantillaCuenta, primerDiaFuturo } from '../server/cashflow/apuntes.ts';
 import { useApiRecargable } from './api.ts';
 import { euros, fechaCorta, fechaHora, plural } from './formato.ts';
 import { Cabecera, MOVIL, useMedia } from './ui.tsx';
+import { Dialogo, FormularioApunte, SeccionApuntes, Sugerencia, contextoDe, type CeldaFija } from './cashflow_apuntes.tsx';
 
 // ---------------------------------------------------------------------------
 // Formato
@@ -309,10 +313,34 @@ function IndicadorVariacion({ r }: { r: ResultadoCashflow }) {
 // Tabla
 // ---------------------------------------------------------------------------
 
-interface Abrir { titulo: string; col: Columna; celda: CeldaColumna; externo?: boolean; incluye?: string[] }
+interface Abrir {
+  titulo: string; col: Columna; celda: CeldaColumna | null; externo?: boolean; incluye?: string[];
+  /** H7-AP1: celda de un concepto en la vista de una cuenta: desde ella se anota un apunte manual. */
+  linea?: { cuenta: VistaCuenta; categoria: string; concepto: string; incluye: string[] };
+}
 
-function CeldaTabla({ c, col, titulo, onAbrir, clave }: { c: CeldaColumna | null; col: Columna; titulo: string; onAbrir: (a: Abrir) => void; clave: string }) {
-  if (c === null) return <td className={`cf-c vacia ${col.actual ? 'actual' : ''}`} />;
+/** H7-AP1: popup de la marca «a»: «Apunte manual: nota · Marc · fecha». */
+function textoApuntes(cs: readonly Celda[]): string {
+  const xs = cs.flatMap((x) => x.apuntes.map((a) => ({ a, cuenta: x.fuente === 'MANUAL' })));
+  const lineas = xs.map(({ a }) => `Apunte manual: ${a.nota ?? 'sin nota'} · ${a.autor} · ${fechaCorta(a.fecha)}`);
+  return `${lineas.join('\n')}${xs.some((x) => !x.cuenta) ? '\n(ganan los vencimientos, mayores que el apunte)' : ''}`;
+}
+
+function CeldaTabla({ c, col, titulo, onAbrir, clave, linea, previsto = false }: {
+  c: CeldaColumna | null; col: Columna; titulo: string; onAbrir: (a: Abrir) => void; clave: string; linea?: Abrir['linea']; previsto?: boolean;
+}) {
+  if (c === null) {
+    // H7-AP1: una celda vacía de un concepto, en una columna con decenas futuras, también se abre para anotar un apunte.
+    if (!linea || linea.cuenta === 'CONSOLIDADO' || !previsto) return <td className={`cf-c vacia ${col.actual ? 'actual' : ''}`} />;
+    return (
+      <td className={`cf-c vacia ${col.actual ? 'actual' : ''}`} data-cf-celda={clave} data-cf-tipo="vacia">
+        <button type="button" className="cf-cbtn cf-cbtn-vacio" onClick={() => onAbrir({ titulo, col, celda: null, linea })}
+          aria-label={`${titulo} · ${textoColumnaLargo(col)}: sin movimientos`} title={`${titulo} · ${textoColumnaLargo(col)}: sin movimientos (anotar un apunte manual)`} />
+
+      </td>
+    );
+  }
+  const apuntes = c.celdas.flatMap((x) => x.apuntes);
   const usaMedia = c.fuentes.includes('MEDIA') && c.celdas.some((x) => x.fuente === 'MEDIA' && x.en_saldo);
   // H7-REAL-9: en la cifra de un concepto y decena, la otra de «Excel frente a media» (la que no cuenta), a la vista.
   const f = c.celdas.length === 1 ? c.celdas[0].frente : null;
@@ -323,11 +351,12 @@ function CeldaTabla({ c, col, titulo, onAbrir, clave }: { c: CeldaColumna | null
   const conMedia = c.tipo !== 'real' && usaMedia;
   return (
     <td className={`cf-c ${c.tipo} f-${fuente}${col.actual ? ' actual' : ''}`} data-cf-celda={clave} data-cf-tipo={c.tipo} data-cf-fuente={fuente}>
-      <button type="button" className="cf-cbtn" onClick={() => onAbrir({ titulo, col, celda: c })}
-        title={`${titulo} · ${textoColumnaLargo(col)}: ${eurosExactos(c.importe)}${conMedia ? ' (incluye media calculada)' : ''} (ver de dónde sale)`}>
+      <button type="button" className="cf-cbtn" onClick={() => onAbrir({ titulo, col, celda: c, linea })}
+        title={`${titulo} · ${textoColumnaLargo(col)}: ${eurosExactos(c.importe)}${conMedia ? ' (incluye media calculada)' : ''}${apuntes.length ? `\n${textoApuntes(c.celdas)}` : ''} (ver de dónde sale)`}>
         <span className="cf-linea1">
           {c.diferencia && <span className="cf-dif" title={TEXTO_POSIBLE_DUPLICADO} data-cf-diferencia>!</span>}
           {conMedia && <span className="cf-marca-media" title="Media calculada" aria-label="media" data-cf-marca-media>m</span>}
+          {apuntes.length > 0 && <span className="cf-marca-apunte" title={textoApuntes(c.celdas)} aria-label="apunte manual" data-cf-marca-apunte={apuntes.length}>a</span>}
           <span className="cf-num">{c.importe === null && c.desconocidos > 0 ? 'pend.' : cifra(c.importe)}</span>
         </span>
         {c.desconocidos > 0 && <span className="cf-sub aviso">+{c.desconocidos} sin importe</span>}
@@ -376,7 +405,8 @@ function Tabla({ r, v, cols, onAbrir, onAbrirSaldo }: {
       ...(abierta ? g.lineas.map((l) => (
         <tr key={l.clave} className={`cf-concepto${l.media ? ' media' : ''}`} data-cf-concepto={l.concepto}>
           <th scope="row"><span className="cf-concepto-nombre" title={l.incluye.length ? `${l.concepto} (incluye: ${l.incluye.join(', ')})` : l.concepto}>{l.concepto}</span></th>
-          {cols.map((c) => <CeldaTabla key={c.clave} c={celdaColumna(l, c, v)} col={c} titulo={`${l.concepto} (${g.categoria})`} onAbrir={(a) => abrir({ ...a, incluye: l.incluye })} clave={`${k}|${l.concepto}|${c.clave}`} />)}
+          {cols.map((c) => <CeldaTabla key={c.clave} c={celdaColumna(l, c, v)} col={c} titulo={`${l.concepto} (${g.categoria})`} onAbrir={(a) => abrir({ ...a, incluye: l.incluye })} clave={`${k}|${l.concepto}|${c.clave}`}
+            linea={{ cuenta: v.vista, categoria: l.categoria, concepto: l.concepto, incluye: l.incluye }} previsto={tipoColumna(v, c) !== 'real'} />)}
         </tr>
       )) : []),
     ];
@@ -506,7 +536,26 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
             : <>Excel <strong className="cf-num">{eurosExactos(Math.abs(c.frente.excel))}</strong> (superior a la media {eurosExactos(Math.abs(c.frente.media))}).</>}
         </p>
       )}
-      {c.fuente === 'MANUAL' && <p>Apunte manual para esta decena: sustituye a lo anotado en el Excel{c.excel_filas > 0 ? ` (${eurosExactos(c.excel)})` : ''}.</p>}
+      {/* H7-AP1: el apunte manual manda sobre el Excel y la media; con vencimientos, gana el mayor en valor absoluto. */}
+      {c.apuntes.length > 0 && (
+        <>
+          <p className={c.fuente === 'MANUAL' ? 'cf-nota azul' : 'cf-nota'} data-cf-apunte-manda={c.fuente === 'MANUAL' ? 'si' : 'no'}>
+            {c.fuente === 'MANUAL'
+              ? <>El apunte manual manda en esta decena{c.excel_filas > 0 ? <> sobre lo anotado en el Excel ({eurosExactos(c.excel)})</> : null}
+                {c.media ? <>{c.excel_filas > 0 ? ' y' : ' sobre'} la media del concepto ({eurosExactos(c.media.media)})</> : null}{c.excel_filas > 0 || c.media ? ': no suman.' : '.'}</>
+              : <>Hay un apunte manual en esta decena, pero los vencimientos son mayores: cuentan ellos.</>}
+          </p>
+          <ul className="cf-venc" data-cf-apuntes>
+            {c.apuntes.map((a) => (
+              <li key={`${a.tipo}|${a.id}|${a.fecha}`} data-cf-apunte={a.id}>
+                <span>Apunte manual: {a.nota ?? 'sin nota'} · {a.autor} · {fechaCorta(a.fecha)}</span>
+                <span className="tenue">{a.tipo === 'OCURRENCIA' ? 'ocurrencia de un recurrente' : 'apunte suelto'} · creado el {fechaCorta(a.creado_at)}</span>
+                <span className="cf-num">{eurosExactos((c.importe ?? c.comparada?.importe ?? 0) < 0 ? -a.importe : a.importe)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       {c.fuente === 'REAL' && <p>Anotado en el Excel en una decena que ya tiene saldo de banco{c.excel_filas > 1 ? ` (${c.excel_filas} filas)` : ''}.</p>}
       {c.fuente === 'EXCEL' && (
         <p>Anotado en las decenas futuras del Excel{c.excel_filas > 1 ? ` (${c.excel_filas} filas)` : ''}
@@ -541,7 +590,7 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
           <ListaVenc vs={c.vencimientos.cargo_negativo} titulo="Importe negativo: revisar (no suman)" />
         </>
       )}
-      {c.media && (
+      {c.media && c.apuntes.length === 0 && (
         <>
           {c.media.excluidos.length > 0 && (
             <>
@@ -575,35 +624,43 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
   );
 }
 
-function Dialogo({ titulo, subtitulo, onCerrar, children, datos }: { titulo: string; subtitulo: string; onCerrar: () => void; children: ReactNode; datos?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    ref.current?.focus();
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onCerrar(); };
-    window.addEventListener('keydown', esc);
-    return () => window.removeEventListener('keydown', esc);
-  }, [onCerrar]);
+/**
+ * H7-AP1: panel «Apunte manual» de la celda de un concepto (vista PIO o RITA) en una columna con decenas futuras: fecha
+ * dentro de la columna y después del último saldo de banco. El concepto tiene que estar en la plantilla del Excel o
+ * entre los conceptos nuevos (si la línea suma conceptos equivalentes, el primero que esté).
+ */
+function PanelApunte({ abrir, d, onCambio }: { abrir: Abrir; d: CashflowDTO; onCambio: (texto: string) => void }) {
+  const l = abrir.linea;
+  if (!l || l.cuenta === 'CONSOLIDADO') return null;
+  const limite = limiteFuturo(d, l.cuenta);
+  const desde = limite === null ? null : [primerDiaFuturo(limite), abrir.col.desde].sort()[1];
+  if (desde === null || desde > abrir.col.hasta) return null; // columna ya real: lo real es el Excel
+  const pl = plantillaCuenta(d, d.previsiones, l.cuenta);
+  const concepto = [l.concepto, ...l.incluye].map((x) => conceptoEnPlantilla(pl, l.categoria, x)).find((x) => x !== null) ?? null;
+  const fija: CeldaFija | null = concepto === null ? null : {
+    cuenta: l.cuenta, categoria: l.categoria, concepto, desde, hasta: abrir.col.hasta,
+    texto: abrir.col.escala === 'decenas' ? `la decena ${textoDecenaLargo(abrir.col.clave)}` : `el mes ${textoColumnaLargo(abrir.col)}`,
+  };
   return (
-    <div className="cf-velo" onClick={onCerrar}>
-      <div className="cf-desglose tarjeta" role="dialog" aria-modal="true" aria-labelledby="t-cf-desglose" tabIndex={-1} ref={ref}
-        onClick={(e) => { e.stopPropagation(); if ((e.target as HTMLElement).closest('a')) onCerrar(); }} data-cf-desglose={datos ?? ''}>
-        <header>
-          <div>
-            <h2 id="t-cf-desglose">{titulo}</h2>
-            <span className="tenue">{subtitulo}</span>
-          </div>
-          <button type="button" className="boton-secundario" onClick={onCerrar}>Cerrar</button>
-        </header>
-        <div className="cf-desglose-cuerpo">{children}</div>
-      </div>
-    </div>
+    <section className="cf-desglose-celda ap-panel" data-ap-panel>
+      <h3>Apunte manual <span className="tenue">· manda sobre el Excel y la media de este concepto</span></h3>
+      {fija === null
+        ? <p className="cf-nota" data-ap-panel-sin-plantilla>Este concepto no está en la plantilla del Excel vigente: usa «Añadir apunte» con un concepto nuevo.</p>
+        : <FormularioApunte d={d} fija={fija} onHecho={onCambio} />}
+    </section>
   );
 }
 
-function Desglose({ abrir, d, onCerrar }: { abrir: Abrir; d: CashflowDTO; onCerrar: () => void }) {
-  const celdas = abrir.celda.celdas.flatMap((c) => (c.partes.length ? c.partes : [c]));
+function Desglose({ abrir, d, onCerrar, onCambio }: { abrir: Abrir; d: CashflowDTO; onCerrar: () => void; onCambio: (texto: string) => void }) {
+  const celdas = (abrir.celda?.celdas ?? []).flatMap((c) => (c.partes.length ? c.partes : [c]));
+  // H7-AP1: facturas que pueden sustituir a un apunte de esta celda.
+  const ids = new Set(celdas.flatMap((c) => c.apuntes.map((a) => `${a.tipo}|${a.id}|${a.fecha}`)));
+  const sugerencias = ids.size === 0 ? [] : candidatosSustitucion(contextoDe(d), d.vencimientos)
+    .filter((c) => ids.has(c.tipo === 'SUELTO' ? `SUELTO|${c.apunte_id}|${c.fecha}` : `OCURRENCIA|${c.recurrente_id}|${c.fecha}`));
+  const subtitulo = abrir.celda === null ? `${textoColumnaLargo(abrir.col)} · sin movimientos`
+    : `${textoColumnaLargo(abrir.col)} · ${TEXTO_TIPO[abrir.celda.tipo]} · total ${eurosExactos(abrir.celda.importe)}`;
   return (
-    <Dialogo titulo={abrir.titulo} subtitulo={`${textoColumnaLargo(abrir.col)} · ${TEXTO_TIPO[abrir.celda.tipo]} · total ${eurosExactos(abrir.celda.importe)}`} onCerrar={onCerrar}>
+    <Dialogo titulo={abrir.titulo} subtitulo={subtitulo} onCerrar={onCerrar}>
       {abrir.externo && (
         <p className="cf-nota naranja" data-cf-traspaso-externo>
           <strong>Traspaso externo</strong> (SL, fondos, valores…): no es entre PIO y RITA, así que es una entrada o salida real y cuenta en el saldo de la cuenta y en el consolidado.
@@ -616,6 +673,13 @@ function Desglose({ abrir, d, onCerrar }: { abrir: Abrir; d: CashflowDTO; onCerr
         </p>
       )}
       {celdas.map((c, i) => <DesgloseCelda key={i} c={c} d={d} />)}
+      {sugerencias.length > 0 && (
+        <section className="cf-desglose-celda" data-ap-sugerencias-celda={sugerencias.length}>
+          <h3>Factura que coincide con el apunte</h3>
+          <ul className="ap-lista">{sugerencias.map((c) => <Sugerencia key={c.clave} c={c} d={d} onHecho={onCambio} />)}</ul>
+        </section>
+      )}
+      <PanelApunte abrir={abrir} d={d} onCambio={onCambio} />
     </Dialogo>
   );
 }
@@ -717,10 +781,14 @@ export function PaginaCashflow() {
   const vista: VistaCuenta = p === 'PIO' || p === 'RITA' ? p : 'CONSOLIDADO';
   const [abrir, setAbrir] = useState<Abrir | null>(null);
   const [abrirSaldo, setAbrirSaldo] = useState<Columna | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const cerrar = useCallback(() => setAbrir(null), []);
   const cerrarSaldo = useCallback(() => setAbrirSaldo(null), []);
+  // H7-AP1: tras guardar o anular un apunte: se cierra el desglose, se relee y el aviso queda en «Apuntes manuales».
+  const cambio = useCallback((texto: string) => { setAbrir(null); setAviso(texto); recargar(); }, [recargar]);
   const d = carga.estado === 'ok' ? carga.datos : null;
-  const r = useMemo(() => (d ? calcularCashflow(d) : null), [d]);
+  // H7-AP1: los apuntes manuales (sueltos y ocurrencias) entran en el motor: mandan sobre el Excel y la media.
+  const r = useMemo(() => (d ? calcularCashflow({ ...d, apuntes_manuales: apuntesMotor(d.previsiones) }) : null), [d]);
   const cols = useMemo(() => (d ? columnasVista(d.hoy, escala, d.config) : []), [d, escala]);
   const cambiar = (k: string, valor: string | null) => {
     const n = new URLSearchParams(params);
@@ -785,6 +853,7 @@ export function PaginaCashflow() {
             </div>
             <span className="cf-leyenda-fuentes tenue">
               <span className="cf-fuente-m f-vencimientos" /> vencimientos del sistema
+              <span className="cf-fuente-m f-manual" /> <span className="cf-marca-apunte estatico" data-cf-leyenda-apunte>a</span> apunte manual
               <span className="cf-fuente-m f-media" /> <span className="cf-marca-media estatico">m</span> media
               <span className="cf-fuente-m f-excel" /> Excel
               <span className="cf-dif estatico">!</span> {TEXTO_POSIBLE_DUPLICADO}
@@ -801,12 +870,13 @@ export function PaginaCashflow() {
 
           <section className="tarjeta cf-bloque" aria-labelledby="t-cf-tabla">
             <h2 id="t-cf-tabla">{NOMBRE_VISTA[vista]}: real frente a previsto</h2>
-            <p className="tenue cf-ayuda">Pulsa una cifra para ver de dónde sale. Cada categoría se despliega por concepto.</p>
+            <p className="tenue cf-ayuda">Pulsa una cifra para ver de dónde sale. Cada categoría se despliega por concepto; en PIO o RITA, la celda futura de un concepto permite anotar un apunte manual.</p>
             <Tabla v={v} cols={cols} onAbrir={setAbrir} onAbrirSaldo={setAbrirSaldo} r={r} />
           </section>
 
+          <SeccionApuntes d={d} aviso={aviso} onCambio={cambio} />
           <Fuera r={r} />
-          {abrir && <Desglose abrir={abrir} d={d} onCerrar={cerrar} />}
+          {abrir && <Desglose abrir={abrir} d={d} onCerrar={cerrar} onCambio={cambio} />}
           {abrirSaldo && <DesgloseSaldo r={r} vista={vista} col={abrirSaldo} onCerrar={cerrarSaldo} />}
         </div>
       )}

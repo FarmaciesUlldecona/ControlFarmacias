@@ -29,8 +29,10 @@ import type { AdaptadorRrhh } from './rrhh/adaptador_fixtures.ts';
 import { esEscrituraPagos, registrarPagos } from './pagos/rutas.ts';
 import type { AlmacenPagosAsync } from './pagos/almacen.ts';
 import type { LectorPagos } from './pagos/adaptador_real.ts';
-import { registrarCashflow } from './cashflow/rutas.ts';
+import { esEscrituraCashflow, registrarCashflow } from './cashflow/rutas.ts';
 import type { DatosCashflow } from './cashflow/cashflow.ts';
+import type { PrevisionesCashflow } from './cashflow/apuntes.ts';
+import type { AlmacenCashflowAsync } from './cashflow/almacen.ts';
 
 const HOST = '127.0.0.1';
 export const PUERTO_FIJO = 4747;
@@ -61,7 +63,7 @@ export function leerPuerto(modo: Modo): number {
 }
 
 async function crearContrato(modo: Modo): Promise<{
-  contrato: Contrato; cerrar: () => Promise<void>; leerPagos?: LectorPagos; leerCashflow?: () => Promise<DatosCashflow>;
+  contrato: Contrato; cerrar: () => Promise<void>; leerPagos?: LectorPagos; leerCashflow?: () => Promise<DatosCashflow & { previsiones: PrevisionesCashflow }>;
 }> {
   if (modo === 'FIXTURES') return { contrato: crearAdaptadorFixtures(), cerrar: async () => {} };
   const { crearAdaptadorReal } = await import('./adaptador_real.ts');
@@ -83,6 +85,21 @@ async function crearAlmacenPagos(modo: Modo, leerPagos?: LectorPagos): Promise<A
   const c = configuracionPagos(leerEnvWeb());
   if (!c.ok) console.warn(`Pagos en solo lectura: ${c.codigo}`);
   return crearAlmacenPagosReal({ lector: leerPagos, pool: c.ok ? crearPoolPagos(c.config) : null });
+}
+
+/**
+ * H7-AP1: apuntes manuales de Cashflow en REAL. Lectura con cf_lectura (con el cashflow, siempre); escritura con la
+ * credencial propia CF_CASHFLOW_USER / CF_CASHFLOW_PASSWORD de .env.web (rol cf_cashflow_web) y pool propio de 2
+ * conexiones. Si falta o no vale, Cashflow funciona en solo lectura con «Falta configurar la credencial de Cashflow».
+ * FIXTURES: almacén en memoria (undefined: lo crea registrarCashflow).
+ */
+async function crearAlmacenCashflow(modo: Modo): Promise<AlmacenCashflowAsync | undefined> {
+  if (modo === 'FIXTURES') return undefined;
+  const { configuracionCashflow, crearAlmacenCashflowReal, crearPoolCashflow } = await import('./cashflow/adaptador_real.ts');
+  const { leerEnvWeb } = await import('./rrhh/adaptador_real.ts');
+  const c = configuracionCashflow(leerEnvWeb());
+  if (!c.ok) console.warn(`Cashflow en solo lectura: ${c.codigo}`);
+  return crearAlmacenCashflowReal({ pool: c.ok ? crearPoolCashflow(c.config) : null });
 }
 
 /**
@@ -135,21 +152,22 @@ async function crearRrhh(modo: Modo): Promise<{ adaptador?: AdaptadorRrhh; sinCo
 }
 
 /** Módulos que pueden escribir, en el orden en que salen en el pie del lateral. */
-export type ModuloEscritura = 'Trabajadores' | 'Pagos';
+export type ModuloEscritura = 'Trabajadores' | 'Pagos' | 'Cashflow';
 
 /**
  * H6-REAL-2: módulos con escritura activa en REAL, para el rótulo del lateral. Cada uno aparece solo si su credencial
- * está configurada (Trabajadores: adaptador creado; Pagos: almacén sin `sinEscritura`). FIXTURES: lista vacía (el pie
- * de FIXTURES no cambia). Nunca nombres de usuario ni datos de conexión.
+ * está configurada (Trabajadores: adaptador creado; Pagos y, H7-AP1, Cashflow: almacén sin `sinEscritura`). FIXTURES:
+ * lista vacía (el pie de FIXTURES no cambia). Nunca nombres de usuario ni datos de conexión.
  */
 export function modulosEscritura(
   modo: Modo,
-  r: { trabajadores: boolean; pagos: Pick<AlmacenPagosAsync, 'sinEscritura'> | undefined },
+  r: { trabajadores: boolean; pagos: Pick<AlmacenPagosAsync, 'sinEscritura'> | undefined; cashflow?: Pick<AlmacenCashflowAsync, 'sinEscritura'> | undefined },
 ): ModuloEscritura[] {
   if (modo !== 'REAL') return [];
   const m: ModuloEscritura[] = [];
   if (r.trabajadores) m.push('Trabajadores');
   if (r.pagos !== undefined && r.pagos.sinEscritura === null) m.push('Pagos');
+  if (r.cashflow !== undefined && r.cashflow.sinEscritura === null) m.push('Cashflow');
   return m;
 }
 
@@ -157,12 +175,13 @@ export async function crearServidor(modo: Modo) {
   const { contrato, cerrar, leerPagos, leerCashflow } = await crearContrato(modo);
   const rrhh = await crearRrhh(modo);
   const almacenPagos = await crearAlmacenPagos(modo, leerPagos);
+  const almacenCashflow = await crearAlmacenCashflow(modo);
   const acceso = await crearGestorAcceso(modo);
   const dist = join(import.meta.dirname, '..', 'dist');
   const { fuentes, publicas } = fuentesAcceso(dist);
 
   const app = Fastify({ logger: { level: 'warn' }, bodyLimit: 4096 });
-  app.addHook('onClose', async () => { await cerrar(); await rrhh.adaptador?.cerrar?.(); await almacenPagos?.cerrar?.(); });
+  app.addHook('onClose', async () => { await cerrar(); await rrhh.adaptador?.cerrar?.(); await almacenPagos?.cerrar?.(); await almacenCashflow?.cerrar?.(); });
 
   const enviarAcceso = (reply: FastifyReply, codigo: number, aviso: AvisoAcceso, destino: string) =>
     reply.code(codigo)
@@ -182,9 +201,11 @@ export async function crearServidor(modo: Modo) {
   // con sesión, Origin obligatorio y JSON (server/rrhh/rutas.ts).
   // H6 (excepción autorizada por Marc): marcas de pago y forma de pago por proveedor (esEscrituraPagos, /api/pagos/…;
   // H6-REAL: en REAL, con cf_pagos_web; sin su credencial, 503). Nunca facturas, vencimientos ni conciliación.
+  // H7-AP1: apuntes manuales de Cashflow (esEscrituraCashflow, /api/cashflow/…; en REAL, con cf_cashflow_web; sin su
+  // credencial, 503). Nunca lo importado del Excel.
   app.addHook('onRequest', async (req, reply) => {
     if (req.method === 'GET' || req.method === 'HEAD') return;
-    const escrituraRrhh = esEscrituraRrhh(req.method, ruta(req)) || esEscrituraPagos(req.method, ruta(req));
+    const escrituraRrhh = esEscrituraRrhh(req.method, ruta(req)) || esEscrituraPagos(req.method, ruta(req)) || esEscrituraCashflow(req.method, ruta(req));
     if (!escrituraRrhh && (req.method !== 'POST' || !POST_PERMITIDOS.has(ruta(req)))) return reply.code(405).send({ error: 'SOLO_LECTURA' });
     const origen = req.headers.origin;
     if (origen !== undefined && origen !== `http://${req.headers.host}`) return reply.code(403).send({ error: 'ORIGEN_NO_PERMITIDO' });
@@ -225,7 +246,7 @@ export async function crearServidor(modo: Modo) {
   });
 
   // H6-REAL-2: `escritura` = módulos con credencial de escritura configurada (solo REAL; en FIXTURES, []).
-  const escritura = modulosEscritura(modo, { trabajadores: rrhh.adaptador !== undefined, pagos: almacenPagos });
+  const escritura = modulosEscritura(modo, { trabajadores: rrhh.adaptador !== undefined, pagos: almacenPagos, cashflow: almacenCashflow });
   app.get('/api/estado', async () => ({ modo, farmacia: FARMACIA, solo_lectura: true, usuario: USUARIO, escritura }));
   app.get('/api/inicio', () => contrato.inicio());
   app.get('/api/facturas', () => contrato.facturas());
@@ -247,9 +268,13 @@ export async function crearServidor(modo: Modo) {
   const pagos = registrarPagos(app, {
     modo, contrato, quien: AUTOR_HISTORIAL, almacen: almacenPagos, sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)),
   });
-  // H7: Cashflow (solo lectura; sustituye al cashflow por semanas de H3a). FIXTURES: datos ficticios con la forma del
-  // contrato + vencimientos de H6. H7-REAL: tablas cf_cashflow_* (migración 38) con cf_lectura, importación vigente.
-  registrarCashflow(app, { modo, pantallaPagos: pagos.pantalla, leerReal: leerCashflow });
+  // H7: Cashflow (sustituye al cashflow por semanas de H3a). FIXTURES: datos ficticios con la forma del contrato +
+  // vencimientos de H6. H7-REAL: tablas cf_cashflow_* (migración 38) con cf_lectura, importación vigente. H7-AP1: apuntes
+  // manuales (migración 40): lectura con cf_lectura; escritura con cf_cashflow_web (FIXTURES: en memoria), autor «Marc».
+  registrarCashflow(app, {
+    modo, pantallaPagos: pagos.pantalla, leerReal: leerCashflow, quien: AUTOR_HISTORIAL, almacen: almacenCashflow,
+    sesionValida: (req) => acceso.sesionValida(tokenDeCookie(req.headers.cookie)),
+  });
 
   // Errores: mensaje genérico al cliente; nunca filas ni datos de conexión.
   app.setErrorHandler((err, _req, reply) => {

@@ -7,7 +7,7 @@ export interface EstadoApi {
   solo_lectura: boolean;
   usuario: string;
   /** H6-REAL-2: módulos con escritura activa en REAL (cada uno, solo si su credencial está configurada). */
-  escritura?: ('Trabajadores' | 'Pagos')[];
+  escritura?: ('Trabajadores' | 'Pagos' | 'Cashflow')[];
 }
 
 /**
@@ -53,11 +53,11 @@ export class ErrorApi extends Error {
 }
 
 /**
- * TA1: escritura JSON, solo en /api/rrhh/* y, H6, /api/pagos/* (el servidor rechaza cualquier otra). El navegador
- * envía Origin y Sec-Fetch-Site, que el servidor comprueba.
+ * TA1: escritura JSON, solo en /api/rrhh/*, H6 /api/pagos/* y, H7-AP1, /api/cashflow/* (el servidor rechaza cualquier
+ * otra). El navegador envía Origin y Sec-Fetch-Site, que el servidor comprueba.
  */
 export async function enviar<T>(ruta: string, metodo: 'POST' | 'PUT', cuerpo: unknown): Promise<T> {
-  if (!ruta.startsWith('/api/rrhh/') && !ruta.startsWith('/api/pagos/')) throw new Error('ESCRITURA_SOLO_RRHH_O_PAGOS');
+  if (!ruta.startsWith('/api/rrhh/') && !ruta.startsWith('/api/pagos/') && !ruta.startsWith('/api/cashflow/')) throw new Error('ESCRITURA_SOLO_RRHH_PAGOS_O_CASHFLOW');
   const r = await fetch(ruta, {
     method: metodo, credentials: 'same-origin',
     headers: { accept: 'application/json', 'content-type': 'application/json' },
