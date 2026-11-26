@@ -1,5 +1,10 @@
 # H7b: Cashflow con previsión (vencimientos y apuntes manuales de la web), diseño
 
+Estado (2026-11-26): **OK de Pio al diseño corregido.** Migración 40 **implementada en local** (`CONFIRMADO POR
+TEST`, `tests/facturas/runtime_supabase/test_integracion_pg17_40_prevision.py`), con su rollback, `desplegar_40.py` y
+`probar_acceso_cf_cashflow_web.py`; **no desplegada**. Concreciones de la implementación (`PROPUESTA`, en §7) para que
+Pio las confirme.
+
 Estado (2026-11-25, tarde): **DISEÑO CORREGIDO a petición de la web y aprobado por Pio** (§2.1 y §6): la media
 sale del diseño y de la BD (es la regla del motor de la web) y la prioridad con vencimientos pasa a «gana el mayor en
 valor absoluto». **La 40 no se aplica sin el OK de Pio a este diseño corregido.** Sin código, sin migración y sin
@@ -301,3 +306,39 @@ Tabla de la propuesta del 2026-11-24 (histórico; D5 y D7 sustituidas por lo ant
 | H7B-D6 | Sustitución de un apunte por una factura | Candidato único (misma cuenta y categoría, decena igual o siguiente, ±5 %), confirmado por Pio |
 | H7B-D7 | Numeración: cada migración exige la anterior y la 39 no existe todavía | **DECIDIDA (2026-11-25): H7b = 40**, tras R21 = 39 (`pruebas/auditoria_r21/DISENO.md` §9.10) |
 | H7B-D8 | ¿Los vencimientos con marca de pago (H6) cuentan? | No: un vencimiento marcado como pagado ya no es previsión |
+
+## 7. Concreciones de la implementación (2026-11-26, `PROPUESTA` para que Pio las confirme)
+
+La migración 40 sigue §1–§5. Donde el diseño no fijaba un detalle, la implementación decide lo siguiente, siempre
+fallando cerrado:
+
+1. **Sin decena cuadrada con el banco** en la vigente para la cuenta, no se admite ningún apunte ni recurrente
+   (`SIN_SALDO_DE_BANCO`).
+2. **Recurrente:**
+   - el `inicio` debe ser una ocurrencia (`INICIO_NO_ES_OCURRENCIA`);
+   - se admite con un inicio pasado si tiene alguna ocurrencia futura (si no, `FECHA_NO_FUTURA`);
+   - las ocurrencias pasadas no se pueden anular;
+   - anular la anulación de una ocurrencia la recupera.
+3. **`cf_cashflow_ocurrencias(desde, hasta)`** devuelve todas las ocurrencias del intervalo, sin las anuladas. El
+   filtro «posteriores al último saldo de bancos y hasta la última decena de la vigente» lo aplica el motor de la web:
+   `cf_cashflow_web` no lee los saldos.
+4. **Conceptos:**
+   - el nombre se compara normalizado: minúsculas, con los espacios recortados y colapsados;
+   - es único por cuenta y categoría entre los no anulados;
+   - puede repetir un concepto de la plantilla, para asociarle un `proveedor_cif` (H7B-D3);
+   - hay un solo concepto vigente por cuenta y CIF;
+   - anular un concepto no invalida los apuntes que ya lo usan.
+5. **Sustitución:**
+   - se guarda en `sustituido_factura_id` y `sustituido_vencimiento_orden`, sin clave externa, como en la 35 (D7);
+   - en un suelto, va en su anulación; en una recurrente, en la anulación de la ocurrencia;
+   - se valida que el vencimiento existe y es de la farmacia de la cuenta;
+   - un vencimiento sustituye a un solo apunte;
+   - la BD no comprueba el candidato (±5 %, decena igual o siguiente): eso lo sugiere la web y lo confirma Pio.
+6. **Colocación de vencimientos y candidatos (§2.2 y §2.3):** los calcula el motor de la web leyendo con
+   `cf_lectura` (vencimientos, marcas de pago, conceptos). La BD no tiene vista para ello. Los tests de §5 sobre
+   vencimientos sin categoría, con marca de pago o candidatos son, como la regla por celda, del motor de la web.
+7. **Códigos de rechazo añadidos:**
+   - `CUENTA_NO_VALIDA`, `FRECUENCIA_NO_VALIDA`, `DIA_NO_VALIDO` y `FIN_ANTERIOR_A_INICIO`;
+   - `MOTIVO_ANULACION_AUSENTE`, `OCURRENCIA_NO_VALIDA`, `RECURRENTE_ANULADA` y `RECURRENTE_NO_ENCONTRADA`;
+   - `IMPORTE_EN_ANULACION_DE_OCURRENCIA`, `SUSTITUCION_SOLO_AL_ANULAR` y `SUSTITUCION_INCOMPLETA`;
+   - `FACTURA_NO_ENCONTRADA`, `VENCIMIENTO_NO_ENCONTRADO` y `FARMACIA_DISTINTA_DE_LA_FACTURA`.

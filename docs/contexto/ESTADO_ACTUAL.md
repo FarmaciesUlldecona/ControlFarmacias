@@ -343,6 +343,39 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### H7b: migración 40 de previsión de Cashflow, solo local (2026-11-26)
+
+- **OK de Pio al diseño H7b corregido** (d1a0aae + 832970c) y orden de implementar la 40. Diseño:
+  `pruebas/auditoria_h7b/DISENO.md`; las concreciones de la implementación están en su §7, como `PROPUESTA`.
+- **Migración 40** (`sql/migrations/40_cf_cashflow_prevision.sql` y su rollback; exige la 39):
+  - `cf_cashflow_conceptos`, `cf_cashflow_recurrentes`, `cf_cashflow_apuntes` y `cf_cashflow_apuntes_historial`;
+  - triggers de alta, solo anular e historial; la función de ocurrencias;
+  - el rol `cf_cashflow_web`, sin contraseña;
+  - la RLS del módulo `CASHFLOW` (PIO y RITA) y `SELECT` de `cf_lectura`.
+
+  Nombra el rol del sistema solo en la 40 y su rollback (autorización de Pio).
+- **Scripts:** `pruebas/auditoria_h7b/desplegar_40.py` (7 precondiciones y 5 postcondiciones) y
+  `pruebas/auditoria_h7b/probar_acceso_cf_cashflow_web.py`.
+- **Tests:** `test_integracion_pg17_40_prevision.py` (64), con:
+  - el rollback al esquema 39, la idempotencia y cada validación;
+  - las ocurrencias, la sustitución, la RLS y los privilegios;
+  - el ensayo de `desplegar_40` con la imitación del `postgres` de Supabase y el rechazo de un SQL distinto del
+    commit;
+  - la prueba de acceso contra PostgreSQL 17 local.
+
+  Las plantillas «40» y «40_rollback» están en `pg17_local`.
+- **Noche y series:** `TABLAS_CASHFLOW` incluye las cuatro tablas nuevas. Se informan aparte y solo se leen si
+  existen.
+- `PENDIENTE` (con confirmación de Pio): el 40-D.
+  - Primero, push de Pio, flags apagados y preflight READ_ONLY.
+  - Después, `desplegar_40` una sola vez y el postcheck por fila.
+  - Por último, la contraseña SCRAM de Pio, la prueba de acceso y los flags encendidos.
+
+  Plan: `C:\ControlFarmacias\evidencias_40_d\PLAN_40_D.md`. Tras el 40-D:
+  - los ensayos de la 40 pasan a `SUITE_HISTORICA`;
+  - se informa a la web del rol `cf_cashflow_web`, sin credenciales;
+  - se completa `docs/web/ESQUEMA_CASHFLOW.md`.
+
 ### Noche 25→26/11 y devoluciones Alliance sin reservar (READ_ONLY, 2026-11-26)
 
 - **Noche REAL 25→26/11 (revisión READ_ONLY, `C:\ControlFarmacias\carga_abril_mayo\revision_2611`, con

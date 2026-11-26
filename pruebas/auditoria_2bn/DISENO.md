@@ -31,8 +31,11 @@ lo que necesitan, no puede escribir ni ejecutar RPC que escriban y no tiene acce
     - `SELECT` concedido;
     - política `conciliacion_albaranes_reservados_lectura_select` para `cf_lectura`, que muestra las filas cuya
       factura es de una farmacia habilitada.
-  - **Prevista en H7b (`DECISIÓN DE PIO`, 2026-11-24; no implementada):** `SELECT` sobre las tablas de previsión de
-    Cashflow (`pruebas/auditoria_h7b/DISENO.md` §4).
+  - **Ampliación de la 40 (H7b, `DECISIÓN DE PIO`, 2026-11-24; implementada en local el 2026-11-26, no desplegada):**
+    - `SELECT` sobre `cf_cashflow_conceptos`, `cf_cashflow_recurrentes`, `cf_cashflow_apuntes` y
+      `cf_cashflow_apuntes_historial`, con la RLS del módulo `CASHFLOW`;
+    - `EXECUTE` de `cf_cashflow_ocurrencias` y `cf_cashflow_fechas_recurrente`, que son stable e immutable y no son
+      security definer (`pruebas/auditoria_h7b/DISENO.md` §4 y §7).
 - **Sin escritura ni RPC:** ningún `INSERT/UPDATE/DELETE/TRUNCATE`, ninguna secuencia, ningún `EXECUTE`
   concedido. Las únicas funciones de `public` ejecutables por `PUBLIC` son dos de trigger y una inmutable de
   cálculo (`cf_resultado_conciliacion`); ninguna `SECURITY DEFINER` ni volátil es ejecutable por el rol.

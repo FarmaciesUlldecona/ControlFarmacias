@@ -174,7 +174,8 @@ def test_pagos_fuera_del_2ax_y_comparados_aparte():
 def test_cashflow_fuera_del_2ax_y_comparado_aparte():
     """H7 (DISENO §6, decision de Pio 2026-11-22): Cashflow se informa aparte, como Pagos, sin veredicto."""
     assert na.TABLAS_CASHFLOW == {"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
-                                  "cf_cashflow_saldos"}
+                                  "cf_cashflow_saldos", "cf_cashflow_conceptos", "cf_cashflow_recurrentes",
+                                  "cf_cashflow_apuntes", "cf_cashflow_apuntes_historial"}
     assert na.TABLAS_CASHFLOW <= na.TABLAS_FUERA_DEL_SNAPSHOT
     assert not na.TABLAS_CASHFLOW & (na.TABLAS_TRABAJADORES | na.TABLAS_PAGOS)
     pre = {"tablas": {"cf_cashflow_importaciones": {}}}

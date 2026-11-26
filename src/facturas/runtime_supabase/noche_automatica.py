@@ -82,8 +82,11 @@ TABLAS_TRABAJADORES = frozenset({
 TABLAS_PAGOS = frozenset({"vencimientos_marcas_pago", "proveedores_forma_pago", "pagos_historial"})
 # Cashflow (H7, migracion 38; decision de Pio, pruebas/auditoria_h7/DISENO.md §6): importaciones del Excel de cashflow,
 # ajenas a facturas. Como Pagos: se informan aparte y no hacen fallar el veredicto. Solo se leen las que existen.
+# H7b (migracion 40; pruebas/auditoria_h7b/DISENO.md §4): conceptos, recurrentes, apuntes y su historial, escritos por
+# la web; hasta desplegar la 40 no existen y no se leen.
 TABLAS_CASHFLOW = frozenset({"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
-                             "cf_cashflow_saldos"})
+                             "cf_cashflow_saldos", "cf_cashflow_conceptos", "cf_cashflow_recurrentes",
+                             "cf_cashflow_apuntes", "cf_cashflow_apuntes_historial"})
 # Fuera del snapshot 2AX: la propia tabla de resumen, Trabajadores, Pagos y Cashflow (se leen aparte,
 # ``snapshot_aparte``).
 TABLAS_FUERA_DEL_SNAPSHOT = frozenset({TABLA_RESUMEN}) | TABLAS_TRABAJADORES | TABLAS_PAGOS | TABLAS_CASHFLOW

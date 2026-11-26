@@ -219,6 +219,8 @@ MIGRACION_38 = MIG / "38_cf_cashflow.sql"
 ROLLBACK_38 = MIG / "38_cf_cashflow.rollback.sql"
 MIGRACION_39 = MIG / "39_cf_r21_complementarios.sql"
 ROLLBACK_39 = MIG / "39_cf_r21_complementarios.rollback.sql"
+MIGRACION_40 = MIG / "40_cf_cashflow_prevision.sql"
+ROLLBACK_40 = MIG / "40_cf_cashflow_prevision.rollback.sql"
 
 
 # Norma de Pio (2BN-D): todo ensayo de despliegue se hace con un rol que imita al postgres de Supabase. Alli postgres
@@ -561,7 +563,8 @@ def _ejecuciones(pg: _Pg, documento_id: str):
 VARIANTES = ("16", "17", "16_rollback", "18", "17_rollback", "19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback",
              "23", "23_rollback", "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback", "28", "28_rollback", "29", "29_rollback",
              "30", "30_rollback", "31", "31_rollback", "32", "32_rollback", "33", "33_rollback", "34", "34_rollback",
-             "35", "35_rollback", "36", "36_rollback", "37", "37_rollback", "38", "38_rollback", "39", "39_rollback")
+             "35", "35_rollback", "36", "36_rollback", "37", "37_rollback", "38", "38_rollback", "39", "39_rollback",
+             "40", "40_rollback")
 
 
 def construir_plantilla(contenedor: str, variante: str) -> str:
@@ -591,6 +594,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     37 (defectos): 36 + migracion 37 aplicada dos veces (como postgres); 37_rollback: 37 + rollback.
     38 (H7, Cashflow): 37 + migracion 38 aplicada dos veces (como postgres); 38_rollback: 38 + rollback.
     39 (R21): 38 + migracion 39 aplicada dos veces (como postgres); 39_rollback: 39 + rollback.
+    40 (H7b, prevision de Cashflow): 39 + migracion 40 aplicada dos veces (como postgres); 40_rollback: 40 + rollback.
     Idempotente: si la plantilla ya existe en el contenedor, se reutiliza.
     """
     assert variante in VARIANTES
@@ -601,7 +605,7 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
     if variante in ("19", "20", "20_rollback", "21", "21_rollback", "22", "22_rollback", "23", "23_rollback",
                     "24", "24_rollback", "25", "25_rollback", "26", "26_rollback", "27", "27_rollback", "28", "28_rollback", "29", "29_rollback", "30", "30_rollback", "31",
                     "31_rollback", "32", "32_rollback", "33", "33_rollback", "34", "34_rollback", "35", "35_rollback", "36",
-                    "36_rollback", "37", "37_rollback", "38", "38_rollback", "39", "39_rollback"):
+                    "36_rollback", "37", "37_rollback", "38", "38_rollback", "39", "39_rollback", "40", "40_rollback"):
         nombre = f"cf_plantilla_{variante}"
         base = construir_plantilla(contenedor, {"19": "18", "20": "19", "20_rollback": "20",
                                                  "21": "20", "21_rollback": "21",
@@ -622,7 +626,8 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
                                                  "36": "35", "36_rollback": "36",
                                                  "37": "36", "37_rollback": "37",
                                                  "38": "37", "38_rollback": "38",
-                                                 "39": "38", "39_rollback": "39"}[variante])
+                                                 "39": "38", "39_rollback": "39",
+                                                 "40": "39", "40_rollback": "40"}[variante])
         cerrar_sesiones(contenedor, base)  # createdb -T exige que nadie este conectado al origen
         _docker("exec", contenedor, "createdb", "-U", "postgres", "-T", base, nombre)
         pg = _Pg(contenedor, nombre)
@@ -728,8 +733,13 @@ def construir_plantilla(contenedor: str, variante: str) -> str:
         elif variante == "39":
             pg.sql(MIGRACION_39.read_text(encoding="utf-8"))
             pg.sql(MIGRACION_39.read_text(encoding="utf-8"))
-        else:
+        elif variante == "39_rollback":
             pg.sql(ROLLBACK_39.read_text(encoding="utf-8"))
+        elif variante == "40":
+            pg.sql(MIGRACION_40.read_text(encoding="utf-8"))
+            pg.sql(MIGRACION_40.read_text(encoding="utf-8"))
+        else:
+            pg.sql(ROLLBACK_40.read_text(encoding="utf-8"))
         cerrar_sesiones(contenedor, nombre)
         return nombre
     assert variante in VARIANTES

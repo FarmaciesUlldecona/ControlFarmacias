@@ -102,7 +102,8 @@ def test_postcheck_informa_cashflow_aparte_sin_veredicto():
     """H7 (DISENO §6, decision de Pio 2026-11-22): Cashflow se informa aparte, como Pagos, sin veredicto."""
     m = _modulo()
     assert m.TABLAS_CASHFLOW == {"cf_cashflow_importaciones", "cf_cashflow_cuentas", "cf_cashflow_importes",
-                                 "cf_cashflow_saldos"}
+                                 "cf_cashflow_saldos", "cf_cashflow_conceptos", "cf_cashflow_recurrentes",
+                                 "cf_cashflow_apuntes", "cf_cashflow_apuntes_historial"}
     assert m.TABLAS_CASHFLOW <= m.TABLAS_WEB
     antes = {"cf_cashflow_importaciones": {}, "cf_cashflow_importes": {}, "albaranes": {"a1": ["ha", None]}}
     despues = {"cf_cashflow_importaciones": {"i1": ["hi", None]}, "cf_cashflow_importes": {"1": ["h1", None]},

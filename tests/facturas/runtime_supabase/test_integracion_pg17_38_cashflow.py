@@ -410,7 +410,8 @@ def test_el_sistema_de_facturas_no_usa_cashflow(pg38):
 def test_la_noche_y_las_series_tratan_cashflow_aparte():
     from src.facturas.runtime_supabase import noche_automatica as na
 
-    assert na.TABLAS_CASHFLOW == set(TABLAS) == set(DESPLIEGUE.TABLAS_NUEVAS)
+    # La 40 (H7b) anade sus tablas al mismo conjunto.
+    assert set(TABLAS) == set(DESPLIEGUE.TABLAS_NUEVAS) <= na.TABLAS_CASHFLOW
     assert na.TABLAS_CASHFLOW <= na.TABLAS_FUERA_DEL_SNAPSHOT
 
 

@@ -709,7 +709,8 @@ entran en `SUITE_HISTORICA` en el commit del 38-B, no en el de su «D».
 - **Importación:** su estado es `OK` o `ERROR`. El importe conserva el signo de la celda del Excel; no se deduce ni se
   invierte.
 - **Previsión de Cashflow (H7b; DECISIONES DE PIO del 2026-11-23 y 2026-11-24; diseño en
-  `pruebas/auditoria_h7b/DISENO.md`; NO IMPLEMENTADA, sin migración):**
+  `pruebas/auditoria_h7b/DISENO.md`; OK de Pio al diseño corregido el 2026-11-26; migración 40 `CONFIRMADO POR TEST`
+  en PostgreSQL 17 local, NO DESPLEGADA):**
   - El Cashflow será Norma 43 (real) + vencimientos (previsto) + apuntes manuales de la web (lo que no tiene
     factura); el Excel pasa a ser provisional. Mientras no haya Norma 43, todo lo anterior de esta sección sigue
     vigente. Solo previsión futura: nada de lo nuevo cambia lo pasado ni las tablas importadas.
@@ -727,10 +728,53 @@ entran en `SUITE_HISTORICA` en el commit del 38-B, no en el de su «D».
   - **Excepción de RITA ampliada, solo en Cashflow:** además de sus datos bancarios del Excel importado, sus apuntes
     manuales de Cashflow. `farmacias_habilitadas` no cambia y sus facturas siguen desactivadas. Rige desde que se
     despliegue la migración de H7b.
-  - Rol de escritura propio de la web para Cashflow (`INSERT`, `SELECT` y `UPDATE` solo de anulación sobre las
-    tablas de previsión), y `SELECT` de `cf_lectura` sobre ellas.
-  - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-24):** nombrar el rol del sistema **solo** en la migración de H7b (41
-    según el encargo; **40** por la numeración decidida por Pio el 2026-11-25) y su rollback, si hace falta.
+  - **Migración 40** (`sql/migrations/40_cf_cashflow_prevision.sql`, exige la 39). Tablas:
+    - `cf_cashflow_conceptos`: conceptos nuevos, cada uno de una categoría de la plantilla. Llevan `proveedor_cif`
+      opcional, con un concepto vigente por CIF y cuenta.
+    - `cf_cashflow_recurrentes`: mensual, trimestral o anual; el día 29–31 cae el último día del mes; el inicio es
+      la primera ocurrencia.
+    - `cf_cashflow_apuntes`: sueltos, con importe > 0, y anulaciones de una ocurrencia, sin importe.
+    - `cf_cashflow_apuntes_historial`: lo escribe un trigger y es solo de inserción.
+  - **Reglas en la BD:**
+    - Solo anular: `anulado` de false a true, con motivo; `anulado_por` y `anulado_at` los pone el trigger
+      (`SOLO_ANULAR`). Nadie borra ni vacía (`BORRADO_NO_PERMITIDO`).
+    - El autor sale de `cf.autor` (`AUTOR_AUSENTE`).
+    - Al dar de alta, falla cerrado si:
+      - la cuenta no es `PIO` o `RITA` (`CUENTA_NO_VALIDA`) o su farmacia no está en el módulo `CASHFLOW`
+        (`FARMACIA_NO_HABILITADA`);
+      - no hay importación vigente (`SIN_IMPORTACION_VIGENTE`);
+      - la categoría no está en la plantilla de la cuenta en la vigente (`CATEGORIA_FUERA_DE_PLANTILLA`);
+      - el concepto no está en la plantilla ni en `cf_cashflow_conceptos` (`CONCEPTO_DESCONOCIDO`);
+      - el importe no es > 0 (`IMPORTE_NO_POSITIVO`);
+      - la fecha no es posterior al fin de la última decena con saldo de bancos de la vigente (`FECHA_NO_FUTURA`;
+        sin esa decena, `SIN_SALDO_DE_BANCO`).
+  - **Ocurrencias:** se calculan al leer con `cf_cashflow_ocurrencias(desde, hasta)` (stable, security invoker).
+    Devuelve las del intervalo sin las anuladas una a una; que solo cuenten las futuras lo aplica el motor de la web.
+    La BD no elige la fuente por celda ni calcula la media.
+  - **Sustitución confirmada por Pio (H7B-D6):** al anular un apunte suelto, o al anular una ocurrencia, se guarda
+    la factura y el orden del vencimiento, validados (existe y es de la farmacia de la cuenta). Un vencimiento
+    sustituye a un solo apunte.
+  - **Rol de escritura de la web `cf_cashflow_web`:** `LOGIN`, sin contraseña en el repositorio (la fija Pio con
+    SCRAM tras el 40-D). Permisos:
+    - `SELECT` e `INSERT` en las tres tablas;
+    - `UPDATE` solo de `anulado` y `motivo_anulacion`, y en apuntes también de `sustituido_factura_id` y
+      `sustituido_vencimiento_orden`;
+    - `SELECT` del historial;
+    - `EXECUTE` solo de las dos funciones de lectura y de la de su RLS.
+
+    No lee las tablas importadas, facturas ni vencimientos: la web los lee con `cf_lectura`.
+  - **`cf_lectura`:** `SELECT` de las cuatro tablas nuevas y `EXECUTE` de las dos funciones de lectura, con la RLS del
+    módulo `CASHFLOW` y sin funciones security definer (regla del 2BN).
+  - **El sistema no las lee:** la noche y las series 2BJ/2BP las informan aparte en `TABLAS_CASHFLOW`, sin afectar
+    al veredicto.
+  - **Rollback** al esquema 39: falla cerrado con datos (`ROLLBACK_40_CON_DATOS`).
+  - **Despliegue y acceso:**
+    - `pruebas/auditoria_h7b/desplegar_40.py`, ensayado con la imitación del `postgres` de Supabase; solo se toca
+      con Read/Edit y solo lo cargan los tests;
+    - `pruebas/auditoria_h7b/probar_acceso_cf_cashflow_web.py`, que se ejecuta en la terminal de Pio, con la
+      contraseña en `CF_CASHFLOW_PASSWORD`.
+  - **AUTORIZACIÓN EXPRESA DE PIO (2026-11-24; reconfirmada el 2026-11-26):** nombrar el rol del sistema **solo** en
+    `sql/migrations/40_*.sql` y su rollback, para quitarle los privilegios por defecto de Supabase sobre lo nuevo.
     Tests, scripts y documentación no lo nombran.
 
 ## Automatización Alliance
