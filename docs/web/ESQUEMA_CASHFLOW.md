@@ -1,15 +1,21 @@
 # Esquema de Cashflow para la web
 
-Actualizado: 2026-11-22. Fuente: migración 38 (`sql/migrations/38_cf_cashflow.sql`), desplegada en producción el
-2026-11-22. Reglas en `docs/contexto/REGLAS_CRITICAS.md` («Cashflow (H7)») y diseño en
-`pruebas/auditoria_h7/DISENO.md`.
+Actualizado: 2026-11-26. Fuentes:
+
+- migración 38 (`sql/migrations/38_cf_cashflow.sql`), desplegada en producción el 2026-11-22: lo importado del Excel;
+- migración 40 (`sql/migrations/40_cf_cashflow_prevision.sql`), desplegada en producción el 2026-11-26: la previsión
+  que escribe la web (ver «Previsión: apuntes de la web (migración 40)»).
+
+Reglas en `docs/contexto/REGLAS_CRITICAS.md` («Cashflow (H7)») y diseños en `pruebas/auditoria_h7/DISENO.md` y
+`pruebas/auditoria_h7b/DISENO.md`.
 
 ## Qué es y quién escribe
 
 - Los datos salen del Excel de cashflow de Pio. El sistema lo importa cada noche a las 23:45 (tarea «ControlFarmacias
   - Importar Cashflow») y, además, cuando Pio lanza una importación manual.
-- **La web solo lee**, con el rol `cf_lectura`. Nadie escribe directamente en estas tablas. La única escritura es la
-  función de importación del sistema, que la web no puede ejecutar.
+- **En lo importado, la web solo lee**, con el rol `cf_lectura`. Nadie escribe directamente en estas tablas. La única
+  escritura es la función de importación del sistema, que la web no puede ejecutar. Lo que escribe la web son los
+  apuntes de previsión de la migración 40, en otras tablas y con otro rol.
 - Las tablas son **solo de inserción**: no hay `UPDATE` ni `DELETE`. Una importación nueva no modifica las anteriores;
   solo cambia cuál es la vigente.
 - Primera importación real: 2026-11-22, `OK`, con 5131 importes y 539 saldos.
@@ -143,3 +149,99 @@ Solo se guardan los importes distintos de 0. Una categoría sin fila en una dece
 - `SL` no tiene importes en el Excel actual: solo saldos.
 - Los avisos de la importación (celdas con `=` o solo espacios tratadas como vacías, redondeos) no se guardan en la
   base: están en el informe local de cada importación.
+
+## Previsión: apuntes de la web (migración 40)
+
+Desplegada en producción el 2026-11-26. Son los apuntes que no tienen factura. Solo previsión futura: nada de esto
+cambia lo importado ni lo pasado, y el sistema no lo usa para decidir nada.
+
+### Rol de escritura `cf_cashflow_web`
+
+- Rol con `LOGIN`. **Pio entrega la contraseña aparte**; no está en el repositorio. Por el pooler el usuario es
+  `cf_cashflow_web.<project_ref>`. Límite de 5 conexiones; `statement_timeout` e `idle_in_transaction_session_timeout`
+  de 60 s.
+- Permisos:
+  - `SELECT` e `INSERT` en `cf_cashflow_conceptos`, `cf_cashflow_recurrentes` y `cf_cashflow_apuntes`;
+  - `UPDATE` solo de `anulado` y `motivo_anulacion` y, en apuntes, también de `sustituido_factura_id` y
+    `sustituido_vencimiento_orden`;
+  - `SELECT` de `cf_cashflow_apuntes_historial`;
+  - `EXECUTE` de `cf_cashflow_ocurrencias` y `cf_cashflow_fechas_recurrente`.
+- **No lee** lo importado (cuentas, importaciones, importes, saldos), facturas ni vencimientos: eso se lee con
+  `cf_lectura`. No borra (`DELETE` y `TRUNCATE` se rechazan).
+- **Autor obligatorio:** cada transacción que escriba hace antes `set local cf.autor = '<usuario>'` (1–60
+  caracteres). Sin él, `AUTOR_AUSENTE`.
+- RLS: solo las filas de una farmacia del módulo `CASHFLOW` de `cf_modulos_farmacias` (hoy PIO y RITA).
+
+`cf_lectura` también lee las cuatro tablas (con la misma RLS) y ejecuta las dos funciones; no escribe.
+
+### Tablas
+
+Columnas comunes de las tres tablas de escritura:
+
+| Columna | Tipo | Significado |
+|---|---|---|
+| `id` | `uuid`, clave primaria | Lo genera la BD |
+| `cuenta` | `text` | `PIO` o `RITA` |
+| `farmacia` | `text` | La pone el trigger (igual a la cuenta); lo que envíe la web se ignora |
+| `categoria` | `text` | Una categoría `RE …`/`RS …` de la plantilla de la cuenta en la importación vigente |
+| `autor` | `text` | Lo pone el trigger desde `cf.autor` |
+| `creado_at` | `timestamptz` | Lo pone el trigger |
+| `anulado`, `anulado_por`, `anulado_at`, `motivo_anulacion` | | Anulación; ver «Anular» |
+
+- **`cf_cashflow_conceptos`:** `nombre` (1–120) y `proveedor_cif` opcional (`^[A-Z0-9]{5,20}$`), para colocar los
+  vencimientos de ese proveedor. Un nombre vigente por cuenta y categoría (sin distinguir mayúsculas ni espacios
+  repetidos) y un concepto vigente por cuenta y CIF.
+- **`cf_cashflow_recurrentes`:** `concepto` (1–255), `importe` (> 0), `nota` (≤ 500), `frecuencia` (`MENSUAL`,
+  `TRIMESTRAL` o `ANUAL`), `dia` (1–31; si el mes no lo tiene, el último día del mes), `inicio` (debe ser una
+  ocurrencia: la primera) y `fin` opcional (≥ `inicio`).
+- **`cf_cashflow_apuntes`:** `fecha`, `concepto` (1–255), `importe`, `nota` (≤ 500), `recurrente_id`,
+  `fecha_ocurrencia`, `sustituido_factura_id`, `sustituido_vencimiento_orden`. Dos tipos:
+  - **suelto:** `importe` > 0, sin `recurrente_id` ni `fecha_ocurrencia`;
+  - **anulación de una ocurrencia:** `recurrente_id` y `fecha_ocurrencia`, sin `importe`. Cuenta, categoría y
+    concepto los copia el trigger de la recurrente, y `fecha` = `fecha_ocurrencia`.
+- **`cf_cashflow_apuntes_historial`** (solo lectura para la web): `tabla`, `registro_id`, `cuenta`, `farmacia`,
+  `operacion` (`INSERT` o `UPDATE`), `antes`, `despues`, `autor`, `created_at`. Lo escribe un trigger en cada alta y
+  anulación.
+
+El importe es siempre positivo: el sentido lo da el prefijo de la categoría (`RE` entra, `RS` sale).
+
+### Validaciones al dar de alta (la BD falla cerrado)
+
+| Código | Cuándo |
+|---|---|
+| `AUTOR_AUSENTE` | Sin `set local cf.autor` |
+| `CUENTA_NO_VALIDA` | La cuenta no es `PIO` ni `RITA` |
+| `FARMACIA_NO_HABILITADA` | La farmacia no está en el módulo `CASHFLOW` |
+| `SIN_IMPORTACION_VIGENTE` | No hay importación vigente |
+| `CATEGORIA_FUERA_DE_PLANTILLA` | La categoría no está en la plantilla de la cuenta en la vigente |
+| `CONCEPTO_DESCONOCIDO` | El concepto (de un apunte o una recurrente) no está, para esa cuenta y categoría, ni en la plantilla de la vigente ni en `cf_cashflow_conceptos` sin anular |
+| `IMPORTE_NO_POSITIVO` | Importe ausente o ≤ 0 (suelto o recurrente) |
+| `SIN_SALDO_DE_BANCO` | La cuenta no tiene ninguna decena con saldo de bancos en la vigente |
+| `FECHA_NO_FUTURA` | La fecha (o ninguna ocurrencia de la recurrente) es posterior al fin de la última decena con saldo de bancos |
+| `FRECUENCIA_NO_VALIDA`, `DIA_NO_VALIDO`, `INICIO_AUSENTE`, `FIN_ANTERIOR_A_INICIO`, `INICIO_NO_ES_OCURRENCIA` | Recurrente mal formada |
+| `OCURRENCIA_NO_VALIDA`, `RECURRENTE_NO_ENCONTRADA`, `RECURRENTE_ANULADA`, `IMPORTE_EN_ANULACION_DE_OCURRENCIA`, `OCURRENCIA_SIN_RECURRENTE` | Anulación de ocurrencia mal formada |
+| `SUSTITUCION_SOLO_AL_ANULAR`, `SUSTITUCION_INCOMPLETA`, `FACTURA_NO_ENCONTRADA`, `FARMACIA_DISTINTA_DE_LA_FACTURA`, `VENCIMIENTO_NO_ENCONTRADO` | Sustitución no válida |
+
+### Anular (nunca borrar)
+
+- El único cambio admitido es `anulado` de `false` a `true` con `motivo_anulacion` (1–500). `anulado_por` y
+  `anulado_at` los pone el trigger. Lo demás no cambia (`SOLO_ANULAR`), sin motivo no se anula
+  (`MOTIVO_ANULACION_AUSENTE`) y lo anulado no se reabre. Para corregir, se anula y se da de alta de nuevo.
+- Anular una recurrente anula todas sus ocurrencias. Anular una sola ocurrencia es dar de alta un apunte de
+  «anulación de una ocurrencia».
+- **Sustitución confirmada por Pio:** al anular un apunte suelto se pueden guardar `sustituido_factura_id` y
+  `sustituido_vencimiento_orden` (el vencimiento que lo sustituye). Para una ocurrencia, van en el alta de su
+  anulación. La BD comprueba que el vencimiento existe y que su factura es de la farmacia de la cuenta; un
+  vencimiento sustituye a un solo apunte. Elegir el candidato (por ejemplo, el ±5 %) es cosa de la web.
+
+### Ocurrencias
+
+```sql
+select * from cf_cashflow_ocurrencias(:desde, :hasta);
+-- recurrente_id, cuenta, farmacia, categoria, concepto, importe, fecha
+```
+
+Devuelve las ocurrencias de las recurrentes no anuladas en el intervalo, sin las anuladas una a una, con la RLS de
+quien llama. Devuelve todas las del intervalo: que solo cuenten las posteriores al último saldo de bancos de la
+cuenta lo aplica el motor de la web. **La BD no elige la fuente por celda ni calcula la media:** la prioridad
+(apunte > Excel > media; con vencimientos, el mayor en valor absoluto) es del motor de la web.

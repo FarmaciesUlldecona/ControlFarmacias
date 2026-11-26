@@ -1,5 +1,10 @@
 # H7b: Cashflow con previsión (vencimientos y apuntes manuales de la web), diseño
 
+Estado (2026-11-26, 40-D): **migración 40 desplegada en producción** con confirmación explícita de Pio
+(`desplegar_40` `APLICADA`, postcheck por fila sin diferencias, prueba de acceso de `cf_cashflow_web` `ACCESO_OK`).
+**Las concreciones de §7 son `DECISIÓN DE PIO`** (todas aprobadas el 2026-11-26). El esquema para la web está en
+`docs/web/ESQUEMA_CASHFLOW.md`.
+
 Estado (2026-11-26): **OK de Pio al diseño corregido.** Migración 40 **implementada en local** (`CONFIRMADO POR
 TEST`, `tests/facturas/runtime_supabase/test_integracion_pg17_40_prevision.py`), con su rollback, `desplegar_40.py` y
 `probar_acceso_cf_cashflow_web.py`; **no desplegada**. Concreciones de la implementación (`PROPUESTA`, en §7) para que
@@ -307,7 +312,7 @@ Tabla de la propuesta del 2026-11-24 (histórico; D5 y D7 sustituidas por lo ant
 | H7B-D7 | Numeración: cada migración exige la anterior y la 39 no existe todavía | **DECIDIDA (2026-11-25): H7b = 40**, tras R21 = 39 (`pruebas/auditoria_r21/DISENO.md` §9.10) |
 | H7B-D8 | ¿Los vencimientos con marca de pago (H6) cuentan? | No: un vencimiento marcado como pagado ya no es previsión |
 
-## 7. Concreciones de la implementación (2026-11-26, `PROPUESTA` para que Pio las confirme)
+## 7. Concreciones de la implementación (2026-11-26; `DECISIÓN DE PIO`: todas aprobadas el 2026-11-26)
 
 La migración 40 sigue §1–§5. Donde el diseño no fijaba un detalle, la implementación decide lo siguiente, siempre
 fallando cerrado:
