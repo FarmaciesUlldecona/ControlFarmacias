@@ -343,6 +343,56 @@ con confirmación expresa de Pio y lanzada una sola vez.
   El banco 2AZ no lo listaba porque solo guarda el número de movimientos comerciales, no su detalle; lo que se
   comparó eran las operaciones de las filas de albarán (los 3 abonos). Informativo.
 
+### Noche 25→26/11 y devoluciones Alliance sin reservar (READ_ONLY, 2026-11-26)
+
+- **Noche REAL 25→26/11 (revisión READ_ONLY, `C:\ControlFarmacias\carga_abril_mayo\revision_2611`, con
+  SHA256SUMS):**
+  - `NOCHE_OK`, 22:15–22:15, commit 832970c, 0 conciliadas, `para_revisar` vacío, sin motivo de parada, cola 0.
+  - Alliance: 89 CONCILIADA hasta el 20/11. Pendientes, sin cambios, 08005254 y 08006123 (opción C).
+  - Sincronización a las 21:30: 38 albaranes (24–25/11, `id_contador` 299810–299976), 0 cambios, 0 documentos nuevos.
+  - Cashflow: no hay importación del 25/11; sigue vigente la del 24/11. Sin comprobar si el Excel no cambió.
+  - Sin locks, claims, NORMALIZANDO ni ERROR. Flags `t|t|f|{PIO}`, R20 y R21 `true`.
+- **Devoluciones Alliance sin reservar desde el 20/05:** informe en
+  `C:\ControlFarmacias\carga_abril_mayo\devoluciones_2511`, ampliado el 26/11. Ninguna devolución Alliance negativa
+  está reservada: la conciliación no enlaza los ABONOS AGRUPADOS con los albaranes internos de Farmatic.
+  DECISIONES DE PIO del 2026-11-26:
+  - **R006421/2026 (−530,06): explicada.** Alliance anuló la venta y no la cobró; no se espera abono.
+  - **SAFA CADUCITATS (2, −87,52):** compensadas con producto; el proveedor está dado de baja.
+  - **SAFA (127, −5.183,99):** cubiertas en total por los ABONOS AGRUPADOS (−5.307,35, 123 € a favor).
+    `PENDIENTE`: diseñar la regla de enlace.
+  - **ECO360 (34, −845,70):** `PENDIENTE`, Pio pide a Alliance el extracto de abonos. Las facturas PLATAFORMA 360 no
+    traen ningún abono. Los 41 ABONOS AGRUPADOS van en las facturas NORMAL ACÚSTICO. Ninguna factura trae el texto
+    ECO360. Los abonos ECOCEUTICS anulan cargos ECOCEUTICS del mismo importe.
+- **Criterio H8-6, petición de la web:** las devoluciones Alliance sin reservar se identifican así:
+  - albaranes de PIO con fecha ≥ 2026-05-20 e `importe_puc < 0`;
+  - `proveedor` en `1.- SAFA`, `6- PLATAF. ECO360 AH` o `SAFA CADUCITATS I DEVOLUCIONS`, que equivale a
+    `ltrim(btrim(id_proveedor), '0')` en 2, 154 o 143;
+  - sin fila en `conciliacion_albaranes_reservados` con el mismo `albaran_farmacia` y `albaran_id_contador`;
+  - son recientes las de fecha posterior a la última factura Alliance cargada.
+
+  El patrón del número no filtra. Recuento del 26/11:
+
+  | Tipo | N.º | PUC |
+  |---|---|---|
+  | SAFA | 125 | −5.101,42 |
+  | SAFA recientes | 2 | −82,57 |
+  | ECO360 | 34 | −845,70 |
+  | SAFA CADUCITATS | 2 | −87,52 |
+  | Total | 163 | −6.117,21 |
+
+  Los 177 de la web serían los 161 negativos hasta el 20/11 más 16 de SAFA a 0,00; es una inferencia. La reserva ya
+  está en la lista cerrada de `cf_lectura` (`pruebas/auditoria_2bn/DISENO.md`); comprobado en producción
+  READ_ONLY. En producción, `public.albaranes` no tiene `id_proveedor_comparable` ni `numero_base`.
+- **25 cargos Alliance positivos sin número en ningún PDF:** no indican que falte un PDF.
+  - Las 3 facturas habituales (NORMAL ACÚSTICO, PLATAFORMA 360 y ECOCEUTICS) están cargadas en todas las decenas
+    del 20/05 al 20/11.
+  - No hay ningún documento sin factura que mencione Alliance.
+  - De los 25:
+    - 11 son internos positivos de Farmatic;
+    - 4 llevan una «A» final, y el número sin la «A» está en un PDF (08006123, 08009718 y 08012619);
+    - 7 tienen un formato que no es de Alliance;
+    - 3 son del 20/11 y no están en las facturas de esa fecha: probablemente vayan en la del 30/11.
+
 ### 39-D: R21 desplegada en producción y 2BP de las 15 pendientes (2026-11-25)
 
 - **Push y flags (Pio):** push de f88bec6 y flags apagados antes del preflight.

@@ -25,6 +25,12 @@ lo que necesitan, no puede escribir ni ejecutar RPC que escriban y no tiene acce
     2026-11-24):** `SELECT` sobre `cf_cashflow_cuentas`, `cf_cashflow_importaciones`, `cf_cashflow_importes` y
     `cf_cashflow_saldos`, con RLS sin funciones security definer (cuentas, saldos e importes si su farmacia está en
     el módulo `CASHFLOW` o no tienen farmacia; importaciones, todas). Ver REGLAS_CRITICAS «Cashflow (H7)».
+  - **Uso en H8-6 (web, 2026-11-26):** la reserva de un albarán se lee en `conciliacion_albaranes_reservados`
+    (`albaran_farmacia`, `albaran_id_contador`), que ya está en la lista. No hace falta ampliarla. Comprobado en
+    producción READ_ONLY:
+    - `SELECT` concedido;
+    - política `conciliacion_albaranes_reservados_lectura_select` para `cf_lectura`, que muestra las filas cuya
+      factura es de una farmacia habilitada.
   - **Prevista en H7b (`DECISIÓN DE PIO`, 2026-11-24; no implementada):** `SELECT` sobre las tablas de previsión de
     Cashflow (`pruebas/auditoria_h7b/DISENO.md` §4).
 - **Sin escritura ni RPC:** ningún `INSERT/UPDATE/DELETE/TRUNCATE`, ninguna secuencia, ningún `EXECUTE`
