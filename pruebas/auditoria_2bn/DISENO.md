@@ -31,13 +31,18 @@ lo que necesitan, no puede escribir ni ejecutar RPC que escriban y no tiene acce
     - `SELECT` concedido;
     - política `conciliacion_albaranes_reservados_lectura_select` para `cf_lectura`, que muestra las filas cuya
       factura es de una farmacia habilitada.
-  - **Ampliación de la 40 (H7b, `DECISIÓN DE PIO`, 2026-11-24; implementada en local el 2026-11-26, no desplegada):**
+  - **Ampliación de la 40 (H7b, `DECISIÓN DE PIO`, 2026-11-24; desplegada en producción en el 40-D, 2026-11-26;
+    privilegios comprobados en su postcheck por fila):**
     - `SELECT` sobre `cf_cashflow_conceptos`, `cf_cashflow_recurrentes`, `cf_cashflow_apuntes` y
       `cf_cashflow_apuntes_historial`, con la RLS del módulo `CASHFLOW`;
-    - `EXECUTE` de `cf_cashflow_ocurrencias` y `cf_cashflow_fechas_recurrente`, que son stable e immutable y no son
-      security definer (`pruebas/auditoria_h7b/DISENO.md` §4 y §7).
+    - la 40 concede a `cf_lectura` el `EXECUTE` de `cf_cashflow_ocurrencias(date, date)` y
+      `cf_cashflow_fechas_recurrente(text, integer, date, date, date, date)`
+      (`sql/migrations/40_cf_cashflow_prevision.sql:616-618`), que son stable e immutable y no son security definer
+      (`pruebas/auditoria_h7b/DISENO.md` §4 y §7). `cf_cashflow_farmacia_habilitada` es solo de `cf_cashflow_web`.
+    - Nota: la RLS de lectura de esas cuatro tablas consulta `cf_modulos_farmacias`, que `cf_lectura` lee desde la
+      31 (`sql/migrations/31_cf_trabajadores.sql:300-302`); la 40 no la concede de nuevo.
 - **Sin escritura ni RPC:** ningún `INSERT/UPDATE/DELETE/TRUNCATE`, ninguna secuencia, ningún `EXECUTE`
-  concedido. Las únicas funciones de `public` ejecutables por `PUBLIC` son dos de trigger y una inmutable de
+  concedido por la 29. La única excepción posterior son las dos funciones de lectura de la 40 (arriba). Las únicas funciones de `public` ejecutables por `PUBLIC` son dos de trigger y una inmutable de
   cálculo (`cf_resultado_conciliacion`); ninguna `SECURITY DEFINER` ni volátil es ejecutable por el rol.
 - **RLS coherente:** las 15 políticas de lectura de `authenticated` pasan a aplicarse también a `cf_lectura`
   (`ALTER POLICY … TO authenticated, cf_lectura`: la misma regla, farmacias habilitadas). Las 5 tablas sin política
