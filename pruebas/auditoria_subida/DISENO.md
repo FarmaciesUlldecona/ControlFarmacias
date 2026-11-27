@@ -6,7 +6,9 @@ migración y sin tocar producción. Petición de la web con las decisiones de Pi
 **Numeración (DECISIONES DE PIO del 2026-11-25 y del 2026-11-26):** «Actualizar ahora» era la migración 39; pasó a 41
 (R21 = 39, H7b = 40) y ahora a **42** (la 41 es TA4-2 de Trabajadores). En este documento, «la 42» es la antigua «39».
 La autorización A4 para nombrar el rol del sistema se dio para esta migración con el número 39: **se reconfirma con
-Pio al implementarla con el número 42** (como en la renumeración de C3, 2026-11-19).
+Pio al implementarla con el número 42** (como en la renumeración de C3, 2026-11-19). **DECISIÓN DE PIO (2026-11-27):** la
+42 pasa a ser el Paso 0 de FACTURAS-0 y «Actualizar ahora» es la **43**. Donde este documento dice «la 42», léase «la
+43»; la autorización A4 se reconfirma al implementar la 43.
 
 - **Etiquetas:** `CONFIRMADO POR CÓDIGO` (fichero:línea), `CONFIRMADO POR LECTURA` (listado del espejo, solo nombres y
   conteos, sin abrir PDF) y `PROPUESTA`. Lo que tiene que decidir Pio está en §4.

@@ -19,7 +19,62 @@ decisión de Pio) e `INFERIDO`.
 | **F0-4** | HEFAME: recargo de equivalencia de la clase «No.» al **5,2 %** |
 | **F0-5** | Orden de lectores: **HEFAME** y después los otros 7 del 80 % por importe: Cofares, Suavinex, Fedefarma, Dermofarm, Pierre Fabre, Kenvue y Ecoceutics |
 
-Pendientes de Pio: las decisiones HEFAME de §6 y las marcadas `PROPUESTA` en §2–§5.
+**Decisiones de Pio, segunda tanda (2026-11-27):**
+
+| Id | Decisión |
+|---|---|
+| **F0-6** | HEFAME, página 2: 0,01 por componente en lo recalculado; exacto en lo impreso (§6.1, tal como se recomienda) |
+| **F0-7** | HEFAME, conciliación: número sin ceros a la izquierda; ventana de 0 a +4 días; 0,01 por fila; internos y `91…` solo con candidato único (§6.2, tal como se recomienda) |
+| **F0-8** | Redondeo documental de §3.5: `mín(0,01 × filas; 0,50)` |
+| **F0-9** | La 42 corrige `tipo_documento` también en las facturas existentes (§3.2), con aviso a la web |
+| **F0-10** | Numeración: **42 = Paso 0**; «Actualizar ahora» pasa a la **43** |
+
+Siguen como `PROPUESTA`, pendientes de Pio, las demás piezas de §2–§5.
+
+## 0a. Paso 0a: verificador de literalidad implementado (2026-11-27)
+
+`CONFIRMADO POR TEST` y `CONFIRMADO POR MEDICIÓN` (banco local, sin producción).
+
+- **Código.** `src/facturas/certificacion/literalidad.py`, versión 0.1.0, con los tests de
+  `tests/facturas/certificacion/test_literalidad.py`.
+  - Solo importa `pypdf` y la biblioteca estándar; un test lo comprueba.
+  - No tiene migración y no está enchufado a la noche ni a la persistencia.
+  - Implementa §2, con dos detalles:
+    - la página citada debe caer dentro de la factura;
+    - las evidencias de un valor deben repetir el literal del campo.
+  - Listas cerradas: derivadas = {R14}; decisiones de Pio = {} (ningún valor documentado de Alliance la usa).
+- **Banco Alliance 1.3.2.** Scripts y salidas en `C:\ControlFarmacias\estrategia_facturas\banco_literalidad\`:
+  - **94 PDF Alliance** distintos del espejo. 81 tienen salida de `alliance-local` (179 facturas). Los 13 restantes
+    no los reconoce el lector, así que no hay nada que verificar.
+  - **179 de 179 facturas `LITERALIDAD_OK`.**
+
+    | Clase | Valores documentados |
+    |---|---|
+    | Verificados `LITERAL` | 48.835 |
+    | `DERIVADO` por R14 (importe del vencimiento) | 179 |
+    | Fallidos (`NO_LITERAL`) | **0** |
+    | `NO_EVALUABLE` | **0** |
+
+  - Tiempo del verificador: 0,39 s como máximo por documento; 54 s el banco entero, con el lector.
+  - Los valores normalizados del proveedor (por ejemplo, `ESPANA` en lugar de `ESPAÑA`) se aceptan como texto: el
+    valor, sin acentos ni puntuación, está contenido en el literal impreso.
+- **Sensibilidad** (mutaciones sobre la salida normalizada del banco):
+  - **38.700 de 38.700 mutaciones detectadas:**
+
+    | Mutación | Casos |
+    |---|---|
+    | Importe +0,01 | 20.524 |
+    | Fecha +1 día | 9.062 |
+    | Número de albarán con un carácter cambiado | 8.704 |
+    | Signo de movimiento cambiado | 410 |
+
+  - **Límite medido: verificar el payload de un documento contra el PDF del documento siguiente.** Siguen pasando
+    como `LITERAL` 3.648 valores (7 %). Son literales cortos o repetidos que aparecen en cualquier factura de
+    Alliance: tipo de pedido, porcentajes, datos fijos del proveedor e importes que coinciden.
+  - La comprobación «el literal aparece en la página» **no ancla la fila**.
+  - **Mejora propuesta (0.2.0), pendiente de Pio:** exigir también que el `fila_literal` de la evidencia aparezca
+    en la página, o la posición (`bbox`) con una herramienta independiente, antes de usar el verificador como
+    bloqueante.
 
 ## 1. Estado confirmado de los documentos
 
@@ -314,3 +369,5 @@ Cómo casar cada fila de la factura con su albarán de Farmatic.
    - La tolerancia de la conciliación de la factura entera sigue siendo la de R11.
 
 Con F0-4 y estas dos decisiones, el diseño de HEFAME queda cerrado para escribir hefame-local 1.3.0 sobre el Paso 0.
+
+**DECISIÓN DE PIO (2026-11-27, F0-6 y F0-7):** aprobadas §6.1 y §6.2 tal como se recomiendan.
