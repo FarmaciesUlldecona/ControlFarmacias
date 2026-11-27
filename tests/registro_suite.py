@@ -166,6 +166,29 @@ class RegistroSuite:
                           and datos["huella"] is not None)
         return datos
 
+    # PERMISOS-1 (2026-11-27): marca «suite en curso» del proceso principal, para que tests/consultar_suite.py
+    # responda EN_CURSO (y el revisor marque T2 INCONCLUSO) mientras la suite no ha terminado.
+
+    def marcar_inicio(self, directorio: Path | None = None) -> Path | None:
+        try:
+            directorio = directorio or ruta_registro().parent / _estado_git().NOMBRE_EN_CURSO
+            os.makedirs(directorio, exist_ok=True)
+            self.marca = directorio / f"{os.getpid()}.json"
+            self.marca.write_text(json.dumps({"pid": os.getpid(), "ts_inicio": self.inicio}), encoding="utf-8")
+            return self.marca
+        except Exception as error:  # nunca altera la suite; sin marca, consultar_suite lee el registro
+            print(f"\n[registro_suite] no se pudo marcar la suite en curso: {type(error).__name__}: {error}")
+            return None
+
+    def quitar_marca(self) -> None:
+        marca = getattr(self, "marca", None)
+        if marca is None:
+            return
+        try:
+            marca.unlink(missing_ok=True)
+        except Exception as error:
+            print(f"\n[registro_suite] no se pudo quitar la marca de suite en curso: {type(error).__name__}: {error}")
+
     def escribir(self, session, exitstatus, ruta: Path | None = None) -> dict | None:
         try:
             datos = self.linea(session, exitstatus)

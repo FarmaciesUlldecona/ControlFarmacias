@@ -143,12 +143,16 @@ def test_la_reparacion_exige_la_misma_base(tmp_path):
 # --------------------------------------------------------------------------- histórica
 
 def test_historica_exacta_por_rutas_de_despliegue_o_modulos_historicos():
-    for ruta in ("sql/migrations/37_x.sql", "pruebas/auditoria_37/desplegar_37.py", "pruebas/auditoria_2at/x.py",
+    """PERMISOS-1 (DECISIÓN DE PIO, 2026-11-27): exacta SOLO por estas rutas; en el resto, ninguna (None)."""
+    for ruta in ("sql/migrations/37_x.sql", "pruebas/auditoria_37/desplegar_37.py",
                  "pruebas/auditoria_2bn_d/preflight_readonly.py", "src/facturas/runtime_supabase/puerta_git.py",
+                 "src/facturas/runtime_supabase/conciliacion.py", "src/facturas/runtime_supabase/repositorios.py",
                  "tests/facturas/runtime_supabase/pg17_local.py", "tests/facturas/runtime_supabase/conftest.py",
                  "tests/facturas/runtime_supabase/test_integracion_pg17_r20.py"):
         assert estado_git.historica_exigida(["docs/a.md", ruta]) == "exacta", ruta
-    assert estado_git.historica_exigida(["src/facturas/runtime_supabase/conciliacion.py", TEST_A]) == "semanal"
+    for ruta in ("pruebas/auditoria_2at/x.py", "sql/otro.sql", "src/x.py", TEST_A, "tests/conftest.py",
+                 ".claude/hooks/estado_git.py", "src/facturas/runtime_supabase/noche_automatica.py"):
+        assert estado_git.historica_exigida(["docs/a.md", ruta]) is None, ruta
 
 
 def test_modulos_historicos_se_leen_sin_importar_el_conftest():
@@ -166,13 +170,11 @@ def _hist(dias, verde=True, huella="hx"):
             "ts_fin": (AHORA - datetime.timedelta(days=dias)).isoformat()}
 
 
-def test_historica_semanal(tmp_path):
-    assert estado_git.historica_valida("h", "semanal", _registro(tmp_path, _hist(6.9)), ahora=AHORA)["verde"]
-    assert estado_git.historica_valida("h", "semanal", _registro(tmp_path, _hist(7.1)), ahora=AHORA) is None
-    assert estado_git.historica_valida("h", "semanal", _registro(tmp_path, {**_hist(1), "ts_fin": "x"}),
-                                       ahora=AHORA) is None
-    ultima_roja = _registro(tmp_path, _hist(2), _hist(1, verde=False))
-    assert not estado_git.historica_valida("h", "semanal", ultima_roja, ahora=AHORA)["verde"]
+def test_sin_historica_semanal(tmp_path):
+    """PERMISOS-1: la regla de 7 días se retira; pedir otro modo que ``exacta`` es un error (fallo cerrado)."""
+    with pytest.raises(ValueError):
+        estado_git.historica_valida("h", "semanal", _registro(tmp_path, _hist(1)), ahora=AHORA)
+    assert not hasattr(estado_git, "DIAS_HISTORICA")
 
 
 def test_historica_exacta_sobre_la_huella(tmp_path):
@@ -190,7 +192,8 @@ def _pass(tmp_path, huella):
     return str(ruta)
 
 
-def test_barrera_de_commit_con_reparacion_b_e_historica(tmp_path):
+def test_barrera_de_commit_con_reparacion_b_sin_historica(tmp_path):
+    """PERMISOS-1: src/x.py y un test no exigen histórica; basta la completa (aquí, por reparación)."""
     rutas = [r[0] for r in D1["rutas"]]
     uso = _pass(tmp_path, estado_git.huella_de(D1))
     roja = _linea(D0, "completa", False, **ROJA)
@@ -198,26 +201,35 @@ def test_barrera_de_commit_con_reparacion_b_e_historica(tmp_path):
                                                                                    "tests/test_b.py::t2"])
     decision = barreras.barrera_commit(None, uso, rutas, _registro(tmp_path, roja, reparacion), detalle=D1,
                                        ahora=AHORA)
-    assert decision.motivo == "commit_sin_historica"
-    vieja = _registro(tmp_path, _hist(8), roja, reparacion)
-    assert barreras.barrera_commit(None, uso, rutas, vieja, detalle=D1, ahora=AHORA).motivo == \
-        "commit_sin_historica"
-    roja_hist = _registro(tmp_path, _hist(1, verde=False), roja, reparacion)
-    assert barreras.barrera_commit(None, uso, rutas, roja_hist, detalle=D1, ahora=AHORA).motivo == \
-        "commit_historica_roja"
-    bien = _registro(tmp_path, _hist(1), roja, reparacion)
-    assert barreras.barrera_commit(None, uso, rutas, bien, detalle=D1, ahora=AHORA).codigo == 0
+    assert decision.codigo == 0
     sin_reparar = _registro(tmp_path, _hist(1), roja)
     assert barreras.barrera_commit(None, uso, rutas, sin_reparar, detalle=D1, ahora=AHORA).motivo == \
         "commit_sin_suite"  # la roja es de otro árbol y no hay reparación
 
 
+def test_barrera_de_commit_que_toca_la_conciliacion_exige_la_historica_exacta(tmp_path):
+    d = _detalle(("src/facturas/runtime_supabase/conciliacion.py", "c" * 64), (TEST_A, "a" * 64))
+    rutas = [r[0] for r in d["rutas"]]
+    uso = _pass(tmp_path, estado_git.huella_de(d))
+    completa = _linea(d, "completa")
+    assert barreras.barrera_commit(None, uso, rutas, _registro(tmp_path, completa), detalle=d,
+                                   ahora=AHORA).motivo == "commit_sin_historica"
+    otra_huella = _registro(tmp_path, _hist(0), completa)
+    assert barreras.barrera_commit(None, uso, rutas, otra_huella, detalle=d, ahora=AHORA).motivo == \
+        "commit_sin_historica"
+    roja = _registro(tmp_path, completa, _linea(d, "historica", False, **ROJA))
+    assert barreras.barrera_commit(None, uso, rutas, roja, detalle=d, ahora=AHORA).motivo == \
+        "commit_historica_roja"
+    bien = _registro(tmp_path, completa, _linea(d, "historica"))
+    assert barreras.barrera_commit(None, uso, rutas, bien, detalle=d, ahora=AHORA).codigo == 0
+
+
 def test_commit_que_toca_un_despliegue_exige_la_historica_exacta(tmp_path):
     d = _detalle(("pruebas/auditoria_37/desplegar_37.py", "e" * 64))
     uso = _pass(tmp_path, estado_git.huella_de(d))
-    semanal = _registro(tmp_path, _hist(1), _linea(d, "completa"))
-    assert barreras.barrera_commit(None, uso, [d["rutas"][0][0]], semanal, detalle=d, ahora=AHORA).motivo == \
-        "commit_sin_historica"
+    otra_huella = _registro(tmp_path, _hist(1), _linea(d, "completa"))
+    assert barreras.barrera_commit(None, uso, [d["rutas"][0][0]], otra_huella, detalle=d,
+                                   ahora=AHORA).motivo == "commit_sin_historica"
     exacta = _registro(tmp_path, _linea(d, "completa"), _linea(d, "historica"))
     assert barreras.barrera_commit(None, uso, [d["rutas"][0][0]], exacta, detalle=d, ahora=AHORA).codigo == 0
 
@@ -228,9 +240,8 @@ def test_suites_para_commit(tmp_path):
                                                                                    "tests/test_b.py::t2"])
     r = _registro(tmp_path, _linea(D0, "completa", False, **ROJA), reparacion)
     estado = estado_git.suites_para_commit(rutas, r, detalle=D1, ahora=AHORA)
-    assert (estado["suite"]["via"], estado["historica_modo"], estado["ok"]) == ("reparacion_b", "semanal", False)
-    r = _registro(tmp_path, _hist(1), _linea(D0, "completa", False, **ROJA), reparacion)
-    assert estado_git.suites_para_commit(rutas, r, detalle=D1, ahora=AHORA)["ok"] is True
+    assert (estado["suite"]["via"], estado["historica_modo"], estado["historica"], estado["ok"]) == \
+        ("reparacion_b", None, None, True)
     docs = _detalle(("docs/a.md", "d" * 64))
     r = _registro(tmp_path, _linea(docs, "rapida"))
     assert estado_git.suites_para_commit(["docs/a.md"], r, detalle=docs)["ok"] is True

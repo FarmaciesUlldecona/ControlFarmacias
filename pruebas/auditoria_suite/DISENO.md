@@ -79,6 +79,11 @@ ejecutar y registrar los tests y la barrera de commit (`.claude/`); **no toca pr
   | `total` | sin `-m` | `completa`, `historica` y `rapida` |
 
   En todos se exigen `tests/` completo, sin `-k`, todo lo colectado ejecutado y ningún `pg17_local` omitido.
+- **Cambiado por PERMISOS-1 (DECISIÓN DE PIO, 2026-11-27):** la histórica es obligatoria (exacta) **solo** si el
+  commit toca `sql/migrations/`, un `desplegar_*` o `preflight*` de `pruebas/`, `pg17_local.py`, el `conftest.py`
+  de `runtime_supabase`, un módulo de `SUITE_HISTORICA`, `conciliacion.py`, `repositorios.py` o `puerta_git.py`.
+  Se retiran la regla semanal, `pruebas/auditoria_2at/` y el resto de `sql/`. Vigente: `REGLAS_CRITICAS`
+  («Hito SUITE»). Lo que sigue es el diseño original.
 - **Cuándo es obligatoria la histórica** (la barrera lo comprueba en cada commit de código):
   - **por rutas tocadas:** si el cambio toca `sql/`, `pg17_local.py`, el `conftest.py` de `runtime_supabase`, un
     `desplegar_*` o un `preflight*` de `pruebas/`, `pruebas/auditoria_2at/`, `src/facturas/runtime_supabase/puerta_git.py`

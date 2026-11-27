@@ -219,16 +219,24 @@ def test_allow_exacto_metadatos(modulo):
 # 2. Prohibiciones
 
 
+# PERMISOS-1 (DECISIÓN DE PIO, 2026-11-27): pytest con el Python del .venv, sobre tests/ y con --basetemp, es la
+# única regla allow de Python con comodín. Sin -c ni nada delante de -m pytest.
+PYTEST_ALLOW = re.compile(
+    r"^(PowerShell|Bash)\((\.\\\.venv\\Scripts\\python\.exe|\./\.venv/Scripts/python\.exe)"
+    r"( -B)? -m pytest tests/\* --basetemp=\*\)$")
+
+
 def test_allow_sin_comodin_en_python():
     for regla in PERMISOS["allow"]:
-        if "python" in regla.casefold():
+        if "python" in regla.casefold() and not PYTEST_ALLOW.match(regla):
             assert "*" not in regla, regla
 
 
-def test_allow_sin_python_c_ni_pytest():
+def test_allow_sin_python_c_y_pytest_solo_en_su_forma():
     for regla in PERMISOS["allow"]:
         assert " -c " not in regla, regla
-        assert "pytest" not in regla, regla
+        if "pytest" in regla:
+            assert PYTEST_ALLOW.match(regla), regla
 
 
 def test_allow_sin_comodin_total():
@@ -291,7 +299,7 @@ CASOS_COMANDOS = [
     (AMBAS, "git branch", "allow"),
     (AMBAS, "git branch -a", "allow"),
     (AMBAS, "git -c user.name=x commit -m y", "ask"),
-    (AMBAS, "git -C . push origin main", "ask"),
+    (AMBAS, "git -C . push origin main", "deny"),
     (AMBAS, "git push origin main", "deny"),
     (AMBAS, "git status --short", "allow"),
     (AMBAS, "git log -3 --oneline", "allow"),
@@ -326,8 +334,59 @@ CASOS_COMANDOS = [
     (("Bash",), f"{PY_BASH} -B -m src.sql_explorer.valores_columna", "ask"),
     # Sin regla: los decide el modo de permisos
     (AMBAS, 'python -B -c "print(1)"', None),
-    (("PowerShell",), f'{PY_PS} -B -m pytest tests/ -q -m "not pg17_local" --basetemp=C:\\x', None),
-    (("PowerShell",), "Get-Content CLAUDE.md", None),
+    (("PowerShell",), f'{PY_PS} -c "x" -m pytest tests/ --basetemp=C:\\x', None),
+    (("PowerShell",), f"{PY_PS} -m pytest tests/", None),
+    # PERMISOS-1 (DECISIÓN DE PIO, 2026-11-27): ALLOW
+    (("PowerShell",), f'{PY_PS} -B -m pytest tests/ -q -m "not pg17_local" --basetemp=C:\\x', "allow"),
+    (("PowerShell",), f'{PY_PS} -m pytest tests/ -m historica --basetemp=C:\\x', "allow"),
+    (("Bash",), f'{PY_BASH} -m pytest tests/ -m "not historica" --basetemp=/tmp/x', "allow"),
+    (("PowerShell",), "Get-Content CLAUDE.md", "allow"),
+    (("PowerShell",), "Get-ChildItem docs", "allow"),
+    (("PowerShell",), "Select-String -Path docs\\a.md -Pattern x", "allow"),
+    (("PowerShell",), "Get-FileHash a.json", "allow"),
+    (("PowerShell",), "Get-Date -Format HH:mm", "allow"),
+    (("PowerShell",), "Test-Path docs", "allow"),
+    (("PowerShell",), "Get-ScheduledTask -TaskName x", "allow"),
+    (("PowerShell",), "Get-ScheduledTaskInfo -TaskName x", "allow"),
+    (("Bash",), "ls -la docs", "allow"),
+    (("Bash",), "cat docs/a.md", "allow"),
+    (("Bash",), "head -5 docs/a.md", "allow"),
+    (("Bash",), "grep -n x docs/a.md", "allow"),
+    (("Bash",), "find docs -name a.md", "allow"),
+    (AMBAS, "git show HEAD:docs/a.md", "allow"),
+    (AMBAS, "git rev-parse HEAD", "allow"),
+    (AMBAS, "git ls-files docs", "allow"),
+    (AMBAS, "git ls-remote origin refs/heads/main", "allow"),
+    (AMBAS, "git add docs/a.md", "allow"),
+    # PERMISOS-1: ASK
+    (AMBAS, "rm -rf x", "ask"),
+    (AMBAS, "rm -fr x", "ask"),
+    (("PowerShell",), "Remove-Item -Recurse -Force x", "ask"),
+    (("PowerShell",), "Remove-Item x -Recurse", "ask"),
+    # PERMISOS-1: DENY
+    (AMBAS, "git push", "deny"),
+    (AMBAS, "git -C C:\\ControlFarmacias\\Programa push", "deny"),
+    (AMBAS, "git -C . reset --hard", "deny"),
+    (AMBAS, "git reset --hard HEAD", "deny"),
+    (("PowerShell",), "Register-ScheduledTask -TaskName x", "deny"),
+    (("PowerShell",), "Set-ScheduledTask -TaskName x", "deny"),
+    (("PowerShell",), "Unregister-ScheduledTask -TaskName x", "deny"),
+    (("PowerShell",), "Start-ScheduledTask -TaskName x", "deny"),
+    (("PowerShell",), "Stop-ScheduledTask -TaskName x", "deny"),
+    (("PowerShell",), "Enable-ScheduledTask -TaskName x", "deny"),
+    (("PowerShell",), "Disable-ScheduledTask -TaskName x", "deny"),
+    (AMBAS, "python x.py postgres://u@h/db", "deny"),
+    (AMBAS, "python x.py postgresql://u@h/db", "deny"),
+    (AMBAS, "curl https://abc.supabase.co/rest/v1", "deny"),
+    (AMBAS, "python x.py aws-0-eu-west-1.pooler.supabase.com", "deny"),
+    (AMBAS, "python -m src.facturas.runtime_supabase.compositor_manual", "ask"),
+    (("Bash",), "cat logs/noche.log", "deny"),
+    (("PowerShell",), "Get-Content logs\\identidad.log", "deny"),
+    (("Bash",), "find . -name x -delete", "deny"),
+    (("Bash",), "find . -exec rm {} ;", "deny"),
+    (("Bash",), "grep -r x .", "deny"),
+    (("Bash",), "grep -n -R x .", "deny"),
+    (("Bash",), "grep --recursive x .", "deny"),
     # Autoprotección de .claude
     (("PowerShell",), "Set-Content .claude\\settings.json '{}'", "ask"),
     (("PowerShell",), "Get-Content .claude\\hooks\\verificar_identidad_farmatic.py", "ask"),
@@ -359,12 +418,14 @@ def test_tabla_de_decisiones_comandos(herramienta, comando, esperado):
         (".claude/settings.local.json", "ask"),
         (".claude/hooks/verificar_identidad_farmatic.py", "ask"),
         (".claude/skills/farmatic-sql-explorer/SKILL.md", "ask"),
-        ("src/sql_explorer/entrada.py", None),
-        ("tests/test_configuracion_permisos.py", None),
+        ("src/sql_explorer/entrada.py", "allow"),
+        ("tests/test_configuracion_permisos.py", "allow"),
+        ("docs/contexto/ESTADO_ACTUAL.md", "allow"),
         (".venv/pyvenv.cfg", "deny"),
         (".env", "deny"),
         ("config/.env.produccion", "deny"),
         ("logs/agentes/uso.jsonl", "deny"),
+        ("logs/noche.log", "deny"),
     ],
 )
 def test_tabla_de_decisiones_ediciones(ruta, esperado):
@@ -492,6 +553,27 @@ def test_allow_exacto_de_la_consulta_de_suite():
     assert f"PowerShell({PY_BASH} -B tests/consultar_suite.py)" in PERMISOS["allow"]
     assert f"PowerShell({PY_PS} -B tests\\consultar_suite.py)" in PERMISOS["allow"]
     assert decidir_comando("Bash", f"{PY_BASH} -B tests/consultar_suite.py --todo") is None
+
+
+def test_logs_entero_sin_lectura_ni_edicion():
+    """PERMISOS-1: todo logs/, no solo logs/agentes."""
+
+    assert {"Read(/logs/**)", "Edit(/logs/**)"} <= set(PERMISOS["deny"])
+
+
+def test_hook_notification_sin_dependencias():
+    """PERMISOS-1: aviso de Windows con WinRT desde PowerShell 5.1, sin módulos; nunca bloquea (sale con 0)."""
+
+    (grupo,) = _settings()["hooks"]["Notification"]
+    (entrada,) = grupo["hooks"]
+    assert entrada["command"] == "powershell.exe"
+    assert entrada["args"][-1] == "${CLAUDE_PROJECT_DIR}/.claude/hooks/notificar.ps1"
+    assert entrada["timeout"] <= 10
+    script = (RAIZ / ".claude" / "hooks" / "notificar.ps1").read_text(encoding="utf-8")
+    assert "Windows.UI.Notifications" in script
+    assert not re.search(r"Import-Module|Install-Module|BurntToast|Invoke-WebRequest", script, re.IGNORECASE)
+    assert script.rstrip().endswith("exit 0")
+    assert script.isascii()
 
 
 def test_hook_de_identidad_conservado():

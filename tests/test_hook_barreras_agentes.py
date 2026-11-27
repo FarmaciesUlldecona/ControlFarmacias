@@ -1321,3 +1321,143 @@ def test_definicion_del_revisor_usa_la_consulta():
     texto = (RAIZ / ".claude" / "agents" / "revisor-reglas.md").read_text(encoding="utf-8")
     assert "tests/consultar_suite.py" in texto
     assert "suites.jsonl" not in texto
+
+
+# 11. PERMISOS-1 (DECISIÓN DE PIO, 2026-11-27)
+
+
+@pytest.mark.parametrize("comando, motivo", [
+    ("git push", "git_push"),
+    ("git push origin main", "git_push"),
+    ("git -C C:/ControlFarmacias/Programa push", "git_push"),
+    ('git -C "C:/Control Farmacias" push --dry-run', "git_push"),
+    ("git -c user.name=x push", "git_push"),
+    ("git.exe --no-pager push", "git_push"),
+    ("git reset --hard HEAD", "git_reset"),
+    ("git -C . reset --soft HEAD~1", "git_reset"),
+    ("Register-ScheduledTask -TaskName x", "tarea_programada"),
+    ("Set-ScheduledTask -TaskName x", "tarea_programada"),
+    ("Unregister-ScheduledTask -TaskName x", "tarea_programada"),
+    ("Start-ScheduledTask -TaskName x", "tarea_programada"),
+    ("Stop-ScheduledTask -TaskName x", "tarea_programada"),
+    ("Enable-ScheduledTask -TaskName x", "tarea_programada"),
+    ("Disable-ScheduledTask -TaskName x", "tarea_programada"),
+    ("python x.py postgres://u@h:5432/db", "conexion_supabase"),
+    ("python x.py postgresql://u@h/db", "conexion_supabase"),
+    ("curl https://abc.supabase.co/rest/v1", "conexion_supabase"),
+    ("python x.py aws-0-eu-west-1.pooler.supabase.com 5432", "conexion_supabase"),
+    ("cat logs/noche.log", "logs"),
+    ("Get-Content C:/ControlFarmacias/Programa/logs/identidad.log", "logs"),
+    ("type logs\\x.txt", "logs"),
+])
+@pytest.mark.parametrize("herramienta", ["Bash", "PowerShell"])
+def test_permisos_1_bloquea_en_el_hook(herramienta, comando, motivo):
+    assert _decidir(herramienta, {"command": comando}).motivo == motivo
+
+
+@pytest.mark.parametrize("comando", [
+    "git status --short", "git log -3", "git diff HEAD", "git show HEAD", "git stash list",
+    "Get-ScheduledTask -TaskName x", "Get-ScheduledTaskInfo -TaskName x",
+    "python -m src.facturas.runtime_supabase.compositor_manual",
+    "Get-Content docs/blogs/a.md", "git log --oneline",
+    "pytest tests/test_pushover.py --basetemp=x",
+])
+def test_permisos_1_no_bloquea_lo_permitido(comando):
+    assert _bash(comando).codigo == 0
+
+
+@pytest.mark.parametrize("herramienta, entrada", [
+    ("Read", {"file_path": "logs/noche.log"}),
+    ("Read", {"file_path": str(RAIZ / "logs" / "identidad" / "x.log")}),
+    ("Edit", {"file_path": "logs/x.txt"}),
+    ("Write", {"file_path": "logs/sub/x.txt"}),
+    ("Glob", {"pattern": "*.log", "path": "logs"}),
+    ("Grep", {"pattern": "x", "path": "logs/noche"}),
+])
+def test_permisos_1_logs_entero_bloqueado_por_ruta(herramienta, entrada):
+    assert _decidir(herramienta, entrada).motivo in ("logs", "registro_agentes")
+
+
+def test_permisos_1_logs_no_bloquea_el_resto():
+    assert _decidir("Read", {"file_path": "docs/contexto/ESTADO_ACTUAL.md"}).codigo == 0
+    assert _decidir("Grep", {"pattern": "x", "path": "src"}).codigo == 0
+
+
+def test_permisos_1_fail_de_proceso_solo_t2(tmp_path):
+    """Un FAIL «de proceso» (solo T2) con PASS posterior no cuenta; cualquier otra regla, o T2 con otra, sí."""
+    assert estado_git.REGLAS_DE_PROCESO == frozenset({"T2"})
+    suite = _suite_completa_verde(tmp_path)
+    proceso = _uso(tmp_path, _revision("a", "FAIL", ["T2"]), _revision("b", "PASS", []))
+    assert barreras.barrera_commit("h1", proceso, ["src/x.py"], suite).codigo == 0
+    for fallidas in (["M1"], ["T2", "M1"], []):
+        ruta = _uso(tmp_path, _revision("a", "FAIL", fallidas), _revision("b", "PASS", []))
+        assert barreras.barrera_commit("h1", ruta, ["src/x.py"], suite).motivo == "commit_revisor_fail", fallidas
+
+
+def test_permisos_1_en_curso_es_inconcluso_y_un_pass_posterior_lo_levanta(tmp_path):
+    suite = _suite_completa_verde(tmp_path)
+    en_curso = _uso(tmp_path, _revision("a", "INCONCLUSO"))
+    assert barreras.barrera_commit("h1", en_curso, ["src/x.py"], suite).motivo == "commit_revisor_inconcluso"
+    levantado = _uso(tmp_path, _revision("a", "INCONCLUSO"), _revision("b", "PASS", []))
+    assert barreras.barrera_commit("h1", levantado, ["src/x.py"], suite).codigo == 0
+
+
+def test_permisos_1_commit_de_codigo_sin_rutas_historicas_no_exige_historica(tmp_path):
+    ruta = _uso(tmp_path, _revision("a", "PASS", []))
+    solo_completa = _suites(tmp_path, {"huella": "h1", "alcance": "completa", "verde": True})
+    assert barreras.barrera_commit("h1", ruta, ["src/x.py"], solo_completa).codigo == 0
+    assert barreras.barrera_commit("h1", ruta, ["sql/migrations/42_x.sql"], solo_completa).motivo == \
+        "commit_sin_historica"
+
+
+def _marca(directorio, pid, inicio):
+    directorio.mkdir(parents=True, exist_ok=True)
+    (directorio / f"{pid}.json").write_text(json.dumps({"pid": pid, "ts_inicio": inicio}), encoding="utf-8")
+
+
+def test_permisos_1_suites_en_curso(tmp_path):
+    import datetime
+    import os
+    import subprocess
+    import sys
+    ahora = datetime.datetime.now().astimezone()
+    directorio = tmp_path / estado_git.NOMBRE_EN_CURSO
+    assert estado_git.suites_en_curso(str(directorio)) == []
+    _marca(directorio, os.getpid(), ahora.isoformat())
+    assert [m["pid"] for m in estado_git.suites_en_curso(str(directorio))] == [os.getpid()]
+    # Marca vieja o de un proceso que ya terminó: no cuenta.
+    terminado = subprocess.run([sys.executable, "-c", "import os; print(os.getpid())"], capture_output=True,
+                               text=True, check=True)
+    _marca(directorio, int(terminado.stdout), ahora.isoformat())
+    vieja = tmp_path / "vieja"
+    _marca(vieja, os.getpid(), (ahora - datetime.timedelta(hours=4)).isoformat())
+    assert [m["pid"] for m in estado_git.suites_en_curso(str(directorio))] == [os.getpid()]
+    assert estado_git.suites_en_curso(str(vieja)) == []
+
+
+def test_permisos_1_consulta_en_curso_no_lee_el_registro(repo_con_cambios, tmp_path_factory):
+    import datetime
+    import os
+    registro = _registro_suites(tmp_path_factory, _linea_suite(repo_con_cambios, alcance="historica"),
+                                _linea_suite(repo_con_cambios))
+    _marca(Path(estado_git.directorio_en_curso(registro)), os.getpid(),
+           datetime.datetime.now().astimezone().isoformat())
+    respuesta = _consulta().consultar(repo_con_cambios, registro)
+    assert respuesta == {"base": respuesta["base"], "rutas": ["a.txt", "nuevo.py"], "suites_en_curso": 1,
+                         "t2": "EN_CURSO"}
+
+
+def test_permisos_1_registro_marca_y_quita_la_suite_en_curso(tmp_path):
+    import os
+    import registro_suite
+    registro = registro_suite.RegistroSuite()
+    marca = registro.marcar_inicio(tmp_path / "suites_en_curso")
+    assert marca.exists() and json.loads(marca.read_text(encoding="utf-8"))["pid"] == os.getpid()
+    registro.quitar_marca()
+    assert not marca.exists()
+    registro.quitar_marca()  # sin marca: no falla
+
+
+def test_permisos_1_definicion_del_revisor_en_curso_es_inconcluso():
+    texto = (RAIZ / ".claude" / "agents" / "revisor-reglas.md").read_text(encoding="utf-8")
+    assert '"t2": "EN_CURSO"' in texto and "INCONCLUSO" in texto

@@ -336,6 +336,38 @@ def busqueda_alcanza_registro(tool_name: str, tool_input: dict, cwd: str) -> boo
 
 BLOQUEO_REGISTRO = "logs/agentes no se lee ni se escribe: solo lo escriben los hooks."
 
+# --- PERMISOS-1 (DECISIÓN DE PIO, 2026-11-27): segunda capa de las deny de settings.json ---------------------
+#
+# Por si una grafía no casa con la regla de settings: git push y git reset en cualquier forma (también con -C u
+# otras opciones globales), los cmdlets que cambian tareas programadas (Get-ScheduledTask* sí se permite), una
+# cadena de conexión o un host de Supabase en el comando y todo logs/ (no solo logs/agentes).
+
+DIRECTORIO_LOGS = os.path.join(DIRECTORIO_PROYECTO, "logs")
+BLOQUEO_LOGS = "logs/ no se lee ni se escribe con ninguna herramienta."
+RE_GIT_PUSH_RESET = re.compile(
+    rf"(?:^|[\s;&|()\"'/])git(?:\.exe)?[\"']?\s+(?:{_OPCION_GIT}\s+)*(push|reset)(?![\w-])")
+RE_TAREA_PROGRAMADA = re.compile(
+    r"\b(?:register|set|unregister|start|stop|enable|disable)-scheduledtask\b")
+# Host de Supabase con su punto delante (*.supabase.co y *.supabase.com): no casa con módulos como
+# src.facturas.runtime_supabase.compositor_manual.
+RE_CONEXION_SUPABASE = re.compile(r"postgres(?:ql)?://|\.supabase\.co")
+RE_LOGS_COMANDO = re.compile(r"(?<![\w.-])logs[\\/]")
+
+
+def barrera_permisos_1(texto: str) -> Decision:
+    """``texto``: el comando en minúsculas."""
+
+    encontrado = RE_GIT_PUSH_RESET.search(texto)
+    if encontrado:
+        return bloquear(f"git_{encontrado.group(1)}", f"git {encontrado.group(1)} lo hace solo Pio.")
+    if RE_TAREA_PROGRAMADA.search(texto):
+        return bloquear("tarea_programada", "las tareas programadas solo las cambia Pio a mano.")
+    if RE_CONEXION_SUPABASE.search(texto):
+        return bloquear("conexion_supabase", "una URL o un host de Supabase no van en un comando.")
+    if RE_LOGS_COMANDO.search(texto):
+        return bloquear("logs", BLOQUEO_LOGS)
+    return PERMITIR
+
 
 def barrera_global(tool_name: str, tool_input: dict, cwd: str) -> Decision:
     for texto in textos_de(tool_input):
@@ -355,6 +387,8 @@ def barrera_global(tool_name: str, tool_input: dict, cwd: str) -> Decision:
             return bloquear("registro_agentes", BLOQUEO_REGISTRO)
     if busqueda_alcanza_registro(tool_name, tool_input, cwd):
         return bloquear("registro_agentes", BLOQUEO_REGISTRO)
+    if any(dentro_de(normalizar(ruta, cwd), DIRECTORIO_LOGS) for ruta in rutas):
+        return bloquear("logs", BLOQUEO_LOGS)
 
     if tool_name in HERRAMIENTAS_SHELL or "command" in tool_input:
         comando = tool_input.get("command")
@@ -369,6 +403,9 @@ def barrera_global(tool_name: str, tool_input: dict, cwd: str) -> Decision:
                 or any(t in normalizado(texto) for t in REGISTRO_AGENTES)
                 or (re.search(r"\blogs\b", texto) and "agentes" in texto)):
             return bloquear("registro_agentes", BLOQUEO_REGISTRO)
+        decision = barrera_permisos_1(texto)
+        if decision.codigo:
+            return decision
         if es_git_commit(texto):
             return barrera_commit()
         if estado_git.es_despliegue(texto):
@@ -428,15 +465,15 @@ def barrera_commit(huella_actual=None, ruta_uso=None, rutas_cambiadas=None, ruta
             f"la última suite {suite.get('alcance')} sobre estos cambios no está en verde "
             f"(failed {suite.get('failed')}, errors {suite.get('errors')}).",
         )
-    if exigida == "completa":
-        historica, modo = estado["historica"], estado["historica_modo"]
+    if exigida == "completa" and estado["historica_modo"] is not None:
+        # PERMISOS-1: la histórica solo se exige si el cambio toca rutas de despliegue o módulos históricos.
+        historica = estado["historica"]
         if historica is None:
             return bloquear(
                 "commit_sin_historica",
-                ("el cambio toca rutas de despliegue o módulos históricos: hace falta la suite histórica sobre "
-                 "el estado exacto de los cambios" if modo == "exacta" else
-                 f"no hay una suite histórica de los últimos {estado_git.DIAS_HISTORICA} días")
-                + "; ejecuta pytest tests/ -m historica con --basetemp propio (con Docker).",
+                "el cambio toca rutas de despliegue o módulos históricos: hace falta la suite histórica sobre "
+                "el estado exacto de los cambios; ejecuta pytest tests/ -m historica con --basetemp propio "
+                "(con Docker).",
             )
         if not historica.get("verde"):
             return bloquear(
@@ -457,7 +494,8 @@ def _suites_exigidas(rutas, huella, detalle, ruta_suites, ahora) -> dict:
         return {"exigida": exigida, "suite": suite, "historica_modo": None, "historica": None}
     modo = estado_git.historica_exigida(rutas)
     return {"exigida": exigida, "suite": suite, "historica_modo": modo,
-            "historica": estado_git.historica_valida(huella, modo, ruta_suites, ahora=ahora)}
+            "historica": None if modo is None else estado_git.historica_valida(huella, modo, ruta_suites,
+                                                                               ahora=ahora)}
 
 
 def barrera_despliegue(huella_actual=None, ruta_suites=None) -> Decision:

@@ -9,7 +9,8 @@ Uso (lo único que el revisor ejecuta además de git): ``./.venv/Scripts/python.
 Imprime un JSON: ``base`` (HEAD), ``rutas`` (las de ``git status``), ``exigida`` (``completa`` o ``rapida``),
 ``suite`` (solo el resumen de la línea válida: alcance, verde, cifras, fechas y si el árbol cambió durante la
 suite; nunca el resto del registro) y ``t2`` (``PASS`` o ``FAIL``). Código de salida 0 con PASS, 1 con FAIL.
-No escribe nada.
+PERMISOS-1: si hay una suite en curso, solo ``base``, ``rutas``, ``suites_en_curso`` y ``t2: "EN_CURSO"``
+(código 1), sin leer el registro. No escribe nada.
 """
 from __future__ import annotations
 
@@ -35,6 +36,11 @@ def consultar(repositorio: Path = ROOT, ruta_suites: str | None = None) -> dict:
     eg = _estado_git()
     detalle = eg.detalle_cambios(str(repositorio))
     rutas = [ruta for ruta, _ in detalle["rutas"]]
+    # PERMISOS-1 (DECISIÓN DE PIO, 2026-11-27): con una suite en curso no se lee el registro; el revisor marca T2
+    # INCONCLUSO y lo vuelve a consultar cuando las suites hayan terminado.
+    en_curso = eg.suites_en_curso(eg.directorio_en_curso(ruta_suites))
+    if en_curso:
+        return {"base": detalle["base"], "rutas": rutas, "suites_en_curso": len(en_curso), "t2": "EN_CURSO"}
     # Hito SUITE: las mismas reglas que la barrera de commit (completa directa o por reparación + histórica).
     estado = eg.suites_para_commit(rutas, ruta_suites, str(repositorio), detalle=detalle)
     exigida, suite, historica = estado["exigida"], estado["suite"], estado["historica"]

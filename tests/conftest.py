@@ -23,6 +23,12 @@ _ES_WORKER = "PYTEST_XDIST_WORKER" in os.environ
 _REGISTRO = RegistroSuite(worker=_ES_WORKER)
 
 
+def pytest_sessionstart(session):
+    """PERMISOS-1: el proceso principal marca la suite en curso (la quita al terminar)."""
+    if not _ES_WORKER:
+        _REGISTRO.marcar_inicio()
+
+
 def pytest_collection_finish(session):
     _REGISTRO.coleccion(session.items)
 
@@ -42,7 +48,10 @@ def pytest_sessionfinish(session, exitstatus):
     if hasattr(session.config, "workeroutput"):
         session.config.workeroutput["registro_suite"] = _REGISTRO.resumen_worker()
     else:
-        _REGISTRO.escribir(session, exitstatus)
+        try:
+            _REGISTRO.escribir(session, exitstatus)
+        finally:
+            _REGISTRO.quitar_marca()
     for logger in logging.Logger.manager.loggerDict.values():
         if not isinstance(logger, logging.Logger):
             continue

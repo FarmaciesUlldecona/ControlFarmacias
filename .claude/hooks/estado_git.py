@@ -187,10 +187,16 @@ INFRAESTRUCTURA_TESTS = ("tests/conftest.py", "tests/facturas/runtime_supabase/p
                          "tests/registro_suite.py", "tests/consultar_suite.py")
 CONFTEST_HISTORICA = "tests/facturas/runtime_supabase/conftest.py"
 MAXIMO_FALLADOS_REPETICION = 3
-DIAS_HISTORICA = 7
+# PERMISOS-1 (DECISIÓN DE PIO, 2026-11-27): la histórica es obligatoria (exacta) SOLO si el commit toca estas rutas
+# o un módulo de SUITE_HISTORICA; en el resto no se exige (se retira la regla de 7 días). Se mantienen puerta_git.py
+# y preflight*.py; salen pruebas/auditoria_2at/ y el resto de sql/.
 _RUTAS_HISTORICA = re.compile(
-    r"^(sql/|tests/facturas/runtime_supabase/(pg17_local|conftest)\.py$|pruebas/auditoria_2at/"
-    r"|pruebas/.*/(desplegar_[^/]*|preflight[^/]*)\.py$|src/facturas/runtime_supabase/puerta_git\.py$)")
+    r"^(sql/migrations/|tests/facturas/runtime_supabase/(pg17_local|conftest)\.py$"
+    r"|pruebas/.*/(desplegar_[^/]*|preflight[^/]*)\.py$"
+    r"|src/facturas/runtime_supabase/(puerta_git|conciliacion|repositorios)\.py$)")
+# PERMISOS-1: un FAIL «de proceso» (solo estas reglas fallidas) no cuenta si hay un PASS posterior de la misma
+# huella. La suite en curso (consultar_suite responde EN_CURSO) la marca el revisor como INCONCLUSO.
+REGLAS_DE_PROCESO = frozenset({"T2"})
 
 
 def _registros_suite(ruta: str | None, repositorio: str) -> list[dict]:
@@ -218,13 +224,14 @@ def modulos_historicos(repositorio: str = DIRECTORIO_PROYECTO) -> set[str]:
     return set()
 
 
-def historica_exigida(rutas: list[str], repositorio: str = DIRECTORIO_PROYECTO) -> str:
-    """``exacta`` si el cambio toca rutas de despliegue o módulos históricos; si no, ``semanal``."""
+def historica_exigida(rutas: list[str], repositorio: str = DIRECTORIO_PROYECTO) -> str | None:
+    """``exacta`` si el cambio toca rutas de despliegue o módulos históricos (o no se puede leer
+    ``SUITE_HISTORICA``: fallo cerrado); si no, None (no se exige histórica, PERMISOS-1)."""
     modulos = modulos_historicos(repositorio)
     normalizadas = [r.replace("\\", "/") for r in rutas]
     if any(_RUTAS_HISTORICA.search(r) or r in modulos for r in normalizadas) or not modulos:
         return "exacta"
-    return "semanal"
+    return None
 
 
 def _fecha(texto) -> "datetime.datetime | None":
@@ -238,21 +245,11 @@ def _fecha(texto) -> "datetime.datetime | None":
 
 def historica_valida(huella: str, modo: str, ruta: str | None = None, repositorio: str = DIRECTORIO_PROYECTO,
                      ahora=None) -> dict | None:
-    """``exacta``: la última histórica (o total) sobre la huella. ``semanal``: la última histórica (o total) del
-    repositorio, si terminó hace 7 días o menos. Devuelve la línea (verde o no) o None."""
-    import datetime
-    registros = _registros_suite(ruta, repositorio)
-    if modo == "exacta":
-        return _ultima(registros, huella, "historica")
-    historicas = [r for r in registros if r.get("alcance") in CUBRE["historica"] and r.get("huella")]
-    if not historicas:
-        return None
-    ultima = historicas[-1]
-    fin = _fecha(ultima.get("ts_fin"))
-    ahora = ahora or datetime.datetime.now(datetime.timezone.utc)
-    if fin is None or ahora - fin > datetime.timedelta(days=DIAS_HISTORICA):
-        return None
-    return ultima
+    """``exacta``: la última histórica (o total) sobre la huella (verde o no), o None. Cualquier otro modo es un
+    error de programación: PERMISOS-1 retiró la histórica semanal (fallo cerrado)."""
+    if modo != "exacta":
+        raise ValueError(f"modo de histórica no admitido: {modo!r}")
+    return _ultima(_registros_suite(ruta, repositorio), huella, "historica")
 
 
 def _diferencias(rutas_a: list, rutas_b: list) -> set[str]:
@@ -325,8 +322,8 @@ def suites_para_commit(rutas: list[str], ruta: str | None = None, repositorio: s
                        detalle: dict | None = None, ahora=None) -> dict:
     """Lo que exige la barrera de commit (y T2) sobre el estado exacto de los cambios.
 
-    Documentación: la rápida (o más). Código: la completa (directa o por reparación) en verde y la histórica en
-    verde, sobre la misma huella si el cambio toca rutas de despliegue o módulos históricos, o de 7 días o menos.
+    Documentación: la rápida (o más). Código: la completa (directa o por reparación) en verde y, si el cambio toca
+    rutas de despliegue o módulos históricos (``historica_exigida``), la histórica en verde sobre la misma huella.
     """
     detalle = detalle if detalle is not None else detalle_cambios(repositorio)
     huella = huella_de(detalle)
@@ -337,9 +334,72 @@ def suites_para_commit(rutas: list[str], ruta: str | None = None, repositorio: s
                 "ok": bool(suite and suite.get("verde"))}
     suite = completa_valida(detalle, ruta, repositorio)
     modo = historica_exigida(rutas, repositorio)
-    historica = historica_valida(huella, modo, ruta, repositorio, ahora)
+    historica = None if modo is None else historica_valida(huella, modo, ruta, repositorio, ahora)
     return {"exigida": exigida, "suite": suite, "historica_modo": modo, "historica": historica,
-            "ok": bool(suite and suite.get("verde") and historica and historica.get("verde"))}
+            "ok": bool(suite and suite.get("verde") and (modo is None or (historica and historica.get("verde"))))}
+
+
+# --- PERMISOS-1: suites en curso ---------------------------------------------
+#
+# El proceso principal de pytest deja una marca ``<pid>.json`` en ``suites_en_curso/`` (junto al registro de
+# suites) al empezar y la quita al terminar. Con una marca viva, ``tests/consultar_suite.py`` responde EN_CURSO sin
+# leer el registro y el revisor marca T2 INCONCLUSO. Una marca de un proceso que ya no existe, o de más de
+# ``HORAS_MARCA_EN_CURSO``, no cuenta (la deja una suite que murió sin terminar).
+
+NOMBRE_EN_CURSO = "suites_en_curso"
+HORAS_MARCA_EN_CURSO = 3
+
+
+def directorio_en_curso(ruta_suites_: str | None = None) -> str:
+    return os.path.join(os.path.dirname(ruta_suites_ or ruta_suites()), NOMBRE_EN_CURSO)
+
+
+def pid_vivo(pid: int) -> bool:
+    if not isinstance(pid, int) or pid <= 0:
+        return False
+    if os.name == "nt":
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        proceso = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not proceso:
+            return False
+        try:
+            codigo = ctypes.c_ulong()
+            if not kernel32.GetExitCodeProcess(proceso, ctypes.byref(codigo)):
+                return False
+            return codigo.value == 259  # STILL_ACTIVE
+        finally:
+            kernel32.CloseHandle(proceso)
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def suites_en_curso(directorio: str, ahora=None) -> list[dict]:
+    """Marcas vivas: proceso existente y de ``HORAS_MARCA_EN_CURSO`` o menos. No escribe ni borra nada."""
+    import datetime
+    ahora = ahora or datetime.datetime.now(datetime.timezone.utc)
+    vivas = []
+    try:
+        nombres = sorted(os.listdir(directorio))
+    except OSError:
+        return []
+    for nombre in nombres:
+        if not nombre.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(directorio, nombre), encoding="utf-8") as archivo:
+                marca = json.load(archivo)
+        except (OSError, ValueError):
+            continue
+        inicio = _fecha(marca.get("ts_inicio")) if isinstance(marca, dict) else None
+        if (inicio is None or ahora - inicio > datetime.timedelta(hours=HORAS_MARCA_EN_CURSO)
+                or not pid_vivo(marca.get("pid"))):
+            continue
+        vivas.append({"pid": marca.get("pid"), "ts_inicio": marca.get("ts_inicio")})
+    return vivas
 
 
 RE_DESPLIEGUE = re.compile(r"\bpython[\w.]*\s[^|;&]*\bdesplegar_\d+(\.py)?\b")
@@ -412,7 +472,9 @@ def _veredicto_grupo(lineas: list[dict]) -> str:
         if veredicto == "INCONCLUSO":
             inconcluso = inconcluso or not pase_posterior
             continue
-        if not (registro.get("reglas_fail") == ["T2"] and pase_posterior):
+        fallidas = registro.get("reglas_fail")
+        de_proceso = bool(fallidas) and set(fallidas) <= REGLAS_DE_PROCESO
+        if not (de_proceso and pase_posterior):
             return "FAIL"
     return "INCONCLUSO" if inconcluso else "PASS"
 
