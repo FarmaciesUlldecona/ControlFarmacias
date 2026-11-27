@@ -165,6 +165,18 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   propio y no implementado: detectar en conciliación albaranes Alliance sin factura
   asociada por periodo. Fijado por
   `test_limite_conocido_factura_alliance_entera_omitida`.
+- **Fábrica de lectores (DECISIÓN DE PIO, 2026-11-27, FACTURAS-0; diseño en
+  `pruebas/auditoria_facturas0/DISENO.md`):**
+  - cada proveedor sin lector tendrá un lector determinista, escrito a partir de facturas reales, como
+    `alliance-local`;
+  - **nunca IA leyendo facturas por la noche**;
+  - **Paso 0 aprobado, NO IMPLEMENTADO**: verificador de literalidad independiente del lector, contrato mínimo
+    obligatorio (CIF del emisor en su columna, tipo de documento real, importe real de cada vencimiento, no persistir
+    con el cuadre fiscal fallido, albaranes + movimientos = total) y aviso de proveedor sin lector en
+    `para_revisar`, sin romper Alliance;
+  - orden de lectores: HEFAME y después Cofares, Suavinex, Fedefarma, Dermofarm, Pierre Fabre, Kenvue y Ecoceutics;
+  - hasta que cada uno se certifique y Pio le dé autoridad, sigue vigente todo lo anterior: ningún lector distinto
+    de `alliance-local` 1.3.2 tiene autoridad.
 - Shadow conserva siempre la salida oficial; `adaptadores_productivos()` es un alias
   de compatibilidad y su nombre no concede autoridad.
 - Solo Guimerà declara backend con OCR local. El resto usa PDFium nativo salvo que
@@ -178,7 +190,7 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
 |---|---|
 | Alliance / Cencora | Conserva tablas y secciones documentales `CARGOS`/`ABONOS`, fiscalidad, vencimientos y relaciones 1:1 inequívocas sin fusionar objetos. `SERVICIO BASICO` y `CONDIC. COMERCIAL` son `CARGO` solo por decisión funcional explícita de Pio. `ABONOS CLUBS` es `ABONO` **solo si el importe de la fila es negativo** (DECISIÓN DE PIO, 2026-11-24; adaptador 1.3.2), con el literal en el adaptador y después de la sección y de las relaciones documentales, que prevalecen; con importe positivo o nulo queda indeterminado. Fuera de esas pruebas, el sentido queda indeterminado. |
 | FEDEFARMA | `Total abonaments (consultar detalls)` se clasifica como `DEVOLUCION_MERCANCIA` sin derivar por ello el sentido. La cuota mensual de servicios cooperativos es `CONDICION_COOPERATIVA`; textos meramente registrales no crean movimientos. Conserva facturas internas segmentadas. |
-| HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos, salvo estas dos decisiones funcionales explícitas de Pio (2026-11-18, `pruebas/auditoria_hefame/DISENO.md` §0): el desfase de 80,00 de base S.R. de la factura de fin de mes es el **cargo cooperativo HEFAME**, fijo cada mes (H1), y `APROAFA` (aportación a la Asociación para la Promoción de la Asistencia Farmacéutica en España) es `CARGO` (H2). Un desfase distinto de 80,00, en otra clase, negativo o fuera del fin de mes, y un `APROAFA` negativo, fallan cerrados (H6, H7). Decisiones de Pio del 2026-11-19: `Resumen Liquidaciones Comerciales` son pequeños descuentos sobre especialidad (IVA 4 %, base S.R.) y son `ABONO` (H3); los números de 9 dígitos que empiezan por `91` son albaranes normales que Farmatic registra con numeración interna `Q…`/`R…`, y casan por numeración interna, importe y fecha con candidato único, como R15b (H4). La autoridad productiva de `hefame-local` sigue desactivada. |
+| HEFAME | Declara controles documentales entre detalle, pedidos, servicios operativos, fiscalidad, total y vencimiento. Una diferencia solo produce resultado de control; no crea explicaciones ni movimientos, salvo estas dos decisiones funcionales explícitas de Pio (2026-11-18, `pruebas/auditoria_hefame/DISENO.md` §0): el desfase de 80,00 de base S.R. de la factura de fin de mes es el **cargo cooperativo HEFAME**, fijo cada mes (H1), y `APROAFA` (aportación a la Asociación para la Promoción de la Asistencia Farmacéutica en España) es `CARGO` (H2). Un desfase distinto de 80,00, en otra clase, negativo o fuera del fin de mes, y un `APROAFA` negativo, fallan cerrados (H6, H7). Decisiones de Pio del 2026-11-19: `Resumen Liquidaciones Comerciales` son pequeños descuentos sobre especialidad (IVA 4 %, base S.R.) y son `ABONO` (H3); los números de 9 dígitos que empiezan por `91` son albaranes normales que Farmatic registra con numeración interna `Q…`/`R…`, y casan por numeración interna, importe y fecha con candidato único, como R15b (H4). Decisión de Pio del 2026-11-27 (FACTURAS-0, F0-4): el recargo de equivalencia de la base «No.» es el **5,2 %** (el 1,2 % de `hefame_economia.py` es un defecto, pendiente de corregir en el código). La autoridad productiva de `hefame-local` sigue desactivada. |
 | COFARES | La elegibilidad local exige documento monopágina, segmentación determinista, filas completas y únicas, columnas inequívocas y evidencia integral. El sentido literal ausente no se infiere. El descuento por pronto pago sigue como gap funcional. |
 | Guimerà | Dispone de adaptadores OCR actual e histórico; el OCR solo se reintenta ante `PENDIENTE_OCR`. El routing no usa filename ni hash. |
 | DERMOFARM | Conserva evidencia y no inventa importes. La relación de abonos descontados en la primera factura del mes siguiente sigue pendiente de decisión funcional. |
