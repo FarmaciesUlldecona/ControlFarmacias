@@ -170,16 +170,23 @@ de commit; 2BE: regla R17; 2BF-D: migración 23 desplegada).
   - cada proveedor sin lector tendrá un lector determinista, escrito a partir de facturas reales, como
     `alliance-local`;
   - **nunca IA leyendo facturas por la noche**;
-  - **Paso 0 aprobado, NO IMPLEMENTADO**: verificador de literalidad independiente del lector, contrato mínimo
-    obligatorio (CIF del emisor en su columna, tipo de documento real, importe real de cada vencimiento, no persistir
-    con el cuadre fiscal fallido, albaranes + movimientos = total) y aviso de proveedor sin lector en
-    `para_revisar`, sin romper Alliance;
+  - **Paso 0 aprobado**, con este estado:
+    - **verificador de literalidad independiente del lector: IMPLEMENTADO en local** (Paso 0a, debajo), sin enchufar
+      a la noche ni a la persistencia;
+    - **contrato mínimo obligatorio: NO IMPLEMENTADO** (CIF del emisor en su columna, tipo de documento real,
+      importe real de cada vencimiento, no persistir con el cuadre fiscal fallido, albaranes + movimientos =
+      total; migración 42);
+    - **aviso de proveedor sin lector en `para_revisar`: NO IMPLEMENTADO**;
+    - todo ello sin romper Alliance;
   - orden de lectores: HEFAME y después Cofares, Suavinex, Fedefarma, Dermofarm, Pierre Fabre, Kenvue y Ecoceutics;
   - **decisiones del Paso 0 (Pio, 2026-11-27):**
     - redondeo documental de albaranes + movimientos frente al total: `mín(0,01 × filas; 0,50)`;
     - la migración 42 corrige `tipo_documento` también en las facturas ya persistidas, con aviso a la web;
   - **Paso 0a (2026-11-27):** verificador de literalidad `src/facturas/certificacion/literalidad.py` (pypdf). Es
     independiente del lector y **no está enchufado** a la noche ni a la persistencia;
+    - **versión 0.2.0 (aprobada por Pio, 2026-11-27):** cada literal se ancla a su fila o bloque (la banda de
+      `bbox_fila` ∪ `bbox`; el texto vertical, por su franja), y la fila entera que vio el lector tiene que estar
+      en esa posición;
   - la lista cerrada de reglas derivadas solo contiene R14; la de decisiones de Pio, ninguna;
   - hasta que cada uno se certifique y Pio le dé autoridad, sigue vigente todo lo anterior: ningún lector distinto
     de `alliance-local` 1.3.2 tiene autoridad.

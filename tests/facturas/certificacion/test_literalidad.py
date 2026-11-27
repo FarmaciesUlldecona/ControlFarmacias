@@ -12,9 +12,41 @@ from src.facturas.certificacion import literalidad as lit
 MODULO = Path(lit.__file__)
 
 
-def _ev(literal, pagina=1, regla="VALOR_TRAS_ETIQUETA", origen="LITERAL_LOCAL_DETERMINISTA"):
+LINEAS = ["FACTURA DUPLICADO", "08015660 10-12-2025 06-04-2026",
+          "02-12-2025 ECOCEUTICS 08E33517 40,45 45,07", "30-06-2026 ABONOS AGRUPADOS 08C38230 8,29- 8,66-",
+          "TOTAL BASE IMPONIBLE 1.198,99 TOTAL FACTURA 1.221,68",
+          "Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÑA, S.A., para gestionar"]
+PAGINA = "\n".join(LINEAS)
+
+
+def _y(i):
+    """Línea base (desde arriba) de la línea i de la página sintética."""
+    return 100.0 + 20.0 * i
+
+
+def _tiradas():
+    return [(18.0, _y(i), "   " + linea, False) for i, linea in enumerate(LINEAS)]
+
+
+def _texto(paginas=1):
+    return lit.TextoPdf([PAGINA] * paginas, [_tiradas() for _ in range(paginas)])
+
+
+TEXTO = _texto()
+
+
+def _ev(literal, pagina=1, regla="VALOR_TRAS_ETIQUETA", origen="LITERAL_LOCAL_DETERMINISTA", linea=None, fila=None,
+        bbox_fila="auto"):
+    """Evidencia con la fila que vería el lector: la primera línea que contiene el literal (o la indicada)."""
+    if linea is None:
+        clave = lit.normalizar_estricto(literal)
+        linea = next((i for i, l in enumerate(LINEAS) if clave in lit.normalizar_estricto(l)), 0)
+    if bbox_fila == "auto":
+        bbox_fila = [18.0, _y(linea) - 5.0, 560.0, _y(linea)]
     return {"literal": literal, "pagina": pagina,
-            "ubicacion": {"regla": regla, "pagina": pagina, "origen_autoridad": origen, "tipo_evidencia": "LITERAL_LOCAL"}}
+            "ubicacion": {"regla": regla, "pagina": pagina, "origen_autoridad": origen, "tipo_evidencia": "LITERAL_LOCAL",
+                          "bbox_fila": bbox_fila, "bbox": bbox_fila,
+                          "fila_literal": LINEAS[linea] if fila is None else fila}}
 
 
 def _campo(valor, literal, **kw):
@@ -25,13 +57,6 @@ def _factura(**campos):
     base = {"pagina_inicio": 1, "pagina_fin": 1, "numero_factura": _campo("08015660", "08015660")}
     base.update(campos)
     return base
-
-
-PAGINA = ("FACTURA DUPLICADO\n08015660 10-12-2025 06-04-2026\n"
-          "02-12-2025 ECOCEUTICS 08E33517 40,45 45,07\n30-06-2026 ABONOS AGRUPADOS 08C38230 8,29- 8,66-\n"
-          "TOTAL BASE IMPONIBLE 1.198,99 TOTAL FACTURA 1.221,68\n"
-          "Sus datos son tratados por ALLIANCE HEALTHCARE ESPAÑA, S.A., para gestionar")
-TEXTO = lit.TextoPdf([PAGINA])
 
 
 def _clases(factura, texto=TEXTO):
@@ -110,7 +135,7 @@ def test_fecha_distinta_del_literal_falla():
 
 
 def test_pagina_fuera_de_la_factura_falla():
-    texto = lit.TextoPdf([PAGINA, PAGINA])
+    texto = _texto(2)
     f = _factura(totales={"total": _campo("1221.68", "1.221,68", pagina=2)})
     assert ("/totales/total", lit.NO_LITERAL, "PAGINA_FUERA_DE_LA_FACTURA") in _clases(f, texto)
 
@@ -201,8 +226,8 @@ def test_lista_cerrada_de_reglas():
 
 def _pdf_minimo(lineas: list[str]) -> bytes:
     """PDF de una página con texto Helvetica (sin dependencias) para probar la extracción con pypdf."""
-    contenido = "BT /F1 10 Tf 50 750 Td 14 TL " + " ".join(
-        "(" + l.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)") + ") Tj T*" for l in lineas) + " ET"
+    contenido = "BT /F1 10 Tf 50 750 Td " + " 0 -14 Td ".join(
+        "(" + l.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)") + ") Tj" for l in lineas) + " ET"
     objetos = [
         "<< /Type /Catalog /Pages 2 0 R >>",
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
@@ -221,10 +246,97 @@ def _pdf_minimo(lineas: list[str]) -> bytes:
     return salida
 
 
+def _en_pdf(valor, literal, fila, y_base):
+    caja = [50.0, y_base - 5.0, 300.0, y_base]
+    return _campo(valor, literal, bbox_fila=caja, fila=fila)
+
+
+def _factura_pdf(total="1221.68", literal="1.221,68", y_total=106.0):
+    return {"pagina_inicio": 1, "pagina_fin": 1,
+            "numero_factura": _en_pdf("08015660", "08015660", "FACTURA 08015660", 92.0),
+            "totales": {"total": _en_pdf(total, literal, "TOTAL FACTURA 1.221,68", y_total)}}
+
+
 def test_texto_pdf_con_pypdf_sobre_un_pdf_real():
     texto = lit.TextoPdf.desde_pdf(_pdf_minimo(["FACTURA 08015660", "TOTAL FACTURA 1.221,68"]))
     assert texto.numero_paginas == 1 and texto.tiene_texto(1) and not texto.tiene_texto(2)
-    f = _factura(totales={"total": _campo("1221.68", "1.221,68")})
-    assert lit.verificar_factura(f, texto).estado == "LITERALIDAD_OK"
-    f_mal = _factura(totales={"total": _campo("1221.69", "1.221,69")})
-    assert lit.verificar_factura(f_mal, texto).estado == "LITERALIDAD_FALLO"
+    assert lit.verificar_factura(_factura_pdf(), texto).estado == "LITERALIDAD_OK"
+    assert lit.verificar_factura(_factura_pdf("1221.69", "1.221,69"), texto).estado == "LITERALIDAD_FALLO"
+
+
+def test_pdf_real_total_en_otra_fila_falla():
+    texto = lit.TextoPdf.desde_pdf(_pdf_minimo(["FACTURA 08015660", "TOTAL FACTURA 1.221,68"]))
+    motivos = {r.ruta: r.motivo for r in lit.verificar_factura(_factura_pdf(y_total=92.0), texto).resultados}
+    assert motivos["/totales/total"] == "LITERAL_AUSENTE_EN_SU_FILA"
+
+
+def test_pdf_girado_no_ancla_filas():
+    pdf = _pdf_minimo(["FACTURA 08015660", "TOTAL FACTURA 1.221,68"]).replace(
+        b"/MediaBox [0 0 595 842]", b"/MediaBox [0 0 595 842] /Rotate 90")
+    informe = lit.verificar_factura(_factura_pdf(), lit.TextoPdf.desde_pdf(pdf))
+    assert {(r.clase, r.motivo) for r in informe.resultados} == {(lit.NO_EVALUABLE, "FILA_NO_EVALUABLE")}
+    assert informe.estado == lit.NO_EVALUABLE
+
+
+# --- 0.2.0: anclaje a la fila o bloque --------------------------------------------------------------------------
+
+def test_literal_de_otra_fila_de_la_misma_pagina_falla():
+    """40,45 está en la página, pero no en la fila del total: el anclaje por página lo dejaba pasar."""
+    f = _factura(totales={"total": _campo("40.45", "40,45", linea=4)})
+    assert ("/totales/total", lit.NO_LITERAL, "LITERAL_AUSENTE_EN_SU_FILA") in _clases(f)
+
+
+def test_fila_del_lector_que_no_esta_en_su_posicion_falla():
+    campo = _campo("45.07", "45,07", fila="02-12-2025 OTRO_LABORATORIO 08E33517 40,45 45,07")
+    assert ("/albaranes[0]/importe_total", lit.NO_LITERAL, "FILA_DEL_LECTOR_AUSENTE_EN_SU_POSICION") in _clases(
+        _factura(albaranes=[{"importe_total": campo}]))
+
+
+def test_evidencia_sin_caja_falla_cerrado():
+    campo = _campo("45.07", "45,07", bbox_fila=None)
+    assert ("/albaranes[0]/importe_total", lit.NO_LITERAL, "EVIDENCIA_SIN_FILA") in _clases(
+        _factura(albaranes=[{"importe_total": campo}]))
+
+
+def test_sin_posiciones_de_pypdf_la_fila_no_es_evaluable():
+    informe = lit.verificar_factura(_factura(), lit.TextoPdf([PAGINA]))
+    assert [(r.clase, r.motivo) for r in informe.resultados] == [(lit.NO_EVALUABLE, "FILA_NO_EVALUABLE")]
+
+
+def test_bloque_de_dos_lineas_con_etiqueta_intercalada():
+    """Dirección en dos líneas con la etiqueta a la derecha (como el bloque del destinatario de Alliance)."""
+    tiradas = [(323.0, 116.0, "DIRECCION", False), (18.0, 114.0, "     CALLE MAYOR 1", False),
+               (18.0, 126.0, "     08001 BARCELONA", False), (18.0, 140.0, "OTRA FILA", False)]
+    texto = lit.TextoPdf(["DIRECCION\nCALLE MAYOR 1\n08001 BARCELONA\nOTRA FILA"], [tiradas])
+    campo = _campo("CALLE MAYOR 1 08001 BARCELONA", "CALLE MAYOR 1 08001 BARCELONA",
+                   bbox_fila=[323.0, 108.6, 447.0, 116.0], fila="DIRECCION CALLE MAYOR 1")
+    campo["evidencia"][0]["ubicacion"]["bbox"] = [384.0, 109.7, 448.0, 126.1]
+    informe = lit.verificar_factura({"pagina_inicio": 1, "pagina_fin": 1, "destinatario": {"direccion": campo}}, texto)
+    assert informe.estado == "LITERALIDAD_OK"
+
+
+def test_texto_vertical_se_ancla_por_su_franja_y_no_contamina_las_filas():
+    vertical = (20.0, 692.0, "Domicilio Social: Pol. Ind. 4 Insc. 1o CIF: A50004324", True)
+    fila = (18.0, 421.0, "25-07-2026 NORMAL ACUSTICO 08C54396 6,38 7,11", False)
+    texto = lit.TextoPdf([vertical[2] + "\n" + fila[2]], [[vertical, fila]])
+    nif = _campo("A50004324", "A50004324", bbox_fila=[17.1, 387.0, 20.0, 407.3], fila="A50004324")
+    albaran = _campo("08C54396", "08C54396", bbox_fila=[17.1, 416.5, 289.8, 422.0],
+                     fila="1o 25-07-2026 NORMAL ACUSTICO 08C54396 6,38 7,11")
+    otra = _campo("08C54396", "08C54396", bbox_fila=[200.0, 387.0, 300.0, 407.3], fila="08C54396")
+    f = {"pagina_inicio": 1, "pagina_fin": 1, "proveedor": {"nif": nif}, "albaranes": [{"numero": albaran}, {"numero": otra}]}
+    clases = {r.ruta: r.clase for r in lit.verificar_factura(f, texto).resultados}
+    assert clases == {"/proveedor/nif": lit.LITERAL, "/albaranes[0]/numero": lit.LITERAL,
+                      "/albaranes[1]/numero": lit.NO_LITERAL}
+
+
+@pytest.mark.parametrize("literal, tiradas, esperado", [
+    ("ABCDEFGH", ["XXABCDEFGHYY"], True),
+    ("ABCDEFGH", ["ABCD", "EFGH"], True),
+    ("ABCDEFGH", ["ABCDE", "FGH"], False),
+    ("TOTALA10TOTALB20", ["TOTALA", "TOTALB", "10XX20"], False),
+    ("TOTALA10,0TOTALB20,0", ["TOTALA", "TOTALB", "10,0XX20,0"], True),
+    ("TOTALA20,0TOTALB10,0", ["TOTALA", "TOTALB", "10,0XX20,0"], False),
+    ("", ["ALGO"], False),
+])
+def test_composicion_por_trozos_ordenados(literal, tiradas, esperado):
+    assert lit.compuesto_en_tiradas(literal, tiradas) is esperado

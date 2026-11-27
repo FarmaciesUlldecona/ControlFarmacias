@@ -4,9 +4,11 @@ Comprueba, para cada valor documentado de la salida normalizada (``{valor, liter
 
 1. el literal aparece en el texto de la página citada, extraído con **pypdf** (motor distinto del ``pypdfium2`` de
    los lectores);
-2. el valor sale de ese literal con un analizador declarado (importe es-ES, porcentaje, fecha, texto o
+2. (0.2.0) el literal aparece **en su fila**: en el texto que pypdf sitúa dentro de la banda vertical del
+   ``bbox_fila`` de la evidencia (coordenadas desde el borde superior, como las del lector), no solo en la página;
+3. el valor sale de ese literal con un analizador declarado (importe es-ES, porcentaje, fecha, texto o
    identificador);
-3. la página citada está dentro del rango de la factura.
+4. la página citada está dentro del rango de la factura.
 
 Clases de resultado por valor:
 
@@ -29,7 +31,11 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
+
+# Banda vertical de la fila (puntos PDF): la línea base de pypdf cae en el borde inferior del bbox del lector.
+MARGEN_FILA_ARRIBA = 1.5
+MARGEN_FILA_ABAJO = 3.0
 
 LITERAL = "LITERAL"
 DERIVADO = "DERIVADO"
@@ -120,12 +126,51 @@ def valor_sale_del_literal(valor: Any, literal: str) -> tuple[bool, str]:
 # Texto del PDF con pypdf
 # ---------------------------------------------------------------------------------------------------------------
 
-class TextoPdf:
-    """Texto por página extraído con pypdf (1-indexado); ``None`` si la página no da texto."""
+TROZO_MINIMO = 4
 
-    def __init__(self, paginas: list[str | None]):
+
+def compuesto_en_tiradas(literal: str, tiradas: list[str]) -> bool:
+    """El literal (normalizado) está entero en una tirada, o se compone de trozos consecutivos de al menos
+    ``TROZO_MINIMO`` caracteres, cada uno dentro de una tirada del bloque y, si se repite tirada, siempre más a la derecha
+    que el trozo anterior en esa tirada (literales de varias líneas y filas con etiquetas y valores intercalados)."""
+    if not literal:
+        return False
+    if any(literal in t for t in tiradas):
+        return True
+    resto, cursor = literal, [0] * len(tiradas)
+    while resto:
+        mejor, indice, posicion = 0, None, None
+        for i, t in enumerate(tiradas):
+            k = len(resto)
+            while k >= TROZO_MINIMO:
+                p = t.find(resto[:k], cursor[i])
+                if p >= 0:
+                    break
+                k -= 1
+            if k >= TROZO_MINIMO and k > mejor:
+                mejor, indice, posicion = k, i, p
+        if indice is None:
+            return False
+        cursor[indice] = posicion + mejor
+        resto = resto[mejor:]
+    return True
+
+
+# (x, y desde el borde superior, texto, vertical) de cada fragmento de pypdf; ``vertical`` = texto girado 90°.
+Tirada = tuple[float, float, str, bool]
+
+
+class TextoPdf:
+    """Texto por página extraído con pypdf (1-indexado); ``None`` si la página no da texto.
+
+    ``tiradas[i]`` son los fragmentos con posición de la página i+1 (``None`` si no hay posiciones fiables, p. ej.
+    página girada): sin posiciones, la comprobación de fila es NO_EVALUABLE.
+    """
+
+    def __init__(self, paginas: list[str | None], tiradas: list[list[Tirada] | None] | None = None):
         self._paginas = paginas
         self._estricto = [normalizar_estricto(t) if t else None for t in paginas]
+        self._tiradas = tiradas if tiradas is not None else [None] * len(paginas)
 
     @classmethod
     def desde_pdf(cls, origen: str | Path | bytes) -> "TextoPdf":
@@ -135,13 +180,71 @@ class TextoPdf:
 
         lector = PdfReader(io.BytesIO(origen) if isinstance(origen, bytes) else str(origen))
         paginas: list[str | None] = []
+        tiradas: list[list[Tirada] | None] = []
         for pagina in lector.pages:
+            propias: list[Tirada] = []
+            alto = float(pagina.mediabox.top)
+
+            def visitar(texto, cm, tm, _fuente, _tamano, propias=propias, alto=alto):
+                if not texto or not texto.strip():
+                    return
+                a, b, c, d, e, f = (float(v) for v in cm)
+                x = float(tm[4]) * a + float(tm[5]) * c + e
+                y = float(tm[4]) * b + float(tm[5]) * d + f
+                if x == 0.0 and y == 0.0:
+                    return  # fragmento sin posición: no ancla ninguna fila
+                dir_x = float(tm[0]) * a + float(tm[1]) * c
+                dir_y = float(tm[0]) * b + float(tm[1]) * d
+                propias.append((x, alto - y, texto, abs(dir_y) > abs(dir_x)))
+
             try:
-                texto = pagina.extract_text() or ""
+                texto = pagina.extract_text(visitor_text=visitar) or ""
             except Exception:  # noqa: BLE001 - una página ilegible queda NO_EVALUABLE, no se oculta
-                texto = ""
+                texto, propias = "", []
+            girada = int(pagina.get("/Rotate", 0) or 0) % 360 != 0
             paginas.append(texto if texto.strip() else None)
-        return cls(paginas)
+            tiradas.append(None if girada or not propias else propias)
+        return cls(paginas, tiradas)
+
+    def contiene_en_fila(self, pagina: int, literal: str, cajas: list) -> bool | None:
+        """``True``/``False`` si el literal está en su fila o bloque; ``None`` si no se puede evaluar.
+
+        ``cajas`` son el ``bbox_fila`` y el ``bbox`` de la evidencia (su unión es el bloque). Texto horizontal: la línea
+        base de la tirada cae en la banda vertical del bloque. Texto vertical: la tirada cae en su franja horizontal.
+        """
+        en_bloque = self._en_bloque(pagina, cajas)
+        if en_bloque is None:
+            return None
+        return compuesto_en_tiradas(normalizar_estricto(literal), [t for t, _ in en_bloque])
+
+    def fila_en_su_posicion(self, pagina: int, fila: str, cajas: list) -> bool | None:
+        """La fila entera que vio el lector está en el bloque. Las palabras que solo aparecen en texto vertical que
+        cruza la banda (p. ej. el texto legal del margen) y en ninguna tirada horizontal no cuentan."""
+        en_bloque = self._en_bloque(pagina, cajas)
+        if en_bloque is None:
+            return None
+        palabras = [normalizar_estricto(p) for p in fila.split()]
+        cajas_validas = [c for c in cajas if c and len(c) == 4]
+        fila_vertical = any((float(c[3]) - float(c[1])) > (float(c[2]) - float(c[0])) for c in cajas_validas[:1])
+        if not fila_vertical:
+            horizontales = [t for t, vertical in en_bloque if not vertical]
+            verticales = [t for t, vertical in en_bloque if vertical]
+            palabras = [p for p in palabras if p and not (
+                all(p not in h for h in horizontales) and any(p in v for v in verticales))]
+        return compuesto_en_tiradas("".join(palabras), [t for t, _ in en_bloque])
+
+    def _en_bloque(self, pagina: int, cajas: list) -> list[tuple[str, bool]] | None:
+        if not (1 <= pagina <= len(self._tiradas)) or self._tiradas[pagina - 1] is None:
+            return None
+        cajas = [c for c in cajas if c and len(c) == 4]
+        if not cajas:
+            return None
+        x0 = min(float(c[0]) for c in cajas) - MARGEN_FILA_ARRIBA
+        x1 = max(float(c[2]) for c in cajas) + MARGEN_FILA_ABAJO
+        y0 = min(float(c[1]) for c in cajas) - MARGEN_FILA_ARRIBA
+        y1 = max(float(c[3]) for c in cajas) + MARGEN_FILA_ABAJO
+        return [(normalizar_estricto(t[2]), t[3]) for t in self._tiradas[pagina - 1]
+                if (x0 <= t[0] <= x1 if t[3] else y0 <= t[1] <= y1)]
 
     @property
     def numero_paginas(self) -> int:
@@ -266,6 +369,17 @@ def _verificar_valor(ruta: str, campo: dict, factura: dict, texto: TextoPdf) -> 
             return ResultadoValor(ruta, NO_EVALUABLE, "PAGINA_SIN_TEXTO_PYPDF", regla, pagina)
         if not texto.contiene(pagina, literal_ev):
             return ResultadoValor(ruta, NO_LITERAL, "LITERAL_AUSENTE_EN_LA_PAGINA", regla, pagina)
+        cajas = [ubicacion.get("bbox_fila"), ubicacion.get("bbox")]
+        en_fila = texto.contiene_en_fila(pagina, literal_ev, cajas)
+        if en_fila is None:
+            motivo = "EVIDENCIA_SIN_FILA" if not any(cajas) else "FILA_NO_EVALUABLE"
+            clase = NO_LITERAL if motivo == "EVIDENCIA_SIN_FILA" else NO_EVALUABLE
+            return ResultadoValor(ruta, clase, motivo, regla, pagina)
+        if not en_fila:
+            return ResultadoValor(ruta, NO_LITERAL, "LITERAL_AUSENTE_EN_SU_FILA", regla, pagina)
+        fila_lector = (ubicacion.get("fila_literal") or "").replace("|", " ")
+        if fila_lector.strip() and not texto.fila_en_su_posicion(pagina, fila_lector, cajas):
+            return ResultadoValor(ruta, NO_LITERAL, "FILA_DEL_LECTOR_AUSENTE_EN_SU_POSICION", regla, pagina)
         if normalizar_estricto(literal_ev) != normalizar_estricto(literal):
             return ResultadoValor(ruta, NO_LITERAL, "LITERAL_DE_EVIDENCIA_DISTINTO", regla, pagina)
     if ubicacion.get("origen_autoridad") == ORIGEN_DECISION_PIO:

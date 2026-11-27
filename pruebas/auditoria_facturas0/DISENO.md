@@ -72,9 +72,61 @@ Siguen como `PROPUESTA`, pendientes de Pio, las demás piezas de §2–§5.
     como `LITERAL` 3.648 valores (7 %). Son literales cortos o repetidos que aparecen en cualquier factura de
     Alliance: tipo de pedido, porcentajes, datos fijos del proveedor e importes que coinciden.
   - La comprobación «el literal aparece en la página» **no ancla la fila**.
-  - **Mejora propuesta (0.2.0), pendiente de Pio:** exigir también que el `fila_literal` de la evidencia aparezca
-    en la página, o la posición (`bbox`) con una herramienta independiente, antes de usar el verificador como
-    bloqueante.
+  - **Mejora propuesta (0.2.0):** exigir también que el `fila_literal` de la evidencia aparezca en la página, o la
+    posición (`bbox`) con una herramienta independiente, antes de usar el verificador como bloqueante. **Aprobada
+    por Pio e implementada** (§0b).
+
+## 0b. Verificador 0.2.0: anclaje a la fila o bloque (2026-11-27)
+
+Aprobado por Pio. `CONFIRMADO POR TEST` (56 tests) y `CONFIRMADO POR MEDICIÓN`, con el mismo banco y la misma
+prueba de mutaciones.
+
+- **Qué añade.** Además de estar en la página:
+  1. **El literal está en su fila o bloque.**
+     - `pypdf` da cada fragmento de texto con su posición (`visitor_text`, coordenadas desde el borde superior,
+       como las del lector).
+     - Un fragmento horizontal entra si su línea base cae en la banda vertical de `bbox_fila` ∪ `bbox`, con un
+       margen de 1,5 pt arriba y 3 pt abajo. Un fragmento vertical (texto girado) entra si cae en la franja
+       horizontal del bloque.
+     - El literal tiene que estar entero en un fragmento del bloque, o componerse de trozos consecutivos de al
+       menos 4 caracteres. Cada trozo debe estar en un fragmento del bloque y, si repite fragmento, quedar más a la
+       derecha que el trozo anterior. Así se cubren los bloques de varias líneas y las filas con etiquetas y
+       valores intercalados.
+  2. **La fila entera que vio el lector (`fila_literal`) está en esa misma posición.**
+     - Cuenta la identidad completa de la fila: fecha, número e importes.
+     - En una fila horizontal no cuentan las palabras que solo aparecen en texto vertical que la cruza. Por
+       ejemplo, el «1º» del texto legal del margen de Alliance, que el lector mete en algunas filas.
+- **Falla cerrado:**
+  - una página girada, o sin posiciones de `pypdf`, da `FILA_NO_EVALUABLE` (`NO_EVALUABLE`);
+  - una evidencia sin caja da `EVIDENCIA_SIN_FILA` (`NO_LITERAL`).
+- **Banco Alliance 1.3.2** (94 PDF, 81 con salida): **179 de 179 facturas `LITERALIDAD_OK`**, con 48.835
+  literales, 179 derivados por R14, 0 fallos y 0 `NO_EVALUABLE`. Tarda 0,52 s como máximo por documento.
+  - **Causas encontradas y corregidas en la 0.2.0** antes de llegar a 0 fallos:
+    - **NIF de Alliance en el texto legal vertical:** se ancla por la franja horizontal.
+    - **Dirección del destinatario en dos líneas, con la etiqueta a la derecha:** se usa el bloque `bbox` ∪
+      `bbox_fila` y la composición por trozos.
+    - **Fila de totales con etiquetas y valores en fragmentos distintos:** se permite reutilizar un fragmento en
+      orden.
+    - **«1º» del texto vertical dentro de 7 filas de albarán:** no cuenta en la fila.
+- **Mutaciones:** 38.700 de 38.700 detectadas, igual que en la 0.1.0.
+- **Prueba cruzada** (la salida de cada documento contra el PDF del documento siguiente):
+
+  | Resultado | 0.1.0 | 0.2.0 |
+  |---|---|---|
+  | Valores que pasan | 3.648 (7 %) | **1.270 (2,6 %)** |
+  | De ellos, el **mismo dato** en el mismo campo del otro documento | — | 1.186 |
+  | Porcentajes de la **cabecera fija** de impuestos de Alliance | — | 84 |
+  | **Coincidencias reales de importes o fechas** | ~10 | **0** |
+
+  - **Mismo dato (1.186):** está impreso igual en la misma fila de los dos PDF. Son los tipos de IVA y de RE, el
+    nombre, el NIF y el domicilio de Alliance, «FACTURA DUPLICADO», el bloque del destinatario (la misma farmacia)
+    y 3 filas de cuota de servicio iguales en los dos meses.
+  - **Cabecera fija (84):** la fila «CONCEPTO 4 10 21 4 10 21 0,50 1,40 5,20» sale en toda factura Alliance,
+    aunque el otro documento no tenga ese tramo. Que pasen es correcto: el dato está, literal, en esa fila del
+    otro PDF.
+  - **El 2,6 % que queda está explicado caso por caso.** Para bajarlo a 0 haría falta distinguir dos PDF con el
+    mismo texto en la misma fila, y eso ya no es una cuestión de literalidad, sino de identidad del documento (SHA
+    e identidad de la factura, que se comprueban aparte).
 
 ## 1. Estado confirmado de los documentos
 
