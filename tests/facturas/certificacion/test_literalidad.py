@@ -332,7 +332,8 @@ def test_texto_vertical_se_ancla_por_su_franja_y_no_contamina_las_filas():
 @pytest.mark.parametrize("literal, tiradas, esperado", [
     ("ABCDEFGH", ["XXABCDEFGHYY"], True),
     ("ABCDEFGH", ["ABCD", "EFGH"], True),
-    ("ABCDEFGH", ["ABCDE", "FGH"], False),
+    ("ABCDEFGH", ["ABCDE", "FGH"], True),  # tirada entera corta (p. ej. la etiqueta «IVA»)
+    ("ABCDEFGH", ["ABCDE", "XFGH"], False),  # trozo corto que no es una tirada entera
     ("TOTALA10TOTALB20", ["TOTALA", "TOTALB", "10XX20"], False),
     ("TOTALA10,0TOTALB20,0", ["TOTALA", "TOTALB", "10,0XX20,0"], True),
     ("TOTALA20,0TOTALB10,0", ["TOTALA", "TOTALB", "10,0XX20,0"], False),

@@ -67,7 +67,7 @@ def test_registro_local_contiene_cofares_hefame_fedefarma_y_alliance():
     motor = MotorDocumentoLocal(BackendFalso(_documento_cofares_falso()))
     assert [(a.id, a.version) for a in motor.adaptadores] == [
         ("cofares-local", "2.1.0"),
-        ("hefame-local", "1.2.0"),
+        ("hefame-local", "1.3.0"),
         ("hplus-consumo-local", "1.0.0"),
         ("fedefarma-local", "1.2.0"),
         ("alliance-local", "1.3.2"),  # 2AZ: R10, D8 y R14; 1.3.1: R10 + "ENCARGO" (Pio, 2026-11-14); 1.3.2: ABONOS CLUBS

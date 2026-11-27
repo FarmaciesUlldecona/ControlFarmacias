@@ -149,6 +149,9 @@ def compuesto_en_tiradas(literal: str, tiradas: list[str]) -> bool:
                 k -= 1
             if k >= TROZO_MINIMO and k > mejor:
                 mejor, indice, posicion = k, i, p
+            elif cursor[i] == 0 and t and resto.startswith(t) and len(t) > mejor:
+                # Una tirada entera (p. ej. la etiqueta «IVA») cuenta como trozo aunque sea más corta que el mínimo.
+                mejor, indice, posicion = len(t), i, 0
         if indice is None:
             return False
         cursor[indice] = posicion + mejor
@@ -184,18 +187,26 @@ class TextoPdf:
         for pagina in lector.pages:
             propias: list[Tirada] = []
             alto = float(pagina.mediabox.top)
+            ultima: list[Tirada] = []
 
-            def visitar(texto, cm, tm, _fuente, _tamano, propias=propias, alto=alto):
+            def visitar(texto, cm, tm, _fuente, _tamano, propias=propias, alto=alto, ultima=ultima):
                 if not texto or not texto.strip():
                     return
                 a, b, c, d, e, f = (float(v) for v in cm)
                 x = float(tm[4]) * a + float(tm[5]) * c + e
                 y = float(tm[4]) * b + float(tm[5]) * d + f
                 if x == 0.0 and y == 0.0:
-                    return  # fragmento sin posición: no ancla ninguna fila
+                    # pypdf no da posición a algunos fragmentos que siguen a otro en el mismo objeto de texto (p. ej. el
+                    # valor tras su etiqueta): heredan la del último fragmento posicionado. Sin él, no anclan fila.
+                    if ultima:
+                        x0, y0, _, vertical0 = ultima[-1]
+                        propias.append((x0, y0, texto, vertical0))
+                    return
                 dir_x = float(tm[0]) * a + float(tm[1]) * c
                 dir_y = float(tm[0]) * b + float(tm[1]) * d
-                propias.append((x, alto - y, texto, abs(dir_y) > abs(dir_x)))
+                tirada = (x, alto - y, texto, abs(dir_y) > abs(dir_x))
+                propias.append(tirada)
+                ultima[:] = [tirada]
 
             try:
                 texto = pagina.extract_text(visitor_text=visitar) or ""

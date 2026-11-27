@@ -124,6 +124,13 @@ prueba de mutaciones.
   - **Cabecera fija (84):** la fila «CONCEPTO 4 10 21 4 10 21 0,50 1,40 5,20» sale en toda factura Alliance,
     aunque el otro documento no tenga ese tramo. Que pasen es correcto: el dato está, literal, en esa fila del
     otro PDF.
+  - **Ajustes de la 0.2.0 tras el banco HEFAME (2026-11-27):**
+    - una tirada de `pypdf` sin posición (matriz identidad: el valor que sigue a su etiqueta en el mismo objeto de
+      texto) hereda la posición de la tirada posicionada anterior;
+    - una tirada entera cuenta como trozo aunque mida menos de 4 caracteres (la etiqueta «IVA»).
+
+    Tras estos ajustes, el banco Alliance sigue en 179/179 OK, las mutaciones en 38.700/38.700 y la prueba
+    cruzada sin cambios.
   - **El 2,6 % que queda está explicado caso por caso.** Para bajarlo a 0 haría falta distinguir dos PDF con el
     mismo texto en la misma fila, y eso ya no es una cuestión de literalidad, sino de identidad del documento (SHA
     e identidad de la factura, que se comprueban aparte).

@@ -5,9 +5,12 @@ from decimal import Decimal
 from typing import Any
 
 from src.facturas.grupos_funcionales import clasificar_grupo_hefame
+import datetime
+
 from src.facturas.hefame_economia import (
+    CARGO_COOPERATIVO_BASE_S_R,
+    FISCALIDAD_HEFAME,
     derivar_magnitud_comparable_hefame,
-    detectar_comision_hefame,
 )
 
 from ..conciliacion import ComponenteConciliacion, EspecificacionConciliacion
@@ -18,12 +21,24 @@ from .base import AdaptadorBase, Reconocimiento
 
 
 NIF_RE = re.compile(r"^(?:[A-Z]\d{8}|\d{8}[A-Z])$")
-ALBARAN_RE = re.compile(r"^\d{10}$")
+# DISENO HEFAME §4.1: albaranes de 10 dígitos (41…), documentos de entrega de 7 dígitos (desde octubre) y números de
+# 9 dígitos que empiezan por 91 (H4).
+ALBARAN_RE = re.compile(r"^(?:\d{10}|\d{7}|91\d{7})$")
+_POR_CONCEPTO = object()  # sentido del movimiento: el que fija su concepto (decisiones de Pio)
+TOLERANCIA_PAGINA2 = Decimal("0.01")  # F0-6: por componente, solo en lo que el lector recalcula
+
+
+def _d(valor) -> Decimal:
+    return Decimal(str(valor)).quantize(Decimal("0.01"))
 
 
 class AdaptadorHefame(AdaptadorBase):
     id = "hefame-local"
-    version = "1.2.0"
+    # 1.3.0 (FACTURAS-0, 2026-11-27; pruebas/auditoria_hefame/DISENO.md y decisiones H1-H7, F0-4, F0-6): RE No. 5,2 %,
+    # cargo cooperativo de 80,00 en fin de mes (H1/H6), liquidaciones comerciales como ABONO (H3), APROAFA negativo
+    # falla cerrado (H7), sentido de ABO/DEVO por signo neto y controles de la pagina 2 (0,01 en lo recalculado,
+    # exacto en lo impreso). Sin autoridad productiva.
+    version = "1.3.0"
     capacidades = {
         "segmentacion": "SOPORTADO_MULTIPAGINA_DETERMINISTA",
         "cabecera": "SOPORTADO_PARCIAL_MONEDA_NO_DOCUMENTADA",
@@ -95,6 +110,10 @@ class AdaptadorHefame(AdaptadorBase):
         )
         if identidad_funcional is None:
             raise ValueError("IDENTIDAD_FUNCIONAL_HEFAME_MERCANCIA_NO_DEMOSTRADA")
+        fallos = [c for c in self.controles_pagina2(documento, segmentos) if c["resultado"] != "OK"]
+        if fallos:
+            raise ValueError("CONTROL_PAGINA2_HEFAME:" + ";".join(
+                f"{c['codigo']}:{c.get('calculado')}/{c.get('impreso')}" for c in fallos))
         return {
             "proveedor": {
                 "nombre": self._campo(documento, proveedor_nombre.texto, proveedor_nombre.palabras, proveedor_nombre, "cabecera", "proveedor_nombre", "LITERAL_RAZON_SOCIAL"),
@@ -189,7 +208,20 @@ class AdaptadorHefame(AdaptadorBase):
                     continue
                 literal = concepto_words[0].texto
                 concepto = {"ABO/DEVO": "ABONO_DEVOLUCION", "APROAFA": "APROAFA"}.get(normalizar_texto(literal), normalizar_texto(literal))
-                salida.append(self._movimiento(documento, linea, concepto_words, importes, fecha_word=fechas[0], concepto=concepto))
+                if concepto == "APROAFA" and any(valor < 0 for _, valor in importes):
+                    raise ValueError("APROAFA_NEGATIVO_H7")
+                sentido = self._sentido_neto(importes) if concepto == "ABONO_DEVOLUCION" else _POR_CONCEPTO
+                salida.append(self._movimiento(documento, linea, concepto_words, importes, fecha_word=fechas[0], concepto=concepto, sentido=sentido))
+        liquidaciones = lineas_con_texto(documento.paginas[0].lineas, "Resumen Liquidaciones Comerciales")
+        if len(liquidaciones) == 1:
+            linea = liquidaciones[0]
+            importes = palabras_importe(linea)
+            if len(importes) == 4 and importes[3][1] != 0:
+                # H3 (Pio, 2026-11-19): pequeños descuentos sobre especialidad (IVA 4 %, base S.R.) = ABONO.
+                if importes[1][1] != 0 or importes[2][1] != 0 or importes[3][1] > 0:
+                    raise ValueError("LIQUIDACION_COMERCIAL_FUERA_DE_H3")
+                palabras = [p for p in linea.palabras if p.bbox.x1 < importes[0][0].bbox.x0]
+                salida.append(self._movimiento(documento, linea, palabras, importes, fecha_word=None, concepto="LIQUIDACIONES_COMERCIALES"))
         servicios = lineas_con_texto(documento.paginas[0].lineas, "Resumen Servicios Operativos")
         if len(servicios) == 1:
             linea = servicios[0]
@@ -319,6 +351,8 @@ class AdaptadorHefame(AdaptadorBase):
 
         pedidos = self._resumen(otros, "DESGLOSE IMPORTES PEDIDOS")
         servicios = self._resumen(otros, "RESUMEN SERVICIOS OPERATIVOS")
+        autoconsumo = self._resumen(otros, "DESGLOSE IMPORTES AUTOCONSUMO")
+        liquidaciones = self._resumen(otros, "RESUMEN LIQUIDACIONES COMERCIALES")
         abo_devo = self._movimiento_por_concepto(movimientos, "ABONO_DEVOLUCION")
         aproafa = self._movimiento_por_concepto(movimientos, "APROAFA")
         comision = self._movimiento_por_concepto(movimientos, "COMISION_HEFAME")
@@ -351,8 +385,10 @@ class AdaptadorHefame(AdaptadorBase):
                 "BASE_IMPONIBLE_DESDE_BLOQUES",
                 "BASE_IMPONIBLE",
                 base_imponible,
-                [self._componente_resumen("PEDIDOS", pedidos), self._componente_resumen("SERVICIOS_OPERATIVOS", servicios)],
-                {"regla_relacion": "DESGLOSE_IMPORTES_PEDIDOS_MAS_RESUMEN_SERVICIOS_OPERATIVOS"},
+                [self._componente_resumen("PEDIDOS", pedidos), self._componente_resumen("SERVICIOS_OPERATIVOS", servicios),
+                 *([self._componente_resumen("AUTOCONSUMO", autoconsumo)] if autoconsumo else []),
+                 *([self._componente_resumen("LIQUIDACIONES_COMERCIALES", liquidaciones)] if liquidaciones else [])],
+                {"regla_relacion": "PEDIDOS_MAS_AUTOCONSUMO_LIQUIDACIONES_Y_SERVICIOS_OPERATIVOS"},
             ),
             EspecificacionConciliacion(
                 "TOTAL_FACTURA_DESDE_FISCALIDAD",
@@ -406,9 +442,17 @@ class AdaptadorHefame(AdaptadorBase):
                 + sum(m["bases"][categoria]["valor"] for m in incluidos),
                 2,
             )
-        comision = detectar_comision_hefame(objetivo, detalle)
-        if comision is None:
+        diferencias = {categoria: _d(objetivo[categoria]) - _d(detalle[categoria]) for categoria in categorias}
+        if all(valor == 0 for valor in diferencias.values()):
             return None
+        fecha = datetime.date.fromisoformat(self._fecha_factura(documento))
+        fin_de_mes = (fecha + datetime.timedelta(days=1)).day == 1
+        if not (fin_de_mes and diferencias["BASE_S_R"] == CARGO_COOPERATIVO_BASE_S_R
+                and diferencias["BASE_RE"] == 0 and diferencias["BASE_NO"] == 0):
+            # H1/H6 (Pio): solo 80,00 de base S.R. en la factura de fin de mes; cualquier otro desfase para el lector.
+            raise ValueError("DESFASE_PEDIDOS_NO_AUTORIZADO_H6:" + ",".join(
+                f"{c}={v}" for c, v in diferencias.items()) + f":fin_de_mes={fin_de_mes}")
+        comision = derivar_magnitud_comparable_hefame(diferencias["BASE_S_R"], "BASE_S_R")
 
         base = float(comision["base_neta"])
         evidencia_objetivo = self.evidencia(
@@ -426,13 +470,13 @@ class AdaptadorHefame(AdaptadorBase):
         return {
             "orden": 0,
             "descripcion_literal": {
-                "valor": "COMISION_HEFAME",
-                "literal": "AUTORIZACION_FUNCIONAL_PIO_SOBRE_DIFERENCIA_BASE_S_R",
+                "valor": "CARGO_COOPERATIVO_HEFAME",
+                "literal": "DECISION_PIO_H1_CARGO_COOPERATIVO_80_BASE_S_R_FIN_DE_MES",
                 "evidencias": evidencias,
             },
             "concepto_normalizado": "COMISION_HEFAME",
             "categoria": "CARGO",
-            "origen_categoria": "AUTORIZACION_FUNCIONAL_PIO_HITO_2Z",
+            "origen_categoria": "DECISION_PIO_H1",
             "sentido": "CARGO",
             "fecha": None,
             "bases": {
@@ -451,9 +495,9 @@ class AdaptadorHefame(AdaptadorBase):
             "importe_fiscal_total": float(comision["importe_comparable_operativo"]),
             "no_albaran": True,
             "requiere_match_operativo": False,
-            "periodicidad": "NO_DEMOSTRADA",
+            "periodicidad": "MENSUAL_FIN_DE_MES",
             "provenance": {
-                "autoridad_funcional": "PIO_HITO_2Z",
+                "autoridad_funcional": "PIO_H1_2026_11_18",
                 "fuente_documental": "DESGLOSE_IMPORTES_PEDIDOS_BASE_S_R",
                 "calculo": {
                     "subtotal_base_sr": objetivo["BASE_S_R"],
@@ -463,6 +507,70 @@ class AdaptadorHefame(AdaptadorBase):
                 "computar_una_sola_vez": True,
             },
         }
+
+    @staticmethod
+    def _fecha_factura(documento: DocumentoLocal) -> str:
+        linea = lineas_con_texto(documento.paginas[0].lineas, "Fecha")[0]
+        return fecha_iso(palabras_fecha(linea)[0].texto)
+
+    @staticmethod
+    def _fila_resumen(lineas, texto: str, n: int) -> list[Decimal] | None:
+        """Importes de la primera línea que contiene ``texto`` y tiene exactamente ``n`` importes."""
+        for linea in lineas_con_texto(lineas, texto):
+            importes = palabras_importe(linea)
+            if len(importes) == n:
+                return [_d(valor) for _, valor in importes]
+        return None
+
+    def controles_pagina2(self, documento: DocumentoLocal, segmentos) -> list[dict[str, Any]]:
+        """DISENO §2.5 con F0-6: página 2 frente a página 1, por clase. ``FALLO`` en cualquier control para el lector.
+
+        Recalculado (tolerancia 0,01 por componente): base = pedidos + autoconsumo + liquidaciones + servicios; IVA =
+        base × tipo; RE = (base − servicios) × tipo. Impreso (exacto): Σ bases de cada fila = Total Bases; totales por
+        clase = base + IVA + RE + gastos; Σ totales por clase = Total Factura = Σ vencimientos; Base Ex. y gastos 0.
+        """
+        p1, p2 = documento.paginas[0].lineas, documento.paginas[1].lineas
+        controles: list[dict[str, Any]] = []
+
+        def control(codigo, calculado, impreso, tolerancia=Decimal("0")):
+            ok = calculado is not None and impreso is not None and abs(calculado - impreso) <= tolerancia
+            controles.append({"codigo": codigo, "resultado": "OK" if ok else "FALLO", "calculado": str(calculado),
+                              "impreso": str(impreso), "tolerancia": str(tolerancia)})
+
+        for albaran in self.extraer_albaranes(documento, segmentos):
+            control(f"FILA_{albaran.numero_albaran}_TOTAL_BASES",
+                    sum((_d(v) for v in albaran.bases_por_categoria.values()), Decimal("0")), _d(albaran.total))
+        pedidos = self._fila_resumen(p1, "Desglose importes pedidos", 4)
+        cero = [Decimal("0")] * 4
+        autoconsumo = self._fila_resumen(p1, "Desglose importes autoconsumo", 4) or cero
+        liquidaciones = self._fila_resumen(p1, "Resumen Liquidaciones Comerciales", 4) or cero
+        servicios = self._fila_resumen(p1, "Resumen Servicios Operativos", 4) or cero
+        filas = {clave: self._fila_resumen(p2, texto, 5) for clave, texto in (
+            ("base", "Base imponible"), ("iva", "IVA"), ("re", "Rec. Equiv."), ("gastos", "Gastos giro"),
+            ("totales", "Totales"))}
+        if pedidos is None or any(v is None for v in filas.values()):
+            controles.append({"codigo": "ESTRUCTURA_PAGINAS", "resultado": "FALLO",
+                              "faltan": [k for k, v in {"pedidos": pedidos, **filas}.items() if v is None]})
+            return controles
+        tolerancia = TOLERANCIA_PAGINA2
+        for i, categoria in enumerate(("BASE_S_R", "BASE_RE", "BASE_NO")):
+            iva_pct, re_pct = FISCALIDAD_HEFAME[categoria]
+            base = filas["base"][i]
+            control(f"{categoria}_BASE", pedidos[i] + autoconsumo[i] + liquidaciones[i] + servicios[i], base, tolerancia)
+            control(f"{categoria}_IVA", (base * iva_pct / 100).quantize(Decimal("0.01")), filas["iva"][i], tolerancia)
+            control(f"{categoria}_RE", ((base - servicios[i]) * re_pct / 100).quantize(Decimal("0.01")),
+                    filas["re"][i], tolerancia)
+            control(f"{categoria}_TOTAL_CLASE",
+                    base + filas["iva"][i] + filas["re"][i] + filas["gastos"][i], filas["totales"][i])
+        for clave in ("base", "iva", "re", "totales"):
+            control(f"BASE_EX_{clave.upper()}_CERO", Decimal("0"), filas[clave][3])
+        control("GASTOS_GIRO_CERO", Decimal("0"), sum(filas["gastos"][:4], Decimal("0")))
+        total_linea = lineas_con_texto(p2, "Total Factura")[-1]
+        total_factura = _d(palabras_importe(total_linea)[0][1])
+        control("SUMA_TOTALES_CLASE_TOTAL_FACTURA", sum(filas["totales"][:4], Decimal("0")), total_factura)
+        vencimientos = [_d(palabras_importe(linea)[0][1]) for linea in self._lineas_vencimiento(documento)]
+        control("TOTAL_FACTURA_VENCIMIENTOS", sum(vencimientos, Decimal("0")) if vencimientos else None, total_factura)
+        return controles
 
     def _lineas_vencimiento(self, documento: DocumentoLocal):
         if self.reconocer(documento).estado != "RECONOCIDO":
@@ -485,18 +593,30 @@ class AdaptadorHefame(AdaptadorBase):
             )],
         }
 
-    def _movimiento(self, documento, linea, concepto_words, importes, *, fecha_word, concepto):
+    @staticmethod
+    def _sentido_neto(importes):
+        """ABO/DEVO (DISENO §2.3): el del signo neto; ``None`` si el neto es 0 o los signos se mezclan entre clases."""
+        signos = {valor > 0 for _, valor in importes[:3] if valor != 0}
+        total = importes[3][1]
+        if len(signos) > 1 or total == 0:
+            return None
+        return "CARGO" if total > 0 else "ABONO"
+
+    def _movimiento(self, documento, linea, concepto_words, importes, *, fecha_word, concepto, sentido=None):
+        sentido = _POR_CONCEPTO if sentido is None and concepto != "ABONO_DEVOLUCION" else sentido
         categorias = {
             "ABONO_DEVOLUCION": "ABONO_O_DEVOLUCION_NO_DESAMBIGUADO",
             "APROAFA": "OTRO_CONCEPTO_DEMOSTRADO",
             "SERVICIOS_OPERATIVOS": "SERVICIO",
             "COMISION_HEFAME": "CARGO",
+            "LIQUIDACIONES_COMERCIALES": "DESCUENTO",
         }
         sentidos = {
             "ABONO_DEVOLUCION": "ABONO",
             "APROAFA": "CARGO",
             "SERVICIOS_OPERATIVOS": "CARGO",
             "COMISION_HEFAME": "CARGO",
+            "LIQUIDACIONES_COMERCIALES": "ABONO",
         }
         return {
             "orden": 0,
@@ -504,7 +624,7 @@ class AdaptadorHefame(AdaptadorBase):
             "concepto_normalizado": concepto,
             "categoria": categorias.get(concepto, "OTRO"),
             "origen_categoria": "NORMALIZACION_DE_DESCRIPCION_SIN_INFERIR_SENTIDO",
-            "sentido": sentidos.get(concepto),
+            "sentido": sentidos.get(concepto) if sentido is _POR_CONCEPTO else sentido,
             "fecha": self._campo(documento, fecha_iso(fecha_word.texto), [fecha_word], linea, "movimientos", "fecha", "FECHA_MISMA_FILA", literal=fecha_word.texto) if fecha_word else None,
             "bases": {
                 etiqueta: self._campo(documento, valor, [palabra], linea, "movimientos", etiqueta, f"COLUMNA_{etiqueta}")

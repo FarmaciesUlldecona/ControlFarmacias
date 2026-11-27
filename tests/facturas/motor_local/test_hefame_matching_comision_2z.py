@@ -88,9 +88,10 @@ def test_04_base_re_usa_iva_10_y_re_14():
     assert (x["iva_pct"], x["re_pct"]) == (Decimal("10.0"), Decimal("1.4"))
 
 
-def test_05_base_no_usa_iva_21_y_re_12():
+def test_05_base_no_usa_iva_21_y_re_52():
+    """F0-4 (Pio, 2026-11-27): el RE de la base No. es el 5,2 % (el 1,2 % era un defecto)."""
     x = derivar_magnitud_comparable_hefame("12.22", "BASE_NO")
-    assert (x["iva_pct"], x["re_pct"]) == (Decimal("21.0"), Decimal("1.2"))
+    assert (x["iva_pct"], x["re_pct"]) == (Decimal("21.0"), Decimal("5.2"))
 
 
 def test_06_magnitud_comparable_es_campo_separado():
@@ -165,9 +166,10 @@ def test_19_importe_comision_no_esta_hardcodeado():
     assert c is not None and c["base_neta"] == Decimal("90.0000")
 
 
-def test_20_no_se_infiere_periodicidad_mensual():
+def test_20_periodicidad_mensual_por_decision_h1():
+    """H1 (Pio, 2026-11-18): ya no se infiere; es la decisión del cargo cooperativo fijo de fin de mes."""
     c = next(x for x in extraer().movimientos if x["concepto_normalizado"] == "COMISION_HEFAME")
-    assert c["periodicidad"] == "NO_DEMOSTRADA"
+    assert c["periodicidad"] == "MENSUAL_FIN_DE_MES" and c["origen_categoria"] == "DECISION_PIO_H1"
 
 
 def test_21_abo_devo_no_se_duplica():

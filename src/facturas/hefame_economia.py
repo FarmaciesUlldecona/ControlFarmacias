@@ -6,11 +6,14 @@ from decimal import Decimal, ROUND_HALF_UP
 CENTIMOS = Decimal("0.01")
 CUATRO_DECIMALES = Decimal("0.0001")
 
+# Recargo de equivalencia de la base «No.» al 5,2 % (DECISIÓN DE PIO, 2026-11-27, FACTURAS-0 F0-4; el 1,2 % anterior
+# era un defecto: con él ninguna factura con base No. cuadraba con su página 2).
 FISCALIDAD_HEFAME = {
     "BASE_S_R": (Decimal("4.0"), Decimal("0.5")),
     "BASE_RE": (Decimal("10.0"), Decimal("1.4")),
-    "BASE_NO": (Decimal("21.0"), Decimal("1.2")),
+    "BASE_NO": (Decimal("21.0"), Decimal("5.2")),
 }
+CARGO_COOPERATIVO_BASE_S_R = Decimal("80.00")  # H1 (Pio, 2026-11-18): fijo cada mes, factura de fin de mes
 
 
 def derivar_magnitud_comparable_hefame(

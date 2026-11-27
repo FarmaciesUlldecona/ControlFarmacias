@@ -63,7 +63,9 @@ def test_replay_hefame_completo_ciego():
     assert movimientos["APROAFA"]["categoria"] == "OTRO_CONCEPTO_DEMOSTRADO"
     assert movimientos["APROAFA"]["sentido"] == "CARGO"
     assert movimientos["COMISION_HEFAME"]["importe"]["valor"] == 80.0
-    assert movimientos["COMISION_HEFAME"]["periodicidad"] == "NO_DEMOSTRADA"
+    # H1 (Pio, 2026-11-18): cargo cooperativo fijo cada mes, en la factura de fin de mes (hefame-local 1.3.0).
+    assert movimientos["COMISION_HEFAME"]["periodicidad"] == "MENSUAL_FIN_DE_MES"
+    assert movimientos["COMISION_HEFAME"]["descripcion_literal"]["valor"] == "CARGO_COOPERATIVO_HEFAME"
     assert len(resultado.impuestos) == 4
     assert all(item["control_aritmetico"] == "OK" for item in resultado.impuestos)
     assert len(resultado.vencimientos) == 1

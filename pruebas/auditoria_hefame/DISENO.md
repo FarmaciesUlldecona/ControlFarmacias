@@ -217,6 +217,91 @@ Hoy dice «número exacto e importe operativo». **Propuesta:**
 - internos `Q0`/`R0` por PUC a ±3 días con unicidad;
 - R17 no aplica (ya lo dice la regla).
 
+## 4b. Lector `hefame-local` 1.3.0 implementado en local (2026-11-27, FACTURAS-0 vía B)
+
+`CONFIRMADO POR TEST` y `CONFIRMADO POR MEDICIÓN` (banco local del espejo).
+
+- **Alcance:** sin migración, sin autoridad productiva (`habilitada=False`) y sin enchufar a la noche.
+- **Decisiones aplicadas:** H1–H7, F0-4 (RE «No.» al 5,2 %) y F0-6 (página 2).
+- **Código** (`src/facturas/motor_local/adaptadores/hefame.py`, versión 1.3.0):
+  - **RE «No.» al 5,2 %**, en `hefame_economia.FISCALIDAD_HEFAME`.
+  - **Numeración (§4.1):** albaranes de 10 dígitos, documentos de entrega de 7 dígitos y números `91…` de 9 dígitos.
+    La 1.2.0 solo leía los de 10 y se saltaba filas desde octubre, de modo que el desfase de la página 1 parecía un
+    cargo.
+  - **Cargo cooperativo (H1/H6):**
+    - solo existe con **80,00 exactos de base S.R. en una factura de fin de mes**;
+    - cualquier otro desfase entre `Desglose importes pedidos` y las filas **para el lector**
+      (`DESFASE_PEDIDOS_NO_AUTORIZADO_H6`);
+    - se nombra `CARGO_COOPERATIVO_HEFAME`, con periodicidad `MENSUAL_FIN_DE_MES` y origen `DECISION_PIO_H1`.
+  - **`APROAFA` negativo** para el lector (`APROAFA_NEGATIVO_H7`).
+  - **`Resumen Liquidaciones Comerciales`** es un movimiento ABONO (H3). Si no es negativo y exclusivo de la base
+    S.R., para el lector.
+  - **ABO/DEVO:** el sentido sale del signo neto. Con signos mezclados entre clases, o con neto 0, el sentido queda
+    `null`.
+  - **Controles de la página 2 (§2.5 con F0-6)**, en `controles_pagina2`. Cualquier `FALLO` para el lector
+    (`CONTROL_PAGINA2_HEFAME`).
+    - **Con 0,01 por componente**, lo que el lector recalcula:
+      - base = pedidos + autoconsumo + liquidaciones + servicios;
+      - IVA = base × tipo;
+      - RE = (base − servicios) × tipo.
+    - **Exacto**, lo impreso:
+      - Σ bases de cada fila = `Total Bases`;
+      - total de cada clase = base + IVA + RE + gastos;
+      - Σ totales = `Total Factura` = Σ vencimientos;
+      - `Base Ex.` y gastos de giro = 0.
+  - **Conciliación declarada:** la base imponible incluye también el autoconsumo y las liquidaciones.
+- **Banco** (`C:\ControlFarmacias\estrategia_facturas\hefame\`, `SHA256SUMS.txt`):
+  - **Cobertura:** los **16 documentos HEFAME** de PIO en `PROVEEDOR_NO_SOPORTADO`.
+  - **Lectura:** las **16 se leen** y pasan los controles de la página 2.
+  - **Cuadres por factura** (los tres, 16 de 16):
+    - **C1, exacto:** bases + IVA + RE + gastos = `Total Factura`.
+    - **C2, exacto:** vencimientos = total. Incluye 3 facturas con 2 vencimientos.
+    - **C3:** albaranes + movimientos = total, con el total por línea de §2.2. La diferencia es de 0,02 como máximo,
+      dentro de `mín(0,01 × filas; 0,50)` (F0-8).
+  - **Literalidad 0.2.0:**
+    - **12 de 16 `LITERALIDAD_OK`.**
+    - **Las 4 de fin de mes** (0563801595, 0563820041, 0563855563 y 0563869860) fallan **solo** en los 6 valores
+      del cargo cooperativo H1. Esos valores no están impresos: son un **derivado por decisión de Pio**, y la lista
+      cerrada del verificador solo contiene R14.
+    - **Pendiente de Pio:** añadir H1 como regla derivada del verificador, que recalcularía el desfase de S.R. a
+      partir de los literales de la página 1.
+
+  | Factura | Fecha | Total | Albaranes | Movim. | C1 | C2 | C3 (dif./tol.) | Literalidad |
+  |---|---|---|---|---|---|---|---|---|
+  | 0563791043 | 10.06 | 96,86 | 5 | 2 | OK | OK | −0,02 / 0,07 | OK |
+  | 0563796618 | 20.06 | 127,12 | 5 | 2 | OK | OK | 0,00 / 0,07 | OK |
+  | 0563801595 | 30.06 | 263,88 | 4 | 2 | OK | OK (2) | 0,00 / 0,06 | Fallo: cargo H1 (6) |
+  | 0563807670 | 10.07 | 230,86 | 6 | 2 | OK | OK | −0,02 / 0,08 | OK |
+  | 0563812683 | 20.07 | 142,52 | 5 | 4 | OK | OK | 0,02 / 0,09 | OK |
+  | 0563820041 | 31.07 | 677,99 | 12 | 4 | OK | OK | 0,01 / 0,16 | Fallo: cargo H1 (6) |
+  | 0563825633 | 10.08 | 184,84 | 6 | 2 | OK | OK (2) | 0,01 / 0,08 | OK |
+  | 0563830485 | 20.08 | 19,41 | 4 | 2 | OK | OK | −0,01 / 0,06 | OK |
+  | 0563842626 | 10.09 | 64,56 | 7 | 3 | OK | OK (2) | 0,01 / 0,10 | OK |
+  | 0563847628 | 20.09 | 138,81 | 5 | 1 | OK | OK | 0,00 / 0,06 | OK |
+  | 0563855563 | 30.09 | 369,54 | 8 | 3 | OK | OK | 0,01 / 0,11 | Fallo: cargo H1 (6) |
+  | 0563857003 | 10.10 | 45,80 | 3 | 2 | OK | OK | 0,01 / 0,05 | OK |
+  | 0563863435 | 20.10 | 345,83 | 6 | 3 | OK | OK | 0,00 / 0,09 | OK |
+  | 0563869860 | 31.10 | 255,89 | 4 | 2 | OK | OK | 0,01 / 0,06 | Fallo: cargo H1 (6) |
+  | 0563878342 | 10.11 | 14,57 | 2 | 2 | OK | OK | 0,01 / 0,04 | OK |
+  | 0563883869 | 20.11 | 152,95 | 5 | 2 | OK | OK | 0,00 / 0,07 | OK |
+
+- **Simulación local de 0563834757** (31.08, 313,29), con las reglas F0-7 y los albaranes de una lectura
+  READ_ONLY del 27/11 a las 19:27:
+  - **8 de 9 líneas casan por número sin ceros**, en la ventana de 0 a +4 días, con |PUC − importe operativo| ≤
+    0,01. La diferencia neta de las casadas es 0,00.
+  - **La línea 4127750839** (25,01, del 31.08) **no casa:**
+    - en Farmatic existe el albarán **4127750839 con el mismo importe exacto (25,01), fechado el 09.11.2026**, 70
+      días después;
+    - la ventana de 0 a +4 lo rechaza;
+    - es el «caso a 70 días» de §4.2. Con el importe idéntico, lo más probable es **un alta tardía en Farmatic**
+      del mismo albarán, no una coincidencia.
+  - **Resultado de la simulación: NO CONCILIARÍA**, porque queda 1 línea sin casar.
+  - **Decisión de Pio pendiente:**
+    - (a) corregir en Farmatic la fecha del albarán 4127750839;
+    - (b) o admitir, solo con revisión, el mismo número con el importe exacto fuera de la ventana;
+    - (c) o dejar la factura en `DIFERENCIA`.
+  - Los movimientos sin albarán (ABO/DEVO, APROAFA, servicios y cargo H1) no entran en esta simulación de líneas.
+
 ## 5. Qué falta para la autoridad productiva
 
 1. **Decisiones de Pio:**
