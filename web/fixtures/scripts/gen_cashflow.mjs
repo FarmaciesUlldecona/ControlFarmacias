@@ -33,6 +33,16 @@
 //     H7-REAL-9: previsión por concepto, el mayor entre Excel y media (ALLIANCE: su media de 6.000 > Excel 520); los
 //     demás conceptos de una categoría anotada llevan su media. Robot de 23.400 € y campaña HEFAME de RITA de 9.800 €
 //     para mantener la naranja de RITA (11–20/12/2026, 5.008,33 €) y un solo rojo (11–20/01/2027, 2.598,36 €).
+//   H7-REAL-10 (sin media para lo ajeno a la farmacia, esporádicos por el año anterior, terminados, comparación por mes):
+//   - «No relacionadas» (alquiler del apartamento, préstamo, retirada del titular) y traspasos externos sin media: solo
+//     el Excel (FONDOS 2.500 en 1–10/02/2027) o un apunte. Sin la retirada prevista los saldos suben: reforma del
+//     escaparate de RITA (8.180, 11–20/12/2026) para la naranja y robot de 40.000 para el rojo de 11–20/01/2027.
+//   - Esporádicos (≤ 3 meses con movimiento en 12): pagas extra, la reparación de la cámara (6.000 en 21–31/03/2027 por
+//     el año anterior), KENVUE y DERMOFARMACIA (marzo de 2027).
+//   - Terminado: «Mantenimiento antiguo» (PIO, hasta 11–20/07/2026): aviso gris, sin media.
+//   - Por mes: TPV de Navidad (Excel 12.500 frente a la media del mes 30.000: la diferencia, 17.500, en 1–10/12);
+//     ALLIANCE de noviembre (Excel 520 frente a 12.000: 11.480 en 21–30/11); paga extra de RITA (Excel 7.000 en la 2.ª
+//     decena frente al año anterior 7.000 en la 3.ª: solo el Excel); HEFAME de RITA (9.800 frente a 6.000: el Excel).
 //   H7-REAL-7: dos alias de KENVUE en la misma decena real (una línea con la suma) y una obra en 12/2027, fuera del
 //   horizonte de 12 meses previstos: el consolidado queda en negativo allí, pero sin aviso.
 //   - Importación vigente de hace 6 días (10/11/2026).
@@ -102,6 +112,10 @@ const SIN_CONTRAPARTIDA = { PIO: ['DEPOSITO CONECTADO', 6000], RITA: ['TRASPÀS 
  */
 const EXTERNOS = { PIO: ['TRASPASO A FONDOS/VALORS', 1, 1000], RITA: ['TRASPASO A LA SL (JUBILACIO ETC)', 2, 500] };
 const conSinContrapartida = (d) => ord(d) === 3 && ym(d) >= '2026-08' && ym(d) <= '2026-10';
+/** Robot dispensador de PIO (Excel, 11–20/01/2027): el rojo del consolidado. H7-REAL-10: 40.000 € (antes 23.400). */
+const ROBOT = 40000;
+/** H7-REAL-10: reforma del escaparate de RITA (Excel, 11–20/12/2026): la naranja de RITA. */
+const REFORMA_RITA = 8180;
 
 // [categoría, concepto, real(d) → importe | null, futuro(d) → importe | null (lo anotado en el Excel)]
 const nada = () => null;
@@ -123,7 +137,10 @@ const CONCEPTOS = {
     ['RS Gastos generales', 'Suministros', (d) => (ord(d) === 2 ? 900 : null), nada],
     ['RS Modelo 303', 'IVA trimestral', (d) => (ord(d) === 2 ? MODELO_303.PIO[ym(d)] ?? null : null), nada],
     ['RS Modelo 111', 'Retenciones IRPF', (d) => (ord(d) === 2 && TRIMESTRE.includes(mm(d)) ? 1500 : null), nada],
-    ['RS Inversiones', 'Robot dispensador', nada, (d) => (d === '2027-01-11' ? 23400 : null)],
+    ['RS Inversiones', 'Robot dispensador', nada, (d) => (d === '2027-01-11' ? ROBOT : null)],
+    // H7-REAL-10: concepto frecuente (300 € en la 2.ª decena hasta julio de 2026) sin movimiento en los últimos 3 meses:
+    // posible concepto terminado (sin media; aviso gris). Meses que la retirada deja a 0: los saldos reales no cambian.
+    ['RS Gastos generales', 'Mantenimiento antiguo', (d) => (ord(d) === 2 && ym(d) <= '2026-07' ? 300 : null), nada],
     ['RS No relacionadas con la farmacia', 'Préstamo vivienda', (d) => (ord(d) === 1 ? 1200 : null), nada],
     ['RS Traspasos', 'La Caixa Rita', (d) => TRASPASOS[d] ?? null, (d) => TRASPASOS[d] ?? null],
     ['RS Traspasos', SIN_CONTRAPARTIDA.PIO[0], (d) => (conSinContrapartida(d) ? SIN_CONTRAPARTIDA.PIO[1] : null), nada],
@@ -143,6 +160,9 @@ const CONCEPTOS = {
     ['RS Personal', 'Paga extra', (d) => (ord(d) === 3 && ['06', '12'].includes(mm(d)) ? 7000 : null), (d) => (ord(d) === 2 && ['06', '12'].includes(mm(d)) ? 7000 : null)],
     ['RS Gastos generales', 'Alquiler local', (d) => (ord(d) === 1 ? 1500 : null), (d) => (ord(d) === 1 ? 1500 : null)],
     ['RS Gastos generales', 'Suministros', (d) => (ord(d) === 2 ? 500 : null), nada],
+    // H7-REAL-10: anotado en el Excel (sin historia): mantiene la naranja de RITA en 11–20/12/2026 sin media de las
+    // «no relacionadas» (la retirada del titular ya no se prevé).
+    ['RS Gastos generales', 'Reforma escaparate', nada, (d) => (d === '2026-12-11' ? REFORMA_RITA : null)],
     ['RS Modelo 303', 'IVA trimestral', (d) => (ord(d) === 2 ? MODELO_303.RITA[ym(d)] ?? null : null), nada],
     ['RS Traspasos', SIN_CONTRAPARTIDA.RITA[0], (d) => (conSinContrapartida(d) ? SIN_CONTRAPARTIDA.RITA[1] : null), nada],
     ['RS Traspasos', EXTERNOS.RITA[0], (d) => (ord(d) === EXTERNOS.RITA[1] ? EXTERNOS.RITA[2] : null), nada],

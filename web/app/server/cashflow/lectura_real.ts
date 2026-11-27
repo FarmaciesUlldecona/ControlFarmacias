@@ -15,7 +15,7 @@
  */
 import type { Fila, ValorDiagnostico } from '../contrato.ts';
 import {
-  CONFIG_CASHFLOW, CUENTAS_CASHFLOW, MESES_INDICADOR, calcularCashflow, comercialDeConcepto, esDecenaInicio, esFecha, fechaMadrid, moverDecena, variacionMensual,
+  CONFIG_CASHFLOW, CUENTAS_CASHFLOW, MESES_INDICADOR, calcularCashflow, comercialDeConcepto, esDecenaInicio, esFecha, fechaMadrid, moverDecena, variacionMensual, variacionOperativa,
   type Celda, type CuentaCashflow, type ResultadoCashflow, type VencimientoCashflow,
   type CuentaCashflowFila, type DatosCashflow, type ImportacionCashflow, type ImporteCashflow, type OtraCuentaCashflow, type SaldoCashflow,
 } from './cashflow.ts';
@@ -363,9 +363,10 @@ export function diagnosticoCashflow(d: DatosCashflow, hoy: string, vencimientos:
       if (comercial === null || !MAYORISTAS.includes(comercial)) continue;
       const k = `${claveCategoria(comercial)}_${c.toLowerCase()}`;
       for (const q of ['excel_gana_media', 'media_gana_excel']) if (!frente.has(`${q}_${k}`)) frente.set(`${q}_${k}`, 0);
+      // H7-REAL-10: la comparación es por mes: una vez por concepto y mes (en su primera decena con algo conocido).
       for (const x of Object.values(l.celdas)) {
-        if (x.real || x.frente === null) continue;
-        const q = `${Math.abs(x.frente.media) > Math.abs(x.frente.excel) ? 'media_gana_excel' : 'excel_gana_media'}_${k}`;
+        if (x.real || x.mes === null || x.mes.decenas_conocidas[0] !== x.decena) continue;
+        const q = `${x.mes.gana === 'MEDIA' ? 'media_gana_excel' : 'excel_gana_media'}_${k}`;
         frente.set(q, (frente.get(q) as number) + 1);
       }
     }
@@ -382,6 +383,7 @@ export function diagnosticoCashflow(d: DatosCashflow, hoy: string, vencimientos:
     }
   }
   Object.assign(out, diagnosticoPrevision(r, vencimientos));
+  Object.assign(out, diagnosticoReglasPrevision(r));
   // H7-REAL-8: media de 3 meses (la anterior) frente a la de 12 (decisión de Pío, 25/11/2026): indicador consolidado y
   // variación prevista por cuenta, mismo formato (entero sin signo + _negativa).
   const r3 = calcularCashflow({ ...d, hoy, vencimientos: [...vencimientos], config: { ...CONFIG_CASHFLOW, meses_media: 3 } });
@@ -403,6 +405,67 @@ export function diagnosticoCashflow(d: DatosCashflow, hoy: string, vencimientos:
 function fuenteDiagnostico(c: Celda): string {
   if (c.fuente === 'MEDIA') return c.media?.regla === 'ANIO_ANTERIOR' ? 'anio_anterior' : 'media';
   return c.fuente.toLowerCase();
+}
+/** H7-REAL-10: cifras mayores por mes previsto en el diagnóstico. */
+export const TOP_MES_PREVISTO = 5;
+
+/**
+ * H7-REAL-10: diagnóstico de las reglas de la previsión (decisión de Pío, 26/11/2026). Por cuenta (PIO, RITA):
+ *   operativo_<cuenta>_real|_prevista: «Operativo (solo farmacia)» mensual (entero sin signo + _negativa + _disponible);
+ *   conceptos_esporadicos_<cuenta> / conceptos_terminados_<cuenta>: cuántos (nunca sus nombres);
+ *   doble_computo_<cuenta>_casos: conceptos y meses en que la regla 4 evitó un doble cómputo; _evitado (entero sin
+ *     signo + _negativa + _disponible);
+ *   top_<cuenta>_<aaaa_mm>_categorias|_fuentes|_eur|_sentido: por cada mes previsto (12 tras la última decena real), las 5
+ *     mayores cifras previstas por concepto y mes (Σ de lo que entra en el saldo), de mayor a menor en valor absoluto,
+ *     con la etiqueta de su categoría, su fuente dominante y entrada/salida. Nunca el concepto.
+ */
+export function diagnosticoReglasPrevision(r: ResultadoCashflow): Record<string, ValorDiagnostico> {
+  const out: Record<string, ValorDiagnostico> = {};
+  for (const cuenta of CUENTAS_CASHFLOW) {
+    const k = cuenta.toLowerCase();
+    const v = r.vistas[cuenta];
+    const L = v?.ultima_real ?? null;
+    const op = v ? variacionOperativa(v, r.decenas) : { real: null, prevista: null };
+    eurMes(out, `operativo_${k}_real`, op.real === null ? null : Math.round(op.real.por_mes * 100));
+    eurMes(out, `operativo_${k}_prevista`, op.prevista === null ? null : Math.round(op.prevista.por_mes * 100));
+    const p = r.prevision[cuenta];
+    out[`conceptos_esporadicos_${k}`] = p?.esporadicos.length ?? 0;
+    out[`conceptos_terminados_${k}`] = p?.terminados.length ?? 0;
+    out[`doble_computo_${k}_casos`] = p?.doble_computo.casos ?? 0;
+    eurMes(out, `doble_computo_${k}_evitado`, p ? Math.round(p.doble_computo.evitado * 100) : null);
+    if (!v || L === null) continue;
+    const hasta = moverDecena(L, 3 * MESES_INDICADOR);
+    const previstas = r.decenas.filter((d) => d > L && d <= hasta);
+    for (const ym of [...new Set(previstas.map((d) => d.slice(0, 7)))]) {
+      const ds = previstas.filter((d) => d.slice(0, 7) === ym);
+      const cifras: { cat: string; fuente: string; c: number }[] = [];
+      for (const l of v.lineas) {
+        if (l.clase === 'TRASPASO') continue;
+        let c = 0;
+        let hay = false;
+        const fuentes = new Map<string, number>();
+        for (const d of ds) {
+          const x = l.celdas[d];
+          if (!x || !x.en_saldo || x.importe === null) continue;
+          const ct = Math.round(x.importe * 100);
+          c += ct;
+          hay = true;
+          const f = fuenteDiagnostico(x);
+          fuentes.set(f, (fuentes.get(f) ?? 0) + Math.abs(ct));
+        }
+        if (!hay || c === 0) continue;
+        const dom = [...fuentes].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
+        cifras.push({ cat: claveCategoria(l.clase === 'TRASPASO_EXTERNO' ? `${l.categoria} externo` : l.categoria), fuente: dom, c });
+      }
+      const top = cifras.sort((a, b) => Math.abs(b.c) - Math.abs(a.c) || a.cat.localeCompare(b.cat)).slice(0, TOP_MES_PREVISTO);
+      const pre = `top_${k}_${ym.replace('-', '_')}`;
+      out[`${pre}_categorias`] = top.map((x) => x.cat);
+      out[`${pre}_fuentes`] = top.map((x) => x.fuente);
+      out[`${pre}_eur`] = top.map((x) => Math.round(Math.abs(x.c) / 100));
+      out[`${pre}_sentido`] = top.map((x) => (x.c > 0 ? 'entrada' : 'salida'));
+    }
+  }
+  return out;
 }
 /** Importe mensual en euros enteros sin signo + sí/no «negativa» (la barrera de check:real solo admite enteros ≥ 0). */
 function eurMes(out: Record<string, ValorDiagnostico>, k: string, centimosMes: number | null): void {

@@ -66,7 +66,8 @@ test.describe('PC 1440', () => {
     await pulsarCelda(page, 'RS Traspasos (externo)|TRASPASO A FONDOS/VALORS|2027-02-01');
     const d = page.locator('[data-cf-desglose]');
     await expect(d.locator('[data-cf-desglose-fuente="MANUAL"]')).toBeVisible();
-    await expect(d.locator('[data-cf-apunte-manda="si"]')).toHaveText('El apunte manual manda en esta decena sobre lo anotado en el Excel (−2.500,00 €) y la media del concepto (−1.000,00 €): no suman.');
+    // H7-REAL-10: traspaso externo, sin media (CATEGORIAS_SIN_MEDIA).
+    await expect(d.locator('[data-cf-apunte-manda="si"]')).toHaveText('El apunte manual manda en esta decena sobre lo anotado en el Excel (−2.500,00 €), que no suma.');
     await expect(d.locator('[data-cf-apunte]')).toContainText('Apunte manual: Aportación acordada con el banco · Marc · 03/02/2027');
     await expect(d.locator('[data-cf-media]')).toHaveCount(0);
     await expect(d.locator('[data-ap-panel]')).toBeVisible(); // la celda futura también deja anotar otro
@@ -152,12 +153,13 @@ test.describe('PC 1440', () => {
     const r = seccion(page).locator('[data-ap-recurrente]', { hasText: 'Mantenimiento de la alarma (e2e)' });
     await expect(r.locator('[data-ap-regla]')).toHaveText('mensual, día 31, desde 30/04/2027 hasta 31/08/2027');
     await expect(r.locator('[data-ap-ocurrencia] .cf-num')).toHaveText(['30/04/2027', '31/05/2027', '30/06/2027', '31/07/2027', '31/08/2027']);
-    // Mes: la cifra de mayo lleva la marca «a» (media de la 2.ª decena + 75 en la 3.ª).
+    // Mes: la cifra de mayo lleva la marca «a». H7-REAL-10: el apunte manda en su mes (sin la media de la 2.ª decena).
     await page.locator('[data-cf-escala="mes"]').click();
     await page.locator('[data-cf-cuenta="PIO"]').click();
     await desplegar(page, 'RS Gastos generales');
     await expect(celda(page, 'RS Gastos generales|Suministros|2027-05').locator('[data-cf-marca-apunte]')).toHaveAttribute('title', 'Apunte manual: Mantenimiento de la alarma (e2e) · Marc · 31/05/2027');
-    await expect(celda(page, 'RS Gastos generales|Suministros|2027-05')).toContainText('−975');
+    await expect(celda(page, 'RS Gastos generales|Suministros|2027-05').locator('.cf-num')).toHaveText('−75');
+    // Junio sin apunte (tras anularlo, abajo): la media de la 2.ª decena (900).
     await celda(page, 'RS Gastos generales|Suministros|2027-05').scrollIntoViewIfNeeded();
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_recurrente_mes.png') });
@@ -170,6 +172,7 @@ test.describe('PC 1440', () => {
     await expect(r.locator('[data-ap-ocurrencia] .cf-num')).toHaveText(['30/04/2027', '31/05/2027', '31/07/2027', '31/08/2027']);
     await expect(r.locator('[data-ap-anuladas]')).toContainText('30/06/2027 (Junio sin cuota (e2e))');
     await expect(celda(page, 'RS Gastos generales|Suministros|2027-06').locator('[data-cf-marca-apunte]')).toHaveCount(0);
+    await expect(celda(page, 'RS Gastos generales|Suministros|2027-06').locator('.cf-num')).toHaveText('−900');
     await r.scrollIntoViewIfNeeded();
     await page.evaluate(() => document.fonts.ready);
     await r.screenshot({ path: join(CAPTURAS, 'pc1440_recurrente_ocurrencia_anulada.png') });
@@ -230,7 +233,7 @@ test.describe('PC 1440', () => {
     await f.locator('[data-ap-campo="nota"]').fill('Pedido Alliance (e2e)');
     await f.locator('[data-ap-guardar]').click();
     await expect(page.locator('[data-ap-aviso-ok]')).toHaveText('Apunte manual guardado.');
-    // El apunte (460) manda sobre el Excel (520) y la media (6.000); los vencimientos (472,22) son mayores: cuentan ellos.
+    // El apunte (460) manda sobre el Excel (520) y sobre la media del mes; los vencimientos (472,22) son mayores: cuentan ellos.
     await page.locator('[data-cf-cuenta="PIO"]').click();
     await desplegar(page, 'RS Proveedores');
     const c = celda(page, 'RS Proveedores|ALLIANCE|2026-11-11');
@@ -257,8 +260,8 @@ test.describe('PC 1440', () => {
     await expect(seccion(page).locator('[data-ap-sugerencia]')).toHaveCount(0);
     await expect(seccion(page).locator('[data-ap-suelto]', { hasText: 'Pedido Alliance (e2e)' })).toHaveCount(0);
     await expect(seccion(page).locator('[data-ap-anulados]')).toContainText('sustituido por una factura');
-    // La celda vuelve a su previsión (media 6.000 > vencimientos), sin apunte.
-    await expect(c).toHaveAttribute('data-cf-fuente', 'media');
+    // La celda vuelve a su previsión (H7-REAL-10: Excel 520 > vencimientos; la media del mes, en 21–30/11), sin apunte.
+    await expect(c).toHaveAttribute('data-cf-fuente', 'excel');
     await expect(c.locator('[data-cf-marca-apunte]')).toHaveCount(0);
   });
 

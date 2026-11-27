@@ -179,6 +179,10 @@
 /* H7-REAL-2: marca «media» en cada cifra estimada. */
 .cf-marca-media { display: inline-block; min-width: 13px; padding: 0 3px; margin-right: 4px; border-radius: 4px; font-size: var(--cf-tam-min); line-height: 16px; font-weight: 800; text-align: center; color: #fff; background: var(--cf-rita); vertical-align: 1px; }
 .cf-marca-media.estatico { margin: 0 2px 0 4px; }
+/* H7-REAL-10: estimación por el año anterior (modelos trimestrales y conceptos esporádicos): gris pizarra, distinta de «m» y «a». */
+.cf-marca-anio { display: inline-block; padding: 0 3px; margin-right: 4px; border-radius: 4px; font-size: var(--cf-tam-min); line-height: 16px; font-weight: 800; text-align: center; color: #fff; background: #5b6472; vertical-align: 1px; }
+.cf-marca-anio.estatico { margin: 0 2px 0 4px; }
+.cf-indicador-titulo[data-cf-operativo-titulo] { margin-left: 6px; }
 /* H7-REAL-4: indicador de control de la previsión, junto al gráfico. */
 .cf-indicador { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-top: 12px; padding: 12px 14px; border-radius: 8px; background: var(--gris-fondo); font-size: var(--cf-tam-indicador); }
 .cf-indicador-titulo { font-weight: 700; }

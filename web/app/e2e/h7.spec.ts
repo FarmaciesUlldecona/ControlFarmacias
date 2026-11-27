@@ -37,9 +37,11 @@ test.describe('PC 1440', () => {
     await expect(page.locator('[data-cf-proximo-aviso]')).toHaveAttribute('data-cf-proximo-aviso', 'naranja');
     await expect(page.locator('[data-cf-proximo-aviso]')).toContainText('11–20 dic 2026');
     await expect(page.locator('[data-cf-importacion]')).toContainText('hace 6 días');
-    // Avisos: un solo gris (ninguno por traspasos no compensados: H7-REAL-2).
-    await expect(page.locator('[data-cf-aviso="gris"]')).toHaveCount(1);
-    await expect(page.locator('[data-cf-aviso="gris"]')).toHaveText('La importación vigente del Excel tiene 6 días.');
+    // Avisos grises: la importación y, H7-REAL-10, el concepto terminado (ninguno por traspasos no compensados: H7-REAL-2).
+    await expect(page.locator('[data-cf-aviso="gris"]')).toHaveCount(2);
+    await expect(page.locator('[data-cf-aviso="gris"]')).toHaveText(['La importación vigente del Excel tiene 6 días.',
+      'Posible concepto terminado: Mantenimiento antiguo (último movimiento 20/07/2026)']);
+    await expect(page.locator('[data-cf-aviso="gris"][data-codigo="CONCEPTO_TERMINADO"]')).toHaveCount(1);
     const naranja = page.locator('[data-cf-aviso="naranja"]');
     await expect(naranja).toHaveCount(1);
     await expect(naranja).toContainText('RITA en negativo');
@@ -91,8 +93,9 @@ test.describe('PC 1440', () => {
     await expect(page.locator('[data-cf-concepto]')).toHaveCount(0);
     await page.locator('[data-cf-plegar="RS Personal"]').click();
     await expect(page.locator('[data-cf-plegar="RS Personal"]')).toHaveAttribute('aria-expanded', 'true');
-    // H7-REAL-9: Excel de diciembre (7.000, 2.ª decena) + su media en la 3.ª (1.166,67: dos pagas en 12 meses).
-    await expect(celda(page, 'RS Personal|Paga extra|2026-12')).toContainText('−8.167');
+    // H7-REAL-10: paga esporádica (dos en 12 meses): Excel de diciembre (7.000, 2.ª decena) frente al año anterior (7.000 en
+    // la 3.ª): solo el Excel (antes, Excel + 1.166,67 de media: doble cómputo).
+    await expect(celda(page, 'RS Personal|Paga extra|2026-12').locator('.cf-num')).toHaveText('−7.000');
     await expect(page.locator('[data-cf-tabla="RITA"] [data-cf-seccion="traspasos"]')).toBeVisible();
     await sinDesbordar(page, 1440);
     await page.evaluate(() => document.fonts.ready);
@@ -111,20 +114,22 @@ test.describe('PC 1440', () => {
   test('desglose: vencimientos con enlace a la factura y «posible duplicado o diferencia»; media con su cálculo', async ({ page }) => {
     await page.locator('[data-cf-cuenta="PIO"]').click();
     await page.locator('[data-cf-plegar="RS Proveedores"]').click();
-    // H7-REAL-9: previsión base de ALLIANCE = el mayor entre su Excel (520) y su media (6.000): la media; los vencimientos
-    // (472,22) son menores: cuenta la media, con el Excel a la vista.
+    // H7-REAL-10: en su decena, el Excel (520) frente a los vencimientos (472,22): el Excel. Por mes, lo conocido de noviembre
+    // (520) frente a la media del mes (12.000): gana la media y la diferencia (11.480) va a 21–30/11.
     const alliance = celda(page, 'RS Proveedores|ALLIANCE|2026-11-11');
-    await expect(alliance).toHaveAttribute('data-cf-fuente', 'media');
-    await expect(alliance.locator('[data-cf-marca-media]')).toBeVisible();
+    await expect(alliance).toHaveAttribute('data-cf-fuente', 'excel');
+    await expect(alliance.locator('[data-cf-marca-media]')).toHaveCount(0);
     await expect(alliance.locator('[data-cf-diferencia]')).toBeVisible();
-    await expect(alliance).toContainText('−6.000');
-    await expect(alliance.locator('[data-cf-alt]')).toHaveText('Excel −520');
+    await expect(alliance.locator('.cf-num')).toHaveText('−520');
+    await expect(alliance.locator('[data-cf-alt]')).toHaveText('Media mes −12.000');
+    await expect(celda(page, 'RS Proveedores|ALLIANCE|2026-11-21').locator('.cf-num')).toHaveText('−11.480');
+    await expect(celda(page, 'RS Proveedores|ALLIANCE|2026-11-21').locator('[data-cf-marca-media]')).toBeVisible();
     await alliance.locator('button').click();
     const d = page.locator('[data-cf-desglose]');
     await expect(d).toBeVisible();
-    await expect(d.locator('[data-cf-desglose-fuente="MEDIA"]')).toBeVisible();
-    await expect(d.locator('[data-cf-frente="media"]')).toHaveText('Excel 520,00 € (inferior a la media) → media 6.000,00 €.');
-    await expect(d.locator('[data-cf-venc-minimo="media"]')).toContainText('Vencimientos conocidos 472,22 € (inferiores a la media)');
+    await expect(d.locator('[data-cf-desglose-fuente="EXCEL"]')).toBeVisible();
+    await expect(d.locator('[data-cf-mes="media"]')).toHaveText('Noviembre de 2026: conocido (Excel, apunte o vencimientos) 520,00 € frente a la media del mes 12.000,00 € → gana la media: lo conocido en sus decenas y la diferencia 11.480,00 € en 21–30 nov 2026.');
+    await expect(d.locator('[data-cf-venc-minimo="excel"]')).toContainText('Vencimientos conocidos 472,22 € (inferiores a Excel)');
     await expect(d.locator('[data-cf-media-ventana]')).toHaveText('Media de 12 meses (misma decena)');
     await expect(d.locator('[data-cf-comparacion="diferencia"]')).toContainText('Posible duplicado o diferencia');
     await expect(d.locator('[data-cf-comparacion="diferencia"]')).toContainText('Excel: −520,00 €');
@@ -139,15 +144,15 @@ test.describe('PC 1440', () => {
     await expect(page).toHaveURL(/\/cashflow/);
     await expect(page.locator('[data-contrato-ok="cashflow"]')).toBeVisible();
     await expect(d).toHaveCount(0); // seguir el enlace cierra el desglose
-    // H7-REAL-9: por concepto, cada uno con su cifra (sin «media del resto»): 11–20/11 = ALLIANCE 6.000 + COFARES 4.479,17
-    // + DERMOFARMACIA 16,67 + HEFAME 3.500 + KENVUE 41,67 + LOGISTA 800.
+    // Por concepto, cada uno con su cifra: 11–20/11 = ALLIANCE 520 (Excel) + COFARES 4.479,17 + HEFAME 3.500 + LOGISTA 800.
+    // H7-REAL-10: DERMOFARMACIA y KENVUE (esporádicos: solo marzo) ya no llevan 1/12 cada mes.
     await page.keyboard.press('Escape');
     const prov = celda(page, 'RS Proveedores|*|2026-11-11');
-    await expect(prov).toContainText('−14.838');
+    await expect(prov.locator('.cf-num')).toHaveText('−9.299');
     await prov.locator('button').click();
     await expect(d.locator('[data-cf-parte="vencimientos"]')).toHaveText('Vencimientos (ALLIANCE)');
     await expect(d.locator('[data-cf-parte="media-resto"]')).toHaveCount(0);
-    await expect(d.locator('[data-cf-desglose-fuente="MEDIA"] .cf-desglose-cifra')).toHaveText(['−6.000,00 €', '−4.479,17 €', '−16,67 €', '−3.500,00 €', '−41,67 €', '−800,00 €']);
+    await expect(d.locator('[data-cf-desglose-fuente="MEDIA"] .cf-desglose-cifra')).toHaveText(['−4.479,17 €', '−3.500,00 €', '−800,00 €']);
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_desglose_vencimientos_resto.png') });
     await page.keyboard.press('Escape');
@@ -167,20 +172,27 @@ test.describe('PC 1440', () => {
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_desglose_media.png') });
     await page.keyboard.press('Escape');
     await expect(d).toHaveCount(0);
-    // Excel superior a la media: TPV de Navidad (21–31/12, 12.500 frente a 9.000) sin marca «m»; la media, a la vista.
+    // H7-REAL-10: TPV de Navidad: Excel 12.500 (21–31/12, sin marca «m») frente a la media del mes (30.000): gana la media;
+    // la diferencia (17.500) en 1–10/12 (con «m»); 11–20/12, sin cifra (sin doble cómputo).
     await expect(celda(page, 'RE Cobro TPV|*|2026-12-21')).toHaveAttribute('data-cf-fuente', 'excel');
     await expect(celda(page, 'RE Cobro TPV|*|2026-12-21').locator('[data-cf-marca-media]')).toHaveCount(0);
     await page.locator('[data-cf-plegar="RE Cobro TPV"]').click();
-    await expect(celda(page, 'RE Cobro TPV|TPV CaixaBank|2026-12-21').locator('[data-cf-alt]')).toHaveText('Media 9.000');
+    await expect(celda(page, 'RE Cobro TPV|TPV CaixaBank|2026-12-21').locator('[data-cf-alt]')).toHaveText('Media mes 30.000');
+    await expect(celda(page, 'RE Cobro TPV|TPV CaixaBank|2026-12-01').locator('.cf-num')).toHaveText('17.500');
+    await expect(celda(page, 'RE Cobro TPV|TPV CaixaBank|2026-12-01').locator('[data-cf-marca-media]')).toBeVisible();
+    await expect(celda(page, 'RE Cobro TPV|TPV CaixaBank|2026-12-11')).toHaveAttribute('data-cf-tipo', 'vacia');
     await celda(page, 'RE Cobro TPV|TPV CaixaBank|2026-12-21').locator('button').evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
     await celda(page, 'RE Cobro TPV|TPV CaixaBank|2026-12-21').locator('button').click();
-    await expect(d.locator('[data-cf-frente="excel"]')).toHaveText('Excel 12.500,00 € (superior a la media 9.000,00 €).');
+    await expect(d.locator('[data-cf-mes="media"]')).toHaveText('Diciembre de 2026: conocido (Excel, apunte o vencimientos) 12.500,00 € frente a la media del mes 30.000,00 € → gana la media: lo conocido en sus decenas y la diferencia 17.500,00 € en 1–10 dic 2026.');
     await page.evaluate(() => document.fonts.ready);
-    await page.screenshot({ path: join(CAPTURAS, 'pc1440_excel_superior_media.png') });
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_excel_frente_media_mes.png') });
     await page.keyboard.press('Escape');
-    // «RS Modelo 303» de enero de 2027: el mismo mes del año anterior.
+    // «RS Modelo 303» de enero de 2027: el mismo mes del año anterior (marca «año»).
+    await expect(celda(page, 'RS Modelo 303|*|2027-01-11').locator('[data-cf-marca-anio]')).toHaveText('año');
+    await expect(celda(page, 'RS Modelo 303|*|2027-01-11').locator('[data-cf-marca-media]')).toHaveCount(0);
     await celda(page, 'RS Modelo 303|*|2027-01-11').locator('button').click();
     await expect(d.locator('[data-cf-regla="anio_anterior"]')).toBeVisible();
+    await expect(d.locator('[data-cf-motivo="modelo"]')).toBeVisible();
     await expect(d.locator('[data-cf-media] li').first()).toContainText('11–20 ene 2026');
     await expect(d.locator('.cf-media-total')).toContainText('−8.500,00 €');
     await page.evaluate(() => document.fonts.ready);
@@ -205,24 +217,61 @@ test.describe('PC 1440', () => {
 
   test('H7-REAL-9: sin selector «Media / Excel» (la regla aplica siempre); RITA: HEFAME anotado (Excel > media) y COFARES con su media en la misma decena', async ({ page }) => {
     await page.locator('[data-cf-cuenta="PIO"]').click();
-    await expect(saldo(page, '2026-11-11')).toHaveText('22.262');
+    await expect(saldo(page, '2026-11-11')).toHaveText('27.801');
     await expect(page.locator('[data-cf-eleccion]')).toHaveCount(0);
     // Una elección antigua guardada en el navegador ya no cambia nada.
     await page.evaluate(() => { try { localStorage.setItem('cf.cashflow.eleccion.v1', JSON.stringify({ 'RE Cobro TPV': 'excel' })); } catch { /* nada */ } });
     await page.reload();
-    await expect(saldo(page, '2026-11-11')).toHaveText('22.262');
+    await expect(saldo(page, '2026-11-11')).toHaveText('27.801');
     await page.locator('[data-cf-cuenta="RITA"]').click();
     await page.locator('[data-cf-plegar="RS Proveedores"]').click();
+    // H7-REAL-10: HEFAME de diciembre: Excel 9.800 frente a la media del mes (6.000): el Excel; nada de media en 11–31/12.
     const hef = celda(page, 'RS Proveedores|HEFAME|2026-12-01');
     await expect(hef).toHaveAttribute('data-cf-fuente', 'excel');
-    await expect(hef).toContainText('−9.800');
-    await expect(hef.locator('[data-cf-alt]')).toHaveText('Media −2.000');
+    await expect(hef.locator('.cf-num')).toHaveText('−9.800');
+    await expect(hef.locator('[data-cf-alt]')).toHaveText('Media mes −6.000');
+    await expect(celda(page, 'RS Proveedores|HEFAME|2026-12-11')).toHaveAttribute('data-cf-tipo', 'vacia');
     const cof = celda(page, 'RS Proveedores|COFARES|2026-12-01');
     await expect(cof).toHaveAttribute('data-cf-fuente', 'media');
     await expect(cof).toContainText('−3.000');
     await expect(celda(page, 'RS Proveedores|*|2026-12-01')).toContainText('−12.800');
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_rita_excel_y_media.png') });
+  });
+
+  test('H7-REAL-10: conceptos esporádicos por el año anterior (marca «año» y popup) y concepto terminado (sin media; aviso gris)', async ({ page }) => {
+    await page.locator('[data-cf-escala="mes"]').click();
+    await page.locator('[data-cf-cuenta="PIO"]').click();
+    await expect(page.locator('[data-cf-leyenda-anio]')).toHaveText('año');
+    await page.locator('[data-cf-plegar="RS Gastos generales"]').click();
+    // Reparación de la cámara (un solo pago, 21–31/03/2026): marzo de 2027, el año anterior; ningún otro mes.
+    const rep = celda(page, 'RS Gastos generales|Reparación cámara frigorífica|2027-03');
+    await expect(rep.locator('.cf-num')).toHaveText('−6.000');
+    await expect(rep.locator('[data-cf-marca-anio]')).toHaveAttribute('title', /^Año anterior: 21–31 mar 2026, −6\.000,00\s€$/);
+    await expect(rep.locator('[data-cf-marca-media]')).toHaveCount(0);
+    await expect(celda(page, 'RS Gastos generales|Reparación cámara frigorífica|2027-02')).toHaveAttribute('data-cf-tipo', 'vacia');
+    // Terminado: sin cifra a futuro.
+    await expect(celda(page, 'RS Gastos generales|Mantenimiento antiguo|2026-12')).toHaveAttribute('data-cf-tipo', 'vacia');
+    await expect(page.locator('[data-cf-aviso="gris"][data-codigo="CONCEPTO_TERMINADO"]')).toHaveText('Posible concepto terminado: Mantenimiento antiguo (último movimiento 20/07/2026)');
+    await rep.locator('button').evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    await rep.locator('button').click();
+    const d = page.locator('[data-cf-desglose]');
+    await expect(d.locator('[data-cf-motivo="esporadico"]')).toHaveText('Año anterior: concepto esporádico (movimiento en 1 mes de los últimos 12): la misma decena del mismo mes del año anterior, no la media.');
+    await expect(d.locator('[data-cf-media] li').first()).toContainText('21–31 mar 2026');
+    await page.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_esporadico_anio_anterior.png') });
+    await page.keyboard.press('Escape');
+    // Paga extra de RITA (esporádica): Excel en la 2.ª decena frente al año anterior en la 3.ª: «cuenta lo conocido».
+    await page.locator('[data-cf-escala="decenas"]').click();
+    await page.locator('[data-cf-cuenta="RITA"]').click();
+    await page.locator('[data-cf-plegar="RS Personal"]').click();
+    const pg = celda(page, 'RS Personal|Paga extra|2026-12-11');
+    await expect(pg.locator('[data-cf-alt]')).toHaveText('Año ant. mes −7.000');
+    await expect(celda(page, 'RS Personal|Paga extra|2026-12-21')).toHaveAttribute('data-cf-tipo', 'vacia');
+    await pg.locator('button').evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    await pg.locator('button').click();
+    await expect(d.locator('[data-cf-mes="conocido"]')).toHaveText('Diciembre de 2026: conocido (Excel, apunte o vencimientos) 7.000,00 € frente al año anterior del mes 7.000,00 € → cuenta lo conocido; sin año anterior este mes.');
+    await page.screenshot({ path: join(CAPTURAS, 'pc1440_paga_extra_sin_doble_computo.png') });
   });
 
   test('H7-REAL: saldo final con su desglose: E7 (banco − fórmulas, informativa) en PIO 21–31/10 y cuadre de control', async ({ page }) => {
@@ -249,12 +298,19 @@ test.describe('PC 1440', () => {
     await expect(page.locator('[data-cf-desglose-saldo="RITA|2026-11-01"]')).toBeVisible();
   });
 
-  test('H7-REAL-4: traspasos externos en el consolidado con media y marca en el desglose; indicador de variación mensual junto al gráfico', async ({ page }) => {
-    // Indicador de control (consolidado): real de los últimos 12 meses frente a la prevista.
+  test('H7-REAL-4/10: traspasos externos en el consolidado (sin media: el apunte o el Excel) y marca en el desglose; indicador de variación mensual y «Operativo (solo farmacia)» junto al gráfico', async ({ page }) => {
+    // Indicador de control (consolidado): real de los últimos 12 meses frente a la prevista; H7-REAL-10: y lo que genera la
+    // farmacia sola (sin no relacionadas ni traspasos).
     const ind = page.locator('[data-cf-indicador]');
     await expect(ind).toContainText('Variación media mensual del consolidado');
     await expect(ind.locator('[data-cf-variacion="real"] strong')).toHaveText(/€\/mes$/);
     await expect(ind.locator('[data-cf-variacion="prevista"] strong')).toHaveText(/€\/mes$/);
+    await expect(ind.locator('[data-cf-operativo-titulo]')).toHaveText('Operativo (solo farmacia)');
+    await expect(ind.locator('[data-cf-operativo="real"] strong')).toHaveText('+19.885,00 €/mes');
+    await expect(ind.locator('[data-cf-operativo="prevista"] strong')).toHaveText(/^\+[\d.]+,\d{2}\s€\/mes$/);
+    await ind.scrollIntoViewIfNeeded();
+    await page.evaluate(() => document.fonts.ready);
+    await ind.screenshot({ path: join(CAPTURAS, 'pc1440_indicador_operativo.png') });
     // Consolidado: sección de traspasos externos (los internos siguen neutros).
     const t = page.locator('[data-cf-tabla="CONSOLIDADO"]');
     await expect(t.locator('[data-cf-seccion="traspasos_externos"]')).toBeVisible();
@@ -263,9 +319,12 @@ test.describe('PC 1440', () => {
     await t.locator('[data-cf-plegar="RS Traspasos (externo)"]').click();
     await expect(t.locator('[data-cf-concepto="TRASPASO A FONDOS/VALORS"]')).toBeVisible();
     await expect(t.locator('[data-cf-concepto="La Caixa Rita"]')).toHaveCount(0);
-    const c = celda(page, 'RS Traspasos (externo)|TRASPASO A FONDOS/VALORS|2026-12-01');
-    await expect(c).toContainText('−1.000');
-    await expect(c.locator('[data-cf-marca-media]')).toBeVisible();
+    // H7-REAL-10: sin media: 1–10/12 vacío; 1–10/02/2027, el apunte de la semilla (2.000, manda sobre el Excel de 2.500).
+    await expect(celda(page, 'RS Traspasos (externo)|TRASPASO A FONDOS/VALORS|2026-12-01')).toHaveCount(0);
+    const c = celda(page, 'RS Traspasos (externo)|TRASPASO A FONDOS/VALORS|2027-02-01');
+    await expect(c.locator('.cf-num')).toHaveText('−2.000');
+    await expect(c.locator('[data-cf-marca-media]')).toHaveCount(0);
+    await c.locator('button').evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
     await c.locator('button').click();
     const d = page.locator('[data-cf-desglose]');
     await expect(d.locator('[data-cf-traspaso-externo]')).toContainText('Traspaso externo');
@@ -410,7 +469,7 @@ test.describe('Letra de Cashflow (1440 × 900)', () => {
         expect((await estilo(page, `[data-cf-tabla="${vista}"] .cf-col-anio`)).tam).toBe(13);
         expect((await estilo(page, `[data-cf-tabla="${vista}"] .cf-col-tipo`)).tam).toBe(13);
         // Secundarios: nunca por debajo de 12 px.
-        for (const sel of ['.cf-sub', '.cf-marca-media', '.cf-dif', '.cf-eleccion button', '.cf-esquina', '.cf-seccion th']) {
+        for (const sel of ['.cf-sub', '.cf-marca-media', '.cf-marca-anio', '.cf-dif', '.cf-eleccion button', '.cf-esquina', '.cf-seccion th']) {
           const n = await t.locator(sel).count();
           for (let i = 0; i < n; i++) expect(await t.locator(sel).nth(i).evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(12);
         }
@@ -548,7 +607,7 @@ test.describe('Equivalencias de concepto (1440 × 900)', () => {
 test.describe('Vencimientos frente a la previsión base (1440 × 900)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('vencimientos (7.000) mayores que la previsión base (media 6.000 > Excel 520): ganan los vencimientos y el popup da la otra cifra', async ({ page }) => {
+  test('vencimientos (7.000) mayores que el Excel (520) en su decena: ganan los vencimientos y el popup da la otra cifra; la media del mes (12.000), por mes', async ({ page }) => {
     await page.route('**/api/cashflow', async (r) => {
       const res = await r.fetch();
       const j = (await res.json()) as { vencimientos: Record<string, unknown>[] };
@@ -565,8 +624,9 @@ test.describe('Vencimientos frente a la previsión base (1440 × 900)', () => {
     await c.locator('button').evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
     await c.locator('button').click();
     const d = page.locator('[data-cf-desglose]');
-    await expect(d.locator('[data-cf-venc-ganan="media"]')).toHaveText('Ganan los vencimientos: media del concepto 6.000,00 € (inferior a los vencimientos).');
-    await expect(d.locator('[data-cf-frente="media"]')).toHaveText('Excel 520,00 € (inferior a la media) → media 6.000,00 €.');
+    await expect(d.locator('[data-cf-venc-ganan="excel"]')).toHaveText('Ganan los vencimientos: Excel 520,00 € (inferior a los vencimientos).');
+    await expect(d.locator('[data-cf-mes="media"]')).toContainText('conocido (Excel, apunte o vencimientos) 7.000,00 € frente a la media del mes 12.000,00 €');
+    await expect(d.locator('[data-cf-mes="media"]')).toContainText('la diferencia 5.000,00 € en 21–30 nov 2026');
     await expect(d.locator('[data-cf-venc-minimo]')).toHaveCount(0);
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: join(CAPTURAS, 'pc1440_venc_ganan_excel.png') });
@@ -612,7 +672,7 @@ test.describe('REAL simulado', () => {
     // La vigente se sigue usando: mismos saldos que en FIXTURES (no se recalcula nada).
     await expect(page.locator('[data-cf-saldo-actual="PIO"] .cf-ficha-cifra')).toHaveText('25.000,00 €');
     await page.locator('[data-cf-cuenta="PIO"]').click();
-    await expect(saldo(page, '2026-11-11')).toHaveText('22.262');
+    await expect(saldo(page, '2026-11-11')).toHaveText('27.801');
     await expect(page.locator('[data-cf-saldo="2026-11-11"] [data-cf-no-cuadra]')).toHaveText('no cuadra');
     await page.locator('button:has([data-cf-saldo="2026-11-11"])').click();
     const d = page.locator('[data-cf-desglose="saldo"]');

@@ -36,6 +36,9 @@
  * H7-AP1 (migración 40): DIAGNOSTICO cashflow_apuntes con cf_lectura (apuntes vigentes, anulados y sustituidos,
  * ocurrencias anuladas, recurrentes vigentes y anulados, ocurrencias en los próximos 12 meses, conceptos nuevos y anulados)
  * y DIAGNOSTICO credencial_cashflow con cf_cashflow_web (conecta sí/no, en READ ONLY y sin escribir).
+ * H7-REAL-10 (en DIAGNOSTICO cashflow, lectura_real.ts → diagnosticoReglasPrevision): por cuenta, operativo (solo
+ * farmacia) real y previsto, nº de conceptos esporádicos y terminados (sin nombres), doble cómputo evitado por la regla
+ * del mes (casos e importe: entero + _negativa) y, por mes previsto, las 5 mayores cifras con categoría, fuente y sentido.
  * Solo recuentos, sí/no o nombres de columna; nunca valores.
  * Código de salida: 0 si todas OK; 1 si alguna falla (también sin conexión); 2 si falta .env.web o está incompleto.
  */

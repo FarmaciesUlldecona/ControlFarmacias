@@ -39,10 +39,12 @@ const banco = (cuenta: string, d: string, s: number | null): SaldoCashflow =>
   ({ id: `s${++n}`, importacion_id: 'i1', cuenta, farmacia: cuenta, decena_inicio: d, saldo_inicial: null, saldo_formulas: s, saldo_bancos: s });
 const IMP = [{ importacion_id: 'i1', archivo_nombre: 'Cashflow.xlsx', origen: 'NOCHE', estado: 'OK', detalle_error: null, filas: 3, importado_at: '2026-11-15T08:00:00.000Z', vigente: true }];
 const CUENTAS = [{ codigo: 'PIO', farmacia: 'PIO' }, { codigo: 'RITA', farmacia: 'RITA' }];
-const IMPORTES = [
-  fila('PIO', '2026-11-01', 'RS Proveedores', 'ALLIANCE', 600), fila('PIO', '2026-11-01', 'RS Gastos generales', 'Luz', 100),
-  fila('PIO', '2026-11-01', 'RE Cobro TPV', 'TPV', 1000), fila('RITA', '2026-11-01', 'RS Gastos generales', 'Luz', 200),
-];
+// H7-REAL-10: 4 meses de historia (1.ª decena de agosto a noviembre): conceptos frecuentes, con media (con un solo mes
+// serían esporádicos: el año anterior).
+const IMPORTES = ['2026-08-01', '2026-09-01', '2026-10-01', '2026-11-01'].flatMap((d) => [
+  fila('PIO', d, 'RS Proveedores', 'ALLIANCE', 600), fila('PIO', d, 'RS Gastos generales', 'Luz', 100),
+  fila('PIO', d, 'RE Cobro TPV', 'TPV', 1000), fila('RITA', d, 'RS Gastos generales', 'Luz', 200),
+]);
 const SALDOS = [banco('PIO', '2026-11-01', 5000), banco('RITA', '2026-11-01', 1000)];
 const DATOS = { importaciones: IMP, cuentas: CUENTAS, importes: IMPORTES, saldos: SALDOS };
 const comunes = (id: string, cuenta: 'PIO' | 'RITA', categoria: string) => ({
@@ -419,14 +421,20 @@ describe('H7-AP1: semilla de FIXTURES', () => {
     const sin = calcularCashflow(base);
     const L = (v: 'PIO' | 'RITA', con: string) => r.vistas[v].lineas.find((l) => l.concepto === con);
     const fondos = L('PIO', 'TRASPASO A FONDOS/VALORS')?.celdas['2027-02-01'];
-    assert.deepEqual([fondos?.fuente, fondos?.importe, fondos?.excel, fondos?.media?.media], ['MANUAL', -2000, -2500, -1000]);
+    // H7-REAL-10: traspaso externo, sin media (CATEGORIAS_SIN_MEDIA): el apunte manda sobre el Excel.
+    assert.deepEqual([fondos?.fuente, fondos?.importe, fondos?.excel, fondos?.media], ['MANUAL', -2000, -2500, null]);
     assert.deepEqual([L('PIO', 'Mantenimiento ascensor')?.celdas['2027-02-01']?.importe, L('PIO', 'Mantenimiento ascensor')?.celdas['2027-02-01']?.apuntes[0]?.nota], [-350, 'Revisión anual del ascensor']);
     const sum = L('RITA', 'Suministros');
     assert.deepEqual([sum?.celdas['2027-02-21']?.importe, sum?.celdas['2027-02-21']?.apuntes[0]?.fecha, sum?.celdas['2027-03-21']], [-180, '2027-02-28', undefined]);
     // El anulado (PIO Suministros 15/02/2027) no cuenta.
     assert.equal(L('PIO', 'Suministros')?.celdas['2027-02-11']?.fuente, 'MEDIA');
-    for (const v of ['PIO', 'RITA', 'CONSOLIDADO'] as const) for (const d of r.decenas.filter((x) => x < '2027-01-21')) assert.equal(r.vistas[v].decenas[d].saldo, sin.vistas[v].decenas[d].saldo, `${v} ${d}`);
-    assert.deepEqual(r.avisos.map((x) => [x.tipo, x.decena, x.importe]), sin.avisos.map((x) => [x.tipo, x.decena, x.importe]));
+    // H7-REAL-10: el apunte manda en su mes (sin media ese mes): la ocurrencia del 31/01 deja a RITA Suministros sin su
+    // media de 11–20/01 (500). Lo visible hasta el 11/01/2027 no cambia; los avisos, los mismos (el rojo, 500 € menor).
+    assert.equal(sum?.celdas['2027-01-11'], undefined);
+    assert.equal(sum?.celdas['2027-01-21']?.mes?.apunte, true);
+    for (const v of ['PIO', 'RITA', 'CONSOLIDADO'] as const) for (const d of r.decenas.filter((x) => x < '2027-01-11')) assert.equal(r.vistas[v].decenas[d].saldo, sin.vistas[v].decenas[d].saldo, `${v} ${d}`);
+    assert.deepEqual(r.avisos.map((x) => [x.tipo, x.decena]), sin.avisos.map((x) => [x.tipo, x.decena]));
+    assert.deepEqual([r.avisos.find((x) => x.tipo === 'rojo')?.importe, sin.avisos.find((x) => x.tipo === 'rojo')?.importe], [2237.51, 2737.51]);
     // Sin sugerencias en la semilla (el único vencimiento futuro con concepto es ALLIANCE 11–20/11, sin apunte).
     assert.equal(candidatosSustitucion({ datos, previsiones: p }, vencs).length, 0);
     assert.ok(vencs.some((v) => v.vencimiento_orden === 1 && v.proveedor_cif === 'B00000003'));

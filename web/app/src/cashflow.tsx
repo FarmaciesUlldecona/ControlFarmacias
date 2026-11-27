@@ -13,7 +13,7 @@ import { DICCIONARIO_ESTADOS } from '../server/pagos/pagos.ts';
 import {
   CUENTAS_CASHFLOW, TEXTO_FUENTE, TEXTO_POSIBLE_DUPLICADO, TEXTO_SIN_DATOS, TOLERANCIA_CUADRE_POR_IMPORTE, VISTAS_CUENTA,
   avisosColumna, calcularCashflow, celdaColumna, columnasVista, finDecena, porCategoria, resumenColumna, saldoColumna, tipoColumna, totalCategoria,
-  traspasosNoCompensados, variacionMensual, type TramoVariacion,
+  traspasosNoCompensados, variacionMensual, variacionOperativa, type TramoOperativo, type TramoVariacion,
   type AvisoCashflow, type CashflowDTO, type Celda, type CeldaColumna, type Columna, type Escala, type EstadoImportacion,
   type ResultadoCashflow, type ResultadoVista, type TipoColumna, type VencimientoCashflow, type VistaCuenta,
 } from '../server/cashflow/cashflow.ts';
@@ -293,8 +293,10 @@ function Grafico({ r, cols, vista, movil }: { r: ResultadoCashflow; cols: Column
  */
 function IndicadorVariacion({ r }: { r: ResultadoCashflow }) {
   const x = variacionMensual(r.vistas.CONSOLIDADO, r.decenas);
-  const conSigno = (t: TramoVariacion | null) => (t === null ? '—' : `${t.por_mes > 0 ? '+' : ''}${eurosExactos(t.por_mes)}/mes`);
-  const meses = (t: TramoVariacion | null) => (t === null ? 'sin datos' : `${String(t.meses).replace('.', ',')} meses, ${textoDecenaLargo(t.desde)} → ${textoDecenaLargo(t.hasta)}`);
+  // H7-REAL-10: lo que genera la farmacia sola (sin no relacionadas ni traspasos), junto al consolidado.
+  const op = variacionOperativa(r.vistas.CONSOLIDADO, r.decenas);
+  const conSigno = (t: { por_mes: number } | null) => (t === null ? '—' : `${t.por_mes > 0 ? '+' : ''}${eurosExactos(t.por_mes)}/mes`);
+  const meses = (t: TramoVariacion | TramoOperativo | null) => (t === null ? 'sin datos' : `${String(t.meses).replace('.', ',')} meses, ${textoDecenaLargo(t.desde)} → ${textoDecenaLargo(t.hasta)}`);
   return (
     <div className="cf-indicador" data-cf-indicador>
       <span className="cf-indicador-titulo">Variación media mensual del consolidado</span>
@@ -303,6 +305,13 @@ function IndicadorVariacion({ r }: { r: ResultadoCashflow }) {
       </span>
       <span className="cf-indicador-dato" data-cf-variacion="prevista" title={meses(x.prevista)}>
         Prevista, próximos 12 meses <strong className="cf-num">{conSigno(x.prevista)}</strong>
+      </span>
+      <span className="cf-indicador-titulo" data-cf-operativo-titulo>Operativo (solo farmacia)</span>
+      <span className="cf-indicador-dato" data-cf-operativo="real" title={`${meses(op.real)}: cash flow generado farmacia, sin no relacionadas ni traspasos`}>
+        Real <strong className="cf-num">{conSigno(op.real)}</strong>
+      </span>
+      <span className="cf-indicador-dato" data-cf-operativo="prevista" title={`${meses(op.prevista)}: cash flow generado farmacia, sin no relacionadas ni traspasos`}>
+        Previsto <strong className="cf-num">{conSigno(op.prevista)}</strong>
       </span>
       <span className="tenue cf-indicador-nota">Si la prevista se aleja mucho de la real, revisa la previsión.</span>
     </div>
@@ -326,6 +335,12 @@ function textoApuntes(cs: readonly Celda[]): string {
   return `${lineas.join('\n')}${xs.some((x) => !x.cuenta) ? '\n(ganan los vencimientos, mayores que el apunte)' : ''}`;
 }
 
+/** H7-REAL-10: popup de la marca «año»: la decena del año anterior que se usa y su importe. */
+function textoAnio(cs: readonly Celda[]): string {
+  return cs.filter((x) => x.media?.regla === 'ANIO_ANTERIOR').flatMap((x) => (x.media as NonNullable<Celda['media']>).base)
+    .map((b) => `${textoDecenaLargo(b.clave)}, ${eurosExactos(b.importe)}`).join('; ');
+}
+
 function CeldaTabla({ c, col, titulo, onAbrir, clave, linea, previsto = false }: {
   c: CeldaColumna | null; col: Columna; titulo: string; onAbrir: (a: Abrir) => void; clave: string; linea?: Abrir['linea']; previsto?: boolean;
 }) {
@@ -342,20 +357,22 @@ function CeldaTabla({ c, col, titulo, onAbrir, clave, linea, previsto = false }:
   }
   const apuntes = c.celdas.flatMap((x) => x.apuntes);
   const usaMedia = c.fuentes.includes('MEDIA') && c.celdas.some((x) => x.fuente === 'MEDIA' && x.en_saldo);
-  // H7-REAL-9: en la cifra de un concepto y decena, la otra de «Excel frente a media» (la que no cuenta), a la vista.
-  const f = c.celdas.length === 1 ? c.celdas[0].frente : null;
-  const otra = f === null || Math.round(f.media * 100) === Math.round(f.excel * 100) ? null
-    : Math.abs(f.media) > Math.abs(f.excel) ? { texto: 'Excel', importe: f.excel } : { texto: 'Media', importe: f.media };
+  // H7-REAL-10: estimación que suma en la celda: media por posición («m») o año anterior («año»).
+  const estimadas = c.celdas.filter((x) => !x.real && x.en_saldo && x.suma_media !== null);
+  const conMedia = estimadas.some((x) => x.media?.regla !== 'ANIO_ANTERIOR');
+  const conAnio = estimadas.some((x) => x.media?.regla === 'ANIO_ANTERIOR');
+  // H7-REAL-10: en la cifra de un concepto y decena, la estimación del MES con la que se compara (regla 4), a la vista.
+  const mes = c.celdas.length === 1 ? c.celdas[0].mes : null;
+  const otra = mes === null ? null : { texto: mes.regla === 'ANIO_ANTERIOR' ? 'Año ant. mes' : 'Media mes', importe: mes.media };
   const fuente = c.tipo === 'real' ? 'real' : c.fuentes.includes('VENCIMIENTOS') ? 'vencimientos' : c.fuentes.includes('MANUAL') ? 'manual' : usaMedia ? 'media' : 'excel';
-  // Marca «media» en la cifra: lleva alguna parte estimada (media por posición o año anterior) que suma al saldo.
-  const conMedia = c.tipo !== 'real' && usaMedia;
   return (
     <td className={`cf-c ${c.tipo} f-${fuente}${col.actual ? ' actual' : ''}`} data-cf-celda={clave} data-cf-tipo={c.tipo} data-cf-fuente={fuente}>
       <button type="button" className="cf-cbtn" onClick={() => onAbrir({ titulo, col, celda: c, linea })}
-        title={`${titulo} · ${textoColumnaLargo(col)}: ${eurosExactos(c.importe)}${conMedia ? ' (incluye media calculada)' : ''}${apuntes.length ? `\n${textoApuntes(c.celdas)}` : ''} (ver de dónde sale)`}>
+        title={`${titulo} · ${textoColumnaLargo(col)}: ${eurosExactos(c.importe)}${conMedia ? ' (incluye media calculada)' : ''}${conAnio ? ` (incluye año anterior: ${textoAnio(estimadas)})` : ''}${apuntes.length ? `\n${textoApuntes(c.celdas)}` : ''} (ver de dónde sale)`}>
         <span className="cf-linea1">
           {c.diferencia && <span className="cf-dif" title={TEXTO_POSIBLE_DUPLICADO} data-cf-diferencia>!</span>}
           {conMedia && <span className="cf-marca-media" title="Media calculada" aria-label="media" data-cf-marca-media>m</span>}
+          {conAnio && <span className="cf-marca-anio" title={`Año anterior: ${textoAnio(estimadas)}`} aria-label="año anterior" data-cf-marca-anio>año</span>}
           {apuntes.length > 0 && <span className="cf-marca-apunte" title={textoApuntes(c.celdas)} aria-label="apunte manual" data-cf-marca-apunte={apuntes.length}>a</span>}
           <span className="cf-num">{c.importe === null && c.desconocidos > 0 ? 'pend.' : cifra(c.importe)}</span>
         </span>
@@ -521,28 +538,50 @@ function ListaVenc({ vs, titulo }: { vs: VencimientoCashflow[]; titulo: string }
   );
 }
 
-function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
+const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const textoMesLargo = (ym: string) => {
+  const m = MESES_LARGOS[Number(ym.slice(5, 7)) - 1];
+  return `${m[0].toUpperCase()}${m.slice(1)} de ${ym.slice(0, 4)}`;
+};
+
+/**
+ * H7-REAL-10 (regla 4): lo conocido del mes (apunte, Excel o vencimientos) frente a la estimación del mes (media o año
+ * anterior): gana el mayor en valor absoluto; si gana la estimación, la diferencia va a su decena habitual.
+ */
+function DetalleMes({ m }: { m: NonNullable<Celda['mes']> }) {
+  const estim = m.regla === 'ANIO_ANTERIOR' ? 'el año anterior' : 'la media';
+  return (
+    <p className={`cf-nota${m.gana === 'MEDIA' ? '' : ' tenue'}`} data-cf-mes={m.gana === 'MEDIA' ? 'media' : 'conocido'}>
+      {textoMesLargo(m.mes)}: conocido (Excel, apunte o vencimientos) <strong className="cf-num">{eurosExactos(Math.abs(m.conocido))}</strong>{' '}
+      frente {m.regla === 'ANIO_ANTERIOR' ? 'al año anterior' : 'a la media'} del mes <strong className="cf-num">{eurosExactos(Math.abs(m.media))}</strong>
+      {m.gana === 'MEDIA' && m.diferencia !== null && m.decena_diferencia !== null
+        ? <> → gana {estim}: lo conocido en sus decenas y la diferencia <strong className="cf-num">{eurosExactos(Math.abs(m.diferencia))}</strong> en {textoDecenaLargo(m.decena_diferencia)}.</>
+        : m.apunte
+          ? <> → manda el apunte manual: sin {m.regla === 'ANIO_ANTERIOR' ? 'año anterior' : 'media'} este mes.</>
+          : <> → cuenta lo conocido; sin {m.regla === 'ANIO_ANTERIOR' ? 'año anterior' : 'media'} este mes.</>}
+    </p>
+  );
+}
+
+function DesgloseCelda({ c, d, mostrarMes = true }: { c: Celda; d: CashflowDTO; mostrarMes?: boolean }) {
   return (
     <section className="cf-desglose-celda" data-cf-desglose-fuente={c.fuente}>
       <h3>
         {c.cuenta} · {textoDecenaLargo(c.decena)} · <span className={`cf-fuente f-${c.fuente.toLowerCase()}`}>{TEXTO_FUENTE[c.fuente]}</span>
         <span className="cf-num cf-desglose-cifra">{eurosExactos(c.importe)}</span>
       </h3>
-      {/* H7-REAL-9: Excel frente a la media del concepto: gana el mayor en valor absoluto. */}
-      {c.frente && (
-        <p className={`cf-nota${c.fuente === 'MEDIA' ? '' : ' tenue'}`} data-cf-frente={Math.abs(c.frente.media) > Math.abs(c.frente.excel) ? 'media' : 'excel'}>
-          {Math.abs(c.frente.media) > Math.abs(c.frente.excel)
-            ? <>Excel <strong className="cf-num">{eurosExactos(Math.abs(c.frente.excel))}</strong> (inferior a la media) → media <strong className="cf-num">{eurosExactos(Math.abs(c.frente.media))}</strong>.</>
-            : <>Excel <strong className="cf-num">{eurosExactos(Math.abs(c.frente.excel))}</strong> (superior a la media {eurosExactos(Math.abs(c.frente.media))}).</>}
-        </p>
+      {/* H7-REAL-10: comparación por mes (una vez por concepto y mes en el desglose). */}
+      {c.mes && mostrarMes && <DetalleMes m={c.mes} />}
+      {c.suma_media !== null && c.fuente !== 'MEDIA' && (
+        <p className="cf-nota" data-cf-suma-media>Incluye la diferencia de {c.media?.regla === 'ANIO_ANTERIOR' ? 'año anterior' : 'media'} del mes: <strong className="cf-num">{eurosExactos(c.suma_media)}</strong>.</p>
       )}
       {/* H7-AP1: el apunte manual manda sobre el Excel y la media; con vencimientos, gana el mayor en valor absoluto. */}
       {c.apuntes.length > 0 && (
         <>
           <p className={c.fuente === 'MANUAL' ? 'cf-nota azul' : 'cf-nota'} data-cf-apunte-manda={c.fuente === 'MANUAL' ? 'si' : 'no'}>
             {c.fuente === 'MANUAL'
-              ? <>El apunte manual manda en esta decena{c.excel_filas > 0 ? <> sobre lo anotado en el Excel ({eurosExactos(c.excel)})</> : null}
-                {c.media ? <>{c.excel_filas > 0 ? ' y' : ' sobre'} la media del concepto ({eurosExactos(c.media.media)})</> : null}{c.excel_filas > 0 || c.media ? ': no suman.' : '.'}</>
+              ? <>El apunte manual manda en esta decena{c.excel_filas > 0 ? <> sobre lo anotado en el Excel ({eurosExactos(c.excel)}), que no suma</> : null}.
+                {c.media ? ' La media del concepto se compara con el mes entero.' : null}</>
               : <>Hay un apunte manual en esta decena, pero los vencimientos son mayores: cuentan ellos.</>}
           </p>
           <ul className="cf-venc" data-cf-apuntes>
@@ -599,7 +638,9 @@ function DesgloseCelda({ c, d }: { c: Celda; d: CashflowDTO }) {
             </>
           )}
           {c.media.regla === 'ANIO_ANTERIOR'
-            ? <p data-cf-regla="anio_anterior">Impuesto trimestral («RS Modelo …»): la misma decena del mismo mes del año anterior, no la media. Sin nada previsto en esta decena (ni vencimientos ni Excel).</p>
+            ? (c.media.motivo === 'ESPORADICO'
+              ? <p data-cf-regla="anio_anterior" data-cf-motivo="esporadico">Año anterior: concepto esporádico (movimiento en {plural(c.media.meses_con_movimiento, 'mes', 'meses')} de los últimos 12): la misma decena del mismo mes del año anterior, no la media.</p>
+              : <p data-cf-regla="anio_anterior" data-cf-motivo="modelo">Año anterior: impuesto trimestral («RS Modelo …»): la misma decena del mismo mes del año anterior, no la media.</p>)
             : (
               <>
                 {/* H7-REAL-8: ventana de la media (decisión de Pío, 25/11/2026). */}
@@ -672,7 +713,10 @@ function Desglose({ abrir, d, onCerrar, onCambio }: { abrir: Abrir; d: CashflowD
           Incluye: {abrir.incluye.join(', ')} (mismo proveedor en el Excel con otro nombre).
         </p>
       )}
-      {celdas.map((c, i) => <DesgloseCelda key={i} c={c} d={d} />)}
+      {celdas.map((c, i) => (
+        <DesgloseCelda key={i} c={c} d={d}
+          mostrarMes={c.mes === null || celdas.findIndex((x) => x.mes === c.mes) === i} />
+      ))}
       {sugerencias.length > 0 && (
         <section className="cf-desglose-celda" data-ap-sugerencias-celda={sugerencias.length}>
           <h3>Factura que coincide con el apunte</h3>
@@ -855,6 +899,7 @@ export function PaginaCashflow() {
               <span className="cf-fuente-m f-vencimientos" /> vencimientos del sistema
               <span className="cf-fuente-m f-manual" /> <span className="cf-marca-apunte estatico" data-cf-leyenda-apunte>a</span> apunte manual
               <span className="cf-fuente-m f-media" /> <span className="cf-marca-media estatico">m</span> media
+              {' '}<span className="cf-marca-anio estatico" data-cf-leyenda-anio>año</span> año anterior
               <span className="cf-fuente-m f-excel" /> Excel
               <span className="cf-dif estatico">!</span> {TEXTO_POSIBLE_DUPLICADO}
             </span>

@@ -28,12 +28,24 @@
  *     b) Lo anotado en las decenas futuras del Excel (RITA, y PIO para lo no cubierto por a).
  *     c) Si la categoría no tiene nada en esa decena (ni a, ni a', ni b): media de la misma posición de decena (1.ª, 2.ª o
  *        3.ª del mes) en los últimos N meses reales (N = CONFIG_CASHFLOW.meses_media, único punto). Todas las categorías
- *        RE y RS, también TPV, efectivo, SOE (cae en su decena) y «no relacionadas»; los traspasos, nunca (neutros).
+ *        RE y RS, también TPV, efectivo y SOE (cae en su decena); los traspasos, nunca (neutros). H7-REAL-10: ni las
+ *        «no relacionadas» ni los traspasos externos (CATEGORIAS_SIN_MEDIA).
  *     d) «RS Modelo …» (impuestos trimestrales): la misma decena del mismo mes del año anterior, no la media.
  *     Sin doble cómputo: con a, a' o b en esa categoría y decena no se añade media. H7-REAL-3: en las categorías con
  *     vencimientos del sistema, por concepto: lo previsto sustituye solo a su concepto y el resto lleva la «media del
  *     resto» (la de la categoría sin esos conceptos). «Media / Excel» por categoría: con
  *     «Excel», solo lo anotado (la media queda a la vista sin sumar).
+ *   H7-REAL-10 (decisión de Pío, 26/11/2026), por concepto:
+ *     1) CATEGORIAS_SIN_MEDIA («no relacionadas con la farmacia» y traspasos externos): sin media; solo apunte o Excel.
+ *     2) Esporádico (movimiento real en ≤ UMBRAL_ESPORADICO_MESES meses distintos de los últimos 12): el mismo mes del
+ *        año anterior en la misma decena, como «RS Modelo …» (marca «año anterior»).
+ *     3) Terminado (frecuente: ≥ 4 meses con movimiento en 12; sin movimiento en los últimos MESES_TERMINADO): sin media
+ *        y aviso gris «Posible concepto terminado». Excel, apuntes y vencimientos siguen contando.
+ *     4) Lo conocido (apunte, Excel, vencimientos: la cifra de cada decena) frente a la estimación se compara por concepto
+ *        y MES, no por decena: si |Σ estimación del mes| > |Σ conocido del mes|, lo conocido en sus decenas y la
+ *        diferencia en la decena habitual de la estimación; si no, solo lo conocido. Mes sin nada conocido: la
+ *        estimación en cada decena. Con un apunte manual en el mes, el apunte manda: sin estimación ese mes. Así una
+ *        paga extra o un Excel en otra decena no se suman dos veces.
  *   Saldo previsto = anterior + entradas − salidas. Traspasos entre cuentas propias: neutros en el consolidado. Los que no
  *   se compensan (traspasos a la SL, fondos…) no son aviso: solo una línea plegada con las decenas visibles.
  *   «No relacionadas con la farmacia»: cuentan en el saldo, no en el «cash flow generado farmacia».
@@ -251,6 +263,21 @@ export function clasificarCategoria(categoria: string): { sentido: SentidoMovimi
   const clase: ClaseMovimiento = /TRASPAS/.test(resto) ? 'TRASPASO' : /NO RELACIONAD/.test(resto) ? 'NO_RELACIONADA' : 'FARMACIA';
   return { sentido: m[1] === 'RE' ? 'ENTRADA' : 'SALIDA', clase };
 }
+/**
+ * H7-REAL-10 (decisión de Pío, 26/11/2026: «los movimientos ajenos a la farmacia son decisiones puntuales»: Otras
+ * salidas no relacionadas, TRASPASO A MARC, PAGOS PARA MEJORAR…): clases de categoría SIN media. «Entradas / Salidas no
+ * relacionadas con la farmacia» y traspasos externos (SL, fondos, valores; los internos PIO ↔ RITA ya no llevan media).
+ * Su previsión: solo el apunte manual o el Excel. Único punto.
+ */
+export const CATEGORIAS_SIN_MEDIA: readonly ClaseMovimiento[] = ['NO_RELACIONADA', 'TRASPASO_EXTERNO'];
+/** H7-REAL-10: ventana (meses reales) para decidir si un concepto es esporádico, frecuente o terminado. */
+export const VENTANA_FRECUENCIA_MESES = 12;
+/** H7-REAL-10: un concepto con movimiento en este número de meses distintos o menos (de la ventana) es esporádico. */
+export const UMBRAL_ESPORADICO_MESES = 3;
+/** H7-REAL-10: un concepto frecuente sin movimiento en estos últimos meses reales es un posible concepto terminado. */
+export const MESES_TERMINADO = 3;
+/** Por qué se estima así una celda: media por posición, modelo trimestral o concepto esporádico (año anterior). */
+export type MotivoEstimacion = 'MEDIA' | 'MODELO' | 'ESPORADICO';
 /** «RS Modelo …» (impuestos trimestrales): se estiman con el mismo mes del año anterior. */
 export function esModeloTrimestral(categoria: string): boolean {
   return /^RS MODELO\b/.test(normal(categoria));
@@ -261,7 +288,8 @@ export function esModeloTrimestral(categoria: string): boolean {
  */
 export function reglaEstimacion(categoria: string): ReglaEstimacion | null {
   const c = clasificarCategoria(categoria);
-  if (c === null || c.clase === 'TRASPASO') return null;
+  // H7-REAL-10: tampoco las de CATEGORIAS_SIN_MEDIA (no relacionadas; los traspasos externos van por concepto).
+  if (c === null || c.clase === 'TRASPASO' || CATEGORIAS_SIN_MEDIA.includes(c.clase)) return null;
   return esModeloTrimestral(categoria) ? 'ANIO_ANTERIOR' : 'POSICION';
 }
 
@@ -500,6 +528,30 @@ export interface DesgloseMedia {
    * categorías con vencimientos: la cifra es la «media del resto». Vacío = media de toda la categoría.
    */
   excluidos: string[];
+  /** H7-REAL-10: media por posición, modelo trimestral o concepto esporádico (ANIO_ANTERIOR). */
+  motivo: MotivoEstimacion;
+  /** H7-REAL-10: meses distintos con movimiento real del concepto en los últimos 12 (0 si no se ha contado). */
+  meses_con_movimiento: number;
+}
+/**
+ * H7-REAL-10 (regla 4): comparación por concepto y MES de lo conocido (apunte, Excel o vencimientos: la cifra de cada
+ * decena) frente a la estimación (media o año anterior). Va en las celdas de ese concepto y mes.
+ */
+export interface ComparacionMes {
+  mes: string;
+  regla: ReglaEstimacion;
+  /** Σ de lo conocido en las decenas futuras del mes (con signo). */
+  conocido: number;
+  /** Σ de la estimación en las decenas futuras del mes (con signo). */
+  media: number;
+  gana: 'CONOCIDO' | 'MEDIA';
+  /** Si gana la media: media − conocido, en `decena_diferencia`. */
+  diferencia: number | null;
+  decena_diferencia: string | null;
+  /** Decenas del mes con algo conocido. */
+  decenas_conocidas: string[];
+  /** Hay un apunte manual en el mes: manda (sin estimación ese mes). */
+  apunte: boolean;
 }
 export interface Celda {
   cuenta: CuentaCashflow;
@@ -522,8 +574,10 @@ export interface Celda {
    * base (apunte, Excel o media) y la previsión base si ganaron los vencimientos. null = sin comparación.
    */
   comparada: { fuente: 'VENCIMIENTOS' | 'MANUAL' | 'EXCEL' | 'MEDIA'; importe: number } | null;
-  /** H7-REAL-9: Excel y media del concepto en la misma decena (gana el mayor en valor absoluto). null = no hubo los dos. */
-  frente: { excel: number; media: number } | null;
+  /** H7-REAL-10: comparación del mes (lo conocido frente a la estimación). null = mes sin las dos cosas. */
+  mes: ComparacionMes | null;
+  /** H7-REAL-10: estimación (media o año anterior) que suma en esta celda; null = ninguna. */
+  suma_media: Importe;
   /** Importes desconocidos (null) de la celda. */
   desconocidos: number;
   /** H7-AP1: apuntes manuales de la celda (también si los vencimientos les ganan). */
@@ -593,7 +647,7 @@ export interface ResultadoVista {
 }
 export type CodigoAviso =
   | 'CUENTA_CUBIERTA' | 'CONSOLIDADO_NEGATIVO' | 'IMPORTACION_ANTIGUA' | 'IMPORTACION_FALLIDA' | 'SIN_IMPORTACION_VIGENTE'
-  | 'SIN_SALDO_BANCO' | 'IMPORTACION_NO_CUADRA';
+  | 'SIN_SALDO_BANCO' | 'IMPORTACION_NO_CUADRA' | 'CONCEPTO_TERMINADO';
 export interface AvisoCashflow {
   tipo: 'naranja' | 'rojo' | 'gris';
   codigo: CodigoAviso;
@@ -644,6 +698,15 @@ export interface ResultadoCashflow {
   categorias_media: string[];
   /** H7-REAL-8: equivalencias de concepto: filas sumadas bajo otro nombre (por cuenta) y pares no fusionados (suma de las cuentas). */
   equivalencias: { filas: Record<string, number>; ambiguas: number; sin_coincidencia: number };
+  /** H7-REAL-10: por cuenta, conceptos esporádicos y terminados, y doble cómputo evitado por la regla 4. */
+  prevision: Record<string, ResumenPrevision>;
+}
+export interface ResumenPrevision {
+  /** Conceptos (categoría y concepto) esporádicos con algún movimiento real en 12 meses (sin «RS Modelo …»). */
+  esporadicos: { categoria: string; concepto: string }[];
+  terminados: { categoria: string; concepto: string; ultimo: string }[];
+  /** Conceptos y meses en que la regla 4 da otra cifra que la comparación por decena, e importe (absoluto) evitado. */
+  doble_computo: { casos: number; evitado: number };
 }
 
 // ---------------------------------------------------------------------------
@@ -699,7 +762,9 @@ export function estadoImportacion(imps: readonly ImportacionCashflow[], hoy: str
 // ---------------------------------------------------------------------------
 
 const claveLinea = (categoria: string, concepto: string) => `${categoria}\u0000${concepto}`;
-const NEUTRO = { vencimientos: null, media: null, diferencia: false, desconocidos: 0, partes: [], comparada: null, frente: null, apuntes: [] } as const;
+const NEUTRO = { vencimientos: null, media: null, diferencia: false, desconocidos: 0, partes: [], comparada: null, mes: null, suma_media: null, apuntes: [] } as const;
+/** dd/mm/aaaa de una fecha ISO. */
+const fechaTexto = (f: string) => `${f.slice(8, 10)}/${f.slice(5, 7)}/${f.slice(0, 4)}`;
 
 interface Valida extends Omit<ImporteCashflow, 'concepto'> {
   cuenta: CuentaCashflow; concepto: string; sentido: SentidoMovimiento; clase: ClaseMovimiento;
@@ -734,6 +799,7 @@ export function estimarCategoria(
   return {
     regla, posicion, base: base.map((d) => ({ clave: d, importe: eur(de(d).c) })),
     media: eur(Math.round(total / base.length)), sin_importe: base.reduce((a, d) => a + de(d).sin_importe, 0), excluidos: [],
+    motivo: regla === 'ANIO_ANTERIOR' ? 'MODELO' : 'MEDIA', meses_con_movimiento: 0,
   };
 }
 const signo = (f: { sentido: SentidoMovimiento }) => (f.sentido === 'ENTRADA' ? 1 : -1);
@@ -841,6 +907,7 @@ export function calcularCashflow(
 
   const vistas = {} as Record<VistaCuenta, ResultadoVista>;
   const categoriasMedia = new Set<string>();
+  const resumenPrevision: Record<string, ResumenPrevision> = {};
 
   for (const cuenta of cuentas) {
     const filas = validas.filter((f) => f.cuenta === cuenta);
@@ -900,50 +967,8 @@ export function calcularCashflow(
       };
     }
 
-    // b) H7-REAL-9 (decisión de Pío, 25/11/2026): previsión base POR CONCEPTO en cada decena futura. El apunte manual manda;
-    // si no, gana el mayor en valor absoluto entre el Excel y la media del concepto (últimos N meses reales, misma
-    // posición de decena; «RS Modelo …»: el mismo mes del año anterior); sin Excel, la media; sin historia, el Excel.
-    // Cada concepto lleva su propia media en su línea (no hay media de categoría: todo lo real tiene concepto), así que
-    // un concepto anotado no deja sin media a los demás de su categoría, y nada se cuenta dos veces. Traspasos internos:
-    // nunca (neutros). El Excel con importe desconocido no se compara (cuenta como desconocido).
-    if (ultimaReal !== null) {
-      const primera = primeraCuenta ?? ultimaReal;
-      const conceptos = new Map<string, Valida>();
-      for (const f of filas) if (!conceptos.has(claveLinea(f.categoria, f.concepto))) conceptos.set(claveLinea(f.categoria, f.concepto), f);
-      for (const [k, f0] of conceptos) {
-        if (f0.clase === 'TRASPASO') continue;
-        const regla: ReglaEstimacion | null = f0.clase === 'TRASPASO_EXTERNO' ? 'POSICION' : reglaEstimacion(f0.categoria);
-        const l = lineas.get(k);
-        if (regla === null || !l) continue;
-        const porDecena = new Map<string, { c: number; sin_importe: number }>();
-        for (const f of filas) {
-          if (f.categoria !== f0.categoria || f.concepto !== f0.concepto || !esReal(f.decena_inicio)) continue;
-          const x = porDecena.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
-          if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
-          porDecena.set(f.decena_inicio, x);
-        }
-        for (const d of decenas) {
-          if (esReal(d)) continue;
-          const previa = l.celdas[d];
-          const m0 = estimarCategoria(regla, d, porDecena, primera, ultimaReal, config);
-          const media = m0 !== null && m0.media !== null && cent(m0.media) !== 0 ? m0 : null;
-          // H7-AP1: el apunte manual manda; la media del concepto queda a la vista en su desglose (no suma).
-          if (previa?.fuente === 'MANUAL') { if (media !== null) l.celdas[d] = { ...previa, media }; continue; }
-          if (media === null) continue;
-          if (previa === undefined) {
-            l.celdas[d] = { ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe: media.media, en_saldo: true, excel: null, excel_filas: 0, media };
-          } else if (previa.importe !== null) {
-            const frente = { excel: previa.importe, media: media.media as number };
-            l.celdas[d] = Math.abs(cent(frente.media)) > Math.abs(cent(frente.excel))
-              ? { ...previa, fuente: 'MEDIA', importe: frente.media, media, frente }
-              : { ...previa, media, frente };
-          }
-          categoriasMedia.add(l.categoria);
-        }
-      }
-    }
-
-    // c) Vencimientos del sistema (solo PIO; RITA solo con datos bancarios).
+    // b) Vencimientos del sistema (solo PIO; RITA solo con datos bancarios), por línea y decena. Se combinan en c).
+    const vencDe = new Map<string, Map<string, { dv: DesgloseVencimientos; importe: Importe }>>();
     if (cuenta === CUENTA_VENCIMIENTOS) {
       const porClave = new Map<string, VencimientoCashflow[]>();
       for (const v of dto.vencimientos) {
@@ -967,27 +992,142 @@ export function calcularCashflow(
         const dv = desgloseVencimientos(comercial, vs, finReal);
         // Ninguno suma (ya en el banco, sentido no documentado o cargo negativo): manda el Excel; se cuentan aparte.
         if (dv.incluidos.length === 0) { fuera.venc_no_suman.push(...vs); continue; }
-        const previa = l.celdas[d];
         // neto = lo que se paga (cargos − abonos): en una línea de salida resta.
-        const importe = dv.neto === null ? null : eur(cent(signo(l) * dv.neto));
-        const excel = previa?.excel ?? null;
-        const diferencia = previa !== undefined && previa.excel_filas > 0 && (importe === null || excel === null || !mismoImporte(importe, excel));
-        // H7-REAL-8/9: previsión base del concepto en esa decena (b: apunte manual, o el mayor entre Excel y media). Los
-        // vencimientos (solo de facturas ya recibidas) se comparan con ella: gana el mayor en valor absoluto (a igualdad,
-        // los vencimientos). Con el neto o la base desconocidos no se puede comparar: los vencimientos.
-        const base = previa !== undefined && previa.importe !== null && (previa.fuente === 'MANUAL' || previa.fuente === 'EXCEL' || previa.fuente === 'MEDIA')
-          ? { fuente: previa.fuente, importe: previa.importe } : null;
-        const ganaBase = config.vencimientos_como_minimo && importe !== null && base !== null && Math.abs(cent(base.importe)) > Math.abs(cent(importe));
-        l.celdas[d] = ganaBase && previa !== undefined
-          ? { ...previa, vencimientos: dv, diferencia, desconocidos: 0, comparada: { fuente: 'VENCIMIENTOS', importe: importe as number } }
-          : {
-            ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'VENCIMIENTOS', importe, en_saldo: true,
-            excel, excel_filas: previa?.excel_filas ?? 0, vencimientos: dv, media: previa?.media ?? null, frente: previa?.frente ?? null,
-            diferencia, desconocidos: dv.sin_importe, apuntes: previa?.apuntes ?? [],
-            comparada: base === null || !config.vencimientos_como_minimo ? null : { fuente: base.fuente, importe: base.importe },
-          };
+        const m = vencDe.get(l.clave) ?? new Map<string, { dv: DesgloseVencimientos; importe: Importe }>();
+        vencDe.set(l.clave, m);
+        m.set(d, { dv, importe: dv.neto === null ? null : eur(cent(signo(l) * dv.neto)) });
       }
     }
+
+    // c) H7-REAL-9/10 (decisiones de Pío, 25 y 26/11/2026): previsión POR CONCEPTO en las decenas futuras.
+    //   Lo conocido de cada decena: el apunte manual (manda sobre el Excel) o el Excel; con vencimientos (solo de facturas
+    //   ya recibidas: un mínimo), gana el mayor en valor absoluto (a igualdad, los vencimientos; con el neto o la base
+    //   desconocidos, los vencimientos).
+    //   Estimación del concepto (regla 1–3): ninguna en CATEGORIAS_SIN_MEDIA y en los terminados; año anterior en los
+    //   «RS Modelo …» y en los esporádicos; si no, media de la misma posición de decena en los últimos N meses reales.
+    //   Regla 4: por MES. Con algo conocido en el mes: si |Σ estimación| > |Σ conocido|, la diferencia va a la decena
+    //   habitual de la estimación (la de mayor estimación, primero entre las que no tienen nada conocido); si no, nada de
+    //   estimación. Sin nada conocido: la estimación en cada decena. Con un apunte manual en el mes: manda, sin
+    //   estimación (H7-AP1: el apunte manda sobre la media). Lo conocido con importe desconocido: sin estimación
+    //   ese mes (cuenta como desconocido). Traspasos internos: nunca (neutros).
+    const resumenCuenta: ResumenPrevision = { esporadicos: [], terminados: [], doble_computo: { casos: 0, evitado: 0 } };
+    if (ultimaReal !== null) {
+      const primera = primeraCuenta ?? ultimaReal;
+      const futuras = decenas.filter((d) => !esReal(d));
+      const desde12 = moverDecena(ultimaReal, -3 * VENTANA_FRECUENCIA_MESES);
+      const desdeTerminado = moverDecena(ultimaReal, -3 * MESES_TERMINADO);
+      const absC = (x: number) => Math.abs(cent(x));
+      let evitadoC = 0;
+      for (const l of [...lineas.values()]) {
+        if (l.clase === 'TRASPASO') continue;
+        const porDecena = new Map<string, { c: number; sin_importe: number }>();
+        for (const f of filas) {
+          if (f.categoria !== l.categoria || f.concepto !== l.concepto || !esReal(f.decena_inicio)) continue;
+          const x = porDecena.get(f.decena_inicio) ?? { c: 0, sin_importe: 0 };
+          if (f.importe === null) x.sin_importe += 1; else x.c += cent(signo(f) * f.importe);
+          porDecena.set(f.decena_inicio, x);
+        }
+        const conMovimiento = [...porDecena].filter(([, x]) => x.c !== 0 || x.sin_importe > 0).map(([d]) => d).sort();
+        const meses = new Set(conMovimiento.filter((d) => d > desde12).map((d) => d.slice(0, 7))).size;
+        const ultimo = conMovimiento[conMovimiento.length - 1] ?? null;
+        let regla: ReglaEstimacion | null = null;
+        let motivo: MotivoEstimacion = 'MEDIA';
+        if (CATEGORIAS_SIN_MEDIA.includes(l.clase)) regla = null;
+        else if (esModeloTrimestral(l.categoria)) { regla = 'ANIO_ANTERIOR'; motivo = 'MODELO'; }
+        else if (meses <= UMBRAL_ESPORADICO_MESES) {
+          regla = 'ANIO_ANTERIOR'; motivo = 'ESPORADICO';
+          if (meses > 0) resumenCuenta.esporadicos.push({ categoria: l.categoria, concepto: l.concepto });
+        } else if (ultimo !== null && ultimo <= desdeTerminado) {
+          resumenCuenta.terminados.push({ categoria: l.categoria, concepto: l.concepto, ultimo: finDecena(ultimo) });
+        } else regla = 'POSICION';
+        const mediaDe = new Map<string, DesgloseMedia>();
+        if (regla !== null) {
+          for (const d of futuras) {
+            const m0 = estimarCategoria(regla, d, porDecena, primera, ultimaReal, config);
+            if (m0 !== null && m0.media !== null && cent(m0.media) !== 0) mediaDe.set(d, { ...m0, motivo, meses_con_movimiento: meses });
+          }
+        }
+        // Lo conocido de cada decena (y, para el recuento del doble cómputo evitado, la cifra de la regla por decena).
+        const porDecenaAntes = new Map<string, number | null>();
+        const ven = vencDe.get(l.clave);
+        for (const d of futuras) {
+          const previa = l.celdas[d];
+          const v = ven?.get(d);
+          const med = mediaDe.get(d) ?? null;
+          const mayor = (a: number, b: number) => (absC(a) > absC(b) ? a : b);
+          // Regla anterior (por decena), solo para el recuento: apunte; si no, el mayor entre Excel y estimación.
+          let antes: number | null | undefined = previa === undefined ? med?.media ?? undefined
+            : previa.importe === null ? null : previa.fuente === 'MANUAL' || med === null ? previa.importe : mayor(med.media as number, previa.importe);
+          let c = previa;
+          if (v) {
+            const excel = previa?.excel ?? null;
+            const diferencia = previa !== undefined && previa.excel_filas > 0 && (v.importe === null || excel === null || !mismoImporte(v.importe, excel));
+            const base = previa !== undefined && previa.importe !== null ? { fuente: previa.fuente as 'MANUAL' | 'EXCEL', importe: previa.importe } : null;
+            const ganaBase = config.vencimientos_como_minimo && v.importe !== null && base !== null && absC(base.importe) > absC(v.importe);
+            c = ganaBase && previa !== undefined
+              ? { ...previa, vencimientos: v.dv, diferencia, desconocidos: 0, comparada: { fuente: 'VENCIMIENTOS', importe: v.importe as number } }
+              : {
+                ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'VENCIMIENTOS', importe: v.importe, en_saldo: true,
+                excel, excel_filas: previa?.excel_filas ?? 0, vencimientos: v.dv, diferencia, desconocidos: v.dv.sin_importe, apuntes: previa?.apuntes ?? [],
+                comparada: base === null || !config.vencimientos_como_minimo ? null : { fuente: base.fuente, importe: base.importe },
+              };
+            if (v.importe === null) antes = null;
+            else if (antes === undefined) antes = v.importe;
+            else if (antes !== null) antes = !config.vencimientos_como_minimo || absC(v.importe) >= absC(antes) ? v.importe : antes;
+          }
+          if (c !== undefined) l.celdas[d] = { ...c, media: med };
+          if (antes !== undefined) porDecenaAntes.set(d, antes);
+        }
+        if (mediaDe.size === 0) continue;
+        for (const ym of [...new Set(futuras.map((d) => d.slice(0, 7)))]) {
+          const ds = futuras.filter((d) => d.slice(0, 7) === ym);
+          const conMedia = ds.filter((d) => mediaDe.has(d));
+          if (conMedia.length === 0) continue;
+          const conocidas = ds.filter((d) => l.celdas[d] !== undefined);
+          const nueva = (d: string, importe: number): Celda => ({
+            ...NEUTRO, partes: [], cuenta, decena: d, real: false, fuente: 'MEDIA', importe, en_saldo: true, excel: null, excel_filas: 0,
+            media: mediaDe.get(d) as DesgloseMedia, suma_media: importe,
+          });
+          if (conocidas.length === 0) {
+            for (const d of conMedia) l.celdas[d] = nueva(d, (mediaDe.get(d) as DesgloseMedia).media as number);
+            categoriasMedia.add(l.categoria);
+            continue;
+          }
+          if (conocidas.some((d) => l.celdas[d].importe === null)) continue;
+          const K = conocidas.reduce((a, d) => a + cent(l.celdas[d].importe as number), 0);
+          const M = conMedia.reduce((a, d) => a + cent((mediaDe.get(d) as DesgloseMedia).media as number), 0);
+          // El apunte manual manda (H7-AP1) también frente a la estimación del mes: con un apunte en el mes, sin estimación.
+          const conApunte = conocidas.some((d) => l.celdas[d].fuente === 'MANUAL' || l.celdas[d].apuntes.length > 0);
+          const ganaMedia = !conApunte && Math.abs(M) > Math.abs(K);
+          const libres = conMedia.filter((d) => !conocidas.includes(d));
+          const candidatas = libres.length > 0 ? libres : conMedia;
+          const destino = !ganaMedia ? null
+            : candidatas.reduce((a, d) => (Math.abs(cent((mediaDe.get(d) as DesgloseMedia).media as number)) > Math.abs(cent((mediaDe.get(a) as DesgloseMedia).media as number)) ? d : a));
+          const mes: ComparacionMes = {
+            mes: ym, regla: regla as ReglaEstimacion, conocido: eur(K), media: eur(M), gana: ganaMedia ? 'MEDIA' : 'CONOCIDO',
+            diferencia: ganaMedia ? eur(M - K) : null, decena_diferencia: destino, decenas_conocidas: conocidas, apunte: conApunte,
+          };
+          for (const d of conocidas) l.celdas[d] = { ...l.celdas[d], mes };
+          if (destino !== null) {
+            const p = l.celdas[destino];
+            l.celdas[destino] = p === undefined ? { ...nueva(destino, eur(M - K)), mes }
+              : { ...p, importe: eur(cent(p.importe as number) + M - K), suma_media: eur(M - K), mes };
+            categoriasMedia.add(l.categoria);
+          }
+          // Recuento: cifra del mes con la regla anterior (por decena) frente a la de ahora.
+          const antes = ds.map((d) => porDecenaAntes.get(d)).filter((x): x is number | null => x !== undefined);
+          if (antes.some((x) => x === null)) continue;
+          const A = (antes as number[]).reduce((a, x) => a + cent(x), 0);
+          const N = ganaMedia ? M : K;
+          if (A !== N) { resumenCuenta.doble_computo.casos += 1; evitadoC += Math.abs(A) - Math.abs(N); }
+        }
+      }
+      resumenCuenta.doble_computo.evitado = eur(evitadoC);
+      for (const t of resumenCuenta.terminados) {
+        avisos.push({ ...base, tipo: 'gris', codigo: 'CONCEPTO_TERMINADO', cuenta, texto: `Posible concepto terminado: ${t.concepto} (último movimiento ${fechaTexto(t.ultimo)})` });
+      }
+    }
+    resumenPrevision[cuenta] = resumenCuenta;
 
     // Cuadre de control (H7-REAL): saldo_inicial + ΣRE − ΣRS = saldo_formulas, con los valores de la importación tal
     // cual (también traspasos y «no relacionadas»; sin medias ni vencimientos). Solo se comprueba, nunca se corrige.
@@ -1072,7 +1212,8 @@ export function calcularCashflow(
           excel: sumaOnull(partes.map((p) => p.excel).filter((x) => x !== null)), excel_filas: partes.reduce((a, p) => a + p.excel_filas, 0),
           diferencia: partes.some((p) => p.diferencia), desconocidos: cuentan.reduce((a, p) => a + p.desconocidos, 0), partes,
           media: partes.find((p) => p.media)?.media ?? null, vencimientos: partes.find((p) => p.vencimientos)?.vencimientos ?? null,
-          comparada: partes.find((p) => p.comparada)?.comparada ?? null, frente: partes.length === 1 ? partes[0].frente : null,
+          comparada: partes.find((p) => p.comparada)?.comparada ?? null, mes: partes.length === 1 ? partes[0].mes : null,
+          suma_media: sumaOnull(cuentan.map((p) => p.suma_media).filter((x) => x !== null)),
           apuntes: partes.flatMap((p) => p.apuntes),
         };
       }
@@ -1117,6 +1258,7 @@ export function calcularCashflow(
       ambiguas: cuentas.reduce((a, c) => a + (equivalenciasDe.get(c)?.ambiguas ?? 0), 0),
       sin_coincidencia: cuentas.reduce((a, c) => a + (equivalenciasDe.get(c)?.sin_coincidencia ?? 0), 0),
     },
+    prevision: resumenPrevision,
   };
 }
 
@@ -1308,6 +1450,30 @@ export function variacionMensual(v: ResultadoVista, decenas: readonly string[]):
     real: inicioReal === undefined ? null : tramo(inicioReal, L),
     prevista: finPrevisto === undefined ? null : tramo(L, finPrevisto),
   };
+}
+/** H7-REAL-10: tramo del indicador operativo: Σ del cash flow generado farmacia y su media mensual. */
+export interface TramoOperativo {
+  desde: string;
+  hasta: string;
+  meses: number;
+  /** Σ de «Cash flow generado farmacia» de las decenas del tramo (sin «no relacionadas» ni traspasos). */
+  total: number;
+  por_mes: number;
+}
+/**
+ * H7-REAL-10 (decisión de Pío, 26/11/2026): «Operativo (solo farmacia)»: lo que genera la farmacia sola, sin los
+ * movimientos ajenos (no relacionadas, traspasos internos y externos). Mismos tramos que variacionMensual: real (12
+ * meses hasta la última decena real) y previsto (12 siguientes): Σ farmacia de las decenas (desde, hasta] ÷ meses.
+ */
+export function variacionOperativa(v: ResultadoVista, decenas: readonly string[]): { real: TramoOperativo | null; prevista: TramoOperativo | null } {
+  const x = variacionMensual(v, decenas);
+  const tramo = (t: TramoVariacion | null): TramoOperativo | null => {
+    if (t === null) return null;
+    const n = rangoDecenas(t.desde, t.hasta).length - 1;
+    const total = rangoDecenas(t.desde, t.hasta).slice(1).reduce((a, d) => a + cent(v.decenas[d]?.farmacia ?? 0), 0);
+    return { desde: t.desde, hasta: t.hasta, meses: t.meses, total: eur(total), por_mes: eur(Math.round(total / (n / 3))) };
+  };
+  return { real: tramo(x.real), prevista: tramo(x.prevista) };
 }
 /** Agrupa las líneas por categoría (en el orden de las líneas). */
 export function porCategoria(ls: readonly Linea[]): { categoria: string; sentido: SentidoMovimiento; clase: ClaseMovimiento; lineas: Linea[] }[] {
