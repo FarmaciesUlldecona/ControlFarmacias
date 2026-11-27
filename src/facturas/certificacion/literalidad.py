@@ -31,7 +31,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"  # 0.2.1 (Pio, 2026-11-27): posición heredada, tirada entera corta, borde de tirada, búsqueda con vuelta atrás
 
 # Banda vertical de la fila (puntos PDF): la línea base de pypdf cae en el borde inferior del bbox del lector.
 MARGEN_FILA_ARRIBA = 1.5
@@ -137,26 +137,47 @@ def compuesto_en_tiradas(literal: str, tiradas: list[str]) -> bool:
         return False
     if any(literal in t for t in tiradas):
         return True
-    resto, cursor = literal, [0] * len(tiradas)
-    while resto:
-        mejor, indice, posicion = 0, None, None
+    # Búsqueda en profundidad con memoria (0.2.1): una elección voraz se equivoca con filas de ceros repetidos
+    # («1 0,00 0,0000 0,00»). Tope de pasos: si se agota, no se demuestra (falla cerrado).
+    fallidos: set[tuple[int, tuple[int, ...]]] = set()
+    pasos = [0]
+
+    def candidatos(resto: str, cursor: tuple[int, ...], desde: int):
+        salida = []
         for i, t in enumerate(tiradas):
-            k = len(resto)
-            while k >= TROZO_MINIMO:
+            for k in range(len(resto), TROZO_MINIMO - 1, -1):
                 p = t.find(resto[:k], cursor[i])
                 if p >= 0:
+                    salida.append((k, i, p))
                     break
-                k -= 1
-            if k >= TROZO_MINIMO and k > mejor:
-                mejor, indice, posicion = k, i, p
-            elif cursor[i] == 0 and t and resto.startswith(t) and len(t) > mejor:
-                # Una tirada entera (p. ej. la etiqueta «IVA») cuenta como trozo aunque sea más corta que el mínimo.
-                mejor, indice, posicion = len(t), i, 0
-        if indice is None:
+            # Una tirada entera (p. ej. la etiqueta «IVA») cuenta como trozo aunque sea más corta que el mínimo.
+            if cursor[i] == 0 and t and len(t) < TROZO_MINIMO and resto.startswith(t):
+                salida.append((len(t), i, 0))
+            # Trozo corto pegado al borde de una tirada, solo en los extremos del literal: al principio, el final de una
+            # tirada; al final, el principio de una tirada (la fila del lector empieza o acaba a media frase de pypdf,
+            # p. ej. «…ABONO A» | «COMPENSAR.»).
+            for k in range(min(TROZO_MINIMO - 1, len(resto)), 0, -1):
+                trozo = resto[:k]
+                if desde == 0 and t.endswith(trozo) and len(t) - k >= cursor[i]:
+                    salida.append((k, i, len(t) - k))
+                if k == len(resto) and cursor[i] == 0 and t.startswith(trozo):
+                    salida.append((k, i, 0))
+        return sorted(set(salida), key=lambda c: -c[0])
+
+    def buscar(desde: int, cursor: tuple[int, ...]) -> bool:
+        if desde == len(literal):
+            return True
+        if (desde, cursor) in fallidos or pasos[0] > 20000:
             return False
-        cursor[indice] = posicion + mejor
-        resto = resto[mejor:]
-    return True
+        pasos[0] += 1
+        for k, i, p in candidatos(literal[desde:], cursor, desde):
+            nuevo = cursor[:i] + (p + k,) + cursor[i + 1:]
+            if buscar(desde + k, nuevo):
+                return True
+        fallidos.add((desde, cursor))
+        return False
+
+    return buscar(0, tuple(0 for _ in tiradas))
 
 
 # (x, y desde el borde superior, texto, vertical) de cada fragmento de pypdf; ``vertical`` = texto girado 90°.
@@ -195,16 +216,18 @@ class TextoPdf:
                 a, b, c, d, e, f = (float(v) for v in cm)
                 x = float(tm[4]) * a + float(tm[5]) * c + e
                 y = float(tm[4]) * b + float(tm[5]) * d + f
-                if x == 0.0 and y == 0.0:
-                    # pypdf no da posición a algunos fragmentos que siguen a otro en el mismo objeto de texto (p. ej. el
-                    # valor tras su etiqueta): heredan la del último fragmento posicionado. Sin él, no anclan fila.
+                dir_x = float(tm[0]) * a + float(tm[1]) * c
+                dir_y = float(tm[0]) * b + float(tm[1]) * d
+                tirada = (x, alto - y, texto, abs(dir_y) > abs(dir_x))
+                if abs(float(tm[4])) < 0.01 and abs(float(tm[5])) < 0.01:  # matriz de texto sin desplazamiento
+                    # pypdf no siempre da la posición de un fragmento que sigue a otro en el mismo objeto de texto (p. ej.
+                    # el valor tras su etiqueta): puede ser la calculada (si la lleva la cm) o la del último fragmento
+                    # posicionado. Se registran las dos; la heredada no pasa a ser la última.
+                    propias.append(tirada)
                     if ultima:
                         x0, y0, _, vertical0 = ultima[-1]
                         propias.append((x0, y0, texto, vertical0))
                     return
-                dir_x = float(tm[0]) * a + float(tm[1]) * c
-                dir_y = float(tm[0]) * b + float(tm[1]) * d
-                tirada = (x, alto - y, texto, abs(dir_y) > abs(dir_x))
                 propias.append(tirada)
                 ultima[:] = [tirada]
 

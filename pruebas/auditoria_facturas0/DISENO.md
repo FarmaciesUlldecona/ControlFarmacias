@@ -131,6 +131,27 @@ prueba de mutaciones.
 
     Tras estos ajustes, el banco Alliance sigue en 179/179 OK, las mutaciones en 38.700/38.700 y la prueba
     cruzada sin cambios.
+  - **Versión 0.2.1** (Pio, 2026-11-27, encargo de Suavinex). Fija los dos ajustes anteriores y añade:
+    - **tirada con la matriz de texto sin desplazamiento (`tm`):** se registra dos veces, en la posición calculada y
+      en la heredada de la tirada anterior;
+      - Alliance las coloca con la `cm`, así que la calculada es la buena;
+      - en Suavinex, con una `cm` escalada, la calculada cae en el borde superior;
+      - en HEFAME la calculada es (0, 0);
+      - la copia de más solo puede hacer pasar texto de otra banda; lo vigila la prueba cruzada, que no cambia;
+    - un trozo de menos de 4 caracteres pegado al borde de una tirada, solo al principio (final de una tirada) o al
+      final (principio de una tirada) de la fila;
+    - búsqueda con vuelta atrás y memoria, con un tope de 20.000 pasos que, si se agota, falla cerrado. La elección
+      voraz fallaba con filas de ceros repetidos.
+
+    Resultados con la 0.2.1:
+
+    | Banco | Resultado |
+    |---|---|
+    | Alliance | 179/179 OK, 48.835 literales + 179 R14, 0 fallos |
+    | Mutaciones de Alliance | 38.700/38.700 detectadas |
+    | Prueba cruzada de Alliance | Igual que con la 0.2.0: 1.270, de ellos 1.186 el mismo dato y 84 de la cabecera fija |
+    | HEFAME | 12/16 OK; solo falla el cargo H1 |
+    | Suavinex | 24/26 OK; 3 filas partidas por pdfium, explicadas en `pruebas/auditoria_suavinex/DISENO.md` §4 |
   - **El 2,6 % que queda está explicado caso por caso.** Para bajarlo a 0 haría falta distinguir dos PDF con el
     mismo texto en la misma fila, y eso ya no es una cuestión de literalidad, sino de identidad del documento (SHA
     e identidad de la factura, que se comprueban aparte).

@@ -217,6 +217,10 @@ def test_el_verificador_no_importa_los_lectores_ni_la_persistencia():
     assert modulos <= {"__future__", "re", "unicodedata", "dataclasses", "decimal", "pathlib", "typing", "io", "pypdf"}
 
 
+def test_version_0_2_1():
+    assert lit.VERSION == "0.2.1"
+
+
 def test_lista_cerrada_de_reglas():
     assert set(lit.REGLAS_DERIVADAS) == {"R14_TOTAL_MISMA_HOJA_VENCIMIENTO_UNICO"}
     assert lit.REGLAS_DECISION_PIO == frozenset()
@@ -338,6 +342,11 @@ def test_texto_vertical_se_ancla_por_su_franja_y_no_contamina_las_filas():
     ("TOTALA10,0TOTALB20,0", ["TOTALA", "TOTALB", "10,0XX20,0"], True),
     ("TOTALA20,0TOTALB10,0", ["TOTALA", "TOTALB", "10,0XX20,0"], False),
     ("", ["ALGO"], False),
+    # 0.2.1: búsqueda con vuelta atrás (la voraz tomaba «0,000» de «0,0000»)
+    ("10,000,00000,00", ["1", "0,00", "0,0000", "0,00"], True),
+    # 0.2.1: trozo corto pegado al borde de una tirada («…ABONO A» | «COMPENSAR.»)
+    ("ACOMPENSAR.IMPORTE", ["VIADEPAGO:ABONOA", "COMPENSAR.", "IMPORTE"], True),
+    ("XCOMPENSAR.", ["VIADEPAGO:ABONOA", "COMPENSAR."], False),
 ])
 def test_composicion_por_trozos_ordenados(literal, tiradas, esperado):
     assert lit.compuesto_en_tiradas(literal, tiradas) is esperado
