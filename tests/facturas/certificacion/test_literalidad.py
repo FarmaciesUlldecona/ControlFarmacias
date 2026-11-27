@@ -214,15 +214,17 @@ def test_el_verificador_no_importa_los_lectores_ni_la_persistencia():
     arbol = ast.parse(MODULO.read_text(encoding="utf-8"))
     modulos = {n.module for n in ast.walk(arbol) if isinstance(n, ast.ImportFrom) and n.module}
     modulos |= {a.name for n in ast.walk(arbol) if isinstance(n, ast.Import) for a in n.names}
-    assert modulos <= {"__future__", "re", "unicodedata", "dataclasses", "decimal", "pathlib", "typing", "io", "pypdf"}
+    assert modulos <= {"__future__", "datetime", "re", "unicodedata", "dataclasses", "decimal", "pathlib", "typing", "io", "pypdf"}
 
 
-def test_version_0_2_1():
-    assert lit.VERSION == "0.2.1"
+def test_version_0_2_2():
+    assert lit.VERSION == "0.2.2"
 
 
 def test_lista_cerrada_de_reglas():
-    assert set(lit.REGLAS_DERIVADAS) == {"R14_TOTAL_MISMA_HOJA_VENCIMIENTO_UNICO"}
+    assert set(lit.REGLAS_DERIVADAS) == {"R14_TOTAL_MISMA_HOJA_VENCIMIENTO_UNICO",
+                                         "DIFERENCIA_ENTRE_SUBTOTAL_PEDIDOS_Y_DETALLE"}
+    assert lit.REGLAS_CON_LITERAL_DE_CALCULO == frozenset({"DIFERENCIA_ENTRE_SUBTOTAL_PEDIDOS_Y_DETALLE"})
     assert lit.REGLAS_DECISION_PIO == frozenset()
 
 
@@ -350,3 +352,115 @@ def test_texto_vertical_se_ancla_por_su_franja_y_no_contamina_las_filas():
 ])
 def test_composicion_por_trozos_ordenados(literal, tiradas, esperado):
     assert lit.compuesto_en_tiradas(literal, tiradas) is esperado
+
+
+# --- DERIVADO (H1, 0.2.2): cargo cooperativo HEFAME de fin de mes recalculado desde la página 1 -----------------
+
+H1 = "DIFERENCIA_ENTRE_SUBTOTAL_PEDIDOS_Y_DETALLE"
+
+
+def _h1_texto(fecha="30/06/2026", subtotal="121,17 0,00 0,00 121,17"):
+    lineas = [f"Factura 0563801595 Fecha {fecha}", "Albaran 0012345678 30,00 0,00 0,00",
+              "Albaran 0012345679 11,17 0,00 0,00", f"Desglose importes pedidos {subtotal}"]
+    tiradas = [(18.0, _y(i), "  " + linea, False) for i, linea in enumerate(lineas)]
+    return lineas, lit.TextoPdf(["\n".join(lineas)], [tiradas])
+
+
+def _h1_campo(lineas, i, valor, literal, regla="VALOR_TRAS_ETIQUETA", literal_evidencia=None):
+    caja = [18.0, _y(i) - 5.0, 560.0, _y(i)]
+    ev = literal if literal_evidencia is None else literal_evidencia
+    return {"valor": valor, "literal": literal, "evidencia": [{"literal": ev, "pagina": 1, "ubicacion": {
+        "regla": regla, "pagina": 1, "origen_autoridad": "LITERAL_LOCAL_DETERMINISTA", "tipo_evidencia": "LITERAL_LOCAL",
+        "bbox_fila": caja, "bbox": caja, "fila_literal": lineas[i]}}]}
+
+
+def _h1_factura(fecha="30/06/2026", subtotal="121,17 0,00 0,00 121,17", cargo=80.0, cargos=1, ev_sr=None):
+    lineas, texto = _h1_texto(fecha, subtotal)
+    ev_sr = ev_sr or subtotal.split()[0]
+    dia, mes, anio = fecha.split("/")
+
+    def h1(valor, literal):
+        return _h1_campo(lineas, 3, valor, literal, regla=H1, literal_evidencia=ev_sr)
+
+    def albaran(i, base):
+        return {"numero": _h1_campo(lineas, i, lineas[i].split()[1], lineas[i].split()[1]),
+                "BASE_S_R": _h1_campo(lineas, i, base, lineas[i].split()[2]),
+                "BASE_RE": _h1_campo(lineas, i, 0.0, "0,00"), "BASE_NO": _h1_campo(lineas, i, 0.0, "0,00")}
+
+    movimiento = {"concepto_normalizado": "COMISION_HEFAME",
+                  "descripcion_literal": h1("CARGO_COOPERATIVO_HEFAME", "DECISION_PIO_H1_CARGO_COOPERATIVO"),
+                  "bases": {"BASE_S_R": h1(cargo, "DIFERENCIA BASE_S_R"), "BASE_RE": h1(0.0, "SIN DIFERENCIA"),
+                            "BASE_NO": h1(0.0, "SIN DIFERENCIA"), "TOTAL_BASES": h1(cargo, "DIFERENCIA BASE_S_R")},
+                  "importe": h1(cargo, "DIFERENCIA BASE_S_R")}
+    factura = {"pagina_inicio": 1, "pagina_fin": 1,
+               "cabecera": {"fecha_factura": _h1_campo(lineas, 0, {"iso": f"{anio}-{mes}-{dia}", "literal": fecha}, fecha)},
+               "albaranes": [albaran(1, 30.0), albaran(2, 11.17)], "movimientos": [movimiento] * cargos}
+    return factura, texto
+
+
+def _h1_resultados(**kw):
+    factura, texto = _h1_factura(**kw)
+    return {r.ruta: r for r in lit.verificar_factura(factura, texto).resultados}
+
+
+def test_h1_cargo_de_fin_de_mes_es_derivado():
+    factura, texto = _h1_factura()
+    informe = lit.verificar_factura(factura, texto)
+    h1 = [r for r in informe.resultados if r.regla == H1]
+    assert len(h1) == 6
+    assert {(r.clase, r.motivo) for r in h1} == {(lit.DERIVADO, "H1_IGUAL_AL_RECALCULADO")}
+    assert informe.estado == "LITERALIDAD_OK"
+
+
+def test_h1_fuera_del_fin_de_mes_falla():
+    r = _h1_resultados(fecha="29/06/2026")["/movimientos[0]/importe"]
+    assert (r.clase, r.motivo) == (lit.NO_LITERAL, "H1_FUERA_DEL_FIN_DE_MES")
+
+
+@pytest.mark.parametrize("subtotal", ["121,16 0,00 0,00 121,16", "121,18 0,00 0,00 121,18",
+                                      "121,17 1,00 0,00 122,17", "121,17 0,00 2,00 123,17"])
+def test_h1_desfase_distinto_de_80_o_en_otra_clase_falla(subtotal):
+    r = _h1_resultados(subtotal=subtotal)["/movimientos[0]/bases/BASE_S_R"]
+    assert (r.clase, r.motivo) == (lit.NO_LITERAL, "H1_DESFASE_NO_AUTORIZADO")
+
+
+def test_h1_valor_del_cargo_distinto_del_recalculado_falla():
+    r = _h1_resultados(cargo=81.0)["/movimientos[0]/importe"]
+    assert (r.clase, r.motivo) == (lit.NO_LITERAL, "H1_DISTINTO_DEL_RECALCULADO")
+
+
+def test_h1_cargo_repetido_falla():
+    r = _h1_resultados(cargos=2)["/movimientos[0]/importe"]
+    assert (r.clase, r.motivo) == (lit.NO_LITERAL, "H1_CARGO_NO_UNICO")
+
+
+def test_h1_evidencia_que_no_es_el_subtotal_s_r_falla():
+    r = _h1_resultados(ev_sr="0,00")["/movimientos[0]/importe"]
+    assert (r.clase, r.motivo) == (lit.NO_LITERAL, "H1_EVIDENCIA_NO_ES_EL_SUBTOTAL_S_R")
+
+
+def test_h1_regla_en_un_campo_fuera_del_cargo_falla():
+    factura, texto = _h1_factura()
+    lineas, _ = _h1_texto()
+    factura["albaranes"][0]["BASE_S_R"] = _h1_campo(lineas, 3, 30.0, "30,00", regla=H1, literal_evidencia="121,17")
+    r = {x.ruta: x for x in lit.verificar_factura(factura, texto).resultados}["/albaranes[0]/BASE_S_R"]
+    assert (r.clase, r.motivo) == (lit.NO_LITERAL, "H1_CAMPO_FUERA_DEL_CARGO")
+
+
+@pytest.mark.parametrize("lineas", [
+    ["Desglose importes pedidos 121,17 0,00 0,00 121,17", "Desglose importes pedidos 121,17 0,00 0,00 121,17"],
+    ["Desglose importes pedidos 121,17 0,00 121,17"],
+    ["Desglose importes pedidos 121,17 0,00 0,00 121,18"],
+    ["Desglose importes Autoconsumo 0,00 0,00 0,00 0,00"],
+])
+def test_h1_subtotal_ilegible_no_da_valor(lineas):
+    assert lit.h1_subtotal_pedidos(lit.TextoPdf(["\n".join(lineas)])) is None
+
+
+def test_h1_subtotal_leido_de_la_fila():
+    texto = lit.TextoPdf([" Desglose importes pedidos            264,84             62,49            157,31            484,64 "])
+    assert lit.h1_subtotal_pedidos(texto) == [Decimal("264.84"), Decimal("62.49"), Decimal("157.31"), Decimal("484.64")]
+
+
+def test_h1_la_constante_es_la_de_la_decision_de_pio():
+    assert lit.H1_CARGO_BASE_S_R == Decimal("80.00")

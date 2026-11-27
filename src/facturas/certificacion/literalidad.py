@@ -13,8 +13,9 @@ Comprueba, para cada valor documentado de la salida normalizada (``{valor, liter
 Clases de resultado por valor:
 
 - ``LITERAL``: cumple 1–3.
-- ``DERIVADO``: lo produce una regla con nombre de la lista cerrada ``REGLAS_DERIVADAS`` (p. ej. R14); el verificador
-  recalcula el valor con la regla y exige que su literal aparezca en la página.
+- ``DERIVADO``: lo produce una regla con nombre de la lista cerrada ``REGLAS_DERIVADAS`` (R14 y, desde 0.2.2, el
+  cargo cooperativo H1 de HEFAME); el verificador recalcula el valor con la regla y exige que el literal de la
+  evidencia aparezca en su fila de la página.
 - ``DECISION_PIO``: evidencia con ``origen_autoridad = DECISION_FUNCIONAL_PIO`` y regla de la lista cerrada
   ``REGLAS_DECISION_PIO`` (vacía hoy: ningún valor documentado la usa).
 - ``NO_LITERAL``: falla 1, 2 o 3, o la regla no está en ninguna lista.
@@ -24,6 +25,7 @@ No conecta a nada, no escribe nada, no importa los lectores y no lo usan la noch
 """
 from __future__ import annotations
 
+import datetime
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -31,7 +33,9 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-VERSION = "0.2.1"  # 0.2.1 (Pio, 2026-11-27): posición heredada, tirada entera corta, borde de tirada, búsqueda con vuelta atrás
+VERSION = "0.2.2"
+# 0.2.1 (Pio, 2026-11-27): posición heredada, tirada entera corta, borde de tirada, búsqueda con vuelta atrás.
+# 0.2.2 (Pio, 2026-11-28): H1 (cargo cooperativo HEFAME de fin de mes) en la lista cerrada de reglas derivadas.
 
 # Banda vertical de la fila (puntos PDF): la línea base de pypdf cae en el borde inferior del bbox del lector.
 MARGEN_FILA_ARRIBA = 1.5
@@ -280,6 +284,12 @@ class TextoPdf:
         return [(normalizar_estricto(t[2]), t[3]) for t in self._tiradas[pagina - 1]
                 if (x0 <= t[0] <= x1 if t[3] else y0 <= t[1] <= y1)]
 
+    def lineas(self, pagina: int) -> list[str]:
+        """Líneas del texto pypdf de la página (vacía si no tiene texto)."""
+        if not self.tiene_texto(pagina):
+            return []
+        return (self._paginas[pagina - 1] or "").splitlines()
+
     @property
     def numero_paginas(self) -> int:
         return len(self._paginas)
@@ -297,7 +307,7 @@ class TextoPdf:
 # Reglas derivadas (lista cerrada)
 # ---------------------------------------------------------------------------------------------------------------
 
-def _r14_importe_es_total(campo: dict, factura: dict) -> tuple[bool, str]:
+def _r14_importe_es_total(campo: dict, factura: dict, _contexto: dict | None = None) -> tuple[bool, str]:
     """R14 (REGLAS_CRITICAS): con una sola fecha de vencimiento, su importe es el TOTAL FACTURA de la misma hoja."""
     total = ((factura.get("totales") or {}).get("total") or {})
     vencimientos = factura.get("vencimientos") or []
@@ -312,9 +322,124 @@ def _r14_importe_es_total(campo: dict, factura: dict) -> tuple[bool, str]:
     return (igual, "R14_IGUAL_AL_TOTAL" if igual else "R14_DISTINTO_DEL_TOTAL")
 
 
-REGLAS_DERIVADAS: dict[str, Callable[[dict, dict], tuple[bool, str]]] = {
+# H1 (decisión de Pio, 2026-11-18; REGLAS_CRITICAS, fila HEFAME): el desfase de 80,00 de base S.R. entre el subtotal
+# impreso «Desglose importes pedidos» de la página 1 y el detalle (albaranes + abonos por devolución + APROAFA) es el
+# cargo cooperativo HEFAME, solo en la factura de fin de mes y una sola vez. El verificador no usa el cálculo del
+# lector: lee él mismo la fila del subtotal con pypdf, suma el detalle (cuyos valores verifica uno a uno como
+# literales) y recalcula la diferencia. La constante es la de la decisión de Pio, no la del lector.
+H1_CARGO_BASE_S_R = Decimal("80.00")
+H1_FILA_SUBTOTAL = "Desglose importes pedidos"
+H1_CONCEPTO = "COMISION_HEFAME"
+H1_DESCRIPCION = "CARGO_COOPERATIVO_HEFAME"
+H1_MOVIMIENTOS_DEL_DETALLE = frozenset({"ABONO_DEVOLUCION", "APROAFA"})
+H1_CATEGORIAS = ("BASE_S_R", "BASE_RE", "BASE_NO")
+_RE_IMPORTE_EN_FILA = re.compile(r"(?<![\d,.])-?\d{1,3}(?:\.\d{3})*,\d{2}-?(?![\d,])")
+_CENT = Decimal("0.01")
+_CERO = Decimal("0.00")
+
+
+def _valor_decimal(nodo: Any) -> Decimal | None:
+    valor = nodo.get("valor") if isinstance(nodo, dict) else nodo
+    if valor is None or isinstance(valor, bool):
+        return None
+    try:
+        return Decimal(str(valor)).quantize(_CENT)
+    except InvalidOperation:
+        return None
+
+
+def h1_subtotal_pedidos(texto: "TextoPdf", pagina: int = 1) -> list[Decimal] | None:
+    """S.R., RE, No. y total de la única fila «Desglose importes pedidos» de la página, leída con pypdf; ``None`` si
+    no hay exactamente una fila con cuatro importes y S.R. + RE + No. = total."""
+    clave = normalizar_estricto(H1_FILA_SUBTOTAL)
+    filas = [l for l in texto.lineas(pagina) if clave in normalizar_estricto(l)]
+    if len(filas) != 1:
+        return None
+    importes = [importe_desde_literal(m) for m in _RE_IMPORTE_EN_FILA.findall(filas[0])]
+    if len(importes) != 4 or any(i is None for i in importes):
+        return None
+    if importes[0] + importes[1] + importes[2] != importes[3]:
+        return None
+    return importes
+
+
+def _h1_fecha(factura: dict) -> datetime.date | None:
+    nodo = factura.get("fecha_factura") or (factura.get("cabecera") or {}).get("fecha_factura") or {}
+    valor = nodo.get("valor") if isinstance(nodo, dict) else None
+    iso = valor.get("iso") if isinstance(valor, dict) else valor
+    try:
+        return datetime.date.fromisoformat(str(iso))
+    except ValueError:
+        return None
+
+
+def _h1_base_de(item: dict, categoria: str) -> Decimal | None:
+    for nodo in (item.get(categoria), (item.get("bases") or {}).get(categoria),
+                 (item.get("bases_por_categoria") or {}).get(categoria)):
+        if nodo is not None:
+            return _valor_decimal(nodo)
+    return None
+
+
+def _h1_cargo_cooperativo(campo: dict, factura: dict, contexto: dict | None = None) -> tuple[bool, str]:
+    """H1: recalcula el cargo cooperativo desde la página 1 (pypdf) y comprueba el campo del movimiento del cargo."""
+    contexto = contexto or {}
+    texto, ruta = contexto.get("texto"), str(contexto.get("ruta") or "")
+    if texto is None:
+        return False, "H1_SIN_TEXTO"
+    if contexto.get("pagina") != 1:
+        return False, "H1_EVIDENCIA_FUERA_DE_LA_PAGINA_1"
+    subtotal = h1_subtotal_pedidos(texto, 1)
+    if subtotal is None:
+        return False, "H1_SIN_SUBTOTAL_PEDIDOS_EN_LA_PAGINA_1"
+    if importe_desde_literal(str(contexto.get("literal_evidencia") or "")) != subtotal[0]:
+        return False, "H1_EVIDENCIA_NO_ES_EL_SUBTOTAL_S_R"
+    fecha = _h1_fecha(factura)
+    if fecha is None:
+        return False, "H1_SIN_FECHA_DE_FACTURA"
+    if (fecha + datetime.timedelta(days=1)).day != 1:
+        return False, "H1_FUERA_DEL_FIN_DE_MES"
+    movimientos = [m for m in factura.get("movimientos") or [] if isinstance(m, dict)]
+    cargos = [i for i, m in enumerate(movimientos) if m.get("concepto_normalizado") == H1_CONCEPTO]
+    if len(cargos) != 1:
+        return False, "H1_CARGO_NO_UNICO"
+    prefijo = f"/movimientos[{cargos[0]}]/"
+    if not ruta.startswith(prefijo):
+        return False, "H1_CAMPO_FUERA_DEL_CARGO"
+    items = [a for a in factura.get("albaranes") or [] if isinstance(a, dict)]
+    items += [m for m in movimientos if m.get("concepto_normalizado") in H1_MOVIMIENTOS_DEL_DETALLE]
+    detalle = []
+    for categoria in H1_CATEGORIAS:
+        suma = _CERO
+        for item in items:
+            base = _h1_base_de(item, categoria)
+            if base is None:
+                return False, "H1_DETALLE_INCOMPLETO"
+            suma += base
+        detalle.append(suma)
+    diferencias = [subtotal[i] - detalle[i] for i in range(3)]
+    if diferencias != [H1_CARGO_BASE_S_R, _CERO, _CERO]:
+        return False, "H1_DESFASE_NO_AUTORIZADO"
+    campo_rel = ruta[len(prefijo):]
+    if campo_rel == "descripcion_literal":
+        ok = campo.get("valor") == H1_DESCRIPCION
+    elif campo_rel in ("bases/BASE_S_R", "bases/TOTAL_BASES", "importe"):
+        ok = _valor_decimal(campo) == H1_CARGO_BASE_S_R
+    elif campo_rel in ("bases/BASE_RE", "bases/BASE_NO"):
+        ok = _valor_decimal(campo) == _CERO
+    else:
+        return False, "H1_CAMPO_NO_PREVISTO"
+    return ok, ("H1_IGUAL_AL_RECALCULADO" if ok else "H1_DISTINTO_DEL_RECALCULADO")
+
+
+REGLAS_DERIVADAS: dict[str, Callable[[dict, dict, dict | None], tuple[bool, str]]] = {
     "R14_TOTAL_MISMA_HOJA_VENCIMIENTO_UNICO": _r14_importe_es_total,
+    # H1: nombre con el que hefame-local 1.3.0 marca la evidencia del cargo (el subtotal S.R. impreso).
+    "DIFERENCIA_ENTRE_SUBTOTAL_PEDIDOS_Y_DETALLE": _h1_cargo_cooperativo,
 }
+# Reglas cuyo campo no copia el literal de la evidencia (la evidencia es el subtotal impreso del que se recalcula): la
+# regla comprueba ella misma que ese literal es el subtotal de su fila.
+REGLAS_CON_LITERAL_DE_CALCULO = frozenset({"DIFERENCIA_ENTRE_SUBTOTAL_PEDIDOS_Y_DETALLE"})
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -388,13 +513,14 @@ def _verificar_valor(ruta: str, campo: dict, factura: dict, texto: TextoPdf) -> 
     if not evidencias or not isinstance(literal, str) or not literal.strip():
         return ResultadoValor(ruta, NO_LITERAL, "SIN_EVIDENCIA_O_LITERAL", None, None)
     inicio, fin = factura.get("pagina_inicio"), factura.get("pagina_fin")
-    regla_final, pagina_final = None, None
+    regla_final, pagina_final, literal_final = None, None, None
     for evidencia in evidencias:
         ubicacion = evidencia.get("ubicacion") or {}
         regla = ubicacion.get("regla")
         pagina = evidencia.get("pagina", ubicacion.get("pagina"))
         regla_final, pagina_final = regla, pagina
         literal_ev = evidencia.get("literal") or literal
+        literal_final = literal_ev
         if not isinstance(pagina, int):
             return ResultadoValor(ruta, NO_LITERAL, "EVIDENCIA_SIN_PAGINA", regla, None)
         if isinstance(inicio, int) and isinstance(fin, int) and not inicio <= pagina <= fin:
@@ -414,14 +540,16 @@ def _verificar_valor(ruta: str, campo: dict, factura: dict, texto: TextoPdf) -> 
         fila_lector = (ubicacion.get("fila_literal") or "").replace("|", " ")
         if fila_lector.strip() and not texto.fila_en_su_posicion(pagina, fila_lector, cajas):
             return ResultadoValor(ruta, NO_LITERAL, "FILA_DEL_LECTOR_AUSENTE_EN_SU_POSICION", regla, pagina)
-        if normalizar_estricto(literal_ev) != normalizar_estricto(literal):
+        de_calculo = regla in REGLAS_CON_LITERAL_DE_CALCULO
+        if normalizar_estricto(literal_ev) != normalizar_estricto(literal) and not de_calculo:
             return ResultadoValor(ruta, NO_LITERAL, "LITERAL_DE_EVIDENCIA_DISTINTO", regla, pagina)
     if ubicacion.get("origen_autoridad") == ORIGEN_DECISION_PIO:
         if regla in REGLAS_DECISION_PIO:
             return ResultadoValor(ruta, DECISION_PIO, "DECISION_FUNCIONAL_PIO", regla, pagina_final)
         return ResultadoValor(ruta, NO_LITERAL, "DECISION_PIO_NO_RECONOCIDA", regla, pagina_final)
     if regla_final in REGLAS_DERIVADAS:
-        ok, motivo = REGLAS_DERIVADAS[regla_final](campo, factura)
+        contexto = {"ruta": ruta, "texto": texto, "pagina": pagina_final, "literal_evidencia": literal_final}
+        ok, motivo = REGLAS_DERIVADAS[regla_final](campo, factura, contexto)
         return ResultadoValor(ruta, DERIVADO if ok else NO_LITERAL, motivo, regla_final, pagina_final)
     ok, motivo = valor_sale_del_literal(campo.get("valor"), literal)
     return ResultadoValor(ruta, LITERAL if ok else NO_LITERAL, motivo, regla_final, pagina_final)

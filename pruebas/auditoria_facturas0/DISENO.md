@@ -152,6 +152,32 @@ prueba de mutaciones.
     | Prueba cruzada de Alliance | Igual que con la 0.2.0: 1.270, de ellos 1.186 el mismo dato y 84 de la cabecera fija |
     | HEFAME | 12/16 OK; solo falla el cargo H1 |
     | Suavinex | 24/26 OK; 3 filas partidas por pdfium, explicadas en `pruebas/auditoria_suavinex/DISENO.md` §4 |
+  - **Versión 0.2.2** (Pio, 2026-11-28): **H1 en la lista cerrada de reglas derivadas.** La regla del lector que marca
+    la evidencia del cargo (`DIFERENCIA_ENTRE_SUBTOTAL_PEDIDOS_Y_DETALLE`) solo da `DERIVADO` si el verificador,
+    sin usar el cálculo del lector, llega al mismo cargo:
+    - lee con pypdf la única fila «Desglose importes pedidos» de la página 1, con cuatro importes y S.R. + RE + No. =
+      total;
+    - la evidencia del cargo es el importe S.R. de esa fila;
+    - resta el detalle de la factura: albaranes, `ABONO_DEVOLUCION` y `APROAFA`, cuyos valores verifica uno a uno
+      como literales;
+    - la diferencia es exactamente 80,00 en S.R. y 0 en RE y No. (constante de la decisión H1, no la del lector);
+    - la factura es de fin de mes y tiene un solo `COMISION_HEFAME`;
+    - el campo es el del cargo: descripción `CARGO_COOPERATIVO_HEFAME`; S.R., total de bases e importe = 80,00; RE y
+      No. = 0.
+
+    Cualquier otra cosa da `NO_LITERAL` con su motivo (`H1_…`). Como el literal del campo no es el impreso, esta regla
+    (y solo ella, `REGLAS_CON_LITERAL_DE_CALCULO`) no exige que el literal de la evidencia sea igual al del campo; lo
+    sustituye la comprobación de que es el subtotal de su fila.
+
+    Resultados con la 0.2.2:
+
+    | Banco | Resultado |
+    |---|---|
+    | HEFAME | **16/16 OK**; las 4 de fin de mes con sus 6 valores H1 `DERIVADO` |
+    | Mutaciones del cargo H1 (4 facturas) | 56/56 detectadas: ±0,01 en cada importe, descripción, cargo duplicado, fecha −1 día y albarán +0,01 |
+    | Alliance | 179/179 OK, sin cambios (48.835 literales + 179 R14) |
+    | Mutaciones y prueba cruzada de Alliance | Sin cambios: 38.700/38.700; 1.270 (1.186 + 84) |
+    | Suavinex | Sin cambios: 24/26 |
   - **El 2,6 % que queda está explicado caso por caso.** Para bajarlo a 0 haría falta distinguir dos PDF con el
     mismo texto en la misma fila, y eso ya no es una cuestión de literalidad, sino de identidad del documento (SHA
     e identidad de la factura, que se comprueban aparte).

@@ -263,8 +263,9 @@ Hoy dice «número exacto e importe operativo». **Propuesta:**
     - **Las 4 de fin de mes** (0563801595, 0563820041, 0563855563 y 0563869860) fallan **solo** en los 6 valores
       del cargo cooperativo H1. Esos valores no están impresos: son un **derivado por decisión de Pio**, y la lista
       cerrada del verificador solo contiene R14.
-    - **Pendiente de Pio:** añadir H1 como regla derivada del verificador, que recalcularía el desfase de S.R. a
-      partir de los literales de la página 1.
+    - **Resuelto con el verificador 0.2.2** (decisión de Pio, 2026-11-28): H1 está en la lista cerrada y se recalcula
+      desde la fila «Desglose importes pedidos» de la página 1. **16 de 16 `LITERALIDAD_OK`** (DISENO de FACTURAS-0
+      §0b). La columna «Literalidad» de la tabla es la de la 0.2.0.
 
   | Factura | Fecha | Total | Albaranes | Movim. | C1 | C2 | C3 (dif./tol.) | Literalidad |
   |---|---|---|---|---|---|---|---|---|
