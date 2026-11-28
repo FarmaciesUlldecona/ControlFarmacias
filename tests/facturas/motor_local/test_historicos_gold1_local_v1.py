@@ -16,8 +16,7 @@ PDFS = {
     "dermofarm": DOCS / "DERMOFARM ABONO VTO 5.8.26 PIO.pdf",
     "gas_casa": DOCS / "GAS CASA ABRIL-MAIG 2026.pdf",
     "pierre_fabre": DOCS / "PIERRE FABRE ABONO VTO 7.9.26 PIO.pdf",
-    "suavinex": DOCS / "SUAVINEX VTO 15.8.26 PIO.pdf",
-}
+}  # Suavinex: suavinex-historico-local retirado (Pio, 2026-11-28); ver test_suavinex_local_110.py
 
 
 @pytest.fixture(scope="module")
@@ -26,7 +25,7 @@ def resultados():
     return {proveedor: motor.extraer(ruta) for proveedor, ruta in PDFS.items()}
 
 
-def test_cuatro_documentos_nativos_segmentados_y_reconocidos(resultados):
+def test_tres_documentos_nativos_segmentados_y_reconocidos(resultados):
     assert set(resultados) == set(PDFS)
     assert all(resultado.documento["pages"] in {1, 2} for resultado in resultados.values())
     assert all(len(resultado.segmentos) == 1 for resultado in resultados.values())
@@ -99,22 +98,6 @@ def test_pierre_fabre_abono_y_descuento_no_independiente(resultados):
     }
     assert descuento["es_movimiento_economico_independiente"] is False
     assert factura["vencimientos"][0]["importe"] is None
-
-
-def test_suavinex_detalle_fiscalidad_agregada_y_punto_verde(resultados):
-    factura = resultados["suavinex"].facturas[0]
-    assert factura["layout"] == "SUAVINEX_FACTURA_MERCANCIA_V1"
-    assert len(next(o for o in factura["otros"] if o["tipo"] == "DETALLE_PRODUCTOS")["lineas"]) == 19
-    assert factura["albaranes"][0].sentido == "CARGO"
-    fiscalidad = factura["impuestos"][0]
-    assert factura["cabecera"]["importe_bruto"]["valor"] == factura["cabecera"]["base_imponible_total"]["valor"]
-    assert fiscalidad["cuota_fiscal_resumen_visible"]["valor"] == fiscalidad["cuota_fiscal_agregada_visible"]["valor"]
-    assert fiscalidad["cuota_iva"]["provenance"]["evidencia_documental_directa"] is False
-    assert fiscalidad["cuota_recargo_equivalencia"]["provenance"]["evidencia_documental_directa"] is False
-    punto_verde = next(o for o in factura["otros"] if o["tipo"] == "APORTACION_AMBIENTAL_INFORMATIVA")
-    assert punto_verde["es_movimiento_economico_independiente"] is False
-    assert punto_verde["incluido_en_base"] is True
-    assert len(factura["vencimientos"]) == 1
 
 
 def test_todas_las_conciliaciones_cierran_y_hay_evidencia(resultados):

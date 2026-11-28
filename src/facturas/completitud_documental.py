@@ -24,7 +24,7 @@ COBERTURA_ADAPTADORES = {
     "dermofarm-historico-local": "COBERTURA_PARCIAL_FAIL_CLOSED",
     "gas-casa-historico-local": "COBERTURA_PARCIAL_FAIL_CLOSED",
     "pierre-fabre-historico-local": "COBERTURA_PARCIAL_FAIL_CLOSED",
-    "suavinex-historico-local": "COBERTURA_PARCIAL_FAIL_CLOSED",
+    "suavinex-local": "COBERTURA_PARCIAL_FAIL_CLOSED",  # sustituye a suavinex-historico-local (Pio, 2026-11-28)
 }
 
 

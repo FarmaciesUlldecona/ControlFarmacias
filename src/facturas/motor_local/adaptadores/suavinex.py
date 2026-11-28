@@ -1,9 +1,14 @@
-"""suavinex-local 1.0.0 (FACTURAS-0, fábrica de lectores, 2026-11-27). Sin autoridad productiva y SIN REGISTRAR.
+"""suavinex-local 1.1.0 (FACTURAS-0, fábrica de lectores). Registrado en sombra, SIN autoridad productiva.
 
 Lector determinista de las facturas y abonos (facturas rectificativas) de Suavinex Group, S.L. (CIF B03074093), sobre
 la plantilla común (``AdaptadorBase``). Un PDF puede llevar varios documentos seguidos: se segmenta por el número
-impreso («Factura Nº» / «Abono Nº») y la paginación «Página i/n». No está en ``REGISTRO_ADAPTADORES_LOCALES`` (el
-registro necesita el OK de Pio y hoy convive ``suavinex-historico-local``): se usa llamando a ``extraer_facturas``.
+impreso («Factura Nº» / «Abono Nº») y la paginación «Página i/n».
+
+- 1.0.0 (2026-11-27): facturas y abonos, líneas, albaranes con la suma de sus líneas, impuestos, totales y vencimientos.
+- 1.1.0 (DECISIÓN DE PIO, 2026-11-28): recoge, en cada albarán, la «Su Referencia: O-…» impresa en su fila «Pedido»
+  (``su_referencia``, literal; sin la etiqueta, ``None``; con la etiqueta y otro valor, falla cerrado). Sustituye en
+  ``REGISTRO_ADAPTADORES_LOCALES`` a ``suavinex-historico-local``, que se retira: queda en sombra, sin autoridad
+  productiva (``completitud_documental``: ``COBERTURA_PARCIAL_FAIL_CLOSED``, nunca documento completo demostrado).
 
 Falla cerrado (``ValueError("CONTROL_SUAVINEX:...")``) si no cuadra lo impreso: Σ líneas = importe bruto = importe neto =
 Σ bases; cuota = base × (IVA + RE) con 0,01; Σ cuotas = impuestos; neto + impuestos = total; factura con vencimientos
@@ -26,6 +31,7 @@ RE_NUMERO = re.compile(r"\b(Factura|Abono)\s+N\S*:\s*(\d{10})")
 RE_PAGINA = re.compile(r"P\S*gina\s+(\d+)\s*/\s*(\d+)")
 RE_CODIGO = re.compile(r"^\d{4,7}$")  # códigos de artículo de 5 y 6 dígitos en el espejo
 RE_ALBARAN = re.compile(r"^\d{8}$")
+RE_SU_REFERENCIA = re.compile(r"^O-\d+$")
 C = Decimal("0.01")
 
 
@@ -39,11 +45,11 @@ def _d(palabra: PalabraLocal) -> Decimal:
 
 class AdaptadorSuavinex(AdaptadorBase):
     id = "suavinex-local"
-    version = "1.0.0"
+    version = "1.1.0"
     capacidades = {
         "segmentacion": "SOPORTADO_MULTIDOCUMENTO_POR_NUMERO_Y_PAGINACION",
         "cabecera": "SOPORTADO",
-        "albaranes": "SOPORTADO_NUMERO_SIN_IMPORTE_IMPRESO",
+        "albaranes": "SOPORTADO_NUMERO_Y_SU_REFERENCIA_SIN_IMPORTE_IMPRESO",
         "movimientos": "NO_APLICA",
         "impuestos": "SOPORTADO",
         "vencimientos": "SOPORTADO",
@@ -123,6 +129,7 @@ class AdaptadorSuavinex(AdaptadorBase):
                     if p.texto.startswith("Albar") and i + 1 < len(linea.palabras) and RE_ALBARAN.fullmatch(linea.palabras[i + 1].texto):
                         palabra = linea.palabras[i + 1]
                         albaranes.append({"numero": self.campo_documentado(documento, palabra.texto, [palabra], linea, "albaranes", "numero_albaran", "NUMERO_TRAS_ALBARAN"),
+                                          "su_referencia": self._su_referencia(documento, linea, i + 1),
                                           "importe_base_suma_lineas": "0"})
             elif linea.palabras and RE_CODIGO.fullmatch(linea.palabras[0].texto) and palabras_importe(linea):
                 importe = palabras_importe(linea)[-1][0]
@@ -185,6 +192,7 @@ class AdaptadorSuavinex(AdaptadorBase):
             "impuestos": impuestos,
             "totales": totales,
             "vencimientos": vencimientos,
+            "otros": [],  # 1.1.0: familia que espera el puente de sombra (``shadow._familias_locales``)
             "forma_pago_abono_a_compensar": any(
                 "abono a compensar" in p.texto.lower() for p in documento.paginas if p.numero in paginas),
         }
@@ -194,6 +202,22 @@ class AdaptadorSuavinex(AdaptadorBase):
             raise ValueError("CONTROL_SUAVINEX:" + numero.texto + ":" + ";".join(
                 f"{c['codigo']}:{c['calculado']}/{c['impreso']}" for c in fallos))
         return factura
+
+    def _su_referencia(self, documento: DocumentoLocal, linea, desde: int) -> dict[str, Any] | None:
+        """«Su Referencia: O-…» tras el número de albarán en la misma fila «Pedido» (1.1.0, Pio 2026-11-28)."""
+        palabras = linea.palabras
+        etiquetas = [i for i in range(desde + 1, len(palabras))
+                     if palabras[i].texto.lower() == "referencia:" and palabras[i - 1].texto.lower() == "su"]
+        if not etiquetas:
+            if any("referencia" in p.texto.lower() for p in palabras[desde + 1:]):
+                raise ValueError(f"CONTROL_SUAVINEX:SU_REFERENCIA_ILEGIBLE:{linea.texto[:80]}")
+            return None
+        i = etiquetas[0]
+        if len(etiquetas) != 1 or i + 1 >= len(palabras) or not RE_SU_REFERENCIA.fullmatch(palabras[i + 1].texto):
+            raise ValueError(f"CONTROL_SUAVINEX:SU_REFERENCIA_ILEGIBLE:{linea.texto[:80]}")
+        valor = palabras[i + 1]
+        return self.campo_documentado(documento, valor.texto, [valor], linea, "albaranes", "su_referencia",
+                                      "REFERENCIA_TRAS_SU_REFERENCIA")
 
     @staticmethod
     def controles(f: dict[str, Any], es_abono: bool) -> list[dict[str, Any]]:

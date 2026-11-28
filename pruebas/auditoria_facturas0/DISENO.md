@@ -29,6 +29,18 @@ decisión de Pio) e `INFERIDO`.
 | **F0-9** | La 42 corrige `tipo_documento` también en las facturas existentes (§3.2), con aviso a la web |
 | **F0-10** | Numeración: **42 = Paso 0**; «Actualizar ahora» pasa a la **43** |
 
+**Decisiones de Pio, tercera tanda (2026-11-28):**
+
+| Id | Decisión |
+|---|---|
+| **F0-11** | Verificador 0.2.2: el cargo cooperativo H1 de HEFAME entra en la lista cerrada de reglas derivadas (§0b) |
+| **F0-12** | `suavinex-local` 1.1.0 recoge la «Su Referencia: O-…» de cada albarán y se registra en sombra en lugar de `suavinex-historico-local`, que se retira con su texto fijo de datos personales (`pruebas/auditoria_suavinex/DISENO.md` §3b) |
+| **F0-13** | Conciliación Suavinex: referencia `O-…` normalizada como número a ±15 días; sin ella, importe con candidato único entre −3 y +10 días; 0,05 por línea y R11 (DISENO de Suavinex §5) |
+| **F0-14** | Conciliación HEFAME: formatos de Farmatic `0` + 6 últimos dígitos + `01nnn` y número + `/001`, con el mismo importe y 0–1 días (DISENO de HEFAME §4.1) |
+
+F0-13 y F0-14 están `NO IMPLEMENTADO` en la conciliación productiva: se aplican en las simulaciones y llegarán con la
+ruta de cada proveedor.
+
 Siguen como `PROPUESTA`, pendientes de Pio, las demás piezas de §2–§5.
 
 ## 0a. Paso 0a: verificador de literalidad implementado (2026-11-27)

@@ -23,8 +23,8 @@ from .historicos_gold1 import (
     AdaptadorDermofarmHistorico,
     AdaptadorGasCasaHistorico,
     AdaptadorPierreFabreHistorico,
-    AdaptadorSuavinexHistorico,
 )
+from .suavinex import AdaptadorSuavinex
 
 
 ClaseAdaptador: TypeAlias = type[AdaptadorBase]
@@ -74,7 +74,9 @@ REGISTRO_ADAPTADORES_LOCALES: tuple[EntradaAdaptadorLocal, ...] = (
     EntradaAdaptadorLocal(ProveedorLocal.DERMOFARM, AdaptadorDermofarmHistorico),
     EntradaAdaptadorLocal(ProveedorLocal.GAS_CASA, AdaptadorGasCasaHistorico),
     EntradaAdaptadorLocal(ProveedorLocal.PIERRE_FABRE, AdaptadorPierreFabreHistorico),
-    EntradaAdaptadorLocal(ProveedorLocal.SUAVINEX, AdaptadorSuavinexHistorico),
+    # suavinex-local 1.1.0 sustituye a suavinex-historico-local, retirado (DECISION DE PIO, 2026-11-28): en sombra,
+    # sin autoridad productiva.
+    EntradaAdaptadorLocal(ProveedorLocal.SUAVINEX, AdaptadorSuavinex),
 )
 
 

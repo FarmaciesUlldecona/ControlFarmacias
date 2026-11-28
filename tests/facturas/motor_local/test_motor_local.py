@@ -82,7 +82,7 @@ def test_registro_local_contiene_cofares_hefame_fedefarma_y_alliance():
         ("dermofarm-historico-local", "1.0.0"),
         ("gas-casa-historico-local", "1.0.0"),
         ("pierre-fabre-historico-local", "1.0.0"),
-        ("suavinex-historico-local", "1.0.0"),
+        ("suavinex-local", "1.1.0"),  # sustituye a suavinex-historico-local, retirado (Pio, 2026-11-28)
     ]
 
 

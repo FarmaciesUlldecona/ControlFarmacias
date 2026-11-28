@@ -181,6 +181,10 @@ Propuestas, medidas READ_ONLY contra `Supabase.albaranes` (81 filas numéricas).
   - 912776450 (18.06) casa con `Q039867/2026` (31,06, mismo día, recepción 50749).
   - Los 2 de 0563863435 (20.10) eran formulación magistral sin entrar; Pio los registró el 18.11 con su número
     (914618399 a 67,15 frente a 67,01 del PDF, que Pio corrige, y 914621188 a 33,57).
+- **Dos formatos más de Farmatic (DECISIÓN DE PIO, 2026-11-28):** aprobados con el **mismo importe** y fecha de
+  Farmatic de **0 a +1 días**, con candidato único:
+  - `0` + los 6 últimos dígitos + `01nnn` (`4126594557` ↔ `059455701000`);
+  - el número con `/001` al final (`4126746976` ↔ `4126746976/001`).
 - **Resultado del casamiento:**
 
 | Casamiento | Filas | Detalle |
@@ -303,6 +307,21 @@ Hoy dice «número exacto e importe operativo». **Propuesta:**
     - (c) o dejar la factura en `DIFERENCIA`.
   - Los movimientos sin albarán (ABO/DEVO, APROAFA, servicios y cargo H1) no entran en esta simulación de líneas.
 
+- **Simulación de las 16 facturas con F0-7 y los formatos del 28/11** (captura READ_ONLY de Supabase del
+  2026-11-28 a las 08:47; `C:\ControlFarmacias\estrategia_facturas\simulaciones_2811b\`):
+  - **54 de 87 líneas casan** (46 sin los formatos): 30 por número, 8 por los formatos nuevos (6 + 2, todos con
+    diferencia 0,00) y 16 internos por importe;
+  - **2 de 16 facturas conciliarían:** 0563869860 y 0563878342;
+  - el resto no concilia por:
+    - 26 líneas sin ningún albarán que case en Farmatic;
+    - 2 líneas cuyo número sí está en Farmatic en el formato aprobado pero con otro importe: 4128046020 (2,30
+      frente a 2,26) y 4128537621 (21,43 frente a 22,85);
+    - 5 diferencias de importe: 4126699570 (−0,20), 4127249779 (−0,03), 7070398 (+21,71), 7128219 (+3,38) y
+      914618399 (+0,14).
+  - **Para revisar en Farmatic:** las 33 líneas, en
+    `C:\ControlFarmacias\estrategia_facturas\hefame\revision_farmatic_hefame_2811.csv`.
+  - Los formatos nuevos `NO IMPLEMENTADO` en la conciliación productiva: se aplicarán con la ruta HEFAME (F0-7).
+
 ## 5. Qué falta para la autoridad productiva
 
 1. **Decisiones de Pio:**
@@ -311,9 +330,10 @@ Hoy dice «número exacto e importe operativo». **Propuesta:**
    - **tomadas (2026-11-19, §0):** las liquidaciones comerciales son un ABONO (H3); los números `91…` son albaranes
      normales que casan por numeración interna, importe y fecha con candidato único (H4); la factura del 30.09 está
      importada (H5);
-   - **pendientes:**
-     - tolerancia del control de la página 2 (§2.5);
-     - reglas de §4 (normalización, ventana y tolerancia por línea).
+   - **tomadas (2026-11-27, F0-6 y F0-7):** tolerancia del control de la página 2 (§2.5) y reglas de §4
+     (normalización, ventana y tolerancia por línea);
+   - **tomadas (2026-11-28):** los formatos `0…01nnn` y `/001` de §4.1;
+   - **pendientes:** el albarán 4127750839 y la revisión en Farmatic de las 33 líneas del CSV de §4b.
 2. **Código** (hito propio, con su suite). La farmacia se demuestra por el destinatario impreso (código de cliente,
    NIF y dirección del bloque de cliente), nunca por la carpeta del espejo ni por el nombre del fichero (S3/S5):
    - corrección del RE No. a 5,2 % en `hefame_economia.py`;

@@ -84,6 +84,19 @@ def _oficiales(documento: Any) -> list[dict[str, Any]]:
 
 
 def _fila_local(fila: Any, indice: int) -> dict[str, Any]:
+    if isinstance(fila, dict):
+        # Lectores de la fabrica (FACTURAS-0, p. ej. suavinex-local 1.1.0): albaran como campos documentados. Sin
+        # fecha, total, tipo de pedido ni sentido impresos en la fila: None; la base es la suma de sus lineas.
+        numero = fila.get("numero")
+        return {
+            "indice": indice,
+            "numero": str(numero.get("valor")) if isinstance(numero, dict) else None,
+            "fecha": None,
+            "base": _decimal(fila.get("importe_base_suma_lineas")),
+            "total": None,
+            "tipo_pedido": None,
+            "sentido": None,
+        }
     base = sum((Decimal(str(v)) for v in fila.bases), Decimal("0")) if fila.bases else None
     return {
         "indice": indice,
